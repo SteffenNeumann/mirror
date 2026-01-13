@@ -107,7 +107,12 @@
 				const metaRight = document.getElementById("metaRight");
 
 				const params = new URLSearchParams(location.search);
-				const defaultWsUrl = "wss://relay.websocket.events/";
+				const defaultWsUrl =
+					(location.protocol === "https:" ? "wss:" : "ws:") +
+					"//" +
+					location.host +
+					"/ws";
+				// Override möglich: ?ws=wss://example.com/ws
 				const wsBaseUrl = params.get("ws") || defaultWsUrl;
 
 				const clientId = crypto.randomUUID
@@ -152,7 +157,7 @@
 				function wsUrlForRoom(base, roomName) {
 					// Viele Relays verwenden Query-Parameter. Falls dein Relay anders ist,
 					// setze ?ws=wss://... passend oder passe diese Funktion an.
-					const url = new URL(base);
+					const url = new URL(base, location.href);
 					url.searchParams.set("room", roomName);
 					url.searchParams.set("client", clientId);
 					return url.toString();
