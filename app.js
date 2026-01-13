@@ -279,7 +279,8 @@
 				"error"
 			);
 		} catch (e) {
-			toast("Link konnte nicht erstellt werden.", "error");
+			const msg = e && e.message ? String(e.message) : "unbekannter Fehler";
+			toast(`Link konnte nicht erstellt werden: ${msg}`, "error");
 		}
 	}
 
