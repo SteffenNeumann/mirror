@@ -274,10 +274,16 @@
 				return;
 			}
 			if (psDevLink) psDevLink.classList.add("hidden");
-			toast(
-				"E-Mail konnte nicht zugestellt werden (SMTP/Setup prüfen).",
-				"error"
-			);
+			const reason = res && res.reason ? String(res.reason) : "unknown";
+			const hint =
+				reason === "smtp_not_configured"
+					? "SMTP ist nicht konfiguriert."
+					: reason === "smtp_incomplete"
+					? "SMTP Secrets sind unvollständig."
+					: reason === "send_failed"
+					? "SMTP Versand fehlgeschlagen."
+					: "SMTP/Setup prüfen.";
+			toast(`E-Mail nicht versendet: ${hint} (${reason})`, "error");
 		} catch (e) {
 			const msg = e && e.message ? String(e.message) : "unbekannter Fehler";
 			toast(`Link konnte nicht erstellt werden: ${msg}`, "error");
