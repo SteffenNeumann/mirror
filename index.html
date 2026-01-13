@@ -34,6 +34,9 @@
 		</script>
 	</head>
 	<body class="min-h-screen bg-slate-950 text-slate-100 antialiased">
+		<div
+			id="toastRoot"
+			class="pointer-events-none fixed right-4 top-4 z-50 flex w-[min(92vw,420px)] flex-col gap-2"></div>
 		<div class="pointer-events-none fixed inset-0 overflow-hidden">
 			<div
 				class="absolute -top-48 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-fuchsia-500/15 blur-3xl"></div>
@@ -86,17 +89,22 @@
 							<span id="roomLabel" class="font-medium text-slate-100"></span>
 						</div>
 						<div class="mt-1">
+							<button
+								id="copyLink"
+								type="button"
+								class="rounded-md border border-white/10 bg-white/10 px-2.5 py-1.5 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">
+								Link kopieren
+							</button>
 							<a
 								id="shareLink"
-								class="underline decoration-white/20 underline-offset-4 hover:decoration-white/50"
+								class="ml-2 underline decoration-white/20 underline-offset-4 hover:decoration-white/50"
 								href="#"
 								target="_self"
 								rel="noreferrer"
-								>Link teilen</a
-							>
+								>Öffnen</a
 						</div>
 						<div class="mt-1" id="statusText">Offline</div>
-						<div class="mt-1 text-slate-400" id="wsHint"></div>
+							<div class="mt-1 hidden text-slate-400" id="wsHint"></div>
 					</div>
 				</header>
 
@@ -126,6 +134,7 @@
 				const statusText = document.getElementById("statusText");
 				const roomLabel = document.getElementById("roomLabel");
 				const shareLink = document.getElementById("shareLink");
+				const copyLinkBtn = document.getElementById("copyLink");
 				const wsHint = document.getElementById("wsHint");
 				const roomInput = document.getElementById("roomInput");
 				const roomOptions = document.getElementById("roomOptions");
@@ -133,6 +142,7 @@
 				const newRoomBtn = document.getElementById("newRoom");
 				const metaLeft = document.getElementById("metaLeft");
 				const metaRight = document.getElementById("metaRight");
+				const toastRoot = document.getElementById("toastRoot");
 
 				const params = new URLSearchParams(location.search);
 				const defaultWsUrl =
@@ -142,6 +152,7 @@
 					"/ws";
 				// Override möglich: ?ws=wss://example.com/ws
 				const wsBaseUrl = params.get("ws") || defaultWsUrl;
+				const debug = params.get("debug") === "1";
 
 				const clientId = crypto.randomUUID
 					? crypto.randomUUID()
@@ -154,6 +165,77 @@
 						.replace(/^room=/, "")
 						.replace(/[^a-zA-Z0-9_-]/g, "")
 						.slice(0, 40);
+				}
+
+				function normalizeKey(raw) {
+					return String(raw || "")
+						.trim()
+						.replace(/^#/, "")
+						.replace(/^key=/, "")
+						.replace(/[^a-zA-Z0-9_-]/g, "")
+						.slice(0, 64);
+				}
+
+				function parseRoomAndKeyFromHash() {
+					const raw = String(location.hash || "");
+					const hash = raw.startsWith("#") ? raw.slice(1) : raw;
+					if (!hash) return { room: "", key: "" };
+
+					// Unterstützt:
+					// - #room=ABC
+					// - #room=ABC&key=SECRET
+					// - #ABC (fallback)
+					if (!hash.includes("=")) {
+						return { room: normalizeRoom(hash), key: "" };
+					}
+					const sp = new URLSearchParams(hash);
+					return {
+						room: normalizeRoom(sp.get("room")),
+						key: normalizeKey(sp.get("key")),
+					};
+				}
+
+				function buildShareHash(roomName, keyName) {
+					const sp = new URLSearchParams();
+					sp.set("room", roomName);
+					if (keyName) sp.set("key", keyName);
+					return "#" + sp.toString();
+				}
+
+				function randomKey() {
+					try {
+						const bytes = new Uint8Array(16);
+						crypto.getRandomValues(bytes);
+						let bin = "";
+						for (const b of bytes) bin += String.fromCharCode(b);
+						const b64 = btoa(bin)
+							.replace(/\+/g, "-")
+							.replace(/\//g, "_")
+							.replace(/=+$/g, "");
+						return normalizeKey(b64);
+					} catch {
+						return normalizeKey(String(Math.random()).slice(2));
+					}
+				}
+
+				function toast(message, kind) {
+					const el = document.createElement("div");
+					const base =
+						"pointer-events-auto rounded-xl border px-3 py-2 text-sm shadow-soft backdrop-blur";
+					const colors =
+						kind === "error"
+							? "border-rose-400/30 bg-rose-500/10 text-rose-100"
+							: kind === "success"
+							? "border-emerald-400/30 bg-emerald-500/10 text-emerald-100"
+							: "border-white/10 bg-white/10 text-slate-100";
+					el.className = `${base} ${colors}`;
+					el.textContent = message;
+					toastRoot.appendChild(el);
+					window.setTimeout(() => {
+						el.style.opacity = "0";
+						el.style.transition = "opacity 220ms ease";
+						window.setTimeout(() => el.remove(), 260);
+					}, 1400);
 				}
 
 				function randomRoom() {
@@ -190,10 +272,11 @@
 					return normalizeRoom(`${prefix}Room${number}`);
 				}
 
-				let room = normalizeRoom(location.hash);
+				let { room, key } = parseRoomAndKeyFromHash();
 				if (!room) {
 					room = randomRoom();
-					location.hash = "room=" + room;
+					key = randomKey();
+					location.hash = buildShareHash(room, key);
 				}
 
 				const RECENT_KEY = "mirror_recent_rooms";
@@ -226,7 +309,7 @@
 				}
 
 				roomLabel.textContent = room;
-				shareLink.href = location.pathname + location.search + "#room=" + room;
+				shareLink.href = location.pathname + location.search + buildShareHash(room, key);
 				roomInput.value = room;
 				saveRecentRoom(room);
 				renderRecentRooms();
@@ -249,11 +332,12 @@
 					}
 				}
 
-				function wsUrlForRoom(base, roomName) {
+				function wsUrlForRoom(base, roomName, keyName) {
 					// Viele Relays verwenden Query-Parameter. Falls dein Relay anders ist,
 					// setze ?ws=wss://... passend oder passe diese Funktion an.
 					const url = new URL(base, location.href);
 					url.searchParams.set("room", roomName);
+					if (keyName) url.searchParams.set("key", keyName);
 					url.searchParams.set("client", clientId);
 					return url.toString();
 				}
@@ -330,8 +414,14 @@
 					}
 
 					setStatus("connecting", "Verbinde…");
-					wsHint.textContent = wsDisplay(wsBaseUrl);
-					const url = wsUrlForRoom(wsBaseUrl, room);
+					if (debug) {
+						wsHint.classList.remove("hidden");
+						wsHint.textContent = wsDisplay(wsBaseUrl);
+					} else {
+						wsHint.classList.add("hidden");
+						wsHint.textContent = "";
+					}
+					const url = wsUrlForRoom(wsBaseUrl, room, key);
 					ws = new WebSocket(url);
 
 					ws.addEventListener("open", () => {
@@ -388,7 +478,7 @@
 				function goToRoom(roomName) {
 					const next = normalizeRoom(roomName);
 					if (!next) return;
-					location.hash = "room=" + next;
+					location.hash = buildShareHash(next, key);
 				}
 
 				joinRoomBtn.addEventListener("click", () => {
@@ -401,7 +491,33 @@
 					}
 				});
 				newRoomBtn.addEventListener("click", () => {
-					goToRoom(randomRoom());
+					const nextRoom = randomRoom();
+					key = randomKey();
+					location.hash = buildShareHash(nextRoom, key);
+				});
+
+				copyLinkBtn.addEventListener("click", async () => {
+					const href = shareLink.href;
+					try {
+						await navigator.clipboard.writeText(href);
+						toast("Link kopiert.", "success");
+					} catch {
+						// Fallback: in-page selection (funktioniert ohne Clipboard API)
+						try {
+							const ta = document.createElement("textarea");
+							ta.value = href;
+							ta.setAttribute("readonly", "");
+							ta.style.position = "fixed";
+							ta.style.opacity = "0";
+							document.body.appendChild(ta);
+							ta.select();
+							document.execCommand("copy");
+							ta.remove();
+							toast("Link kopiert.", "success");
+						} catch {
+							toast("Kopieren nicht möglich.", "error");
+						}
+					}
 				});
 
 				textarea.addEventListener("input", () => {
@@ -410,17 +526,22 @@
 				});
 
 				window.addEventListener("hashchange", () => {
-					const next = normalizeRoom(location.hash);
-					if (!next || next === room) return;
-					room = next;
+					const parsed = parseRoomAndKeyFromHash();
+					const nextRoom = parsed.room;
+					const nextKey = parsed.key;
+					if (!nextRoom) return;
+					if (nextRoom === room && nextKey === key) return;
+					room = nextRoom;
+					key = nextKey;
 					lastAppliedRemoteTs = 0;
 					lastLocalText = "";
 					roomLabel.textContent = room;
 					shareLink.href =
-						location.pathname + location.search + "#room=" + room;
+						location.pathname + location.search + buildShareHash(room, key);
 					roomInput.value = room;
 					saveRecentRoom(room);
 					renderRecentRooms();
+					if (!key) toast("Öffentlicher Raum (ohne Key).", "info");
 					connect();
 				});
 

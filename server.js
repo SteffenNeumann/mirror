@@ -36,27 +36,38 @@ function clampRoom(room) {
 		.slice(0, 40);
 }
 
+function clampKey(key) {
+	return String(key || "")
+		.trim()
+		.replace(/[^a-zA-Z0-9_-]/g, "")
+		.slice(0, 64);
+}
+
+function roomKey(room, key) {
+	return key ? `${room}:${key}` : room;
+}
+
 /**
  * In-memory state (scales horizontally with sticky sessions or external store).
- * room -> { text: string, ts: number }
+ * roomKey -> { text: string, ts: number }
  */
 const roomState = new Map();
 
-/** room -> Set<WebSocket> */
+/** roomKey -> Set<WebSocket> */
 const roomSockets = new Map();
 
-function getRoomSockets(room) {
-	let set = roomSockets.get(room);
+function getRoomSockets(roomKeyName) {
+	let set = roomSockets.get(roomKeyName);
 	if (!set) {
 		set = new Set();
-		roomSockets.set(room, set);
+		roomSockets.set(roomKeyName, set);
 	}
 	return set;
 }
 
-function broadcast(room, data, except) {
+function broadcast(roomKeyName, data, except) {
 	const payload = JSON.stringify(data);
-	for (const socket of getRoomSockets(room)) {
+	for (const socket of getRoomSockets(roomKeyName)) {
 		if (socket === except) continue;
 		if (socket.readyState !== socket.OPEN) continue;
 		socket.send(payload);
@@ -103,16 +114,18 @@ const wss = new WebSocketServer({ server, path: "/ws" });
 wss.on("connection", (ws, req) => {
 	const url = new URL(req.url || "/ws", `http://${req.headers.host}`);
 	const room = clampRoom(url.searchParams.get("room"));
+	const key = clampKey(url.searchParams.get("key"));
+	const rk = roomKey(room, key);
 
 	if (!room) {
 		ws.close(1008, "room required");
 		return;
 	}
 
-	const sockets = getRoomSockets(room);
+	const sockets = getRoomSockets(rk);
 	sockets.add(ws);
 
-	const existing = roomState.get(room);
+	const existing = roomState.get(rk);
 	if (existing) {
 		ws.send(
 			JSON.stringify({
@@ -132,16 +145,16 @@ wss.on("connection", (ws, req) => {
 			const ts = typeof msg.ts === "number" ? msg.ts : Date.now();
 			const text = typeof msg.text === "string" ? msg.text : "";
 
-			const prev = roomState.get(room);
+			const prev = roomState.get(rk);
 			if (prev && prev.ts > ts) return;
 
-			roomState.set(room, { text, ts });
-			broadcast(room, { type: "set", room, text, ts }, ws);
+			roomState.set(rk, { text, ts });
+			broadcast(rk, { type: "set", room, text, ts }, ws);
 			return;
 		}
 
 		if (msg.type === "request_state") {
-			const cur = roomState.get(room);
+			const cur = roomState.get(rk);
 			if (cur) {
 				ws.send(
 					JSON.stringify({ type: "set", room, text: cur.text, ts: cur.ts })
@@ -153,7 +166,7 @@ wss.on("connection", (ws, req) => {
 
 	ws.on("close", () => {
 		sockets.delete(ws);
-		if (sockets.size === 0) roomSockets.delete(room);
+		if (sockets.size === 0) roomSockets.delete(rk);
 	});
 });
 
