@@ -1,1 +1,299 @@
+<!DOCTYPE html>
+<html lang="de">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<meta name="color-scheme" content="dark light" />
+		<title>Mirror</title>
 
+		<!-- Tailwind (CDN) -->
+		<script src="https://cdn.tailwindcss.com"></script>
+		<script>
+			tailwind.config = {
+				theme: {
+					extend: {
+						fontFamily: {
+							sans: [
+								"ui-sans-serif",
+								"system-ui",
+								"-apple-system",
+								"Segoe UI",
+								"Roboto",
+								"Inter",
+								"Arial",
+								"Noto Sans",
+								"sans-serif",
+							],
+						},
+						boxShadow: {
+							soft: "0 10px 30px rgba(0,0,0,.25)",
+						},
+					},
+				},
+			};
+		</script>
+	</head>
+	<body class="min-h-screen bg-slate-950 text-slate-100 antialiased">
+		<div class="pointer-events-none fixed inset-0 overflow-hidden">
+			<div
+				class="absolute -top-48 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-fuchsia-500/15 blur-3xl"></div>
+			<div
+				class="absolute -bottom-56 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-cyan-400/10 blur-3xl"></div>
+		</div>
+
+		<main
+			class="relative mx-auto flex min-h-screen w-full max-w-3xl items-center px-4 py-10">
+			<section
+				class="w-full rounded-2xl border border-white/10 bg-white/5 p-6 shadow-soft backdrop-blur">
+				<header class="flex items-start justify-between gap-4">
+					<div class="min-w-0">
+						<div class="flex items-center gap-2">
+							<div
+								id="statusDot"
+								class="h-2.5 w-2.5 rounded-full bg-slate-500"></div>
+							<h1 class="text-lg font-semibold tracking-tight">Mirror</h1>
+						</div>
+						<p class="mt-1 text-sm text-slate-300">
+							Ein Textfeld. Alle sehen in Echtzeit den aktuellen Stand.
+						</p>
+					</div>
+
+					<div class="shrink-0 text-right text-xs text-slate-300">
+						<div>
+							Raum:
+							<span id="roomLabel" class="font-medium text-slate-100"></span>
+						</div>
+						<div class="mt-1">
+							<a
+								id="shareLink"
+								class="underline decoration-white/20 underline-offset-4 hover:decoration-white/50"
+								href="#"
+								target="_self"
+								rel="noreferrer"
+								>Link teilen</a
+							>
+						</div>
+						<div class="mt-1" id="statusText">Offline</div>
+					</div>
+				</header>
+
+				<div class="mt-6">
+					<label for="mirror" class="sr-only">Text</label>
+					<textarea
+						id="mirror"
+						class="h-72 w-full resize-none rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3 font-sans text-base leading-relaxed text-slate-100 placeholder:text-slate-500 shadow-inner outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25"
+						placeholder="Tippe etwas – alle mit diesem Link sehen es sofort…"
+						autocomplete="off"
+						spellcheck="false"></textarea>
+					<div
+						class="mt-3 flex items-center justify-between text-xs text-slate-400">
+						<span id="metaLeft">Bereit.</span>
+						<span id="metaRight"></span>
+					</div>
+				</div>
+			</section>
+		</main>
+
+		<script>
+			// Minimalistische Echtzeit-Synchronisation.
+			// Für Produktion: eigenen WebSocket-Server oder einen Realtime-Provider einsetzen.
+			(function () {
+				const textarea = document.getElementById("mirror");
+				const statusDot = document.getElementById("statusDot");
+				const statusText = document.getElementById("statusText");
+				const roomLabel = document.getElementById("roomLabel");
+				const shareLink = document.getElementById("shareLink");
+				const metaLeft = document.getElementById("metaLeft");
+				const metaRight = document.getElementById("metaRight");
+
+				const params = new URLSearchParams(location.search);
+				const defaultWsUrl = "wss://relay.websocket.events/";
+				const wsBaseUrl = params.get("ws") || defaultWsUrl;
+
+				const clientId = crypto.randomUUID
+					? crypto.randomUUID()
+					: String(Math.random()).slice(2);
+
+				function normalizeRoom(raw) {
+					return String(raw || "")
+						.trim()
+						.replace(/^#/, "")
+						.replace(/^room=/, "")
+						.replace(/[^a-zA-Z0-9_-]/g, "")
+						.slice(0, 40);
+				}
+
+				function randomRoom() {
+					const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
+					let out = "";
+					for (let i = 0; i < 10; i++)
+						out += alphabet[Math.floor(Math.random() * alphabet.length)];
+					return out;
+				}
+
+				let room = normalizeRoom(location.hash);
+				if (!room) {
+					room = randomRoom();
+					location.hash = "room=" + room;
+				}
+
+				roomLabel.textContent = room;
+				shareLink.href = location.pathname + location.search + "#room=" + room;
+
+				function setStatus(kind, text) {
+					statusText.textContent = text;
+					statusDot.className = "h-2.5 w-2.5 rounded-full";
+					if (kind === "online") statusDot.classList.add("bg-emerald-400");
+					else if (kind === "connecting")
+						statusDot.classList.add("bg-amber-400");
+					else statusDot.classList.add("bg-slate-500");
+				}
+
+				function wsUrlForRoom(base, roomName) {
+					// Viele Relays verwenden Query-Parameter. Falls dein Relay anders ist,
+					// setze ?ws=wss://... passend oder passe diese Funktion an.
+					const url = new URL(base);
+					url.searchParams.set("room", roomName);
+					url.searchParams.set("client", clientId);
+					return url.toString();
+				}
+
+				let ws;
+				let reconnectTimer;
+				let lastLocalText = "";
+				let lastAppliedRemoteTs = 0;
+				let suppressSend = false;
+				let sendTimer;
+
+				function nowIso() {
+					return new Date().toLocaleString("de-DE", {
+						year: "numeric",
+						month: "2-digit",
+						day: "2-digit",
+						hour: "2-digit",
+						minute: "2-digit",
+						second: "2-digit",
+					});
+				}
+
+				function safeJsonParse(raw) {
+					try {
+						return JSON.parse(raw);
+					} catch {
+						return null;
+					}
+				}
+
+				function sendMessage(message) {
+					if (!ws || ws.readyState !== WebSocket.OPEN) return;
+					ws.send(JSON.stringify(message));
+				}
+
+				function scheduleSend() {
+					if (suppressSend) return;
+					window.clearTimeout(sendTimer);
+					sendTimer = window.setTimeout(() => {
+						const text = textarea.value;
+						if (text === lastLocalText) return;
+
+						lastLocalText = text;
+						const ts = Date.now();
+						sendMessage({ type: "set", room, text, ts, clientId });
+						metaLeft.textContent = "Gesendet.";
+						metaRight.textContent = nowIso();
+					}, 180);
+				}
+
+				function applyRemoteText(text, ts) {
+					if (typeof ts !== "number" || ts < lastAppliedRemoteTs) return;
+					lastAppliedRemoteTs = ts;
+
+					suppressSend = true;
+					textarea.value = String(text ?? "");
+					lastLocalText = textarea.value;
+					suppressSend = false;
+
+					metaLeft.textContent = "Synchronisiert.";
+					metaRight.textContent = nowIso();
+				}
+
+				function connect() {
+					window.clearTimeout(reconnectTimer);
+					if (ws) {
+						try {
+							ws.close();
+						} catch {
+							// ignore
+						}
+					}
+
+					setStatus("connecting", "Verbinde…");
+					const url = wsUrlForRoom(wsBaseUrl, room);
+					ws = new WebSocket(url);
+
+					ws.addEventListener("open", () => {
+						setStatus("online", "Online");
+						metaLeft.textContent = "Online. Warte auf Updates…";
+						sendMessage({ type: "hello", room, clientId, ts: Date.now() });
+						sendMessage({
+							type: "request_state",
+							room,
+							clientId,
+							ts: Date.now(),
+						});
+					});
+
+					ws.addEventListener("message", (ev) => {
+						const msg = safeJsonParse(ev.data);
+						if (!msg || msg.room !== room) return;
+						if (msg.clientId === clientId) return;
+
+						if (msg.type === "set") {
+							applyRemoteText(msg.text, msg.ts);
+						}
+
+						if (msg.type === "request_state") {
+							// Zustand an neue Teilnehmer schicken
+							sendMessage({
+								type: "set",
+								room,
+								text: textarea.value,
+								ts: Date.now(),
+								clientId,
+							});
+						}
+					});
+
+					ws.addEventListener("close", () => {
+						setStatus("offline", "Offline – Reconnect…");
+						metaLeft.textContent = "Verbindung verloren.";
+						reconnectTimer = window.setTimeout(connect, 900);
+					});
+
+					ws.addEventListener("error", () => {
+						setStatus("offline", "WebSocket-Fehler");
+					});
+				}
+
+				textarea.addEventListener("input", () => {
+					metaLeft.textContent = "Tippen…";
+					scheduleSend();
+				});
+
+				window.addEventListener("hashchange", () => {
+					const next = normalizeRoom(location.hash);
+					if (!next || next === room) return;
+					room = next;
+					roomLabel.textContent = room;
+					shareLink.href =
+						location.pathname + location.search + "#room=" + room;
+					connect();
+				});
+
+				// Initial
+				setStatus("offline", "Offline");
+				connect();
+			})();
+		</script>
+	</body>
+</html>
