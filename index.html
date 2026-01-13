@@ -62,7 +62,7 @@
 									id="roomInput"
 									list="roomOptions"
 									class="w-44 sm:w-48 rounded-lg border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25"
-									placeholder="Raum (z.B. Darkroom001)" />
+									placeholder="Raum (z.B. KubernetesRoom123)" />
 								<datalist id="roomOptions"></datalist>
 							</div>
 							<button
@@ -157,30 +157,37 @@
 				}
 
 				function randomRoom() {
-					const names = [
-						"Darkroom",
-						"ByteBunker",
-						"HackLab",
-						"CodeCave",
-						"PixelPit",
-						"NerdNest",
-						"RetroRoom",
-						"QuantumQuarters",
-						"DungeonServer",
-						"TerminalTower",
-						"MatrixModule",
-						"SyntaxSanctum",
-						"KernelKeep",
-						"CacheCastle",
-						"CompileCottage",
+					const prefixes = [
+						"Dark",
+						"Kubernetes",
+						"Kubernetics",
+						"Byte",
+						"Hack",
+						"Code",
+						"Pixel",
+						"Nerd",
+						"Retro",
+						"Quantum",
+						"Dungeon",
+						"Terminal",
+						"Matrix",
+						"Syntax",
+						"Kernel",
+						"Cache",
+						"Compile",
+						"Docker",
+						"Git",
+						"Linux",
+						"Neon",
+						"Vector",
 					];
 
-					const base = names[Math.floor(Math.random() * names.length)];
+					const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
 					const number = String(Math.floor(Math.random() * 1000)).padStart(
 						3,
 						"0"
 					);
-					return normalizeRoom(`${base}${number}`);
+					return normalizeRoom(`${prefix}Room${number}`);
 				}
 
 				let room = normalizeRoom(location.hash);
