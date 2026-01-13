@@ -3,6 +3,7 @@
 Diese Liste ist bewusst breit. Sie dient als Ideenspeicher für zukünftige Iterationen.
 
 ## UX & Basics
+
 - Raumwechsel ohne Reload (stabil, kein Flackern)
 - „Room“-Namen-Generator konfigurierbar (nerdig/lustig/kurz) + „Neu“ erstellt immer eindeutigen Namen
 - „Link kopieren“ Button (mit visuellem Feedback)
@@ -14,6 +15,7 @@ Diese Liste ist bewusst breit. Sie dient als Ideenspeicher für zukünftige Iter
 - i18n (DE/EN) als Option
 
 ## Markdown (Anzeige & Export)
+
 - Markdown-Preview (Split View: Editor links, Preview rechts)
 - Markdown-Rendering mit Sicherheits-Sandbox (kein unsicheres HTML)
 - Syntax-Highlighting für Codeblöcke
@@ -27,6 +29,7 @@ Diese Liste ist bewusst breit. Sie dient als Ideenspeicher für zukünftige Iter
   - `Copy as HTML` (optional)
 
 ## Kollaboration (Realtime)
+
 - Präsenz: „X Nutzer online in diesem Raum“
 - Anzeige „User tippt…“ (Typing Indicator)
 - Cursor-/Selection-Sharing (optional)
@@ -36,6 +39,7 @@ Diese Liste ist bewusst breit. Sie dient als Ideenspeicher für zukünftige Iter
 - „Read-only“ Mode (Raum kann schreibgeschützt sein)
 
 ## Persistenz & Historie
+
 - Persistenz über Neustarts:
   - Lokal: Datei/SQLite
   - Production: Redis/Postgres
@@ -45,6 +49,7 @@ Diese Liste ist bewusst breit. Sie dient als Ideenspeicher für zukünftige Iter
 - Optional: Auto-Prune (z.B. Räume nach 7/30 Tagen ohne Aktivität löschen)
 
 ## Sicherheit & Datenschutz
+
 - Private Rooms: Secret Token im Link (z.B. `#room=...&key=...`)
 - Passphrase-geschützte Räume
 - Ende-zu-Ende-Verschlüsselung (E2EE) im Browser (Server sieht nur Ciphertext)
@@ -59,6 +64,7 @@ Diese Liste ist bewusst breit. Sie dient als Ideenspeicher für zukünftige Iter
 - Audit-Logs (optional, DSGVO-konform)
 
 ## Admin & Operations
+
 - Healthcheck Endpoint (`/healthz`)
 - Metrics (z.B. Prometheus): aktive Rooms, aktive WS-Verbindungen
 - Logging strukturiert (JSON), Log-Level
@@ -69,6 +75,7 @@ Diese Liste ist bewusst breit. Sie dient als Ideenspeicher für zukünftige Iter
 - Graceful shutdown: WS sauber schließen, State flushen
 
 ## Produkt-Features
+
 - Raum-Übersicht (nur lokal/admin): Liste aktiver Räume
 - Favoriten/Recents (Client) – existiert teilweise, ausbauen
 - Templates (vordefinierte Inhalte: Meeting Notes, Standup, Retro)
@@ -77,6 +84,7 @@ Diese Liste ist bewusst breit. Sie dient als Ideenspeicher für zukünftige Iter
 - „Broadcast“ Modus (nur ein Sender darf schreiben)
 
 ## Entwickler-Qualität
+
 - E2E-Test: zwei Clients, Sync, Room switch
 - Lint/Format (Prettier/ESLint) + CI
 - TypeScript (optional) oder zumindest JSDoc + Schema Validation
@@ -85,6 +93,7 @@ Diese Liste ist bewusst breit. Sie dient als Ideenspeicher für zukünftige Iter
 ---
 
 ### Priorisierungsvorschlag (kurz)
+
 - P0: Payload-Limits + Origin-Check + bessere Statusanzeigen
 - P1: Markdown-Preview + Export
 - P2: Persistenz (SQLite/Redis) + History
