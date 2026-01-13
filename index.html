@@ -56,6 +56,29 @@
 						<p class="mt-1 text-sm text-slate-300">
 							Ein Textfeld. Alle sehen in Echtzeit den aktuellen Stand.
 						</p>
+						<div class="mt-4 flex flex-wrap items-center gap-2">
+							<div class="relative">
+								<label for="roomInput" class="sr-only">Raum</label>
+								<input
+									id="roomInput"
+									list="roomOptions"
+									class="w-44 rounded-lg border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25"
+									placeholder="Raum (z.B. team)" />
+								<datalist id="roomOptions"></datalist>
+							</div>
+							<button
+								id="joinRoom"
+								type="button"
+								class="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-slate-100 transition hover:bg-white/15 active:bg-white/20"
+								>Wechseln</button
+							>
+							<button
+								id="newRoom"
+								type="button"
+								class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+								>Neu</button
+							>
+						</div>
 					</div>
 
 					<div class="shrink-0 text-right text-xs text-slate-300">
@@ -74,6 +97,7 @@
 							>
 						</div>
 						<div class="mt-1" id="statusText">Offline</div>
+						<div class="mt-1 text-slate-400" id="wsHint"></div>
 					</div>
 				</header>
 
@@ -103,6 +127,11 @@
 				const statusText = document.getElementById("statusText");
 				const roomLabel = document.getElementById("roomLabel");
 				const shareLink = document.getElementById("shareLink");
+				const wsHint = document.getElementById("wsHint");
+				const roomInput = document.getElementById("roomInput");
+				const roomOptions = document.getElementById("roomOptions");
+				const joinRoomBtn = document.getElementById("joinRoom");
+				const newRoomBtn = document.getElementById("newRoom");
 				const metaLeft = document.getElementById("metaLeft");
 				const metaRight = document.getElementById("metaRight");
 
@@ -142,8 +171,37 @@
 					location.hash = "room=" + room;
 				}
 
+				const RECENT_KEY = "mirror_recent_rooms";
+				function loadRecentRooms() {
+					try {
+						const raw = localStorage.getItem(RECENT_KEY);
+						const parsed = JSON.parse(raw || "[]");
+						return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+					} catch {
+						return [];
+					}
+				}
+				function saveRecentRoom(roomName) {
+					const cur = loadRecentRooms();
+					const next = [roomName, ...cur.filter((r) => r !== roomName)].slice(0, 8);
+					try {
+						localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+					} catch {
+						// ignore
+					}
+				}
+				function renderRecentRooms() {
+					const rooms = loadRecentRooms();
+					roomOptions.innerHTML = rooms
+						.map((r) => `<option value="${r}"></option>`)
+						.join("");
+				}
+
 				roomLabel.textContent = room;
 				shareLink.href = location.pathname + location.search + "#room=" + room;
+				roomInput.value = room;
+				saveRecentRoom(room);
+				renderRecentRooms();
 
 				function setStatus(kind, text) {
 					statusText.textContent = text;
@@ -152,6 +210,15 @@
 					else if (kind === "connecting")
 						statusDot.classList.add("bg-amber-400");
 					else statusDot.classList.add("bg-slate-500");
+				}
+
+				function wsDisplay(base) {
+					try {
+						const u = new URL(base, location.href);
+						return `${u.protocol}//${u.host}${u.pathname}`;
+					} catch {
+						return String(base);
+					}
 				}
 
 				function wsUrlForRoom(base, roomName) {
@@ -233,6 +300,7 @@
 					}
 
 					setStatus("connecting", "Verbinde…");
+					wsHint.textContent = wsDisplay(wsBaseUrl);
 					const url = wsUrlForRoom(wsBaseUrl, room);
 					ws = new WebSocket(url);
 
@@ -271,14 +339,34 @@
 
 					ws.addEventListener("close", () => {
 						setStatus("offline", "Offline – Reconnect…");
-						metaLeft.textContent = "Verbindung verloren.";
+						metaLeft.textContent = "Verbindung verloren. Prüfe Server/Netzwerk.";
 						reconnectTimer = window.setTimeout(connect, 900);
 					});
 
 					ws.addEventListener("error", () => {
-						setStatus("offline", "WebSocket-Fehler");
+						setStatus("offline", "WebSocket nicht erreichbar");
+						metaLeft.textContent = "Keine Verbindung. Läuft der Server (npm start)?";
 					});
 				}
+
+				function goToRoom(roomName) {
+					const next = normalizeRoom(roomName);
+					if (!next) return;
+					location.hash = "room=" + next;
+				}
+
+				joinRoomBtn.addEventListener("click", () => {
+					goToRoom(roomInput.value);
+				});
+				roomInput.addEventListener("keydown", (e) => {
+					if (e.key === "Enter") {
+						e.preventDefault();
+						goToRoom(roomInput.value);
+					}
+				});
+				newRoomBtn.addEventListener("click", () => {
+					goToRoom(randomRoom());
+				});
 
 				textarea.addEventListener("input", () => {
 					metaLeft.textContent = "Tippen…";
@@ -292,6 +380,9 @@
 					roomLabel.textContent = room;
 					shareLink.href =
 						location.pathname + location.search + "#room=" + room;
+					roomInput.value = room;
+					saveRecentRoom(room);
+					renderRecentRooms();
 					connect();
 				});
 
