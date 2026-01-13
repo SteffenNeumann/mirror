@@ -266,12 +266,18 @@
 				if (psDevLink) psDevLink.classList.add("hidden");
 				return;
 			}
-			// Dev-/Fallback: Link anzeigen
-			toast("SMTP nicht aktiv – Link wird angezeigt (Dev).", "info");
+			// Dev-/Fallback: Link anzeigen (nur wenn Server ihn explizit zurückgibt)
 			if (psDevLink && res.link) {
+				toast("SMTP/Versand nicht aktiv – Link wird angezeigt (Dev).", "info");
 				psDevLink.classList.remove("hidden");
 				psDevLink.innerHTML = `<div class="text-slate-300">Verifizierungs-Link:</div><a class="mt-1 block break-all underline decoration-white/20 underline-offset-4 hover:decoration-white/50" href="${res.link}">${res.link}</a>`;
+				return;
 			}
+			if (psDevLink) psDevLink.classList.add("hidden");
+			toast(
+				"E-Mail konnte nicht zugestellt werden (SMTP/Setup prüfen).",
+				"error"
+			);
 		} catch (e) {
 			toast("Link konnte nicht erstellt werden.", "error");
 		}

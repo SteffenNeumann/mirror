@@ -409,14 +409,18 @@ async function sendMagicLinkEmail(email, link) {
 		auth: { user, pass },
 	});
 
-	await transporter.sendMail({
+	const info = await transporter.sendMail({
 		from,
 		to: email,
 		subject: "Mirror: dein Login-Link",
 		text: `Hier ist dein Login-Link (gültig für 30 Minuten):\n\n${link}\n\nWenn du das nicht warst, ignoriere diese E-Mail.`,
 	});
 
-	return { sent: true };
+	return {
+		sent: true,
+		messageId: info && info.messageId ? String(info.messageId) : "",
+		response: info && info.response ? String(info.response) : "",
+	};
 }
 
 function clampRoom(room) {
@@ -479,6 +483,9 @@ const server = http.createServer((req, res) => {
 					json(res, 400, { ok: false, error: "invalid_email" });
 					return;
 				}
+				const allowReturnLink =
+					String(process.env.RETURN_MAGIC_LINK_IN_RESPONSE || "").toLowerCase() ===
+						"true" || process.env.NODE_ENV !== "production";
 				const token = crypto.randomBytes(32).toString("base64url");
 				saveLoginToken(token, email, Date.now() + MAGIC_LINK_TTL_MS);
 
@@ -488,24 +495,28 @@ const server = http.createServer((req, res) => {
 				try {
 					const result = await sendMagicLinkEmail(email, link);
 					if (!result.sent) {
-						console.log(`[magic-link] for ${email}: ${link}`);
+						console.log(`[magic-link] NOT SENT (${result.reason}) for ${email}`);
+						if (allowReturnLink) console.log(`[magic-link] DEV LINK for ${email}: ${link}`);
 						json(res, 200, {
 							ok: true,
 							sent: false,
 							reason: result.reason,
-							link,
+							...(allowReturnLink ? { link } : {}),
 						});
 						return;
 					}
+					console.log(
+						`[magic-link] SENT to ${email} ${result.messageId ? `(${result.messageId})` : ""}`
+					);
 					json(res, 200, { ok: true, sent: true });
 				} catch (e) {
 					console.error("magic-link send failed", e);
-					console.log(`[magic-link] for ${email}: ${link}`);
+					if (allowReturnLink) console.log(`[magic-link] DEV LINK for ${email}: ${link}`);
 					json(res, 200, {
 						ok: true,
 						sent: false,
 						reason: "send_failed",
-						link,
+						...(allowReturnLink ? { link } : {}),
 					});
 				}
 			})
