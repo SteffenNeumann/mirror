@@ -62,7 +62,7 @@
 									id="roomInput"
 									list="roomOptions"
 									class="w-44 sm:w-48 rounded-lg border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25"
-									placeholder="Raum (z.B. team)" />
+									placeholder="Raum (z.B. Darkroom001)" />
 								<datalist id="roomOptions"></datalist>
 							</div>
 							<button
@@ -157,11 +157,27 @@
 				}
 
 				function randomRoom() {
-					const alphabet = "abcdefghijklmnopqrstuvwxyz0123456789";
-					let out = "";
-					for (let i = 0; i < 10; i++)
-						out += alphabet[Math.floor(Math.random() * alphabet.length)];
-					return out;
+					const names = [
+						"Darkroom",
+						"ByteBunker",
+						"HackLab",
+						"CodeCave",
+						"PixelPit",
+						"NerdNest",
+						"RetroRoom",
+						"QuantumQuarters",
+						"DungeonServer",
+						"TerminalTower",
+						"MatrixModule",
+						"SyntaxSanctum",
+						"KernelKeep",
+						"CacheCastle",
+						"CompileCottage",
+					];
+
+					const base = names[Math.floor(Math.random() * names.length)];
+					const number = String(Math.floor(Math.random() * 1000)).padStart(3, "0");
+					return normalizeRoom(`${base}${number}`);
 				}
 
 				let room = normalizeRoom(location.hash);
