@@ -2,3 +2,10 @@ node_modules/
 .DS_Store
 *.log
 .env
+
+# Local persistence
+data/
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.db

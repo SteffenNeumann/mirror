@@ -16,6 +16,19 @@
 	const metaRight = document.getElementById("metaRight");
 	const toastRoot = document.getElementById("toastRoot");
 
+	// Personal Space elements (optional)
+	const psUnauthed = document.getElementById("psUnauthed");
+	const psAuthed = document.getElementById("psAuthed");
+	const addPersonalSpaceBtn = document.getElementById("addPersonalSpace");
+	const psDevLink = document.getElementById("psDevLink");
+	const psEmail = document.getElementById("psEmail");
+	const psTags = document.getElementById("psTags");
+	const psInput = document.getElementById("psInput");
+	const psSave = document.getElementById("psSave");
+	const psList = document.getElementById("psList");
+	const psHint = document.getElementById("psHint");
+	const psLogout = document.getElementById("psLogout");
+
 	const params = new URLSearchParams(location.search);
 	const defaultWsUrl =
 		(location.protocol === "https:" ? "wss:" : "ws:") +
@@ -26,7 +39,9 @@
 	const wsBaseUrl = params.get("ws") || defaultWsUrl;
 	const debug = params.get("debug") === "1";
 
-	const clientId = crypto.randomUUID ? crypto.randomUUID() : String(Math.random()).slice(2);
+	const clientId = crypto.randomUUID
+		? crypto.randomUUID()
+		: String(Math.random()).slice(2);
 
 	function normalizeRoom(raw) {
 		return String(raw || "")
@@ -108,6 +123,160 @@
 		}, 1400);
 	}
 
+	async function api(path, opts) {
+		const res = await fetch(path, {
+			credentials: "same-origin",
+			headers: { "Content-Type": "application/json" },
+			...opts,
+		});
+		const text = await res.text();
+		const data = safeJsonParse(text);
+		if (!res.ok) {
+			const msg = (data && data.error) || `HTTP ${res.status}`;
+			throw new Error(msg);
+		}
+		return data;
+	}
+
+	function fmtDate(ts) {
+		try {
+			return new Date(ts).toLocaleString("de-DE", {
+				year: "numeric",
+				month: "2-digit",
+				day: "2-digit",
+				hour: "2-digit",
+				minute: "2-digit",
+			});
+		} catch {
+			return "";
+		}
+	}
+
+	let psState = { authed: false, email: "", tags: [], notes: [] };
+	let psActiveTag = "";
+
+	function renderPsTags(tags) {
+		if (!psTags) return;
+		const safeTags = Array.isArray(tags) ? tags : [];
+		const allBtn = {
+			tag: "",
+			label: "Alle",
+		};
+		const items = [
+			allBtn,
+			...safeTags.map((t) => ({ tag: t, label: `#${t}` })),
+		];
+		psTags.innerHTML = items
+			.map((it) => {
+				const active = it.tag === psActiveTag;
+				const base = "rounded-full border px-2.5 py-1 text-xs transition";
+				const cls = active
+					? "border-fuchsia-400/40 bg-fuchsia-500/15 text-fuchsia-100"
+					: "border-white/10 bg-white/5 text-slate-200 hover:bg-white/10";
+				const tagAttr = it.tag ? `data-tag="${it.tag}"` : 'data-tag=""';
+				return `<button type="button" ${tagAttr} class="${base} ${cls}">${it.label}</button>`;
+			})
+			.join("");
+
+		psTags.querySelectorAll("button[data-tag]").forEach((btn) => {
+			btn.addEventListener("click", async () => {
+				psActiveTag = btn.getAttribute("data-tag") || "";
+				await refreshPersonalSpace();
+			});
+		});
+	}
+
+	function renderPsList(notes) {
+		if (!psList) return;
+		const items = Array.isArray(notes) ? notes : [];
+		if (items.length === 0) {
+			psList.innerHTML =
+				'<div class="text-xs text-slate-400">Noch keine Notizen.</div>';
+			return;
+		}
+		psList.innerHTML = items
+			.map((n) => {
+				const tags = Array.isArray(n.tags) ? n.tags : [];
+				const chips = tags
+					.slice(0, 6)
+					.map(
+						(t) =>
+							`<span class="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-slate-200">#${t}</span>`
+					)
+					.join(" ");
+				const body = String(n.text || "")
+					.replace(/&/g, "&amp;")
+					.replace(/</g, "&lt;")
+					.replace(/>/g, "&gt;");
+				return `
+					<div class="rounded-xl border border-white/10 bg-slate-950/25 p-3">
+						<div class="flex items-center justify-between gap-2">
+							<div class="text-xs text-slate-400">${fmtDate(n.createdAt)}</div>
+							<div class="text-[11px] text-slate-300">${chips}</div>
+						</div>
+						<pre class="mt-2 whitespace-pre-wrap break-words text-sm text-slate-100">${body}</pre>
+					</div>
+				`;
+			})
+			.join("");
+	}
+
+	async function refreshPersonalSpace() {
+		if (!psUnauthed || !psAuthed) return;
+
+		try {
+			const me = await api("/api/personal-space/me");
+			psState = me;
+		} catch (e) {
+			psState = { authed: false, email: "", tags: [], notes: [] };
+			if (psHint) psHint.textContent = "";
+		}
+
+		if (!psState.authed) {
+			psUnauthed.classList.remove("hidden");
+			psAuthed.classList.add("hidden");
+			if (psLogout) psLogout.classList.add("hidden");
+			return;
+		}
+
+		psUnauthed.classList.add("hidden");
+		psAuthed.classList.remove("hidden");
+		if (psLogout) psLogout.classList.remove("hidden");
+		if (psEmail) psEmail.textContent = psState.email || "";
+
+		let notes = Array.isArray(psState.notes) ? psState.notes : [];
+		if (psActiveTag) {
+			notes = notes.filter((n) => (n.tags || []).includes(psActiveTag));
+		}
+		renderPsTags(psState.tags || []);
+		renderPsList(notes);
+	}
+
+	async function requestPersonalSpaceLink() {
+		const raw = window.prompt("E-Mail-Adresse für deinen Personal Space:");
+		const email = String(raw || "").trim();
+		if (!email) return;
+		try {
+			const res = await api("/api/personal-space/request-link", {
+				method: "POST",
+				body: JSON.stringify({ email }),
+			});
+			if (res.sent) {
+				toast("Link gesendet. Bitte E-Mail prüfen.", "success");
+				if (psDevLink) psDevLink.classList.add("hidden");
+				return;
+			}
+			// Dev-/Fallback: Link anzeigen
+			toast("SMTP nicht aktiv – Link wird angezeigt (Dev).", "info");
+			if (psDevLink && res.link) {
+				psDevLink.classList.remove("hidden");
+				psDevLink.innerHTML = `<div class="text-slate-300">Verifizierungs-Link:</div><a class="mt-1 block break-all underline decoration-white/20 underline-offset-4 hover:decoration-white/50" href="${res.link}">${res.link}</a>`;
+			}
+		} catch (e) {
+			toast("Link konnte nicht erstellt werden.", "error");
+		}
+	}
+
 	function randomRoom() {
 		const prefixes = [
 			"Dark",
@@ -173,7 +342,8 @@
 	}
 
 	roomLabel.textContent = room;
-	shareLink.href = location.pathname + location.search + buildShareHash(room, key);
+	shareLink.href =
+		location.pathname + location.search + buildShareHash(room, key);
 	roomInput.value = room;
 	saveRecentRoom(room);
 	renderRecentRooms();
@@ -397,7 +567,8 @@
 		lastAppliedRemoteTs = 0;
 		lastLocalText = "";
 		roomLabel.textContent = room;
-		shareLink.href = location.pathname + location.search + buildShareHash(room, key);
+		shareLink.href =
+			location.pathname + location.search + buildShareHash(room, key);
 		roomInput.value = room;
 		saveRecentRoom(room);
 		renderRecentRooms();
@@ -408,4 +579,57 @@
 	// Initial
 	setStatus("offline", "Offline");
 	connect();
+
+	// Personal Space wiring
+	if (addPersonalSpaceBtn) {
+		addPersonalSpaceBtn.addEventListener("click", requestPersonalSpaceLink);
+	}
+	if (psSave) {
+		psSave.addEventListener("click", async () => {
+			if (!psInput) return;
+			const text = String(psInput.value || "").trim();
+			if (!text) return;
+			try {
+				if (psHint) psHint.textContent = "Speichere…";
+				await api("/api/notes", {
+					method: "POST",
+					body: JSON.stringify({ text }),
+				});
+				psInput.value = "";
+				if (psHint) psHint.textContent = "Gespeichert.";
+				await refreshPersonalSpace();
+			} catch {
+				if (psHint) psHint.textContent = "Nicht gespeichert (Login?).";
+				toast("Speichern fehlgeschlagen.", "error");
+			}
+		});
+	}
+	if (psLogout) {
+		psLogout.addEventListener("click", async () => {
+			try {
+				await api("/api/logout", { method: "POST", body: "{}" });
+				psActiveTag = "";
+				toast("Abgemeldet.", "success");
+				await refreshPersonalSpace();
+			} catch {
+				toast("Abmelden fehlgeschlagen.", "error");
+			}
+		});
+	}
+
+	// Show a small post-verify hint
+	try {
+		const sp = new URLSearchParams(location.search);
+		if (sp.get("ps") === "1") {
+			toast("Personal Space aktiviert.", "success");
+			sp.delete("ps");
+			const next =
+				location.pathname + (sp.toString() ? `?${sp}` : "") + location.hash;
+			history.replaceState(null, "", next);
+		}
+	} catch {
+		// ignore
+	}
+
+	refreshPersonalSpace();
 })();

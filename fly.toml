@@ -6,6 +6,9 @@
 app = 'mirror-snowy-sound-8093'
 primary_region = 'fra'
 
+[env]
+  MIRROR_DB_PATH = '/data/mirror.sqlite'
+
 [build]
 
 [http_service]
@@ -21,3 +24,7 @@ primary_region = 'fra'
   cpu_kind = 'shared'
   cpus = 1
   memory_mb = 1024
+
+[[mounts]]
+  source = 'mirror_data'
+  destination = '/data'
