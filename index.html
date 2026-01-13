@@ -264,6 +264,7 @@
 				let lastAppliedRemoteTs = 0;
 				let suppressSend = false;
 				let sendTimer;
+				let connectionSeq = 0;
 
 				function nowIso() {
 					return new Date().toLocaleString("de-DE", {
@@ -318,6 +319,7 @@
 				}
 
 				function connect() {
+					const mySeq = ++connectionSeq;
 					window.clearTimeout(reconnectTimer);
 					if (ws) {
 						try {
@@ -333,6 +335,7 @@
 					ws = new WebSocket(url);
 
 					ws.addEventListener("open", () => {
+						if (mySeq !== connectionSeq) return;
 						setStatus("online", "Online");
 						metaLeft.textContent = "Online. Warte auf Updates…";
 						sendMessage({ type: "hello", room, clientId, ts: Date.now() });
@@ -345,6 +348,7 @@
 					});
 
 					ws.addEventListener("message", (ev) => {
+						if (mySeq !== connectionSeq) return;
 						const msg = safeJsonParse(ev.data);
 						if (!msg || msg.room !== room) return;
 						if (msg.clientId === clientId) return;
@@ -366,6 +370,7 @@
 					});
 
 					ws.addEventListener("close", () => {
+						if (mySeq !== connectionSeq) return;
 						setStatus("offline", "Offline – Reconnect…");
 						metaLeft.textContent =
 							"Verbindung verloren. Prüfe Server/Netzwerk.";
@@ -373,6 +378,7 @@
 					});
 
 					ws.addEventListener("error", () => {
+						if (mySeq !== connectionSeq) return;
 						setStatus("offline", "WebSocket nicht erreichbar");
 						metaLeft.textContent =
 							"Keine Verbindung. Läuft der Server (npm start)?";
@@ -407,6 +413,8 @@
 					const next = normalizeRoom(location.hash);
 					if (!next || next === room) return;
 					room = next;
+					lastAppliedRemoteTs = 0;
+					lastLocalText = "";
 					roomLabel.textContent = room;
 					shareLink.href =
 						location.pathname + location.search + "#room=" + room;
