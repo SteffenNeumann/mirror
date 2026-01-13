@@ -28,3 +28,4 @@ primary_region = 'fra'
 [[mounts]]
   source = 'mirror_data'
   destination = '/data'
+  processes = ['app']
