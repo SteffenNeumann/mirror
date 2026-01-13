@@ -69,15 +69,15 @@
 							<button
 								id="joinRoom"
 								type="button"
-								class="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-slate-100 transition hover:bg-white/15 active:bg-white/20"
-								>Wechseln</button
-							>
+								class="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-slate-100 transition hover:bg-white/15 active:bg-white/20">
+								Wechseln
+							</button>
 							<button
 								id="newRoom"
 								type="button"
-								class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10"
-								>Neu</button
-							>
+								class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10">
+								Neu
+							</button>
 						</div>
 					</div>
 
@@ -183,7 +183,10 @@
 				}
 				function saveRecentRoom(roomName) {
 					const cur = loadRecentRooms();
-					const next = [roomName, ...cur.filter((r) => r !== roomName)].slice(0, 8);
+					const next = [roomName, ...cur.filter((r) => r !== roomName)].slice(
+						0,
+						8
+					);
 					try {
 						localStorage.setItem(RECENT_KEY, JSON.stringify(next));
 					} catch {
@@ -339,13 +342,15 @@
 
 					ws.addEventListener("close", () => {
 						setStatus("offline", "Offline – Reconnect…");
-						metaLeft.textContent = "Verbindung verloren. Prüfe Server/Netzwerk.";
+						metaLeft.textContent =
+							"Verbindung verloren. Prüfe Server/Netzwerk.";
 						reconnectTimer = window.setTimeout(connect, 900);
 					});
 
 					ws.addEventListener("error", () => {
 						setStatus("offline", "WebSocket nicht erreichbar");
-						metaLeft.textContent = "Keine Verbindung. Läuft der Server (npm start)?";
+						metaLeft.textContent =
+							"Keine Verbindung. Läuft der Server (npm start)?";
 					});
 				}
 
