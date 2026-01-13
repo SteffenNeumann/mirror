@@ -176,7 +176,10 @@
 					];
 
 					const base = names[Math.floor(Math.random() * names.length)];
-					const number = String(Math.floor(Math.random() * 1000)).padStart(3, "0");
+					const number = String(Math.floor(Math.random() * 1000)).padStart(
+						3,
+						"0"
+					);
 					return normalizeRoom(`${base}${number}`);
 				}
 
