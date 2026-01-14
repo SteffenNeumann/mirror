@@ -256,26 +256,26 @@
 									id="statusDot"
 									class="h-2.5 w-2.5 rounded-full bg-slate-500"></div>
 								<h1 class="text-lg font-semibold tracking-tight">Mirror</h1>
-													<button
-														id="togglePersonalSpace"
-														type="button"
-														class="ml-1 inline-flex h-8 items-center justify-center gap-1 rounded-lg border border-white/10 bg-transparent px-2.5 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10"
-														title="Personal Space Aus/Einblenden"
-														aria-label="Personal Space Aus/Einblenden"
-														aria-pressed="true">
-														<svg
-															data-role="psChevron"
-															viewBox="0 0 24 24"
-															fill="none"
-															stroke="currentColor"
-															stroke-width="2"
-															stroke-linecap="round"
-															stroke-linejoin="round"
-															class="h-4 w-4 text-slate-300 transition-transform">
-															<path d="M14 7l-5 5 5 5" />
-														</svg>
-														<span>PS</span>
-													</button>
+								<button
+									id="togglePersonalSpace"
+									type="button"
+									class="ml-1 inline-flex h-8 items-center justify-center gap-1 rounded-lg border border-white/10 bg-transparent px-2.5 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+									title="Personal Space Aus/Einblenden"
+									aria-label="Personal Space Aus/Einblenden"
+									aria-pressed="true">
+									<svg
+										data-role="psChevron"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										class="h-4 w-4 text-slate-300 transition-transform">
+										<path d="M14 7l-5 5 5 5" />
+									</svg>
+									<span>PS</span>
+								</button>
 							</div>
 							<p class="mt-1 text-sm text-slate-300">Share your thoughts</p>
 							<div class="mt-4 flex flex-wrap items-center gap-2">
@@ -467,6 +467,21 @@
 											Preview
 										</div>
 										<div class="flex items-center gap-2">
+																	<select
+																		id="aiMode"
+																		class="rounded-md border border-white/10 bg-slate-950/30 px-2.5 py-1.5 text-xs text-slate-200 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30"
+																		title="AI Modus">
+																		<option value="explain" selected>Erklären</option>
+																		<option value="fix">Fixen</option>
+																		<option value="improve">Verbessern</option>
+																	</select>
+																	<button
+																		id="aiAssist"
+																		type="button"
+																		class="rounded-md border border-white/10 bg-transparent px-2.5 py-1.5 text-xs font-medium text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+																		title="AI Hilfe (erklären/fixen/verbessern)">
+																		AI
+																	</button>
 											<button
 												id="runPreview"
 												type="button"

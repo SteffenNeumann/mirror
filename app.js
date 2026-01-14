@@ -22,6 +22,8 @@
 	const mdPreview = document.getElementById("mdPreview");
 	const togglePreview = document.getElementById("togglePreview");
 	const runPreviewBtn = document.getElementById("runPreview");
+	const aiModeSelect = document.getElementById("aiMode");
+	const aiAssistBtn = document.getElementById("aiAssist");
 	const clearRunOutputBtn = document.getElementById("clearRunOutput");
 	const runOutputEl = document.getElementById("runOutput");
 	const runStatusEl = document.getElementById("runStatus");
@@ -1391,6 +1393,44 @@ self.onmessage = async (e) => {
 		if (res.error) toast("Run: Fehler (siehe Ausgabe).", "error");
 	}
 
+	function getAiMode() {
+		const v = String(aiModeSelect && aiModeSelect.value ? aiModeSelect.value : "")
+			.trim()
+			.toLowerCase();
+		return v === "fix" || v === "improve" ? v : "explain";
+	}
+
+	async function aiAssistFromPreview() {
+		const parsed = parseRunnableFromEditor();
+		if (!parsed) {
+			setPreviewRunOutput({ status: "", output: "", error: "" });
+			toast(
+				"Kein Code gefunden. Nutze einen ```lang Codeblock oder wähle eine Sprache.",
+				"info"
+			);
+			return;
+		}
+		const mode = getAiMode();
+		const lang = String(parsed.lang || "").trim().toLowerCase();
+		const code = String(parsed.code || "");
+		setPreviewRunOutput({ status: `AI (${mode})…`, output: "", error: "" });
+		try {
+			const res = await api("/api/ai", {
+				method: "POST",
+				body: JSON.stringify({ mode, lang, code }),
+			});
+			setPreviewRunOutput({
+				status: "AI",
+				output: String(res && res.text ? res.text : ""),
+				error: "",
+			});
+		} catch (e) {
+			const msg = e && e.message ? String(e.message) : "Fehler";
+			setPreviewRunOutput({ status: "AI Fehler", output: "", error: msg });
+			toast(`AI fehlgeschlagen: ${msg}`, "error");
+		}
+	}
+
 	async function refreshPersonalSpace() {
 		if (!psUnauthed || !psAuthed) return;
 
@@ -2301,6 +2341,11 @@ self.onmessage = async (e) => {
 	if (runPreviewBtn) {
 		runPreviewBtn.addEventListener("click", async () => {
 			await runSnippetFromPreview();
+		});
+	}
+	if (aiAssistBtn) {
+		aiAssistBtn.addEventListener("click", async () => {
+			await aiAssistFromPreview();
 		});
 	}
 	if (clearRunOutputBtn) {

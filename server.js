@@ -18,6 +18,16 @@ const MAGIC_LINK_TTL_MS = 1000 * 60 * 30; // 30 min
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 const MAX_BODY_BYTES = 1024 * 1024; // 1MB
 
+const ANTHROPIC_API_KEY = String(process.env.ANTHROPIC_API_KEY || "").trim();
+const ANTHROPIC_MODEL = String(
+	process.env.ANTHROPIC_MODEL || "claude-3-5-sonnet-latest"
+).trim();
+const AI_MAX_INPUT_CHARS = 20000;
+const AI_MAX_OUTPUT_TOKENS = Number(process.env.AI_MAX_OUTPUT_TOKENS || 900);
+const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 30000);
+const AI_RATE_WINDOW_MS = Number(process.env.AI_RATE_WINDOW_MS || 60_000);
+const AI_RATE_MAX = Number(process.env.AI_RATE_MAX || 10);
+
 let signingSecret = String(process.env.MIRROR_SECRET || "");
 
 let db;
@@ -38,6 +48,30 @@ let stmtMetaGet;
 let stmtMetaInsert;
 let stmtRoomStateGet;
 let stmtRoomStateUpsert;
+
+// In-memory rate limit: ip -> { count, resetAt }
+const aiRate = new Map();
+
+function getClientIp(req) {
+	const fwd = String(req.headers["x-forwarded-for"] || "").trim();
+	if (fwd) return String(fwd.split(",")[0] || "").trim();
+	return String(req.socket && req.socket.remoteAddress ? req.socket.remoteAddress : "");
+}
+
+function checkAiRateLimit(ip) {
+	const now = Date.now();
+	const key = String(ip || "");
+	const rec = aiRate.get(key);
+	if (!rec || now >= rec.resetAt) {
+		aiRate.set(key, { count: 1, resetAt: now + AI_RATE_WINDOW_MS });
+		return { ok: true };
+	}
+	if (rec.count >= AI_RATE_MAX) {
+		return { ok: false, retryAfterMs: Math.max(0, rec.resetAt - now) };
+	}
+	rec.count += 1;
+	return { ok: true };
+}
 
 function ensureDbDir() {
 	try {
@@ -923,6 +957,120 @@ const server = http.createServer((req, res) => {
 			"Set-Cookie": clearSessionCookie(),
 		});
 		res.end(JSON.stringify({ ok: true }));
+		return;
+	}
+
+	// --- API: AI helper (Claude via Anthropic) ---
+	if (url.pathname === "/api/ai" && req.method === "POST") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		if (!ANTHROPIC_API_KEY) {
+			json(res, 503, { ok: false, error: "ai_not_configured" });
+			return;
+		}
+		const ip = getClientIp(req);
+		const rl = checkAiRateLimit(ip);
+		if (!rl.ok) {
+			res.writeHead(429, {
+				"Content-Type": "application/json; charset=utf-8",
+				"Cache-Control": "no-store",
+				"Retry-After": String(Math.ceil((rl.retryAfterMs || 0) / 1000) || 1),
+			});
+			res.end(JSON.stringify({ ok: false, error: "rate_limited" }));
+			return;
+		}
+
+		readJson(req)
+			.then(async (body) => {
+				const modeRaw = String(body && body.mode ? body.mode : "explain")
+					.trim()
+					.toLowerCase();
+				const mode =
+					modeRaw === "fix" || modeRaw === "improve" ? modeRaw : "explain";
+				const lang = String(body && body.lang ? body.lang : "")
+					.trim()
+					.toLowerCase()
+					.slice(0, 32);
+				let code = String(body && body.code ? body.code : "");
+				if (!code.trim()) {
+					json(res, 400, { ok: false, error: "empty" });
+					return;
+				}
+				if (code.length > AI_MAX_INPUT_CHARS) {
+					code = code.slice(0, AI_MAX_INPUT_CHARS);
+				}
+
+				const system =
+					"Du bist ein präziser Coding-Assistent. Antworte kurz und konkret. " +
+					"Keine Geheimnisse/Keys ausgeben. Wenn du Code änderst, gib eine klare Empfehlung oder ein kleines Patch-Snippet.";
+				const user =
+					`Modus: ${mode}\nSprache: ${lang || "(unbekannt)"}\n\nCode:\n\n` +
+					"```\n" +
+					code +
+					"\n```";
+
+				const controller = new AbortController();
+				const t = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+				try {
+					const r = await fetch("https://api.anthropic.com/v1/messages", {
+						method: "POST",
+						headers: {
+							"content-type": "application/json",
+							"x-api-key": ANTHROPIC_API_KEY,
+							"anthropic-version": "2023-06-01",
+						},
+						body: JSON.stringify({
+							model: ANTHROPIC_MODEL,
+							max_tokens: Number.isFinite(AI_MAX_OUTPUT_TOKENS)
+								? AI_MAX_OUTPUT_TOKENS
+								: 900,
+							system,
+							messages: [{ role: "user", content: user }],
+						}),
+						signal: controller.signal,
+					});
+					const textBody = await r.text();
+					const data = safeJsonParse(textBody);
+					if (!r.ok) {
+						const errMsg =
+							(data && (data.error && data.error.message)) ||
+							(data && data.message) ||
+							`AI HTTP ${r.status}`;
+						json(res, 502, { ok: false, error: "ai_failed", message: errMsg });
+						return;
+					}
+					const parts = data && Array.isArray(data.content) ? data.content : [];
+					const out = parts
+						.map((p) => (p && p.type === "text" ? String(p.text || "") : ""))
+						.join("\n")
+						.trim();
+					json(res, 200, {
+						ok: true,
+						text: out,
+						model: data && data.model ? String(data.model) : ANTHROPIC_MODEL,
+					});
+				} catch (e) {
+					const msg =
+						e && e.name === "AbortError"
+							? "timeout"
+							: e && e.message
+							? String(e.message)
+							: "ai_error";
+					json(res, 502, { ok: false, error: "ai_failed", message: msg });
+				} finally {
+					clearTimeout(t);
+				}
+			})
+			.catch((e) => {
+				if (String(e && e.message) === "body_too_large") {
+					json(res, 413, { ok: false, error: "body_too_large" });
+					return;
+				}
+				json(res, 400, { ok: false, error: "invalid_json" });
+			});
 		return;
 	}
 

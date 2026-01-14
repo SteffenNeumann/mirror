@@ -33,6 +33,7 @@ Diese Liste ist bewusst breit. Sie dient als Ideenspeicher für zukünftige Iter
 
 - Snippets ausführen (Preview / Personal Space): Python (Pyodide) & JavaScript
 - Python-Init Timeout Workaround (falls CDN blockiert/Netz langsam): Seite mit `?pyodide=https://pyodide-cdn2.iodide.io/v0.25.1/full/` öffnen
+- Optional: AI-Hilfe (erklären/fixen/verbessern) für Codeblöcke (Server-API, benötigt API-Key als ENV)
 
 ## Kollaboration (Realtime)
 
