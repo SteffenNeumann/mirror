@@ -169,6 +169,11 @@
 	const clearMirrorBtn = document.getElementById("clearMirror");
 	let mdLibWarned = false;
 	let previewObjectUrl = "";
+	let psRunOutputById = new Map();
+	let pyRunnerWorker = null;
+	let pyRunnerSeq = 0;
+	let jsRunnerFrame = null;
+	let jsRunnerPending = new Map();
 
 	function ensureMarkdown() {
 		if (md) return md;
@@ -456,6 +461,16 @@
 				const id = String(n.id || "");
 				const active = id && id === psEditingNoteId;
 				const tags = Array.isArray(n.tags) ? n.tags : [];
+				const kind = String((n && n.kind) || "");
+				const langTag = tags.find((t) =>
+					/^lang-[a-z0-9_+-]{1,32}$/i.test(String(t || ""))
+				);
+				const lang = langTag ? String(langTag).slice(5).toLowerCase() : "";
+				const canRun = kind === "code" && (lang === "python" || lang === "py" || lang === "javascript" || lang === "js");
+				const runState = id ? psRunOutputById.get(id) : null;
+				const runOut = runState && typeof runState.output === "string" ? runState.output : "";
+				const runErr = runState && typeof runState.error === "string" ? runState.error : "";
+				const runStatus = runState && runState.status ? String(runState.status) : "";
 				const chips = tags
 					.slice(0, 6)
 					.map(
@@ -464,12 +479,41 @@
 					)
 					.join(" ");
 				const bodyHtml = renderNoteHtml(n);
+				const runBtnHtml = canRun
+					? `
+						<button
+							type="button"
+							data-action="run"
+							data-lang="${lang}"
+							class="absolute right-11 top-2 hidden rounded-md border border-white/10 bg-slate-950/60 px-2 py-1.5 text-[11px] text-slate-200 shadow-soft backdrop-blur transition group-hover:flex hover:bg-slate-950/80"
+							title="Snippet ausführen">
+							Run
+						</button>
+					`
+					: "";
+				const runOutHtml = canRun && (runStatus || runOut || runErr)
+					? `
+						<div class="mt-2 rounded-lg border border-white/10 bg-slate-950/30 p-2">
+							<div class="flex items-center justify-between gap-2 text-[11px] text-slate-300">
+								<span>${runStatus === "running" ? "Ausgabe (läuft…)" : "Ausgabe"}</span>
+								<button type="button" data-action="clear-run" class="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-slate-200 hover:bg-white/10">Clear</button>
+							</div>
+							<pre class="mt-2 max-h-28 overflow-auto whitespace-pre-wrap break-words text-[12px] leading-relaxed text-slate-100">${
+								(runOut || runErr || "")
+									.replace(/&/g, "&amp;")
+									.replace(/</g, "&lt;")
+									.replace(/>/g, "&gt;")
+							}</pre>
+						</div>
+					`
+					: "";
 				return `
 					<div data-note-id="${id}" class="group relative cursor-pointer rounded-xl border ${
 					active
 						? "border-fuchsia-400/40 bg-fuchsia-500/10"
 						: "border-white/10 bg-slate-950/25 hover:bg-slate-950/35"
 				} p-3">
+						${runBtnHtml}
 						<button
 							type="button"
 							data-action="delete"
@@ -488,6 +532,7 @@
 							<div class="text-[11px] text-slate-300">${chips}</div>
 						</div>
 						<div class="max-h-40 overflow-hidden">${bodyHtml}</div>
+						${runOutHtml}
 					</div>
 				`;
 			})
@@ -499,6 +544,33 @@
 					ev.stopPropagation();
 				});
 			});
+						const runBtn = row.querySelector('[data-action="run"]');
+						if (runBtn) {
+							runBtn.addEventListener("click", async (ev) => {
+								ev.preventDefault();
+								ev.stopPropagation();
+								const id = row.getAttribute("data-note-id") || "";
+								const note = byId.get(id);
+								if (!note) return;
+								const tags = Array.isArray(note.tags) ? note.tags : [];
+								const langTag = tags.find((t) =>
+									/^lang-[a-z0-9_+-]{1,32}$/i.test(String(t || ""))
+								);
+								const lang = langTag ? String(langTag).slice(5).toLowerCase() : "";
+								await runSnippetForNote(id, lang, String(note.text || ""));
+							});
+						}
+						const clearRunBtn = row.querySelector('[data-action="clear-run"]');
+						if (clearRunBtn) {
+							clearRunBtn.addEventListener("click", (ev) => {
+								ev.preventDefault();
+								ev.stopPropagation();
+								const id = row.getAttribute("data-note-id") || "";
+								if (!id) return;
+								psRunOutputById.delete(id);
+								renderPsList(items);
+							});
+						}
 			row.querySelectorAll('input[type="checkbox"]').forEach((i) => {
 				i.addEventListener("click", (ev) => {
 					ev.preventDefault();
@@ -548,6 +620,226 @@
 				});
 			}
 		});
+	}
+
+	function ensureJsRunnerFrame() {
+		if (jsRunnerFrame && jsRunnerFrame.contentWindow) return jsRunnerFrame;
+		try {
+			const iframe = document.createElement("iframe");
+			iframe.style.position = "fixed";
+			iframe.style.width = "1px";
+			iframe.style.height = "1px";
+			iframe.style.opacity = "0";
+			iframe.style.pointerEvents = "none";
+			iframe.style.left = "-9999px";
+			iframe.style.top = "-9999px";
+			iframe.setAttribute("sandbox", "allow-scripts");
+			document.body.appendChild(iframe);
+			jsRunnerFrame = iframe;
+			return jsRunnerFrame;
+		} catch {
+			jsRunnerFrame = null;
+			return null;
+		}
+	}
+
+	window.addEventListener("message", (ev) => {
+		const data = ev && ev.data ? ev.data : null;
+		if (!data || data.type !== "mirror_js_run_result") return;
+		const pending = jsRunnerPending.get(String(data.id || ""));
+		if (!pending) return;
+		try {
+			jsRunnerPending.delete(String(data.id || ""));
+			pending.resolve({ output: String(data.output || ""), error: String(data.error || "") });
+		} catch {
+			// ignore
+		}
+	});
+
+	function runJsSnippet(code, timeoutMs) {
+		return new Promise((resolve) => {
+			const frame = ensureJsRunnerFrame();
+			if (!frame || !frame.contentWindow) {
+				resolve({ output: "", error: "JS Runner nicht verfügbar." });
+				return;
+			}
+			const id = `js_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+			const timer = window.setTimeout(() => {
+				jsRunnerPending.delete(id);
+				resolve({ output: "", error: `Timeout nach ${timeoutMs}ms.` });
+			}, timeoutMs);
+			jsRunnerPending.set(id, {
+				resolve: (v) => {
+					window.clearTimeout(timer);
+					resolve(v);
+				},
+			});
+
+			const html = `<!doctype html><html><head><meta charset="utf-8"></head><body><script>
+(function(){
+  const id = ${JSON.stringify(id)};
+  const send = (output, error) => parent.postMessage({type:'mirror_js_run_result', id, output, error}, '*');
+  const logs = [];
+  const orig = { log: console.log, warn: console.warn, error: console.error };
+  console.log = (...a)=>logs.push(a.map(String).join(' '));
+  console.warn = (...a)=>logs.push(a.map(String).join(' '));
+  console.error = (...a)=>logs.push(a.map(String).join(' '));
+  try {
+    (function(){ ${code}\n })();
+    send(logs.join('\n'), '');
+  } catch (e) {
+    send(logs.join('\n'), (e && e.stack) ? String(e.stack) : String(e));
+  } finally {
+    console.log = orig.log; console.warn = orig.warn; console.error = orig.error;
+  }
+})();
+<\/script></body></html>`;
+			try {
+				frame.src = "about:blank";
+			} catch {
+				// ignore
+			}
+			try {
+				frame.srcdoc = html;
+			} catch {
+				resolve({ output: "", error: "JS Runner konnte nicht gestartet werden." });
+			}
+		});
+	}
+
+	function ensurePyRunnerWorker() {
+		if (pyRunnerWorker) return pyRunnerWorker;
+		try {
+			const workerCode = `
+let pyodide = null;
+let pyodideReady = null;
+
+async function ensurePyodide() {
+  if (pyodide) return pyodide;
+  if (!pyodideReady) {
+    importScripts('https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js');
+    pyodideReady = loadPyodide();
+  }
+  pyodide = await pyodideReady;
+  return pyodide;
+}
+
+self.onmessage = async (e) => {
+  const data = e && e.data ? e.data : {};
+  const id = String(data.id || '');
+  const code = String(data.code || '');
+  try {
+    const py = await ensurePyodide();
+    py.globals.set('___code', code);
+    const result = await py.runPythonAsync(
+      "import sys, io, traceback\n" +
+      "_out = io.StringIO()\n" +
+      "_err = io.StringIO()\n" +
+      "_old_out, _old_err = sys.stdout, sys.stderr\n" +
+      "sys.stdout, sys.stderr = _out, _err\n" +
+      "try:\n" +
+      "    exec(___code, {})\n" +
+      "except Exception:\n" +
+      "    traceback.print_exc(file=_err)\n" +
+      "finally:\n" +
+      "    sys.stdout, sys.stderr = _old_out, _old_err\n" +
+      "(_out.getvalue(), _err.getvalue())\n"
+    );
+    let out = '';
+    let err = '';
+    try { out = (result && result.get && result.get(0)) ? String(result.get(0)) : String(result[0] || ''); } catch { out = '' }
+    try { err = (result && result.get && result.get(1)) ? String(result.get(1)) : String(result[1] || ''); } catch { err = '' }
+    self.postMessage({ id, output: out, error: err });
+  } catch (ex) {
+    self.postMessage({ id, output: '', error: (ex && ex.stack) ? String(ex.stack) : String(ex) });
+  }
+};
+`;
+			const blob = new Blob([workerCode], { type: "application/javascript" });
+			const url = URL.createObjectURL(blob);
+			pyRunnerWorker = new Worker(url);
+			URL.revokeObjectURL(url);
+			return pyRunnerWorker;
+		} catch {
+			pyRunnerWorker = null;
+			return null;
+		}
+	}
+
+	function runPySnippet(code, timeoutMs) {
+		return new Promise((resolve) => {
+			const worker = ensurePyRunnerWorker();
+			if (!worker) {
+				resolve({ output: "", error: "Python Runner nicht verfügbar." });
+				return;
+			}
+			const id = `py_${Date.now()}_${++pyRunnerSeq}`;
+			let done = false;
+			const timer = window.setTimeout(() => {
+				if (done) return;
+				done = true;
+				try {
+					worker.terminate();
+				} catch {
+					// ignore
+				}
+				pyRunnerWorker = null;
+				resolve({ output: "", error: `Timeout nach ${timeoutMs}ms.` });
+			}, timeoutMs);
+
+			const onMsg = (ev) => {
+				const data = ev && ev.data ? ev.data : null;
+				if (!data || String(data.id || "") !== id) return;
+				if (done) return;
+				done = true;
+				window.clearTimeout(timer);
+				try {
+					worker.removeEventListener("message", onMsg);
+				} catch {
+					// ignore
+				}
+				resolve({ output: String(data.output || ""), error: String(data.error || "") });
+			};
+			worker.addEventListener("message", onMsg);
+			try {
+				worker.postMessage({ id, code: String(code || "") });
+			} catch {
+				window.clearTimeout(timer);
+				try {
+					worker.removeEventListener("message", onMsg);
+				} catch {
+					// ignore
+				}
+				resolve({ output: "", error: "Python Runner konnte nicht starten." });
+			}
+		});
+	}
+
+	async function runSnippetForNote(noteId, lang, code) {
+		const id = String(noteId || "");
+		if (!id) return;
+		psRunOutputById.set(id, { status: "running", output: "", error: "" });
+		renderPsList(Array.isArray(psState && psState.notes) ? psState.notes : []);
+
+		const timeoutMs = 12000;
+		let res = { output: "", error: "" };
+		if (lang === "python" || lang === "py") {
+			res = await runPySnippet(code, timeoutMs);
+		} else if (lang === "javascript" || lang === "js") {
+			res = await runJsSnippet(code, timeoutMs);
+		} else {
+			res = { output: "", error: `Nicht unterstützt: ${lang || "unknown"}` };
+		}
+
+		const out = String(res.output || "");
+		const err = String(res.error || "");
+		psRunOutputById.set(id, {
+			status: err ? "error" : "done",
+			output: out ? out.slice(0, 8000) : "",
+			error: err ? err.slice(0, 8000) : "",
+		});
+		renderPsList(Array.isArray(psState && psState.notes) ? psState.notes : []);
+		if (err) toast("Snippet-Fehler (siehe Ausgabe).", "error");
 	}
 
 	async function refreshPersonalSpace() {
@@ -723,7 +1015,7 @@
 			const esc =
 				window.CSS && typeof window.CSS.escape === "function"
 					? window.CSS.escape(current)
-					: current.replace(/"/g, "\\\"");
+					: current.replace(/"/g, '\\"');
 			const has = favoritesSelect.querySelector(`option[value="${esc}"]`);
 			favoritesSelect.value = has ? current : "";
 		}
