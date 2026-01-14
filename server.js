@@ -27,6 +27,7 @@ let stmtNoteInsert;
 let stmtNoteGetByIdUser;
 let stmtNoteUpdate;
 let stmtNoteDelete;
+let stmtNotesDeleteAll;
 let stmtNotesByUser;
 let stmtNotesByUserAndTag;
 let stmtTagsByUser;
@@ -102,6 +103,7 @@ function initDb() {
 		"UPDATE notes SET text = ?, kind = ?, tags_json = ? WHERE id = ? AND user_id = ?"
 	);
 	stmtNoteDelete = db.prepare("DELETE FROM notes WHERE id = ? AND user_id = ?");
+	stmtNotesDeleteAll = db.prepare("DELETE FROM notes WHERE user_id = ?");
 	stmtNotesByUser = db.prepare(
 		"SELECT id, text, kind, tags_json, created_at FROM notes WHERE user_id = ? ORDER BY created_at DESC LIMIT 500"
 	);
@@ -405,6 +407,26 @@ function parseTagsJson(raw) {
 	} catch {
 		return [];
 	}
+}
+
+function normalizeImportTags(rawTags) {
+	const tags = Array.isArray(rawTags) ? rawTags : [];
+	const out = [];
+	for (const t of tags) {
+		const s = String(t || "")
+			.trim()
+			.toLowerCase()
+			.slice(0, 48);
+		if (!s) continue;
+		if (!/^[a-z0-9_+\-]{1,48}$/i.test(s)) continue;
+		out.push(s);
+		if (out.length >= 24) break;
+	}
+	return uniq(out);
+}
+
+function isValidNoteId(id) {
+	return /^[a-zA-Z0-9_-]{8,80}$/.test(String(id || ""));
 }
 
 function getOrCreateUserId(email) {
@@ -769,6 +791,127 @@ const server = http.createServer((req, res) => {
 		const userId = getOrCreateUserId(email);
 		const notes = listNotes(userId, tag);
 		json(res, 200, { ok: true, notes });
+		return;
+	}
+
+	if (url.pathname === "/api/notes/export" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const notes = listNotes(userId, "");
+		json(res, 200, {
+			ok: true,
+			export: {
+				version: 1,
+				exportedAt: Date.now(),
+				notes,
+			},
+		});
+		return;
+	}
+
+	if (url.pathname === "/api/notes/import" && req.method === "POST") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		readJson(req)
+			.then((body) => {
+				const userId = getOrCreateUserId(email);
+				const mode = String(body && body.mode ? body.mode : "merge")
+					.trim()
+					.toLowerCase();
+				const exportObj = body && body.export ? body.export : null;
+				const notesRaw =
+					(body && Array.isArray(body.notes) ? body.notes : null) ||
+					(exportObj && Array.isArray(exportObj.notes)
+						? exportObj.notes
+						: null) ||
+					[];
+				if (!Array.isArray(notesRaw)) {
+					json(res, 400, { ok: false, error: "invalid_notes" });
+					return;
+				}
+
+				initDb();
+				let imported = 0;
+				let updated = 0;
+				let skipped = 0;
+
+				const tx = db.transaction(() => {
+					if (mode === "replace") {
+						stmtNotesDeleteAll.run(userId);
+					}
+					for (const n of notesRaw) {
+						const textVal = String(n && n.text ? n.text : "").trim();
+						if (!textVal) {
+							skipped += 1;
+							continue;
+						}
+						let noteId = String(n && n.id ? n.id : "");
+						if (!isValidNoteId(noteId)) {
+							noteId = crypto.randomBytes(12).toString("base64url");
+						}
+						const createdAtRaw = Number(n && n.createdAt ? n.createdAt : 0);
+						const createdAt =
+							Number.isFinite(createdAtRaw) && createdAtRaw > 0
+								? createdAtRaw
+								: Date.now();
+						const kindRaw = String(n && n.kind ? n.kind : "").trim();
+						const tagsRaw = n && n.tags ? n.tags : [];
+						const tags = normalizeImportTags(tagsRaw);
+
+						const existing = stmtNoteGetByIdUser.get(noteId, userId);
+						if (existing) {
+							const derived = classifyText(textVal);
+							const kind = kindRaw ? kindRaw : derived.kind;
+							const tagsFinal = tags.length ? tags : derived.tags;
+							stmtNoteUpdate.run(
+								textVal,
+								kind,
+								JSON.stringify(tagsFinal),
+								noteId,
+								userId
+							);
+							updated += 1;
+							continue;
+						}
+
+						const derived = classifyText(textVal);
+						const kind = kindRaw ? kindRaw : derived.kind;
+						const tagsFinal = tags.length ? tags : derived.tags;
+						stmtNoteInsert.run(
+							noteId,
+							userId,
+							textVal,
+							kind,
+							JSON.stringify(tagsFinal),
+							createdAt
+						);
+						imported += 1;
+					}
+				});
+
+				tx();
+				json(res, 200, {
+					ok: true,
+					mode: mode === "replace" ? "replace" : "merge",
+					imported,
+					updated,
+					skipped,
+				});
+			})
+			.catch((e) => {
+				if (String(e && e.message) === "body_too_large") {
+					json(res, 413, { ok: false, error: "body_too_large" });
+					return;
+				}
+				json(res, 400, { ok: false, error: "invalid_json" });
+			});
 		return;
 	}
 

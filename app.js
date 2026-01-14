@@ -37,6 +37,9 @@
 	const psEmail = document.getElementById("psEmail");
 	const psTags = document.getElementById("psTags");
 	const psNewNote = document.getElementById("psNewNote");
+	const psExportNotesBtn = document.getElementById("psExportNotes");
+	const psImportNotesBtn = document.getElementById("psImportNotes");
+	const psImportFileInput = document.getElementById("psImportFile");
 	const psList = document.getElementById("psList");
 	const psHint = document.getElementById("psHint");
 	const psLogout = document.getElementById("psLogout");
@@ -857,6 +860,10 @@ self.onmessage = async (e) => {
 		});
 	}
 
+	const PY_TIMEOUT_COLD_MS = 180000;
+	const PY_TIMEOUT_WARM_MS = 60000;
+	const JS_TIMEOUT_MS = 20000;
+
 	async function runSnippetForNote(noteId, lang, code) {
 		const id = String(noteId || "");
 		if (!id) return;
@@ -866,9 +873,9 @@ self.onmessage = async (e) => {
 		const timeoutMs =
 			lang === "python" || lang === "py"
 				? pyRuntimeWarmed
-					? 20000
-					: 90000
-				: 12000;
+					? PY_TIMEOUT_WARM_MS
+					: PY_TIMEOUT_COLD_MS
+				: JS_TIMEOUT_MS;
 		let res = { output: "", error: "" };
 		if (lang === "python" || lang === "py") {
 			res = await runPySnippet(code, timeoutMs);
@@ -894,6 +901,31 @@ self.onmessage = async (e) => {
 		if (err) toast("Snippet-Fehler (siehe Ausgabe).", "error");
 	}
 
+	async function warmPythonRuntime() {
+		if (pyRuntimeWarmed) return { ok: true };
+		setPreviewRunOutput({
+			status: "Python lädt…",
+			output: "",
+			error: "",
+		});
+		const res = await runPySnippet("pass", PY_TIMEOUT_COLD_MS);
+		if (res && res.error && /Timeout nach/i.test(String(res.error))) {
+			return {
+				ok: false,
+				error:
+					"Python-Init Timeout. Vermutlich Pyodide-CDN blockiert oder Netzwerk zu langsam.",
+			};
+		}
+		if (res && res.error) {
+			return {
+				ok: false,
+				error: String(res.error || "Python konnte nicht initialisiert werden."),
+			};
+		}
+		pyRuntimeWarmed = true;
+		return { ok: true };
+	}
+
 	async function runSnippetFromPreview() {
 		const parsed = parseRunnableFromEditor();
 		if (!parsed) {
@@ -910,11 +942,26 @@ self.onmessage = async (e) => {
 		const timeoutMs =
 			lang === "python" || lang === "py"
 				? pyRuntimeWarmed
-					? 20000
-					: 90000
-				: 12000;
+					? PY_TIMEOUT_WARM_MS
+					: PY_TIMEOUT_COLD_MS
+				: JS_TIMEOUT_MS;
 		let res = { output: "", error: "" };
 		if (lang === "python" || lang === "py") {
+			if (!pyRuntimeWarmed) {
+				const warm = await warmPythonRuntime();
+				if (!warm.ok) {
+					setPreviewRunOutput({
+						status: "Fehler",
+						output: "",
+						error: String(
+							warm.error || "Python konnte nicht initialisiert werden."
+						),
+					});
+					toast("Run: Fehler (siehe Ausgabe).", "error");
+					return;
+				}
+				setPreviewRunOutput({ status: "läuft…", output: "", error: "" });
+			}
 			res = await runPySnippet(code, timeoutMs);
 			if (!/Timeout nach/i.test(String(res.error || "")))
 				pyRuntimeWarmed = true;
@@ -965,6 +1012,96 @@ self.onmessage = async (e) => {
 		}
 		renderPsTags(psState.tags || []);
 		renderPsList(notes);
+	}
+
+	function downloadJson(filename, obj) {
+		try {
+			const text = JSON.stringify(obj, null, 2);
+			const blob = new Blob([text], { type: "application/json" });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url;
+			a.download = filename;
+			document.body.appendChild(a);
+			a.click();
+			a.remove();
+			setTimeout(() => URL.revokeObjectURL(url), 500);
+		} catch {
+			toast("Export fehlgeschlagen.", "error");
+		}
+	}
+
+	function ymd() {
+		try {
+			const d = new Date();
+			const y = String(d.getFullYear());
+			const m = String(d.getMonth() + 1).padStart(2, "0");
+			const day = String(d.getDate()).padStart(2, "0");
+			return `${y}${m}${day}`;
+		} catch {
+			return "";
+		}
+	}
+
+	async function exportPersonalSpaceNotes() {
+		if (!psState || !psState.authed) {
+			toast("Bitte erst Personal Space aktivieren (Login).", "error");
+			return;
+		}
+		try {
+			if (psHint) psHint.textContent = "Exportiere…";
+			const res = await api("/api/notes/export");
+			const payload = res && res.export ? res.export : { version: 1, notes: [] };
+			downloadJson(`mirror-notes-${ymd() || "export"}.json`, payload);
+			if (psHint) psHint.textContent = "Export bereit.";
+			toast("Export erstellt.", "success");
+		} catch (e) {
+			const msg = e && e.message ? String(e.message) : "Fehler";
+			if (psHint) psHint.textContent = "Export fehlgeschlagen.";
+			toast(`Export fehlgeschlagen: ${msg}`, "error");
+		}
+	}
+
+	async function importPersonalSpaceNotesFromText(text) {
+		let parsed;
+		try {
+			parsed = JSON.parse(String(text || ""));
+		} catch {
+			toast("Import: ungültige JSON-Datei.", "error");
+			return;
+		}
+		const notes = Array.isArray(parsed)
+			? parsed
+			: Array.isArray(parsed && parsed.notes)
+			? parsed.notes
+			: Array.isArray(parsed && parsed.export && parsed.export.notes)
+			? parsed.export.notes
+			: [];
+		if (!Array.isArray(notes)) {
+			toast("Import: keine Notizen gefunden.", "error");
+			return;
+		}
+		const replace = window.confirm(
+			"Beim Import vorhandene Notizen ersetzen?\nOK = ersetzen, Abbrechen = zusammenführen (merge)."
+		);
+		const mode = replace ? "replace" : "merge";
+		try {
+			if (psHint) psHint.textContent = "Importiere…";
+			const res = await api("/api/notes/import", {
+				method: "POST",
+				body: JSON.stringify({ mode, notes }),
+			});
+			toast(
+				`Import fertig: ${res.imported || 0} neu, ${res.updated || 0} aktualisiert, ${res.skipped || 0} übersprungen.`,
+				"success"
+			);
+			if (psHint) psHint.textContent = "Import fertig.";
+			await refreshPersonalSpace();
+		} catch (e) {
+			const msg = e && e.message ? String(e.message) : "Fehler";
+			if (psHint) psHint.textContent = "Import fehlgeschlagen.";
+			toast(`Import fehlgeschlagen: ${msg}`, "error");
+		}
 	}
 
 	async function requestPersonalSpaceLink() {
@@ -1491,6 +1628,38 @@ self.onmessage = async (e) => {
 			metaLeft.textContent = "Bereit.";
 			metaRight.textContent = "";
 			updatePreview();
+		});
+	}
+	if (psExportNotesBtn) {
+		psExportNotesBtn.addEventListener("click", async () => {
+			await exportPersonalSpaceNotes();
+		});
+	}
+	if (psImportNotesBtn && psImportFileInput) {
+		psImportNotesBtn.addEventListener("click", () => {
+			if (!psState || !psState.authed) {
+				toast("Bitte erst Personal Space aktivieren (Login).", "error");
+				return;
+			}
+			try {
+				psImportFileInput.value = "";
+			} catch {
+				// ignore
+			}
+			psImportFileInput.click();
+		});
+		psImportFileInput.addEventListener("change", async () => {
+			const file =
+				psImportFileInput.files && psImportFileInput.files[0]
+					? psImportFileInput.files[0]
+					: null;
+			if (!file) return;
+			try {
+				const text = await file.text();
+				await importPersonalSpaceNotesFromText(text);
+			} catch {
+				toast("Import fehlgeschlagen (Datei lesen).", "error");
+			}
 		});
 	}
 	if (clearMirrorBtn && textarea) {
