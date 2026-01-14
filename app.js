@@ -39,6 +39,8 @@
 	const copyMirrorBtn = document.getElementById("copyMirror");
 	const codeLangSelect = document.getElementById("codeLang");
 	const insertCodeBlockBtn = document.getElementById("insertCodeBlock");
+	const slashMenu = document.getElementById("slashMenu");
+	const slashMenuList = document.getElementById("slashMenuList");
 	const mainGrid = document.getElementById("mainGrid");
 	const psPanel = document.getElementById("psPanel");
 	const togglePersonalSpaceBtn = document.getElementById("togglePersonalSpace");
@@ -450,6 +452,153 @@
 			cancelText: "Schließen",
 			backdropClose: true,
 		});
+	}
+
+	const SLASH_SUGGESTIONS = [
+		{ cmd: "help", label: "Help", snippet: "/help" },
+		{ cmd: "h1", label: "Heading 1", snippet: "/h1" },
+		{ cmd: "h2", label: "Heading 2", snippet: "/h2" },
+		{ cmd: "h3", label: "Heading 3", snippet: "/h3" },
+		{ cmd: "b", label: "Bold", snippet: "/b" },
+		{ cmd: "i", label: "Italic", snippet: "/i" },
+		{ cmd: "s", label: "Strikethrough", snippet: "/s" },
+		{ cmd: "quote", label: "Blockquote", snippet: "/quote" },
+		{ cmd: "ul", label: "Bullet list", snippet: "/ul" },
+		{ cmd: "ol", label: "Numbered list", snippet: "/ol" },
+		{ cmd: "todo", label: "Task list", snippet: "/todo" },
+		{ cmd: "hr", label: "Horizontal rule", snippet: "/hr" },
+		{ cmd: "link", label: "Link", snippet: "/link" },
+		{ cmd: "code", label: "Code block", snippet: "/code" },
+		{ cmd: "code", label: "Code block (js)", snippet: "/code javascript" },
+		{ cmd: "code", label: "Code block (py)", snippet: "/code python" },
+	];
+
+	let slashMenuOpen = false;
+	let slashMenuItems = [];
+	let slashMenuIndex = 0;
+
+	function setSlashMenuOpen(open) {
+		slashMenuOpen = Boolean(open);
+		if (!slashMenu || !slashMenu.classList) return;
+		slashMenu.classList.toggle("hidden", !slashMenuOpen);
+	}
+
+	function getSlashContext() {
+		if (!textarea) return { active: false, start: 0, end: 0, query: "" };
+		const value = String(textarea.value || "");
+		const caret = Math.max(0, Math.min(value.length, Number(textarea.selectionEnd || 0)));
+		const { start, end, line } = getLineBounds(value, caret);
+		const raw = String(line || "");
+		const trimmedStart = raw.replace(/^\s+/, "");
+		if (!trimmedStart.startsWith("/")) {
+			return { active: false, start, end, query: "" };
+		}
+		// Filter by the first token after '/', ignore args
+		const token = trimmedStart.slice(1).split(/\s+/)[0] || "";
+		return { active: true, start, end, query: token.toLowerCase() };
+	}
+
+	function renderSlashMenu() {
+		if (!slashMenuList) return;
+		if (!slashMenuItems.length) {
+			slashMenuList.innerHTML =
+				'<div class="px-3 py-2 text-xs text-slate-400">Keine Treffer.</div>';
+			return;
+		}
+		slashMenuList.innerHTML = slashMenuItems
+			.map((it, idx) => {
+				const active = idx === slashMenuIndex;
+				const base =
+					"w-full text-left rounded-lg px-3 py-2 text-sm transition flex items-center justify-between gap-3";
+				const cls = active
+					? "bg-fuchsia-500/15 text-fuchsia-100"
+					: "hover:bg-white/5 text-slate-200";
+				const right =
+					'<span class="text-[11px] text-slate-500">' +
+					String(it.snippet || "") +
+					"</span>";
+				return (
+					`<button type="button" data-slash-idx="${idx}" class="${base} ${cls}">` +
+					`<span class="font-medium">${String(it.label || it.cmd)}</span>` +
+					right +
+					"</button>"
+				);
+			})
+			.join("");
+
+		slashMenuList.querySelectorAll("button[data-slash-idx]").forEach((btn) => {
+			btn.addEventListener("click", () => {
+				const idx = Number(btn.getAttribute("data-slash-idx") || 0);
+				const it = slashMenuItems[idx];
+				if (!it) return;
+				insertSlashSnippet(String(it.snippet || ""));
+			});
+		});
+	}
+
+	function insertSlashSnippet(snippet) {
+		if (!textarea) return;
+		const s = String(snippet || "").trim();
+		if (!s) return;
+		const ctx = getSlashContext();
+		if (!ctx.active) return;
+		replaceTextRange(textarea, ctx.start, ctx.end, s);
+		const pos = ctx.start + s.length;
+		textarea.selectionStart = pos;
+		textarea.selectionEnd = pos;
+		setSlashMenuOpen(false);
+		try {
+			textarea.focus();
+		} catch {
+			// ignore
+		}
+		updatePreview();
+	}
+
+	function updateSlashMenu() {
+		if (!textarea || !slashMenu || !slashMenuList) return;
+		const ctx = getSlashContext();
+		if (!ctx.active) {
+			setSlashMenuOpen(false);
+			return;
+		}
+		const q = String(ctx.query || "");
+		slashMenuItems = SLASH_SUGGESTIONS.filter((it) => {
+			if (!q) return true;
+			return String(it.cmd || "").toLowerCase().startsWith(q);
+		}).slice(0, 12);
+		slashMenuIndex = 0;
+		setSlashMenuOpen(true);
+		renderSlashMenu();
+	}
+
+	function handleSlashMenuKey(ev) {
+		if (!slashMenuOpen) return false;
+		if (!ev) return false;
+		if (ev.key === "Escape") {
+			ev.preventDefault();
+			setSlashMenuOpen(false);
+			return true;
+		}
+		if (ev.key === "ArrowDown") {
+			ev.preventDefault();
+			slashMenuIndex = Math.min(slashMenuItems.length - 1, slashMenuIndex + 1);
+			renderSlashMenu();
+			return true;
+		}
+		if (ev.key === "ArrowUp") {
+			ev.preventDefault();
+			slashMenuIndex = Math.max(0, slashMenuIndex - 1);
+			renderSlashMenu();
+			return true;
+		}
+		if (ev.key === "Enter" || ev.key === "Tab") {
+			ev.preventDefault();
+			const it = slashMenuItems[slashMenuIndex];
+			if (it) insertSlashSnippet(String(it.snippet || ""));
+			return true;
+		}
+		return false;
 	}
 
 	function applySlashCommand(el) {
@@ -2603,9 +2752,15 @@ self.onmessage = async (e) => {
 		metaLeft.textContent = "Tippen…";
 		scheduleSend();
 		updatePreview();
+		updateSlashMenu();
+	});
+
+	textarea.addEventListener("click", () => {
+		updateSlashMenu();
 	});
 
 	textarea.addEventListener("keydown", (ev) => {
+		if (handleSlashMenuKey(ev)) return;
 		if (!ev) return;
 		if (ev.key !== "Enter") return;
 		if (ev.shiftKey || ev.metaKey || ev.ctrlKey || ev.altKey) return;
