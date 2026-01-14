@@ -45,6 +45,7 @@
 	const psImportModeSelect = document.getElementById("psImportMode");
 	const psImportNotesBtn = document.getElementById("psImportNotes");
 	const psImportFileInput = document.getElementById("psImportFile");
+	const psCount = document.getElementById("psCount");
 	const psSearchInput = document.getElementById("psSearch");
 	const psList = document.getElementById("psList");
 	const psHint = document.getElementById("psHint");
@@ -264,7 +265,8 @@
 
 	function applyPersonalSpaceFiltersAndRender() {
 		if (!psState || !psState.authed) return;
-		let notes = Array.isArray(psState.notes) ? psState.notes : [];
+		const allNotes = Array.isArray(psState.notes) ? psState.notes : [];
+		let notes = allNotes;
 		const active = Array.from(psActiveTags || []).filter(Boolean);
 		if (active.length) {
 			if (psTagFilterMode === "or") {
@@ -283,6 +285,12 @@
 		if (q) {
 			const tokens = q.split(/\s+/).filter(Boolean).slice(0, 8);
 			notes = notes.filter((n) => noteMatchesSearch(n, tokens));
+		}
+		if (psCount) {
+			const total = allNotes.length;
+			const shown = notes.length;
+			const hasFilter = active.length > 0 || !!q;
+			psCount.textContent = hasFilter ? `${shown}/${total}` : String(total);
 		}
 		renderPsTags(psState.tags || []);
 		renderPsList(notes);
