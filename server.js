@@ -964,6 +964,7 @@ const server = http.createServer((req, res) => {
 
 	// --- API: AI helper (Claude via Anthropic) ---
 	if (url.pathname === "/api/ai" && req.method === "POST") {
+		const reqId = crypto.randomBytes(6).toString("hex");
 		const email = getAuthedEmail(req);
 		if (!email) {
 			json(res, 401, { ok: false, error: "unauthorized" });
@@ -1041,7 +1042,25 @@ const server = http.createServer((req, res) => {
 							(data && data.error && data.error.message) ||
 							(data && data.message) ||
 							`AI HTTP ${r.status}`;
-						json(res, 502, { ok: false, error: "ai_failed", message: errMsg });
+						try {
+							console.warn("[ai] upstream_error", {
+								reqId,
+								status: r.status,
+								errMsg,
+								mode,
+								lang,
+								ip,
+								email,
+							});
+						} catch {
+							// ignore logging errors
+						}
+						json(res, 502, {
+							ok: false,
+							error: "ai_failed",
+							message: errMsg,
+							reqId,
+						});
 						return;
 					}
 					const parts = data && Array.isArray(data.content) ? data.content : [];
@@ -1061,7 +1080,25 @@ const server = http.createServer((req, res) => {
 							: e && e.message
 							? String(e.message)
 							: "ai_error";
-					json(res, 502, { ok: false, error: "ai_failed", message: msg });
+					try {
+						console.warn("[ai] exception", {
+							reqId,
+							name: e && e.name ? String(e.name) : "",
+							msg,
+							mode,
+							lang,
+							ip,
+							email,
+						});
+					} catch {
+						// ignore logging errors
+					}
+					json(res, 502, {
+						ok: false,
+						error: "ai_failed",
+						message: msg,
+						reqId,
+					});
 				} finally {
 					clearTimeout(t);
 				}

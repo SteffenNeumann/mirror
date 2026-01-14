@@ -176,7 +176,15 @@
 		const text = await res.text();
 		const data = safeJsonParse(text);
 		if (!res.ok) {
-			const msg = (data && data.error) || `HTTP ${res.status}`;
+			const msg = data
+				? data.error
+					? data.message
+						? `${data.error}: ${data.message}`
+						: String(data.error)
+					: data.message
+					? String(data.message)
+					: `HTTP ${res.status}`
+				: `HTTP ${res.status}`;
 			throw new Error(msg);
 		}
 		return data;
