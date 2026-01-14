@@ -167,17 +167,40 @@
 		if (md) return md;
 		if (typeof window.markdownit !== "function") return null;
 		try {
+			const canHighlight =
+				window.hljs && typeof window.hljs.highlight === "function";
+			const safeLang = (raw) =>
+				String(raw || "")
+					.trim()
+					.toLowerCase()
+					.replace(/[^a-z0-9_+-]/g, "")
+					.slice(0, 32);
+			const highlightPlain = (str) => {
+				const escaped = md.utils.escapeHtml(str);
+				return `<pre class="hljs"><code>${escaped}</code></pre>`;
+			};
+
 			md = window.markdownit({
 				html: false,
 				linkify: true,
 				breaks: true,
 				typographer: true,
 				highlight: (str, lang) => {
-					const escaped = md.utils.escapeHtml(str);
-					const cls = lang
-						? `language-${String(lang).replace(/[^a-z0-9_-]/gi, "")}`
-						: "";
-					return `<pre class=\"hljs\"><code class=\"${cls}\">${escaped}</code></pre>`;
+					if (!canHighlight) return highlightPlain(str);
+					try {
+						const l = safeLang(lang);
+						if (l && window.hljs.getLanguage && window.hljs.getLanguage(l)) {
+							const v = window.hljs.highlight(str, {
+								language: l,
+								ignoreIllegals: true,
+							}).value;
+							return `<pre class="hljs"><code class="hljs language-${l}">${v}</code></pre>`;
+						}
+						const v = window.hljs.highlightAuto(str).value;
+						return `<pre class="hljs"><code class="hljs">${v}</code></pre>`;
+					} catch {
+						return highlightPlain(str);
+					}
 				},
 			});
 			// GFM bits
@@ -227,13 +250,25 @@
 		if (togglePreview) {
 			togglePreview.textContent = previewOpen ? "Preview aus" : "Preview";
 		}
-		if (previewOpen) updatePreview();
+		if (previewOpen) {
+			const renderer = ensureMarkdown();
+			if (!renderer) {
+				toast("Markdown-Preview: Bibliothek nicht geladen (CDN).", "error");
+			}
+			updatePreview();
+		}
 	}
 
 	function updatePreview() {
 		if (!previewOpen || !mdPreview) return;
 		const renderer = ensureMarkdown();
-		if (!renderer) return;
+		if (!renderer) {
+			mdPreview.srcdoc = `<!doctype html><html lang="de"><head><meta charset="utf-8" />
+			<meta name="viewport" content="width=device-width, initial-scale=1" />
+			<style>:root{color-scheme:dark;}body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:#020617;color:#e2e8f0;}a{color:#60a5fa;}</style>
+			</head><body><strong>Markdown Preview nicht verfügbar.</strong><div style="margin-top:8px;color:#94a3b8">Bitte Seite neu laden oder CDN-Blocking (AdBlock/Corporate Proxy) prüfen.</div></body></html>`;
+			return;
+		}
 		const src = String(textarea && textarea.value ? textarea.value : "");
 		let bodyHtml = "";
 		try {
@@ -267,8 +302,6 @@
 </head>
 <body>
   <div id="content">${bodyHtml}</div>
-  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/highlight.min.js"></script>
-  <script>try{hljs.highlightAll();}catch(e){}<\/script>
 </body>
 </html>`;
 		mdPreview.srcdoc = doc;
@@ -340,7 +373,7 @@
 							type="button"
 							data-action="delete"
 							class="absolute right-2 top-2 hidden rounded-md border border-white/10 bg-slate-950/60 p-1.5 text-slate-200 shadow-soft backdrop-blur transition group-hover:flex hover:bg-slate-950/80"
-							title="L f6schen">
+										title="Löschen">
 							<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 								<path d="M3 6h18" />
 								<path d="M8 6V4h8v2" />
@@ -383,7 +416,7 @@
 					ev.stopPropagation();
 					const id = row.getAttribute("data-note-id") || "";
 					if (!id) return;
-					if (!window.confirm("Notiz wirklich l f6schen?")) return;
+					if (!window.confirm("Notiz wirklich löschen?")) return;
 					try {
 						await api(`/api/notes/${encodeURIComponent(id)}`, {
 							method: "DELETE",
@@ -392,10 +425,10 @@
 							psEditingNoteId = "";
 							if (psMainHint) psMainHint.classList.add("hidden");
 						}
-						toast("Notiz gel f6scht.", "success");
+						toast("Notiz gelöscht.", "success");
 						await refreshPersonalSpace();
 					} catch {
-						toast("L f6schen fehlgeschlagen.", "error");
+						toast("Löschen fehlgeschlagen.", "error");
 					}
 				});
 			}
