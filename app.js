@@ -25,6 +25,9 @@
 	const clearRunOutputBtn = document.getElementById("clearRunOutput");
 	const runOutputEl = document.getElementById("runOutput");
 	const runStatusEl = document.getElementById("runStatus");
+	const copyMirrorBtn = document.getElementById("copyMirror");
+	const codeLangSelect = document.getElementById("codeLang");
+	const insertCodeBlockBtn = document.getElementById("insertCodeBlock");
 
 	// Personal Space elements (optional)
 	const psUnauthed = document.getElementById("psUnauthed");
@@ -220,7 +223,45 @@
 			const code = String(m[2] || "");
 			return { lang, code };
 		}
+
+		// Last resort: run whole editor as code if a language is selected
+		const selected = String(codeLangSelect && codeLangSelect.value ? codeLangSelect.value : "")
+			.trim()
+			.toLowerCase();
+		if (selected) return { lang: selected, code: text };
 		return null;
+	}
+
+	function getSelectedCodeLang() {
+		const v = String(codeLangSelect && codeLangSelect.value ? codeLangSelect.value : "")
+			.trim()
+			.toLowerCase();
+		return v || "python";
+	}
+
+	function insertCodeBlock() {
+		if (!textarea) return;
+		const lang = getSelectedCodeLang();
+		const start = textarea.selectionStart || 0;
+		const end = textarea.selectionEnd || 0;
+		const full = String(textarea.value || "");
+		const selected = full.slice(start, end);
+		const fenceStart = "```" + lang + "\n";
+		const fenceEnd = "\n```";
+		const insert = fenceStart + (selected || "") + fenceEnd;
+		textarea.value = full.slice(0, start) + insert + full.slice(end);
+		// Cursor inside block
+		try {
+			const cursor = start + fenceStart.length;
+			textarea.focus();
+			textarea.setSelectionRange(cursor, cursor + (selected || "").length);
+		} catch {
+			// ignore
+		}
+		metaLeft.textContent = "Codeblock eingefügt.";
+		metaRight.textContent = nowIso();
+		updatePreview();
+		scheduleSend();
 	}
 
 	function ensureMarkdown() {
@@ -914,7 +955,8 @@ self.onmessage = async (e) => {
 		}
 		if (lang === "python" || lang === "py") {
 			// Mark runtime warmed if we got any non-timeout response
-			if (!/Timeout nach/i.test(String(res.error || ""))) pyRuntimeWarmed = true;
+			if (!/Timeout nach/i.test(String(res.error || "")))
+				pyRuntimeWarmed = true;
 		}
 
 		const out = String(res.output || "");
@@ -950,8 +992,14 @@ self.onmessage = async (e) => {
 		let res = { output: "", error: "" };
 		if (lang === "python" || lang === "py") {
 			res = await runPySnippet(code, timeoutMs);
-			if (!/Timeout nach/i.test(String(res.error || ""))) pyRuntimeWarmed = true;
-		} else if (lang === "javascript" || lang === "js" || lang === "javascript" || lang === "node") {
+			if (!/Timeout nach/i.test(String(res.error || "")))
+				pyRuntimeWarmed = true;
+		} else if (
+			lang === "javascript" ||
+			lang === "js" ||
+			lang === "javascript" ||
+			lang === "node"
+		) {
 			res = await runJsSnippet(code, timeoutMs);
 		} else {
 			res = { output: "", error: `Nicht unterstützt: ${lang || "unknown"}` };
@@ -1415,6 +1463,60 @@ self.onmessage = async (e) => {
 			}
 		}
 	});
+
+	if (copyMirrorBtn && textarea) {
+		copyMirrorBtn.addEventListener("click", async () => {
+			const value = String(textarea.value || "");
+			if (!value) {
+				toast("Nichts zu kopieren.", "info");
+				return;
+			}
+			try {
+				await navigator.clipboard.writeText(value);
+				toast("Text kopiert.", "success");
+			} catch {
+				try {
+					const ta = document.createElement("textarea");
+					ta.value = value;
+					ta.setAttribute("readonly", "");
+					ta.style.position = "fixed";
+					ta.style.opacity = "0";
+					document.body.appendChild(ta);
+					ta.select();
+					document.execCommand("copy");
+					ta.remove();
+					toast("Text kopiert.", "success");
+				} catch {
+					toast("Kopieren nicht möglich.", "error");
+				}
+			}
+		});
+	}
+
+	if (codeLangSelect) {
+		try {
+			const saved = localStorage.getItem("mirror_code_lang") || "";
+			if (saved) codeLangSelect.value = saved;
+			else codeLangSelect.value = "python";
+			codeLangSelect.addEventListener("change", () => {
+				try {
+					localStorage.setItem(
+						"mirror_code_lang",
+						String(codeLangSelect.value || "")
+					);
+				} catch {
+					// ignore
+				}
+			});
+		} catch {
+			// ignore
+		}
+	}
+	if (insertCodeBlockBtn) {
+		insertCodeBlockBtn.addEventListener("click", () => {
+			insertCodeBlock();
+		});
+	}
 
 	textarea.addEventListener("input", () => {
 		metaLeft.textContent = "Tippen…";
