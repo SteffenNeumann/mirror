@@ -738,6 +738,7 @@
 	let psEditingNoteId = "";
 	let psEditingNoteKind = "";
 	let psEditingNoteTags = [];
+	let psEditingNoteTagsOverridden = false;
 	let previewOpen = false;
 	let md;
 	const clearMirrorBtn = document.getElementById("clearMirror");
@@ -758,6 +759,17 @@
 	const PS_TAGS_COLLAPSED_KEY = "mirror_ps_tags_collapsed";
 	const PS_SEARCH_QUERY_KEY = "mirror_ps_search_query";
 	const PS_VISIBLE_KEY = "mirror_ps_visible";
+	const PS_MANUAL_TAGS_MARKER = "__manual_tags__";
+
+	function stripManualTagsMarker(tags) {
+		const arr = Array.isArray(tags) ? tags : [];
+		return arr.filter((t) => String(t || "") !== PS_MANUAL_TAGS_MARKER);
+	}
+
+	function buildPsTagsPayload(tags, overridden) {
+		const cleaned = stripManualTagsMarker(tags);
+		return overridden ? [...cleaned, PS_MANUAL_TAGS_MARKER] : cleaned;
+	}
 	let psTagsCollapsed = false;
 	let psVisible = true;
 	const GRID_WITH_PS = "lg:grid-cols-[360px_1fr]";
@@ -1354,7 +1366,7 @@
 			.map((n) => {
 				const id = String(n.id || "");
 				const active = id && id === psEditingNoteId;
-				const tags = Array.isArray(n.tags) ? n.tags : [];
+				const tags = stripManualTagsMarker(Array.isArray(n.tags) ? n.tags : []);
 				const chips = tags
 					.slice(0, 6)
 					.map(
@@ -1411,7 +1423,11 @@
 				if (!note || !textarea) return;
 				psEditingNoteId = id;
 				psEditingNoteKind = String(note.kind || "");
-				psEditingNoteTags = Array.isArray(note.tags) ? note.tags : [];
+				const rawTags = Array.isArray(note.tags) ? note.tags : [];
+				psEditingNoteTagsOverridden = rawTags.some(
+					(t) => String(t || "") === PS_MANUAL_TAGS_MARKER
+				);
+				psEditingNoteTags = stripManualTagsMarker(rawTags);
 				textarea.value = String(note.text || "");
 				textarea.focus();
 				if (psHint) psHint.textContent = "Bearbeiten: Text rechts angepasst.";
@@ -2818,6 +2834,7 @@ self.onmessage = async (e) => {
 			psEditingNoteId = "";
 			psEditingNoteKind = "";
 			psEditingNoteTags = [];
+			psEditingNoteTagsOverridden = false;
 			if (textarea) {
 				textarea.value = "";
 				textarea.focus();
@@ -2832,42 +2849,45 @@ self.onmessage = async (e) => {
 	if (psEditTagsBtn) {
 		psEditTagsBtn.addEventListener("click", async () => {
 			if (!psState || !psState.authed) {
-				toast("Bitte erst Personal Space aktivieren (Login).", "error");
+				toast("Please enable Personal Space first (login).", "error");
 				return;
 			}
 			const current = formatTagsForHint(psEditingNoteTags)
 				.replace(/#/g, "")
 				.trim();
 			const raw = await modalPrompt(
-				"Tags eingeben (Komma oder Leerzeichen getrennt).",
+				"Enter tags (comma or space separated).",
 				{
-					title: "Tags bearbeiten",
-					okText: "Speichern",
-					cancelText: "Abbrechen",
+					title: "Edit tags",
+					okText: "Save",
+					cancelText: "Cancel",
 					value: current,
-					placeholder: "projekt, idee, lang-python",
+					placeholder: "project, idea, lang-python",
 					backdropClose: true,
 				}
 			);
 			if (raw === null) return;
 			const nextTags = normalizeManualTags(raw);
 			psEditingNoteTags = nextTags;
+			psEditingNoteTagsOverridden = true;
 			updatePsEditingTagsHint();
 
 			if (!psEditingNoteId) {
-				toast("Tags gesetzt (für neuen Eintrag).", "success");
+				toast("Tags set (for new note).", "success");
 				return;
 			}
 			try {
 				await api(`/api/notes/${encodeURIComponent(psEditingNoteId)}`, {
 					method: "PUT",
-					body: JSON.stringify({ tags: nextTags }),
+					body: JSON.stringify({
+						tags: buildPsTagsPayload(nextTags, true),
+					}),
 				});
-				toast("Tags gespeichert.", "success");
+				toast("Tags saved.", "success");
 				await refreshPersonalSpace();
 			} catch (e) {
-				const msg = e && e.message ? String(e.message) : "Fehler";
-				toast(`Tags speichern fehlgeschlagen: ${msg}`, "error");
+				const msg = e && e.message ? String(e.message) : "Error";
+				toast(`Saving tags failed: ${msg}`, "error");
 			}
 		});
 	}
@@ -2943,6 +2963,10 @@ self.onmessage = async (e) => {
 				return;
 			}
 			try {
+				const tagsPayload = buildPsTagsPayload(
+					Array.isArray(psEditingNoteTags) ? psEditingNoteTags : [],
+					psEditingNoteTagsOverridden
+				);
 				if (psHint)
 					psHint.textContent = psEditingNoteId ? "Aktualisiere…" : "Speichere…";
 				if (!psEditingNoteId) {
@@ -2950,7 +2974,7 @@ self.onmessage = async (e) => {
 						method: "POST",
 						body: JSON.stringify({
 							text,
-							tags: Array.isArray(psEditingNoteTags) ? psEditingNoteTags : [],
+							tags: tagsPayload,
 						}),
 					});
 					if (psHint) psHint.textContent = "Gespeichert.";
@@ -2959,7 +2983,7 @@ self.onmessage = async (e) => {
 						method: "PUT",
 						body: JSON.stringify({
 							text,
-							tags: Array.isArray(psEditingNoteTags) ? psEditingNoteTags : [],
+							tags: tagsPayload,
 						}),
 					});
 					if (psHint) psHint.textContent = "Aktualisiert.";

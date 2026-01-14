@@ -461,6 +461,17 @@ function normalizeImportTags(rawTags) {
 	return uniq(out);
 }
 
+const MANUAL_TAGS_MARKER = "__manual_tags__";
+
+function splitManualOverrideTags(rawTags) {
+	const normalized = normalizeImportTags(rawTags);
+	const override = normalized.includes(MANUAL_TAGS_MARKER);
+	const tags = override
+		? normalized.filter((t) => t !== MANUAL_TAGS_MARKER)
+		: normalized;
+	return { override, tags };
+}
+
 function mergeManualTags(textVal, manualTags) {
 	const derived = classifyText(textVal);
 	const manual = normalizeImportTags(manualTags);
@@ -528,7 +539,12 @@ function listTags(userId) {
 	initDb();
 	const rows = stmtTagsByUser.all(userId);
 	const tags = [];
-	for (const r of rows) tags.push(...parseTagsJson(r.tags_json));
+	for (const r of rows) {
+		for (const t of parseTagsJson(r.tags_json)) {
+			if (String(t || "") === MANUAL_TAGS_MARKER) continue;
+			tags.push(t);
+		}
+	}
 	return uniq(tags).sort();
 }
 
@@ -764,11 +780,25 @@ const server = http.createServer((req, res) => {
 					return;
 				}
 				const userId = getOrCreateUserId(email);
-				const merged = hasTags
-					? mergeManualTags(textVal, body && body.tags ? body.tags : [])
-					: classifyText(textVal);
-				const kind = merged.kind;
-				const tags = merged.tags;
+				let kind;
+				let tags;
+				if (hasTags) {
+					const { override, tags: incoming } = splitManualOverrideTags(
+						body && body.tags ? body.tags : []
+					);
+					if (override) {
+						kind = classifyText(textVal).kind;
+						tags = uniq([...incoming, MANUAL_TAGS_MARKER]);
+					} else {
+						const merged = mergeManualTags(textVal, incoming);
+						kind = merged.kind;
+						tags = merged.tags;
+					}
+				} else {
+					const merged = classifyText(textVal);
+					kind = merged.kind;
+					tags = merged.tags;
+				}
 				const note = {
 					id: crypto.randomBytes(12).toString("base64url"),
 					text: textVal,
@@ -829,10 +859,12 @@ const server = http.createServer((req, res) => {
 					const kind = derived.kind;
 					let tags;
 					if (hasTags) {
-						tags = mergeManualTags(
-							nextText,
+						const { override, tags: incoming } = splitManualOverrideTags(
 							body && body.tags ? body.tags : []
-						).tags;
+						);
+						tags = override
+							? uniq([...incoming, MANUAL_TAGS_MARKER])
+							: mergeManualTags(nextText, incoming).tags;
 					} else if (hasText) {
 						tags = derived.tags;
 					} else {
