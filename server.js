@@ -288,9 +288,32 @@ function classifyText(text) {
 	const tags = [];
 
 	const hasCodeFence = /```/.test(t);
+	const fenceLangMatch = t.match(/(^|\n)```\s*([a-zA-Z0-9_+-]{1,32})\s*(\n|$)/);
+	const fenceLangRaw = fenceLangMatch ? fenceLangMatch[2] : "";
+	const fenceLang = String(fenceLangRaw || "")
+		.trim()
+		.toLowerCase()
+		.replace(/[^a-z0-9_+-]/g, "")
+		.slice(0, 32);
 	const hasManyLines = t.split("\n").length >= 3;
+	const hasIndentedCode = /(^|\n)(?:\t| {4,})\S/.test(t);
+	const hasStacktrace = /(^|\n)\s*at\s+\S+\s*\(/.test(t) || /(^|\n)\w+Exception\b/.test(t);
+	const hasShell = /(^|\n)\s*(\$|#)\s+\S+/.test(t);
+	const maybeJson = /^[\[{]/.test(t) && /[\]}]$/.test(t) && t.length <= 200000;
+	let isJson = false;
+	if (maybeJson) {
+		try {
+			const parsed = JSON.parse(t);
+			isJson = parsed !== null && typeof parsed === "object";
+		} catch {
+			isJson = false;
+		}
+	}
 	const looksLikeCode =
 		hasCodeFence ||
+		hasIndentedCode ||
+		hasStacktrace ||
+		isJson ||
 		(hasManyLines && /[{};]/.test(t)) ||
 		/\b(const|let|var|function|class|import|export|return|def|SELECT|INSERT|UPDATE)\b/i.test(
 			t
@@ -323,6 +346,18 @@ function classifyText(text) {
 	else if (hasTodo) kind = "todo";
 
 	tags.push(kind);
+	if (fenceLang && kind === "code") tags.push(`lang-${fenceLang}`);
+	if (isJson) tags.push("json");
+	if (hasStacktrace) tags.push("stacktrace");
+	if (hasShell) tags.push("shell");
+	// Grobe Sprach-Erkennung (Regex, heuristisch)
+	if (kind === "code") {
+		if (/\b(def\s+\w+\(|import\s+\w+|print\()\b/.test(t)) tags.push("python");
+		if (/\b(const|let|var|=>|console\.)\b/.test(t)) tags.push("javascript");
+		if (/\b(public\s+class|System\.out\.println|import\s+java\.)\b/.test(t)) tags.push("java");
+		if (/\bSELECT\b[\s\S]*\bFROM\b/i.test(t) || /\bINSERT\b[\s\S]*\bINTO\b/i.test(t)) tags.push("sql");
+		if (/(^|\n)\s*[A-Za-z0-9_-]+:\s*\S+/.test(t) && hasManyLines) tags.push("yaml");
+	}
 	if (hasMarkdown && kind !== "code") tags.push("markdown");
 	tags.push(...extractHashtags(t));
 

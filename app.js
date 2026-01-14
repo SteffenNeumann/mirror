@@ -160,6 +160,8 @@
 	let psState = { authed: false, email: "", tags: [], notes: [] };
 	let psActiveTag = "";
 	let psEditingNoteId = "";
+	let psEditingNoteKind = "";
+	let psEditingNoteTags = [];
 	let previewOpen = false;
 	let md;
 
@@ -203,6 +205,12 @@
 					}
 				},
 			});
+			// Nur sichere Link-Protokolle (kein javascript:, data:, etc.)
+			try {
+				md.validateLink = (url) => /^(https?:|mailto:|tel:)/i.test(String(url || "").trim());
+			} catch {
+				// ignore
+			}
 			// GFM bits
 			try {
 				md.enable(["table", "strikethrough"]);
@@ -237,6 +245,35 @@
 		} catch {
 			md = null;
 			return null;
+		}
+	}
+
+	function renderNoteHtml(note) {
+		const renderer = ensureMarkdown();
+		const text = String((note && note.text) || "");
+		const kind = String((note && note.kind) || "");
+		const tags = Array.isArray(note && note.tags) ? note.tags : [];
+		if (!renderer) {
+			const body = text
+				.replace(/&/g, "&amp;")
+				.replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;");
+			return `<pre class="mt-2 whitespace-pre-wrap break-words text-sm text-slate-100">${body}</pre>`;
+		}
+		let src = text;
+		if (kind === "code" && !/```/.test(text)) {
+			const langTag = tags.find((t) => /^lang-[a-z0-9_+-]{1,32}$/i.test(String(t || "")));
+			const lang = langTag ? String(langTag).slice(5) : "";
+			src = `\n\n\`\`\`${lang}\n${text}\n\`\`\`\n`;
+		}
+		try {
+			return `<div class="md-content mt-2">${renderer.render(src)}</div>`;
+		} catch {
+			const body = text
+				.replace(/&/g, "&amp;")
+				.replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;");
+			return `<pre class="mt-2 whitespace-pre-wrap break-words text-sm text-slate-100">${body}</pre>`;
 		}
 	}
 
@@ -359,10 +396,7 @@
 							`<span class="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-slate-200">#${t}</span>`
 					)
 					.join(" ");
-				const body = String(n.text || "")
-					.replace(/&/g, "&amp;")
-					.replace(/</g, "&lt;")
-					.replace(/>/g, "&gt;");
+				const bodyHtml = renderNoteHtml(n);
 				return `
 					<div data-note-id="${id}" class="group relative cursor-pointer rounded-xl border ${
 					active
@@ -386,18 +420,32 @@
 							<div class="text-xs text-slate-400">${fmtDate(n.createdAt)}</div>
 							<div class="text-[11px] text-slate-300">${chips}</div>
 						</div>
-						<pre class="mt-2 whitespace-pre-wrap break-words text-sm text-slate-100">${body}</pre>
+						<div class="max-h-40 overflow-hidden">${bodyHtml}</div>
 					</div>
 				`;
 			})
 			.join("");
 
 		psList.querySelectorAll("[data-note-id]").forEach((row) => {
+			row.querySelectorAll("a").forEach((a) => {
+				a.addEventListener("click", (ev) => {
+					ev.stopPropagation();
+				});
+			});
+			row.querySelectorAll('input[type="checkbox"]').forEach((i) => {
+				i.addEventListener("click", (ev) => {
+					ev.preventDefault();
+					ev.stopPropagation();
+				});
+			});
+
 			row.addEventListener("click", () => {
 				const id = row.getAttribute("data-note-id") || "";
 				const note = byId.get(id);
 				if (!note || !textarea) return;
 				psEditingNoteId = id;
+				psEditingNoteKind = String(note.kind || "");
+				psEditingNoteTags = Array.isArray(note.tags) ? note.tags : [];
 				textarea.value = String(note.text || "");
 				textarea.focus();
 				if (psHint) psHint.textContent = "Bearbeiten: Text rechts angepasst.";
@@ -815,6 +863,8 @@
 	if (psNewNote) {
 		psNewNote.addEventListener("click", () => {
 			psEditingNoteId = "";
+			psEditingNoteKind = "";
+			psEditingNoteTags = [];
 			if (psMainHint) psMainHint.classList.add("hidden");
 			if (psHint) psHint.textContent = "Neuer Eintrag.";
 		});
