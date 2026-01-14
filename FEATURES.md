@@ -29,6 +29,11 @@ Diese Liste ist bewusst breit. Sie dient als Ideenspeicher für zukünftige Iter
   - `Copy as Markdown`
   - `Copy as HTML` (optional)
 
+## Code Runner (Snippets)
+
+- Snippets ausführen (Preview / Personal Space): Python (Pyodide) & JavaScript
+- Python-Init Timeout Workaround (falls CDN blockiert/Netz langsam): Seite mit `?pyodide=https://pyodide-cdn2.iodide.io/v0.25.1/full/` öffnen
+
 ## Kollaboration (Realtime)
 
 - Präsenz: „X Nutzer online in diesem Raum“
