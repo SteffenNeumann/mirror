@@ -24,6 +24,9 @@ let db;
 let stmtUserGet;
 let stmtUserInsert;
 let stmtNoteInsert;
+let stmtNoteGetByIdUser;
+let stmtNoteUpdate;
+let stmtNoteDelete;
 let stmtNotesByUser;
 let stmtNotesByUserAndTag;
 let stmtTagsByUser;
@@ -83,6 +86,13 @@ function initDb() {
 	stmtNoteInsert = db.prepare(
 		"INSERT INTO notes(id, user_id, text, kind, tags_json, created_at) VALUES(?, ?, ?, ?, ?, ?)"
 	);
+	stmtNoteGetByIdUser = db.prepare(
+		"SELECT id, text, kind, tags_json, created_at FROM notes WHERE id = ? AND user_id = ?"
+	);
+	stmtNoteUpdate = db.prepare(
+		"UPDATE notes SET text = ?, kind = ?, tags_json = ? WHERE id = ? AND user_id = ?"
+	);
+	stmtNoteDelete = db.prepare("DELETE FROM notes WHERE id = ? AND user_id = ?");
 	stmtNotesByUser = db.prepare(
 		"SELECT id, text, kind, tags_json, created_at FROM notes WHERE user_id = ? ORDER BY created_at DESC LIMIT 500"
 	);
@@ -290,6 +300,14 @@ function classifyText(text) {
 	const hasEmail = /\b[^@\s]+@[^@\s]+\.[^@\s]+\b/i.test(t);
 	const hasPhone = /\b\+?\d[\d\s()\-]{7,}\d\b/.test(t);
 	const hasTodo = /(^|\n)\s*(?:-\s*\[\s*\]|TODO:)/i.test(t);
+	const hasMarkdown =
+		/(^|\n)\s{0,3}#{1,6}\s+/.test(t) ||
+		/(^|\n)\s*(?:[-*+]|\d+\.)\s+/.test(t) ||
+		/(^|\n)\s*>\s+/.test(t) ||
+		/(^|\n)\s*\|.+\|\s*$/.test(t) ||
+		/(^|\n)\s*[-*]\s*\[[ xX]\]\s+/.test(t) ||
+		/\*\*[^*]+\*\*/.test(t) ||
+		/`[^`]+`/.test(t);
 	const hasAddress =
 		/\b\d{5}\b/.test(t) ||
 		/\b\d{1,4}\s+[^\n,]+\s+(?:str\.|straße|strasse|weg|gasse|platz|allee|road|rd\.|avenue|ave\.)\b/i.test(
@@ -305,6 +323,7 @@ function classifyText(text) {
 	else if (hasTodo) kind = "todo";
 
 	tags.push(kind);
+	if (hasMarkdown && kind !== "code") tags.push("markdown");
 	tags.push(...extractHashtags(t));
 
 	return { kind, tags: uniq(tags) };
@@ -604,6 +623,69 @@ const server = http.createServer((req, res) => {
 			})
 			.catch(() => json(res, 400, { ok: false, error: "invalid_json" }));
 		return;
+	}
+
+	{
+		const m = url.pathname.match(/^\/api\/notes\/([a-zA-Z0-9_-]{8,80})$/);
+		const noteId = m ? String(m[1] || "") : "";
+		if (noteId && req.method === "PUT") {
+			const email = getAuthedEmail(req);
+			if (!email) {
+				json(res, 401, { ok: false, error: "unauthorized" });
+				return;
+			}
+			readJson(req)
+				.then((body) => {
+					const textVal = String(body && body.text ? body.text : "").trim();
+					if (!textVal) {
+						json(res, 400, { ok: false, error: "empty" });
+						return;
+					}
+					const userId = getOrCreateUserId(email);
+					initDb();
+					const existing = stmtNoteGetByIdUser.get(noteId, userId);
+					if (!existing) {
+						json(res, 404, { ok: false, error: "not_found" });
+						return;
+					}
+					const { kind, tags } = classifyText(textVal);
+					stmtNoteUpdate.run(
+						textVal,
+						kind,
+						JSON.stringify(tags),
+						noteId,
+						userId
+					);
+					json(res, 200, {
+						ok: true,
+						note: {
+							id: noteId,
+							text: textVal,
+							kind,
+							tags,
+							createdAt: existing.created_at,
+						},
+					});
+				})
+				.catch(() => json(res, 400, { ok: false, error: "invalid_json" }));
+			return;
+		}
+		if (noteId && req.method === "DELETE") {
+			const email = getAuthedEmail(req);
+			if (!email) {
+				json(res, 401, { ok: false, error: "unauthorized" });
+				return;
+			}
+			const userId = getOrCreateUserId(email);
+			initDb();
+			const info = stmtNoteDelete.run(noteId, userId);
+			if (!info || info.changes < 1) {
+				json(res, 404, { ok: false, error: "not_found" });
+				return;
+			}
+			json(res, 200, { ok: true });
+			return;
+		}
 	}
 
 	if (url.pathname === "/api/notes" && req.method === "GET") {

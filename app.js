@@ -15,6 +15,10 @@
 	const metaLeft = document.getElementById("metaLeft");
 	const metaRight = document.getElementById("metaRight");
 	const toastRoot = document.getElementById("toastRoot");
+	const editorPreviewGrid = document.getElementById("editorPreviewGrid");
+	const previewPanel = document.getElementById("previewPanel");
+	const mdPreview = document.getElementById("mdPreview");
+	const togglePreview = document.getElementById("togglePreview");
 
 	// Personal Space elements (optional)
 	const psUnauthed = document.getElementById("psUnauthed");
@@ -23,11 +27,12 @@
 	const psDevLink = document.getElementById("psDevLink");
 	const psEmail = document.getElementById("psEmail");
 	const psTags = document.getElementById("psTags");
-	const psInput = document.getElementById("psInput");
-	const psSave = document.getElementById("psSave");
+	const psNewNote = document.getElementById("psNewNote");
 	const psList = document.getElementById("psList");
 	const psHint = document.getElementById("psHint");
 	const psLogout = document.getElementById("psLogout");
+	const psSaveMain = document.getElementById("psSaveMain");
+	const psMainHint = document.getElementById("psMainHint");
 
 	const params = new URLSearchParams(location.search);
 	const defaultWsUrl =
@@ -154,6 +159,120 @@
 
 	let psState = { authed: false, email: "", tags: [], notes: [] };
 	let psActiveTag = "";
+	let psEditingNoteId = "";
+	let previewOpen = false;
+	let md;
+
+	function ensureMarkdown() {
+		if (md) return md;
+		if (typeof window.markdownit !== "function") return null;
+		try {
+			md = window.markdownit({
+				html: false,
+				linkify: true,
+				breaks: true,
+				typographer: true,
+				highlight: (str, lang) => {
+					const escaped = md.utils.escapeHtml(str);
+					const cls = lang
+						? `language-${String(lang).replace(/[^a-z0-9_-]/gi, "")}`
+						: "";
+					return `<pre class=\"hljs\"><code class=\"${cls}\">${escaped}</code></pre>`;
+				},
+			});
+			// GFM bits
+			try {
+				md.enable(["table", "strikethrough"]);
+			} catch {
+				// ignore
+			}
+			if (typeof window.markdownitTaskLists === "function") {
+				md.use(window.markdownitTaskLists, {
+					enabled: true,
+					label: true,
+					labelAfter: true,
+				});
+			}
+			// Links in neuer Tab + sicher
+			const defaultRender =
+				md.renderer.rules.link_open ||
+				function (tokens, idx, options, env, self) {
+					return self.renderToken(tokens, idx, options);
+				};
+			md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
+				const token = tokens[idx];
+				const setAttr = (name, value) => {
+					const i = token.attrIndex(name);
+					if (i < 0) token.attrPush([name, value]);
+					else token.attrs[i][1] = value;
+				};
+				setAttr("target", "_blank");
+				setAttr("rel", "noopener noreferrer");
+				return defaultRender(tokens, idx, options, env, self);
+			};
+			return md;
+		} catch {
+			md = null;
+			return null;
+		}
+	}
+
+	function setPreviewVisible(next) {
+		previewOpen = Boolean(next);
+		if (!previewPanel || !editorPreviewGrid) return;
+		previewPanel.classList.toggle("hidden", !previewOpen);
+		editorPreviewGrid.className = previewOpen
+			? "grid grid-cols-1 gap-3 lg:grid-cols-2"
+			: "grid grid-cols-1 gap-3 lg:grid-cols-1";
+		if (togglePreview) {
+			togglePreview.textContent = previewOpen ? "Preview aus" : "Preview";
+		}
+		if (previewOpen) updatePreview();
+	}
+
+	function updatePreview() {
+		if (!previewOpen || !mdPreview) return;
+		const renderer = ensureMarkdown();
+		if (!renderer) return;
+		const src = String(textarea && textarea.value ? textarea.value : "");
+		let bodyHtml = "";
+		try {
+			bodyHtml = renderer.render(src);
+		} catch {
+			bodyHtml = "";
+		}
+
+		const doc = `<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+  <style>
+    :root{color-scheme:dark;}
+    body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:#020617;color:#e2e8f0;}
+    a{color:#60a5fa;}
+    code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;}
+    pre{overflow:auto;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;background:rgba(2,6,23,.6);}
+    code{background:rgba(255,255,255,.06);padding:.15em .35em;border-radius:.35em;}
+    pre code{background:transparent;padding:0;}
+    h1,h2,h3{line-height:1.25;}
+    table{border-collapse:collapse;width:100%;}
+    th,td{border:1px solid rgba(255,255,255,.12);padding:6px 8px;}
+    blockquote{border-left:3px solid rgba(217,70,239,.45);margin:0;padding:0 12px;color:#cbd5e1;}
+    ul.task-list{list-style:none;padding-left:0;}
+    ul.task-list li{display:flex;gap:.55rem;align-items:flex-start;}
+    ul.task-list input[type=checkbox]{margin-top:.2rem;}
+  </style>
+</head>
+<body>
+  <div id="content">${bodyHtml}</div>
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/highlight.min.js"></script>
+  <script>try{hljs.highlightAll();}catch(e){}<\/script>
+</body>
+</html>`;
+		mdPreview.srcdoc = doc;
+	}
 
 	function renderPsTags(tags) {
 		if (!psTags) return;
@@ -194,8 +313,11 @@
 				'<div class="text-xs text-slate-400">Noch keine Notizen.</div>';
 			return;
 		}
+		const byId = new Map(items.map((n) => [String(n.id || ""), n]));
 		psList.innerHTML = items
 			.map((n) => {
+				const id = String(n.id || "");
+				const active = id && id === psEditingNoteId;
 				const tags = Array.isArray(n.tags) ? n.tags : [];
 				const chips = tags
 					.slice(0, 6)
@@ -209,7 +331,24 @@
 					.replace(/</g, "&lt;")
 					.replace(/>/g, "&gt;");
 				return `
-					<div class="rounded-xl border border-white/10 bg-slate-950/25 p-3">
+					<div data-note-id="${id}" class="group relative cursor-pointer rounded-xl border ${
+					active
+						? "border-fuchsia-400/40 bg-fuchsia-500/10"
+						: "border-white/10 bg-slate-950/25 hover:bg-slate-950/35"
+				} p-3">
+						<button
+							type="button"
+							data-action="delete"
+							class="absolute right-2 top-2 hidden rounded-md border border-white/10 bg-slate-950/60 p-1.5 text-slate-200 shadow-soft backdrop-blur transition group-hover:flex hover:bg-slate-950/80"
+							title="L f6schen">
+							<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+								<path d="M3 6h18" />
+								<path d="M8 6V4h8v2" />
+								<path d="M19 6l-1 14H6L5 6" />
+								<path d="M10 11v6" />
+								<path d="M14 11v6" />
+							</svg>
+						</button>
 						<div class="flex items-center justify-between gap-2">
 							<div class="text-xs text-slate-400">${fmtDate(n.createdAt)}</div>
 							<div class="text-[11px] text-slate-300">${chips}</div>
@@ -219,6 +358,48 @@
 				`;
 			})
 			.join("");
+
+		psList.querySelectorAll("[data-note-id]").forEach((row) => {
+			row.addEventListener("click", () => {
+				const id = row.getAttribute("data-note-id") || "";
+				const note = byId.get(id);
+				if (!note || !textarea) return;
+				psEditingNoteId = id;
+				textarea.value = String(note.text || "");
+				textarea.focus();
+				if (psHint) psHint.textContent = "Bearbeiten: Text rechts angepasst.";
+				if (psMainHint) {
+					psMainHint.classList.remove("hidden");
+					psMainHint.textContent = "Bearbeiten aktiv";
+				}
+				updatePreview();
+				renderPsList(items);
+			});
+
+			const delBtn = row.querySelector('[data-action="delete"]');
+			if (delBtn) {
+				delBtn.addEventListener("click", async (ev) => {
+					ev.preventDefault();
+					ev.stopPropagation();
+					const id = row.getAttribute("data-note-id") || "";
+					if (!id) return;
+					if (!window.confirm("Notiz wirklich l f6schen?")) return;
+					try {
+						await api(`/api/notes/${encodeURIComponent(id)}`, {
+							method: "DELETE",
+						});
+						if (psEditingNoteId === id) {
+							psEditingNoteId = "";
+							if (psMainHint) psMainHint.classList.add("hidden");
+						}
+						toast("Notiz gel f6scht.", "success");
+						await refreshPersonalSpace();
+					} catch {
+						toast("L f6schen fehlgeschlagen.", "error");
+					}
+				});
+			}
+		});
 	}
 
 	async function refreshPersonalSpace() {
@@ -567,6 +748,7 @@
 	textarea.addEventListener("input", () => {
 		metaLeft.textContent = "Tippen…";
 		scheduleSend();
+		updatePreview();
 	});
 
 	window.addEventListener("hashchange", () => {
@@ -597,24 +779,51 @@
 	if (addPersonalSpaceBtn) {
 		addPersonalSpaceBtn.addEventListener("click", requestPersonalSpaceLink);
 	}
-	if (psSave) {
-		psSave.addEventListener("click", async () => {
-			if (!psInput) return;
-			const text = String(psInput.value || "").trim();
+	if (psNewNote) {
+		psNewNote.addEventListener("click", () => {
+			psEditingNoteId = "";
+			if (psMainHint) psMainHint.classList.add("hidden");
+			if (psHint) psHint.textContent = "Neuer Eintrag.";
+		});
+	}
+	if (psSaveMain) {
+		psSaveMain.addEventListener("click", async () => {
+			const text = String(
+				textarea && textarea.value ? textarea.value : ""
+			).trim();
 			if (!text) return;
-			try {
-				if (psHint) psHint.textContent = "Speichere…";
-				await api("/api/notes", {
-					method: "POST",
-					body: JSON.stringify({ text }),
-				});
-				psInput.value = "";
-				if (psHint) psHint.textContent = "Gespeichert.";
-				await refreshPersonalSpace();
-			} catch {
-				if (psHint) psHint.textContent = "Nicht gespeichert (Login?).";
-				toast("Speichern fehlgeschlagen.", "error");
+			if (!psState || !psState.authed) {
+				toast("Bitte erst Personal Space aktivieren (Login).", "error");
+				return;
 			}
+			try {
+				if (psHint)
+					psHint.textContent = psEditingNoteId ? "Aktualisiere…" : "Speichere…";
+				if (!psEditingNoteId) {
+					await api("/api/notes", {
+						method: "POST",
+						body: JSON.stringify({ text }),
+					});
+					if (psHint) psHint.textContent = "Gespeichert.";
+				} else {
+					await api(`/api/notes/${encodeURIComponent(psEditingNoteId)}`, {
+						method: "PUT",
+						body: JSON.stringify({ text }),
+					});
+					if (psHint) psHint.textContent = "Aktualisiert.";
+				}
+				toast("Personal Space: gespeichert.", "success");
+				await refreshPersonalSpace();
+			} catch (e) {
+				if (psHint) psHint.textContent = "Nicht gespeichert (Login?).";
+				const msg = e && e.message ? String(e.message) : "Fehler";
+				toast(`Speichern fehlgeschlagen: ${msg}`, "error");
+			}
+		});
+	}
+	if (togglePreview) {
+		togglePreview.addEventListener("click", () => {
+			setPreviewVisible(!previewOpen);
 		});
 	}
 	if (psLogout) {

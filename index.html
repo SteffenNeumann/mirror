@@ -88,23 +88,19 @@
 						</div>
 
 						<div class="mt-3 flex flex-wrap gap-2" id="psTags"></div>
-
-						<label for="psInput" class="sr-only">Notiz</label>
-						<textarea
-							id="psInput"
-							class="mt-3 h-28 w-full resize-none rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 text-sm leading-relaxed text-slate-100 placeholder:text-slate-500 shadow-inner outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25"
-							placeholder="Notiz, Link, Adresse, Code… (#tags optional)"
-							autocomplete="off"
-							spellcheck="false"></textarea>
-						<div class="mt-2 flex items-center justify-between gap-2">
+						<div class="mt-3 flex items-center justify-between gap-2">
 							<button
-								id="psSave"
+								id="psNewNote"
 								type="button"
-								class="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-slate-100 transition hover:bg-white/15 active:bg-white/20">
-								Speichern
+								class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10">
+								Neu
 							</button>
 							<span id="psHint" class="text-xs text-slate-400"></span>
 						</div>
+						<p class="mt-2 text-xs text-slate-400">
+							Zum Speichern/Bearbeiten nutze den großen Editor rechts und klicke
+							<span class="font-medium text-slate-200">„Speichern“</span>.
+						</p>
 
 						<div class="mt-4">
 							<div class="text-xs font-medium text-slate-200">Inhalte</div>
@@ -178,23 +174,54 @@
 					</header>
 
 					<div class="mt-5 sm:mt-6">
-						<label for="mirror" class="sr-only">Text</label>
-						<textarea
-							id="mirror"
-							class="h-56 sm:h-72 w-full resize-none rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3 font-sans text-base leading-relaxed text-slate-100 placeholder:text-slate-500 shadow-inner outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25"
-							placeholder="Tippe etwas – alle mit diesem Link sehen es sofort…"
-							autocomplete="off"
-							spellcheck="false"></textarea>
-						<div
-							class="mt-3 flex items-center justify-between text-xs text-slate-400">
-							<span id="metaLeft">Bereit.</span>
-							<span id="metaRight"></span>
+						<div id="editorPreviewGrid" class="grid grid-cols-1 gap-3 lg:grid-cols-1">
+							<div class="min-w-0">
+								<label for="mirror" class="sr-only">Text</label>
+								<textarea
+									id="mirror"
+									class="h-56 sm:h-72 w-full resize-none rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3 font-sans text-base leading-relaxed text-slate-100 placeholder:text-slate-500 shadow-inner outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25"
+									placeholder="Tippe etwas – alle mit diesem Link sehen es sofort…"
+									autocomplete="off"
+									spellcheck="false"></textarea>
+								<div class="mt-3 flex flex-wrap items-center justify-between gap-2">
+									<div class="flex items-center gap-2">
+										<button
+											id="psSaveMain"
+											type="button"
+											class="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-slate-100 transition hover:bg-white/15 active:bg-white/20">
+											Speichern
+										</button>
+										<button
+											id="togglePreview"
+											type="button"
+											class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10">
+											Preview
+										</button>
+									</div>
+									<div class="flex items-center gap-3 text-xs text-slate-400">
+										<span id="metaLeft">Bereit.</span>
+										<span id="metaRight"></span>
+										<span id="psMainHint" class="hidden"></span>
+									</div>
+								</div>
+							</div>
+							<div id="previewPanel" class="hidden overflow-hidden rounded-xl border border-white/10 bg-slate-950/25">
+								<iframe
+									id="mdPreview"
+									title="Markdown Preview"
+									class="h-[340px] w-full"
+									sandbox="allow-scripts allow-popups"
+									referrerpolicy="no-referrer"></iframe>
+							</div>
 						</div>
 					</div>
 				</section>
 			</div>
 		</main>
 
+		<!-- Markdown Preview libs (client-side, no build step) -->
+		<script src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/markdown-it-task-lists@2.1.1/dist/markdown-it-task-lists.min.js"></script>
 		<script src="/app.js"></script>
 	</body>
 </html>
