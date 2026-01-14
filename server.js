@@ -35,6 +35,8 @@ let stmtTokenGet;
 let stmtTokenDelete;
 let stmtMetaGet;
 let stmtMetaInsert;
+let stmtRoomStateGet;
+let stmtRoomStateUpsert;
 
 function ensureDbDir() {
 	try {
@@ -56,6 +58,13 @@ function initDb() {
 			key TEXT PRIMARY KEY,
 			value TEXT NOT NULL
 		);
+		CREATE TABLE IF NOT EXISTS room_state (
+			rk TEXT PRIMARY KEY,
+			text TEXT NOT NULL,
+			ts INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL
+		);
+		CREATE INDEX IF NOT EXISTS idx_room_state_updated ON room_state(updated_at DESC);
 		CREATE TABLE IF NOT EXISTS users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			email TEXT NOT NULL UNIQUE,
@@ -113,6 +122,24 @@ function initDb() {
 	stmtMetaInsert = db.prepare(
 		"INSERT INTO meta(key, value) VALUES(?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
 	);
+	stmtRoomStateGet = db.prepare("SELECT text, ts FROM room_state WHERE rk = ?");
+	stmtRoomStateUpsert = db.prepare(
+		"INSERT INTO room_state(rk, text, ts, updated_at) VALUES(?, ?, ?, ?) ON CONFLICT(rk) DO UPDATE SET text = excluded.text, ts = excluded.ts, updated_at = excluded.updated_at"
+	);
+}
+
+function loadPersistedRoomState(rk) {
+	initDb();
+	const row = stmtRoomStateGet.get(rk);
+	if (!row) return null;
+	const ts = typeof row.ts === "number" ? row.ts : Number(row.ts) || 0;
+	return { text: String(row.text ?? ""), ts };
+}
+
+function persistRoomState(rk, text, ts) {
+	initDb();
+	const safeTs = typeof ts === "number" ? ts : Date.now();
+	stmtRoomStateUpsert.run(String(rk), String(text ?? ""), safeTs, Date.now());
 }
 
 function getSigningSecret() {
@@ -804,7 +831,14 @@ wss.on("connection", (ws, req) => {
 	const sockets = getRoomSockets(rk);
 	sockets.add(ws);
 
-	const existing = roomState.get(rk);
+	let existing = roomState.get(rk);
+	if (!existing) {
+		const persisted = loadPersistedRoomState(rk);
+		if (persisted) {
+			existing = persisted;
+			roomState.set(rk, persisted);
+		}
+	}
 	if (existing) {
 		ws.send(
 			JSON.stringify({
@@ -828,12 +862,20 @@ wss.on("connection", (ws, req) => {
 			if (prev && prev.ts > ts) return;
 
 			roomState.set(rk, { text, ts });
+			persistRoomState(rk, text, ts);
 			broadcast(rk, { type: "set", room, text, ts }, ws);
 			return;
 		}
 
 		if (msg.type === "request_state") {
-			const cur = roomState.get(rk);
+			let cur = roomState.get(rk);
+			if (!cur) {
+				const persisted = loadPersistedRoomState(rk);
+				if (persisted) {
+					cur = persisted;
+					roomState.set(rk, persisted);
+				}
+			}
 			if (cur) {
 				ws.send(
 					JSON.stringify({ type: "set", room, text: cur.text, ts: cur.ts })
