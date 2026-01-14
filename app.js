@@ -61,6 +61,21 @@
 	// Override möglich: ?ws=wss://example.com/ws
 	const wsBaseUrl = params.get("ws") || defaultWsUrl;
 	const debug = params.get("debug") === "1";
+	const pyodideBaseOverrideRaw =
+		params.get("pyodide") || params.get("pyodideBase") || "";
+
+	function normalizeBaseUrl(raw) {
+		const v = String(raw || "").trim();
+		if (!v) return "";
+		return v.endsWith("/") ? v : v + "/";
+	}
+
+	const pyodideBaseOverride = normalizeBaseUrl(pyodideBaseOverrideRaw);
+	const PYODIDE_BASE_URLS = [
+		pyodideBaseOverride,
+		"https://cdn.jsdelivr.net/pyodide/v0.25.1/full/",
+		"https://pyodide-cdn2.iodide.io/v0.25.1/full/",
+	].filter(Boolean);
 
 	const clientId = crypto.randomUUID
 		? crypto.randomUUID()
@@ -956,15 +971,37 @@
 	function ensurePyRunnerWorker() {
 		if (pyRunnerWorker) return pyRunnerWorker;
 		try {
+			const baseUrls = JSON.stringify(PYODIDE_BASE_URLS);
 			const workerCode = `
 let pyodide = null;
 let pyodideReady = null;
+const BASE_URLS = ${baseUrls};
+
+function normalizeBase(raw) {
+	const v = String(raw || '').trim();
+	if (!v) return '';
+	return v.endsWith('/') ? v : v + '/';
+}
 
 async function ensurePyodide() {
   if (pyodide) return pyodide;
   if (!pyodideReady) {
-    importScripts('https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js');
-    pyodideReady = loadPyodide();
+		pyodideReady = (async () => {
+			let lastErr = null;
+			const bases = Array.isArray(BASE_URLS) ? BASE_URLS : [];
+			for (const b of bases) {
+				const base = normalizeBase(b);
+				if (!base) continue;
+				try {
+					importScripts(base + 'pyodide.js');
+					const py = await loadPyodide({ indexURL: base });
+					return py;
+				} catch (e) {
+					lastErr = e;
+				}
+			}
+			throw lastErr || new Error('Pyodide konnte nicht geladen werden.');
+		})();
   }
   pyodide = await pyodideReady;
   return pyodide;
@@ -1117,7 +1154,7 @@ self.onmessage = async (e) => {
 			return {
 				ok: false,
 				error:
-					"Python-Init Timeout. Vermutlich Pyodide-CDN blockiert oder Netzwerk zu langsam.",
+					"Python-Init Timeout. Vermutlich ist das Pyodide-CDN blockiert oder das Netzwerk zu langsam. Workaround: Seite mit ?pyodide=https://pyodide-cdn2.iodide.io/v0.25.1/full/ öffnen.",
 			};
 		}
 		if (res && res.error) {
