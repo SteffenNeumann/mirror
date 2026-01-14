@@ -202,6 +202,32 @@
 									class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10">
 									Neu
 								</button>
+								<div class="flex items-center gap-2">
+									<label for="favoritesSelect" class="sr-only">Favoriten</label>
+									<select
+										id="favoritesSelect"
+										class="w-44 sm:w-56 rounded-lg border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25">
+										<option value="">Favoriten…</option>
+									</select>
+									<button
+										id="toggleFavorite"
+										type="button"
+										class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/10 text-slate-100 transition hover:bg-white/15 active:bg-white/20"
+										title="Als Favorit speichern/entfernen"
+										aria-label="Als Favorit speichern/entfernen">
+										<svg
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											class="h-5 w-5">
+											<path
+												d="M12 17.3l-6.18 3.25 1.18-6.88L2 8.9l6.9-1L12 1.8l3.1 6.1 6.9 1-5 4.77 1.18 6.88z" />
+										</svg>
+									</button>
+								</div>
 							</div>
 						</div>
 
@@ -309,7 +335,7 @@
 		<!-- Markdown Preview libs (client-side, no build step) -->
 		<script src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/markdown-it-task-lists@2.1.1/dist/markdown-it-task-lists.min.js"></script>
-		<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/highlight.min.js"></script>
+		<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
 		<script src="/app.js?v=2026-01-14"></script>
 	</body>
 </html>

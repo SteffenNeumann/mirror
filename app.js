@@ -12,6 +12,8 @@
 	const roomOptions = document.getElementById("roomOptions");
 	const joinRoomBtn = document.getElementById("joinRoom");
 	const newRoomBtn = document.getElementById("newRoom");
+	const favoritesSelect = document.getElementById("favoritesSelect");
+	const toggleFavoriteBtn = document.getElementById("toggleFavorite");
 	const metaLeft = document.getElementById("metaLeft");
 	const metaRight = document.getElementById("metaRight");
 	const toastRoot = document.getElementById("toastRoot");
@@ -255,6 +257,26 @@
 		}
 	}
 
+	function applyHljsToHtml(html) {
+		try {
+			if (!window.hljs || typeof window.hljs.highlightElement !== "function") {
+				return html;
+			}
+			const container = document.createElement("div");
+			container.innerHTML = html;
+			container.querySelectorAll("pre code").forEach((codeEl) => {
+				try {
+					window.hljs.highlightElement(codeEl);
+				} catch {
+					// ignore
+				}
+			});
+			return container.innerHTML;
+		} catch {
+			return html;
+		}
+	}
+
 	function renderNoteHtml(note) {
 		const renderer = ensureMarkdown();
 		const text = String((note && note.text) || "");
@@ -280,7 +302,8 @@
 			src = `\n\n\`\`\`${lang}\n${text}\n\`\`\`\n`;
 		}
 		try {
-			return `<div class="md-content mt-2">${renderer.render(src)}</div>`;
+			const rendered = renderer.render(src);
+			return `<div class="md-content mt-2">${applyHljsToHtml(rendered)}</div>`;
 		} catch {
 			const body = text
 				.replace(/&/g, "&amp;")
@@ -324,7 +347,7 @@
 		const src = String(textarea && textarea.value ? textarea.value : "");
 		let bodyHtml = "";
 		try {
-			bodyHtml = renderer.render(src);
+			bodyHtml = applyHljsToHtml(renderer.render(src));
 		} catch {
 			bodyHtml = "";
 		}
@@ -635,6 +658,76 @@
 	}
 
 	const RECENT_KEY = "mirror_recent_rooms";
+	const FAVORITES_KEY = "mirror_favorites_v1";
+
+	function loadFavorites() {
+		try {
+			const raw = localStorage.getItem(FAVORITES_KEY);
+			const parsed = JSON.parse(raw || "[]");
+			if (!Array.isArray(parsed)) return [];
+			return parsed
+				.map((it) => {
+					const roomName = normalizeRoom(it && it.room);
+					const keyName = normalizeKey(it && it.key);
+					const addedAt = Number(it && it.addedAt) || 0;
+					if (!roomName) return null;
+					return { room: roomName, key: keyName, addedAt };
+				})
+				.filter(Boolean);
+		} catch {
+			return [];
+		}
+	}
+
+	function saveFavorites(list) {
+		try {
+			localStorage.setItem(FAVORITES_KEY, JSON.stringify(list || []));
+		} catch {
+			// ignore
+		}
+	}
+
+	function findFavoriteIndex(roomName, keyName) {
+		const favs = loadFavorites();
+		return favs.findIndex((f) => f.room === roomName && f.key === keyName);
+	}
+
+	function renderFavorites() {
+		if (!favoritesSelect) return;
+		const favs = loadFavorites().sort(
+			(a, b) => (b.addedAt || 0) - (a.addedAt || 0)
+		);
+		const options = favs
+			.map((f) => {
+				const value = buildShareHash(f.room, f.key);
+				const label = f.key ? `${f.room} (privat)` : f.room;
+				return `<option value="${value}">${label}</option>`;
+			})
+			.join("");
+		favoritesSelect.innerHTML = `<option value="">Favoriten…</option>${options}`;
+	}
+
+	function updateFavoriteButton() {
+		if (!toggleFavoriteBtn) return;
+		const active = findFavoriteIndex(room, key) >= 0;
+		toggleFavoriteBtn.classList.toggle("border-fuchsia-400/40", active);
+		toggleFavoriteBtn.classList.toggle("bg-fuchsia-500/15", active);
+		toggleFavoriteBtn.classList.toggle("text-fuchsia-100", active);
+	}
+
+	function updateFavoritesUI() {
+		renderFavorites();
+		updateFavoriteButton();
+		if (favoritesSelect) {
+			const current = buildShareHash(room, key);
+			const esc =
+				window.CSS && typeof window.CSS.escape === "function"
+					? window.CSS.escape(current)
+					: current.replace(/"/g, "\\\"");
+			const has = favoritesSelect.querySelector(`option[value="${esc}"]`);
+			favoritesSelect.value = has ? current : "";
+		}
+	}
 	function loadRecentRooms() {
 		try {
 			const raw = localStorage.getItem(RECENT_KEY);
@@ -666,6 +759,7 @@
 	roomInput.value = room;
 	saveRecentRoom(room);
 	renderRecentRooms();
+	updateFavoritesUI();
 
 	function setStatus(kind, text) {
 		statusText.textContent = text;
@@ -847,6 +941,43 @@
 		location.hash = buildShareHash(nextRoom, key);
 	});
 
+	if (favoritesSelect) {
+		favoritesSelect.addEventListener("change", () => {
+			const v = String(favoritesSelect.value || "");
+			if (!v) return;
+			location.hash = v;
+		});
+	}
+	if (toggleFavoriteBtn) {
+		toggleFavoriteBtn.addEventListener("click", () => {
+			const roomName = normalizeRoom(room);
+			const keyName = normalizeKey(key);
+			if (!roomName) return;
+			const favs = loadFavorites();
+			const idx = favs.findIndex(
+				(f) => f.room === roomName && f.key === keyName
+			);
+			if (idx >= 0) {
+				favs.splice(idx, 1);
+				saveFavorites(favs);
+				toast("Favorit entfernt.", "info");
+			} else {
+				const next = [
+					{ room: roomName, key: keyName, addedAt: Date.now() },
+					...favs,
+				]
+					.filter(
+						(f, i, arr) =>
+							arr.findIndex((x) => x.room === f.room && x.key === f.key) === i
+					)
+					.slice(0, 20);
+				saveFavorites(next);
+				toast("Favorit gespeichert.", "success");
+			}
+			updateFavoritesUI();
+		});
+	}
+
 	copyLinkBtn.addEventListener("click", async () => {
 		const href = shareLink.href;
 		try {
@@ -893,6 +1024,7 @@
 		roomInput.value = room;
 		saveRecentRoom(room);
 		renderRecentRooms();
+		updateFavoritesUI();
 		if (!key) toast("Öffentlicher Raum (ohne Key).", "info");
 		connect();
 	});
