@@ -152,12 +152,8 @@
 							<button
 								id="psNewNote"
 								type="button"
-								class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-white/10 px-4 py-2.5 text-sm font-medium text-slate-100 shadow-soft transition hover:bg-white/15 active:bg-white/20">
-								<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-									<path d="M12 5v14" />
-									<path d="M5 12h14" />
-								</svg>
-								Neu
+								class="inline-flex items-center rounded-xl border border-fuchsia-400/20 bg-gradient-to-r from-fuchsia-500/20 via-white/10 to-cyan-400/10 px-4 py-2.5 text-sm font-semibold text-slate-50 shadow-soft transition hover:from-fuchsia-500/25 hover:via-white/15 hover:to-cyan-400/15 active:opacity-90">
+								Neuer Eintrag
 							</button>
 							<span id="psHint" class="pt-2 text-xs text-slate-400"></span>
 						</div>
@@ -327,12 +323,40 @@
 							<div
 								id="previewPanel"
 								class="hidden h-full min-h-56 sm:min-h-72 overflow-hidden rounded-xl border border-white/10 bg-slate-950/25">
-								<iframe
-									id="mdPreview"
-									title="Markdown Preview"
-									class="h-full w-full"
-									sandbox="allow-popups allow-same-origin"
-									referrerpolicy="no-referrer"></iframe>
+								<div class="flex h-full min-h-0 flex-col">
+									<div class="flex items-center justify-between gap-2 border-b border-white/10 bg-slate-950/30 px-3 py-2">
+										<div class="text-xs font-medium text-slate-200">Preview</div>
+										<div class="flex items-center gap-2">
+											<button
+												id="runPreview"
+												type="button"
+												class="rounded-md border border-white/10 bg-white/10 px-2.5 py-1.5 text-xs font-medium text-slate-100 transition hover:bg-white/15 active:bg-white/20"
+												title="Code ausführen (lang-python / lang-js)">
+												Run
+											</button>
+											<button
+												id="clearRunOutput"
+												type="button"
+												class="rounded-md border border-white/10 bg-transparent px-2.5 py-1.5 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+												title="Ausgabe löschen">
+												Clear
+											</button>
+										</div>
+									</div>
+									<iframe
+										id="mdPreview"
+										title="Markdown Preview"
+										class="min-h-0 flex-1"
+										sandbox="allow-popups allow-same-origin"
+										referrerpolicy="no-referrer"></iframe>
+									<div class="border-t border-white/10 bg-slate-950/20 px-3 py-2">
+										<div class="flex items-center justify-between gap-2 text-[11px] text-slate-300">
+											<span>Ausgabe</span>
+											<span id="runStatus" class="text-slate-400"></span>
+										</div>
+										<pre id="runOutput" class="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words text-[12px] leading-relaxed text-slate-100"></pre>
+									</div>
+								</div>
 							</div>
 						</div>
 					</div>

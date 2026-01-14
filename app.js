@@ -21,6 +21,10 @@
 	const previewPanel = document.getElementById("previewPanel");
 	const mdPreview = document.getElementById("mdPreview");
 	const togglePreview = document.getElementById("togglePreview");
+	const runPreviewBtn = document.getElementById("runPreview");
+	const clearRunOutputBtn = document.getElementById("clearRunOutput");
+	const runOutputEl = document.getElementById("runOutput");
+	const runStatusEl = document.getElementById("runStatus");
 
 	// Personal Space elements (optional)
 	const psUnauthed = document.getElementById("psUnauthed");
@@ -172,8 +176,52 @@
 	let psRunOutputById = new Map();
 	let pyRunnerWorker = null;
 	let pyRunnerSeq = 0;
+	let pyRuntimeWarmed = false;
 	let jsRunnerFrame = null;
 	let jsRunnerPending = new Map();
+	let previewRunState = { status: "", output: "", error: "" };
+
+	function escapeHtml(str) {
+		return String(str || "")
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;");
+	}
+
+	function setPreviewRunOutput(state) {
+		previewRunState = state || { status: "", output: "", error: "" };
+		if (runStatusEl) runStatusEl.textContent = previewRunState.status || "";
+		if (!runOutputEl) return;
+		const combined =
+			(previewRunState.output ? String(previewRunState.output) : "") +
+			(previewRunState.error
+				? (previewRunState.output ? "\n" : "") + String(previewRunState.error)
+				: "");
+		runOutputEl.innerHTML = escapeHtml(combined);
+	}
+
+	function parseRunnableFromEditor() {
+		const text = String(textarea && textarea.value ? textarea.value : "");
+		if (!text.trim()) return null;
+
+		// Prefer Personal Space context when editing a code note
+		if (psEditingNoteKind === "code") {
+			const langTag = (psEditingNoteTags || []).find((t) =>
+				/^lang-[a-z0-9_+-]{1,32}$/i.test(String(t || ""))
+			);
+			const lang = langTag ? String(langTag).slice(5).toLowerCase() : "";
+			return { lang, code: text };
+		}
+
+		// Fallback: first fenced code block
+		const m = text.match(/```([a-z0-9_+-]{0,32})\n([\s\S]*?)\n```/i);
+		if (m) {
+			const lang = String(m[1] || "").toLowerCase();
+			const code = String(m[2] || "");
+			return { lang, code };
+		}
+		return null;
+	}
 
 	function ensureMarkdown() {
 		if (md) return md;
@@ -466,11 +514,21 @@
 					/^lang-[a-z0-9_+-]{1,32}$/i.test(String(t || ""))
 				);
 				const lang = langTag ? String(langTag).slice(5).toLowerCase() : "";
-				const canRun = kind === "code" && (lang === "python" || lang === "py" || lang === "javascript" || lang === "js");
+				const canRun =
+					kind === "code" &&
+					(lang === "python" ||
+						lang === "py" ||
+						lang === "javascript" ||
+						lang === "js");
 				const runState = id ? psRunOutputById.get(id) : null;
-				const runOut = runState && typeof runState.output === "string" ? runState.output : "";
-				const runErr = runState && typeof runState.error === "string" ? runState.error : "";
-				const runStatus = runState && runState.status ? String(runState.status) : "";
+				const runOut =
+					runState && typeof runState.output === "string"
+						? runState.output
+						: "";
+				const runErr =
+					runState && typeof runState.error === "string" ? runState.error : "";
+				const runStatus =
+					runState && runState.status ? String(runState.status) : "";
 				const chips = tags
 					.slice(0, 6)
 					.map(
@@ -491,22 +549,25 @@
 						</button>
 					`
 					: "";
-				const runOutHtml = canRun && (runStatus || runOut || runErr)
-					? `
+				const runOutHtml =
+					canRun && (runStatus || runOut || runErr)
+						? `
 						<div class="mt-2 rounded-lg border border-white/10 bg-slate-950/30 p-2">
 							<div class="flex items-center justify-between gap-2 text-[11px] text-slate-300">
 								<span>${runStatus === "running" ? "Ausgabe (läuft…)" : "Ausgabe"}</span>
 								<button type="button" data-action="clear-run" class="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-slate-200 hover:bg-white/10">Clear</button>
 							</div>
-							<pre class="mt-2 max-h-28 overflow-auto whitespace-pre-wrap break-words text-[12px] leading-relaxed text-slate-100">${
-								(runOut || runErr || "")
-									.replace(/&/g, "&amp;")
-									.replace(/</g, "&lt;")
-									.replace(/>/g, "&gt;")
-							}</pre>
+							<pre class="mt-2 max-h-28 overflow-auto whitespace-pre-wrap break-words text-[12px] leading-relaxed text-slate-100">${(
+								runOut ||
+								runErr ||
+								""
+							)
+								.replace(/&/g, "&amp;")
+								.replace(/</g, "&lt;")
+								.replace(/>/g, "&gt;")}</pre>
 						</div>
 					`
-					: "";
+						: "";
 				return `
 					<div data-note-id="${id}" class="group relative cursor-pointer rounded-xl border ${
 					active
@@ -544,33 +605,33 @@
 					ev.stopPropagation();
 				});
 			});
-						const runBtn = row.querySelector('[data-action="run"]');
-						if (runBtn) {
-							runBtn.addEventListener("click", async (ev) => {
-								ev.preventDefault();
-								ev.stopPropagation();
-								const id = row.getAttribute("data-note-id") || "";
-								const note = byId.get(id);
-								if (!note) return;
-								const tags = Array.isArray(note.tags) ? note.tags : [];
-								const langTag = tags.find((t) =>
-									/^lang-[a-z0-9_+-]{1,32}$/i.test(String(t || ""))
-								);
-								const lang = langTag ? String(langTag).slice(5).toLowerCase() : "";
-								await runSnippetForNote(id, lang, String(note.text || ""));
-							});
-						}
-						const clearRunBtn = row.querySelector('[data-action="clear-run"]');
-						if (clearRunBtn) {
-							clearRunBtn.addEventListener("click", (ev) => {
-								ev.preventDefault();
-								ev.stopPropagation();
-								const id = row.getAttribute("data-note-id") || "";
-								if (!id) return;
-								psRunOutputById.delete(id);
-								renderPsList(items);
-							});
-						}
+			const runBtn = row.querySelector('[data-action="run"]');
+			if (runBtn) {
+				runBtn.addEventListener("click", async (ev) => {
+					ev.preventDefault();
+					ev.stopPropagation();
+					const id = row.getAttribute("data-note-id") || "";
+					const note = byId.get(id);
+					if (!note) return;
+					const tags = Array.isArray(note.tags) ? note.tags : [];
+					const langTag = tags.find((t) =>
+						/^lang-[a-z0-9_+-]{1,32}$/i.test(String(t || ""))
+					);
+					const lang = langTag ? String(langTag).slice(5).toLowerCase() : "";
+					await runSnippetForNote(id, lang, String(note.text || ""));
+				});
+			}
+			const clearRunBtn = row.querySelector('[data-action="clear-run"]');
+			if (clearRunBtn) {
+				clearRunBtn.addEventListener("click", (ev) => {
+					ev.preventDefault();
+					ev.stopPropagation();
+					const id = row.getAttribute("data-note-id") || "";
+					if (!id) return;
+					psRunOutputById.delete(id);
+					renderPsList(items);
+				});
+			}
 			row.querySelectorAll('input[type="checkbox"]').forEach((i) => {
 				i.addEventListener("click", (ev) => {
 					ev.preventDefault();
@@ -650,7 +711,10 @@
 		if (!pending) return;
 		try {
 			jsRunnerPending.delete(String(data.id || ""));
-			pending.resolve({ output: String(data.output || ""), error: String(data.error || "") });
+			pending.resolve({
+				output: String(data.output || ""),
+				error: String(data.error || ""),
+			});
 		} catch {
 			// ignore
 		}
@@ -666,6 +730,13 @@
 			const id = `js_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 			const timer = window.setTimeout(() => {
 				jsRunnerPending.delete(id);
+				// Kill runaway scripts by replacing the runner frame
+				try {
+					if (jsRunnerFrame) jsRunnerFrame.remove();
+				} catch {
+					// ignore
+				}
+				jsRunnerFrame = null;
 				resolve({ output: "", error: `Timeout nach ${timeoutMs}ms.` });
 			}, timeoutMs);
 			jsRunnerPending.set(id, {
@@ -702,7 +773,10 @@
 			try {
 				frame.srcdoc = html;
 			} catch {
-				resolve({ output: "", error: "JS Runner konnte nicht gestartet werden." });
+				resolve({
+					output: "",
+					error: "JS Runner konnte nicht gestartet werden.",
+				});
 			}
 		});
 	}
@@ -798,7 +872,10 @@ self.onmessage = async (e) => {
 				} catch {
 					// ignore
 				}
-				resolve({ output: String(data.output || ""), error: String(data.error || "") });
+				resolve({
+					output: String(data.output || ""),
+					error: String(data.error || ""),
+				});
 			};
 			worker.addEventListener("message", onMsg);
 			try {
@@ -821,7 +898,12 @@ self.onmessage = async (e) => {
 		psRunOutputById.set(id, { status: "running", output: "", error: "" });
 		renderPsList(Array.isArray(psState && psState.notes) ? psState.notes : []);
 
-		const timeoutMs = 12000;
+		const timeoutMs =
+			lang === "python" || lang === "py"
+				? pyRuntimeWarmed
+					? 20000
+					: 90000
+				: 12000;
 		let res = { output: "", error: "" };
 		if (lang === "python" || lang === "py") {
 			res = await runPySnippet(code, timeoutMs);
@@ -829,6 +911,10 @@ self.onmessage = async (e) => {
 			res = await runJsSnippet(code, timeoutMs);
 		} else {
 			res = { output: "", error: `Nicht unterstützt: ${lang || "unknown"}` };
+		}
+		if (lang === "python" || lang === "py") {
+			// Mark runtime warmed if we got any non-timeout response
+			if (!/Timeout nach/i.test(String(res.error || ""))) pyRuntimeWarmed = true;
 		}
 
 		const out = String(res.output || "");
@@ -840,6 +926,42 @@ self.onmessage = async (e) => {
 		});
 		renderPsList(Array.isArray(psState && psState.notes) ? psState.notes : []);
 		if (err) toast("Snippet-Fehler (siehe Ausgabe).", "error");
+	}
+
+	async function runSnippetFromPreview() {
+		const parsed = parseRunnableFromEditor();
+		if (!parsed) {
+			setPreviewRunOutput({ status: "", output: "", error: "" });
+			toast(
+				"Kein ausführbarer Code gefunden. Nutze #lang-python/#lang-js oder einen ```lang Codeblock.",
+				"info"
+			);
+			return;
+		}
+		const lang = String(parsed.lang || "").toLowerCase();
+		const code = String(parsed.code || "");
+		setPreviewRunOutput({ status: "läuft…", output: "", error: "" });
+		const timeoutMs =
+			lang === "python" || lang === "py"
+				? pyRuntimeWarmed
+					? 20000
+					: 90000
+				: 12000;
+		let res = { output: "", error: "" };
+		if (lang === "python" || lang === "py") {
+			res = await runPySnippet(code, timeoutMs);
+			if (!/Timeout nach/i.test(String(res.error || ""))) pyRuntimeWarmed = true;
+		} else if (lang === "javascript" || lang === "js" || lang === "javascript" || lang === "node") {
+			res = await runJsSnippet(code, timeoutMs);
+		} else {
+			res = { output: "", error: `Nicht unterstützt: ${lang || "unknown"}` };
+		}
+		setPreviewRunOutput({
+			status: res.error ? "Fehler" : "fertig",
+			output: String(res.output || "").slice(0, 8000),
+			error: String(res.error || "").slice(0, 8000),
+		});
+		if (res.error) toast("Run: Fehler (siehe Ausgabe).", "error");
 	}
 
 	async function refreshPersonalSpace() {
@@ -1395,6 +1517,16 @@ self.onmessage = async (e) => {
 	if (togglePreview) {
 		togglePreview.addEventListener("click", () => {
 			setPreviewVisible(!previewOpen);
+		});
+	}
+	if (runPreviewBtn) {
+		runPreviewBtn.addEventListener("click", async () => {
+			await runSnippetFromPreview();
+		});
+	}
+	if (clearRunOutputBtn) {
+		clearRunOutputBtn.addEventListener("click", () => {
+			setPreviewRunOutput({ status: "", output: "", error: "" });
 		});
 	}
 	if (psLogout) {
