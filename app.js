@@ -39,6 +39,9 @@
 	const psNewNote = document.getElementById("psNewNote");
 	const psExportNotesBtn = document.getElementById("psExportNotes");
 	const psImportNotesBtn = document.getElementById("psImportNotes");
+	const psImportNotesReplaceBtn = document.getElementById(
+		"psImportNotesReplace"
+	);
 	const psImportFileInput = document.getElementById("psImportFile");
 	const psList = document.getElementById("psList");
 	const psHint = document.getElementById("psHint");
@@ -186,6 +189,7 @@
 	let jsRunnerFrame = null;
 	let jsRunnerPending = new Map();
 	let previewRunState = { status: "", output: "", error: "" };
+	let psNextImportMode = "merge";
 
 	function escapeHtml(str) {
 		return String(str || "")
@@ -1051,7 +1055,8 @@ self.onmessage = async (e) => {
 		try {
 			if (psHint) psHint.textContent = "Exportiere…";
 			const res = await api("/api/notes/export");
-			const payload = res && res.export ? res.export : { version: 1, notes: [] };
+			const payload =
+				res && res.export ? res.export : { version: 1, notes: [] };
 			downloadJson(`mirror-notes-${ymd() || "export"}.json`, payload);
 			if (psHint) psHint.textContent = "Export bereit.";
 			toast("Export erstellt.", "success");
@@ -1062,7 +1067,62 @@ self.onmessage = async (e) => {
 		}
 	}
 
-	async function importPersonalSpaceNotesFromText(text) {
+	async function importPersonalSpaceNotes(notes, mode) {
+		const m = String(mode || "merge").trim().toLowerCase();
+		const safeMode = m === "replace" ? "replace" : "merge";
+		try {
+			if (psHint) psHint.textContent = "Importiere…";
+			const res = await api("/api/notes/import", {
+				method: "POST",
+				body: JSON.stringify({ mode: safeMode, notes }),
+			});
+			toast(
+				`Import fertig: ${res.imported || 0} neu, ${
+					res.updated || 0
+				} aktualisiert, ${res.skipped || 0} übersprungen.`,
+				"success"
+			);
+			if (psHint) psHint.textContent = "Import fertig.";
+			await refreshPersonalSpace();
+		} catch (e) {
+			const msg = e && e.message ? String(e.message) : "Fehler";
+			if (psHint) psHint.textContent = "Import fehlgeschlagen.";
+			toast(`Import fehlgeschlagen: ${msg}`, "error");
+		}
+	}
+
+	function chunkTextIntoNotes(text, filename) {
+		const raw = String(text || "");
+		const trimmed = raw.trim();
+		if (!trimmed) return [];
+		const name = String(filename || "import").trim();
+
+		// Conservative limit: keep JSON request under 1MB.
+		const MAX_CHARS = 220000;
+		if (trimmed.length <= MAX_CHARS) {
+			return [
+				{
+					text: trimmed,
+					createdAt: Date.now(),
+				},
+			];
+		}
+
+		const parts = [];
+		let i = 0;
+		for (let start = 0; start < trimmed.length; start += MAX_CHARS) {
+			i += 1;
+			const chunk = trimmed.slice(start, start + MAX_CHARS);
+			parts.push({
+				text: `# Import: ${name} (Teil ${i})\n\n${chunk}`,
+				createdAt: Date.now(),
+			});
+			if (parts.length >= 25) break;
+		}
+		return parts;
+	}
+
+	async function importPersonalSpaceNotesFromText(text, mode) {
 		let parsed;
 		try {
 			parsed = JSON.parse(String(text || ""));
@@ -1081,27 +1141,47 @@ self.onmessage = async (e) => {
 			toast("Import: keine Notizen gefunden.", "error");
 			return;
 		}
-		const replace = window.confirm(
-			"Beim Import vorhandene Notizen ersetzen?\nOK = ersetzen, Abbrechen = zusammenführen (merge)."
-		);
-		const mode = replace ? "replace" : "merge";
+		await importPersonalSpaceNotes(notes, mode);
+	}
+
+	async function importPersonalSpaceFile(file, mode) {
+		if (!file) return;
+		const name = String(file.name || "");
+		const isJson =
+			/\.json$/i.test(name) ||
+			String(file.type || "").toLowerCase().includes("json");
+		let text = "";
 		try {
-			if (psHint) psHint.textContent = "Importiere…";
-			const res = await api("/api/notes/import", {
-				method: "POST",
-				body: JSON.stringify({ mode, notes }),
-			});
-			toast(
-				`Import fertig: ${res.imported || 0} neu, ${res.updated || 0} aktualisiert, ${res.skipped || 0} übersprungen.`,
-				"success"
-			);
-			if (psHint) psHint.textContent = "Import fertig.";
-			await refreshPersonalSpace();
-		} catch (e) {
-			const msg = e && e.message ? String(e.message) : "Fehler";
-			if (psHint) psHint.textContent = "Import fehlgeschlagen.";
-			toast(`Import fehlgeschlagen: ${msg}`, "error");
+			text = await file.text();
+		} catch {
+			toast("Import fehlgeschlagen (Datei lesen).", "error");
+			return;
 		}
+		if (isJson) {
+			await importPersonalSpaceNotesFromText(text, mode);
+			return;
+		}
+		const notes = chunkTextIntoNotes(text, name || "import.md");
+		if (!notes.length) {
+			toast("Import: Datei ist leer.", "error");
+			return;
+		}
+		await importPersonalSpaceNotes(notes, mode);
+	}
+
+	function startNotesImport(mode) {
+		if (!psImportFileInput) return;
+		if (!psState || !psState.authed) {
+			toast("Bitte erst Personal Space aktivieren (Login).", "error");
+			return;
+		}
+		psNextImportMode = String(mode || "merge").trim().toLowerCase();
+		try {
+			psImportFileInput.value = "";
+		} catch {
+			// ignore
+		}
+		psImportFileInput.click();
 	}
 
 	async function requestPersonalSpaceLink() {
@@ -1637,29 +1717,26 @@ self.onmessage = async (e) => {
 	}
 	if (psImportNotesBtn && psImportFileInput) {
 		psImportNotesBtn.addEventListener("click", () => {
-			if (!psState || !psState.authed) {
-				toast("Bitte erst Personal Space aktivieren (Login).", "error");
-				return;
-			}
-			try {
-				psImportFileInput.value = "";
-			} catch {
-				// ignore
-			}
-			psImportFileInput.click();
+			startNotesImport("merge");
 		});
+		if (psImportNotesReplaceBtn) {
+			psImportNotesReplaceBtn.addEventListener("click", () => {
+				if (
+					!window.confirm(
+						"Import ersetzen löscht alle vorhandenen Notizen. Wirklich fortfahren?"
+					)
+				)
+					return;
+				startNotesImport("replace");
+			});
+		}
 		psImportFileInput.addEventListener("change", async () => {
 			const file =
 				psImportFileInput.files && psImportFileInput.files[0]
 					? psImportFileInput.files[0]
 					: null;
 			if (!file) return;
-			try {
-				const text = await file.text();
-				await importPersonalSpaceNotesFromText(text);
-			} catch {
-				toast("Import fehlgeschlagen (Datei lesen).", "error");
-			}
+			await importPersonalSpaceFile(file, psNextImportMode);
 		});
 	}
 	if (clearMirrorBtn && textarea) {
