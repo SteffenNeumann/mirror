@@ -164,13 +164,12 @@
 	let psEditingNoteTags = [];
 	let previewOpen = false;
 	let md;
+	const clearMirrorBtn = document.getElementById("clearMirror");
 
 	function ensureMarkdown() {
 		if (md) return md;
 		if (typeof window.markdownit !== "function") return null;
 		try {
-			const canHighlight =
-				window.hljs && typeof window.hljs.highlight === "function";
 			const safeLang = (raw) =>
 				String(raw || "")
 					.trim()
@@ -188,6 +187,8 @@
 				breaks: true,
 				typographer: true,
 				highlight: (str, lang) => {
+					const canHighlight =
+						window.hljs && typeof window.hljs.highlight === "function";
 					if (!canHighlight) return highlightPlain(str);
 					try {
 						const l = safeLang(lang);
@@ -198,7 +199,10 @@
 							}).value;
 							return `<pre class="hljs"><code class="hljs language-${l}">${v}</code></pre>`;
 						}
-						const v = window.hljs.highlightAuto(str).value;
+						const v =
+							window.hljs && typeof window.hljs.highlightAuto === "function"
+								? window.hljs.highlightAuto(str).value
+								: md.utils.escapeHtml(str);
 						return `<pre class="hljs"><code class="hljs">${v}</code></pre>`;
 					} catch {
 						return highlightPlain(str);
@@ -302,11 +306,12 @@
 	function updatePreview() {
 		if (!previewOpen || !mdPreview) return;
 		const renderer = ensureMarkdown();
+		const stamp = Date.now();
 		if (!renderer) {
 			mdPreview.srcdoc = `<!doctype html><html lang="de"><head><meta charset="utf-8" />
 			<meta name="viewport" content="width=device-width, initial-scale=1" />
 			<style>:root{color-scheme:dark;}body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:#020617;color:#e2e8f0;}a{color:#60a5fa;}</style>
-			</head><body><strong>Markdown Preview nicht verfügbar.</strong><div style="margin-top:8px;color:#94a3b8">Bitte Seite neu laden oder CDN-Blocking (AdBlock/Corporate Proxy) prüfen.</div></body></html>`;
+			</head><body><!--ts:${stamp}--><strong>Markdown Preview nicht verfügbar.</strong><div style="margin-top:8px;color:#94a3b8">Bitte Seite neu laden oder CDN-Blocking (AdBlock/Corporate Proxy) prüfen.</div></body></html>`;
 			return;
 		}
 		const src = String(textarea && textarea.value ? textarea.value : "");
@@ -323,6 +328,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+	<!--ts:${stamp}-->
   <style>
     :root{color-scheme:dark;}
     body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:#020617;color:#e2e8f0;}
@@ -344,6 +350,12 @@
   <div id="content">${bodyHtml}</div>
 </body>
 </html>`;
+		// Safari kann srcdoc-Updates gelegentlich "verschlucken"; leeren + neu setzen ist stabiler.
+		try {
+			mdPreview.srcdoc = "";
+		} catch {
+			// ignore
+		}
 		mdPreview.srcdoc = doc;
 	}
 
@@ -711,6 +723,7 @@
 
 		metaLeft.textContent = "Synchronisiert.";
 		metaRight.textContent = nowIso();
+		updatePreview();
 	}
 
 	function connect() {
@@ -868,8 +881,27 @@
 			psEditingNoteId = "";
 			psEditingNoteKind = "";
 			psEditingNoteTags = [];
+			if (textarea) {
+				textarea.value = "";
+				textarea.focus();
+			}
 			if (psMainHint) psMainHint.classList.add("hidden");
 			if (psHint) psHint.textContent = "Neuer Eintrag.";
+			metaLeft.textContent = "Bereit.";
+			metaRight.textContent = "";
+			updatePreview();
+		});
+	}
+	if (clearMirrorBtn && textarea) {
+		clearMirrorBtn.addEventListener("click", () => {
+			if (!textarea.value) return;
+			if (!window.confirm("Eingabe wirklich löschen?")) return;
+			textarea.value = "";
+			textarea.focus();
+			metaLeft.textContent = "Geleert.";
+			metaRight.textContent = nowIso();
+			updatePreview();
+			scheduleSend();
 		});
 	}
 	if (psSaveMain) {

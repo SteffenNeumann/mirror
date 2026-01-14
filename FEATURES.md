@@ -4,6 +4,7 @@ Diese Liste ist bewusst breit. Sie dient als Ideenspeicher für zukünftige Iter
 
 ## UX & Basics
 
+- Räume Speichernund wieder drau zugreifen können
 - Raumwechsel ohne Reload (stabil, kein Flackern)
 - „Room“-Namen-Generator konfigurierbar (nerdig/lustig/kurz) + „Neu“ erstellt immer eindeutigen Namen
 - „Link kopieren“ Button (mit visuellem Feedback)

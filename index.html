@@ -117,9 +117,6 @@
 							<h2 class="text-sm font-semibold tracking-tight">
 								Personal Space
 							</h2>
-							<p class="mt-1 text-xs text-slate-300">
-								Dein privater Bereich (Login per E-Mail-Link)
-							</p>
 						</div>
 						<button
 							id="psLogout"
@@ -160,10 +157,6 @@
 							</button>
 							<span id="psHint" class="text-xs text-slate-400"></span>
 						</div>
-						<p class="mt-2 text-xs text-slate-400">
-							Zum Speichern/Bearbeiten nutze den großen Editor rechts und klicke
-							<span class="font-medium text-slate-200">„Speichern“</span>.
-						</p>
 
 						<div class="mt-4">
 							<div class="text-xs font-medium text-slate-200">Inhalte</div>
@@ -240,14 +233,30 @@
 						<div
 							id="editorPreviewGrid"
 							class="grid grid-cols-1 gap-3 lg:grid-cols-1">
-							<div class="min-w-0">
+								<div class="min-w-0">
 								<label for="mirror" class="sr-only">Text</label>
-								<textarea
-									id="mirror"
-									class="h-56 sm:h-72 w-full resize-none rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3 font-sans text-base leading-relaxed text-slate-100 placeholder:text-slate-500 shadow-inner outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25"
-									placeholder="Tippe etwas – alle mit diesem Link sehen es sofort…"
-									autocomplete="off"
-									spellcheck="false"></textarea>
+									<div class="relative">
+										<textarea
+											id="mirror"
+											class="h-56 sm:h-72 w-full resize-none rounded-xl border border-white/10 bg-slate-950/40 px-4 py-3 pr-11 font-sans text-base leading-relaxed text-slate-100 placeholder:text-slate-500 shadow-inner outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25"
+											placeholder="Tippe etwas – alle mit diesem Link sehen es sofort…"
+											autocomplete="off"
+											spellcheck="false"></textarea>
+										<button
+											id="clearMirror"
+											type="button"
+											class="absolute right-2 top-2 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10 active:bg-white/15"
+											title="Eingabe löschen"
+											aria-label="Eingabe löschen">
+											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+												<path d="M3 6h18" />
+												<path d="M8 6V4h8v2" />
+												<path d="M6 6l1 16h10l1-16" />
+												<path d="M10 11v6" />
+												<path d="M14 11v6" />
+											</svg>
+										</button>
+									</div>
 								<div
 									class="mt-3 flex flex-wrap items-center justify-between gap-2">
 									<div class="flex items-center gap-2">
@@ -273,11 +282,11 @@
 							</div>
 							<div
 								id="previewPanel"
-								class="hidden overflow-hidden rounded-xl border border-white/10 bg-slate-950/25">
+									class="hidden h-56 sm:h-72 overflow-hidden rounded-xl border border-white/10 bg-slate-950/25">
 								<iframe
 									id="mdPreview"
 									title="Markdown Preview"
-									class="h-[340px] w-full"
+										class="h-full w-full"
 									sandbox="allow-popups"
 									referrerpolicy="no-referrer"></iframe>
 							</div>
