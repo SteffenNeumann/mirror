@@ -38,10 +38,8 @@
 	const psTags = document.getElementById("psTags");
 	const psNewNote = document.getElementById("psNewNote");
 	const psExportNotesBtn = document.getElementById("psExportNotes");
+	const psImportModeSelect = document.getElementById("psImportMode");
 	const psImportNotesBtn = document.getElementById("psImportNotes");
-	const psImportNotesReplaceBtn = document.getElementById(
-		"psImportNotesReplace"
-	);
 	const psImportFileInput = document.getElementById("psImportFile");
 	const psList = document.getElementById("psList");
 	const psHint = document.getElementById("psHint");
@@ -1068,7 +1066,9 @@ self.onmessage = async (e) => {
 	}
 
 	async function importPersonalSpaceNotes(notes, mode) {
-		const m = String(mode || "merge").trim().toLowerCase();
+		const m = String(mode || "merge")
+			.trim()
+			.toLowerCase();
 		const safeMode = m === "replace" ? "replace" : "merge";
 		try {
 			if (psHint) psHint.textContent = "Importiere…";
@@ -1115,20 +1115,31 @@ self.onmessage = async (e) => {
 			}
 			if (end === -1) return { front: "", body: src };
 			const front = lines.slice(0, end + 1).join("\n");
-			const body = lines.slice(end + 1).join("\n").trimStart();
+			const body = lines
+				.slice(end + 1)
+				.join("\n")
+				.trimStart();
 			return { front, body };
 		}
 
 		function splitByHr(src) {
-			// Split at markdown horizontal rule lines consisting of '---' only.
+			// Split at markdown separator lines consisting of '---' only,
+			// but only when surrounded by blank lines (or file boundaries).
+			const lines = src.split("\n");
 			const parts = [];
 			let buf = [];
-			for (const line of src.split("\n")) {
+			for (let i = 0; i < lines.length; i += 1) {
+				const line = lines[i];
 				if (line.trim() === "---") {
-					const chunk = buf.join("\n").trim();
-					if (chunk) parts.push(chunk);
-					buf = [];
-					continue;
+					const prevBlank = i === 0 ? true : lines[i - 1].trim() === "";
+					const nextBlank =
+						i === lines.length - 1 ? true : lines[i + 1].trim() === "";
+					if (prevBlank && nextBlank) {
+						const chunk = buf.join("\n").trim();
+						if (chunk) parts.push(chunk);
+						buf = [];
+						continue;
+					}
 				}
 				buf.push(line);
 			}
@@ -1231,7 +1242,9 @@ self.onmessage = async (e) => {
 		const name = String(file.name || "");
 		const isJson =
 			/\.json$/i.test(name) ||
-			String(file.type || "").toLowerCase().includes("json");
+			String(file.type || "")
+				.toLowerCase()
+				.includes("json");
 		let text = "";
 		try {
 			text = await file.text();
@@ -1257,7 +1270,9 @@ self.onmessage = async (e) => {
 			toast("Bitte erst Personal Space aktivieren (Login).", "error");
 			return;
 		}
-		psNextImportMode = String(mode || "merge").trim().toLowerCase();
+		psNextImportMode = String(mode || "merge")
+			.trim()
+			.toLowerCase();
 		try {
 			psImportFileInput.value = "";
 		} catch {
@@ -1799,19 +1814,22 @@ self.onmessage = async (e) => {
 	}
 	if (psImportNotesBtn && psImportFileInput) {
 		psImportNotesBtn.addEventListener("click", () => {
-			startNotesImport("merge");
-		});
-		if (psImportNotesReplaceBtn) {
-			psImportNotesReplaceBtn.addEventListener("click", () => {
-				if (
-					!window.confirm(
-						"Import ersetzen löscht alle vorhandenen Notizen. Wirklich fortfahren?"
-					)
+			const mode = String(
+				psImportModeSelect && psImportModeSelect.value
+					? psImportModeSelect.value
+					: "merge"
+			)
+				.trim()
+				.toLowerCase();
+			if (
+				mode === "replace" &&
+				!window.confirm(
+					"Import ersetzen löscht alle vorhandenen Notizen. Wirklich fortfahren?"
 				)
-					return;
-				startNotesImport("replace");
-			});
-		}
+			)
+				return;
+			startNotesImport(mode);
+		});
 		psImportFileInput.addEventListener("change", async () => {
 			const file =
 				psImportFileInput.files && psImportFileInput.files[0]
