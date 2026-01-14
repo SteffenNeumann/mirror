@@ -28,6 +28,9 @@
 	const copyMirrorBtn = document.getElementById("copyMirror");
 	const codeLangSelect = document.getElementById("codeLang");
 	const insertCodeBlockBtn = document.getElementById("insertCodeBlock");
+	const mainGrid = document.getElementById("mainGrid");
+	const psPanel = document.getElementById("psPanel");
+	const togglePersonalSpaceBtn = document.getElementById("togglePersonalSpace");
 
 	// Personal Space elements (optional)
 	const psUnauthed = document.getElementById("psUnauthed");
@@ -216,7 +219,48 @@
 	const PS_TAG_FILTER_MODE_KEY = "mirror_ps_tag_filter_mode";
 	const PS_TAGS_COLLAPSED_KEY = "mirror_ps_tags_collapsed";
 	const PS_SEARCH_QUERY_KEY = "mirror_ps_search_query";
+	const PS_VISIBLE_KEY = "mirror_ps_visible";
 	let psTagsCollapsed = false;
+	let psVisible = true;
+	const GRID_WITH_PS = "lg:grid-cols-[360px_1fr]";
+	const GRID_NO_PS = "lg:grid-cols-1";
+
+	function loadPsVisible() {
+		try {
+			const v = localStorage.getItem(PS_VISIBLE_KEY);
+			psVisible = v === null ? true : v !== "0";
+		} catch {
+			psVisible = true;
+		}
+	}
+
+	function savePsVisible() {
+		try {
+			localStorage.setItem(PS_VISIBLE_KEY, psVisible ? "1" : "0");
+		} catch {
+			// ignore
+		}
+	}
+
+	function applyPsVisible() {
+		if (psPanel && psPanel.classList) {
+			psPanel.classList.toggle("hidden", !psVisible);
+		}
+		if (mainGrid && mainGrid.classList) {
+			mainGrid.classList.toggle(GRID_WITH_PS, psVisible);
+			mainGrid.classList.toggle(GRID_NO_PS, !psVisible);
+		}
+		if (togglePersonalSpaceBtn) {
+			try {
+				togglePersonalSpaceBtn.setAttribute(
+					"aria-pressed",
+					psVisible ? "true" : "false"
+				);
+			} catch {
+				// ignore
+			}
+		}
+	}
 
 	function normalizeSearchQuery(raw) {
 		return String(raw || "")
@@ -2137,6 +2181,8 @@ self.onmessage = async (e) => {
 	loadPsTagsCollapsed();
 	applyPsTagsCollapsed();
 	loadPsSearchQuery();
+	loadPsVisible();
+	applyPsVisible();
 
 	// Personal Space wiring
 	if (addPersonalSpaceBtn) {
@@ -2283,6 +2329,13 @@ self.onmessage = async (e) => {
 			psSearchDebounceTimer = window.setTimeout(() => {
 				savePsSearchQuery();
 			}, 150);
+		});
+	}
+	if (togglePersonalSpaceBtn) {
+		togglePersonalSpaceBtn.addEventListener("click", () => {
+			psVisible = !psVisible;
+			savePsVisible();
+			applyPsVisible();
 		});
 	}
 	if (psToggleTags) {

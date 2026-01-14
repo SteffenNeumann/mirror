@@ -110,8 +110,10 @@
 		<main
 			class="relative mx-auto my-6 flex h-[calc(100vh-48px)] w-[calc(100vw-48px)] max-w-none items-stretch px-0 py-0 sm:my-5 sm:h-[calc(100vh-40px)] sm:w-[calc(100vw-40px)]">
 			<div
+				id="mainGrid"
 				class="grid h-full w-full grid-cols-1 gap-4 lg:grid-cols-[360px_1fr]">
 				<section
+					id="psPanel"
 					class="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 shadow-soft backdrop-blur sm:p-6">
 					<header class="flex items-start justify-between gap-3">
 						<div>
@@ -319,6 +321,14 @@
 									type="button"
 									class="rounded-md border border-white/10 bg-white/10 px-2.5 py-1.5 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">
 									Link kopieren
+								</button>
+								<button
+									id="togglePersonalSpace"
+									type="button"
+									class="ml-2 rounded-md border border-white/10 bg-transparent px-2.5 py-1.5 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+									title="Personal Space ein-/ausblenden"
+									aria-pressed="true">
+									PS
 								</button>
 								<a
 									id="shareLink"
