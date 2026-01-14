@@ -45,6 +45,7 @@
 	const psImportModeSelect = document.getElementById("psImportMode");
 	const psImportNotesBtn = document.getElementById("psImportNotes");
 	const psImportFileInput = document.getElementById("psImportFile");
+	const psSearchInput = document.getElementById("psSearch");
 	const psList = document.getElementById("psList");
 	const psHint = document.getElementById("psHint");
 	const psLogout = document.getElementById("psLogout");
@@ -193,10 +194,80 @@
 	let jsRunnerPending = new Map();
 	let previewRunState = { status: "", output: "", error: "" };
 	let psNextImportMode = "merge";
+	let psSearchQuery = "";
+	let psSearchDebounceTimer = 0;
 	const PS_ACTIVE_TAGS_KEY = "mirror_ps_active_tags";
 	const PS_TAG_FILTER_MODE_KEY = "mirror_ps_tag_filter_mode";
 	const PS_TAGS_COLLAPSED_KEY = "mirror_ps_tags_collapsed";
+	const PS_SEARCH_QUERY_KEY = "mirror_ps_search_query";
 	let psTagsCollapsed = false;
+
+	function normalizeSearchQuery(raw) {
+		return String(raw || "").trim().toLowerCase();
+	}
+
+	function loadPsSearchQuery() {
+		try {
+			psSearchQuery = String(localStorage.getItem(PS_SEARCH_QUERY_KEY) || "");
+		} catch {
+			psSearchQuery = "";
+		}
+		if (psSearchInput) psSearchInput.value = psSearchQuery;
+	}
+
+	function savePsSearchQuery() {
+		try {
+			localStorage.setItem(PS_SEARCH_QUERY_KEY, String(psSearchQuery || ""));
+		} catch {
+			// ignore
+		}
+	}
+
+	function noteMatchesSearch(note, tokens) {
+		if (!tokens || tokens.length === 0) return true;
+		const text = String(note && note.text ? note.text : "").toLowerCase();
+		const tags = Array.isArray(note && note.tags) ? note.tags : [];
+		const tagsLower = tags.map((t) => String(t || "").toLowerCase());
+		const hay = `${text}\n${tagsLower.join(" ")}`;
+		return tokens.every((tokRaw) => {
+			let tok = String(tokRaw || "").trim().toLowerCase();
+			if (!tok) return true;
+			if (tok.startsWith("#")) tok = tok.slice(1);
+			if (!tok) return true;
+			if (tok.startsWith("tag:")) {
+				const want = tok.slice(4).trim();
+				if (!want) return true;
+				return tagsLower.includes(want);
+			}
+			return hay.includes(tok);
+		});
+	}
+
+	function applyPersonalSpaceFiltersAndRender() {
+		if (!psState || !psState.authed) return;
+		let notes = Array.isArray(psState.notes) ? psState.notes : [];
+		const active = Array.from(psActiveTags || []).filter(Boolean);
+		if (active.length) {
+			if (psTagFilterMode === "or") {
+				notes = notes.filter((n) => {
+					const tags = Array.isArray(n && n.tags) ? n.tags : [];
+					return active.some((t) => tags.includes(t));
+				});
+			} else {
+				notes = notes.filter((n) => {
+					const tags = Array.isArray(n && n.tags) ? n.tags : [];
+					return active.every((t) => tags.includes(t));
+				});
+			}
+		}
+		const q = normalizeSearchQuery(psSearchQuery);
+		if (q) {
+			const tokens = q.split(/\s+/).filter(Boolean).slice(0, 8);
+			notes = notes.filter((n) => noteMatchesSearch(n, tokens));
+		}
+		renderPsTags(psState.tags || []);
+		renderPsList(notes);
+	}
 
 	function loadPsTagsCollapsed() {
 		try {
@@ -653,8 +724,10 @@
 		if (!psList) return;
 		const items = Array.isArray(notes) ? notes : [];
 		if (items.length === 0) {
-			psList.innerHTML =
-				'<div class="text-xs text-slate-400">Noch keine Notizen.</div>';
+			const q = normalizeSearchQuery(psSearchQuery);
+			psList.innerHTML = q
+				? '<div class="text-xs text-slate-400">Keine Treffer.</div>'
+				: '<div class="text-xs text-slate-400">Noch keine Notizen.</div>';
 			return;
 		}
 		const byId = new Map(items.map((n) => [String(n.id || ""), n]));
@@ -1133,23 +1206,7 @@ self.onmessage = async (e) => {
 		if (psLogout) psLogout.classList.remove("hidden");
 		if (psEmail) psEmail.textContent = psState.email || "";
 
-		let notes = Array.isArray(psState.notes) ? psState.notes : [];
-		const active = Array.from(psActiveTags || []).filter(Boolean);
-		if (active.length) {
-			if (psTagFilterMode === "or") {
-				notes = notes.filter((n) => {
-					const tags = Array.isArray(n && n.tags) ? n.tags : [];
-					return active.some((t) => tags.includes(t));
-				});
-			} else {
-				notes = notes.filter((n) => {
-					const tags = Array.isArray(n && n.tags) ? n.tags : [];
-					return active.every((t) => tags.includes(t));
-				});
-			}
-		}
-		renderPsTags(psState.tags || []);
-		renderPsList(notes);
+		applyPersonalSpaceFiltersAndRender();
 	}
 
 	function downloadJson(filename, obj) {
@@ -1925,6 +1982,7 @@ self.onmessage = async (e) => {
 	loadPsTagPrefs();
 	loadPsTagsCollapsed();
 	applyPsTagsCollapsed();
+	loadPsSearchQuery();
 
 	// Personal Space wiring
 	if (addPersonalSpaceBtn) {
@@ -2061,6 +2119,16 @@ self.onmessage = async (e) => {
 			psTagFilterMode = v === "or" ? "or" : "and";
 			savePsTagPrefs();
 			await refreshPersonalSpace();
+		});
+	}
+	if (psSearchInput) {
+		psSearchInput.addEventListener("input", () => {
+			psSearchQuery = String(psSearchInput.value || "");
+			applyPersonalSpaceFiltersAndRender();
+			if (psSearchDebounceTimer) window.clearTimeout(psSearchDebounceTimer);
+			psSearchDebounceTimer = window.setTimeout(() => {
+				savePsSearchQuery();
+			}, 150);
 		});
 	}
 	if (psToggleTags) {
