@@ -486,7 +486,10 @@
 	function getSlashContext() {
 		if (!textarea) return { active: false, start: 0, end: 0, query: "" };
 		const value = String(textarea.value || "");
-		const caret = Math.max(0, Math.min(value.length, Number(textarea.selectionEnd || 0)));
+		const caret = Math.max(
+			0,
+			Math.min(value.length, Number(textarea.selectionEnd || 0))
+		);
 		const { start, end, line } = getLineBounds(value, caret);
 		const raw = String(line || "");
 		const trimmedStart = raw.replace(/^\s+/, "");
@@ -565,7 +568,9 @@
 		const q = String(ctx.query || "");
 		slashMenuItems = SLASH_SUGGESTIONS.filter((it) => {
 			if (!q) return true;
-			return String(it.cmd || "").toLowerCase().startsWith(q);
+			return String(it.cmd || "")
+				.toLowerCase()
+				.startsWith(q);
 		}).slice(0, 12);
 		slashMenuIndex = 0;
 		setSlashMenuOpen(true);
