@@ -148,14 +148,16 @@
 							<span id="psEmail" class="font-medium text-slate-100"></span>
 						</div>
 
-						<div class="mt-3 flex items-start justify-between gap-2">
+						<div class="mt-3 flex items-start gap-3">
 							<button
 								id="psNewNote"
 								type="button"
-								class="inline-flex items-center rounded-xl border border-fuchsia-400/20 bg-gradient-to-r from-fuchsia-500/20 via-white/10 to-cyan-400/10 px-4 py-2.5 text-sm font-semibold text-slate-50 shadow-soft transition hover:from-fuchsia-500/25 hover:via-white/15 hover:to-cyan-400/15 active:opacity-90">
+								class="inline-flex shrink-0 items-center whitespace-nowrap rounded-xl border border-fuchsia-400/20 bg-gradient-to-r from-fuchsia-500/20 via-white/10 to-cyan-400/10 px-4 py-2.5 text-sm font-semibold text-slate-50 shadow-soft transition hover:from-fuchsia-500/25 hover:via-white/15 hover:to-cyan-400/15 active:opacity-90">
 								Neuer Eintrag
 							</button>
-							<span id="psHint" class="pt-2 text-xs text-slate-400"></span>
+							<span
+								id="psHint"
+								class="min-w-0 flex-1 pt-2 text-right text-xs text-slate-400"></span>
 						</div>
 
 						<div class="mt-4">
@@ -296,17 +298,25 @@
 											<path d="M14 11v6" />
 										</svg>
 									</button>
-								<button
-									id="copyMirror"
-									type="button"
-									class="absolute bottom-2 right-2 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10 active:bg-white/15"
-									title="In Zwischenablage kopieren"
-									aria-label="In Zwischenablage kopieren">
-									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
-										<rect x="9" y="9" width="13" height="13" rx="2" />
-										<path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-									</svg>
-								</button>
+									<button
+										id="copyMirror"
+										type="button"
+										class="absolute bottom-2 right-2 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10 active:bg-white/15"
+										title="In Zwischenablage kopieren"
+										aria-label="In Zwischenablage kopieren">
+										<svg
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											class="h-4 w-4">
+											<rect x="9" y="9" width="13" height="13" rx="2" />
+											<path
+												d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+										</svg>
+									</button>
 								</div>
 								<div
 									class="mt-3 flex flex-wrap items-center justify-between gap-2">

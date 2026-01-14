@@ -225,7 +225,9 @@
 		}
 
 		// Last resort: run whole editor as code if a language is selected
-		const selected = String(codeLangSelect && codeLangSelect.value ? codeLangSelect.value : "")
+		const selected = String(
+			codeLangSelect && codeLangSelect.value ? codeLangSelect.value : ""
+		)
 			.trim()
 			.toLowerCase();
 		if (selected) return { lang: selected, code: text };
@@ -233,7 +235,9 @@
 	}
 
 	function getSelectedCodeLang() {
-		const v = String(codeLangSelect && codeLangSelect.value ? codeLangSelect.value : "")
+		const v = String(
+			codeLangSelect && codeLangSelect.value ? codeLangSelect.value : ""
+		)
 			.trim()
 			.toLowerCase();
 		return v || "python";
@@ -550,26 +554,6 @@
 				const id = String(n.id || "");
 				const active = id && id === psEditingNoteId;
 				const tags = Array.isArray(n.tags) ? n.tags : [];
-				const kind = String((n && n.kind) || "");
-				const langTag = tags.find((t) =>
-					/^lang-[a-z0-9_+-]{1,32}$/i.test(String(t || ""))
-				);
-				const lang = langTag ? String(langTag).slice(5).toLowerCase() : "";
-				const canRun =
-					kind === "code" &&
-					(lang === "python" ||
-						lang === "py" ||
-						lang === "javascript" ||
-						lang === "js");
-				const runState = id ? psRunOutputById.get(id) : null;
-				const runOut =
-					runState && typeof runState.output === "string"
-						? runState.output
-						: "";
-				const runErr =
-					runState && typeof runState.error === "string" ? runState.error : "";
-				const runStatus =
-					runState && runState.status ? String(runState.status) : "";
 				const chips = tags
 					.slice(0, 6)
 					.map(
@@ -578,44 +562,12 @@
 					)
 					.join(" ");
 				const bodyHtml = renderNoteHtml(n);
-				const runBtnHtml = canRun
-					? `
-						<button
-							type="button"
-							data-action="run"
-							data-lang="${lang}"
-							class="absolute right-11 top-2 hidden rounded-md border border-white/10 bg-slate-950/60 px-2 py-1.5 text-[11px] text-slate-200 shadow-soft backdrop-blur transition group-hover:flex hover:bg-slate-950/80"
-							title="Snippet ausführen">
-							Run
-						</button>
-					`
-					: "";
-				const runOutHtml =
-					canRun && (runStatus || runOut || runErr)
-						? `
-						<div class="mt-2 rounded-lg border border-white/10 bg-slate-950/30 p-2">
-							<div class="flex items-center justify-between gap-2 text-[11px] text-slate-300">
-								<span>${runStatus === "running" ? "Ausgabe (läuft…)" : "Ausgabe"}</span>
-								<button type="button" data-action="clear-run" class="rounded-md border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-slate-200 hover:bg-white/10">Clear</button>
-							</div>
-							<pre class="mt-2 max-h-28 overflow-auto whitespace-pre-wrap break-words text-[12px] leading-relaxed text-slate-100">${(
-								runOut ||
-								runErr ||
-								""
-							)
-								.replace(/&/g, "&amp;")
-								.replace(/</g, "&lt;")
-								.replace(/>/g, "&gt;")}</pre>
-						</div>
-					`
-						: "";
 				return `
 					<div data-note-id="${id}" class="group relative cursor-pointer rounded-xl border ${
 					active
 						? "border-fuchsia-400/40 bg-fuchsia-500/10"
 						: "border-white/10 bg-slate-950/25 hover:bg-slate-950/35"
 				} p-3">
-						${runBtnHtml}
 						<button
 							type="button"
 							data-action="delete"
@@ -634,7 +586,6 @@
 							<div class="text-[11px] text-slate-300">${chips}</div>
 						</div>
 						<div class="max-h-40 overflow-hidden">${bodyHtml}</div>
-						${runOutHtml}
 					</div>
 				`;
 			})
@@ -646,33 +597,6 @@
 					ev.stopPropagation();
 				});
 			});
-			const runBtn = row.querySelector('[data-action="run"]');
-			if (runBtn) {
-				runBtn.addEventListener("click", async (ev) => {
-					ev.preventDefault();
-					ev.stopPropagation();
-					const id = row.getAttribute("data-note-id") || "";
-					const note = byId.get(id);
-					if (!note) return;
-					const tags = Array.isArray(note.tags) ? note.tags : [];
-					const langTag = tags.find((t) =>
-						/^lang-[a-z0-9_+-]{1,32}$/i.test(String(t || ""))
-					);
-					const lang = langTag ? String(langTag).slice(5).toLowerCase() : "";
-					await runSnippetForNote(id, lang, String(note.text || ""));
-				});
-			}
-			const clearRunBtn = row.querySelector('[data-action="clear-run"]');
-			if (clearRunBtn) {
-				clearRunBtn.addEventListener("click", (ev) => {
-					ev.preventDefault();
-					ev.stopPropagation();
-					const id = row.getAttribute("data-note-id") || "";
-					if (!id) return;
-					psRunOutputById.delete(id);
-					renderPsList(items);
-				});
-			}
 			row.querySelectorAll('input[type="checkbox"]').forEach((i) => {
 				i.addEventListener("click", (ev) => {
 					ev.preventDefault();
