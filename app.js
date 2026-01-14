@@ -938,7 +938,17 @@ self.onmessage = async (e) => {
 				});
 				const url = URL.createObjectURL(blob);
 				const worker = new Worker(url);
-				URL.revokeObjectURL(url);
+				let workerUrl = url;
+				const cleanupWorkerUrl = () => {
+					try {
+						if (workerUrl) URL.revokeObjectURL(workerUrl);
+					} catch {
+						// ignore
+					}
+					workerUrl = "";
+				};
+				// Safety: revoke später, falls cleanup nicht greift
+				window.setTimeout(() => cleanupWorkerUrl(), 5000);
 				let done = false;
 				const timer = window.setTimeout(() => {
 					if (done) return;
@@ -948,6 +958,7 @@ self.onmessage = async (e) => {
 					} catch {
 						// ignore
 					}
+					cleanupWorkerUrl();
 					resolve({ output: "", error: `Timeout nach ${timeoutMs}ms.` });
 				}, timeoutMs);
 				worker.addEventListener("message", (ev) => {
@@ -961,6 +972,7 @@ self.onmessage = async (e) => {
 					} catch {
 						// ignore
 					}
+					cleanupWorkerUrl();
 					resolve({
 						output: String(data.output || ""),
 						error: String(data.error || ""),
@@ -975,6 +987,7 @@ self.onmessage = async (e) => {
 					} catch {
 						// ignore
 					}
+					cleanupWorkerUrl();
 					resolve({
 						output: "",
 						error: "JS Runner konnte nicht gestartet werden.",
@@ -1137,7 +1150,11 @@ self.onmessage = async (e) => {
 			const blob = new Blob([workerCode], { type: "application/javascript" });
 			const url = URL.createObjectURL(blob);
 			pyRunnerWorker = new Worker(url);
-			URL.revokeObjectURL(url);
+			try {
+				setTimeout(() => URL.revokeObjectURL(url), 5000);
+			} catch {
+				// ignore
+			}
 			return pyRunnerWorker;
 		} catch {
 			pyRunnerWorker = null;
