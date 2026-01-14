@@ -17,6 +17,15 @@
 	const metaLeft = document.getElementById("metaLeft");
 	const metaRight = document.getElementById("metaRight");
 	const toastRoot = document.getElementById("toastRoot");
+	const modalRoot = document.getElementById("modalRoot");
+	const modalBackdrop = document.querySelector('[data-role="modalBackdrop"]');
+	const modalTitle = document.getElementById("modalTitle");
+	const modalDesc = document.getElementById("modalDesc");
+	const modalInputWrap = document.getElementById("modalInputWrap");
+	const modalInput = document.getElementById("modalInput");
+	const modalClose = document.getElementById("modalClose");
+	const modalCancel = document.getElementById("modalCancel");
+	const modalOk = document.getElementById("modalOk");
 	const editorPreviewGrid = document.getElementById("editorPreviewGrid");
 	const previewPanel = document.getElementById("previewPanel");
 	const mdPreview = document.getElementById("mdPreview");
@@ -165,6 +174,171 @@
 			el.style.transition = "opacity 220ms ease";
 			window.setTimeout(() => el.remove(), 260);
 		}, 1400);
+	}
+
+	let modalBusy = false;
+	function isModalReady() {
+		return (
+			modalRoot &&
+			modalTitle &&
+			modalDesc &&
+			modalCancel &&
+			modalOk &&
+			modalInputWrap &&
+			modalInput
+		);
+	}
+
+	function setModalOpen(open) {
+		if (!modalRoot || !modalRoot.classList) return;
+		modalRoot.classList.toggle("hidden", !open);
+		modalRoot.classList.toggle("flex", open);
+		modalRoot.setAttribute("aria-hidden", open ? "false" : "true");
+		try {
+			document.body.style.overflow = open ? "hidden" : "";
+		} catch {
+			// ignore
+		}
+	}
+
+	function openModal(opts) {
+		if (!isModalReady() || modalBusy) {
+			return Promise.resolve({ ok: false, value: "" });
+		}
+		modalBusy = true;
+		const title = String((opts && opts.title) || "Dialog");
+		const message = String((opts && opts.message) || "");
+		const okText = String((opts && opts.okText) || "OK");
+		const cancelText = String((opts && opts.cancelText) || "Abbrechen");
+		const danger = Boolean(opts && opts.danger);
+		const input = opts && opts.input ? opts.input : null;
+		const allowBackdropClose = Boolean(opts && opts.backdropClose);
+
+		modalTitle.textContent = title;
+		modalDesc.textContent = message;
+		modalOk.textContent = okText;
+		modalCancel.textContent = cancelText;
+		modalOk.classList.toggle("border-rose-400/30", danger);
+		modalOk.classList.toggle("bg-rose-500/15", danger);
+		modalOk.classList.toggle("text-rose-100", danger);
+
+		if (input) {
+			modalInputWrap.classList.remove("hidden");
+			modalInput.type = String(input.type || "text");
+			modalInput.placeholder = String(input.placeholder || "");
+			modalInput.value = String(input.value || "");
+			if (input.autocomplete) {
+				modalInput.setAttribute("autocomplete", String(input.autocomplete));
+			} else {
+				modalInput.setAttribute("autocomplete", "off");
+			}
+		} else {
+			modalInputWrap.classList.add("hidden");
+			modalInput.value = "";
+		}
+
+		setModalOpen(true);
+
+		const prevActive = document.activeElement;
+		window.setTimeout(() => {
+			try {
+				if (input) modalInput.focus();
+				else modalOk.focus();
+			} catch {
+				// ignore
+			}
+		}, 0);
+
+		return new Promise((resolve) => {
+			let settled = false;
+
+			function cleanup() {
+				if (settled) return;
+				settled = true;
+				setModalOpen(false);
+				modalBusy = false;
+				window.removeEventListener("keydown", onKeyDown, true);
+				if (modalCancel) modalCancel.removeEventListener("click", onCancel);
+				if (modalOk) modalOk.removeEventListener("click", onOk);
+				if (modalClose) modalClose.removeEventListener("click", onCancel);
+				if (modalBackdrop)
+					modalBackdrop.removeEventListener("click", onBackdropClick);
+				if (modalInput) modalInput.removeEventListener("keydown", onInputKey);
+				try {
+					if (prevActive && prevActive.focus) prevActive.focus();
+				} catch {
+					// ignore
+				}
+			}
+
+			function finish(ok) {
+				const value = input ? String(modalInput.value || "") : "";
+				cleanup();
+				resolve({ ok: Boolean(ok), value });
+			}
+
+			function onCancel() {
+				finish(false);
+			}
+			function onOk() {
+				finish(true);
+			}
+			function onBackdropClick() {
+				if (!allowBackdropClose) return;
+				finish(false);
+			}
+			function onInputKey(ev) {
+				if (!ev) return;
+				if (ev.key === "Enter") {
+					ev.preventDefault();
+					finish(true);
+				}
+			}
+			function onKeyDown(ev) {
+				if (!ev) return;
+				if (ev.key === "Escape") {
+					ev.preventDefault();
+					finish(false);
+				}
+			}
+
+			modalCancel.addEventListener("click", onCancel);
+			modalOk.addEventListener("click", onOk);
+			if (modalClose) modalClose.addEventListener("click", onCancel);
+			if (modalBackdrop) modalBackdrop.addEventListener("click", onBackdropClick);
+			if (modalInput) modalInput.addEventListener("keydown", onInputKey);
+			window.addEventListener("keydown", onKeyDown, true);
+		});
+	}
+
+	async function modalConfirm(message, opts) {
+		const res = await openModal({
+			title: (opts && opts.title) || "Bestätigen",
+			message: String(message || ""),
+			okText: (opts && opts.okText) || "OK",
+			cancelText: (opts && opts.cancelText) || "Abbrechen",
+			danger: Boolean(opts && opts.danger),
+			backdropClose: Boolean(opts && opts.backdropClose),
+		});
+		return Boolean(res && res.ok);
+	}
+
+	async function modalPrompt(message, opts) {
+		const res = await openModal({
+			title: (opts && opts.title) || "Eingabe",
+			message: String(message || ""),
+			okText: (opts && opts.okText) || "Weiter",
+			cancelText: (opts && opts.cancelText) || "Abbrechen",
+			backdropClose: Boolean(opts && opts.backdropClose),
+			input: {
+				type: (opts && opts.type) || "text",
+				placeholder: (opts && opts.placeholder) || "",
+				value: (opts && opts.value) || "",
+				autocomplete: (opts && opts.autocomplete) || "off",
+			},
+		});
+		if (!res || !res.ok) return null;
+		return String(res.value || "");
 	}
 
 	async function api(path, opts) {
@@ -844,7 +1018,7 @@
 						<button
 							type="button"
 							data-action="delete"
-							class="absolute right-2 top-2 hidden rounded-md border border-white/10 bg-slate-950/60 p-1.5 text-slate-200 shadow-soft backdrop-blur transition group-hover:flex hover:bg-slate-950/80"
+							class="ps-note-delete absolute right-2 top-2 hidden rounded-md border border-white/10 bg-slate-950/60 p-1.5 text-slate-200 shadow-soft backdrop-blur transition group-hover:flex hover:bg-slate-950/80"
 										title="Löschen">
 							<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 								<path d="M3 6h18" />
@@ -902,7 +1076,14 @@
 					ev.stopPropagation();
 					const id = row.getAttribute("data-note-id") || "";
 					if (!id) return;
-					if (!window.confirm("Notiz wirklich löschen?")) return;
+						const ok = await modalConfirm("Notiz wirklich löschen?", {
+							title: "Notiz löschen",
+							okText: "Löschen",
+							cancelText: "Abbrechen",
+							danger: true,
+							backdropClose: true,
+						});
+						if (!ok) return;
 					try {
 						await api(`/api/notes/${encodeURIComponent(id)}`, {
 							method: "DELETE",
@@ -1735,7 +1916,15 @@ self.onmessage = async (e) => {
 	}
 
 	async function requestPersonalSpaceLink() {
-		const raw = window.prompt("E-Mail-Adresse für deinen Personal Space:");
+		const raw = await modalPrompt("E-Mail-Adresse für deinen Personal Space:", {
+			title: "Personal Space",
+			okText: "Link senden",
+			cancelText: "Abbrechen",
+			type: "email",
+			autocomplete: "email",
+			placeholder: "name@example.com",
+			backdropClose: true,
+		});
 		const email = String(raw || "").trim();
 		if (!email) return;
 		try {
@@ -2280,14 +2469,22 @@ self.onmessage = async (e) => {
 			)
 				.trim()
 				.toLowerCase();
-			if (
-				mode === "replace" &&
-				!window.confirm(
-					"Import ersetzen löscht alle vorhandenen Notizen. Wirklich fortfahren?"
-				)
-			)
-				return;
-			startNotesImport(mode);
+			(async () => {
+				if (mode === "replace") {
+					const ok = await modalConfirm(
+						"Import ersetzen löscht alle vorhandenen Notizen. Wirklich fortfahren?",
+						{
+							title: "Import ersetzen",
+							okText: "Ersetzen",
+							cancelText: "Abbrechen",
+							danger: true,
+							backdropClose: true,
+						}
+					);
+					if (!ok) return;
+				}
+				startNotesImport(mode);
+			})();
 		});
 		psImportFileInput.addEventListener("change", async () => {
 			const file =
@@ -2301,13 +2498,22 @@ self.onmessage = async (e) => {
 	if (clearMirrorBtn && textarea) {
 		clearMirrorBtn.addEventListener("click", () => {
 			if (!textarea.value) return;
-			if (!window.confirm("Eingabe wirklich löschen?")) return;
-			textarea.value = "";
-			textarea.focus();
-			metaLeft.textContent = "Geleert.";
-			metaRight.textContent = nowIso();
-			updatePreview();
-			scheduleSend();
+			(async () => {
+				const ok = await modalConfirm("Eingabe wirklich löschen?", {
+					title: "Text löschen",
+					okText: "Löschen",
+					cancelText: "Abbrechen",
+					danger: true,
+					backdropClose: true,
+				});
+				if (!ok) return;
+				textarea.value = "";
+				textarea.focus();
+				metaLeft.textContent = "Geleert.";
+				metaRight.textContent = nowIso();
+				updatePreview();
+				scheduleSend();
+			})();
 		});
 	}
 	if (psSaveMain) {
