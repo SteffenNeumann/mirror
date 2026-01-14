@@ -165,6 +165,8 @@
 	let previewOpen = false;
 	let md;
 	const clearMirrorBtn = document.getElementById("clearMirror");
+	let mdLibWarned = false;
+	let previewObjectUrl = "";
 
 	function ensureMarkdown() {
 		if (md) return md;
@@ -259,6 +261,10 @@
 		const kind = String((note && note.kind) || "");
 		const tags = Array.isArray(note && note.tags) ? note.tags : [];
 		if (!renderer) {
+			if (!mdLibWarned) {
+				mdLibWarned = true;
+				toast("Markdown-Rendering: Bibliotheken nicht geladen (CDN).", "error");
+			}
 			const body = text
 				.replace(/&/g, "&amp;")
 				.replace(/</g, "&lt;")
@@ -289,8 +295,8 @@
 		if (!previewPanel || !editorPreviewGrid) return;
 		previewPanel.classList.toggle("hidden", !previewOpen);
 		editorPreviewGrid.className = previewOpen
-			? "grid grid-cols-1 gap-3 lg:grid-cols-2"
-			: "grid grid-cols-1 gap-3 lg:grid-cols-1";
+			? "grid h-full min-h-0 grid-cols-1 gap-3 lg:grid-cols-2"
+			: "grid h-full min-h-0 grid-cols-1 gap-3 lg:grid-cols-1";
 		if (togglePreview) {
 			togglePreview.textContent = previewOpen ? "Preview aus" : "Preview";
 		}
@@ -308,10 +314,11 @@
 		const renderer = ensureMarkdown();
 		const stamp = Date.now();
 		if (!renderer) {
-			mdPreview.srcdoc = `<!doctype html><html lang="de"><head><meta charset="utf-8" />
+			const fallbackDoc = `<!doctype html><html lang="de"><head><meta charset="utf-8" />
 			<meta name="viewport" content="width=device-width, initial-scale=1" />
 			<style>:root{color-scheme:dark;}body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:#020617;color:#e2e8f0;}a{color:#60a5fa;}</style>
 			</head><body><!--ts:${stamp}--><strong>Markdown Preview nicht verfügbar.</strong><div style="margin-top:8px;color:#94a3b8">Bitte Seite neu laden oder CDN-Blocking (AdBlock/Corporate Proxy) prüfen.</div></body></html>`;
+			setPreviewDocument(fallbackDoc);
 			return;
 		}
 		const src = String(textarea && textarea.value ? textarea.value : "");
@@ -350,13 +357,35 @@
   <div id="content">${bodyHtml}</div>
 </body>
 </html>`;
-		// Safari kann srcdoc-Updates gelegentlich "verschlucken"; leeren + neu setzen ist stabiler.
+		setPreviewDocument(doc);
+	}
+
+	function setPreviewDocument(html) {
+		if (!mdPreview) return;
+		// Robust: statt srcdoc eine blob: URL nutzen (Safari/Reload/Room-Switch ist damit stabil).
 		try {
-			mdPreview.srcdoc = "";
+			if (previewObjectUrl) {
+				URL.revokeObjectURL(previewObjectUrl);
+				previewObjectUrl = "";
+			}
+			const blob = new Blob([String(html || "")], { type: "text/html" });
+			previewObjectUrl = URL.createObjectURL(blob);
+			mdPreview.removeAttribute("srcdoc");
+			mdPreview.src = previewObjectUrl;
+			return;
 		} catch {
-			// ignore
+			// Fallback: srcdoc
+			try {
+				mdPreview.src = "about:blank";
+			} catch {
+				// ignore
+			}
+			try {
+				mdPreview.srcdoc = String(html || "");
+			} catch {
+				// ignore
+			}
 		}
-		mdPreview.srcdoc = doc;
 	}
 
 	function renderPsTags(tags) {
