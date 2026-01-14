@@ -55,7 +55,9 @@ const aiRate = new Map();
 function getClientIp(req) {
 	const fwd = String(req.headers["x-forwarded-for"] || "").trim();
 	if (fwd) return String(fwd.split(",")[0] || "").trim();
-	return String(req.socket && req.socket.remoteAddress ? req.socket.remoteAddress : "");
+	return String(
+		req.socket && req.socket.remoteAddress ? req.socket.remoteAddress : ""
+	);
 }
 
 function checkAiRateLimit(ip) {
@@ -1036,7 +1038,7 @@ const server = http.createServer((req, res) => {
 					const data = safeJsonParse(textBody);
 					if (!r.ok) {
 						const errMsg =
-							(data && (data.error && data.error.message)) ||
+							(data && data.error && data.error.message) ||
 							(data && data.message) ||
 							`AI HTTP ${r.status}`;
 						json(res, 502, { ok: false, error: "ai_failed", message: errMsg });

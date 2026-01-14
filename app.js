@@ -1394,7 +1394,9 @@ self.onmessage = async (e) => {
 	}
 
 	function getAiMode() {
-		const v = String(aiModeSelect && aiModeSelect.value ? aiModeSelect.value : "")
+		const v = String(
+			aiModeSelect && aiModeSelect.value ? aiModeSelect.value : ""
+		)
 			.trim()
 			.toLowerCase();
 		return v === "fix" || v === "improve" ? v : "explain";
@@ -1411,7 +1413,9 @@ self.onmessage = async (e) => {
 			return;
 		}
 		const mode = getAiMode();
-		const lang = String(parsed.lang || "").trim().toLowerCase();
+		const lang = String(parsed.lang || "")
+			.trim()
+			.toLowerCase();
 		const code = String(parsed.code || "");
 		setPreviewRunOutput({ status: `AI (${mode})…`, output: "", error: "" });
 		try {
