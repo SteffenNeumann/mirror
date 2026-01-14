@@ -35,6 +35,9 @@
 	const addPersonalSpaceBtn = document.getElementById("addPersonalSpace");
 	const psDevLink = document.getElementById("psDevLink");
 	const psEmail = document.getElementById("psEmail");
+	const psToggleTags = document.getElementById("psToggleTags");
+	const psTagControls = document.getElementById("psTagControls");
+	const psTagsPanel = document.getElementById("psTagsPanel");
 	const psTags = document.getElementById("psTags");
 	const psTagFilterModeSelect = document.getElementById("psTagFilterMode");
 	const psNewNote = document.getElementById("psNewNote");
@@ -192,6 +195,46 @@
 	let psNextImportMode = "merge";
 	const PS_ACTIVE_TAGS_KEY = "mirror_ps_active_tags";
 	const PS_TAG_FILTER_MODE_KEY = "mirror_ps_tag_filter_mode";
+	const PS_TAGS_COLLAPSED_KEY = "mirror_ps_tags_collapsed";
+	let psTagsCollapsed = false;
+
+	function loadPsTagsCollapsed() {
+		try {
+			psTagsCollapsed = localStorage.getItem(PS_TAGS_COLLAPSED_KEY) === "1";
+		} catch {
+			psTagsCollapsed = false;
+		}
+	}
+
+	function savePsTagsCollapsed() {
+		try {
+			localStorage.setItem(PS_TAGS_COLLAPSED_KEY, psTagsCollapsed ? "1" : "0");
+		} catch {
+			// ignore
+		}
+	}
+
+	function applyPsTagsCollapsed() {
+		if (!psToggleTags) return;
+		try {
+			psToggleTags.setAttribute(
+				"aria-expanded",
+				psTagsCollapsed ? "false" : "true"
+			);
+		} catch {
+			// ignore
+		}
+		const chev = psToggleTags.querySelector('[data-role="chevron"]');
+		if (chev && chev.classList) {
+			chev.classList.toggle("-rotate-90", psTagsCollapsed);
+		}
+		if (psTagControls && psTagControls.classList) {
+			psTagControls.classList.toggle("hidden", psTagsCollapsed);
+		}
+		if (psTagsPanel && psTagsPanel.classList) {
+			psTagsPanel.classList.toggle("hidden", psTagsCollapsed);
+		}
+	}
 
 	function loadPsTagPrefs() {
 		try {
@@ -759,8 +802,18 @@
 				return;
 			}
 			const id = `js_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+			let runnerUrl = "";
+			const cleanupUrl = () => {
+				try {
+					if (runnerUrl) URL.revokeObjectURL(runnerUrl);
+				} catch {
+					// ignore
+				}
+				runnerUrl = "";
+			};
 			const timer = window.setTimeout(() => {
 				jsRunnerPending.delete(id);
+				cleanupUrl();
 				// Kill runaway scripts by replacing the runner frame
 				try {
 					if (jsRunnerFrame) jsRunnerFrame.remove();
@@ -773,6 +826,7 @@
 			jsRunnerPending.set(id, {
 				resolve: (v) => {
 					window.clearTimeout(timer);
+					cleanupUrl();
 					resolve(v);
 				},
 			});
@@ -797,17 +851,27 @@
 })();
 <\/script></body></html>`;
 			try {
-				frame.src = "about:blank";
+				// Prefer Blob URL over srcdoc (stabiler mit sandbox, insbesondere in Safari)
+				const blob = new Blob([html], { type: "text/html" });
+				runnerUrl = URL.createObjectURL(blob);
+				frame.src = runnerUrl;
 			} catch {
-				// ignore
-			}
-			try {
-				frame.srcdoc = html;
-			} catch {
-				resolve({
-					output: "",
-					error: "JS Runner konnte nicht gestartet werden.",
-				});
+				try {
+					frame.src = "about:blank";
+				} catch {
+					// ignore
+				}
+				try {
+					frame.srcdoc = html;
+				} catch {
+					window.clearTimeout(timer);
+					jsRunnerPending.delete(id);
+					cleanupUrl();
+					resolve({
+						output: "",
+						error: "JS Runner konnte nicht gestartet werden.",
+					});
+				}
 			}
 		});
 	}
@@ -1859,6 +1923,8 @@ self.onmessage = async (e) => {
 	setStatus("offline", "Offline");
 	connect();
 	loadPsTagPrefs();
+	loadPsTagsCollapsed();
+	applyPsTagsCollapsed();
 
 	// Personal Space wiring
 	if (addPersonalSpaceBtn) {
@@ -1995,6 +2061,13 @@ self.onmessage = async (e) => {
 			psTagFilterMode = v === "or" ? "or" : "and";
 			savePsTagPrefs();
 			await refreshPersonalSpace();
+		});
+	}
+	if (psToggleTags) {
+		psToggleTags.addEventListener("click", () => {
+			psTagsCollapsed = !psTagsCollapsed;
+			savePsTagsCollapsed();
+			applyPsTagsCollapsed();
 		});
 	}
 

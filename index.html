@@ -188,15 +188,36 @@
 
 						<div class="mt-4">
 							<div class="flex items-center justify-between gap-2">
-								<div class="text-xs font-medium text-slate-200">Tags</div>
-								<select
-									id="psTagFilterMode"
-									class="rounded-lg border border-white/10 bg-slate-950/30 px-2 py-1.5 text-xs text-slate-200 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30">
-									<option value="and" selected>UND</option>
-									<option value="or">ODER</option>
-								</select>
+								<button
+									id="psToggleTags"
+									type="button"
+									class="inline-flex items-center gap-1 text-xs font-medium text-slate-200 transition hover:text-slate-100"
+									aria-expanded="true">
+									<span>Tags</span>
+									<svg
+										data-role="chevron"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										class="h-4 w-4 text-slate-400 transition-transform">
+										<path d="M6 9l6 6 6-6" />
+									</svg>
+								</button>
+								<div id="psTagControls" class="flex items-center gap-2">
+									<select
+										id="psTagFilterMode"
+										class="rounded-lg border border-white/10 bg-slate-950/30 px-2 py-1.5 text-xs text-slate-200 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30">
+										<option value="and" selected>UND</option>
+										<option value="or">ODER</option>
+									</select>
+								</div>
 							</div>
-							<div class="mt-2 flex flex-wrap gap-2" id="psTags"></div>
+							<div id="psTagsPanel" class="mt-2">
+								<div class="flex flex-wrap gap-2" id="psTags"></div>
+							</div>
 						</div>
 
 						<div class="mt-4 flex min-h-0 flex-1 flex-col">
