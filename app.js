@@ -203,7 +203,9 @@
 	let psTagsCollapsed = false;
 
 	function normalizeSearchQuery(raw) {
-		return String(raw || "").trim().toLowerCase();
+		return String(raw || "")
+			.trim()
+			.toLowerCase();
 	}
 
 	function loadPsSearchQuery() {
@@ -230,7 +232,9 @@
 		const tagsLower = tags.map((t) => String(t || "").toLowerCase());
 		const hay = `${text}\n${tagsLower.join(" ")}`;
 		return tokens.every((tokRaw) => {
-			let tok = String(tokRaw || "").trim().toLowerCase();
+			let tok = String(tokRaw || "")
+				.trim()
+				.toLowerCase();
 			if (!tok) return true;
 			if (tok.startsWith("#")) tok = tok.slice(1);
 			if (!tok) return true;
