@@ -353,10 +353,34 @@
 								<div class="relative flex min-h-0 flex-1">
 									<textarea
 										id="mirror"
-										class="h-full min-h-0 w-full resize-none rounded-xl border border-white/10 bg-slate-950/40 px-4 pt-3 pb-12 pr-11 font-sans text-base leading-relaxed text-slate-100 placeholder:text-slate-500 shadow-inner outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25"
+										class="h-full min-h-0 w-full resize-none rounded-xl border border-white/10 bg-slate-950/40 px-4 pt-12 pb-12 pr-11 font-sans text-base leading-relaxed text-slate-100 placeholder:text-slate-500 shadow-inner outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25"
 										placeholder="Tippe etwas – alle mit diesem Link sehen es sofort…"
 										autocomplete="off"
 										spellcheck="false"></textarea>
+									<div
+										class="absolute left-2 top-2 hidden items-center gap-2 sm:flex">
+										<label for="codeLang" class="sr-only">Sprache</label>
+										<select
+											id="codeLang"
+											class="h-9 w-36 rounded-lg border border-white/10 bg-slate-950/60 px-2.5 text-sm text-slate-100 shadow-soft backdrop-blur outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25"
+											title="Sprache für Codeblock">
+											<option value="python">Python</option>
+											<option value="javascript">JavaScript</option>
+											<option value="bash">Shell</option>
+											<option value="json">JSON</option>
+											<option value="yaml">YAML</option>
+											<option value="sql">SQL</option>
+											<option value="html">HTML</option>
+											<option value="css">CSS</option>
+										</select>
+										<button
+											id="insertCodeBlock"
+											type="button"
+											class="h-9 rounded-lg border border-white/10 bg-transparent px-3 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+											title="Codeblock mit Sprache einfügen">
+											Codeblock
+										</button>
+									</div>
 									<button
 										id="clearMirror"
 										type="button"
@@ -413,29 +437,6 @@
 											class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10">
 											Preview
 										</button>
-										<div class="hidden items-center gap-2 sm:flex">
-											<label for="codeLang" class="sr-only">Sprache</label>
-											<select
-												id="codeLang"
-												class="w-36 rounded-lg border border-white/10 bg-slate-950/40 px-2.5 py-2 text-sm text-slate-100 outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25"
-												title="Sprache für Codeblock">
-												<option value="python">Python</option>
-												<option value="javascript">JavaScript</option>
-												<option value="bash">Shell</option>
-												<option value="json">JSON</option>
-												<option value="yaml">YAML</option>
-												<option value="sql">SQL</option>
-												<option value="html">HTML</option>
-												<option value="css">CSS</option>
-											</select>
-											<button
-												id="insertCodeBlock"
-												type="button"
-												class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10"
-												title="Codeblock mit Sprache einfügen">
-												Codeblock
-											</button>
-										</div>
 									</div>
 									<div class="flex items-center gap-3 text-xs text-slate-400">
 										<span id="metaLeft">Bereit.</span>
