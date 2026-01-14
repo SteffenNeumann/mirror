@@ -36,6 +36,7 @@
 	const psDevLink = document.getElementById("psDevLink");
 	const psEmail = document.getElementById("psEmail");
 	const psTags = document.getElementById("psTags");
+	const psTagFilterModeSelect = document.getElementById("psTagFilterMode");
 	const psNewNote = document.getElementById("psNewNote");
 	const psExportNotesBtn = document.getElementById("psExportNotes");
 	const psImportModeSelect = document.getElementById("psImportMode");
@@ -171,7 +172,8 @@
 	}
 
 	let psState = { authed: false, email: "", tags: [], notes: [] };
-	let psActiveTag = "";
+	let psActiveTags = new Set();
+	let psTagFilterMode = "and";
 	let psEditingNoteId = "";
 	let psEditingNoteKind = "";
 	let psEditingNoteTags = [];
@@ -188,6 +190,54 @@
 	let jsRunnerPending = new Map();
 	let previewRunState = { status: "", output: "", error: "" };
 	let psNextImportMode = "merge";
+	const PS_ACTIVE_TAGS_KEY = "mirror_ps_active_tags";
+	const PS_TAG_FILTER_MODE_KEY = "mirror_ps_tag_filter_mode";
+
+	function loadPsTagPrefs() {
+		try {
+			const rawTags = localStorage.getItem(PS_ACTIVE_TAGS_KEY);
+			if (rawTags) {
+				const arr = JSON.parse(rawTags);
+				if (Array.isArray(arr)) {
+					psActiveTags = new Set(
+						arr
+							.map((t) => String(t || "").trim())
+							.filter(Boolean)
+							.slice(0, 12)
+					);
+				}
+			}
+		} catch {
+			psActiveTags = new Set();
+		}
+		try {
+			const m = String(localStorage.getItem(PS_TAG_FILTER_MODE_KEY) || "and")
+				.trim()
+				.toLowerCase();
+			psTagFilterMode = m === "or" ? "or" : "and";
+		} catch {
+			psTagFilterMode = "and";
+		}
+		if (psTagFilterModeSelect) {
+			psTagFilterModeSelect.value = psTagFilterMode;
+		}
+	}
+
+	function savePsTagPrefs() {
+		try {
+			localStorage.setItem(
+				PS_ACTIVE_TAGS_KEY,
+				JSON.stringify(Array.from(psActiveTags || []).slice(0, 12))
+			);
+		} catch {
+			// ignore
+		}
+		try {
+			localStorage.setItem(PS_TAG_FILTER_MODE_KEY, psTagFilterMode);
+		} catch {
+			// ignore
+		}
+	}
 
 	function escapeHtml(str) {
 		return String(str || "")
@@ -527,7 +577,9 @@
 		];
 		psTags.innerHTML = items
 			.map((it) => {
-				const active = it.tag === psActiveTag;
+				const active = it.tag
+					? psActiveTags && psActiveTags.has(String(it.tag))
+					: !psActiveTags || psActiveTags.size === 0;
 				const base = "rounded-full border px-2.5 py-1 text-xs transition";
 				const cls = active
 					? "border-fuchsia-400/40 bg-fuchsia-500/15 text-fuchsia-100"
@@ -539,7 +591,16 @@
 
 		psTags.querySelectorAll("button[data-tag]").forEach((btn) => {
 			btn.addEventListener("click", async () => {
-				psActiveTag = btn.getAttribute("data-tag") || "";
+				const t = btn.getAttribute("data-tag") || "";
+				if (!t) {
+					psActiveTags = new Set();
+				} else {
+					const next = new Set(psActiveTags || []);
+					if (next.has(t)) next.delete(t);
+					else next.add(t);
+					psActiveTags = next;
+				}
+				savePsTagPrefs();
 				await refreshPersonalSpace();
 			});
 		});
@@ -1009,8 +1070,19 @@ self.onmessage = async (e) => {
 		if (psEmail) psEmail.textContent = psState.email || "";
 
 		let notes = Array.isArray(psState.notes) ? psState.notes : [];
-		if (psActiveTag) {
-			notes = notes.filter((n) => (n.tags || []).includes(psActiveTag));
+		const active = Array.from(psActiveTags || []).filter(Boolean);
+		if (active.length) {
+			if (psTagFilterMode === "or") {
+				notes = notes.filter((n) => {
+					const tags = Array.isArray(n && n.tags) ? n.tags : [];
+					return active.some((t) => tags.includes(t));
+				});
+			} else {
+				notes = notes.filter((n) => {
+					const tags = Array.isArray(n && n.tags) ? n.tags : [];
+					return active.every((t) => tags.includes(t));
+				});
+			}
 		}
 		renderPsTags(psState.tags || []);
 		renderPsList(notes);
@@ -1786,6 +1858,7 @@ self.onmessage = async (e) => {
 	// Initial
 	setStatus("offline", "Offline");
 	connect();
+	loadPsTagPrefs();
 
 	// Personal Space wiring
 	if (addPersonalSpaceBtn) {
@@ -1905,12 +1978,23 @@ self.onmessage = async (e) => {
 		psLogout.addEventListener("click", async () => {
 			try {
 				await api("/api/logout", { method: "POST", body: "{}" });
-				psActiveTag = "";
+				psActiveTags = new Set();
+				savePsTagPrefs();
 				toast("Abgemeldet.", "success");
 				await refreshPersonalSpace();
 			} catch {
 				toast("Abmelden fehlgeschlagen.", "error");
 			}
+		});
+	}
+	if (psTagFilterModeSelect) {
+		psTagFilterModeSelect.addEventListener("change", async () => {
+			const v = String(psTagFilterModeSelect.value || "and")
+				.trim()
+				.toLowerCase();
+			psTagFilterMode = v === "or" ? "or" : "and";
+			savePsTagPrefs();
+			await refreshPersonalSpace();
 		});
 	}
 
