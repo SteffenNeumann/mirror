@@ -259,6 +259,16 @@
 			} catch {
 				// ignore
 			}
+			try {
+				const icon = togglePersonalSpaceBtn.querySelector(
+					'[data-role="psChevron"]'
+				);
+				if (icon && icon.classList) {
+					icon.classList.toggle("rotate-180", !psVisible);
+				}
+			} catch {
+				// ignore
+			}
 		}
 	}
 
