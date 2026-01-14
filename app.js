@@ -207,7 +207,8 @@
 			});
 			// Nur sichere Link-Protokolle (kein javascript:, data:, etc.)
 			try {
-				md.validateLink = (url) => /^(https?:|mailto:|tel:)/i.test(String(url || "").trim());
+				md.validateLink = (url) =>
+					/^(https?:|mailto:|tel:)/i.test(String(url || "").trim());
 			} catch {
 				// ignore
 			}
@@ -262,7 +263,9 @@
 		}
 		let src = text;
 		if (kind === "code" && !/```/.test(text)) {
-			const langTag = tags.find((t) => /^lang-[a-z0-9_+-]{1,32}$/i.test(String(t || "")));
+			const langTag = tags.find((t) =>
+				/^lang-[a-z0-9_+-]{1,32}$/i.test(String(t || ""))
+			);
 			const lang = langTag ? String(langTag).slice(5) : "";
 			src = `\n\n\`\`\`${lang}\n${text}\n\`\`\`\n`;
 		}

@@ -297,7 +297,8 @@ function classifyText(text) {
 		.slice(0, 32);
 	const hasManyLines = t.split("\n").length >= 3;
 	const hasIndentedCode = /(^|\n)(?:\t| {4,})\S/.test(t);
-	const hasStacktrace = /(^|\n)\s*at\s+\S+\s*\(/.test(t) || /(^|\n)\w+Exception\b/.test(t);
+	const hasStacktrace =
+		/(^|\n)\s*at\s+\S+\s*\(/.test(t) || /(^|\n)\w+Exception\b/.test(t);
 	const hasShell = /(^|\n)\s*(\$|#)\s+\S+/.test(t);
 	const maybeJson = /^[\[{]/.test(t) && /[\]}]$/.test(t) && t.length <= 200000;
 	let isJson = false;
@@ -354,9 +355,15 @@ function classifyText(text) {
 	if (kind === "code") {
 		if (/\b(def\s+\w+\(|import\s+\w+|print\()\b/.test(t)) tags.push("python");
 		if (/\b(const|let|var|=>|console\.)\b/.test(t)) tags.push("javascript");
-		if (/\b(public\s+class|System\.out\.println|import\s+java\.)\b/.test(t)) tags.push("java");
-		if (/\bSELECT\b[\s\S]*\bFROM\b/i.test(t) || /\bINSERT\b[\s\S]*\bINTO\b/i.test(t)) tags.push("sql");
-		if (/(^|\n)\s*[A-Za-z0-9_-]+:\s*\S+/.test(t) && hasManyLines) tags.push("yaml");
+		if (/\b(public\s+class|System\.out\.println|import\s+java\.)\b/.test(t))
+			tags.push("java");
+		if (
+			/\bSELECT\b[\s\S]*\bFROM\b/i.test(t) ||
+			/\bINSERT\b[\s\S]*\bINTO\b/i.test(t)
+		)
+			tags.push("sql");
+		if (/(^|\n)\s*[A-Za-z0-9_-]+:\s*\S+/.test(t) && hasManyLines)
+			tags.push("yaml");
 	}
 	if (hasMarkdown && kind !== "code") tags.push("markdown");
 	tags.push(...extractHashtags(t));
