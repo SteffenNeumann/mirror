@@ -55,6 +55,7 @@
 	const psTags = document.getElementById("psTags");
 	const psTagFilterModeSelect = document.getElementById("psTagFilterMode");
 	const psNewNote = document.getElementById("psNewNote");
+	const psEditTagsBtn = document.getElementById("psEditTags");
 	const psExportNotesBtn = document.getElementById("psExportNotes");
 	const psImportModeSelect = document.getElementById("psImportMode");
 	const psImportNotesBtn = document.getElementById("psImportNotes");
@@ -305,7 +306,8 @@
 			modalCancel.addEventListener("click", onCancel);
 			modalOk.addEventListener("click", onOk);
 			if (modalClose) modalClose.addEventListener("click", onCancel);
-			if (modalBackdrop) modalBackdrop.addEventListener("click", onBackdropClick);
+			if (modalBackdrop)
+				modalBackdrop.addEventListener("click", onBackdropClick);
 			if (modalInput) modalInput.addEventListener("keydown", onInputKey);
 			window.addEventListener("keydown", onKeyDown, true);
 		});
@@ -376,6 +378,204 @@
 		} catch {
 			return "";
 		}
+	}
+
+	function normalizeManualTags(rawTags) {
+		const text = String(rawTags || "");
+		const parts = text
+			.split(/[\s,]+/g)
+			.map((p) => String(p || "").trim())
+			.filter(Boolean);
+		const out = [];
+		for (const p of parts) {
+			const s = String(p || "")
+				.trim()
+				.replace(/^#/, "")
+				.toLowerCase()
+				.slice(0, 48);
+			if (!s) continue;
+			if (!/^[a-z0-9_+\-]{1,48}$/i.test(s)) continue;
+			out.push(s);
+			if (out.length >= 24) break;
+		}
+		return Array.from(new Set(out));
+	}
+
+	function formatTagsForHint(tags) {
+		const arr = Array.isArray(tags) ? tags : [];
+		if (!arr.length) return "";
+		return arr.map((t) => `#${t}`).join(" ");
+	}
+
+	function updatePsEditingTagsHint() {
+		if (!psHint) return;
+		const t = formatTagsForHint(psEditingNoteTags);
+		if (!t) return;
+		const tagPart = `Tags: ${t}`;
+		const existing = String(psHint.textContent || "").trim();
+		if (!existing) {
+			psHint.textContent = tagPart;
+			return;
+		}
+		if (/\bTags:\b/i.test(existing)) {
+			psHint.textContent = tagPart;
+			return;
+		}
+		psHint.textContent = `${existing} · ${tagPart}`;
+	}
+
+	function getLineBounds(text, pos) {
+		const v = String(text || "");
+		const p = Math.max(0, Math.min(v.length, Number(pos) || 0));
+		const start = v.lastIndexOf("\n", p - 1) + 1;
+		const endIdx = v.indexOf("\n", p);
+		const end = endIdx === -1 ? v.length : endIdx;
+		return { start, end, line: v.slice(start, end) };
+	}
+
+	function replaceTextRange(el, start, end, replacement) {
+		const v = String(el && el.value ? el.value : "");
+		const s = Math.max(0, Math.min(v.length, Number(start) || 0));
+		const e = Math.max(s, Math.min(v.length, Number(end) || 0));
+		el.value = v.slice(0, s) + String(replacement || "") + v.slice(e);
+		return s + String(replacement || "").length;
+	}
+
+	async function showSlashHelp() {
+		await openModal({
+			title: "Slash-Commands",
+			message:
+				"/h1 /h2 /h3 · /b (bold) · /i (italic) · /s (strike) · /quote · /ul · /ol · /todo · /code [lang] · /link · /hr",
+			okText: "OK",
+			cancelText: "Schließen",
+			backdropClose: true,
+		});
+	}
+
+	function applySlashCommand(el) {
+		if (!el) return false;
+		const value = String(el.value || "");
+		const selStart = Number(el.selectionStart || 0);
+		const selEnd = Number(el.selectionEnd || 0);
+		const caret = Math.max(0, Math.min(value.length, selEnd));
+		const { start, end, line } = getLineBounds(value, caret);
+		const trimmed = String(line || "").trim();
+		if (!trimmed.startsWith("/")) return false;
+		const m = trimmed.match(/^\/(\S+)(?:\s+(.*))?$/);
+		if (!m) return false;
+		const cmd = String(m[1] || "")
+			.trim()
+			.toLowerCase();
+		const arg = String(m[2] || "");
+
+		const wrap = (left, right) => {
+			const hasSel = selEnd > selStart;
+			const inner = hasSel ? value.slice(selStart, selEnd) : arg;
+			const next = `${left}${inner}${right}`;
+			if (hasSel) {
+				replaceTextRange(el, selStart, selEnd, next);
+				el.selectionStart = selStart;
+				el.selectionEnd = selStart + next.length;
+				return;
+			}
+			const nextPos = replaceTextRange(el, start, end, next);
+			if (!inner) {
+				const caretPos = nextPos - right.length;
+				el.selectionStart = caretPos;
+				el.selectionEnd = caretPos;
+			} else {
+				el.selectionStart = start + next.length;
+				el.selectionEnd = start + next.length;
+			}
+		};
+
+		const insertLine = (prefix) => {
+			const next = arg ? `${prefix}${arg}` : prefix;
+			replaceTextRange(el, start, end, next);
+			const cursor = start + (arg ? next.length : prefix.length);
+			el.selectionStart = cursor;
+			el.selectionEnd = cursor;
+		};
+
+		if (cmd === "help" || cmd === "?" || cmd === "commands") {
+			void showSlashHelp();
+			replaceTextRange(el, start, end, "");
+			el.selectionStart = start;
+			el.selectionEnd = start;
+			return true;
+		}
+		if (cmd === "h1") {
+			insertLine("# ");
+			return true;
+		}
+		if (cmd === "h2") {
+			insertLine("## ");
+			return true;
+		}
+		if (cmd === "h3") {
+			insertLine("### ");
+			return true;
+		}
+		if (cmd === "b" || cmd === "bold") {
+			wrap("**", "**");
+			return true;
+		}
+		if (cmd === "i" || cmd === "italic") {
+			wrap("*", "*");
+			return true;
+		}
+		if (cmd === "s" || cmd === "strike" || cmd === "strikethrough") {
+			wrap("~~", "~~");
+			return true;
+		}
+		if (cmd === "quote") {
+			insertLine("> ");
+			return true;
+		}
+		if (cmd === "ul" || cmd === "list") {
+			insertLine("- ");
+			return true;
+		}
+		if (cmd === "ol") {
+			insertLine("1. ");
+			return true;
+		}
+		if (cmd === "todo" || cmd === "task") {
+			insertLine("- [ ] ");
+			return true;
+		}
+		if (cmd === "hr") {
+			insertLine("---");
+			return true;
+		}
+		if (cmd === "link") {
+			const next = arg ? `[${arg}](https://)` : "[]()";
+			replaceTextRange(el, start, end, next);
+			if (!arg) {
+				el.selectionStart = start + 1;
+				el.selectionEnd = start + 1;
+			} else {
+				el.selectionStart = start + next.length - 1;
+				el.selectionEnd = start + next.length - 1;
+			}
+			return true;
+		}
+		if (cmd === "code") {
+			const lang = String(arg || "")
+				.trim()
+				.toLowerCase()
+				.replace(/[^a-z0-9_+\-]/g, "")
+				.slice(0, 32);
+			const opening = lang ? `\`\`\`${lang}` : "```";
+			const insert = `${opening}\n\n\`\`\``;
+			replaceTextRange(el, start, end, insert);
+			const cursor = start + opening.length + 1;
+			el.selectionStart = cursor;
+			el.selectionEnd = cursor;
+			return true;
+		}
+
+		return false;
 	}
 
 	let psState = { authed: false, email: "", tags: [], notes: [] };
@@ -1061,6 +1261,7 @@
 				textarea.value = String(note.text || "");
 				textarea.focus();
 				if (psHint) psHint.textContent = "Bearbeiten: Text rechts angepasst.";
+				updatePsEditingTagsHint();
 				if (psMainHint) {
 					psMainHint.classList.remove("hidden");
 					psMainHint.textContent = "Bearbeiten aktiv";
@@ -1076,14 +1277,14 @@
 					ev.stopPropagation();
 					const id = row.getAttribute("data-note-id") || "";
 					if (!id) return;
-						const ok = await modalConfirm("Notiz wirklich löschen?", {
-							title: "Notiz löschen",
-							okText: "Löschen",
-							cancelText: "Abbrechen",
-							danger: true,
-							backdropClose: true,
-						});
-						if (!ok) return;
+					const ok = await modalConfirm("Notiz wirklich löschen?", {
+						title: "Notiz löschen",
+						okText: "Löschen",
+						cancelText: "Abbrechen",
+						danger: true,
+						backdropClose: true,
+					});
+					if (!ok) return;
 					try {
 						await api(`/api/notes/${encodeURIComponent(id)}`, {
 							method: "DELETE",
@@ -2404,6 +2605,19 @@ self.onmessage = async (e) => {
 		updatePreview();
 	});
 
+	textarea.addEventListener("keydown", (ev) => {
+		if (!ev) return;
+		if (ev.key !== "Enter") return;
+		if (ev.shiftKey || ev.metaKey || ev.ctrlKey || ev.altKey) return;
+		const applied = applySlashCommand(textarea);
+		if (!applied) return;
+		ev.preventDefault();
+		metaLeft.textContent = "Formatierung";
+		metaRight.textContent = nowIso();
+		updatePreview();
+		scheduleSend();
+	});
+
 	window.addEventListener("hashchange", () => {
 		const parsed = parseRoomAndKeyFromHash();
 		const nextRoom = parsed.room;
@@ -2449,10 +2663,52 @@ self.onmessage = async (e) => {
 				textarea.focus();
 			}
 			if (psMainHint) psMainHint.classList.add("hidden");
-			if (psHint) psHint.textContent = "Neuer Eintrag.";
+			if (psHint) psHint.textContent = "New note.";
 			metaLeft.textContent = "Bereit.";
 			metaRight.textContent = "";
 			updatePreview();
+		});
+	}
+	if (psEditTagsBtn) {
+		psEditTagsBtn.addEventListener("click", async () => {
+			if (!psState || !psState.authed) {
+				toast("Bitte erst Personal Space aktivieren (Login).", "error");
+				return;
+			}
+			const current = formatTagsForHint(psEditingNoteTags)
+				.replace(/#/g, "")
+				.trim();
+			const raw = await modalPrompt(
+				"Tags eingeben (Komma oder Leerzeichen getrennt).",
+				{
+					title: "Tags bearbeiten",
+					okText: "Speichern",
+					cancelText: "Abbrechen",
+					value: current,
+					placeholder: "projekt, idee, lang-python",
+					backdropClose: true,
+				}
+			);
+			if (raw === null) return;
+			const nextTags = normalizeManualTags(raw);
+			psEditingNoteTags = nextTags;
+			updatePsEditingTagsHint();
+
+			if (!psEditingNoteId) {
+				toast("Tags gesetzt (für neuen Eintrag).", "success");
+				return;
+			}
+			try {
+				await api(`/api/notes/${encodeURIComponent(psEditingNoteId)}`, {
+					method: "PUT",
+					body: JSON.stringify({ tags: nextTags }),
+				});
+				toast("Tags gespeichert.", "success");
+				await refreshPersonalSpace();
+			} catch (e) {
+				const msg = e && e.message ? String(e.message) : "Fehler";
+				toast(`Tags speichern fehlgeschlagen: ${msg}`, "error");
+			}
 		});
 	}
 	if (psExportNotesBtn) {
@@ -2532,13 +2788,19 @@ self.onmessage = async (e) => {
 				if (!psEditingNoteId) {
 					await api("/api/notes", {
 						method: "POST",
-						body: JSON.stringify({ text }),
+						body: JSON.stringify({
+							text,
+							tags: Array.isArray(psEditingNoteTags) ? psEditingNoteTags : [],
+						}),
 					});
 					if (psHint) psHint.textContent = "Gespeichert.";
 				} else {
 					await api(`/api/notes/${encodeURIComponent(psEditingNoteId)}`, {
 						method: "PUT",
-						body: JSON.stringify({ text }),
+						body: JSON.stringify({
+							text,
+							tags: Array.isArray(psEditingNoteTags) ? psEditingNoteTags : [],
+						}),
 					});
 					if (psHint) psHint.textContent = "Aktualisiert.";
 				}

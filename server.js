@@ -461,6 +461,35 @@ function normalizeImportTags(rawTags) {
 	return uniq(out);
 }
 
+function mergeManualTags(textVal, manualTags) {
+	const derived = classifyText(textVal);
+	const manual = normalizeImportTags(manualTags);
+	if (!manual.length) return { kind: derived.kind, tags: derived.tags };
+
+	const keep = new Set();
+	keep.add(derived.kind);
+	for (const ht of extractHashtags(textVal)) keep.add(ht);
+	for (const t of derived.tags) {
+		if (t === derived.kind) keep.add(t);
+		if (
+			t === "markdown" ||
+			t === "json" ||
+			t === "stacktrace" ||
+			t === "shell"
+		) {
+			keep.add(t);
+		}
+		if (t.startsWith("lang-")) keep.add(t);
+		if (
+			derived.kind === "code" &&
+			/^(python|javascript|java|sql|yaml|json|shell|stacktrace)$/i.test(t)
+		)
+			keep.add(t);
+	}
+	const tags = uniq([...keep, ...manual]);
+	return { kind: derived.kind, tags };
+}
+
 function isValidNoteId(id) {
 	return /^[a-zA-Z0-9_-]{8,80}$/.test(String(id || ""));
 }
@@ -728,8 +757,18 @@ const server = http.createServer((req, res) => {
 					json(res, 400, { ok: false, error: "empty" });
 					return;
 				}
+				const hasTags =
+					body && Object.prototype.hasOwnProperty.call(body, "tags");
+				if (hasTags && !Array.isArray(body && body.tags ? body.tags : [])) {
+					json(res, 400, { ok: false, error: "invalid_tags" });
+					return;
+				}
 				const userId = getOrCreateUserId(email);
-				const { kind, tags } = classifyText(textVal);
+				const merged = hasTags
+					? mergeManualTags(textVal, body && body.tags ? body.tags : [])
+					: classifyText(textVal);
+				const kind = merged.kind;
+				const tags = merged.tags;
 				const note = {
 					id: crypto.randomBytes(12).toString("base64url"),
 					text: textVal,
@@ -763,11 +802,6 @@ const server = http.createServer((req, res) => {
 			}
 			readJson(req)
 				.then((body) => {
-					const textVal = String(body && body.text ? body.text : "").trim();
-					if (!textVal) {
-						json(res, 400, { ok: false, error: "empty" });
-						return;
-					}
 					const userId = getOrCreateUserId(email);
 					initDb();
 					const existing = stmtNoteGetByIdUser.get(noteId, userId);
@@ -775,9 +809,37 @@ const server = http.createServer((req, res) => {
 						json(res, 404, { ok: false, error: "not_found" });
 						return;
 					}
-					const { kind, tags } = classifyText(textVal);
+					const hasText =
+						body && Object.prototype.hasOwnProperty.call(body, "text");
+					const hasTags =
+						body && Object.prototype.hasOwnProperty.call(body, "tags");
+					const nextText = hasText
+						? String(body && body.text ? body.text : "").trim()
+						: String(existing.text || "");
+					if (hasText && !nextText) {
+						json(res, 400, { ok: false, error: "empty" });
+						return;
+					}
+					if (hasTags && !Array.isArray(body && body.tags ? body.tags : [])) {
+						json(res, 400, { ok: false, error: "invalid_tags" });
+						return;
+					}
+
+					const derived = classifyText(nextText);
+					const kind = derived.kind;
+					let tags;
+					if (hasTags) {
+						tags = mergeManualTags(
+							nextText,
+							body && body.tags ? body.tags : []
+						).tags;
+					} else if (hasText) {
+						tags = derived.tags;
+					} else {
+						tags = parseTagsJson(existing.tags_json);
+					}
 					stmtNoteUpdate.run(
-						textVal,
+						nextText,
 						kind,
 						JSON.stringify(tags),
 						noteId,
@@ -787,7 +849,7 @@ const server = http.createServer((req, res) => {
 						ok: true,
 						note: {
 							id: noteId,
-							text: textVal,
+							text: nextText,
 							kind,
 							tags,
 							createdAt: existing.created_at,
