@@ -888,12 +888,101 @@
 
 	function runJsSnippet(code, timeoutMs) {
 		return new Promise((resolve) => {
+			const js = String(code || "");
+			const id = `js_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+
+			// Prefer WebWorker (robust, killable on timeout) over iframe/sandbox.
+			try {
+				const workerCode = `
+self.onmessage = async (e) => {
+  const data = e && e.data ? e.data : {};
+  const id = String(data.id || '');
+  const code = String(data.code || '');
+  const logs = [];
+  const stringify = (v) => {
+    try {
+      if (typeof v === 'string') return v;
+      if (v && v.stack) return String(v.stack);
+      return JSON.stringify(v);
+    } catch {
+      try { return String(v); } catch { return '[unserializable]'; }
+    }
+  };
+  const orig = { log: console.log, warn: console.warn, error: console.error };
+  console.log = (...a) => logs.push(a.map(stringify).join(' '));
+  console.warn = (...a) => logs.push(a.map(stringify).join(' '));
+  console.error = (...a) => logs.push(a.map(stringify).join(' '));
+  try {
+    const AsyncFunction = Object.getPrototypeOf(async function(){}).constructor;
+    const fn = new AsyncFunction('console', 'stringify', code);
+    await fn(console, stringify);
+    self.postMessage({ id, output: logs.join('\n'), error: '' });
+  } catch (ex) {
+    const err = (ex && ex.stack) ? String(ex.stack) : String(ex);
+    self.postMessage({ id, output: logs.join('\n'), error: err });
+  } finally {
+    console.log = orig.log; console.warn = orig.warn; console.error = orig.error;
+  }
+};
+`;
+				const blob = new Blob([workerCode], {
+					type: "application/javascript",
+				});
+				const url = URL.createObjectURL(blob);
+				const worker = new Worker(url);
+				URL.revokeObjectURL(url);
+				let done = false;
+				const timer = window.setTimeout(() => {
+					if (done) return;
+					done = true;
+					try {
+						worker.terminate();
+					} catch {
+						// ignore
+					}
+					resolve({ output: "", error: `Timeout nach ${timeoutMs}ms.` });
+				}, timeoutMs);
+				worker.addEventListener("message", (ev) => {
+					const data = ev && ev.data ? ev.data : null;
+					if (!data || String(data.id || "") !== id) return;
+					if (done) return;
+					done = true;
+					window.clearTimeout(timer);
+					try {
+						worker.terminate();
+					} catch {
+						// ignore
+					}
+					resolve({
+						output: String(data.output || ""),
+						error: String(data.error || ""),
+					});
+				});
+				worker.addEventListener("error", () => {
+					if (done) return;
+					done = true;
+					window.clearTimeout(timer);
+					try {
+						worker.terminate();
+					} catch {
+						// ignore
+					}
+					resolve({
+						output: "",
+						error: "JS Runner konnte nicht gestartet werden.",
+					});
+				});
+				worker.postMessage({ id, code: js });
+				return;
+			} catch {
+				// Fallback: iframe runner
+			}
+
 			const frame = ensureJsRunnerFrame();
 			if (!frame || !frame.contentWindow) {
 				resolve({ output: "", error: "JS Runner nicht verfügbar." });
 				return;
 			}
-			const id = `js_${Date.now()}_${Math.random().toString(16).slice(2)}`;
 			let runnerUrl = "";
 			const cleanupUrl = () => {
 				try {
@@ -906,7 +995,6 @@
 			const timer = window.setTimeout(() => {
 				jsRunnerPending.delete(id);
 				cleanupUrl();
-				// Kill runaway scripts by replacing the runner frame
 				try {
 					if (jsRunnerFrame) jsRunnerFrame.remove();
 				} catch {
@@ -928,12 +1016,13 @@
   const id = ${JSON.stringify(id)};
   const send = (output, error) => parent.postMessage({type:'mirror_js_run_result', id, output, error}, '*');
   const logs = [];
+  const stringify = (v)=>{ try{ if (typeof v==='string') return v; if (v && v.stack) return String(v.stack); return JSON.stringify(v);}catch{ try{return String(v);}catch{return '[unserializable]';}} };
   const orig = { log: console.log, warn: console.warn, error: console.error };
-  console.log = (...a)=>logs.push(a.map(String).join(' '));
-  console.warn = (...a)=>logs.push(a.map(String).join(' '));
-  console.error = (...a)=>logs.push(a.map(String).join(' '));
+  console.log = (...a)=>logs.push(a.map(stringify).join(' '));
+  console.warn = (...a)=>logs.push(a.map(stringify).join(' '));
+  console.error = (...a)=>logs.push(a.map(stringify).join(' '));
   try {
-    (function(){ ${code}\n })();
+    (function(){ ${js}\n })();
     send(logs.join('\n'), '');
   } catch (e) {
     send(logs.join('\n'), (e && e.stack) ? String(e.stack) : String(e));
@@ -943,7 +1032,6 @@
 })();
 <\/script></body></html>`;
 			try {
-				// Prefer Blob URL over srcdoc (stabiler mit sandbox, insbesondere in Safari)
 				const blob = new Blob([html], { type: "text/html" });
 				runnerUrl = URL.createObjectURL(blob);
 				frame.src = runnerUrl;
