@@ -75,6 +75,7 @@
 	const psImportFileInput = document.getElementById("psImportFile");
 	const psCount = document.getElementById("psCount");
 	const psSearchInput = document.getElementById("psSearch");
+	const psPinnedToggle = document.getElementById("psPinnedToggle");
 	const psList = document.getElementById("psList");
 	const psHint = document.getElementById("psHint");
 	const psLogout = document.getElementById("psLogout");
@@ -507,7 +508,10 @@
 		psEditingNoteTagsOverridden = rawTags.some(
 			(t) => String(t || "") === PS_MANUAL_TAGS_MARKER
 		);
-		psEditingNoteTags = stripManualTagsMarker(rawTags);
+		psEditingNotePinned = rawTags.some(
+			(t) => String(t || "") === PS_PINNED_TAG
+		);
+		psEditingNoteTags = stripPinnedTag(stripManualTagsMarker(rawTags));
 		updatePsEditingTagsHint();
 		syncPsEditorTagsInput();
 	}
@@ -907,6 +911,7 @@
 	let psEditingNoteKind = "";
 	let psEditingNoteTags = [];
 	let psEditingNoteTagsOverridden = false;
+	let psEditingNotePinned = false;
 	let previewOpen = false;
 	let md;
 	const clearMirrorBtn = document.getElementById("clearMirror");
@@ -923,12 +928,15 @@
 	let psNextImportMode = "merge";
 	let psSearchQuery = "";
 	let psSearchDebounceTimer = 0;
+	let psPinnedOnly = false;
 	const PS_ACTIVE_TAGS_KEY = "mirror_ps_active_tags";
 	const PS_TAG_FILTER_MODE_KEY = "mirror_ps_tag_filter_mode";
 	const PS_TAGS_COLLAPSED_KEY = "mirror_ps_tags_collapsed";
 	const PS_SEARCH_QUERY_KEY = "mirror_ps_search_query";
 	const PS_VISIBLE_KEY = "mirror_ps_visible";
+	const PS_PINNED_ONLY_KEY = "mirror_ps_pinned_only";
 	const PS_MANUAL_TAGS_MARKER = "__manual_tags__";
+	const PS_PINNED_TAG = "pinned";
 	const AI_PROMPT_KEY = "mirror_ai_prompt";
 	const AI_USE_PREVIEW_KEY = "mirror_ai_use_preview";
 	let aiPrompt = "";
@@ -1022,6 +1030,16 @@
 		return arr.filter((t) => String(t || "") !== PS_MANUAL_TAGS_MARKER);
 	}
 
+	function stripPinnedTag(tags) {
+		const arr = Array.isArray(tags) ? tags : [];
+		return arr.filter((t) => String(t || "") !== PS_PINNED_TAG);
+	}
+
+	function noteIsPinned(note) {
+		const tags = Array.isArray(note && note.tags) ? note.tags : [];
+		return tags.some((t) => String(t || "") === PS_PINNED_TAG);
+	}
+
 	function buildPsTagsPayload(tags, overridden) {
 		const cleaned = stripManualTagsMarker(tags);
 		return overridden ? [...cleaned, PS_MANUAL_TAGS_MARKER] : cleaned;
@@ -1101,6 +1119,39 @@
 		}
 	}
 
+	function loadPsPinnedOnly() {
+		try {
+			psPinnedOnly = localStorage.getItem(PS_PINNED_ONLY_KEY) === "1";
+		} catch {
+			psPinnedOnly = false;
+		}
+		updatePsPinnedToggle();
+	}
+
+	function savePsPinnedOnly() {
+		try {
+			localStorage.setItem(PS_PINNED_ONLY_KEY, psPinnedOnly ? "1" : "0");
+		} catch {
+			// ignore
+		}
+	}
+
+	function updatePsPinnedToggle() {
+		if (!psPinnedToggle || !psPinnedToggle.classList) return;
+		psPinnedToggle.classList.toggle("bg-fuchsia-500/20", psPinnedOnly);
+		psPinnedToggle.classList.toggle("border-fuchsia-400/40", psPinnedOnly);
+		psPinnedToggle.classList.toggle("text-fuchsia-100", psPinnedOnly);
+		psPinnedToggle.classList.toggle("shadow-soft", psPinnedOnly);
+		psPinnedToggle.classList.toggle("bg-transparent", !psPinnedOnly);
+		psPinnedToggle.classList.toggle("border-white/10", !psPinnedOnly);
+		psPinnedToggle.classList.toggle("text-slate-300", !psPinnedOnly);
+		try {
+			psPinnedToggle.setAttribute("aria-pressed", psPinnedOnly ? "true" : "false");
+		} catch {
+			// ignore
+		}
+	}
+
 	function noteMatchesSearch(note, tokens) {
 		if (!tokens || tokens.length === 0) return true;
 		const text = String(note && note.text ? note.text : "").toLowerCase();
@@ -1127,6 +1178,9 @@
 		if (!psState || !psState.authed) return;
 		const allNotes = Array.isArray(psState.notes) ? psState.notes : [];
 		let notes = allNotes;
+		if (psPinnedOnly) {
+			notes = notes.filter((n) => noteIsPinned(n));
+		}
 		const active = Array.from(psActiveTags || []).filter(Boolean);
 		if (active.length) {
 			if (psTagFilterMode === "or") {
@@ -1149,7 +1203,7 @@
 		if (psCount) {
 			const total = allNotes.length;
 			const shown = notes.length;
-			const hasFilter = active.length > 0 || !!q;
+			const hasFilter = active.length > 0 || !!q || psPinnedOnly;
 			psCount.textContent = hasFilter ? `${shown}/${total}` : String(total);
 		}
 		renderPsTags(psState.tags || []);
@@ -1968,13 +2022,16 @@
 	function renderPsTags(tags) {
 		if (!psTags) return;
 		const safeTags = Array.isArray(tags) ? tags : [];
+		const visibleTags = safeTags.filter(
+			(t) => String(t || "") !== PS_PINNED_TAG
+		);
 		const allBtn = {
 			tag: "",
 			label: "All",
 		};
 		const items = [
 			allBtn,
-			...safeTags.map((t) => ({ tag: t, label: `#${t}` })),
+			...visibleTags.map((t) => ({ tag: t, label: `#${t}` })),
 		];
 		psTags.innerHTML = items
 			.map((it) => {
@@ -2005,6 +2062,57 @@
 				await refreshPersonalSpace();
 			});
 		});
+	}
+
+	async function togglePinnedForNote(note) {
+		if (!note) return;
+		if (!psState || !psState.authed) {
+			toast("Please enable Personal Space first (sign in).", "error");
+			return;
+		}
+		const id = String(note.id || "");
+		if (!id) return;
+		const rawTags = Array.isArray(note.tags) ? note.tags : [];
+		const hasManual = rawTags.some(
+			(t) => String(t || "") === PS_MANUAL_TAGS_MARKER
+		);
+		const pinned = rawTags.some((t) => String(t || "") === PS_PINNED_TAG);
+		const baseTags = stripPinnedTag(stripManualTagsMarker(rawTags));
+		const nextTags = pinned ? baseTags : [...baseTags, PS_PINNED_TAG];
+		const tagsPayload = buildPsTagsPayload(nextTags, hasManual);
+		const text = String(note.text || "");
+		try {
+			const res = await api(`/api/notes/${encodeURIComponent(id)}`, {
+				method: "PUT",
+				body: JSON.stringify({ text, tags: tagsPayload }),
+			});
+			const saved = res && res.note ? res.note : null;
+			if (saved && psState && psState.authed) {
+				const notes = Array.isArray(psState.notes) ? psState.notes : [];
+				psState.notes = notes.map((n) =>
+					String(n && n.id ? n.id : "") === id ? saved : n
+				);
+				if (psEditingNoteId === id) {
+					const updatedRaw = Array.isArray(saved.tags) ? saved.tags : [];
+					psEditingNotePinned = updatedRaw.some(
+						(t) => String(t || "") === PS_PINNED_TAG
+					);
+					psEditingNoteTagsOverridden = updatedRaw.some(
+						(t) => String(t || "") === PS_MANUAL_TAGS_MARKER
+					);
+					psEditingNoteTags = stripPinnedTag(
+						stripManualTagsMarker(updatedRaw)
+					);
+					syncPsEditorTagsInput(true);
+					updatePsEditingTagsHint();
+				}
+				applyPersonalSpaceFiltersAndRender();
+				toast(pinned ? "Unpinned." : "Pinned.", "success");
+			}
+		} catch (e) {
+			const msg = e && e.message ? String(e.message) : "Error";
+			toast(`Pin failed: ${msg}`, "error");
+		}
 	}
 
 	function renderPsList(notes) {
@@ -2070,7 +2178,11 @@
 			.map((n) => {
 				const id = String(n.id || "");
 				const active = id && id === psEditingNoteId;
-				const tags = stripManualTagsMarker(Array.isArray(n.tags) ? n.tags : []);
+				const rawTags = Array.isArray(n.tags) ? n.tags : [];
+				const pinned = rawTags.some(
+					(t) => String(t || "") === PS_PINNED_TAG
+				);
+				const tags = stripPinnedTag(stripManualTagsMarker(rawTags));
 				const showTags = tags.length > 6 ? tags.slice(-6) : tags;
 				const chips = showTags
 					.map(
@@ -2089,20 +2201,38 @@
 				} p-3">
 						<div class="flex items-center justify-between gap-2">
 							<div class="text-xs text-slate-400">${fmtDate(n.createdAt)}</div>
-							<button
-								type="button"
-								data-action="delete"
-								class="ps-note-delete inline-flex rounded-md border border-white/10 bg-slate-950/60 p-1.5 text-slate-200 shadow-soft backdrop-blur transition hover:bg-slate-950/80"
-								title="Delete"
-								aria-label="Delete">
-								<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-									<path d="M3 6h18" />
-									<path d="M8 6V4h8v2" />
-									<path d="M19 6l-1 14H6L5 6" />
-									<path d="M10 11v6" />
-									<path d="M14 11v6" />
-								</svg>
-							</button>
+							<div class="flex items-center gap-2">
+								<button
+									type="button"
+									data-action="pin"
+									class="inline-flex rounded-md border border-white/10 p-1.5 shadow-soft backdrop-blur transition ${
+										pinned
+											? "bg-fuchsia-500/20 text-fuchsia-100"
+											: "bg-slate-950/60 text-slate-200 hover:bg-slate-950/80"
+									}"
+									title="Pin"
+									aria-label="Pin">
+									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+										<path d="M14 9l7 7-4 1-1 4-7-7" />
+										<path d="M14 9l-8 8" />
+										<path d="M5 5l4 4" />
+									</svg>
+								</button>
+								<button
+									type="button"
+									data-action="delete"
+									class="ps-note-delete inline-flex rounded-md border border-white/10 bg-slate-950/60 p-1.5 text-slate-200 shadow-soft backdrop-blur transition hover:bg-slate-950/80"
+									title="Delete"
+									aria-label="Delete">
+									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+										<path d="M3 6h18" />
+										<path d="M8 6V4h8v2" />
+										<path d="M19 6l-1 14H6L5 6" />
+										<path d="M10 11v6" />
+										<path d="M14 11v6" />
+									</svg>
+								</button>
+							</div>
 						</div>
 						<div class="mt-2">
 							<div class="truncate text-sm font-semibold text-slate-100">${titleHtml}</div>
@@ -2141,7 +2271,10 @@
 				psEditingNoteTagsOverridden = rawTags.some(
 					(t) => String(t || "") === PS_MANUAL_TAGS_MARKER
 				);
-				psEditingNoteTags = stripManualTagsMarker(rawTags);
+				psEditingNotePinned = rawTags.some(
+					(t) => String(t || "") === PS_PINNED_TAG
+				);
+				psEditingNoteTags = stripPinnedTag(stripManualTagsMarker(rawTags));
 				syncPsEditorTagsInput(true);
 				textarea.value = String(note.text || "");
 				textarea.focus();
@@ -2183,6 +2316,17 @@
 					} catch {
 						toast("Delete failed.", "error");
 					}
+				});
+			}
+			const pinBtn = row.querySelector('[data-action="pin"]');
+			if (pinBtn) {
+				pinBtn.addEventListener("click", async (ev) => {
+					ev.preventDefault();
+					ev.stopPropagation();
+					const id = row.getAttribute("data-note-id") || "";
+					const note = byId.get(id);
+					if (!note) return;
+					await togglePinnedForNote(note);
 				});
 			}
 		});
@@ -2720,6 +2864,7 @@ self.onmessage = async (e) => {
 			psAuthed.classList.add("hidden");
 			if (psLogout) psLogout.classList.add("hidden");
 			setPsEditorTagsVisible(false);
+			updatePsPinnedToggle();
 			updateFavoritesUI();
 			return;
 		}
@@ -2733,6 +2878,7 @@ self.onmessage = async (e) => {
 		applyPersonalSpaceFiltersAndRender();
 		syncPsEditingNoteTagsFromState();
 		syncPsEditorTagsInput();
+		updatePsPinnedToggle();
 		updateFavoritesUI();
 	}
 
@@ -3631,6 +3777,7 @@ self.onmessage = async (e) => {
 	loadPsTagsCollapsed();
 	applyPsTagsCollapsed();
 	loadPsSearchQuery();
+	loadPsPinnedOnly();
 	loadPsVisible();
 	applyPsVisible();
 
@@ -3644,6 +3791,7 @@ self.onmessage = async (e) => {
 			psEditingNoteKind = "";
 			psEditingNoteTags = [];
 			psEditingNoteTagsOverridden = false;
+			psEditingNotePinned = false;
 			syncPsEditorTagsInput();
 			if (textarea) {
 				textarea.value = "";
@@ -3741,8 +3889,14 @@ self.onmessage = async (e) => {
 				return;
 			}
 			try {
+				const baseTags = Array.isArray(psEditingNoteTags)
+					? psEditingNoteTags
+					: [];
+				const tagsWithPinned = psEditingNotePinned
+					? [...baseTags, PS_PINNED_TAG]
+					: baseTags;
 				const tagsPayload = buildPsTagsPayload(
-					Array.isArray(psEditingNoteTags) ? psEditingNoteTags : [],
+					tagsWithPinned,
 					psEditingNoteTagsOverridden
 				);
 				if (psHint)
@@ -3929,6 +4083,14 @@ self.onmessage = async (e) => {
 			psSearchDebounceTimer = window.setTimeout(() => {
 				savePsSearchQuery();
 			}, 150);
+		});
+	}
+	if (psPinnedToggle) {
+		psPinnedToggle.addEventListener("click", async () => {
+			psPinnedOnly = !psPinnedOnly;
+			savePsPinnedOnly();
+			updatePsPinnedToggle();
+			applyPersonalSpaceFiltersAndRender();
 		});
 	}
 	if (togglePersonalSpaceBtn) {
