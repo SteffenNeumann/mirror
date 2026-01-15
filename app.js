@@ -1553,6 +1553,10 @@
 				updateRunOutputUi();
 				updateRunOutputSizing();
 			}, 0);
+		} else {
+			// Reset status when preview is hidden.
+			if (metaLeft) metaLeft.textContent = "Ready.";
+			if (metaRight) metaRight.textContent = "";
 		}
 	}
 
@@ -1648,9 +1652,19 @@
 				}
 				return null;
 			}
+			function allTaskCheckboxes(){
+				// markdown-it-task-lists reliably marks LI with task-list-item,
+				// but UL class can vary depending on plugin/options.
+				var byLi = document.querySelectorAll('li.task-list-item input[type="checkbox"]');
+				if (byLi && byLi.length) return byLi;
+				var byClass = document.querySelectorAll('input.task-list-item-checkbox');
+				if (byClass && byClass.length) return byClass;
+				var byUl = document.querySelectorAll('ul.task-list input[type="checkbox"]');
+				return byUl;
+			}
 			function indexOfCheckbox(box){
 				if (!box) return null;
-				var all = document.querySelectorAll('ul.task-list input[type="checkbox"]');
+				var all = allTaskCheckboxes();
 				for (var i = 0; i < all.length; i++) if (all[i] === box) return i;
 				return null;
 			}
