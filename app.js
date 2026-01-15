@@ -1136,8 +1136,8 @@
 			const lineStart = idx;
 			let lineEnd = src.indexOf("\n", idx);
 			if (lineEnd === -1) lineEnd = src.length;
-			// Only consider fence lines strictly before the caret.
-			if (lineStart >= p) break;
+			// Include the line that contains the caret (so the opening fence line works too).
+			if (lineStart > p) break;
 			const line = src.slice(lineStart, lineEnd);
 			const m = line.match(/^\s*```\s*([a-z0-9_+\-]{0,32})\s*$/i);
 			if (m) {
@@ -2955,6 +2955,10 @@ self.onmessage = async (e) => {
 
 	textarea.addEventListener("click", () => {
 		updateSlashMenu();
+		updateCodeLangOverlay();
+	});
+
+	textarea.addEventListener("focus", () => {
 		updateCodeLangOverlay();
 	});
 
