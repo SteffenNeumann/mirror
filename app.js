@@ -1555,6 +1555,7 @@
 			}, 0);
 		} else {
 			// Reset status when preview is hidden.
+			previewMsgToken = "";
 			if (metaLeft) metaLeft.textContent = "Ready.";
 			if (metaRight) metaRight.textContent = "";
 		}
@@ -1668,27 +1669,14 @@
 				for (var i = 0; i < all.length; i++) if (all[i] === box) return i;
 				return null;
 			}
-			document.addEventListener('click', function(ev){
+			document.addEventListener('change', function(ev){
 				var t = ev && ev.target ? ev.target : null;
+				if (!t) return;
 				var box = findCheckbox(t);
 				if (!box) return;
 				var idx = indexOfCheckbox(box);
 				if (idx === null) return;
-				// Default toggle happens after click; compute next explicitly.
-				var next = !box.checked;
-				try { box.checked = next; } catch (e) { /* ignore */ }
-				send('mirror_task_toggle', { index: idx, checked: !!next });
-				try { ev.preventDefault(); } catch (e) { /* ignore */ }
-				try { ev.stopPropagation(); } catch (e) { /* ignore */ }
-			}, false);
-
-			// Fallback: wenn Browser/Element den default change feuert (z.B. direkt Checkbox togglen)
-			document.addEventListener('change', function(ev){
-				var t = ev && ev.target ? ev.target : null;
-				if (!t || !(t.matches && t.matches('input[type="checkbox"]'))) return;
-				var idx = indexOfCheckbox(t);
-				if (idx === null) return;
-				send('mirror_task_toggle', { index: idx, checked: !!t.checked });
+				send('mirror_task_toggle', { index: idx, checked: !!box.checked });
 			}, true);
 
 			// Handshake: signalisiert dem Parent, dass Script+Messaging aktiv sind.
@@ -1710,7 +1698,9 @@
 		let changed = false;
 		for (let li = 0; li < lines.length; li++) {
 			const line = String(lines[li] || "");
-			const m = line.match(/^(\s*(?:[-*+]|\d+[.)])\s+\[)([ xX])(\].*)$/);
+			const m = line.match(
+				/^(\s*(?:>\s*)?(?:[-*+]|\d+[.)])\s+\[)([ xX])(\].*)$/
+			);
 			if (!m) continue;
 			if (seen === idx) {
 				const nextChecked =
