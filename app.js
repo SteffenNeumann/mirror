@@ -1603,28 +1603,56 @@
 </head>
 <body>
   <div id="content">${bodyHtml}</div>
-	  <script>
-	    (function(){
-	      function idxOfCheckbox(target){
-	        var box = target && target.closest ? target.closest('input[type="checkbox"]') : null;
-	        if (!box) return null;
-	        var all = document.querySelectorAll('ul.task-list input[type="checkbox"]');
-	        for (var i = 0; i < all.length; i++) if (all[i] === box) return i;
-	        return null;
-	      }
-	      document.addEventListener('click', function(ev){
-	        var t = ev && ev.target ? ev.target : null;
-	        var idx = idxOfCheckbox(t);
-	        if (idx === null) return;
-	        try {
-	          var box = document.querySelectorAll('ul.task-list input[type="checkbox"]')[idx];
-	          parent.postMessage({ type: 'mirror_task_toggle', index: idx, checked: !!(box && box.checked) }, '*');
-	        } catch (e) {
-	          // ignore
-	        }
-	      }, true);
-	    })();
-	  </script>
+	<script>
+		(function(){
+			function toElement(t){
+				if (!t) return null;
+				if (t.nodeType === 1) return t;
+				// Text node -> parent element
+				return t.parentElement || null;
+			}
+			function findCheckbox(t){
+				var el = toElement(t);
+				if (!el) return null;
+				if (el.closest && el.closest('a')) return null;
+				if (el.matches && el.matches('input[type="checkbox"]')) return el;
+				var label = el.closest ? el.closest('label') : null;
+				if (label) {
+					var inLabel = label.querySelector ? label.querySelector('input[type="checkbox"]') : null;
+					if (inLabel) return inLabel;
+				}
+				var li = el.closest ? el.closest('li.task-list-item') : null;
+				if (li) {
+					var inLi = li.querySelector ? li.querySelector('input[type="checkbox"]') : null;
+					if (inLi) return inLi;
+				}
+				return null;
+			}
+			function indexOfCheckbox(box){
+				if (!box) return null;
+				var all = document.querySelectorAll('ul.task-list input[type="checkbox"]');
+				for (var i = 0; i < all.length; i++) if (all[i] === box) return i;
+				return null;
+			}
+			document.addEventListener('click', function(ev){
+				var t = ev && ev.target ? ev.target : null;
+				var box = findCheckbox(t);
+				if (!box) return;
+				var idx = indexOfCheckbox(box);
+				if (idx === null) return;
+				// Default toggle happens after click; compute next explicitly.
+				var next = !box.checked;
+				try { box.checked = next; } catch (e) { /* ignore */ }
+				try {
+					parent.postMessage({ type: 'mirror_task_toggle', index: idx, checked: !!next }, '*');
+				} catch (e) {
+					// ignore
+				}
+				try { ev.preventDefault(); } catch (e) { /* ignore */ }
+				try { ev.stopPropagation(); } catch (e) { /* ignore */ }
+			}, false);
+		})();
+	</script>
 </body>
 </html>`;
 		setPreviewDocument(doc);
