@@ -1618,6 +1618,13 @@
 	<script>
 		(function(){
 			var TOKEN = ${tokenJs};
+			function send(type, payload){
+				try {
+					parent.postMessage(Object.assign({ type: type, token: TOKEN }, payload || {}), '*');
+				} catch (e) {
+					// ignore
+				}
+			}
 			function toElement(t){
 				if (!t) return null;
 				if (t.nodeType === 1) return t;
@@ -1656,14 +1663,22 @@
 				// Default toggle happens after click; compute next explicitly.
 				var next = !box.checked;
 				try { box.checked = next; } catch (e) { /* ignore */ }
-				try {
-					parent.postMessage({ type: 'mirror_task_toggle', token: TOKEN, index: idx, checked: !!next }, '*');
-				} catch (e) {
-					// ignore
-				}
+				send('mirror_task_toggle', { index: idx, checked: !!next });
 				try { ev.preventDefault(); } catch (e) { /* ignore */ }
 				try { ev.stopPropagation(); } catch (e) { /* ignore */ }
 			}, false);
+
+			// Fallback: wenn Browser/Element den default change feuert (z.B. direkt Checkbox togglen)
+			document.addEventListener('change', function(ev){
+				var t = ev && ev.target ? ev.target : null;
+				if (!t || !(t.matches && t.matches('input[type="checkbox"]'))) return;
+				var idx = indexOfCheckbox(t);
+				if (idx === null) return;
+				send('mirror_task_toggle', { index: idx, checked: !!t.checked });
+			}, true);
+
+			// Handshake: signalisiert dem Parent, dass Script+Messaging aktiv sind.
+			send('mirror_preview_ready', { ts: Date.now() });
 		})();
 	</script>
 </body>
@@ -2063,22 +2078,23 @@
 	window.addEventListener("message", (ev) => {
 		const data = ev && ev.data ? ev.data : null;
 		if (!data || !data.type) return;
+		if (data.type === "mirror_preview_ready") {
+			if (!previewMsgToken) return;
+			if (String(data.token || "") !== String(previewMsgToken)) return;
+			if (metaLeft) metaLeft.textContent = "Preview ready.";
+			if (metaRight) metaRight.textContent = nowIso();
+			return;
+		}
 		if (data.type === "mirror_task_toggle") {
 			// Token ist die primäre Validierung (robust bei sandbox/null origin).
 			if (!previewMsgToken) return;
 			if (String(data.token || "") !== String(previewMsgToken)) return;
-			// Zusätzliche Absicherung, wenn source verfügbar ist.
-			try {
-				if (mdPreview && ev.source && ev.source !== mdPreview.contentWindow)
-					return;
-			} catch {
-				// ignore
-			}
 			const idx = Number(data.index);
 			if (!Number.isFinite(idx) || idx < 0) return;
 			const checked = Boolean(data.checked);
 			const ok = toggleMarkdownTaskAtIndex(idx, checked);
-			if (metaLeft) metaLeft.textContent = ok ? "Todo updated." : "Todo not found.";
+			if (metaLeft)
+				metaLeft.textContent = ok ? "Todo updated." : "Todo not found.";
 			if (metaRight) metaRight.textContent = nowIso();
 			return;
 		}
