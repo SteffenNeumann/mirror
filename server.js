@@ -48,6 +48,9 @@ let stmtMetaGet;
 let stmtMetaInsert;
 let stmtRoomStateGet;
 let stmtRoomStateUpsert;
+let stmtFavoriteUpsert;
+let stmtFavoriteDelete;
+let stmtFavoritesByUser;
 
 // In-memory rate limit: ip -> { count, resetAt }
 const aiRate = new Map();
@@ -102,6 +105,18 @@ function initDb() {
 			updated_at INTEGER NOT NULL
 		);
 		CREATE INDEX IF NOT EXISTS idx_room_state_updated ON room_state(updated_at DESC);
+		CREATE TABLE IF NOT EXISTS room_favorites (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER NOT NULL,
+			room TEXT NOT NULL,
+			room_key TEXT NOT NULL,
+			text TEXT NOT NULL,
+			added_at INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL,
+			FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+			UNIQUE(user_id, room, room_key)
+		);
+		CREATE INDEX IF NOT EXISTS idx_room_favorites_user_added ON room_favorites(user_id, added_at DESC);
 		CREATE TABLE IF NOT EXISTS users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			email TEXT NOT NULL UNIQUE,
@@ -163,6 +178,15 @@ function initDb() {
 	stmtRoomStateGet = db.prepare("SELECT text, ts FROM room_state WHERE rk = ?");
 	stmtRoomStateUpsert = db.prepare(
 		"INSERT INTO room_state(rk, text, ts, updated_at) VALUES(?, ?, ?, ?) ON CONFLICT(rk) DO UPDATE SET text = excluded.text, ts = excluded.ts, updated_at = excluded.updated_at"
+	);
+	stmtFavoriteUpsert = db.prepare(
+		"INSERT INTO room_favorites(user_id, room, room_key, text, added_at, updated_at) VALUES(?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, room, room_key) DO UPDATE SET text = excluded.text, updated_at = excluded.updated_at"
+	);
+	stmtFavoriteDelete = db.prepare(
+		"DELETE FROM room_favorites WHERE user_id = ? AND room = ? AND room_key = ?"
+	);
+	stmtFavoritesByUser = db.prepare(
+		"SELECT room, room_key, text, added_at FROM room_favorites WHERE user_id = ? ORDER BY added_at DESC LIMIT 200"
 	);
 }
 
@@ -548,6 +572,16 @@ function listTags(userId) {
 	return uniq(tags).sort();
 }
 
+function listFavorites(userId) {
+	initDb();
+	return stmtFavoritesByUser.all(userId).map((r) => ({
+		room: r.room,
+		key: r.room_key,
+		text: r.text,
+		addedAt: r.added_at,
+	}));
+}
+
 function saveLoginToken(token, email, exp) {
 	initDb();
 	stmtTokenInsert.run(token, email, exp);
@@ -750,13 +784,102 @@ const server = http.createServer((req, res) => {
 		const userId = getOrCreateUserId(email);
 		const notes = listNotes(userId, "");
 		const tags = listTags(userId);
+		const favorites = listFavorites(userId);
 		json(res, 200, {
 			ok: true,
 			authed: true,
 			email,
 			tags,
 			notes,
+			favorites,
 		});
+		return;
+	}
+
+	if (url.pathname === "/api/favorites" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const favorites = listFavorites(userId);
+		json(res, 200, { ok: true, favorites });
+		return;
+	}
+
+	if (url.pathname === "/api/favorites" && req.method === "POST") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		readJson(req)
+			.then((body) => {
+				const room = clampRoom(body && body.room);
+				const key = clampKey(body && body.key);
+				const textVal = String(body && body.text ? body.text : "");
+				if (!room) {
+					json(res, 400, { ok: false, error: "invalid_room" });
+					return;
+				}
+				const userId = getOrCreateUserId(email);
+				const now = Date.now();
+				initDb();
+				stmtFavoriteUpsert.run(
+					userId,
+					room,
+					key,
+					textVal,
+					now,
+					now
+				);
+				json(res, 200, {
+					ok: true,
+					favorite: {
+						room,
+						key,
+						text: textVal,
+						addedAt: now,
+					},
+				});
+			})
+			.catch((e) => {
+				if (String(e && e.message) === "body_too_large") {
+					json(res, 413, { ok: false, error: "body_too_large" });
+					return;
+				}
+				json(res, 400, { ok: false, error: "invalid_json" });
+			});
+		return;
+	}
+
+	if (url.pathname === "/api/favorites" && req.method === "DELETE") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		readJson(req)
+			.then((body) => {
+				const room = clampRoom(body && body.room);
+				const key = clampKey(body && body.key);
+				if (!room) {
+					json(res, 400, { ok: false, error: "invalid_room" });
+					return;
+				}
+				const userId = getOrCreateUserId(email);
+				initDb();
+				stmtFavoriteDelete.run(userId, room, key);
+				json(res, 200, { ok: true });
+			})
+			.catch((e) => {
+				if (String(e && e.message) === "body_too_large") {
+					json(res, 413, { ok: false, error: "body_too_large" });
+					return;
+				}
+				json(res, 400, { ok: false, error: "invalid_json" });
+			});
 		return;
 	}
 

@@ -900,7 +900,7 @@
 		return false;
 	}
 
-	let psState = { authed: false, email: "", tags: [], notes: [] };
+	let psState = { authed: false, email: "", tags: [], notes: [], favorites: [] };
 	let psActiveTags = new Set();
 	let psTagFilterMode = "and";
 	let psEditingNoteId = "";
@@ -2708,15 +2708,19 @@ self.onmessage = async (e) => {
 			const me = await api("/api/personal-space/me");
 			psState = me;
 		} catch (e) {
-			psState = { authed: false, email: "", tags: [], notes: [] };
+			psState = { authed: false, email: "", tags: [], notes: [], favorites: [] };
 			if (psHint) psHint.textContent = "";
 		}
+		psState.favorites = Array.isArray(psState.favorites)
+			? psState.favorites
+			: [];
 
 		if (!psState.authed) {
 			psUnauthed.classList.remove("hidden");
 			psAuthed.classList.add("hidden");
 			if (psLogout) psLogout.classList.add("hidden");
 			setPsEditorTagsVisible(false);
+			updateFavoritesUI();
 			return;
 		}
 
@@ -2729,6 +2733,7 @@ self.onmessage = async (e) => {
 		applyPersonalSpaceFiltersAndRender();
 		syncPsEditingNoteTagsFromState();
 		syncPsEditorTagsInput();
+		updateFavoritesUI();
 	}
 
 	function downloadJson(filename, obj) {
@@ -3083,23 +3088,32 @@ self.onmessage = async (e) => {
 	const RECENT_KEY = "mirror_recent_rooms";
 	const FAVORITES_KEY = "mirror_favorites_v1";
 
-	function loadFavorites() {
+	function normalizeFavoriteEntry(it) {
+		const roomName = normalizeRoom(it && it.room);
+		const keyName = normalizeKey(it && it.key);
+		const addedAt = Number(it && (it.addedAt || it.added_at)) || 0;
+		const text = String(it && it.text ? it.text : "");
+		if (!roomName) return null;
+		return { room: roomName, key: keyName, addedAt, text };
+	}
+
+	function loadLocalFavorites() {
 		try {
 			const raw = localStorage.getItem(FAVORITES_KEY);
 			const parsed = JSON.parse(raw || "[]");
 			if (!Array.isArray(parsed)) return [];
-			return parsed
-				.map((it) => {
-					const roomName = normalizeRoom(it && it.room);
-					const keyName = normalizeKey(it && it.key);
-					const addedAt = Number(it && it.addedAt) || 0;
-					if (!roomName) return null;
-					return { room: roomName, key: keyName, addedAt };
-				})
-				.filter(Boolean);
+			return parsed.map(normalizeFavoriteEntry).filter(Boolean);
 		} catch {
 			return [];
 		}
+	}
+
+	function loadFavorites() {
+		if (psState && psState.authed) {
+			const favs = Array.isArray(psState.favorites) ? psState.favorites : [];
+			return favs.map(normalizeFavoriteEntry).filter(Boolean);
+		}
+		return loadLocalFavorites();
 	}
 
 	function saveFavorites(list) {
@@ -3120,11 +3134,21 @@ self.onmessage = async (e) => {
 		const favs = loadFavorites().sort(
 			(a, b) => (b.addedAt || 0) - (a.addedAt || 0)
 		);
+		const escapeAttr = (raw) =>
+			String(raw || "")
+				.replace(/&/g, "&amp;")
+				.replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;")
+				.replace(/"/g, "&quot;");
 		const options = favs
 			.map((f) => {
 				const value = buildShareHash(f.room, f.key);
 				const label = f.key ? `${f.room} (privat)` : f.room;
-				return `<option value="${value}">${label}</option>`;
+				const textRaw = String(f.text || "").trim();
+				const snippet =
+					textRaw.length > 200 ? `${textRaw.slice(0, 200)}…` : textRaw;
+				const titleAttr = snippet ? ` title="${escapeAttr(snippet)}"` : "";
+				return `<option value="${value}"${titleAttr}>${label}</option>`;
 			})
 			.join("");
 		favoritesSelect.innerHTML = `<option value="">Favoriten…</option>${options}`;
@@ -3373,7 +3397,7 @@ self.onmessage = async (e) => {
 		});
 	}
 	if (toggleFavoriteBtn) {
-		toggleFavoriteBtn.addEventListener("click", () => {
+		toggleFavoriteBtn.addEventListener("click", async () => {
 			const roomName = normalizeRoom(room);
 			const keyName = normalizeKey(key);
 			if (!roomName) return;
@@ -3381,6 +3405,59 @@ self.onmessage = async (e) => {
 			const idx = favs.findIndex(
 				(f) => f.room === roomName && f.key === keyName
 			);
+			const authed = Boolean(psState && psState.authed);
+			if (authed) {
+				try {
+					if (idx >= 0) {
+						await api("/api/favorites", {
+							method: "DELETE",
+							body: JSON.stringify({ room: roomName, key: keyName }),
+						});
+						const next = favs.filter(
+							(f) => !(f.room === roomName && f.key === keyName)
+						);
+						psState.favorites = next;
+						toast("Removed from favorites.", "info");
+					} else {
+						const textSnapshot = String(
+							textarea && textarea.value ? textarea.value : ""
+						);
+						const res = await api("/api/favorites", {
+							method: "POST",
+							body: JSON.stringify({
+								room: roomName,
+								key: keyName,
+								text: textSnapshot,
+							}),
+						});
+						const added = normalizeFavoriteEntry(
+							(res && res.favorite) || {
+								room: roomName,
+								key: keyName,
+								text: textSnapshot,
+								addedAt: Date.now(),
+							}
+						);
+						const next = [added, ...favs]
+							.filter(Boolean)
+							.filter(
+								(f, i, arr) =>
+									arr.findIndex(
+										(x) => x.room === f.room && x.key === f.key
+									) === i
+							)
+							.slice(0, 20);
+						psState.favorites = next;
+						toast("Saved to favorites.", "success");
+					}
+					updateFavoritesUI();
+				} catch (e) {
+					const msg = e && e.message ? String(e.message) : "Error";
+					toast(`Favorites update failed: ${msg}`, "error");
+				}
+				return;
+			}
+
 			if (idx >= 0) {
 				favs.splice(idx, 1);
 				saveFavorites(favs);
