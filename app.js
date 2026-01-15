@@ -451,9 +451,30 @@
 
 	function syncPsEditorTagsInput() {
 		if (!psEditorTagsInput) return;
+		try {
+			if (document && document.activeElement === psEditorTagsInput) return;
+		} catch {
+			// ignore
+		}
 		psEditorTagsSyncing = true;
 		psEditorTagsInput.value = formatTagsForEditor(psEditingNoteTags);
 		psEditorTagsSyncing = false;
+	}
+
+	function syncPsEditingNoteTagsFromState() {
+		if (!psState || !psState.authed) return;
+		if (!psEditingNoteId) return;
+		const notes = Array.isArray(psState.notes) ? psState.notes : [];
+		const id = String(psEditingNoteId || "");
+		const note = notes.find((n) => String(n && n.id ? n.id : "") === id);
+		if (!note) return;
+		const rawTags = Array.isArray(note.tags) ? note.tags : [];
+		psEditingNoteTagsOverridden = rawTags.some(
+			(t) => String(t || "") === PS_MANUAL_TAGS_MARKER
+		);
+		psEditingNoteTags = stripManualTagsMarker(rawTags);
+		updatePsEditingTagsHint();
+		syncPsEditorTagsInput();
 	}
 
 	function getLineBounds(text, pos) {
@@ -1562,8 +1583,8 @@
 				const id = String(n.id || "");
 				const active = id && id === psEditingNoteId;
 				const tags = stripManualTagsMarker(Array.isArray(n.tags) ? n.tags : []);
-				const chips = tags
-					.slice(0, 6)
+				const showTags = tags.length > 6 ? tags.slice(-6) : tags;
+				const chips = showTags
 					.map(
 						(t) =>
 							`<span class="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-slate-200">#${t}</span>`
@@ -2215,9 +2236,10 @@ self.onmessage = async (e) => {
 		if (psLogout) psLogout.classList.remove("hidden");
 		if (psEmail) psEmail.textContent = psState.email || "";
 		setPsEditorTagsVisible(true);
-		syncPsEditorTagsInput();
 
 		applyPersonalSpaceFiltersAndRender();
+		syncPsEditingNoteTagsFromState();
+		syncPsEditorTagsInput();
 	}
 
 	function downloadJson(filename, obj) {
@@ -2997,7 +3019,7 @@ self.onmessage = async (e) => {
 
 	textarea.addEventListener("keyup", () => {
 		updateCodeLangOverlay();
-				syncPsEditorTagsInput();
+		syncPsEditorTagsInput();
 	});
 
 	textarea.addEventListener("keydown", (ev) => {
@@ -3159,22 +3181,49 @@ self.onmessage = async (e) => {
 				if (psHint)
 					psHint.textContent = psEditingNoteId ? "Aktualisiere…" : "Speichere…";
 				if (!psEditingNoteId) {
-					await api("/api/notes", {
+					const res = await api("/api/notes", {
 						method: "POST",
 						body: JSON.stringify({
 							text,
 							tags: tagsPayload,
 						}),
 					});
+					const saved = res && res.note ? res.note : null;
+					if (saved && saved.id && psState && psState.authed) {
+						psEditingNoteId = String(saved.id);
+						psEditingNoteKind = String(saved.kind || "");
+						const notes = Array.isArray(psState.notes) ? psState.notes : [];
+						psState.notes = [saved, ...notes];
+						applyPersonalSpaceFiltersAndRender();
+						syncPsEditingNoteTagsFromState();
+						if (psMainHint) {
+							psMainHint.classList.remove("hidden");
+							psMainHint.textContent = "Bearbeiten aktiv";
+						}
+					}
 					if (psHint) psHint.textContent = "Gespeichert.";
 				} else {
-					await api(`/api/notes/${encodeURIComponent(psEditingNoteId)}`, {
+					const res = await api(`/api/notes/${encodeURIComponent(psEditingNoteId)}`, {
 						method: "PUT",
 						body: JSON.stringify({
 							text,
 							tags: tagsPayload,
 						}),
 					});
+					const saved = res && res.note ? res.note : null;
+					if (saved && saved.id && psState && psState.authed) {
+						const notes = Array.isArray(psState.notes) ? psState.notes : [];
+						const id = String(saved.id);
+						const idx = notes.findIndex(
+							(n) => String(n && n.id ? n.id : "") === id
+						);
+						psState.notes =
+							idx >= 0
+								? [...notes.slice(0, idx), saved, ...notes.slice(idx + 1)]
+								: [saved, ...notes];
+						applyPersonalSpaceFiltersAndRender();
+						syncPsEditingNoteTagsFromState();
+					}
 					if (psHint) psHint.textContent = "Aktualisiert.";
 				}
 				toast("Personal Space: gespeichert.", "success");
