@@ -1596,6 +1596,8 @@
     blockquote{border-left:3px solid rgba(217,70,239,.45);margin:0;padding:0 12px;color:#cbd5e1;}
     ul.task-list{list-style:none;padding-left:0;}
     ul.task-list li{display:flex;gap:.55rem;align-items:flex-start;}
+		ul.task-list li.task-list-item.checked{opacity:.75;text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:rgba(148,163,184,.7);}
+		ul.task-list li.task-list-item.checked input[type=checkbox]{opacity:1;}
     ul.task-list input[type=checkbox]{margin-top:.2rem;}
   </style>
 </head>

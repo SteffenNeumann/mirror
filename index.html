@@ -41,9 +41,24 @@
 				line-height: 1.55;
 				color: rgb(226 232 240);
 			}
+			/* Personal Space: Delete button only on hover (mouse), always on touch */
+			.ps-note-delete {
+				opacity: 0;
+				pointer-events: none;
+				transition: opacity 160ms ease, transform 160ms ease;
+				transform: translateY(-1px);
+			}
+			.group:hover .ps-note-delete,
+			.group:focus-within .ps-note-delete {
+				opacity: 1;
+				pointer-events: auto;
+				transform: translateY(0);
+			}
 			@media (hover: none), (pointer: coarse) {
 				.ps-note-delete {
-					display: flex !important;
+					opacity: 1 !important;
+					pointer-events: auto !important;
+					transform: none !important;
 				}
 			}
 			.md-content a {
@@ -95,6 +110,16 @@
 				display: flex;
 				gap: 0.55rem;
 				align-items: flex-start;
+			}
+			/* Keep completed todos visibly marked */
+			.md-content ul.task-list li.task-list-item.checked {
+				opacity: 0.75;
+				text-decoration: line-through;
+				text-decoration-thickness: 2px;
+				text-decoration-color: rgba(148, 163, 184, 0.7);
+			}
+			.md-content ul.task-list li.task-list-item.checked input[type="checkbox"] {
+				opacity: 1;
 			}
 			.md-content ul.task-list input[type="checkbox"] {
 				margin-top: 0.2rem;
