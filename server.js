@@ -1096,6 +1096,8 @@ const server = http.createServer((req, res) => {
 				const kindRaw = String(body && body.kind ? body.kind : "")
 					.trim()
 					.toLowerCase();
+				const promptRaw = String(body && body.prompt ? body.prompt : "").trim();
+				const prompt = promptRaw ? promptRaw.slice(0, 800) : "";
 				let input = String(body && body.code ? body.code : "");
 				if (!input.trim()) {
 					json(res, 400, { ok: false, error: "empty" });
@@ -1142,7 +1144,7 @@ const server = http.createServer((req, res) => {
 					"Use inclusive language unless the user explicitly asks otherwise. " +
 					"Be concrete and practical. Never reveal secrets/keys.";
 
-				const modeInstruction =
+				const modeInstructionBase =
 					mode === "fix"
 						? kind === "code"
 							? "Fix bugs and issues. Briefly explain root cause, then propose minimal changes (steps or a small patch snippet)."
@@ -1158,6 +1160,9 @@ const server = http.createServer((req, res) => {
 					: kind === "code"
 					? "Explain what this code does and how it works. Mention important details and edge cases."
 					: "If the input contains a question or instruction, answer it. Otherwise explain the content clearly.";
+				const modeInstruction = prompt
+					? modeInstructionBase + "\n\nUser request (higher priority): " + prompt
+					: modeInstructionBase;
 
 				function formatInputForUserPrompt(kind, lang, input) {
 					if (kind === "code") {

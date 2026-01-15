@@ -41,6 +41,8 @@
 	const runOutputIconEl = document.getElementById("runOutputIcon");
 	const applyOutputReplaceBtn = document.getElementById("applyOutputReplace");
 	const applyOutputAppendBtn = document.getElementById("applyOutputAppend");
+	const aiPromptInput = document.getElementById("aiPrompt");
+	const aiPromptClearBtn = document.getElementById("aiPromptClear");
 	const copyMirrorBtn = document.getElementById("copyMirror");
 	const codeLangWrap = document.getElementById("codeLangWrap");
 	const codeLangSelect = document.getElementById("codeLang");
@@ -925,6 +927,33 @@
 	const PS_SEARCH_QUERY_KEY = "mirror_ps_search_query";
 	const PS_VISIBLE_KEY = "mirror_ps_visible";
 	const PS_MANUAL_TAGS_MARKER = "__manual_tags__";
+	const AI_PROMPT_KEY = "mirror_ai_prompt";
+	let aiPrompt = "";
+
+	function loadAiPrompt() {
+		try {
+			aiPrompt = String(localStorage.getItem(AI_PROMPT_KEY) || "");
+		} catch {
+			aiPrompt = "";
+		}
+		if (aiPromptInput) aiPromptInput.value = aiPrompt;
+	}
+
+	function saveAiPrompt(next) {
+		aiPrompt = String(next || "");
+		try {
+			localStorage.setItem(AI_PROMPT_KEY, aiPrompt);
+		} catch {
+			// ignore
+		}
+	}
+
+	function getAiPrompt() {
+		const v = String(aiPromptInput && aiPromptInput.value ? aiPromptInput.value : "")
+			.trim()
+			.slice(0, 800);
+		return v;
+	}
 
 	function stripManualTagsMarker(tags) {
 		const arr = Array.isArray(tags) ? tags : [];
@@ -2608,6 +2637,8 @@ self.onmessage = async (e) => {
 			.toLowerCase();
 		const code = String(parsed && parsed.code ? parsed.code : "");
 
+		const prompt = getAiPrompt();
+		if (prompt) saveAiPrompt(prompt);
 		const hasCode = Boolean(String(code || "").trim());
 		const payloadText = hasCode ? code : editorText;
 		const kind = hasCode ? "code" : "text";
@@ -2621,7 +2652,13 @@ self.onmessage = async (e) => {
 		try {
 			const res = await api("/api/ai", {
 				method: "POST",
-				body: JSON.stringify({ mode, lang: payloadLang, kind, code: payloadText }),
+				body: JSON.stringify({
+					mode,
+					lang: payloadLang,
+					kind,
+					code: payloadText,
+					prompt,
+				}),
 			});
 			setPreviewRunOutput({
 				status: "AI",
@@ -3740,6 +3777,25 @@ self.onmessage = async (e) => {
 	window.addEventListener("resize", () => {
 		updateRunOutputSizing();
 	});
+	if (aiPromptInput) {
+		aiPromptInput.addEventListener("input", () => {
+			// Don't persist every keystroke (privacy-ish); we persist on send.
+		});
+		aiPromptInput.addEventListener("keydown", (e) => {
+			if (!e) return;
+			if (e.key === "Enter") {
+				e.preventDefault();
+				aiAssistFromPreview();
+			}
+		});
+	}
+	if (aiPromptClearBtn) {
+		aiPromptClearBtn.addEventListener("click", () => {
+			if (aiPromptInput) aiPromptInput.value = "";
+			saveAiPrompt("");
+			toast("AI prompt cleared.", "success");
+		});
+	}
 	if (psLogout) {
 		psLogout.addEventListener("click", async () => {
 			try {
@@ -3803,4 +3859,5 @@ self.onmessage = async (e) => {
 	}
 
 	refreshPersonalSpace();
+	loadAiPrompt();
 })();
