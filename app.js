@@ -2205,7 +2205,7 @@
 								<button
 									type="button"
 									data-action="pin"
-									class="inline-flex rounded-md border border-white/10 p-1.5 shadow-soft backdrop-blur transition ${
+									class="ps-note-pin inline-flex rounded-md border border-white/10 p-1.5 shadow-soft backdrop-blur transition ${
 										pinned
 											? "bg-fuchsia-500/20 text-fuchsia-100"
 											: "bg-slate-950/60 text-slate-200 hover:bg-slate-950/80"
@@ -2213,9 +2213,8 @@
 									title="Pin"
 									aria-label="Pin">
 									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-										<path d="M14 9l7 7-4 1-1 4-7-7" />
-										<path d="M14 9l-8 8" />
-										<path d="M5 5l4 4" />
+										<path d="M4 4v16" />
+										<path d="M4 4h12l-2 5 2 5H4" />
 									</svg>
 								</button>
 								<button

@@ -48,6 +48,12 @@
 				transition: opacity 160ms ease, transform 160ms ease;
 				transform: translateY(-1px);
 			}
+			.ps-note-pin {
+				opacity: 0;
+				pointer-events: none;
+				transition: opacity 160ms ease, transform 160ms ease;
+				transform: translateY(-1px);
+			}
 			.ps-note-excerpt {
 				overflow: hidden;
 				display: -webkit-box;
@@ -60,8 +66,19 @@
 				pointer-events: auto;
 				transform: translateY(0);
 			}
+			.group:hover .ps-note-pin,
+			.group:focus-within .ps-note-pin {
+				opacity: 1;
+				pointer-events: auto;
+				transform: translateY(0);
+			}
 			@media (hover: none), (pointer: coarse) {
 				.ps-note-delete {
+					opacity: 1 !important;
+					pointer-events: auto !important;
+					transform: none !important;
+				}
+				.ps-note-pin {
 					opacity: 1 !important;
 					pointer-events: auto !important;
 					transform: none !important;
