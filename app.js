@@ -449,10 +449,11 @@
 		psEditorTagsBar.classList.toggle("hidden", !visible);
 	}
 
-	function syncPsEditorTagsInput() {
+	function syncPsEditorTagsInput(force) {
 		if (!psEditorTagsInput) return;
 		try {
-			if (document && document.activeElement === psEditorTagsInput) return;
+			if (!force && document && document.activeElement === psEditorTagsInput)
+				return;
 		} catch {
 			// ignore
 		}
@@ -1645,6 +1646,7 @@
 					(t) => String(t || "") === PS_MANUAL_TAGS_MARKER
 				);
 				psEditingNoteTags = stripManualTagsMarker(rawTags);
+				syncPsEditorTagsInput(true);
 				textarea.value = String(note.text || "");
 				textarea.focus();
 				if (psHint) psHint.textContent = "Bearbeiten: Text rechts angepasst.";
@@ -3019,7 +3021,6 @@ self.onmessage = async (e) => {
 
 	textarea.addEventListener("keyup", () => {
 		updateCodeLangOverlay();
-		syncPsEditorTagsInput();
 	});
 
 	textarea.addEventListener("keydown", (ev) => {
