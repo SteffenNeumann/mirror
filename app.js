@@ -486,7 +486,15 @@
 	}
 
 	function getSlashContext() {
-		if (!textarea) return { active: false, start: 0, end: 0, query: "" };
+		if (!textarea)
+			return {
+				active: false,
+				start: 0,
+				end: 0,
+				query: "",
+				token: "",
+				exact: false,
+			};
 		const value = String(textarea.value || "");
 		const caret = Math.max(
 			0,
@@ -494,13 +502,34 @@
 		);
 		const { start, end, line } = getLineBounds(value, caret);
 		const raw = String(line || "");
-		const trimmedStart = raw.replace(/^\s+/, "");
+		const leading = raw.match(/^\s+/);
+		const leadingLen = leading ? leading[0].length : 0;
+		const trimmedStart = raw.slice(leadingLen);
 		if (!trimmedStart.startsWith("/")) {
-			return { active: false, start, end, query: "" };
+			return { active: false, start, end, query: "", token: "", exact: false };
 		}
-		// Filter by the first token after '/', ignore args
-		const token = trimmedStart.slice(1).split(/\s+/)[0] || "";
-		return { active: true, start, end, query: token.toLowerCase() };
+		const firstWs = trimmedStart.search(/\s/);
+		const token =
+			(firstWs === -1
+				? trimmedStart.slice(1)
+				: trimmedStart.slice(1, firstWs)) || "";
+		const tokenLower = token.toLowerCase();
+		const exact = SLASH_SUGGESTIONS.some(
+			(it) => String(it.cmd || "").toLowerCase() === tokenLower
+		);
+		// Only show suggestions while the caret is in the command token (before args).
+		const caretInLine = caret - start;
+		const caretInTrimmed = caretInLine - leadingLen;
+		const tokenEndInTrimmed = firstWs === -1 ? trimmedStart.length : firstWs;
+		const caretInToken = caretInTrimmed <= tokenEndInTrimmed;
+		return {
+			active: caretInToken,
+			start,
+			end,
+			query: tokenLower,
+			token: tokenLower,
+			exact,
+		};
 	}
 
 	function renderSlashMenu() {
@@ -587,6 +616,17 @@
 				.toLowerCase()
 				.startsWith(q);
 		}).slice(0, 12);
+		// If the user typed an exact command that has no variants, hide the menu.
+		if (ctx.exact && q) {
+			const matchCount = SLASH_SUGGESTIONS.reduce((acc, it) => {
+				const c = String(it.cmd || "").toLowerCase();
+				return c.startsWith(q) ? acc + 1 : acc;
+			}, 0);
+			if (matchCount <= 1) {
+				setSlashMenuOpen(false);
+				return;
+			}
+		}
 		slashMenuIndex = 0;
 		setSlashMenuOpen(true);
 		renderSlashMenu();
@@ -612,7 +652,20 @@
 			renderSlashMenu();
 			return true;
 		}
-		if (ev.key === "Enter" || ev.key === "Tab") {
+		if (ev.key === "Tab") {
+			ev.preventDefault();
+			const it = slashMenuItems[slashMenuIndex];
+			if (it) insertSlashSnippet(String(it.snippet || ""));
+			return true;
+		}
+		if (ev.key === "Enter") {
+			const ctx = getSlashContext();
+			// If the command is already an exact match, let the normal Enter handler
+			// apply the slash-command (instead of re-inserting the snippet).
+			if (ctx && ctx.exact) {
+				setSlashMenuOpen(false);
+				return false;
+			}
 			ev.preventDefault();
 			const it = slashMenuItems[slashMenuIndex];
 			if (it) insertSlashSnippet(String(it.snippet || ""));
@@ -2882,17 +2935,14 @@ self.onmessage = async (e) => {
 			const current = formatTagsForHint(psEditingNoteTags)
 				.replace(/#/g, "")
 				.trim();
-			const raw = await modalPrompt(
-				"Enter tags (comma or space separated).",
-				{
-					title: "Edit tags",
-					okText: "Save",
-					cancelText: "Cancel",
-					value: current,
-					placeholder: "project, idea, lang-python",
-					backdropClose: true,
-				}
-			);
+			const raw = await modalPrompt("Enter tags (comma or space separated).", {
+				title: "Edit tags",
+				okText: "Save",
+				cancelText: "Cancel",
+				value: current,
+				placeholder: "project, idea, lang-python",
+				backdropClose: true,
+			});
 			if (raw === null) return;
 			const nextTags = normalizeManualTags(raw);
 			psEditingNoteTags = nextTags;
