@@ -882,6 +882,7 @@
 	const clearMirrorBtn = document.getElementById("clearMirror");
 	let mdLibWarned = false;
 	let previewObjectUrl = "";
+	let previewMsgToken = "";
 	let psRunOutputById = new Map();
 	let pyRunnerWorker = null;
 	let pyRunnerSeq = 0;
@@ -1575,6 +1576,17 @@
 			bodyHtml = "";
 		}
 
+		// Token pro Preview-Render: erlaubt sichere postMessage-Validierung auch bei sandbox/null origin.
+		try {
+			previewMsgToken =
+				typeof crypto !== "undefined" && crypto.randomUUID
+					? crypto.randomUUID()
+					: `t_${stamp}_${Math.random().toString(16).slice(2)}`;
+		} catch {
+			previewMsgToken = `t_${stamp}_${Math.random().toString(16).slice(2)}`;
+		}
+		const tokenJs = JSON.stringify(previewMsgToken);
+
 		const doc = `<!doctype html>
 <html lang="en">
 <head>
@@ -1605,6 +1617,7 @@
   <div id="content">${bodyHtml}</div>
 	<script>
 		(function(){
+			var TOKEN = ${tokenJs};
 			function toElement(t){
 				if (!t) return null;
 				if (t.nodeType === 1) return t;
@@ -1644,7 +1657,7 @@
 				var next = !box.checked;
 				try { box.checked = next; } catch (e) { /* ignore */ }
 				try {
-					parent.postMessage({ type: 'mirror_task_toggle', index: idx, checked: !!next }, '*');
+					parent.postMessage({ type: 'mirror_task_toggle', token: TOKEN, index: idx, checked: !!next }, '*');
 				} catch (e) {
 					// ignore
 				}
@@ -2051,15 +2064,22 @@
 		const data = ev && ev.data ? ev.data : null;
 		if (!data || !data.type) return;
 		if (data.type === "mirror_task_toggle") {
-			// Only accept messages from the markdown preview iframe.
+			// Token ist die primäre Validierung (robust bei sandbox/null origin).
+			if (!previewMsgToken) return;
+			if (String(data.token || "") !== String(previewMsgToken)) return;
+			// Zusätzliche Absicherung, wenn source verfügbar ist.
 			try {
-				if (!mdPreview || ev.source !== mdPreview.contentWindow) return;
+				if (mdPreview && ev.source && ev.source !== mdPreview.contentWindow)
+					return;
 			} catch {
-				return;
+				// ignore
 			}
 			const idx = Number(data.index);
+			if (!Number.isFinite(idx) || idx < 0) return;
 			const checked = Boolean(data.checked);
-			toggleMarkdownTaskAtIndex(idx, checked);
+			const ok = toggleMarkdownTaskAtIndex(idx, checked);
+			if (metaLeft) metaLeft.textContent = ok ? "Todo updated." : "Todo not found.";
+			if (metaRight) metaRight.textContent = nowIso();
 			return;
 		}
 		if (data.type !== "mirror_js_run_result") return;
