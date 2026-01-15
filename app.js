@@ -58,7 +58,8 @@
 	const psTags = document.getElementById("psTags");
 	const psTagFilterModeSelect = document.getElementById("psTagFilterMode");
 	const psNewNote = document.getElementById("psNewNote");
-	const psEditTagsBtn = document.getElementById("psEditTags");
+	const psEditorTagsBar = document.getElementById("psEditorTagsBar");
+	const psEditorTagsInput = document.getElementById("psEditorTagsInput");
 	const psExportNotesBtn = document.getElementById("psExportNotes");
 	const psImportModeSelect = document.getElementById("psImportMode");
 	const psImportNotesBtn = document.getElementById("psImportNotes");
@@ -413,7 +414,16 @@
 	function updatePsEditingTagsHint() {
 		if (!psHint) return;
 		const t = formatTagsForHint(psEditingNoteTags);
-		if (!t) return;
+		if (!t) {
+			const existing = String(psHint.textContent || "").trim();
+			if (!existing) return;
+			const cleaned = existing
+				.replace(/\s*·\s*Tags:\s*[^·]+$/i, "")
+				.replace(/^Tags:\s*.*$/i, "")
+				.trim();
+			if (cleaned !== existing) psHint.textContent = cleaned;
+			return;
+		}
 		const tagPart = `Tags: ${t}`;
 		const existing = String(psHint.textContent || "").trim();
 		if (!existing) {
@@ -425,6 +435,25 @@
 			return;
 		}
 		psHint.textContent = `${existing} · ${tagPart}`;
+	}
+
+	let psEditorTagsSyncing = false;
+
+	function formatTagsForEditor(tags) {
+		const arr = Array.isArray(tags) ? tags : [];
+		return arr.join(", ");
+	}
+
+	function setPsEditorTagsVisible(visible) {
+		if (!psEditorTagsBar || !psEditorTagsBar.classList) return;
+		psEditorTagsBar.classList.toggle("hidden", !visible);
+	}
+
+	function syncPsEditorTagsInput() {
+		if (!psEditorTagsInput) return;
+		psEditorTagsSyncing = true;
+		psEditorTagsInput.value = formatTagsForEditor(psEditingNoteTags);
+		psEditorTagsSyncing = false;
 	}
 
 	function getLineBounds(text, pos) {
@@ -2177,6 +2206,7 @@ self.onmessage = async (e) => {
 			psUnauthed.classList.remove("hidden");
 			psAuthed.classList.add("hidden");
 			if (psLogout) psLogout.classList.add("hidden");
+			setPsEditorTagsVisible(false);
 			return;
 		}
 
@@ -2184,6 +2214,8 @@ self.onmessage = async (e) => {
 		psAuthed.classList.remove("hidden");
 		if (psLogout) psLogout.classList.remove("hidden");
 		if (psEmail) psEmail.textContent = psState.email || "";
+		setPsEditorTagsVisible(true);
+		syncPsEditorTagsInput();
 
 		applyPersonalSpaceFiltersAndRender();
 	}
@@ -2965,6 +2997,7 @@ self.onmessage = async (e) => {
 
 	textarea.addEventListener("keyup", () => {
 		updateCodeLangOverlay();
+				syncPsEditorTagsInput();
 	});
 
 	textarea.addEventListener("keydown", (ev) => {
@@ -3022,6 +3055,7 @@ self.onmessage = async (e) => {
 			psEditingNoteKind = "";
 			psEditingNoteTags = [];
 			psEditingNoteTagsOverridden = false;
+			syncPsEditorTagsInput();
 			if (textarea) {
 				textarea.value = "";
 				textarea.focus();
@@ -3033,46 +3067,17 @@ self.onmessage = async (e) => {
 			updatePreview();
 		});
 	}
-	if (psEditTagsBtn) {
-		psEditTagsBtn.addEventListener("click", async () => {
-			if (!psState || !psState.authed) {
-				toast("Please enable Personal Space first (login).", "error");
-				return;
-			}
-			const current = formatTagsForHint(psEditingNoteTags)
-				.replace(/#/g, "")
-				.trim();
-			const raw = await modalPrompt("Enter tags (comma or space separated).", {
-				title: "Edit tags",
-				okText: "Save",
-				cancelText: "Cancel",
-				value: current,
-				placeholder: "project, idea, lang-python",
-				backdropClose: true,
-			});
-			if (raw === null) return;
-			const nextTags = normalizeManualTags(raw);
+	if (psEditorTagsInput) {
+		psEditorTagsInput.addEventListener("input", () => {
+			if (psEditorTagsSyncing) return;
+			const nextTags = normalizeManualTags(psEditorTagsInput.value);
 			psEditingNoteTags = nextTags;
 			psEditingNoteTagsOverridden = true;
 			updatePsEditingTagsHint();
-
-			if (!psEditingNoteId) {
-				toast("Tags set (for new note).", "success");
-				return;
-			}
-			try {
-				await api(`/api/notes/${encodeURIComponent(psEditingNoteId)}`, {
-					method: "PUT",
-					body: JSON.stringify({
-						tags: buildPsTagsPayload(nextTags, true),
-					}),
-				});
-				toast("Tags saved.", "success");
-				await refreshPersonalSpace();
-			} catch (e) {
-				const msg = e && e.message ? String(e.message) : "Error";
-				toast(`Saving tags failed: ${msg}`, "error");
-			}
+		});
+		psEditorTagsInput.addEventListener("blur", () => {
+			if (psEditorTagsSyncing) return;
+			syncPsEditorTagsInput();
 		});
 	}
 	if (psExportNotesBtn) {
