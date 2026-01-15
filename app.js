@@ -36,6 +36,10 @@
 	const clearRunOutputBtn = document.getElementById("clearRunOutput");
 	const runOutputEl = document.getElementById("runOutput");
 	const runStatusEl = document.getElementById("runStatus");
+	const runOutputTitleEl = document.getElementById("runOutputTitle");
+	const runOutputIconEl = document.getElementById("runOutputIcon");
+	const applyOutputReplaceBtn = document.getElementById("applyOutputReplace");
+	const applyOutputAppendBtn = document.getElementById("applyOutputAppend");
 	const copyMirrorBtn = document.getElementById("copyMirror");
 	const codeLangWrap = document.getElementById("codeLangWrap");
 	const codeLangSelect = document.getElementById("codeLang");
@@ -884,7 +888,7 @@
 	let pyRuntimeWarmed = false;
 	let jsRunnerFrame = null;
 	let jsRunnerPending = new Map();
-	let previewRunState = { status: "", output: "", error: "" };
+	let previewRunState = { status: "", output: "", error: "", source: "" };
 	let psNextImportMode = "merge";
 	let psSearchQuery = "";
 	let psSearchDebounceTimer = 0;
@@ -1125,16 +1129,116 @@
 			.replace(/>/g, "&gt;");
 	}
 
+	function getPreviewRunCombinedText(state) {
+		const s = state || { output: "", error: "" };
+		const out = s.output ? String(s.output) : "";
+		const err = s.error ? String(s.error) : "";
+		if (!err) return out;
+		return out ? out + "\n" + err : err;
+	}
+
+	function updateRunOutputUi() {
+		const src = String(
+			previewRunState && previewRunState.source ? previewRunState.source : ""
+		);
+		const hasAiOutput =
+			src === "ai" &&
+			Boolean(
+				String(
+					previewRunState && previewRunState.output
+						? previewRunState.output
+						: ""
+				).trim()
+			);
+		if (runOutputTitleEl)
+			runOutputTitleEl.textContent = hasAiOutput ? "AI Output" : "Output";
+		if (runOutputIconEl && runOutputIconEl.classList) {
+			runOutputIconEl.classList.toggle("hidden", !hasAiOutput);
+		}
+		if (applyOutputReplaceBtn && applyOutputReplaceBtn.classList) {
+			applyOutputReplaceBtn.classList.toggle("hidden", !hasAiOutput);
+		}
+		if (applyOutputAppendBtn && applyOutputAppendBtn.classList) {
+			applyOutputAppendBtn.classList.toggle("hidden", !hasAiOutput);
+		}
+	}
+
+	function updateRunOutputSizing() {
+		if (!runOutputEl) return;
+		// When the preview panel is closed/hidden, keep default sizing.
+		if (
+			!previewOpen ||
+			!previewPanel ||
+			(previewPanel.classList && previewPanel.classList.contains("hidden"))
+		) {
+			try {
+				runOutputEl.style.maxHeight = "";
+			} catch {
+				// ignore
+			}
+			return;
+		}
+
+		const basePx = 160; // roughly Tailwind max-h-40
+		let contentPx = 0;
+		try {
+			contentPx = Math.ceil(runOutputEl.scrollHeight || 0);
+		} catch {
+			contentPx = 0;
+		}
+		if (contentPx <= basePx) {
+			try {
+				runOutputEl.style.maxHeight = `${basePx}px`;
+			} catch {
+				// ignore
+			}
+			return;
+		}
+
+		let panelPx = 0;
+		try {
+			panelPx = Math.ceil(previewPanel.getBoundingClientRect().height || 0);
+		} catch {
+			panelPx = 0;
+		}
+		const winPx = Math.max(0, Math.floor(window.innerHeight || 0));
+		const budgetPx = Math.floor(
+			Math.min((panelPx || winPx) * 0.65, winPx * 0.7 || 520)
+		);
+		const maxPx = Math.max(basePx, budgetPx || 520);
+		const targetPx = Math.max(basePx, Math.min(maxPx, contentPx));
+		try {
+			runOutputEl.style.maxHeight = `${targetPx}px`;
+		} catch {
+			// ignore
+		}
+	}
+
 	function setPreviewRunOutput(state) {
-		previewRunState = state || { status: "", output: "", error: "" };
+		const next = state || { status: "", output: "", error: "" };
+		const status = String(next.status || "");
+		const explicitSource = String(next.source || "")
+			.trim()
+			.toLowerCase();
+		const inferredSource = explicitSource
+			? explicitSource
+			: /^(ai\b|ai\s*\(|ai\s*error)/i.test(status)
+			? "ai"
+			: /^(running|done|error)/i.test(status)
+			? "run"
+			: "";
+		previewRunState = {
+			status,
+			output: next.output ? String(next.output) : "",
+			error: next.error ? String(next.error) : "",
+			source: inferredSource,
+		};
 		if (runStatusEl) runStatusEl.textContent = previewRunState.status || "";
 		if (!runOutputEl) return;
-		const combined =
-			(previewRunState.output ? String(previewRunState.output) : "") +
-			(previewRunState.error
-				? (previewRunState.output ? "\n" : "") + String(previewRunState.error)
-				: "");
+		const combined = getPreviewRunCombinedText(previewRunState);
 		runOutputEl.innerHTML = escapeHtml(combined);
+		updateRunOutputUi();
+		updateRunOutputSizing();
 	}
 
 	function parseRunnableFromEditor() {
@@ -1444,6 +1548,10 @@
 				toast("Markdown preview: library not loaded (CDN).", "error");
 			}
 			updatePreview();
+			window.setTimeout(() => {
+				updateRunOutputUi();
+				updateRunOutputSizing();
+			}, 0);
 		}
 	}
 
@@ -3271,9 +3379,56 @@ self.onmessage = async (e) => {
 	}
 	if (clearRunOutputBtn) {
 		clearRunOutputBtn.addEventListener("click", () => {
-			setPreviewRunOutput({ status: "", output: "", error: "" });
+			setPreviewRunOutput({ status: "", output: "", error: "", source: "" });
 		});
 	}
+	if (applyOutputReplaceBtn) {
+		applyOutputReplaceBtn.addEventListener("click", () => {
+			if (!textarea) return;
+			if (
+				String(
+					previewRunState && previewRunState.source
+						? previewRunState.source
+						: ""
+				) !== "ai"
+			)
+				return;
+			const text = getPreviewRunCombinedText(previewRunState);
+			if (!String(text || "").trim()) return;
+			textarea.value = text;
+			if (metaLeft) metaLeft.textContent = "AI output replaced editor.";
+			if (metaRight) metaRight.textContent = nowIso();
+			updatePreview();
+			scheduleSend();
+			toast("AI output applied (replaced).", "success");
+		});
+	}
+	if (applyOutputAppendBtn) {
+		applyOutputAppendBtn.addEventListener("click", () => {
+			if (!textarea) return;
+			if (
+				String(
+					previewRunState && previewRunState.source
+						? previewRunState.source
+						: ""
+				) !== "ai"
+			)
+				return;
+			const text = getPreviewRunCombinedText(previewRunState);
+			if (!String(text || "").trim()) return;
+			const base = String(textarea.value || "");
+			const sep = base ? (base.endsWith("\n") ? "\n" : "\n\n") : "";
+			textarea.value = base + sep + text;
+			if (metaLeft) metaLeft.textContent = "AI output appended to editor.";
+			if (metaRight) metaRight.textContent = nowIso();
+			updatePreview();
+			scheduleSend();
+			toast("AI output applied (appended).", "success");
+		});
+	}
+	window.addEventListener("resize", () => {
+		updateRunOutputSizing();
+	});
 	if (psLogout) {
 		psLogout.addEventListener("click", async () => {
 			try {

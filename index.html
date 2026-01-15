@@ -539,8 +539,44 @@
 										class="border-t border-white/10 bg-slate-950/20 px-3 py-2">
 										<div
 											class="flex items-center justify-between gap-2 text-[11px] text-slate-300">
-											<span>Output</span>
-											<span id="runStatus" class="text-slate-400"></span>
+											<div class="flex items-center gap-1.5">
+												<span
+													id="runOutputIcon"
+													class="hidden text-fuchsia-200"
+													aria-hidden="true">
+													<svg
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														class="h-3.5 w-3.5">
+														<path
+															d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5L12 2z" />
+														<path
+															d="M4 14l.9 3.2L8 18l-3.1.8L4 22l-.9-3.2L0 18l3.1-.8L4 14z" />
+													</svg>
+												</span>
+												<span id="runOutputTitle">Output</span>
+											</div>
+											<div class="flex items-center gap-2">
+												<span id="runStatus" class="text-slate-400"></span>
+												<button
+													id="applyOutputReplace"
+													type="button"
+													class="hidden rounded-md border border-white/10 bg-transparent px-2 py-1 text-[11px] text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+													title="Replace editor with AI output">
+													Replace
+												</button>
+												<button
+													id="applyOutputAppend"
+													type="button"
+													class="hidden rounded-md border border-white/10 bg-white/10 px-2 py-1 text-[11px] text-slate-100 transition hover:bg-white/15 active:bg-white/20"
+													title="Append AI output to editor">
+													Append
+												</button>
+											</div>
 										</div>
 										<pre
 											id="runOutput"
@@ -571,7 +607,7 @@
 				<div class="p-5">
 					<div class="flex items-start justify-between gap-3">
 						<h3 id="modalTitle" class="text-base font-semibold text-slate-100">
-								Modal
+							Modal
 						</h3>
 						<button
 							id="modalClose"
