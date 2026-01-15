@@ -1756,7 +1756,14 @@
 				} catch {
 					// ignore
 				}
-				toggleMarkdownTaskAtIndex(idx, next);
+				const ok = toggleMarkdownTaskAtIndex(idx, next);
+				if (ok) {
+					if (metaLeft) metaLeft.textContent = "Todo updated.";
+					if (metaRight) metaRight.textContent = nowIso();
+				} else {
+					if (metaLeft) metaLeft.textContent = "Todo not found.";
+					if (metaRight) metaRight.textContent = nowIso();
+				}
 			},
 			true
 		);
@@ -1774,6 +1781,9 @@
 			previewObjectUrl = URL.createObjectURL(blob);
 			mdPreview.removeAttribute("srcdoc");
 			mdPreview.src = previewObjectUrl;
+			window.setTimeout(() => {
+				attachPreviewCheckboxWriteback();
+			}, 0);
 			return;
 		} catch {
 			// Fallback: srcdoc
@@ -1784,6 +1794,9 @@
 			}
 			try {
 				mdPreview.srcdoc = String(html || "");
+				window.setTimeout(() => {
+					attachPreviewCheckboxWriteback();
+				}, 0);
 			} catch {
 				// ignore
 			}
