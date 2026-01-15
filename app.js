@@ -2546,18 +2546,101 @@ self.onmessage = async (e) => {
 		if (err) toast("Snippet error (see output).", "error");
 	}
 
+	async function warmPythonRuntimeForPreview() {
+		if (pyRuntimeWarmed) return { ok: true };
+		setPreviewRunOutput({
+			status: "Loading Python…",
+			output: "",
+			error: "",
+			source: "run",
+		});
+		const res = await runPySnippet("pass", PY_TIMEOUT_COLD_MS);
+		if (res && res.error && /Timeout\s+(nach|after)/i.test(String(res.error))) {
+			return {
+				ok: false,
+				error:
+					"Python init timeout. Pyodide CDN might be blocked or the network is too slow. Workaround: open the page with ?pyodide=https://pyodide-cdn2.iodide.io/v0.25.1/full/",
+			};
+		}
+		if (res && res.error) {
+			return {
+				ok: false,
+				error: String(res.error || "Python could not be initialized."),
+			};
+		}
+		pyRuntimeWarmed = true;
+		return { ok: true };
+	}
+
+	async function runSnippetFromPreview() {
+		const parsed = parseRunnableFromEditor();
+		if (!parsed) {
+			setPreviewRunOutput({ status: "", output: "", error: "", source: "" });
+			toast(
+				"No runnable code found. Use #lang-python/#lang-js or a fenced ```lang code block.",
+				"info"
+			);
+			return;
+		}
+		const lang = String(parsed.lang || "").toLowerCase();
+		const code = String(parsed.code || "");
+		setPreviewRunOutput({ status: "Running…", output: "", error: "", source: "run" });
+		const timeoutMs =
+			lang === "python" || lang === "py"
+				? pyRuntimeWarmed
+					? PY_TIMEOUT_WARM_MS
+					: PY_TIMEOUT_COLD_MS
+				: JS_TIMEOUT_MS;
+		let res = { output: "", error: "" };
+		if (lang === "python" || lang === "py") {
+			if (!pyRuntimeWarmed) {
+				const warm = await warmPythonRuntimeForPreview();
+				if (!warm.ok) {
+					setPreviewRunOutput({
+						status: "Error",
+						output: "",
+						error: String(warm.error || "Python could not be initialized."),
+						source: "run",
+					});
+					toast("Run: error (see output).", "error");
+					return;
+				}
+				setPreviewRunOutput({ status: "Running…", output: "", error: "", source: "run" });
+			}
+			res = await runPySnippet(code, timeoutMs);
+			if (!/Timeout\s+(nach|after)/i.test(String(res.error || "")))
+				pyRuntimeWarmed = true;
+		} else if (lang === "javascript" || lang === "js" || lang === "node") {
+			res = await runJsSnippet(code, timeoutMs);
+		} else {
+			res = { output: "", error: `Not supported: ${lang || "unknown"}` };
+		}
+		setPreviewRunOutput({
+			status: res.error ? "Error" : "Done",
+			output: String(res.output || "").slice(0, 8000),
+			error: String(res.error || "").slice(0, 8000),
+			source: "run",
+		});
+		if (res.error) toast("Run: error (see output).", "error");
+	}
+
 	function getAiMode() {
 		const v = String(
 			aiModeSelect && aiModeSelect.value ? aiModeSelect.value : ""
 		)
 			.trim()
 			.toLowerCase();
-		if (v === "fix" || v === "improve" || v === "summarize") return v;
+		if (v === "fix" || v === "improve" || v === "run" || v === "summarize")
+			return v;
 		return "explain";
 	}
 
 	async function aiAssistFromPreview() {
 		const mode = getAiMode();
+		if (mode === "run") {
+			await runSnippetFromPreview();
+			return;
+		}
 		const parsed = parseRunnableFromEditor();
 		const editorText = String(textarea && textarea.value ? textarea.value : "");
 		const lang = String(parsed && parsed.lang ? parsed.lang : "")
