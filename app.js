@@ -2608,35 +2608,35 @@ self.onmessage = async (e) => {
 			.toLowerCase();
 		const code = String(parsed && parsed.code ? parsed.code : "");
 
-		if (mode !== "summarize" && !code.trim()) {
-			setPreviewRunOutput({ status: "", output: "", error: "" });
-			toast(
-				"No code found. Use a fenced ```lang code block or select a language.",
-				"info"
-			);
+		const hasCode = Boolean(String(code || "").trim());
+		const payloadText = hasCode ? code : editorText;
+		const kind = hasCode ? "code" : "text";
+		const payloadLang = hasCode ? (lang || "") : "text";
+		if (!String(payloadText || "").trim()) {
+			setPreviewRunOutput({ status: "", output: "", error: "", source: "" });
+			toast("Nothing to send.", "info");
 			return;
 		}
-
-		const payloadCode = mode === "summarize" ? code || editorText : code;
-		if (mode === "summarize" && !String(payloadCode || "").trim()) {
-			setPreviewRunOutput({ status: "", output: "", error: "" });
-			toast("Nothing to summarize.", "info");
-			return;
-		}
-		setPreviewRunOutput({ status: `AI (${mode})…`, output: "", error: "" });
+		setPreviewRunOutput({ status: `AI (${mode})…`, output: "", error: "", source: "ai" });
 		try {
 			const res = await api("/api/ai", {
 				method: "POST",
-				body: JSON.stringify({ mode, lang, code: payloadCode }),
+				body: JSON.stringify({ mode, lang: payloadLang, kind, code: payloadText }),
 			});
 			setPreviewRunOutput({
 				status: "AI",
 				output: String(res && res.text ? res.text : ""),
 				error: "",
+				source: "ai",
 			});
 		} catch (e) {
 			const msg = e && e.message ? String(e.message) : "Error";
-			setPreviewRunOutput({ status: "AI error", output: "", error: msg });
+			setPreviewRunOutput({
+				status: "AI error",
+				output: "",
+				error: msg,
+				source: "ai",
+			});
 			toast(`AI failed: ${msg}`, "error");
 		}
 	}

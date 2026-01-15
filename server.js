@@ -1093,33 +1093,96 @@ const server = http.createServer((req, res) => {
 					.trim()
 					.toLowerCase()
 					.slice(0, 32);
-				let code = String(body && body.code ? body.code : "");
-				if (!code.trim()) {
+				const kindRaw = String(body && body.kind ? body.kind : "")
+					.trim()
+					.toLowerCase();
+				let input = String(body && body.code ? body.code : "");
+				if (!input.trim()) {
 					json(res, 400, { ok: false, error: "empty" });
 					return;
 				}
-				if (code.length > AI_MAX_INPUT_CHARS) {
-					code = code.slice(0, AI_MAX_INPUT_CHARS);
+
+				const isTextLang =
+					lang === "text" ||
+					lang === "plain" ||
+					lang === "markdown" ||
+					lang === "md" ||
+					lang === "txt";
+				const isCodeLang =
+					/^(python|py|javascript|js|typescript|ts|bash|sh|shell|json|yaml|yml|sql|html|css)$/i.test(
+						String(lang || "")
+					);
+				const kind =
+					kindRaw === "text" || kindRaw === "code"
+						? kindRaw
+						: isTextLang
+						? "text"
+						: isCodeLang
+						? "code"
+						: "text";
+
+				// Keep a larger ceiling for summarize; chunk later to avoid hard-truncation.
+				const MAX_TOTAL_CHARS = Number(process.env.AI_MAX_TOTAL_CHARS || 120000);
+				let truncated = false;
+				if (Number.isFinite(MAX_TOTAL_CHARS) && MAX_TOTAL_CHARS > 1000) {
+					if (input.length > MAX_TOTAL_CHARS) {
+						input = input.slice(0, MAX_TOTAL_CHARS);
+						truncated = true;
+					}
+				} else {
+					if (input.length > AI_MAX_INPUT_CHARS) {
+						input = input.slice(0, AI_MAX_INPUT_CHARS);
+						truncated = true;
+					}
 				}
 
 				const system =
-					"You are a precise coding assistant. Keep responses short and concrete. " +
-					"Never reveal secrets/keys. If you suggest changes, include clear steps or a small patch snippet.";
+					"You are Mirror's assistant. You can help with both code and normal text. " +
+					"Reply in the same language as the user's input (German/English). " +
+					"Use inclusive language unless the user explicitly asks otherwise. " +
+					"Be concrete and practical. Never reveal secrets/keys.";
+
 				const modeInstruction =
 					mode === "fix"
-						? "Fix bugs and issues. Explain the root cause briefly, then propose minimal changes."
+						? kind === "code"
+							? "Fix bugs and issues. Briefly explain root cause, then propose minimal changes (steps or a small patch snippet)."
+							: "Correct errors and ambiguities in the text. Improve clarity and inclusive wording. Provide an improved version and a short rationale."
 						: mode === "improve"
+					? kind === "code"
 						? "Improve quality: readability, performance, safety. Keep changes minimal and practical."
-						: mode === "summarize"
+						: "Improve the text: clarity, structure, tone, inclusive language. Provide an improved version."
+					: mode === "summarize"
+					? kind === "code"
 						? "Summarize what this code does. Include: purpose, inputs/outputs, key logic, risks, and 2-3 improvement ideas."
-						: "Explain what this code does and how it works. Mention important details and edge cases.";
-				const user =
-					`Mode: ${mode}\nLanguage: ${
-						lang || "(unknown)"
-					}\n\nInstruction: ${modeInstruction}\n\nCode:\n\n` +
-					"```\n" +
-					code +
-					"\n```";
+						: "Summarize the text. Include: core points, decisions, next steps (if any), and key entities. Use bullet points."
+					: kind === "code"
+					? "Explain what this code does and how it works. Mention important details and edge cases."
+					: "If the input contains a question or instruction, answer it. Otherwise explain the content clearly.";
+
+				function formatInputForUserPrompt(kind, lang, input) {
+					if (kind === "code") {
+						return (
+							"Code:\n\n" +
+							"```" +
+							(lang && !isTextLang ? lang : "") +
+							"\n" +
+							input +
+							"\n```"
+						);
+					}
+					return "Text:\n\n" + input;
+				}
+
+				function buildUserPrompt(instruction, inputText) {
+					return (
+						`Mode: ${mode}\nKind: ${kind}\nLanguageTag: ${lang || "(auto)"}\n` +
+						(truncated ? "Note: input may be truncated for safety/performance.\n" : "") +
+						"\nInstruction: " +
+						instruction +
+						"\n\n" +
+						formatInputForUserPrompt(kind, lang, inputText)
+					);
+				}
 
 				const controller = new AbortController();
 				const t = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
@@ -1128,7 +1191,7 @@ const server = http.createServer((req, res) => {
 						? AI_MAX_OUTPUT_TOKENS
 						: 900;
 
-					async function callAnthropic(model) {
+					async function callAnthropic(model, userPrompt) {
 						const r = await fetch("https://api.anthropic.com/v1/messages", {
 							method: "POST",
 							headers: {
@@ -1140,7 +1203,7 @@ const server = http.createServer((req, res) => {
 								model,
 								max_tokens: maxTokens,
 								system,
-								messages: [{ role: "user", content: user }],
+								messages: [{ role: "user", content: userPrompt }],
 							}),
 							signal: controller.signal,
 						});
@@ -1156,29 +1219,113 @@ const server = http.createServer((req, res) => {
 						"claude-3-5-haiku-20241022",
 					]);
 
-					let lastStatus = 0;
-					let lastErrMsg = "";
-					let chosenModel = "";
-					let data = null;
-
-					for (const model of candidates) {
-						chosenModel = String(model || "").trim();
-						if (!chosenModel) continue;
-						const out = await callAnthropic(chosenModel);
-						lastStatus = out.r.status;
-						data = out.data;
-						if (out.r.ok) break;
-						lastErrMsg =
-							(data && data.error && data.error.message) ||
-							(data && data.message) ||
-							`AI HTTP ${out.r.status}`;
-						const isModel404 =
-							out.r.status === 404 && /\bmodel\b/i.test(String(lastErrMsg));
-						if (!isModel404) break;
+					async function runWithModelFallback(userPrompt) {
+						let lastStatus = 0;
+						let lastErrMsg = "";
+						let chosenModel = "";
+						let data = null;
+						for (const model of candidates) {
+							chosenModel = String(model || "").trim();
+							if (!chosenModel) continue;
+							const out = await callAnthropic(chosenModel, userPrompt);
+							lastStatus = out.r.status;
+							data = out.data;
+							if (out.r.ok) return { ok: true, data, model: chosenModel };
+							lastErrMsg =
+								(data && data.error && data.error.message) ||
+								(data && data.message) ||
+								`AI HTTP ${out.r.status}`;
+							const isModel404 =
+								out.r.status === 404 && /\bmodel\b/i.test(String(lastErrMsg));
+							if (!isModel404) break;
+						}
+						return {
+							ok: false,
+							data,
+							status: lastStatus,
+							errMsg: lastErrMsg,
+							model: "",
+						};
 					}
 
-					if (!data || !Array.isArray(data.content)) {
-						if (lastStatus && lastStatus >= 400) {
+					function extractText(data) {
+						const parts = data && Array.isArray(data.content) ? data.content : [];
+						return parts
+							.map((p) =>
+								p && p.type === "text" ? String(p.text || "") : ""
+							)
+							.join("\n")
+							.trim();
+					}
+
+					function chunkText(text, maxChars) {
+						const src = String(text || "");
+						const size = Math.max(1000, Number(maxChars) || AI_MAX_INPUT_CHARS);
+						const chunks = [];
+						let i = 0;
+						while (i < src.length) {
+							chunks.push(src.slice(i, i + size));
+							i += size;
+							if (chunks.length >= 8) break; // hard cap to avoid runaway calls
+						}
+						return chunks;
+					}
+
+					let finalData = null;
+					let chosenModel = "";
+					let chunkCount = 1;
+					if (mode === "summarize" && kind === "text" && input.length > AI_MAX_INPUT_CHARS) {
+						const chunks = chunkText(input, AI_MAX_INPUT_CHARS);
+						chunkCount = chunks.length;
+						const partials = [];
+						for (let idx = 0; idx < chunks.length; idx += 1) {
+							const partInstruction =
+								"Summarize PART " +
+								(idx + 1) +
+								"/" +
+								chunks.length +
+								" of a longer text. Keep the same language. Output concise bullet points.";
+							const prompt = buildUserPrompt(partInstruction, chunks[idx]);
+							const out = await runWithModelFallback(prompt);
+							if (!out.ok || !out.data) {
+								const lastErrMsg = out.errMsg || "ai_failed";
+								json(res, 502, {
+									ok: false,
+									error: "ai_failed",
+									message: lastErrMsg,
+									reqId,
+								});
+								return;
+							}
+							chosenModel = out.model || chosenModel;
+							partials.push(extractText(out.data));
+						}
+						const combineInstruction =
+							"Combine the partial summaries into ONE coherent summary. Keep the same language. " +
+							"Include core points and any explicit decisions/next steps if present.";
+						const combinePrompt = buildUserPrompt(
+							combineInstruction,
+							partials.join("\n\n")
+						);
+						const combined = await runWithModelFallback(combinePrompt);
+						if (!combined.ok || !combined.data) {
+							const lastErrMsg = combined.errMsg || "ai_failed";
+							json(res, 502, {
+								ok: false,
+								error: "ai_failed",
+								message: lastErrMsg,
+								reqId,
+							});
+							return;
+						}
+						chosenModel = combined.model || chosenModel;
+						finalData = combined.data;
+					} else {
+						const userPrompt = buildUserPrompt(modeInstruction, input);
+						const out = await runWithModelFallback(userPrompt);
+						if (!out.ok || !out.data) {
+							const lastStatus = out.status || 502;
+							const lastErrMsg = out.errMsg || "ai_failed";
 							try {
 								console.warn("[ai] upstream_error", {
 									reqId,
@@ -1186,39 +1333,37 @@ const server = http.createServer((req, res) => {
 									errMsg: lastErrMsg || `AI HTTP ${lastStatus}`,
 									mode,
 									lang,
-									model: chosenModel,
+									kind,
 									ip,
 									email,
 								});
 							} catch {
 								// ignore logging errors
 							}
-							const hint =
-								lastStatus === 404 && /\bmodel\b/i.test(String(lastErrMsg))
-									? "Model not found. Set ANTHROPIC_MODEL to an available model."
-									: "";
 							json(res, 502, {
 								ok: false,
 								error: "ai_failed",
-								message: hint
-									? `${lastErrMsg} (${hint})`
-									: lastErrMsg || `AI HTTP ${lastStatus}`,
+								message: lastErrMsg || `AI HTTP ${lastStatus}`,
 								reqId,
-								model: chosenModel || ANTHROPIC_MODEL,
 							});
 							return;
 						}
+						chosenModel = out.model || chosenModel;
+						finalData = out.data;
 					}
-					const parts = data && Array.isArray(data.content) ? data.content : [];
-					const out = parts
-						.map((p) => (p && p.type === "text" ? String(p.text || "") : ""))
-						.join("\n")
-						.trim();
+
+					const outText = extractText(finalData);
 					json(res, 200, {
 						ok: true,
-						text: out,
-						model: data && data.model ? String(data.model) : chosenModel,
+						text: outText,
+						model:
+							finalData && finalData.model
+								? String(finalData.model)
+								: chosenModel,
+						truncated,
+						chunks: chunkCount,
 					});
+					return;
 				} catch (e) {
 					const msg =
 						e && e.name === "AbortError"
