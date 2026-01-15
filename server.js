@@ -1155,7 +1155,7 @@ const server = http.createServer((req, res) => {
 						: "Improve the text: clarity, structure, tone, inclusive language. Provide an improved version."
 					: mode === "run"
 					? kind === "code"
-						? "Simulate executing the code. Do NOT claim you actually ran it. Do NOT explain the code unless there is an error.\n\nReturn format:\n- Output: (what would be printed / returned; plain text)\n- If an error is likely: Error: (short) + Fix: provide a corrected code block (same language)\n\nKeep it practical and concise."
+						? "Simulate executing the code. Do NOT claim you actually ran it.\n\nIMPORTANT: Return ONLY the following lines/sections (no other text, no headings, no markdown):\nOutput: <plain text output or (no output)>\n\nIf an error is likely, additionally include:\nError: <short>\nFix:\n```<same language>\n<corrected code>\n```\n\nDo NOT explain the code. Only give Output and, if needed, Error+Fix."
 						: "The user asked to run something, but the input is text. Explain that only code can be run, and ask for a code snippet or clarify what to execute."
 					: mode === "summarize"
 					? kind === "code"
@@ -1267,6 +1267,21 @@ const server = http.createServer((req, res) => {
 							.trim();
 					}
 
+					function shouldRetryRunOutput(text) {
+						const raw = String(text || "").trim();
+						if (!raw) return true;
+						const t = raw.toLowerCase();
+						if (t.startsWith("output:")) return false;
+						// Common explanation patterns (headings, "let me explain", overviews)
+						if (/(^|\n)#{2,}\s/.test(raw)) return true;
+						if (t.includes("let me explain")) return true;
+						if (t.includes("code overview")) return true;
+						if (t.includes("this script") && t.includes("demonstrates")) return true;
+						if (t.includes("explain")) return true;
+						// If it doesn't look like the requested format, retry once.
+						return true;
+					}
+
 					function chunkText(text, maxChars) {
 						const src = String(text || "");
 						const size = Math.max(1000, Number(maxChars) || AI_MAX_INPUT_CHARS);
@@ -1331,7 +1346,7 @@ const server = http.createServer((req, res) => {
 						finalData = combined.data;
 					} else {
 						const userPrompt = buildUserPrompt(modeInstruction, input);
-						const out = await runWithModelFallback(userPrompt);
+						let out = await runWithModelFallback(userPrompt);
 						if (!out.ok || !out.data) {
 							const lastStatus = out.status || 502;
 							const lastErrMsg = out.errMsg || "ai_failed";
@@ -1356,6 +1371,20 @@ const server = http.createServer((req, res) => {
 								reqId,
 							});
 							return;
+						}
+
+						// One retry for run-mode if the model returns an explanation instead of the required Output/Error/Fix format.
+						if (mode === "run" && kind === "code") {
+							const firstText = extractText(out.data);
+							if (shouldRetryRunOutput(firstText)) {
+								const strictRunInstruction =
+									"Your previous answer was invalid. Reply ONLY in this exact format (no extra text, no markdown headings, no explanations):\n" +
+									"Output: <plain text output or (no output)>\n\n" +
+									"If an error is likely:\nError: <short>\nFix:\n```<same language>\n<corrected code>\n```";
+								const retryPrompt = buildUserPrompt(strictRunInstruction, input);
+								const retryOut = await runWithModelFallback(retryPrompt);
+								if (retryOut.ok && retryOut.data) out = retryOut;
+							}
 						}
 						chosenModel = out.model || chosenModel;
 						finalData = out.data;
