@@ -1004,12 +1004,17 @@
 	function setAiUsePreviewUi(active) {
 		if (!aiUsePreviewBtn || !aiUsePreviewBtn.classList) return;
 		aiUsePreviewBtn.classList.toggle("bg-fuchsia-600/60", active);
-		aiUsePreviewBtn.classList.toggle("border-fuchsia-500/40", active);
+		aiUsePreviewBtn.classList.toggle("border-fuchsia-500/30", active);
 		aiUsePreviewBtn.classList.toggle("text-slate-50", active);
 		aiUsePreviewBtn.classList.toggle("shadow-soft", active);
 		aiUsePreviewBtn.classList.toggle("bg-slate-950/30", !active);
 		aiUsePreviewBtn.classList.toggle("border-white/15", !active);
 		aiUsePreviewBtn.classList.toggle("text-slate-300", !active);
+		try {
+			aiUsePreviewBtn.setAttribute("aria-pressed", active ? "true" : "false");
+		} catch {
+			// ignore
+		}
 	}
 
 	function stripManualTagsMarker(tags) {
