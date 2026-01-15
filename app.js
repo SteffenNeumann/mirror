@@ -37,6 +37,7 @@
 	const runOutputEl = document.getElementById("runOutput");
 	const runStatusEl = document.getElementById("runStatus");
 	const copyMirrorBtn = document.getElementById("copyMirror");
+	const codeLangWrap = document.getElementById("codeLangWrap");
 	const codeLangSelect = document.getElementById("codeLang");
 	const insertCodeBlockBtn = document.getElementById("insertCodeBlock");
 	const slashMenu = document.getElementById("slashMenu");
@@ -795,7 +796,8 @@
 			return true;
 		}
 		if (cmd === "code") {
-			const lang = String(arg || "")
+			const fallback = getSelectedCodeLang();
+			const lang = String(arg || fallback || "")
 				.trim()
 				.toLowerCase()
 				.replace(/[^a-z0-9_+\-]/g, "")
@@ -806,6 +808,7 @@
 			const cursor = start + opening.length + 1;
 			el.selectionStart = cursor;
 			el.selectionEnd = cursor;
+			updateCodeLangOverlay();
 			return true;
 		}
 
@@ -1123,6 +1126,88 @@
 		return v || "python";
 	}
 
+	function getFencedCodeOpenAtPos(text, pos) {
+		const src = String(text || "");
+		const p = Math.max(0, Math.min(src.length, Number(pos) || 0));
+		let inside = false;
+		let open = null;
+		let idx = 0;
+		while (idx <= src.length) {
+			const lineStart = idx;
+			let lineEnd = src.indexOf("\n", idx);
+			if (lineEnd === -1) lineEnd = src.length;
+			// Only consider fence lines strictly before the caret.
+			if (lineStart >= p) break;
+			const line = src.slice(lineStart, lineEnd);
+			const m = line.match(/^\s*```\s*([a-z0-9_+\-]{0,32})\s*$/i);
+			if (m) {
+				if (!inside) {
+					inside = true;
+					open = {
+						lineStart,
+						lineEnd,
+						lang: String(m[1] || "").toLowerCase(),
+					};
+				} else {
+					inside = false;
+					open = null;
+				}
+			}
+			idx = lineEnd + 1;
+			if (idx > src.length) break;
+		}
+		return inside && open ? open : null;
+	}
+
+	function setFencedCodeLanguage(newLang) {
+		if (!textarea) return false;
+		const src = String(textarea.value || "");
+		const caret = Number(textarea.selectionEnd || 0);
+		const open = getFencedCodeOpenAtPos(src, caret);
+		if (!open) return false;
+		const lang = String(newLang || "")
+			.trim()
+			.toLowerCase()
+			.replace(/[^a-z0-9_+\-]/g, "")
+			.slice(0, 32);
+		const oldLine = src.slice(open.lineStart, open.lineEnd);
+		const prefixMatch = oldLine.match(/^(\s*)```/);
+		const prefix = prefixMatch ? prefixMatch[1] : "";
+		const nextLine = prefix + "```" + (lang ? lang : "");
+		if (nextLine === oldLine) return true;
+		const delta = nextLine.length - oldLine.length;
+		const startSel = Number(textarea.selectionStart || 0);
+		const endSel = Number(textarea.selectionEnd || 0);
+		textarea.value =
+			src.slice(0, open.lineStart) + nextLine + src.slice(open.lineEnd);
+		try {
+			const bump = (n) => (n > open.lineEnd ? n + delta : n);
+			textarea.setSelectionRange(bump(startSel), bump(endSel));
+		} catch {
+			// ignore
+		}
+		updatePreview();
+		scheduleSend();
+		return true;
+	}
+
+	function updateCodeLangOverlay() {
+		if (!textarea || !codeLangWrap || !codeLangSelect) return;
+		const open = getFencedCodeOpenAtPos(
+			String(textarea.value || ""),
+			Number(textarea.selectionEnd || 0)
+		);
+		const show = Boolean(open);
+		if (codeLangWrap.classList) codeLangWrap.classList.toggle("hidden", !show);
+		if (show && open && open.lang) {
+			try {
+				codeLangSelect.value = String(open.lang);
+			} catch {
+				// ignore
+			}
+		}
+	}
+
 	function insertCodeBlock() {
 		if (!textarea) return;
 		const lang = getSelectedCodeLang();
@@ -1145,6 +1230,7 @@
 		metaLeft.textContent = "Codeblock eingefügt.";
 		metaRight.textContent = nowIso();
 		updatePreview();
+		updateCodeLangOverlay();
 		scheduleSend();
 	}
 
@@ -2830,6 +2916,16 @@ self.onmessage = async (e) => {
 			if (saved) codeLangSelect.value = saved;
 			else codeLangSelect.value = "python";
 			codeLangSelect.addEventListener("change", () => {
+				// If we're inside a fenced code block, update its language tag.
+				if (textarea) {
+					const applied = setFencedCodeLanguage(
+						String(codeLangSelect.value || "")
+					);
+					if (applied) {
+						updateCodeLangOverlay();
+						return;
+					}
+				}
 				try {
 					localStorage.setItem(
 						"mirror_code_lang",
@@ -2854,10 +2950,16 @@ self.onmessage = async (e) => {
 		scheduleSend();
 		updatePreview();
 		updateSlashMenu();
+		updateCodeLangOverlay();
 	});
 
 	textarea.addEventListener("click", () => {
 		updateSlashMenu();
+		updateCodeLangOverlay();
+	});
+
+	textarea.addEventListener("keyup", () => {
+		updateCodeLangOverlay();
 	});
 
 	textarea.addEventListener("keydown", (ev) => {
