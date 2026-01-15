@@ -3203,13 +3203,16 @@ self.onmessage = async (e) => {
 					}
 					if (psHint) psHint.textContent = "Gespeichert.";
 				} else {
-					const res = await api(`/api/notes/${encodeURIComponent(psEditingNoteId)}`, {
-						method: "PUT",
-						body: JSON.stringify({
-							text,
-							tags: tagsPayload,
-						}),
-					});
+					const res = await api(
+						`/api/notes/${encodeURIComponent(psEditingNoteId)}`,
+						{
+							method: "PUT",
+							body: JSON.stringify({
+								text,
+								tags: tagsPayload,
+							}),
+						}
+					);
 					const saved = res && res.note ? res.note : null;
 					if (saved && saved.id && psState && psState.authed) {
 						const notes = Array.isArray(psState.notes) ? psState.notes : [];
