@@ -43,6 +43,8 @@
 	const aiPromptInput = document.getElementById("aiPrompt");
 	const aiPromptClearBtn = document.getElementById("aiPromptClear");
 	const aiUsePreviewToggle = document.getElementById("aiUsePreview");
+	const aiModeWrap = document.getElementById("aiModeWrap");
+	const aiPromptWrap = document.getElementById("aiPromptWrap");
 	const copyMirrorBtn = document.getElementById("copyMirror");
 	const codeLangWrap = document.getElementById("codeLangWrap");
 	const codeLangSelect = document.getElementById("codeLang");
@@ -966,6 +968,23 @@
 			localStorage.setItem(AI_USE_PREVIEW_KEY, aiUsePreview ? "1" : "0");
 		} catch {
 			// ignore
+		}
+	}
+
+	function applyAiContextMode() {
+		const usePreview = getAiUsePreview();
+		if (aiModeWrap && aiModeWrap.classList) {
+			aiModeWrap.classList.toggle("hidden", !usePreview);
+		}
+		if (aiPromptWrap && aiPromptWrap.classList) {
+			aiPromptWrap.classList.toggle("hidden", usePreview);
+		}
+		if (!usePreview && aiModeSelect) {
+			try {
+				aiModeSelect.value = "explain";
+			} catch {
+				// ignore
+			}
 		}
 	}
 
@@ -3776,6 +3795,7 @@ self.onmessage = async (e) => {
 	if (aiUsePreviewToggle) {
 		aiUsePreviewToggle.addEventListener("change", () => {
 			saveAiUsePreview(Boolean(aiUsePreviewToggle.checked));
+			applyAiContextMode();
 		});
 	}
 	if (aiPromptClearBtn) {
@@ -3850,4 +3870,5 @@ self.onmessage = async (e) => {
 	refreshPersonalSpace();
 	loadAiPrompt();
 	loadAiUsePreview();
+	applyAiContextMode();
 })();
