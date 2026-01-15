@@ -1658,44 +1658,42 @@
 		setPreviewDocument(doc);
 	}
 
-		function toggleMarkdownTaskAtIndex(index, forceChecked) {
-			if (!textarea) return false;
-			const idx = typeof index === "number" ? index : Number(index);
-			if (!Number.isFinite(idx) || idx < 0) return false;
-			const src = String(textarea.value || "");
-			const lines = src.split("\n");
-			let seen = 0;
-			let changed = false;
-			for (let li = 0; li < lines.length; li++) {
-				const line = String(lines[li] || "");
-				const m = line.match(
-					/^(\s*(?:[-*+]|\d+[.)])\s+\[)([ xX])(\].*)$/
-				);
-				if (!m) continue;
-				if (seen === idx) {
-					const nextChecked =
-						typeof forceChecked === "boolean"
-							? forceChecked
-							: String(m[2] || " ").toLowerCase() !== "x";
-					lines[li] = m[1] + (nextChecked ? "x" : " ") + m[3];
-					changed = true;
-					break;
-				}
-				seen += 1;
+	function toggleMarkdownTaskAtIndex(index, forceChecked) {
+		if (!textarea) return false;
+		const idx = typeof index === "number" ? index : Number(index);
+		if (!Number.isFinite(idx) || idx < 0) return false;
+		const src = String(textarea.value || "");
+		const lines = src.split("\n");
+		let seen = 0;
+		let changed = false;
+		for (let li = 0; li < lines.length; li++) {
+			const line = String(lines[li] || "");
+			const m = line.match(/^(\s*(?:[-*+]|\d+[.)])\s+\[)([ xX])(\].*)$/);
+			if (!m) continue;
+			if (seen === idx) {
+				const nextChecked =
+					typeof forceChecked === "boolean"
+						? forceChecked
+						: String(m[2] || " ").toLowerCase() !== "x";
+				lines[li] = m[1] + (nextChecked ? "x" : " ") + m[3];
+				changed = true;
+				break;
 			}
-			if (!changed) return false;
-			const startSel = Number(textarea.selectionStart || 0);
-			const endSel = Number(textarea.selectionEnd || 0);
-			textarea.value = lines.join("\n");
-			try {
-				textarea.setSelectionRange(startSel, endSel);
-			} catch {
-				// ignore
-			}
-			updatePreview();
-			scheduleSend();
-			return true;
+			seen += 1;
 		}
+		if (!changed) return false;
+		const startSel = Number(textarea.selectionStart || 0);
+		const endSel = Number(textarea.selectionEnd || 0);
+		textarea.value = lines.join("\n");
+		try {
+			textarea.setSelectionRange(startSel, endSel);
+		} catch {
+			// ignore
+		}
+		updatePreview();
+		scheduleSend();
+		return true;
+	}
 
 	function setPreviewDocument(html) {
 		if (!mdPreview) return;
