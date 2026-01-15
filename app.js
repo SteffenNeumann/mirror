@@ -196,11 +196,16 @@
 			const parts = line.trim().split(/\s+/);
 			if (parts.length < 2) return;
 			const sha = parts[parts.length - 1];
-			const ts = parts.slice(0, -1).join(" ");
+			const datePart = String(parts[0] || "");
+			const timePart = String(parts[1] || "");
+			const formattedDate = datePart.replace(/-/g, ".");
+			const hm = timePart.split(":").slice(0, 2).join(".");
+			const formattedTs =
+				formattedDate && hm ? `${formattedDate} / ${hm}` : "";
 			const shortSha = sha ? sha.slice(0, 7) : "";
 			// Subtil: kurze Anzeige, volle Infos im Tooltip.
 			buildStamp.textContent =
-				shortSha && ts ? `${shortSha} · ${ts}` : line.trim();
+				shortSha && formattedTs ? `${shortSha} · ${formattedTs}` : shortSha;
 			buildStamp.title = line.trim();
 		} catch {
 			// ignore
