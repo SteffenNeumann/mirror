@@ -1207,6 +1207,19 @@
 						: ""
 				).trim()
 			);
+		const hasAnyOutput = Boolean(
+			String(previewRunState && previewRunState.output ? previewRunState.output : "")
+				.trim()
+		);
+		const hasAnyError = Boolean(
+			String(previewRunState && previewRunState.error ? previewRunState.error : "")
+				.trim()
+		);
+		const hasAnyStatus = Boolean(
+			String(previewRunState && previewRunState.status ? previewRunState.status : "")
+				.trim()
+		);
+		const canClear = hasAnyOutput || hasAnyError || hasAnyStatus;
 		if (runOutputTitleEl)
 			runOutputTitleEl.textContent = hasAiOutput ? "AI Output" : "AI";
 		if (applyOutputReplaceBtn && applyOutputReplaceBtn.classList) {
@@ -1214,6 +1227,9 @@
 		}
 		if (applyOutputAppendBtn && applyOutputAppendBtn.classList) {
 			applyOutputAppendBtn.classList.toggle("hidden", !hasAiOutput);
+		}
+		if (clearRunOutputBtn && clearRunOutputBtn.classList) {
+			clearRunOutputBtn.classList.toggle("hidden", !canClear);
 		}
 	}
 
