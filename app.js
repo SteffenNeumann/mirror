@@ -1603,10 +1603,71 @@
 </head>
 <body>
   <div id="content">${bodyHtml}</div>
+	  <script>
+	    (function(){
+	      function idxOfCheckbox(target){
+	        var box = target && target.closest ? target.closest('input[type="checkbox"]') : null;
+	        if (!box) return null;
+	        var all = document.querySelectorAll('ul.task-list input[type="checkbox"]');
+	        for (var i = 0; i < all.length; i++) if (all[i] === box) return i;
+	        return null;
+	      }
+	      document.addEventListener('click', function(ev){
+	        var t = ev && ev.target ? ev.target : null;
+	        var idx = idxOfCheckbox(t);
+	        if (idx === null) return;
+	        try {
+	          var box = document.querySelectorAll('ul.task-list input[type="checkbox"]')[idx];
+	          parent.postMessage({ type: 'mirror_task_toggle', index: idx, checked: !!(box && box.checked) }, '*');
+	        } catch (e) {
+	          // ignore
+	        }
+	      }, true);
+	    })();
+	  </script>
 </body>
 </html>`;
 		setPreviewDocument(doc);
 	}
+
+		function toggleMarkdownTaskAtIndex(index, forceChecked) {
+			if (!textarea) return false;
+			const idx = typeof index === "number" ? index : Number(index);
+			if (!Number.isFinite(idx) || idx < 0) return false;
+			const src = String(textarea.value || "");
+			const lines = src.split("\n");
+			let seen = 0;
+			let changed = false;
+			for (let li = 0; li < lines.length; li++) {
+				const line = String(lines[li] || "");
+				const m = line.match(
+					/^(\s*(?:[-*+]|\d+[.)])\s+\[)([ xX])(\].*)$/
+				);
+				if (!m) continue;
+				if (seen === idx) {
+					const nextChecked =
+						typeof forceChecked === "boolean"
+							? forceChecked
+							: String(m[2] || " ").toLowerCase() !== "x";
+					lines[li] = m[1] + (nextChecked ? "x" : " ") + m[3];
+					changed = true;
+					break;
+				}
+				seen += 1;
+			}
+			if (!changed) return false;
+			const startSel = Number(textarea.selectionStart || 0);
+			const endSel = Number(textarea.selectionEnd || 0);
+			textarea.value = lines.join("\n");
+			try {
+				textarea.setSelectionRange(startSel, endSel);
+			} catch {
+				// ignore
+			}
+			updatePreview();
+			scheduleSend();
+			return true;
+		}
 
 	function setPreviewDocument(html) {
 		if (!mdPreview) return;
@@ -1680,6 +1741,54 @@
 
 	function renderPsList(notes) {
 		if (!psList) return;
+		const escapeHtml = (raw) =>
+			String(raw || "")
+				.replace(/&/g, "&amp;")
+				.replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;")
+				.replace(/\"/g, "&quot;");
+
+		const cleanTitleLine = (line) => {
+			let s = String(line || "").trim();
+			// headings
+			s = s.replace(/^#{1,6}\s+/, "");
+			// task list item
+			s = s.replace(/^(?:[-*+]|\d+[.)])\s+\[[ xX]\]\s+/, "");
+			// bullet/ordered list
+			s = s.replace(/^(?:[-*+]|\d+[.)])\s+/, "");
+			// blockquote
+			s = s.replace(/^>\s+/, "");
+			// inline code wrappers
+			s = s.replace(/^`+|`+$/g, "");
+			return s.trim();
+		};
+
+		const getTitleAndExcerpt = (text) => {
+			const src = String(text || "").replace(/\r\n?/g, "\n");
+			const lines = src.split("\n");
+			let title = "";
+			let titleLineIndex = -1;
+			for (let i = 0; i < lines.length; i++) {
+				const line = String(lines[i] || "").trim();
+				if (!line) continue;
+				title = cleanTitleLine(line);
+				titleLineIndex = i;
+				break;
+			}
+			if (!title) title = "Untitled";
+			// Excerpt: next non-empty lines after title, flattened.
+			let rest = "";
+			for (let i = titleLineIndex + 1; i < lines.length; i++) {
+				const line = String(lines[i] || "").trim();
+				if (!line) continue;
+				rest += (rest ? " " : "") + cleanTitleLine(line);
+				if (rest.length >= 220) break;
+			}
+			rest = rest.replace(/\s+/g, " ").trim();
+			if (rest.length > 240) rest = rest.slice(0, 240).trim() + "…";
+			return { title, excerpt: rest };
+		};
+
 		const items = Array.isArray(notes) ? notes : [];
 		if (items.length === 0) {
 			const q = normalizeSearchQuery(psSearchQuery);
@@ -1701,7 +1810,9 @@
 							`<span class="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-slate-200">#${t}</span>`
 					)
 					.join("");
-				const bodyHtml = renderNoteHtml(n);
+				const info = getTitleAndExcerpt(n && n.text ? n.text : "");
+				const titleHtml = escapeHtml(info.title);
+				const excerptHtml = escapeHtml(info.excerpt);
 				return `
 					<div data-note-id="${id}" class="group relative cursor-pointer rounded-xl border ${
 					active
@@ -1725,7 +1836,14 @@
 								</svg>
 							</button>
 						</div>
-						<div class="mt-2 max-h-40 overflow-hidden">${bodyHtml}</div>
+						<div class="mt-2">
+							<div class="truncate text-sm font-semibold text-slate-100">${titleHtml}</div>
+							${
+								excerptHtml
+									? `<div class="ps-note-excerpt mt-1 text-xs text-slate-300">${excerptHtml}</div>`
+									: ""
+							}
+						</div>
 						${chips ? `<div class="mt-2 flex flex-wrap gap-1">${chips}</div>` : ""}
 					</div>
 				`;
@@ -1825,7 +1943,20 @@
 
 	window.addEventListener("message", (ev) => {
 		const data = ev && ev.data ? ev.data : null;
-		if (!data || data.type !== "mirror_js_run_result") return;
+		if (!data || !data.type) return;
+		if (data.type === "mirror_task_toggle") {
+			// Only accept messages from the markdown preview iframe.
+			try {
+				if (!mdPreview || ev.source !== mdPreview.contentWindow) return;
+			} catch {
+				return;
+			}
+			const idx = Number(data.index);
+			const checked = Boolean(data.checked);
+			toggleMarkdownTaskAtIndex(idx, checked);
+			return;
+		}
+		if (data.type !== "mirror_js_run_result") return;
 		const pending = jsRunnerPending.get(String(data.id || ""));
 		if (!pending) return;
 		try {
