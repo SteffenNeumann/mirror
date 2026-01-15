@@ -447,7 +447,7 @@
 		await openModal({
 			title: "Slash-Commands",
 			message:
-				"/h1 /h2 /h3 · /b (bold) · /i (italic) · /s (strike) · /quote · /ul · /ol · /todo · /code [lang] · /link · /hr",
+				"/h1 /h2 /h3 · /b (bold) · /i (italic) · /s (strike) · /quote · /ul · /ol · /todo · /done · /tasks · /code [lang] · /link · /hr",
 			okText: "OK",
 			cancelText: "Schließen",
 			backdropClose: true,
@@ -466,6 +466,8 @@
 		{ cmd: "ul", label: "Bullet list", snippet: "/ul" },
 		{ cmd: "ol", label: "Numbered list", snippet: "/ol" },
 		{ cmd: "todo", label: "Task list", snippet: "/todo" },
+		{ cmd: "done", label: "Task (checked)", snippet: "/done" },
+		{ cmd: "tasks", label: "Task template", snippet: "/tasks" },
 		{ cmd: "hr", label: "Horizontal rule", snippet: "/hr" },
 		{ cmd: "link", label: "Link", snippet: "/link" },
 		{ cmd: "code", label: "Code block", snippet: "/code" },
@@ -530,11 +532,24 @@
 			.join("");
 
 		slashMenuList.querySelectorAll("button[data-slash-idx]").forEach((btn) => {
-			btn.addEventListener("click", () => {
+			const pick = () => {
 				const idx = Number(btn.getAttribute("data-slash-idx") || 0);
 				const it = slashMenuItems[idx];
 				if (!it) return;
 				insertSlashSnippet(String(it.snippet || ""));
+			};
+			// Prevent the menu from stealing focus from the textarea on mouse/touch.
+			btn.addEventListener("pointerdown", (ev) => {
+				if (ev) ev.preventDefault();
+				btn.dataset.slashHandled = "1";
+				pick();
+			});
+			btn.addEventListener("click", () => {
+				if (btn.dataset && btn.dataset.slashHandled === "1") {
+					btn.dataset.slashHandled = "0";
+					return;
+				}
+				pick();
 			});
 		});
 	}
@@ -696,6 +711,18 @@
 		}
 		if (cmd === "todo" || cmd === "task") {
 			insertLine("- [ ] ");
+			return true;
+		}
+		if (cmd === "done" || cmd === "x" || cmd === "check") {
+			insertLine("- [x] ");
+			return true;
+		}
+		if (cmd === "tasks") {
+			const block = "- [ ] " + (arg ? arg : "") + "\n- [ ] \n- [ ] ";
+			replaceTextRange(el, start, end, block);
+			const cursor = start + "- [ ] ".length + (arg ? String(arg).length : 0);
+			el.selectionStart = cursor;
+			el.selectionEnd = cursor;
 			return true;
 		}
 		if (cmd === "hr") {
