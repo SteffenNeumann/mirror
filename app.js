@@ -5,6 +5,7 @@
 	const statusDot = document.getElementById("statusDot");
 	const statusText = document.getElementById("statusText");
 	const roomLabel = document.getElementById("roomLabel");
+	const buildStamp = document.getElementById("buildStamp");
 	const shareLink = document.getElementById("shareLink");
 	const copyLinkBtn = document.getElementById("copyLink");
 	const wsHint = document.getElementById("wsHint");
@@ -183,6 +184,27 @@
 			el.style.transition = "opacity 220ms ease";
 			window.setTimeout(() => el.remove(), 260);
 		}, 1400);
+	}
+
+	async function loadBuildStamp() {
+		if (!buildStamp) return;
+		try {
+			const res = await fetch("/gitstamp.txt", { cache: "no-store" });
+			if (!res.ok) return;
+			const raw = String(await res.text());
+			const line = raw.split(/\r?\n/)[0] || "";
+			const parts = line.trim().split(/\s+/);
+			if (parts.length < 2) return;
+			const sha = parts[parts.length - 1];
+			const ts = parts.slice(0, -1).join(" ");
+			const shortSha = sha ? sha.slice(0, 7) : "";
+			// Subtil: kurze Anzeige, volle Infos im Tooltip.
+			buildStamp.textContent =
+				shortSha && ts ? `${shortSha} · ${ts}` : line.trim();
+			buildStamp.title = line.trim();
+		} catch {
+			// ignore
+		}
 	}
 
 	let modalBusy = false;
@@ -3462,6 +3484,7 @@ self.onmessage = async (e) => {
 
 	// Initial
 	setStatus("offline", "Offline");
+	loadBuildStamp();
 	connect();
 	loadPsTagPrefs();
 	loadPsTagsCollapsed();
