@@ -42,7 +42,7 @@
 	const applyOutputAppendBtn = document.getElementById("applyOutputAppend");
 	const aiPromptInput = document.getElementById("aiPrompt");
 	const aiPromptClearBtn = document.getElementById("aiPromptClear");
-	const aiUsePreviewToggle = document.getElementById("aiUsePreview");
+	const aiUsePreviewBtn = document.getElementById("aiUsePreviewBtn");
 	const aiModeWrap = document.getElementById("aiModeWrap");
 	const aiPromptWrap = document.getElementById("aiPromptWrap");
 	const copyMirrorBtn = document.getElementById("copyMirror");
@@ -950,7 +950,7 @@
 		} catch {
 			aiUsePreview = true;
 		}
-		if (aiUsePreviewToggle) aiUsePreviewToggle.checked = aiUsePreview;
+		setAiUsePreviewUi(aiUsePreview);
 	}
 
 	function saveAiPrompt(next) {
@@ -998,8 +998,18 @@
 	}
 
 	function getAiUsePreview() {
-		if (!aiUsePreviewToggle) return aiUsePreview;
-		return Boolean(aiUsePreviewToggle.checked);
+		return aiUsePreview;
+	}
+
+	function setAiUsePreviewUi(active) {
+		if (!aiUsePreviewBtn || !aiUsePreviewBtn.classList) return;
+		aiUsePreviewBtn.classList.toggle("bg-fuchsia-600/60", active);
+		aiUsePreviewBtn.classList.toggle("border-fuchsia-500/40", active);
+		aiUsePreviewBtn.classList.toggle("text-slate-50", active);
+		aiUsePreviewBtn.classList.toggle("shadow-soft", active);
+		aiUsePreviewBtn.classList.toggle("bg-slate-950/30", !active);
+		aiUsePreviewBtn.classList.toggle("border-white/15", !active);
+		aiUsePreviewBtn.classList.toggle("text-slate-300", !active);
 	}
 
 	function stripManualTagsMarker(tags) {
@@ -3792,9 +3802,10 @@ self.onmessage = async (e) => {
 			}
 		});
 	}
-	if (aiUsePreviewToggle) {
-		aiUsePreviewToggle.addEventListener("change", () => {
-			saveAiUsePreview(Boolean(aiUsePreviewToggle.checked));
+	if (aiUsePreviewBtn) {
+		aiUsePreviewBtn.addEventListener("click", () => {
+			saveAiUsePreview(!aiUsePreview);
+			setAiUsePreviewUi(aiUsePreview);
 			applyAiContextMode();
 		});
 	}
