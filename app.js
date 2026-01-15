@@ -42,6 +42,7 @@
 	const applyOutputAppendBtn = document.getElementById("applyOutputAppend");
 	const aiPromptInput = document.getElementById("aiPrompt");
 	const aiPromptClearBtn = document.getElementById("aiPromptClear");
+	const aiUsePreviewToggle = document.getElementById("aiUsePreview");
 	const copyMirrorBtn = document.getElementById("copyMirror");
 	const codeLangWrap = document.getElementById("codeLangWrap");
 	const codeLangSelect = document.getElementById("codeLang");
@@ -927,7 +928,9 @@
 	const PS_VISIBLE_KEY = "mirror_ps_visible";
 	const PS_MANUAL_TAGS_MARKER = "__manual_tags__";
 	const AI_PROMPT_KEY = "mirror_ai_prompt";
+	const AI_USE_PREVIEW_KEY = "mirror_ai_use_preview";
 	let aiPrompt = "";
+	let aiUsePreview = true;
 
 	function loadAiPrompt() {
 		try {
@@ -938,10 +941,29 @@
 		if (aiPromptInput) aiPromptInput.value = aiPrompt;
 	}
 
+	function loadAiUsePreview() {
+		try {
+			const raw = localStorage.getItem(AI_USE_PREVIEW_KEY);
+			aiUsePreview = raw === null ? true : raw !== "0";
+		} catch {
+			aiUsePreview = true;
+		}
+		if (aiUsePreviewToggle) aiUsePreviewToggle.checked = aiUsePreview;
+	}
+
 	function saveAiPrompt(next) {
 		aiPrompt = String(next || "");
 		try {
 			localStorage.setItem(AI_PROMPT_KEY, aiPrompt);
+		} catch {
+			// ignore
+		}
+	}
+
+	function saveAiUsePreview(next) {
+		aiUsePreview = Boolean(next);
+		try {
+			localStorage.setItem(AI_USE_PREVIEW_KEY, aiUsePreview ? "1" : "0");
 		} catch {
 			// ignore
 		}
@@ -954,6 +976,11 @@
 			.trim()
 			.slice(0, 800);
 		return v;
+	}
+
+	function getAiUsePreview() {
+		if (!aiUsePreviewToggle) return aiUsePreview;
+		return Boolean(aiUsePreviewToggle.checked);
 	}
 
 	function stripManualTagsMarker(tags) {
@@ -2568,6 +2595,7 @@ self.onmessage = async (e) => {
 
 		const prompt = getAiPrompt();
 		if (prompt) saveAiPrompt(prompt);
+		const usePreview = getAiUsePreview();
 		const hasCode = Boolean(String(code || "").trim());
 		if (mode === "run" && !hasCode) {
 			setPreviewRunOutput({ status: "", output: "", error: "", source: "" });
@@ -2577,9 +2605,28 @@ self.onmessage = async (e) => {
 			);
 			return;
 		}
-		const kind = mode === "run" ? "code" : hasCode ? "code" : "text";
-		const payloadText = kind === "code" ? code : editorText;
-		const payloadLang = kind === "code" ? lang || "" : "text";
+		let kind = mode === "run" ? "code" : hasCode ? "code" : "text";
+		let payloadText = kind === "code" ? code : editorText;
+		let payloadLang = kind === "code" ? lang || "" : "text";
+		let promptForRequest = prompt;
+		if (mode !== "run" && !usePreview) {
+			if (!prompt) {
+				setPreviewRunOutput({ status: "", output: "", error: "", source: "" });
+				toast("Bitte eine Frage eingeben.", "info");
+				return;
+			}
+			kind = "text";
+			payloadText = prompt;
+			payloadLang = "text";
+			promptForRequest = "";
+		} else if (mode !== "run" && usePreview) {
+			if (!String(editorText || "").trim() && prompt) {
+				kind = "text";
+				payloadText = prompt;
+				payloadLang = "text";
+				promptForRequest = "";
+			}
+		}
 		if (!String(payloadText || "").trim()) {
 			setPreviewRunOutput({ status: "", output: "", error: "", source: "" });
 			toast("Nothing to send.", "info");
@@ -2599,7 +2646,7 @@ self.onmessage = async (e) => {
 					lang: payloadLang,
 					kind,
 					code: payloadText,
-					prompt,
+					prompt: promptForRequest,
 				}),
 			});
 			setPreviewRunOutput({
@@ -3726,6 +3773,11 @@ self.onmessage = async (e) => {
 			}
 		});
 	}
+	if (aiUsePreviewToggle) {
+		aiUsePreviewToggle.addEventListener("change", () => {
+			saveAiUsePreview(Boolean(aiUsePreviewToggle.checked));
+		});
+	}
 	if (aiPromptClearBtn) {
 		aiPromptClearBtn.addEventListener("click", () => {
 			if (aiPromptInput) aiPromptInput.value = "";
@@ -3797,4 +3849,5 @@ self.onmessage = async (e) => {
 
 	refreshPersonalSpace();
 	loadAiPrompt();
+	loadAiUsePreview();
 })();
