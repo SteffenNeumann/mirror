@@ -1086,7 +1086,10 @@ const server = http.createServer((req, res) => {
 					.trim()
 					.toLowerCase();
 				const mode =
-					modeRaw === "fix" || modeRaw === "improve" || modeRaw === "summarize"
+					modeRaw === "fix" ||
+					modeRaw === "improve" ||
+					modeRaw === "run" ||
+					modeRaw === "summarize"
 						? modeRaw
 						: "explain";
 				const lang = String(body && body.lang ? body.lang : "")
