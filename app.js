@@ -31,7 +31,6 @@
 	const previewPanel = document.getElementById("previewPanel");
 	const mdPreview = document.getElementById("mdPreview");
 	const togglePreview = document.getElementById("togglePreview");
-	const runPreviewBtn = document.getElementById("runPreview");
 	const aiModeSelect = document.getElementById("aiMode");
 	const aiAssistBtn = document.getElementById("aiAssist");
 	const clearRunOutputBtn = document.getElementById("clearRunOutput");
@@ -949,7 +948,9 @@
 	}
 
 	function getAiPrompt() {
-		const v = String(aiPromptInput && aiPromptInput.value ? aiPromptInput.value : "")
+		const v = String(
+			aiPromptInput && aiPromptInput.value ? aiPromptInput.value : ""
+		)
 			.trim()
 			.slice(0, 800);
 		return v;
@@ -1207,10 +1208,7 @@
 				).trim()
 			);
 		if (runOutputTitleEl)
-			runOutputTitleEl.textContent = hasAiOutput ? "AI Output" : "Output";
-		if (runOutputIconEl && runOutputIconEl.classList) {
-			runOutputIconEl.classList.toggle("hidden", !hasAiOutput);
-		}
+			runOutputTitleEl.textContent = hasAiOutput ? "AI Output" : "AI";
 		if (applyOutputReplaceBtn && applyOutputReplaceBtn.classList) {
 			applyOutputReplaceBtn.classList.toggle("hidden", !hasAiOutput);
 		}
@@ -2532,104 +2530,18 @@ self.onmessage = async (e) => {
 		if (err) toast("Snippet error (see output).", "error");
 	}
 
-	async function warmPythonRuntime() {
-		if (pyRuntimeWarmed) return { ok: true };
-		setPreviewRunOutput({
-			status: "Loading Python…",
-			output: "",
-			error: "",
-		});
-		const res = await runPySnippet("pass", PY_TIMEOUT_COLD_MS);
-		if (res && res.error && /Timeout\s+(nach|after)/i.test(String(res.error))) {
-			return {
-				ok: false,
-				error:
-					"Python init timeout. Pyodide CDN might be blocked or the network is too slow. Workaround: open the page with ?pyodide=https://pyodide-cdn2.iodide.io/v0.25.1/full/",
-			};
-		}
-		if (res && res.error) {
-			return {
-				ok: false,
-				error: String(res.error || "Python could not be initialized."),
-			};
-		}
-		pyRuntimeWarmed = true;
-		return { ok: true };
-	}
-
-	async function runSnippetFromPreview() {
-		const parsed = parseRunnableFromEditor();
-		if (!parsed) {
-			setPreviewRunOutput({ status: "", output: "", error: "" });
-			toast(
-				"No runnable code found. Use #lang-python/#lang-js or a fenced ```lang code block.",
-				"info"
-			);
-			return;
-		}
-		const lang = String(parsed.lang || "").toLowerCase();
-		const code = String(parsed.code || "");
-		setPreviewRunOutput({ status: "Running…", output: "", error: "" });
-		const timeoutMs =
-			lang === "python" || lang === "py"
-				? pyRuntimeWarmed
-					? PY_TIMEOUT_WARM_MS
-					: PY_TIMEOUT_COLD_MS
-				: JS_TIMEOUT_MS;
-		let res = { output: "", error: "" };
-		if (lang === "python" || lang === "py") {
-			if (!pyRuntimeWarmed) {
-				const warm = await warmPythonRuntime();
-				if (!warm.ok) {
-					setPreviewRunOutput({
-						status: "Error",
-						output: "",
-						error: String(warm.error || "Python could not be initialized."),
-					});
-					toast("Run: error (see output).", "error");
-					return;
-				}
-				setPreviewRunOutput({ status: "Running…", output: "", error: "" });
-			}
-			res = await runPySnippet(code, timeoutMs);
-			if (!/Timeout\s+(nach|after)/i.test(String(res.error || "")))
-				pyRuntimeWarmed = true;
-		} else if (
-			lang === "javascript" ||
-			lang === "js" ||
-			lang === "javascript" ||
-			lang === "node"
-		) {
-			res = await runJsSnippet(code, timeoutMs);
-		} else {
-			res = { output: "", error: `Not supported: ${lang || "unknown"}` };
-		}
-		setPreviewRunOutput({
-			status: res.error ? "Error" : "Done",
-			output: String(res.output || "").slice(0, 8000),
-			error: String(res.error || "").slice(0, 8000),
-		});
-		if (res.error) toast("Run: error (see output).", "error");
-	}
-
 	function getAiMode() {
 		const v = String(
 			aiModeSelect && aiModeSelect.value ? aiModeSelect.value : ""
 		)
 			.trim()
 			.toLowerCase();
-		if (v === "fix" || v === "improve" || v === "run" || v === "summarize")
-			return v;
+		if (v === "fix" || v === "improve" || v === "summarize") return v;
 		return "explain";
 	}
 
 	async function aiAssistFromPreview() {
 		const mode = getAiMode();
-		if (mode === "run") {
-			await runSnippetFromPreview();
-			return;
-		}
-
 		const parsed = parseRunnableFromEditor();
 		const editorText = String(textarea && textarea.value ? textarea.value : "");
 		const lang = String(parsed && parsed.lang ? parsed.lang : "")
@@ -2642,13 +2554,18 @@ self.onmessage = async (e) => {
 		const hasCode = Boolean(String(code || "").trim());
 		const payloadText = hasCode ? code : editorText;
 		const kind = hasCode ? "code" : "text";
-		const payloadLang = hasCode ? (lang || "") : "text";
+		const payloadLang = hasCode ? lang || "" : "text";
 		if (!String(payloadText || "").trim()) {
 			setPreviewRunOutput({ status: "", output: "", error: "", source: "" });
 			toast("Nothing to send.", "info");
 			return;
 		}
-		setPreviewRunOutput({ status: `AI (${mode})…`, output: "", error: "", source: "ai" });
+		setPreviewRunOutput({
+			status: `AI (${mode})…`,
+			output: "",
+			error: "",
+			source: "ai",
+		});
 		try {
 			const res = await api("/api/ai", {
 				method: "POST",
@@ -3713,11 +3630,6 @@ self.onmessage = async (e) => {
 	if (mdPreview) {
 		mdPreview.addEventListener("load", () => {
 			attachPreviewCheckboxWriteback();
-		});
-	}
-	if (runPreviewBtn) {
-		runPreviewBtn.addEventListener("click", async () => {
-			await runSnippetFromPreview();
 		});
 	}
 	if (aiAssistBtn) {
