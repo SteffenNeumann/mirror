@@ -1155,7 +1155,7 @@ const server = http.createServer((req, res) => {
 						: "Improve the text: clarity, structure, tone, inclusive language. Provide an improved version."
 					: mode === "run"
 					? kind === "code"
-						? "Simulate executing the code. Do NOT claim you actually ran it.\n\nIMPORTANT: Return ONLY the following lines/sections (no other text, no headings, no markdown):\nOutput: <plain text output or (no output)>\n\nIf an error is likely, additionally include:\nError: <short>\nFix:\n```<same language>\n<corrected code>\n```\n\nDo NOT explain the code. Only give Output and, if needed, Error+Fix."
+						? "Simulate executing the code. Do NOT claim you actually ran it.\n\nIMPORTANT: Return ONLY the following lines/sections (no other text, no headings, no markdown). No emojis.\nOutput: <plain text output or (no output)>\n\nIf an error is likely, additionally include:\nError: <short>\nFix:\n```<same language>\n<corrected code>\n```\n\nDo NOT explain the code. Only give Output and, if needed, Error+Fix."
 						: "The user asked to run something, but the input is text. Explain that only code can be run, and ask for a code snippet or clarify what to execute."
 					: mode === "summarize"
 					? kind === "code"
@@ -1200,6 +1200,9 @@ const server = http.createServer((req, res) => {
 						? AI_MAX_OUTPUT_TOKENS
 						: 900;
 
+						const temperature =
+							mode === "run" && kind === "code" ? 0 : 0.3;
+
 					async function callAnthropic(model, userPrompt) {
 						const r = await fetch("https://api.anthropic.com/v1/messages", {
 							method: "POST",
@@ -1210,6 +1213,7 @@ const server = http.createServer((req, res) => {
 							},
 							body: JSON.stringify({
 								model,
+									temperature,
 								max_tokens: maxTokens,
 								system,
 								messages: [{ role: "user", content: userPrompt }],
@@ -1281,6 +1285,51 @@ const server = http.createServer((req, res) => {
 						// If it doesn't look like the requested format, retry once.
 						return true;
 					}
+
+						function extractFencedCodeBlocks(text) {
+							const src = String(text || "");
+							const blocks = [];
+							const re = /```[^\n]*\n([\s\S]*?)```/g;
+							let m;
+							while ((m = re.exec(src))) {
+								blocks.push(String(m[1] || ""));
+								if (blocks.length >= 6) break;
+							}
+							return blocks;
+						}
+
+						function coerceRunModeText(text) {
+							const raw = String(text || "").trim();
+							if (!raw) return "Output: (no output)";
+							if (raw.toLowerCase().startsWith("output:")) return raw;
+
+							// Prefer any fenced code block as the most likely "stdout" snippet.
+							const blocks = extractFencedCodeBlocks(raw);
+							if (blocks.length) {
+								const last = String(blocks[blocks.length - 1] || "").trim();
+								return "Output:\n" + (last || "(no output)");
+							}
+
+							// Fallback: try to salvage likely output-like lines.
+							const lines = raw
+								.split("\n")
+								.map((l) => l.replace(/\s+$/g, ""));
+							const candidates = [];
+							for (const line of lines) {
+								const s = String(line || "").trim();
+								if (!s) continue;
+								if (/^(?:[-*•]|\d+\.)\s+/.test(s)) continue;
+								if (/^(?:code overview|key components|execution flow|potential edge cases)\b/i.test(s))
+									continue;
+								if (/\b(run speed:|traceback|exception|error:)\b/i.test(s)) {
+									candidates.push(s);
+								}
+								if (candidates.length >= 12) break;
+							}
+							if (candidates.length) return "Output:\n" + candidates.join("\n");
+
+							return "Output: (no output)";
+						}
 
 					function chunkText(text, maxChars) {
 						const src = String(text || "");
@@ -1378,7 +1427,7 @@ const server = http.createServer((req, res) => {
 							const firstText = extractText(out.data);
 							if (shouldRetryRunOutput(firstText)) {
 								const strictRunInstruction =
-									"Your previous answer was invalid. Reply ONLY in this exact format (no extra text, no markdown headings, no explanations):\n" +
+									"Your previous answer was invalid. Reply ONLY in this exact format (no extra text, no markdown headings, no explanations, no emojis):\n" +
 									"Output: <plain text output or (no output)>\n\n" +
 									"If an error is likely:\nError: <short>\nFix:\n```<same language>\n<corrected code>\n```";
 								const retryPrompt = buildUserPrompt(strictRunInstruction, input);
@@ -1390,7 +1439,10 @@ const server = http.createServer((req, res) => {
 						finalData = out.data;
 					}
 
-					const outText = extractText(finalData);
+						let outText = extractText(finalData);
+						if (mode === "run" && kind === "code") {
+							outText = coerceRunModeText(outText);
+						}
 					json(res, 200, {
 						ok: true,
 						text: outText,
