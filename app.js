@@ -211,10 +211,10 @@
 			return Promise.resolve({ ok: false, value: "" });
 		}
 		modalBusy = true;
-		const title = String((opts && opts.title) || "Dialog");
+		const title = String((opts && opts.title) || "Modal");
 		const message = String((opts && opts.message) || "");
 		const okText = String((opts && opts.okText) || "OK");
-		const cancelText = String((opts && opts.cancelText) || "Abbrechen");
+		const cancelText = String((opts && opts.cancelText) || "Cancel");
 		const danger = Boolean(opts && opts.danger);
 		const input = opts && opts.input ? opts.input : null;
 		const allowBackdropClose = Boolean(opts && opts.backdropClose);
@@ -319,10 +319,10 @@
 
 	async function modalConfirm(message, opts) {
 		const res = await openModal({
-			title: (opts && opts.title) || "Bestätigen",
+			title: (opts && opts.title) || "Confirm",
 			message: String(message || ""),
 			okText: (opts && opts.okText) || "OK",
-			cancelText: (opts && opts.cancelText) || "Abbrechen",
+			cancelText: (opts && opts.cancelText) || "Cancel",
 			danger: Boolean(opts && opts.danger),
 			backdropClose: Boolean(opts && opts.backdropClose),
 		});
@@ -331,10 +331,10 @@
 
 	async function modalPrompt(message, opts) {
 		const res = await openModal({
-			title: (opts && opts.title) || "Eingabe",
+			title: (opts && opts.title) || "Input",
 			message: String(message || ""),
-			okText: (opts && opts.okText) || "Weiter",
-			cancelText: (opts && opts.cancelText) || "Abbrechen",
+			okText: (opts && opts.okText) || "Continue",
+			cancelText: (opts && opts.cancelText) || "Cancel",
 			backdropClose: Boolean(opts && opts.backdropClose),
 			input: {
 				type: (opts && opts.type) || "text",
@@ -497,11 +497,11 @@
 
 	async function showSlashHelp() {
 		await openModal({
-			title: "Slash-Commands",
+			title: "Slash commands",
 			message:
 				"/h1 /h2 /h3 · /b (bold) · /i (italic) · /s (strike) · /quote · /ul · /ol · /todo · /done · /tasks · /code [lang] · /link · /hr",
 			okText: "OK",
-			cancelText: "Schließen",
+			cancelText: "Close",
 			backdropClose: true,
 		});
 	}
@@ -588,7 +588,7 @@
 		if (!slashMenuList) return;
 		if (!slashMenuItems.length) {
 			slashMenuList.innerHTML =
-				'<div class="px-3 py-2 text-xs text-slate-400">Keine Treffer.</div>';
+				'<div class="px-3 py-2 text-xs text-slate-400">No matches.</div>';
 			return;
 		}
 		slashMenuList.innerHTML = slashMenuItems
@@ -1278,7 +1278,7 @@
 		} catch {
 			// ignore
 		}
-		metaLeft.textContent = "Codeblock eingefügt.";
+		metaLeft.textContent = "Inserted code block.";
 		metaRight.textContent = nowIso();
 		updatePreview();
 		updateCodeLangOverlay();
@@ -1400,7 +1400,7 @@
 		if (!renderer) {
 			if (!mdLibWarned) {
 				mdLibWarned = true;
-				toast("Markdown-Rendering: Bibliotheken nicht geladen (CDN).", "error");
+				toast("Markdown rendering: libraries not loaded (CDN).", "error");
 			}
 			const body = text
 				.replace(/&/g, "&amp;")
@@ -1436,12 +1436,12 @@
 			? "grid h-full min-h-0 grid-cols-1 gap-3 lg:grid-cols-2"
 			: "grid h-full min-h-0 grid-cols-1 gap-3 lg:grid-cols-1";
 		if (togglePreview) {
-			togglePreview.textContent = previewOpen ? "Preview aus" : "Preview";
+			togglePreview.textContent = previewOpen ? "Hide preview" : "Preview";
 		}
 		if (previewOpen) {
 			const renderer = ensureMarkdown();
 			if (!renderer) {
-				toast("Markdown-Preview: Bibliothek nicht geladen (CDN).", "error");
+				toast("Markdown preview: library not loaded (CDN).", "error");
 			}
 			updatePreview();
 		}
@@ -1452,10 +1452,10 @@
 		const renderer = ensureMarkdown();
 		const stamp = Date.now();
 		if (!renderer) {
-			const fallbackDoc = `<!doctype html><html lang="de"><head><meta charset="utf-8" />
+			const fallbackDoc = `<!doctype html><html lang="en"><head><meta charset="utf-8" />
 			<meta name="viewport" content="width=device-width, initial-scale=1" />
 			<style>:root{color-scheme:dark;}body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:#020617;color:#e2e8f0;}a{color:#60a5fa;}</style>
-			</head><body><!--ts:${stamp}--><strong>Markdown Preview nicht verfügbar.</strong><div style="margin-top:8px;color:#94a3b8">Bitte Seite neu laden oder CDN-Blocking (AdBlock/Corporate Proxy) prüfen.</div></body></html>`;
+			</head><body><!--ts:${stamp}--><strong>Markdown preview unavailable.</strong><div style="margin-top:8px;color:#94a3b8">Reload the page or check for CDN blocking (AdBlock / corporate proxy).</div></body></html>`;
 			setPreviewDocument(fallbackDoc);
 			return;
 		}
@@ -1468,7 +1468,7 @@
 		}
 
 		const doc = `<!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -1531,7 +1531,7 @@
 		const safeTags = Array.isArray(tags) ? tags : [];
 		const allBtn = {
 			tag: "",
-			label: "Alle",
+			label: "All",
 		};
 		const items = [
 			allBtn,
@@ -1574,8 +1574,8 @@
 		if (items.length === 0) {
 			const q = normalizeSearchQuery(psSearchQuery);
 			psList.innerHTML = q
-				? '<div class="text-xs text-slate-400">Keine Treffer.</div>'
-				: '<div class="text-xs text-slate-400">Noch keine Notizen.</div>';
+				? '<div class="text-xs text-slate-400">No matches.</div>'
+				: '<div class="text-xs text-slate-400">No notes yet.</div>';
 			return;
 		}
 		const byId = new Map(items.map((n) => [String(n.id || ""), n]));
@@ -1604,8 +1604,8 @@
 								type="button"
 								data-action="delete"
 								class="ps-note-delete inline-flex rounded-md border border-white/10 bg-slate-950/60 p-1.5 text-slate-200 shadow-soft backdrop-blur transition hover:bg-slate-950/80"
-								title="Löschen"
-								aria-label="Löschen">
+								title="Delete"
+								aria-label="Delete">
 								<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 									<path d="M3 6h18" />
 									<path d="M8 6V4h8v2" />
@@ -1649,11 +1649,11 @@
 				syncPsEditorTagsInput(true);
 				textarea.value = String(note.text || "");
 				textarea.focus();
-				if (psHint) psHint.textContent = "Bearbeiten: Text rechts angepasst.";
+				if (psHint) psHint.textContent = "Editing: editor text updated.";
 				updatePsEditingTagsHint();
 				if (psMainHint) {
 					psMainHint.classList.remove("hidden");
-					psMainHint.textContent = "Bearbeiten aktiv";
+					psMainHint.textContent = "Editing active";
 				}
 				updatePreview();
 				renderPsList(items);
@@ -1666,10 +1666,10 @@
 					ev.stopPropagation();
 					const id = row.getAttribute("data-note-id") || "";
 					if (!id) return;
-					const ok = await modalConfirm("Notiz wirklich löschen?", {
-						title: "Notiz löschen",
-						okText: "Löschen",
-						cancelText: "Abbrechen",
+					const ok = await modalConfirm("Delete this note?", {
+						title: "Delete note",
+						okText: "Delete",
+						cancelText: "Cancel",
 						danger: true,
 						backdropClose: true,
 					});
@@ -1682,10 +1682,10 @@
 							psEditingNoteId = "";
 							if (psMainHint) psMainHint.classList.add("hidden");
 						}
-						toast("Notiz gelöscht.", "success");
+						toast("Note deleted.", "success");
 						await refreshPersonalSpace();
 					} catch {
-						toast("Löschen fehlgeschlagen.", "error");
+						toast("Delete failed.", "error");
 					}
 				});
 			}
@@ -1794,7 +1794,7 @@ self.onmessage = async (e) => {
 						// ignore
 					}
 					cleanupWorkerUrl();
-					resolve({ output: "", error: `Timeout nach ${timeoutMs}ms.` });
+					resolve({ output: "", error: `Timeout after ${timeoutMs}ms.` });
 				}, timeoutMs);
 				worker.addEventListener("message", (ev) => {
 					const data = ev && ev.data ? ev.data : null;
@@ -1825,7 +1825,7 @@ self.onmessage = async (e) => {
 					cleanupWorkerUrl();
 					resolve({
 						output: "",
-						error: "JS Runner konnte nicht gestartet werden.",
+						error: "JS runner could not be started.",
 					});
 				});
 				worker.postMessage({ id, code: js });
@@ -1836,7 +1836,7 @@ self.onmessage = async (e) => {
 
 			const frame = ensureJsRunnerFrame();
 			if (!frame || !frame.contentWindow) {
-				resolve({ output: "", error: "JS Runner nicht verfügbar." });
+				resolve({ output: "", error: "JS runner unavailable." });
 				return;
 			}
 			let runnerUrl = "";
@@ -1857,7 +1857,7 @@ self.onmessage = async (e) => {
 					// ignore
 				}
 				jsRunnerFrame = null;
-				resolve({ output: "", error: `Timeout nach ${timeoutMs}ms.` });
+				resolve({ output: "", error: `Timeout after ${timeoutMs}ms.` });
 			}, timeoutMs);
 			jsRunnerPending.set(id, {
 				resolve: (v) => {
@@ -1905,7 +1905,7 @@ self.onmessage = async (e) => {
 					cleanupUrl();
 					resolve({
 						output: "",
-						error: "JS Runner konnte nicht gestartet werden.",
+						error: "JS runner could not be started.",
 					});
 				}
 			}
@@ -1944,7 +1944,7 @@ async function ensurePyodide() {
 					lastErr = e;
 				}
 			}
-			throw lastErr || new Error('Pyodide konnte nicht geladen werden.');
+			throw lastErr || new Error('Pyodide could not be loaded.');
 		})();
   }
   pyodide = await pyodideReady;
@@ -2001,7 +2001,7 @@ self.onmessage = async (e) => {
 		return new Promise((resolve) => {
 			const worker = ensurePyRunnerWorker();
 			if (!worker) {
-				resolve({ output: "", error: "Python Runner nicht verfügbar." });
+				resolve({ output: "", error: "Python runner unavailable." });
 				return;
 			}
 			const id = `py_${Date.now()}_${++pyRunnerSeq}`;
@@ -2015,7 +2015,7 @@ self.onmessage = async (e) => {
 					// ignore
 				}
 				pyRunnerWorker = null;
-				resolve({ output: "", error: `Timeout nach ${timeoutMs}ms.` });
+				resolve({ output: "", error: `Timeout after ${timeoutMs}ms.` });
 			}, timeoutMs);
 
 			const onMsg = (ev) => {
@@ -2044,7 +2044,7 @@ self.onmessage = async (e) => {
 				} catch {
 					// ignore
 				}
-				resolve({ output: "", error: "Python Runner konnte nicht starten." });
+				resolve({ output: "", error: "Python runner failed to start." });
 			}
 		});
 	}
@@ -2071,11 +2071,11 @@ self.onmessage = async (e) => {
 		} else if (lang === "javascript" || lang === "js") {
 			res = await runJsSnippet(code, timeoutMs);
 		} else {
-			res = { output: "", error: `Nicht unterstützt: ${lang || "unknown"}` };
+			res = { output: "", error: `Not supported: ${lang || "unknown"}` };
 		}
 		if (lang === "python" || lang === "py") {
 			// Mark runtime warmed if we got any non-timeout response
-			if (!/Timeout nach/i.test(String(res.error || "")))
+			if (!/Timeout\s+(nach|after)/i.test(String(res.error || "")))
 				pyRuntimeWarmed = true;
 		}
 
@@ -2087,28 +2087,28 @@ self.onmessage = async (e) => {
 			error: err ? err.slice(0, 8000) : "",
 		});
 		renderPsList(Array.isArray(psState && psState.notes) ? psState.notes : []);
-		if (err) toast("Snippet-Fehler (siehe Ausgabe).", "error");
+		if (err) toast("Snippet error (see output).", "error");
 	}
 
 	async function warmPythonRuntime() {
 		if (pyRuntimeWarmed) return { ok: true };
 		setPreviewRunOutput({
-			status: "Python lädt…",
+			status: "Loading Python…",
 			output: "",
 			error: "",
 		});
 		const res = await runPySnippet("pass", PY_TIMEOUT_COLD_MS);
-		if (res && res.error && /Timeout nach/i.test(String(res.error))) {
+		if (res && res.error && /Timeout\s+(nach|after)/i.test(String(res.error))) {
 			return {
 				ok: false,
 				error:
-					"Python-Init Timeout. Vermutlich ist das Pyodide-CDN blockiert oder das Netzwerk zu langsam. Workaround: Seite mit ?pyodide=https://pyodide-cdn2.iodide.io/v0.25.1/full/ öffnen.",
+					"Python init timeout. Pyodide CDN might be blocked or the network is too slow. Workaround: open the page with ?pyodide=https://pyodide-cdn2.iodide.io/v0.25.1/full/",
 			};
 		}
 		if (res && res.error) {
 			return {
 				ok: false,
-				error: String(res.error || "Python konnte nicht initialisiert werden."),
+				error: String(res.error || "Python could not be initialized."),
 			};
 		}
 		pyRuntimeWarmed = true;
@@ -2120,14 +2120,14 @@ self.onmessage = async (e) => {
 		if (!parsed) {
 			setPreviewRunOutput({ status: "", output: "", error: "" });
 			toast(
-				"Kein ausführbarer Code gefunden. Nutze #lang-python/#lang-js oder einen ```lang Codeblock.",
+				"No runnable code found. Use #lang-python/#lang-js or a fenced ```lang code block.",
 				"info"
 			);
 			return;
 		}
 		const lang = String(parsed.lang || "").toLowerCase();
 		const code = String(parsed.code || "");
-		setPreviewRunOutput({ status: "läuft…", output: "", error: "" });
+		setPreviewRunOutput({ status: "Running…", output: "", error: "" });
 		const timeoutMs =
 			lang === "python" || lang === "py"
 				? pyRuntimeWarmed
@@ -2140,19 +2140,17 @@ self.onmessage = async (e) => {
 				const warm = await warmPythonRuntime();
 				if (!warm.ok) {
 					setPreviewRunOutput({
-						status: "Fehler",
+						status: "Error",
 						output: "",
-						error: String(
-							warm.error || "Python konnte nicht initialisiert werden."
-						),
+						error: String(warm.error || "Python could not be initialized."),
 					});
-					toast("Run: Fehler (siehe Ausgabe).", "error");
+					toast("Run: error (see output).", "error");
 					return;
 				}
-				setPreviewRunOutput({ status: "läuft…", output: "", error: "" });
+				setPreviewRunOutput({ status: "Running…", output: "", error: "" });
 			}
 			res = await runPySnippet(code, timeoutMs);
-			if (!/Timeout nach/i.test(String(res.error || "")))
+			if (!/Timeout\s+(nach|after)/i.test(String(res.error || "")))
 				pyRuntimeWarmed = true;
 		} else if (
 			lang === "javascript" ||
@@ -2162,14 +2160,14 @@ self.onmessage = async (e) => {
 		) {
 			res = await runJsSnippet(code, timeoutMs);
 		} else {
-			res = { output: "", error: `Nicht unterstützt: ${lang || "unknown"}` };
+			res = { output: "", error: `Not supported: ${lang || "unknown"}` };
 		}
 		setPreviewRunOutput({
-			status: res.error ? "Fehler" : "fertig",
+			status: res.error ? "Error" : "Done",
 			output: String(res.output || "").slice(0, 8000),
 			error: String(res.error || "").slice(0, 8000),
 		});
-		if (res.error) toast("Run: Fehler (siehe Ausgabe).", "error");
+		if (res.error) toast("Run: error (see output).", "error");
 	}
 
 	function getAiMode() {
@@ -2178,29 +2176,45 @@ self.onmessage = async (e) => {
 		)
 			.trim()
 			.toLowerCase();
-		return v === "fix" || v === "improve" ? v : "explain";
+		if (v === "fix" || v === "improve" || v === "run" || v === "summarize")
+			return v;
+		return "explain";
 	}
 
 	async function aiAssistFromPreview() {
+		const mode = getAiMode();
+		if (mode === "run") {
+			await runSnippetFromPreview();
+			return;
+		}
+
 		const parsed = parseRunnableFromEditor();
-		if (!parsed) {
+		const editorText = String(textarea && textarea.value ? textarea.value : "");
+		const lang = String(parsed && parsed.lang ? parsed.lang : "")
+			.trim()
+			.toLowerCase();
+		const code = String(parsed && parsed.code ? parsed.code : "");
+
+		if (mode !== "summarize" && !code.trim()) {
 			setPreviewRunOutput({ status: "", output: "", error: "" });
 			toast(
-				"Kein Code gefunden. Nutze einen ```lang Codeblock oder wähle eine Sprache.",
+				"No code found. Use a fenced ```lang code block or select a language.",
 				"info"
 			);
 			return;
 		}
-		const mode = getAiMode();
-		const lang = String(parsed.lang || "")
-			.trim()
-			.toLowerCase();
-		const code = String(parsed.code || "");
+
+		const payloadCode = mode === "summarize" ? code || editorText : code;
+		if (mode === "summarize" && !String(payloadCode || "").trim()) {
+			setPreviewRunOutput({ status: "", output: "", error: "" });
+			toast("Nothing to summarize.", "info");
+			return;
+		}
 		setPreviewRunOutput({ status: `AI (${mode})…`, output: "", error: "" });
 		try {
 			const res = await api("/api/ai", {
 				method: "POST",
-				body: JSON.stringify({ mode, lang, code }),
+				body: JSON.stringify({ mode, lang, code: payloadCode }),
 			});
 			setPreviewRunOutput({
 				status: "AI",
@@ -2208,9 +2222,9 @@ self.onmessage = async (e) => {
 				error: "",
 			});
 		} catch (e) {
-			const msg = e && e.message ? String(e.message) : "Fehler";
-			setPreviewRunOutput({ status: "AI Fehler", output: "", error: msg });
-			toast(`AI fehlgeschlagen: ${msg}`, "error");
+			const msg = e && e.message ? String(e.message) : "Error";
+			setPreviewRunOutput({ status: "AI error", output: "", error: msg });
+			toast(`AI failed: ${msg}`, "error");
 		}
 	}
 
@@ -2257,7 +2271,7 @@ self.onmessage = async (e) => {
 			a.remove();
 			setTimeout(() => URL.revokeObjectURL(url), 500);
 		} catch {
-			toast("Export fehlgeschlagen.", "error");
+			toast("Export failed.", "error");
 		}
 	}
 
@@ -2275,21 +2289,21 @@ self.onmessage = async (e) => {
 
 	async function exportPersonalSpaceNotes() {
 		if (!psState || !psState.authed) {
-			toast("Bitte erst Personal Space aktivieren (Login).", "error");
+			toast("Please enable Personal Space first (sign in).", "error");
 			return;
 		}
 		try {
-			if (psHint) psHint.textContent = "Exportiere…";
+			if (psHint) psHint.textContent = "Exporting…";
 			const res = await api("/api/notes/export");
 			const payload =
 				res && res.export ? res.export : { version: 1, notes: [] };
 			downloadJson(`mirror-notes-${ymd() || "export"}.json`, payload);
-			if (psHint) psHint.textContent = "Export bereit.";
-			toast("Export erstellt.", "success");
+			if (psHint) psHint.textContent = "Export ready.";
+			toast("Export created.", "success");
 		} catch (e) {
-			const msg = e && e.message ? String(e.message) : "Fehler";
-			if (psHint) psHint.textContent = "Export fehlgeschlagen.";
-			toast(`Export fehlgeschlagen: ${msg}`, "error");
+			const msg = e && e.message ? String(e.message) : "Error";
+			if (psHint) psHint.textContent = "Export failed.";
+			toast(`Export failed: ${msg}`, "error");
 		}
 	}
 
@@ -2299,23 +2313,23 @@ self.onmessage = async (e) => {
 			.toLowerCase();
 		const safeMode = m === "replace" ? "replace" : "merge";
 		try {
-			if (psHint) psHint.textContent = "Importiere…";
+			if (psHint) psHint.textContent = "Importing…";
 			const res = await api("/api/notes/import", {
 				method: "POST",
 				body: JSON.stringify({ mode: safeMode, notes }),
 			});
 			toast(
-				`Import fertig: ${res.imported || 0} neu, ${
+				`Import complete: ${res.imported || 0} new, ${
 					res.updated || 0
-				} aktualisiert, ${res.skipped || 0} übersprungen.`,
+				} updated, ${res.skipped || 0} skipped.`,
 				"success"
 			);
-			if (psHint) psHint.textContent = "Import fertig.";
+			if (psHint) psHint.textContent = "Import complete.";
 			await refreshPersonalSpace();
 		} catch (e) {
-			const msg = e && e.message ? String(e.message) : "Fehler";
-			if (psHint) psHint.textContent = "Import fehlgeschlagen.";
-			toast(`Import fehlgeschlagen: ${msg}`, "error");
+			const msg = e && e.message ? String(e.message) : "Error";
+			if (psHint) psHint.textContent = "Import failed.";
+			toast(`Import failed: ${msg}`, "error");
 		}
 	}
 
@@ -2448,7 +2462,7 @@ self.onmessage = async (e) => {
 		try {
 			parsed = JSON.parse(String(text || ""));
 		} catch {
-			toast("Import: ungültige JSON-Datei.", "error");
+			toast("Import: invalid JSON file.", "error");
 			return;
 		}
 		const notes = Array.isArray(parsed)
@@ -2459,7 +2473,7 @@ self.onmessage = async (e) => {
 			? parsed.export.notes
 			: [];
 		if (!Array.isArray(notes)) {
-			toast("Import: keine Notizen gefunden.", "error");
+			toast("Import: no notes found.", "error");
 			return;
 		}
 		await importPersonalSpaceNotes(notes, mode);
@@ -2477,7 +2491,7 @@ self.onmessage = async (e) => {
 		try {
 			text = await file.text();
 		} catch {
-			toast("Import fehlgeschlagen (Datei lesen).", "error");
+			toast("Import failed (file read).", "error");
 			return;
 		}
 		if (isJson) {
@@ -2486,7 +2500,7 @@ self.onmessage = async (e) => {
 		}
 		const notes = chunkTextIntoNotes(text, name || "import.md");
 		if (!notes.length) {
-			toast("Import: Datei ist leer.", "error");
+			toast("Import: file is empty.", "error");
 			return;
 		}
 		await importPersonalSpaceNotes(notes, mode);
@@ -2495,7 +2509,7 @@ self.onmessage = async (e) => {
 	function startNotesImport(mode) {
 		if (!psImportFileInput) return;
 		if (!psState || !psState.authed) {
-			toast("Bitte erst Personal Space aktivieren (Login).", "error");
+			toast("Please enable Personal Space first (sign in).", "error");
 			return;
 		}
 		psNextImportMode = String(mode || "merge")
@@ -2510,10 +2524,10 @@ self.onmessage = async (e) => {
 	}
 
 	async function requestPersonalSpaceLink() {
-		const raw = await modalPrompt("E-Mail-Adresse für deinen Personal Space:", {
+		const raw = await modalPrompt("Email address for your Personal Space:", {
 			title: "Personal Space",
-			okText: "Link senden",
-			cancelText: "Abbrechen",
+			okText: "Send link",
+			cancelText: "Cancel",
 			type: "email",
 			autocomplete: "email",
 			placeholder: "name@example.com",
@@ -2527,31 +2541,31 @@ self.onmessage = async (e) => {
 				body: JSON.stringify({ email }),
 			});
 			if (res.sent) {
-				toast("Link gesendet. Bitte E-Mail prüfen.", "success");
+				toast("Link sent. Check your email.", "success");
 				if (psDevLink) psDevLink.classList.add("hidden");
 				return;
 			}
 			// Dev-/Fallback: Link anzeigen (nur wenn Server ihn explizit zurückgibt)
 			if (psDevLink && res.link) {
-				toast("SMTP/Versand nicht aktiv – Link wird angezeigt (Dev).", "info");
+				toast("SMTP/sending not enabled — showing link (dev).", "info");
 				psDevLink.classList.remove("hidden");
-				psDevLink.innerHTML = `<div class="text-slate-300">Verifizierungs-Link:</div><a class="mt-1 block break-all underline decoration-white/20 underline-offset-4 hover:decoration-white/50" href="${res.link}">${res.link}</a>`;
+				psDevLink.innerHTML = `<div class="text-slate-300">Verification link:</div><a class="mt-1 block break-all underline decoration-white/20 underline-offset-4 hover:decoration-white/50" href="${res.link}">${res.link}</a>`;
 				return;
 			}
 			if (psDevLink) psDevLink.classList.add("hidden");
 			const reason = res && res.reason ? String(res.reason) : "unknown";
 			const hint =
 				reason === "smtp_not_configured"
-					? "SMTP ist nicht konfiguriert."
+					? "SMTP is not configured."
 					: reason === "smtp_incomplete"
-					? "SMTP Secrets sind unvollständig."
+					? "SMTP secrets are incomplete."
 					: reason === "send_failed"
-					? "SMTP Versand fehlgeschlagen."
-					: "SMTP/Setup prüfen.";
-			toast(`E-Mail nicht versendet: ${hint} (${reason})`, "error");
+					? "SMTP send failed."
+					: "Check SMTP/setup.";
+			toast(`Email not sent: ${hint} (${reason})`, "error");
 		} catch (e) {
-			const msg = e && e.message ? String(e.message) : "unbekannter Fehler";
-			toast(`Link konnte nicht erstellt werden: ${msg}`, "error");
+			const msg = e && e.message ? String(e.message) : "Unknown error";
+			toast(`Could not create link: ${msg}`, "error");
 		}
 	}
 
@@ -2780,7 +2794,7 @@ self.onmessage = async (e) => {
 		lastLocalText = textarea.value;
 		suppressSend = false;
 
-		metaLeft.textContent = "Synchronisiert.";
+		metaLeft.textContent = "Synced.";
 		metaRight.textContent = nowIso();
 		updatePreview();
 	}
@@ -2796,7 +2810,7 @@ self.onmessage = async (e) => {
 			}
 		}
 
-		setStatus("connecting", "Verbinde…");
+		setStatus("connecting", "Connecting…");
 		if (debug) {
 			wsHint.classList.remove("hidden");
 			wsHint.textContent = wsDisplay(wsBaseUrl);
@@ -2810,7 +2824,7 @@ self.onmessage = async (e) => {
 		ws.addEventListener("open", () => {
 			if (mySeq !== connectionSeq) return;
 			setStatus("online", "Online");
-			metaLeft.textContent = "Online. Warte auf Updates…";
+			metaLeft.textContent = "Online. Waiting for updates…";
 			sendMessage({ type: "hello", room, clientId, ts: Date.now() });
 			sendMessage({
 				type: "request_state",
@@ -2844,15 +2858,16 @@ self.onmessage = async (e) => {
 
 		ws.addEventListener("close", () => {
 			if (mySeq !== connectionSeq) return;
-			setStatus("offline", "Offline – Reconnect…");
-			metaLeft.textContent = "Verbindung verloren. Prüfe Server/Netzwerk.";
+			setStatus("offline", "Offline — reconnecting…");
+			metaLeft.textContent = "Connection lost. Check server/network.";
 			reconnectTimer = window.setTimeout(connect, 900);
 		});
 
 		ws.addEventListener("error", () => {
 			if (mySeq !== connectionSeq) return;
-			setStatus("offline", "WebSocket nicht erreichbar");
-			metaLeft.textContent = "Keine Verbindung. Läuft der Server (npm start)?";
+			setStatus("offline", "WebSocket unreachable");
+			metaLeft.textContent =
+				"No connection. Is the server running (npm start)?";
 		});
 	}
 
@@ -2896,7 +2911,7 @@ self.onmessage = async (e) => {
 			if (idx >= 0) {
 				favs.splice(idx, 1);
 				saveFavorites(favs);
-				toast("Favorit entfernt.", "info");
+				toast("Removed from favorites.", "info");
 			} else {
 				const next = [
 					{ room: roomName, key: keyName, addedAt: Date.now() },
@@ -2908,7 +2923,7 @@ self.onmessage = async (e) => {
 					)
 					.slice(0, 20);
 				saveFavorites(next);
-				toast("Favorit gespeichert.", "success");
+				toast("Saved to favorites.", "success");
 			}
 			updateFavoritesUI();
 		});
@@ -2918,7 +2933,7 @@ self.onmessage = async (e) => {
 		const href = shareLink.href;
 		try {
 			await navigator.clipboard.writeText(href);
-			toast("Link kopiert.", "success");
+			toast("Link copied.", "success");
 		} catch {
 			// Fallback: in-page selection (funktioniert ohne Clipboard API)
 			try {
@@ -2931,9 +2946,9 @@ self.onmessage = async (e) => {
 				ta.select();
 				document.execCommand("copy");
 				ta.remove();
-				toast("Link kopiert.", "success");
+				toast("Link copied.", "success");
 			} catch {
-				toast("Kopieren nicht möglich.", "error");
+				toast("Copy not available.", "error");
 			}
 		}
 	});
@@ -2942,12 +2957,12 @@ self.onmessage = async (e) => {
 		copyMirrorBtn.addEventListener("click", async () => {
 			const value = String(textarea.value || "");
 			if (!value) {
-				toast("Nichts zu kopieren.", "info");
+				toast("Nothing to copy.", "info");
 				return;
 			}
 			try {
 				await navigator.clipboard.writeText(value);
-				toast("Text kopiert.", "success");
+				toast("Text copied.", "success");
 			} catch {
 				try {
 					const ta = document.createElement("textarea");
@@ -2959,9 +2974,9 @@ self.onmessage = async (e) => {
 					ta.select();
 					document.execCommand("copy");
 					ta.remove();
-					toast("Text kopiert.", "success");
+					toast("Text copied.", "success");
 				} catch {
-					toast("Kopieren nicht möglich.", "error");
+					toast("Copy not available.", "error");
 				}
 			}
 		});
@@ -3003,7 +3018,7 @@ self.onmessage = async (e) => {
 	}
 
 	textarea.addEventListener("input", () => {
-		metaLeft.textContent = "Tippen…";
+		metaLeft.textContent = "Typing…";
 		scheduleSend();
 		updatePreview();
 		updateSlashMenu();
@@ -3031,7 +3046,7 @@ self.onmessage = async (e) => {
 		const applied = applySlashCommand(textarea);
 		if (!applied) return;
 		ev.preventDefault();
-		metaLeft.textContent = "Formatierung";
+		metaLeft.textContent = "Formatting";
 		metaRight.textContent = nowIso();
 		updatePreview();
 		scheduleSend();
@@ -3054,7 +3069,7 @@ self.onmessage = async (e) => {
 		saveRecentRoom(room);
 		renderRecentRooms();
 		updateFavoritesUI();
-		if (!key) toast("Öffentlicher Raum (ohne Key).", "info");
+		if (!key) toast("Public room (no key).", "info");
 		connect();
 	});
 
@@ -3120,11 +3135,11 @@ self.onmessage = async (e) => {
 			(async () => {
 				if (mode === "replace") {
 					const ok = await modalConfirm(
-						"Import ersetzen löscht alle vorhandenen Notizen. Wirklich fortfahren?",
+						"Replace import deletes all existing notes. Continue?",
 						{
-							title: "Import ersetzen",
-							okText: "Ersetzen",
-							cancelText: "Abbrechen",
+							title: "Replace import",
+							okText: "Replace",
+							cancelText: "Cancel",
 							danger: true,
 							backdropClose: true,
 						}
@@ -3147,17 +3162,17 @@ self.onmessage = async (e) => {
 		clearMirrorBtn.addEventListener("click", () => {
 			if (!textarea.value) return;
 			(async () => {
-				const ok = await modalConfirm("Eingabe wirklich löschen?", {
-					title: "Text löschen",
-					okText: "Löschen",
-					cancelText: "Abbrechen",
+				const ok = await modalConfirm("Clear the editor?", {
+					title: "Clear text",
+					okText: "Clear",
+					cancelText: "Cancel",
 					danger: true,
 					backdropClose: true,
 				});
 				if (!ok) return;
 				textarea.value = "";
 				textarea.focus();
-				metaLeft.textContent = "Geleert.";
+				metaLeft.textContent = "Cleared.";
 				metaRight.textContent = nowIso();
 				updatePreview();
 				scheduleSend();
@@ -3171,7 +3186,7 @@ self.onmessage = async (e) => {
 			).trim();
 			if (!text) return;
 			if (!psState || !psState.authed) {
-				toast("Bitte erst Personal Space aktivieren (Login).", "error");
+				toast("Please enable Personal Space first (sign in).", "error");
 				return;
 			}
 			try {
@@ -3180,7 +3195,7 @@ self.onmessage = async (e) => {
 					psEditingNoteTagsOverridden
 				);
 				if (psHint)
-					psHint.textContent = psEditingNoteId ? "Aktualisiere…" : "Speichere…";
+					psHint.textContent = psEditingNoteId ? "Updating…" : "Saving…";
 				if (!psEditingNoteId) {
 					const res = await api("/api/notes", {
 						method: "POST",
@@ -3199,10 +3214,10 @@ self.onmessage = async (e) => {
 						syncPsEditingNoteTagsFromState();
 						if (psMainHint) {
 							psMainHint.classList.remove("hidden");
-							psMainHint.textContent = "Bearbeiten aktiv";
+							psMainHint.textContent = "Editing active";
 						}
 					}
-					if (psHint) psHint.textContent = "Gespeichert.";
+					if (psHint) psHint.textContent = "Saved.";
 				} else {
 					const res = await api(
 						`/api/notes/${encodeURIComponent(psEditingNoteId)}`,
@@ -3228,14 +3243,14 @@ self.onmessage = async (e) => {
 						applyPersonalSpaceFiltersAndRender();
 						syncPsEditingNoteTagsFromState();
 					}
-					if (psHint) psHint.textContent = "Aktualisiert.";
+					if (psHint) psHint.textContent = "Updated.";
 				}
-				toast("Personal Space: gespeichert.", "success");
+				toast("Personal Space: saved.", "success");
 				await refreshPersonalSpace();
 			} catch (e) {
-				if (psHint) psHint.textContent = "Nicht gespeichert (Login?).";
-				const msg = e && e.message ? String(e.message) : "Fehler";
-				toast(`Speichern fehlgeschlagen: ${msg}`, "error");
+				if (psHint) psHint.textContent = "Not saved (sign in?).";
+				const msg = e && e.message ? String(e.message) : "Error";
+				toast(`Save failed: ${msg}`, "error");
 			}
 		});
 	}
@@ -3265,10 +3280,10 @@ self.onmessage = async (e) => {
 				await api("/api/logout", { method: "POST", body: "{}" });
 				psActiveTags = new Set();
 				savePsTagPrefs();
-				toast("Abgemeldet.", "success");
+				toast("Signed out.", "success");
 				await refreshPersonalSpace();
 			} catch {
-				toast("Abmelden fehlgeschlagen.", "error");
+				toast("Sign out failed.", "error");
 			}
 		});
 	}

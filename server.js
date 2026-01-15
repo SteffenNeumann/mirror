@@ -603,8 +603,8 @@ async function sendMagicLinkEmail(email, link) {
 	const info = await transporter.sendMail({
 		from,
 		to: email,
-		subject: "Mirror: dein Login-Link",
-		text: `Hier ist dein Login-Link (gültig für 30 Minuten):\n\n${link}\n\nWenn du das nicht warst, ignoriere diese E-Mail.`,
+		subject: "Mirror: your sign-in link",
+		text: `Here is your sign-in link (valid for 30 minutes):\n\n${link}\n\nIf you did not request this, you can ignore this email.`,
 	});
 
 	return {
@@ -732,7 +732,7 @@ const server = http.createServer((req, res) => {
 		const token = String(url.searchParams.get("token") || "");
 		const rec = getLoginToken(token);
 		if (!rec || Date.now() > Number(rec.exp || 0)) {
-			text(res, 400, "Link ungültig oder abgelaufen.");
+			text(res, 400, "Link is invalid or expired.");
 			return;
 		}
 		deleteLoginToken(token);
@@ -1086,7 +1086,9 @@ const server = http.createServer((req, res) => {
 					.trim()
 					.toLowerCase();
 				const mode =
-					modeRaw === "fix" || modeRaw === "improve" ? modeRaw : "explain";
+					modeRaw === "fix" || modeRaw === "improve" || modeRaw === "summarize"
+						? modeRaw
+						: "explain";
 				const lang = String(body && body.lang ? body.lang : "")
 					.trim()
 					.toLowerCase()
@@ -1101,10 +1103,20 @@ const server = http.createServer((req, res) => {
 				}
 
 				const system =
-					"Du bist ein präziser Coding-Assistent. Antworte kurz und konkret. " +
-					"Keine Geheimnisse/Keys ausgeben. Wenn du Code änderst, gib eine klare Empfehlung oder ein kleines Patch-Snippet.";
+					"You are a precise coding assistant. Keep responses short and concrete. " +
+					"Never reveal secrets/keys. If you suggest changes, include clear steps or a small patch snippet.";
+				const modeInstruction =
+					mode === "fix"
+						? "Fix bugs and issues. Explain the root cause briefly, then propose minimal changes."
+						: mode === "improve"
+						? "Improve quality: readability, performance, safety. Keep changes minimal and practical."
+						: mode === "summarize"
+						? "Summarize what this code does. Include: purpose, inputs/outputs, key logic, risks, and 2-3 improvement ideas."
+						: "Explain what this code does and how it works. Mention important details and edge cases.";
 				const user =
-					`Modus: ${mode}\nSprache: ${lang || "(unbekannt)"}\n\nCode:\n\n` +
+					`Mode: ${mode}\nLanguage: ${
+						lang || "(unknown)"
+					}\n\nInstruction: ${modeInstruction}\n\nCode:\n\n` +
 					"```\n" +
 					code +
 					"\n```";
@@ -1183,7 +1195,7 @@ const server = http.createServer((req, res) => {
 							}
 							const hint =
 								lastStatus === 404 && /\bmodel\b/i.test(String(lastErrMsg))
-									? "Model nicht gefunden. Setze ANTHROPIC_MODEL auf ein verfügbares Modell."
+									? "Model not found. Set ANTHROPIC_MODEL to an available model."
 									: "";
 							json(res, 502, {
 								ok: false,
