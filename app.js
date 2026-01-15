@@ -1539,7 +1539,7 @@
 						(t) =>
 							`<span class="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-slate-200">#${t}</span>`
 					)
-					.join(" ");
+					.join("");
 				const bodyHtml = renderNoteHtml(n);
 				return `
 					<div data-note-id="${id}" class="group relative cursor-pointer rounded-xl border ${
@@ -1547,24 +1547,25 @@
 						? "border-fuchsia-400/40 bg-fuchsia-500/10"
 						: "border-white/10 bg-slate-950/25 hover:bg-slate-950/35"
 				} p-3">
-						<button
-							type="button"
-							data-action="delete"
-							class="ps-note-delete absolute right-2 top-2 hidden rounded-md border border-white/10 bg-slate-950/60 p-1.5 text-slate-200 shadow-soft backdrop-blur transition group-hover:flex hover:bg-slate-950/80"
-										title="Löschen">
-							<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-								<path d="M3 6h18" />
-								<path d="M8 6V4h8v2" />
-								<path d="M19 6l-1 14H6L5 6" />
-								<path d="M10 11v6" />
-								<path d="M14 11v6" />
-							</svg>
-						</button>
 						<div class="flex items-center justify-between gap-2">
 							<div class="text-xs text-slate-400">${fmtDate(n.createdAt)}</div>
-							<div class="text-[11px] text-slate-300">${chips}</div>
+							<button
+								type="button"
+								data-action="delete"
+								class="ps-note-delete inline-flex rounded-md border border-white/10 bg-slate-950/60 p-1.5 text-slate-200 shadow-soft backdrop-blur transition hover:bg-slate-950/80"
+								title="Löschen"
+								aria-label="Löschen">
+								<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+									<path d="M3 6h18" />
+									<path d="M8 6V4h8v2" />
+									<path d="M19 6l-1 14H6L5 6" />
+									<path d="M10 11v6" />
+									<path d="M14 11v6" />
+								</svg>
+							</button>
 						</div>
-						<div class="max-h-40 overflow-hidden">${bodyHtml}</div>
+						<div class="mt-2 max-h-40 overflow-hidden">${bodyHtml}</div>
+						${chips ? `<div class="mt-2 flex flex-wrap gap-1">${chips}</div>` : ""}
 					</div>
 				`;
 			})
