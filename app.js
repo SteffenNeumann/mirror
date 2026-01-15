@@ -1695,6 +1695,73 @@
 		return true;
 	}
 
+	let previewCheckboxDoc = null;
+	function attachPreviewCheckboxWriteback() {
+		if (!mdPreview) return;
+		let doc;
+		try {
+			doc = mdPreview.contentDocument || null;
+		} catch {
+			doc = null;
+		}
+		if (!doc || previewCheckboxDoc === doc) return;
+		previewCheckboxDoc = doc;
+
+		const toElement = (t) => {
+			if (!t) return null;
+			if (t.nodeType === 1) return t;
+			return t.parentElement || null;
+		};
+		const findCheckbox = (t) => {
+			const el = toElement(t);
+			if (!el) return null;
+			if (el.closest && el.closest("a")) return null;
+			if (el.matches && el.matches('input[type="checkbox"]')) return el;
+			const label = el.closest ? el.closest("label") : null;
+			if (label && label.querySelector) {
+				const inLabel = label.querySelector('input[type="checkbox"]');
+				if (inLabel) return inLabel;
+			}
+			const li = el.closest ? el.closest("li.task-list-item") : null;
+			if (li && li.querySelector) {
+				const inLi = li.querySelector('input[type="checkbox"]');
+				if (inLi) return inLi;
+			}
+			return null;
+		};
+		const indexOfCheckbox = (box) => {
+			if (!box) return null;
+			const all = doc.querySelectorAll('ul.task-list input[type="checkbox"]');
+			for (let i = 0; i < all.length; i++) if (all[i] === box) return i;
+			return null;
+		};
+
+		// Capture click early to compute the intended next state deterministically.
+		doc.addEventListener(
+			"click",
+			(ev) => {
+				const box = findCheckbox(ev && ev.target ? ev.target : null);
+				if (!box) return;
+				const idx = indexOfCheckbox(box);
+				if (idx === null) return;
+				const next = !Boolean(box.checked);
+				try {
+					box.checked = next;
+				} catch {
+					// ignore
+				}
+				try {
+					ev.preventDefault();
+					ev.stopPropagation();
+				} catch {
+					// ignore
+				}
+				toggleMarkdownTaskAtIndex(idx, next);
+			},
+			true
+		);
+	}
+
 	function setPreviewDocument(html) {
 		if (!mdPreview) return;
 		// Robust: statt srcdoc eine blob: URL nutzen (Safari/Reload/Room-Switch ist damit stabil).
@@ -3524,6 +3591,11 @@ self.onmessage = async (e) => {
 	if (togglePreview) {
 		togglePreview.addEventListener("click", () => {
 			setPreviewVisible(!previewOpen);
+		});
+	}
+	if (mdPreview) {
+		mdPreview.addEventListener("load", () => {
+			attachPreviewCheckboxWriteback();
 		});
 	}
 	if (runPreviewBtn) {
