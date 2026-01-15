@@ -198,14 +198,13 @@
 			const sha = parts[parts.length - 1];
 			const datePart = String(parts[0] || "");
 			const timePart = String(parts[1] || "");
-			const formattedDate = datePart.replace(/-/g, ".");
-			const hm = timePart.split(":").slice(0, 2).join(".");
-			const formattedTs =
-				formattedDate && hm ? `${formattedDate} / ${hm}` : "";
+			// Anzeige ohne Zeitzone: lokale Zeit aus gitstamp.txt (YYYY-MM-DD HH:MM:SS)
+			const hm = timePart.split(":").slice(0, 2).join(":");
+			const formattedTs = datePart && hm ? `${datePart} ${hm}` : "";
 			const shortSha = sha ? sha.slice(0, 7) : "";
 			// Subtil: kurze Anzeige, volle Infos im Tooltip.
 			buildStamp.textContent =
-				shortSha && formattedTs ? `${shortSha} · ${formattedTs}` : shortSha;
+				shortSha && formattedTs ? `${shortSha} - ${formattedTs}` : shortSha;
 			buildStamp.title = line.trim();
 		} catch {
 			// ignore
