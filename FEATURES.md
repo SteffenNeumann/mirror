@@ -1,28 +1,28 @@
-# Mirror – Featureliste (Ideen / Roadmap)
+# Mirror – Feature List (Ideas / Roadmap)
 
-Diese Liste ist bewusst breit. Sie dient als Ideenspeicher für zukünftige Iterationen.
+This list is intentionally broad. It’s an idea backlog for future iterations.
 
 ## UX & Basics
 
-- Räume Speichernund wieder drau zugreifen können
-- Raumwechsel ohne Reload (stabil, kein Flackern)
-- „Room“-Namen-Generator konfigurierbar (nerdig/lustig/kurz) + „Neu“ erstellt immer eindeutigen Namen
-- „Link kopieren“ Button (mit visuellem Feedback)
-- „Join on Enter“ + Validierungsfeedback (ungültige Zeichen, Länge)
-- Lade-/Sync-Status genauer: `Verbinde…`, `Online`, `Offline`, `Letztes Update: …`
-- Toasts für wichtige Aktionen/Fehler
-- Mobile UX: bessere Höhe/Keyboard-Handling, größere Touch-Targets
-- Accessibility: Fokus-Stile, ARIA-Labels, Kontrast, Screenreader-Texte
-- i18n (DE/EN) als Option
+- Save rooms and access them again
+- Switch rooms without reload (stable, no flicker)
+- Configurable “room name” generator (nerdy/funny/short) + “New” always creates a unique name
+- “Copy link” button (with visual feedback)
+- “Join on Enter” + validation feedback (invalid characters, length)
+- More precise load/sync status: `Connecting…`, `Online`, `Offline`, `Last update: …`
+- Toasts for important actions/errors
+- Mobile UX: better height/keyboard handling, larger touch targets
+- Accessibility: focus styles, ARIA labels, contrast, screen reader text
+- i18n (DE/EN) as an option
 
-## Markdown (Anzeige & Export)
+## Markdown (Display & Export)
 
-- Markdown-Preview (Split View: Editor links, Preview rechts)
-- Markdown-Rendering mit Sicherheits-Sandbox (kein unsicheres HTML)
-- Syntax-Highlighting für Codeblöcke
-- GitHub-flavoured Markdown: Tabellen, Tasklists, Strikethrough
-- Autolinks (URLs automatisch klickbar)
-- Mermaid/Diagramme optional (aus Sicherheitsgründen standardmäßig aus)
+- Markdown preview (split view: editor left, preview right)
+- Markdown rendering with a security sandbox (no unsafe HTML)
+- Syntax highlighting for code blocks
+- GitHub-flavoured Markdown: tables, task lists, strikethrough
+- Autolinks (URLs automatically clickable)
+- Mermaid/diagrams optional (off by default for security)
 - Export:
   - `Download .md`
   - `Download .txt`
@@ -31,77 +31,77 @@ Diese Liste ist bewusst breit. Sie dient als Ideenspeicher für zukünftige Iter
 
 ## Code Runner (Snippets)
 
-- Snippets ausführen (Preview / Personal Space): Python (Pyodide) & JavaScript
-- Python-Init Timeout Workaround (falls CDN blockiert/Netz langsam): Seite mit `?pyodide=https://pyodide-cdn2.iodide.io/v0.25.1/full/` öffnen
-- Optional: AI-Hilfe (erklären/fixen/verbessern) für Codeblöcke (Server-API, benötigt API-Key als ENV)
+- Run snippets (Preview / Personal Space): Python (Pyodide) & JavaScript
+- Python init timeout workaround (if CDN blocked / network slow): open page with `?pyodide=https://pyodide-cdn2.iodide.io/v0.25.1/full/`
+- Optional: AI assist (explain/fix/improve/summarize) for code blocks (server API, requires API key via ENV)
 
-## Kollaboration (Realtime)
+## Collaboration (Realtime)
 
-- Präsenz: „X Nutzer online in diesem Raum“
-- Anzeige „User tippt…“ (Typing Indicator)
-- Cursor-/Selection-Sharing (optional)
-- Konfliktfreie Zusammenarbeit (CRDT/OT) statt „Last write wins“
-- Per-Client Identität (Name/Farbe) + zufällige Avatare
-- Rate-Limits & Debounce/Throttle pro Client
-- „Read-only“ Mode (Raum kann schreibgeschützt sein)
+- Presence: “X users online in this room”
+- “User is typing…” indicator
+- Cursor/selection sharing (optional)
+- Conflict-free collaboration (CRDT/OT) instead of “last write wins”
+- Per-client identity (name/color) + random avatars
+- Rate limits & debounce/throttle per client
+- “Read-only” mode (room can be write-protected)
 
-## Persistenz & Historie
+## Persistence & History
 
-- Persistenz über Neustarts:
-  - Lokal: Datei/SQLite
+- Persistence across restarts:
+  - Local: file/SQLite
   - Production: Redis/Postgres
-- Versionierung/History pro Raum (Snapshots)
-- Undo/Redo serverseitig (oder CRDT-basiert)
-- Zeitreise/Restore auf Snapshot
-- Optional: Auto-Prune (z.B. Räume nach 7/30 Tagen ohne Aktivität löschen)
+- Versioning/history per room (snapshots)
+- Server-side undo/redo (or CRDT-based)
+- Time travel/restore to snapshot
+- Optional: auto-prune (e.g., delete rooms after 7/30 days of inactivity)
 
-## Sicherheit & Datenschutz
+## Security & Privacy
 
-- Private Rooms: Secret Token im Link (z.B. `#room=...&key=...`)
-- Passphrase-geschützte Räume
-- Ende-zu-Ende-Verschlüsselung (E2EE) im Browser (Server sieht nur Ciphertext)
-- CORS/Origin-Check für WS (nur eigene Domain zulassen)
-- Input-Härtung:
-  - Room-Name Whitelist (ist bereits eingeschränkt)
-  - Message-Schema validieren
-  - Payload-Limits (max Textgröße)
-- Abuse-Schutz:
-  - Connection limits pro IP
+- Private rooms: secret token in the link (e.g. `#room=...&key=...`)
+- Passphrase-protected rooms
+- End-to-end encryption (E2EE) in the browser (server only sees ciphertext)
+- CORS/origin check for WS (only allow own domain)
+- Input hardening:
+  - Room name whitelist (already constrained)
+  - Validate message schema
+  - Payload limits (max text size)
+- Abuse protection:
+  - Connection limits per IP
   - Flood protection
-- Audit-Logs (optional, DSGVO-konform)
+- Audit logs (optional, GDPR-friendly)
 
 ## Admin & Operations
 
-- Healthcheck Endpoint (`/healthz`)
-- Metrics (z.B. Prometheus): aktive Rooms, aktive WS-Verbindungen
-- Logging strukturiert (JSON), Log-Level
-- Konfiguration via ENV:
-  - Port/Host
-  - Max Rooms/Connections
+- Healthcheck endpoint (`/healthz`)
+- Metrics (e.g. Prometheus): active rooms, active WS connections
+- Structured logging (JSON), log levels
+- Configuration via ENV:
+  - Port/host
+  - Max rooms/connections
   - Storage backend
-- Graceful shutdown: WS sauber schließen, State flushen
+- Graceful shutdown: close WS cleanly, flush state
 
-## Produkt-Features
+## Product Features
 
-- Raum-Übersicht (nur lokal/admin): Liste aktiver Räume
-- Favoriten/Recents (Client) – existiert teilweise, ausbauen
-- Templates (vordefinierte Inhalte: Meeting Notes, Standup, Retro)
-- Tags/Labels pro Raum
-- Sharing: QR-Code für Raum-Link
-- „Broadcast“ Modus (nur ein Sender darf schreiben)
+- Room overview (local/admin only): list active rooms
+- Favorites/recents (client) – partially exists, expand
+- Templates (predefined content: meeting notes, standup, retro)
+- Tags/labels per room
+- Sharing: QR code for room link
+- “Broadcast” mode (only one sender can write)
 
-## Entwickler-Qualität
+## Developer Quality
 
-- E2E-Test: zwei Clients, Sync, Room switch
-- Lint/Format (Prettier/ESLint) + CI
-- TypeScript (optional) oder zumindest JSDoc + Schema Validation
-- Saubere Trennung: Client-Script aus HTML in eigene Datei (optional)
+- E2E test: two clients, sync, room switch
+- Lint/format (Prettier/ESLint) + CI
+- TypeScript (optional) or at least JSDoc + schema validation
+- Clean separation: move client script out of HTML into its own file (optional)
 
 ---
 
-### Priorisierungsvorschlag (kurz)
+### Priority Proposal (short)
 
-- P0: Payload-Limits + Origin-Check + bessere Statusanzeigen
-- P1: Markdown-Preview + Export
-- P2: Persistenz (SQLite/Redis) + History
-- P3: CRDT/OT + Cursor/Presence
+- P0: payload limits + origin check + better status indicators
+- P1: markdown preview + export
+- P2: persistence (SQLite/Redis) + history
+- P3: CRDT/OT + cursor/presence
