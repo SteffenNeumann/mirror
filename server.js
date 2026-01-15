@@ -20,7 +20,7 @@ const MAX_BODY_BYTES = 1024 * 1024; // 1MB
 
 const ANTHROPIC_API_KEY = String(process.env.ANTHROPIC_API_KEY || "").trim();
 const ANTHROPIC_MODEL = String(
-	process.env.ANTHROPIC_MODEL || "claude-3-5-sonnet-latest"
+	process.env.ANTHROPIC_MODEL || "claude-3-5-sonnet-20241022"
 ).trim();
 const AI_MAX_INPUT_CHARS = 20000;
 const AI_MAX_OUTPUT_TOKENS = Number(process.env.AI_MAX_OUTPUT_TOKENS || 900);
@@ -1112,50 +1112,90 @@ const server = http.createServer((req, res) => {
 				const controller = new AbortController();
 				const t = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
 				try {
-					const r = await fetch("https://api.anthropic.com/v1/messages", {
-						method: "POST",
-						headers: {
-							"content-type": "application/json",
-							"x-api-key": ANTHROPIC_API_KEY,
-							"anthropic-version": "2023-06-01",
-						},
-						body: JSON.stringify({
-							model: ANTHROPIC_MODEL,
-							max_tokens: Number.isFinite(AI_MAX_OUTPUT_TOKENS)
-								? AI_MAX_OUTPUT_TOKENS
-								: 900,
-							system,
-							messages: [{ role: "user", content: user }],
-						}),
-						signal: controller.signal,
-					});
-					const textBody = await r.text();
-					const data = safeJsonParse(textBody);
-					if (!r.ok) {
-						const errMsg =
+					const maxTokens = Number.isFinite(AI_MAX_OUTPUT_TOKENS)
+						? AI_MAX_OUTPUT_TOKENS
+						: 900;
+
+					async function callAnthropic(model) {
+						const r = await fetch("https://api.anthropic.com/v1/messages", {
+							method: "POST",
+							headers: {
+								"content-type": "application/json",
+								"x-api-key": ANTHROPIC_API_KEY,
+								"anthropic-version": "2023-06-01",
+							},
+							body: JSON.stringify({
+								model,
+								max_tokens: maxTokens,
+								system,
+								messages: [{ role: "user", content: user }],
+							}),
+							signal: controller.signal,
+						});
+						const textBody = await r.text();
+						const data = safeJsonParse(textBody);
+						return { r, data };
+					}
+
+					const candidates = uniq([
+						ANTHROPIC_MODEL,
+						"claude-3-5-sonnet-20241022",
+						"claude-3-5-sonnet-20240620",
+						"claude-3-5-haiku-20241022",
+					]);
+
+					let lastStatus = 0;
+					let lastErrMsg = "";
+					let chosenModel = "";
+					let data = null;
+
+					for (const model of candidates) {
+						chosenModel = String(model || "").trim();
+						if (!chosenModel) continue;
+						const out = await callAnthropic(chosenModel);
+						lastStatus = out.r.status;
+						data = out.data;
+						if (out.r.ok) break;
+						lastErrMsg =
 							(data && data.error && data.error.message) ||
 							(data && data.message) ||
-							`AI HTTP ${r.status}`;
-						try {
-							console.warn("[ai] upstream_error", {
+							`AI HTTP ${out.r.status}`;
+						const isModel404 =
+							out.r.status === 404 && /\bmodel\b/i.test(String(lastErrMsg));
+						if (!isModel404) break;
+					}
+
+					if (!data || !Array.isArray(data.content)) {
+						if (lastStatus && lastStatus >= 400) {
+							try {
+								console.warn("[ai] upstream_error", {
+									reqId,
+									status: lastStatus,
+									errMsg: lastErrMsg || `AI HTTP ${lastStatus}`,
+									mode,
+									lang,
+									model: chosenModel,
+									ip,
+									email,
+								});
+							} catch {
+								// ignore logging errors
+							}
+							const hint =
+								lastStatus === 404 && /\bmodel\b/i.test(String(lastErrMsg))
+									? "Model nicht gefunden. Setze ANTHROPIC_MODEL auf ein verfügbares Modell."
+									: "";
+							json(res, 502, {
+								ok: false,
+								error: "ai_failed",
+								message: hint
+									? `${lastErrMsg} (${hint})`
+									: lastErrMsg || `AI HTTP ${lastStatus}`,
 								reqId,
-								status: r.status,
-								errMsg,
-								mode,
-								lang,
-								ip,
-								email,
+								model: chosenModel || ANTHROPIC_MODEL,
 							});
-						} catch {
-							// ignore logging errors
+							return;
 						}
-						json(res, 502, {
-							ok: false,
-							error: "ai_failed",
-							message: errMsg,
-							reqId,
-						});
-						return;
 					}
 					const parts = data && Array.isArray(data.content) ? data.content : [];
 					const out = parts
@@ -1165,7 +1205,7 @@ const server = http.createServer((req, res) => {
 					json(res, 200, {
 						ok: true,
 						text: out,
-						model: data && data.model ? String(data.model) : ANTHROPIC_MODEL,
+						model: data && data.model ? String(data.model) : chosenModel,
 					});
 				} catch (e) {
 					const msg =
