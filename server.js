@@ -1155,7 +1155,7 @@ const server = http.createServer((req, res) => {
 						: "Improve the text: clarity, structure, tone, inclusive language. Provide an improved version."
 					: mode === "run"
 					? kind === "code"
-						? "Simulate executing the code. Do NOT claim you actually ran it. Provide: (1) expected output (plain text), (2) if it errors, the likely error message/trace summary, (3) any assumptions you made. Be concise."
+						? "Simulate executing the code. Do NOT claim you actually ran it. Do NOT explain the code unless there is an error.\n\nReturn format:\n- Output: (what would be printed / returned; plain text)\n- If an error is likely: Error: (short) + Fix: provide a corrected code block (same language)\n\nKeep it practical and concise."
 						: "The user asked to run something, but the input is text. Explain that only code can be run, and ask for a code snippet or clarify what to execute."
 					: mode === "summarize"
 					? kind === "code"
