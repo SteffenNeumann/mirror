@@ -1889,79 +1889,79 @@
 	const FAQ_ITEMS = [
 		{
 			q: "What is Mirror?",
-			a: "A real-time collaborative editor with Personal Space notes, previews, and AI assistance.",
+			a: "Mirror is a real-time collaborative editor with Personal Space notes, previews, and AI assistance. Use it to share rooms, take notes, and manage your personal knowledge in one place.",
 		},
 		{
 			q: "How do I activate Personal Space?",
-			a: "Click \"Add Personal Space\" on the left, then confirm the email link.",
+			a: "Click \"Add Personal Space\" in the left panel. You will receive a verification link by email; open it to sign in. Once signed in, your notes, tags, and favorites will sync to your account.",
 		},
 		{
 			q: "Signing in and out",
-			a: "Sign in via Personal Space, then use Settings → User Settings → Sign out.",
+			a: "Sign in via Personal Space. To sign out, open Settings → User Settings and click Sign out. This clears the session but keeps your notes safe in your account.",
 		},
 		{
 			q: "Autosave",
-			a: "Personal Space notes autosave while you edit. The status appears below the editor.",
+			a: "Personal Space notes autosave while you edit. The status appears below the editor (e.g., Saving… / Saved). Autosave only runs when you are signed in and editing a Personal Space note.",
 		},
 		{
 			q: "Manual save",
-			a: "Use the Save button in the editor toolbar to save immediately.",
+			a: "Use the Save button in the editor toolbar to save immediately. This is helpful before closing the tab or switching rooms.",
 		},
 		{
 			q: "Export notes",
-			a: "Open Settings → Export/Import and click Export to download a JSON backup.",
+			a: "Open Settings → Export/Import and click Export to download a JSON backup. The file contains your notes, tags, and metadata for restoring later.",
 		},
 		{
 			q: "Import notes",
-			a: "Settings → Export/Import lets you choose Merge or Replace, then select a JSON/Markdown file.",
+			a: "Settings → Export/Import lets you choose Merge or Replace, then select a JSON/Markdown file. Merge adds or updates notes; Replace wipes existing notes before importing.",
 		},
 		{
 			q: "Themes",
-			a: "Settings → Themes changes the background glow. Saved locally in your browser.",
+			a: "Settings → Themes changes the background glow. Your choice is stored locally in your browser, so it does not affect other devices.",
 		},
 		{
 			q: "AI usage",
-			a: "Use the AI panel to explain, improve, fix, run, or summarize. Requires an API key (local or server).",
+			a: "Use the AI panel to explain, improve, fix, run, or summarize. The prompt box lets you provide extra instructions. AI requests require an API key (local or server).",
 		},
 		{
 			q: "AI keys and models",
-			a: "Set your key in Settings → AI. Optional model overrides the server default.",
+			a: "Set your key in Settings → AI. An optional model name overrides the server default for your requests only.",
 		},
 		{
 			q: "Slash commands",
-			a: "Type / in the editor to open commands (e.g., /table, /code, /link).",
+			a: "Type / in the editor to open commands (e.g., /table, /code, /link). Use /table 3x4 for quick grids or /table row+ to add rows.",
 		},
 		{
 			q: "Tables",
-			a: "Use /table 2x2 to insert a table. The table menu lets you add/remove rows/columns and insert sums.",
+			a: "Use /table 2x2 to insert a table. The table menu lets you add/remove rows/columns and insert calculations like sum/avg/max/min for the selected column or row.",
 		},
 		{
 			q: "Room switching",
-			a: "Change the room name or use the dropdown to switch. The URL hash updates for sharing.",
+			a: "Change the room name or use the dropdown to switch. The URL hash updates for sharing and keeps optional keys intact.",
 		},
 		{
 			q: "Favorites",
-			a: "Star a room to add it to Favorites. Quickly return via the Favorites dropdown.",
+			a: "Star a room to add it to Favorites. Use the Favorites dropdown to jump back to a saved room quickly.",
 		},
 		{
 			q: "Preview",
-			a: "Toggle the preview panel to render Markdown and code highlights.",
+			a: "Toggle the preview panel to render Markdown and code highlights. Task lists, tables, and code blocks render in the preview.",
 		},
 		{
 			q: "Run output",
-			a: "The Run output area shows AI results or simulated execution output.",
+			a: "The Run output area shows AI results or simulated execution output. You can clear output or apply AI output back into the editor.",
 		},
 		{
 			q: "Tags",
-			a: "Use tags to filter Personal Space notes. Switch AND/OR filtering in the Tags panel.",
+			a: "Use tags to filter Personal Space notes. Switch AND/OR filtering in the Tags panel and combine multiple tags for precise filtering.",
 		},
 		{
 			q: "Pinned notes",
-			a: "Pin notes to keep them on top. Use the pin toggle to filter pinned-only.",
+			a: "Pin notes to keep them on top. Use the pin toggle to filter pinned-only and focus on important notes.",
 		},
 		{
 			q: "Sharing a room",
-			a: "Use Copy link to share the room + optional key with collaborators.",
+			a: "Use Copy link to share the room + optional key with collaborators. If a room key is set, only people with the key can access the room.",
 		},
 	];
 
@@ -1977,13 +1977,17 @@
 			return !query || text.includes(query);
 		});
 		faqList.innerHTML = items
-			.map(
-				(item) =>
-					`<div class="rounded-xl border border-white/10 bg-white/5 p-3">
-						<div class="text-sm font-medium text-slate-100">${item.q}</div>
-						<p class="mt-1 text-xs text-slate-300">${item.a}</p>
-					</div>`
-			)
+			.map((item, idx) => {
+				const safeIdx = Number.isFinite(idx) ? idx : 0;
+				return `
+					<details class="group rounded-xl border border-white/10 bg-white/5 p-3">
+						<summary class="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium text-slate-100">
+							<span>${item.q}</span>
+							<span class="text-xs text-slate-400 transition group-open:rotate-180">▾</span>
+						</summary>
+						<p class="mt-2 text-xs text-slate-300">${item.a}</p>
+					</details>`;
+			})
 			.join("");
 		if (!items.length) {
 			faqList.innerHTML =
