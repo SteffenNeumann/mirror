@@ -230,16 +230,19 @@
 
 	function base64UrlEncode(input) {
 		const bytes =
-			input instanceof Uint8Array
-				? input
-				: new Uint8Array(input || []);
+			input instanceof Uint8Array ? input : new Uint8Array(input || []);
 		let bin = "";
 		for (const b of bytes) bin += String.fromCharCode(b);
-		return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+		return btoa(bin)
+			.replace(/\+/g, "-")
+			.replace(/\//g, "_")
+			.replace(/=+$/g, "");
 	}
 
 	function base64UrlDecode(input) {
-		const raw = String(input || "").replace(/-/g, "+").replace(/_/g, "/");
+		const raw = String(input || "")
+			.replace(/-/g, "+")
+			.replace(/_/g, "/");
 		const padLen = (4 - (raw.length % 4)) % 4;
 		const padded = raw + "=".repeat(padLen);
 		const bin = atob(padded);
