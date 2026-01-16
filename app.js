@@ -2218,7 +2218,7 @@
 		const usePreview = getAiUsePreview();
 		if (!usePreview && aiModeSelect) {
 			try {
-				aiModeSelect.value = "explain";
+				aiModeSelect.value = "";
 			} catch {
 				// ignore
 			}
