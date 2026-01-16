@@ -3389,7 +3389,9 @@
 	}
 
 	function normalizeNoteTextForCompare(text) {
-		return String(text || "").replace(/\r\n?/g, "\n").trim();
+		return String(text || "")
+			.replace(/\r\n?/g, "\n")
+			.trim();
 	}
 
 	function findNoteByText(text) {

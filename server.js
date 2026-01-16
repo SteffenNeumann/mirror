@@ -142,34 +142,34 @@ function initDb() {
 		CREATE INDEX IF NOT EXISTS idx_login_tokens_exp ON login_tokens(exp);
 	`);
 
-		const noteCols = db.prepare("PRAGMA table_info(notes)").all();
-		const hasHash = noteCols.some((c) => String(c && c.name) === "content_hash");
-		if (!hasHash) {
-			try {
-				db.exec("ALTER TABLE notes ADD COLUMN content_hash TEXT");
-			} catch {
-				// ignore
-			}
+	const noteCols = db.prepare("PRAGMA table_info(notes)").all();
+	const hasHash = noteCols.some((c) => String(c && c.name) === "content_hash");
+	if (!hasHash) {
+		try {
+			db.exec("ALTER TABLE notes ADD COLUMN content_hash TEXT");
+		} catch {
+			// ignore
 		}
-		db.exec(
-			"CREATE UNIQUE INDEX IF NOT EXISTS idx_notes_user_hash ON notes(user_id, content_hash) WHERE content_hash IS NOT NULL AND content_hash <> ''"
-		);
+	}
+	db.exec(
+		"CREATE UNIQUE INDEX IF NOT EXISTS idx_notes_user_hash ON notes(user_id, content_hash) WHERE content_hash IS NOT NULL AND content_hash <> ''"
+	);
 
 	stmtUserGet = db.prepare("SELECT id, email FROM users WHERE email = ?");
 	stmtUserInsert = db.prepare(
 		"INSERT INTO users(email, created_at) VALUES(?, ?) ON CONFLICT(email) DO NOTHING"
 	);
-		stmtNoteInsert = db.prepare(
-			"INSERT INTO notes(id, user_id, text, kind, content_hash, tags_json, created_at) VALUES(?, ?, ?, ?, ?, ?, ?)"
-		);
+	stmtNoteInsert = db.prepare(
+		"INSERT INTO notes(id, user_id, text, kind, content_hash, tags_json, created_at) VALUES(?, ?, ?, ?, ?, ?, ?)"
+	);
 	stmtNoteGetByIdUser = db.prepare(
 		"SELECT id, text, kind, tags_json, created_at FROM notes WHERE id = ? AND user_id = ?"
 	);
-		stmtNoteGetByHashUser = db.prepare(
-			"SELECT id, text, kind, tags_json, created_at FROM notes WHERE user_id = ? AND content_hash = ? LIMIT 1"
-		);
+	stmtNoteGetByHashUser = db.prepare(
+		"SELECT id, text, kind, tags_json, created_at FROM notes WHERE user_id = ? AND content_hash = ? LIMIT 1"
+	);
 	stmtNoteUpdate = db.prepare(
-			"UPDATE notes SET text = ?, kind = ?, content_hash = ?, tags_json = ? WHERE id = ? AND user_id = ?"
+		"UPDATE notes SET text = ?, kind = ?, content_hash = ?, tags_json = ? WHERE id = ? AND user_id = ?"
 	);
 	stmtNoteDelete = db.prepare("DELETE FROM notes WHERE id = ? AND user_id = ?");
 	stmtNotesDeleteAll = db.prepare("DELETE FROM notes WHERE user_id = ?");
@@ -548,7 +548,9 @@ function isValidNoteId(id) {
 }
 
 function normalizeNoteTextForHash(text) {
-	return String(text || "").replace(/\r\n?/g, "\n").trim();
+	return String(text || "")
+		.replace(/\r\n?/g, "\n")
+		.trim();
 }
 
 function computeNoteContentHash(text) {
@@ -1164,7 +1166,7 @@ const server = http.createServer((req, res) => {
 				let skipped = 0;
 				const seenHashes = new Set();
 
-					const tx = db.transaction(() => {
+				const tx = db.transaction(() => {
 					if (mode === "replace") {
 						stmtNotesDeleteAll.run(userId);
 					}
@@ -1174,15 +1176,15 @@ const server = http.createServer((req, res) => {
 							skipped += 1;
 							continue;
 						}
-							const contentHash = computeNoteContentHash(textVal);
-							if (!contentHash) {
-								skipped += 1;
-								continue;
-							}
-							if (mode !== "replace" && seenHashes.has(contentHash)) {
-								skipped += 1;
-								continue;
-							}
+						const contentHash = computeNoteContentHash(textVal);
+						if (!contentHash) {
+							skipped += 1;
+							continue;
+						}
+						if (mode !== "replace" && seenHashes.has(contentHash)) {
+							skipped += 1;
+							continue;
+						}
 						let noteId = String(n && n.id ? n.id : "");
 						if (!isValidNoteId(noteId)) {
 							noteId = crypto.randomBytes(12).toString("base64url");
@@ -1196,57 +1198,57 @@ const server = http.createServer((req, res) => {
 						const tagsRaw = n && n.tags ? n.tags : [];
 						const tags = normalizeImportTags(tagsRaw);
 
-							const existing = stmtNoteGetByIdUser.get(noteId, userId);
-							if (existing) {
-								const dupeByHash =
-									mode !== "replace"
-										? stmtNoteGetByHashUser.get(userId, contentHash)
-										: null;
-								if (
-									dupeByHash &&
-									String(dupeByHash.id || "") !== String(noteId || "")
-								) {
-									skipped += 1;
-									continue;
-								}
+						const existing = stmtNoteGetByIdUser.get(noteId, userId);
+						if (existing) {
+							const dupeByHash =
+								mode !== "replace"
+									? stmtNoteGetByHashUser.get(userId, contentHash)
+									: null;
+							if (
+								dupeByHash &&
+								String(dupeByHash.id || "") !== String(noteId || "")
+							) {
+								skipped += 1;
+								continue;
+							}
 							const derived = classifyText(textVal);
 							const kind = kindRaw ? kindRaw : derived.kind;
 							const tagsFinal = tags.length ? tags : derived.tags;
 							stmtNoteUpdate.run(
-									textVal,
-									kind,
-									contentHash,
-									JSON.stringify(tagsFinal),
-									noteId,
-									userId
+								textVal,
+								kind,
+								contentHash,
+								JSON.stringify(tagsFinal),
+								noteId,
+								userId
 							);
 							updated += 1;
-								seenHashes.add(contentHash);
+							seenHashes.add(contentHash);
 							continue;
 						}
 
-							if (mode !== "replace") {
-								const dupeByHash = stmtNoteGetByHashUser.get(userId, contentHash);
-								if (dupeByHash) {
-									skipped += 1;
-									continue;
-								}
+						if (mode !== "replace") {
+							const dupeByHash = stmtNoteGetByHashUser.get(userId, contentHash);
+							if (dupeByHash) {
+								skipped += 1;
+								continue;
 							}
+						}
 
 						const derived = classifyText(textVal);
 						const kind = kindRaw ? kindRaw : derived.kind;
 						const tagsFinal = tags.length ? tags : derived.tags;
 						stmtNoteInsert.run(
-								noteId,
-								userId,
-								textVal,
-								kind,
-								contentHash,
-								JSON.stringify(tagsFinal),
-								createdAt
+							noteId,
+							userId,
+							textVal,
+							kind,
+							contentHash,
+							JSON.stringify(tagsFinal),
+							createdAt
 						);
 						imported += 1;
-							seenHashes.add(contentHash);
+						seenHashes.add(contentHash);
 					}
 				});
 
