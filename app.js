@@ -1871,7 +1871,7 @@
 		if (!aiApiStatus) return;
 		const localKey = String(aiApiKey || "").trim();
 		if (localKey) {
-			aiApiStatus.textContent = "Lokaler API-Key gesetzt (wird verwendet).";
+			aiApiStatus.textContent = "Local API key set (will be used).";
 			return;
 		}
 		try {
@@ -1879,33 +1879,89 @@
 			const configured = Boolean(res && res.configured);
 			const model = res && res.model ? String(res.model) : "";
 			aiApiStatus.textContent = configured
-				? `Server-Key aktiv${model ? ` (${model})` : ""}.`
-				: "Server-Key nicht konfiguriert.";
+				? `Server key active${model ? ` (${model})` : ""}.`
+				: "Server key not configured.";
 		} catch {
-			aiApiStatus.textContent = "AI-Status nicht verfügbar.";
+			aiApiStatus.textContent = "AI status not available.";
 		}
 	}
 
 	const FAQ_ITEMS = [
 		{
-			q: "Wie aktiviere ich Personal Space?",
-			a: "Klicke in der linken Spalte auf \"Add Personal Space\" und bestätige den Link aus der E-Mail.",
+			q: "What is Mirror?",
+			a: "A real-time collaborative editor with Personal Space notes, previews, and AI assistance.",
 		},
 		{
-			q: "Wie exportiere ich meine Notizen?",
-			a: "Öffne die Settings und nutze Export/Import → Export. Die JSON-Datei wird heruntergeladen.",
+			q: "How do I activate Personal Space?",
+			a: "Click \"Add Personal Space\" on the left, then confirm the email link.",
 		},
 		{
-			q: "Was macht der AI-Modus?",
-			a: "AI hilft beim Erklären, Verbessern, Fixen oder Ausführen von Code/Text. Du brauchst einen API-Key oder einen serverseitigen Key.",
+			q: "Signing in and out",
+			a: "Sign in via Personal Space, then use Settings → User Settings → Sign out.",
 		},
 		{
-			q: "Wie ändere ich das Theme?",
-			a: "Unter Themes kannst du den Hintergrundstil auswählen. Die Auswahl wird lokal gespeichert.",
+			q: "Autosave",
+			a: "Personal Space notes autosave while you edit. The status appears below the editor.",
 		},
 		{
-			q: "Wie importiere ich Notizen?",
-			a: "In Export/Import kannst du Merge oder Replace wählen und eine JSON/Markdown-Datei auswählen.",
+			q: "Manual save",
+			a: "Use the Save button in the editor toolbar to save immediately.",
+		},
+		{
+			q: "Export notes",
+			a: "Open Settings → Export/Import and click Export to download a JSON backup.",
+		},
+		{
+			q: "Import notes",
+			a: "Settings → Export/Import lets you choose Merge or Replace, then select a JSON/Markdown file.",
+		},
+		{
+			q: "Themes",
+			a: "Settings → Themes changes the background glow. Saved locally in your browser.",
+		},
+		{
+			q: "AI usage",
+			a: "Use the AI panel to explain, improve, fix, run, or summarize. Requires an API key (local or server).",
+		},
+		{
+			q: "AI keys and models",
+			a: "Set your key in Settings → AI. Optional model overrides the server default.",
+		},
+		{
+			q: "Slash commands",
+			a: "Type / in the editor to open commands (e.g., /table, /code, /link).",
+		},
+		{
+			q: "Tables",
+			a: "Use /table 2x2 to insert a table. The table menu lets you add/remove rows/columns and insert sums.",
+		},
+		{
+			q: "Room switching",
+			a: "Change the room name or use the dropdown to switch. The URL hash updates for sharing.",
+		},
+		{
+			q: "Favorites",
+			a: "Star a room to add it to Favorites. Quickly return via the Favorites dropdown.",
+		},
+		{
+			q: "Preview",
+			a: "Toggle the preview panel to render Markdown and code highlights.",
+		},
+		{
+			q: "Run output",
+			a: "The Run output area shows AI results or simulated execution output.",
+		},
+		{
+			q: "Tags",
+			a: "Use tags to filter Personal Space notes. Switch AND/OR filtering in the Tags panel.",
+		},
+		{
+			q: "Pinned notes",
+			a: "Pin notes to keep them on top. Use the pin toggle to filter pinned-only.",
+		},
+		{
+			q: "Sharing a room",
+			a: "Use Copy link to share the room + optional key with collaborators.",
 		},
 	];
 
@@ -1931,7 +1987,7 @@
 			.join("");
 		if (!items.length) {
 			faqList.innerHTML =
-				"<div class=\"rounded-xl border border-white/10 bg-slate-950/40 p-3 text-xs text-slate-400\">Keine Treffer.</div>";
+				"<div class=\"rounded-xl border border-white/10 bg-slate-950/40 p-3 text-xs text-slate-400\">No results.</div>";
 		}
 	}
 
