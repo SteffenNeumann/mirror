@@ -151,6 +151,34 @@ function initDb() {
 			// ignore
 		}
 	}
+
+	const roomStateCols = db.prepare("PRAGMA table_info(room_state)").all();
+	const hasCiphertext = roomStateCols.some(
+		(c) => String(c && c.name) === "ciphertext"
+	);
+	const hasIv = roomStateCols.some((c) => String(c && c.name) === "iv");
+	const hasV = roomStateCols.some((c) => String(c && c.name) === "v");
+	if (!hasCiphertext) {
+		try {
+			db.exec("ALTER TABLE room_state ADD COLUMN ciphertext TEXT");
+		} catch {
+			// ignore
+		}
+	}
+	if (!hasIv) {
+		try {
+			db.exec("ALTER TABLE room_state ADD COLUMN iv TEXT");
+		} catch {
+			// ignore
+		}
+	}
+	if (!hasV) {
+		try {
+			db.exec("ALTER TABLE room_state ADD COLUMN v TEXT");
+		} catch {
+			// ignore
+		}
+	}
 	db.exec(
 		"CREATE UNIQUE INDEX IF NOT EXISTS idx_notes_user_hash ON notes(user_id, content_hash) WHERE content_hash IS NOT NULL AND content_hash <> ''"
 	);
@@ -193,9 +221,11 @@ function initDb() {
 	stmtMetaInsert = db.prepare(
 		"INSERT INTO meta(key, value) VALUES(?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
 	);
-	stmtRoomStateGet = db.prepare("SELECT text, ts FROM room_state WHERE rk = ?");
+	stmtRoomStateGet = db.prepare(
+		"SELECT text, ts, ciphertext, iv, v FROM room_state WHERE rk = ?"
+	);
 	stmtRoomStateUpsert = db.prepare(
-		"INSERT INTO room_state(rk, text, ts, updated_at) VALUES(?, ?, ?, ?) ON CONFLICT(rk) DO UPDATE SET text = excluded.text, ts = excluded.ts, updated_at = excluded.updated_at"
+		"INSERT INTO room_state(rk, text, ts, ciphertext, iv, v, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?) ON CONFLICT(rk) DO UPDATE SET text = excluded.text, ts = excluded.ts, ciphertext = excluded.ciphertext, iv = excluded.iv, v = excluded.v, updated_at = excluded.updated_at"
 	);
 	stmtFavoriteUpsert = db.prepare(
 		"INSERT INTO room_favorites(user_id, room, room_key, text, added_at, updated_at) VALUES(?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, room, room_key) DO UPDATE SET text = excluded.text, updated_at = excluded.updated_at"
@@ -213,13 +243,33 @@ function loadPersistedRoomState(rk) {
 	const row = stmtRoomStateGet.get(rk);
 	if (!row) return null;
 	const ts = typeof row.ts === "number" ? row.ts : Number(row.ts) || 0;
-	return { text: String(row.text ?? ""), ts };
+	return {
+		text: String(row.text ?? ""),
+		ts,
+		ciphertext: row.ciphertext ? String(row.ciphertext) : "",
+		iv: row.iv ? String(row.iv) : "",
+		v: row.v ? String(row.v) : "",
+	};
 }
 
-function persistRoomState(rk, text, ts) {
+function persistRoomState(rk, state) {
 	initDb();
-	const safeTs = typeof ts === "number" ? ts : Date.now();
-	stmtRoomStateUpsert.run(String(rk), String(text ?? ""), safeTs, Date.now());
+	const safeTs =
+		state && typeof state.ts === "number" ? state.ts : Date.now();
+	const text = state && typeof state.text === "string" ? state.text : "";
+	const ciphertext =
+		state && typeof state.ciphertext === "string" ? state.ciphertext : "";
+	const iv = state && typeof state.iv === "string" ? state.iv : "";
+	const v = state && typeof state.v === "string" ? state.v : "";
+	stmtRoomStateUpsert.run(
+		String(rk),
+		String(text ?? ""),
+		safeTs,
+		String(ciphertext ?? ""),
+		String(iv ?? ""),
+		String(v ?? ""),
+		Date.now()
+	);
 }
 
 function getSigningSecret() {
@@ -698,7 +748,7 @@ function roomKey(room, key) {
 
 /**
  * In-memory state (scales horizontally with sticky sessions or external store).
- * roomKey -> { text: string, ts: number }
+ * roomKey -> { text: string, ts: number, ciphertext?: string, iv?: string, v?: string }
  */
 const roomState = new Map();
 
@@ -1816,14 +1866,23 @@ wss.on("connection", (ws, req) => {
 		}
 	}
 	if (existing) {
-		ws.send(
-			JSON.stringify({
-				type: "set",
-				room,
-				text: existing.text,
-				ts: existing.ts,
-			})
-		);
+		const payload =
+			existing.ciphertext && existing.iv
+				? {
+					type: "set",
+					room,
+					ciphertext: existing.ciphertext,
+					iv: existing.iv,
+					v: existing.v || "e2ee-v1",
+					ts: existing.ts,
+				}
+				: {
+					type: "set",
+					room,
+					text: existing.text,
+					ts: existing.ts,
+				};
+		ws.send(JSON.stringify(payload));
 	}
 
 	ws.on("message", (raw) => {
@@ -1832,14 +1891,43 @@ wss.on("connection", (ws, req) => {
 
 		if (msg.type === "set") {
 			const ts = typeof msg.ts === "number" ? msg.ts : Date.now();
+			const isEncrypted =
+				typeof msg.ciphertext === "string" &&
+				msg.ciphertext &&
+				typeof msg.iv === "string" &&
+				msg.iv;
 			const text = typeof msg.text === "string" ? msg.text : "";
+			const nextState = isEncrypted
+				? {
+					text: "",
+					ts,
+					ciphertext: msg.ciphertext,
+					iv: msg.iv,
+					v: typeof msg.v === "string" ? msg.v : "e2ee-v1",
+				}
+				: { text, ts, ciphertext: "", iv: "", v: "" };
 
 			const prev = roomState.get(rk);
 			if (prev && prev.ts > ts) return;
 
-			roomState.set(rk, { text, ts });
-			persistRoomState(rk, text, ts);
-			broadcast(rk, { type: "set", room, text, ts }, ws);
+			roomState.set(rk, nextState);
+			persistRoomState(rk, nextState);
+			if (isEncrypted) {
+				broadcast(
+					rk,
+					{
+						type: "set",
+						room,
+						ciphertext: msg.ciphertext,
+						iv: msg.iv,
+						v: typeof msg.v === "string" ? msg.v : "e2ee-v1",
+						ts,
+					},
+					ws
+				);
+			} else {
+				broadcast(rk, { type: "set", room, text, ts }, ws);
+			}
 			return;
 		}
 
@@ -1853,9 +1941,18 @@ wss.on("connection", (ws, req) => {
 				}
 			}
 			if (cur) {
-				ws.send(
-					JSON.stringify({ type: "set", room, text: cur.text, ts: cur.ts })
-				);
+				const payload =
+					cur.ciphertext && cur.iv
+						? {
+							type: "set",
+							room,
+							ciphertext: cur.ciphertext,
+							iv: cur.iv,
+							v: cur.v || "e2ee-v1",
+							ts: cur.ts,
+						}
+						: { type: "set", room, text: cur.text, ts: cur.ts };
+				ws.send(JSON.stringify(payload));
 			}
 			return;
 		}
