@@ -1716,12 +1716,6 @@
 
 	function applyAiContextMode() {
 		const usePreview = getAiUsePreview();
-		if (aiModeWrap && aiModeWrap.classList) {
-			aiModeWrap.classList.toggle("hidden", !usePreview);
-		}
-		if (aiPromptWrap && aiPromptWrap.classList) {
-			aiPromptWrap.classList.toggle("hidden", usePreview);
-		}
 		if (!usePreview && aiModeSelect) {
 			try {
 				aiModeSelect.value = "explain";
