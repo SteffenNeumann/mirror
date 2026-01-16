@@ -218,6 +218,83 @@
 		}
 	}
 
+	const textEncoder = new TextEncoder();
+	const textDecoder = new TextDecoder();
+	let e2eeKeyPromise = null;
+	let e2eeKeySeed = "";
+
+	function resetE2eeKeyCache() {
+		e2eeKeyPromise = null;
+		e2eeKeySeed = "";
+	}
+
+	function base64UrlEncode(input) {
+		const bytes =
+			input instanceof Uint8Array
+				? input
+				: new Uint8Array(input || []);
+		let bin = "";
+		for (const b of bytes) bin += String.fromCharCode(b);
+		return btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+	}
+
+	function base64UrlDecode(input) {
+		const raw = String(input || "").replace(/-/g, "+").replace(/_/g, "/");
+		const padLen = (4 - (raw.length % 4)) % 4;
+		const padded = raw + "=".repeat(padLen);
+		const bin = atob(padded);
+		const out = new Uint8Array(bin.length);
+		for (let i = 0; i < bin.length; i += 1) {
+			out[i] = bin.charCodeAt(i);
+		}
+		return out;
+	}
+
+	async function getE2eeKey() {
+		const seed = String(key || "");
+		if (!seed) return null;
+		if (e2eeKeyPromise && e2eeKeySeed === seed) return e2eeKeyPromise;
+		e2eeKeySeed = seed;
+		e2eeKeyPromise = crypto.subtle
+			.digest("SHA-256", textEncoder.encode(seed))
+			.then((hash) =>
+				crypto.subtle.importKey("raw", hash, "AES-GCM", false, [
+					"encrypt",
+					"decrypt",
+				])
+			);
+		return e2eeKeyPromise;
+	}
+
+	async function encryptForRoom(plainText) {
+		const encKey = await getE2eeKey();
+		if (!encKey) return { mode: "plain", text: plainText };
+		const iv = crypto.getRandomValues(new Uint8Array(12));
+		const cipher = await crypto.subtle.encrypt(
+			{ name: "AES-GCM", iv },
+			encKey,
+			textEncoder.encode(String(plainText ?? ""))
+		);
+		return {
+			mode: "e2ee",
+			ciphertext: base64UrlEncode(cipher),
+			iv: base64UrlEncode(iv),
+		};
+	}
+
+	async function decryptForRoom(ciphertext, iv) {
+		const encKey = await getE2eeKey();
+		if (!encKey) return null;
+		const ivBytes = base64UrlDecode(iv);
+		const cipherBytes = base64UrlDecode(ciphertext);
+		const plain = await crypto.subtle.decrypt(
+			{ name: "AES-GCM", iv: ivBytes },
+			encKey,
+			cipherBytes
+		);
+		return textDecoder.decode(plain);
+	}
+
 	function toast(message, kind) {
 		const el = document.createElement("div");
 		const base =
@@ -4677,12 +4754,12 @@ self.onmessage = async (e) => {
 		}
 	}
 
-	function wsUrlForRoom(base, roomName, keyName) {
+	function wsUrlForRoom(base, roomName) {
+		// Key bleibt im Hash (Client-only), wird nicht an den Server gesendet.
 		// Viele Relays verwenden Query-Parameter. Falls dein Relay anders ist,
 		// setze ?ws=wss://... passend oder passe diese Funktion an.
 		const url = new URL(base, location.href);
 		url.searchParams.set("room", roomName);
-		if (keyName) url.searchParams.set("key", keyName);
 		url.searchParams.set("client", clientId);
 		return url.toString();
 	}
@@ -4719,18 +4796,51 @@ self.onmessage = async (e) => {
 		ws.send(JSON.stringify(message));
 	}
 
+	async function buildSetMessage(text, ts) {
+		const enc = await encryptForRoom(text);
+		if (enc && enc.mode === "e2ee") {
+			return {
+				type: "set",
+				room,
+				ciphertext: enc.ciphertext,
+				iv: enc.iv,
+				ts,
+				clientId,
+				v: "e2ee-v1",
+			};
+		}
+		return { type: "set", room, text, ts, clientId };
+	}
+
+	function sendCurrentState() {
+		const text = textarea.value;
+		const ts = Date.now();
+		buildSetMessage(text, ts)
+			.then((payload) => {
+				sendMessage(payload);
+			})
+			.catch(() => {
+				metaLeft.textContent = "Verschlüsselung fehlgeschlagen.";
+			});
+	}
+
 	function scheduleSend() {
 		if (suppressSend) return;
 		window.clearTimeout(sendTimer);
 		sendTimer = window.setTimeout(() => {
 			const text = textarea.value;
 			if (text === lastLocalText) return;
-
-			lastLocalText = text;
 			const ts = Date.now();
-			sendMessage({ type: "set", room, text, ts, clientId });
-			metaLeft.textContent = "Gesendet.";
-			metaRight.textContent = nowIso();
+			buildSetMessage(text, ts)
+				.then((payload) => {
+					sendMessage(payload);
+					lastLocalText = text;
+					metaLeft.textContent = "Gesendet.";
+					metaRight.textContent = nowIso();
+				})
+				.catch(() => {
+					metaLeft.textContent = "Verschlüsselung fehlgeschlagen.";
+				});
 		}, 180);
 	}
 
@@ -4767,7 +4877,7 @@ self.onmessage = async (e) => {
 			wsHint.classList.add("hidden");
 			wsHint.textContent = "";
 		}
-		const url = wsUrlForRoom(wsBaseUrl, room, key);
+		const url = wsUrlForRoom(wsBaseUrl, room);
 		ws = new WebSocket(url);
 
 		ws.addEventListener("open", () => {
@@ -4790,18 +4900,23 @@ self.onmessage = async (e) => {
 			if (msg.clientId === clientId) return;
 
 			if (msg.type === "set") {
-				applyRemoteText(msg.text, msg.ts);
+				if (msg.ciphertext && msg.iv) {
+					decryptForRoom(msg.ciphertext, msg.iv)
+						.then((plain) => {
+							if (typeof plain !== "string") return;
+							applyRemoteText(plain, msg.ts);
+						})
+						.catch(() => {
+							toast("Entschlüsselung fehlgeschlagen.", "error");
+						});
+				} else {
+					applyRemoteText(msg.text, msg.ts);
+				}
 			}
 
 			if (msg.type === "request_state") {
 				// Zustand an neue Teilnehmer schicken
-				sendMessage({
-					type: "set",
-					room,
-					text: textarea.value,
-					ts: Date.now(),
-					clientId,
-				});
+				sendCurrentState();
 			}
 		});
 
@@ -5209,6 +5324,7 @@ self.onmessage = async (e) => {
 		if (nextRoom === room && nextKey === key) return;
 		room = nextRoom;
 		key = nextKey;
+		resetE2eeKeyCache();
 		lastAppliedRemoteTs = 0;
 		lastLocalText = "";
 		roomLabel.textContent = room;
