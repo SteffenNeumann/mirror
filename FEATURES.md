@@ -14,6 +14,11 @@ This list is intentionally broad. It’s an idea backlog for future iterations.
 - Mobile UX: better height/keyboard handling, larger touch targets
 - Accessibility: focus styles, ARIA labels, contrast, screen reader text
 - i18n (DE/EN) as an option
+- Vor/Zurück Navigation
+- Tags in der Liste live aktualisieren, wenn eine Notiz bereits gespeichert ist
+- Blockquote-Farbe an das Theme anpassen
+- Submenu bei Textmarkierung einblenden (Formatierung ändern, sortieren etc.)
+- Slashkommand-Menüposition an Cursor-Position ausrichten (aktuell zu hoch)
 
 ## Markdown (Display & Export)
 
