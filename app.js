@@ -1713,6 +1713,7 @@
 			label: "Fuchsia",
 			top: "rgba(217, 70, 239, 0.15)",
 			bottom: "rgba(34, 211, 238, 0.1)",
+			accentBgSoft: "rgba(217, 70, 239, 0.1)",
 			accentBg: "rgba(217, 70, 239, 0.15)",
 			accentBgHover: "rgba(217, 70, 239, 0.2)",
 			accentBadgeBg: "rgba(217, 70, 239, 0.2)",
@@ -1730,6 +1731,7 @@
 			label: "Cyan",
 			top: "rgba(14, 165, 233, 0.2)",
 			bottom: "rgba(59, 130, 246, 0.12)",
+			accentBgSoft: "rgba(14, 165, 233, 0.12)",
 			accentBg: "rgba(14, 165, 233, 0.16)",
 			accentBgHover: "rgba(14, 165, 233, 0.22)",
 			accentBadgeBg: "rgba(14, 165, 233, 0.22)",
@@ -1747,6 +1749,7 @@
 			label: "Emerald",
 			top: "rgba(16, 185, 129, 0.18)",
 			bottom: "rgba(34, 197, 94, 0.12)",
+			accentBgSoft: "rgba(16, 185, 129, 0.12)",
 			accentBg: "rgba(16, 185, 129, 0.16)",
 			accentBgHover: "rgba(16, 185, 129, 0.22)",
 			accentBadgeBg: "rgba(16, 185, 129, 0.22)",
@@ -1764,6 +1767,7 @@
 			label: "Amber",
 			top: "rgba(251, 191, 36, 0.18)",
 			bottom: "rgba(244, 114, 182, 0.12)",
+			accentBgSoft: "rgba(251, 191, 36, 0.12)",
 			accentBg: "rgba(251, 191, 36, 0.16)",
 			accentBgHover: "rgba(251, 191, 36, 0.22)",
 			accentBadgeBg: "rgba(251, 191, 36, 0.22)",
@@ -1781,6 +1785,7 @@
 			label: "Violet",
 			top: "rgba(124, 58, 237, 0.2)",
 			bottom: "rgba(99, 102, 241, 0.12)",
+			accentBgSoft: "rgba(124, 58, 237, 0.12)",
 			accentBg: "rgba(124, 58, 237, 0.16)",
 			accentBgHover: "rgba(124, 58, 237, 0.22)",
 			accentBadgeBg: "rgba(124, 58, 237, 0.22)",
@@ -1883,6 +1888,10 @@
 		if (bgBlobBottom && colors) bgBlobBottom.style.background = colors.bottom;
 		if (colors) {
 			const root = document.documentElement;
+			root.style.setProperty(
+				"--accent-bg-soft",
+				colors.accentBgSoft || colors.accentBg || colors.top
+			);
 			root.style.setProperty("--accent-bg", colors.accentBg || colors.top);
 			root.style.setProperty(
 				"--accent-bg-hover",
