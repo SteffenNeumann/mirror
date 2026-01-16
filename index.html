@@ -52,6 +52,28 @@
 				--accent-ring-strong: rgba(217, 70, 239, 0.4);
 				--blockquote-border: rgba(217, 70, 239, 0.45);
 				--blockquote-text: rgb(203 213 225);
+				--scrollbar-track: rgba(2, 6, 23, 0.35);
+				--scrollbar-thumb: rgba(148, 163, 184, 0.25);
+				--scrollbar-thumb-hover: rgba(148, 163, 184, 0.4);
+			}
+			* {
+				scrollbar-width: thin;
+				scrollbar-color: var(--scrollbar-thumb) transparent;
+			}
+			*::-webkit-scrollbar {
+				width: 10px;
+				height: 10px;
+			}
+			*::-webkit-scrollbar-track {
+				background: transparent;
+			}
+			*::-webkit-scrollbar-thumb {
+				background-color: var(--scrollbar-thumb);
+				border-radius: 999px;
+				border: 2px solid var(--scrollbar-track);
+			}
+			*::-webkit-scrollbar-thumb:hover {
+				background-color: var(--scrollbar-thumb-hover);
 			}
 			.md-content {
 				font-size: 0.875rem;
