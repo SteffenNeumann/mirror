@@ -1713,26 +1713,86 @@
 			label: "Fuchsia",
 			top: "rgba(217, 70, 239, 0.15)",
 			bottom: "rgba(34, 211, 238, 0.1)",
+			accentBg: "rgba(217, 70, 239, 0.15)",
+			accentBgHover: "rgba(217, 70, 239, 0.2)",
+			accentBadgeBg: "rgba(217, 70, 239, 0.2)",
+			accentStrong: "rgba(217, 70, 239, 0.6)",
+			accentStrongHover: "rgba(217, 70, 239, 0.7)",
+			accentStrongActive: "rgba(217, 70, 239, 0.8)",
+			accentBorder: "rgba(217, 70, 239, 0.3)",
+			accentBorderStrong: "rgba(217, 70, 239, 0.4)",
+			accentText: "rgba(253, 242, 255, 0.98)",
+			accentTextSoft: "rgba(244, 114, 182, 0.95)",
+			accentRing: "rgba(217, 70, 239, 0.25)",
+			accentRingStrong: "rgba(217, 70, 239, 0.4)",
 		},
 		cyan: {
 			label: "Cyan",
 			top: "rgba(14, 165, 233, 0.2)",
 			bottom: "rgba(59, 130, 246, 0.12)",
+			accentBg: "rgba(14, 165, 233, 0.16)",
+			accentBgHover: "rgba(14, 165, 233, 0.22)",
+			accentBadgeBg: "rgba(14, 165, 233, 0.22)",
+			accentStrong: "rgba(14, 165, 233, 0.6)",
+			accentStrongHover: "rgba(14, 165, 233, 0.7)",
+			accentStrongActive: "rgba(14, 165, 233, 0.8)",
+			accentBorder: "rgba(14, 165, 233, 0.3)",
+			accentBorderStrong: "rgba(14, 165, 233, 0.4)",
+			accentText: "rgba(224, 242, 254, 0.98)",
+			accentTextSoft: "rgba(103, 232, 249, 0.95)",
+			accentRing: "rgba(14, 165, 233, 0.25)",
+			accentRingStrong: "rgba(14, 165, 233, 0.4)",
 		},
 		emerald: {
 			label: "Emerald",
 			top: "rgba(16, 185, 129, 0.18)",
 			bottom: "rgba(34, 197, 94, 0.12)",
+			accentBg: "rgba(16, 185, 129, 0.16)",
+			accentBgHover: "rgba(16, 185, 129, 0.22)",
+			accentBadgeBg: "rgba(16, 185, 129, 0.22)",
+			accentStrong: "rgba(16, 185, 129, 0.6)",
+			accentStrongHover: "rgba(16, 185, 129, 0.7)",
+			accentStrongActive: "rgba(16, 185, 129, 0.8)",
+			accentBorder: "rgba(16, 185, 129, 0.3)",
+			accentBorderStrong: "rgba(16, 185, 129, 0.4)",
+			accentText: "rgba(209, 250, 229, 0.98)",
+			accentTextSoft: "rgba(110, 231, 183, 0.95)",
+			accentRing: "rgba(16, 185, 129, 0.25)",
+			accentRingStrong: "rgba(16, 185, 129, 0.4)",
 		},
 		amber: {
 			label: "Amber",
 			top: "rgba(251, 191, 36, 0.18)",
 			bottom: "rgba(244, 114, 182, 0.12)",
+			accentBg: "rgba(251, 191, 36, 0.16)",
+			accentBgHover: "rgba(251, 191, 36, 0.22)",
+			accentBadgeBg: "rgba(251, 191, 36, 0.22)",
+			accentStrong: "rgba(251, 191, 36, 0.6)",
+			accentStrongHover: "rgba(251, 191, 36, 0.7)",
+			accentStrongActive: "rgba(251, 191, 36, 0.8)",
+			accentBorder: "rgba(251, 191, 36, 0.3)",
+			accentBorderStrong: "rgba(251, 191, 36, 0.4)",
+			accentText: "rgba(255, 251, 235, 0.98)",
+			accentTextSoft: "rgba(253, 230, 138, 0.95)",
+			accentRing: "rgba(251, 191, 36, 0.25)",
+			accentRingStrong: "rgba(251, 191, 36, 0.4)",
 		},
 		violet: {
 			label: "Violet",
 			top: "rgba(124, 58, 237, 0.2)",
 			bottom: "rgba(99, 102, 241, 0.12)",
+			accentBg: "rgba(124, 58, 237, 0.16)",
+			accentBgHover: "rgba(124, 58, 237, 0.22)",
+			accentBadgeBg: "rgba(124, 58, 237, 0.22)",
+			accentStrong: "rgba(124, 58, 237, 0.6)",
+			accentStrongHover: "rgba(124, 58, 237, 0.7)",
+			accentStrongActive: "rgba(124, 58, 237, 0.8)",
+			accentBorder: "rgba(124, 58, 237, 0.3)",
+			accentBorderStrong: "rgba(124, 58, 237, 0.4)",
+			accentText: "rgba(237, 233, 254, 0.98)",
+			accentTextSoft: "rgba(196, 181, 253, 0.95)",
+			accentRing: "rgba(124, 58, 237, 0.25)",
+			accentRingStrong: "rgba(124, 58, 237, 0.4)",
 		},
 	};
 
@@ -1821,6 +1881,54 @@
 		const colors = THEMES[next];
 		if (bgBlobTop && colors) bgBlobTop.style.background = colors.top;
 		if (bgBlobBottom && colors) bgBlobBottom.style.background = colors.bottom;
+		if (colors) {
+			const root = document.documentElement;
+			root.style.setProperty("--accent-bg", colors.accentBg || colors.top);
+			root.style.setProperty(
+				"--accent-bg-hover",
+				colors.accentBgHover || colors.accentBg || colors.top
+			);
+			root.style.setProperty(
+				"--accent-badge-bg",
+				colors.accentBadgeBg || colors.accentBg || colors.top
+			);
+			root.style.setProperty(
+				"--accent-strong",
+				colors.accentStrong || colors.accentBg || colors.top
+			);
+			root.style.setProperty(
+				"--accent-strong-hover",
+				colors.accentStrongHover || colors.accentStrong || colors.accentBg
+			);
+			root.style.setProperty(
+				"--accent-strong-active",
+				colors.accentStrongActive || colors.accentStrong || colors.accentBg
+			);
+			root.style.setProperty(
+				"--accent-border",
+				colors.accentBorder || colors.accentBg
+			);
+			root.style.setProperty(
+				"--accent-border-strong",
+				colors.accentBorderStrong || colors.accentBorder || colors.accentBg
+			);
+			root.style.setProperty(
+				"--accent-text",
+				colors.accentText || "rgba(255,255,255,0.95)"
+			);
+			root.style.setProperty(
+				"--accent-text-soft",
+				colors.accentTextSoft || colors.accentText || "rgba(255,255,255,0.8)"
+			);
+			root.style.setProperty(
+				"--accent-ring",
+				colors.accentRing || colors.accentBorder || "rgba(255,255,255,0.25)"
+			);
+			root.style.setProperty(
+				"--accent-ring-strong",
+				colors.accentRingStrong || colors.accentRing || colors.accentBorder
+			);
+		}
 		try {
 			document.body.setAttribute("data-theme", next);
 		} catch {

@@ -36,10 +36,79 @@
 			rel="stylesheet"
 			href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css" />
 		<style>
+			:root {
+				--accent-bg: rgba(217, 70, 239, 0.15);
+				--accent-bg-hover: rgba(217, 70, 239, 0.2);
+				--accent-badge-bg: rgba(217, 70, 239, 0.2);
+				--accent-strong: rgba(217, 70, 239, 0.6);
+				--accent-strong-hover: rgba(217, 70, 239, 0.7);
+				--accent-strong-active: rgba(217, 70, 239, 0.8);
+				--accent-border: rgba(217, 70, 239, 0.3);
+				--accent-border-strong: rgba(217, 70, 239, 0.4);
+				--accent-text: rgba(253, 242, 255, 0.98);
+				--accent-text-soft: rgba(244, 114, 182, 0.95);
+				--accent-ring: rgba(217, 70, 239, 0.25);
+				--accent-ring-strong: rgba(217, 70, 239, 0.4);
+			}
 			.md-content {
 				font-size: 0.875rem;
 				line-height: 1.55;
 				color: rgb(226 232 240);
+			}
+			/* Theme overrides for accent utility classes */
+			.bg-fuchsia-500\/15 {
+				background-color: var(--accent-bg) !important;
+			}
+			.bg-fuchsia-500\/20 {
+				background-color: var(--accent-bg-hover) !important;
+			}
+			.bg-fuchsia-600\/20 {
+				background-color: var(--accent-badge-bg) !important;
+			}
+			.bg-fuchsia-600\/60 {
+				background-color: var(--accent-strong) !important;
+			}
+			.hover\:bg-fuchsia-500\/20:hover {
+				background-color: var(--accent-bg-hover) !important;
+			}
+			.hover\:bg-fuchsia-600\/70:hover {
+				background-color: var(--accent-strong-hover) !important;
+			}
+			.active\:bg-fuchsia-600\/80:active {
+				background-color: var(--accent-strong-active) !important;
+			}
+			.border-fuchsia-400\/30 {
+				border-color: var(--accent-border) !important;
+			}
+			.border-fuchsia-400\/40 {
+				border-color: var(--accent-border-strong) !important;
+			}
+			.border-fuchsia-500\/30 {
+				border-color: var(--accent-border-strong) !important;
+			}
+			.text-fuchsia-100 {
+				color: var(--accent-text) !important;
+			}
+			.text-fuchsia-300 {
+				color: var(--accent-text-soft) !important;
+			}
+			.ring-fuchsia-400\/25 {
+				--tw-ring-color: var(--accent-ring) !important;
+			}
+			.ring-fuchsia-400\/30 {
+				--tw-ring-color: var(--accent-ring) !important;
+			}
+			.ring-fuchsia-400\/40 {
+				--tw-ring-color: var(--accent-ring-strong) !important;
+			}
+			.focus\:ring-fuchsia-400\/25:focus {
+				--tw-ring-color: var(--accent-ring) !important;
+			}
+			.focus\:ring-fuchsia-400\/30:focus {
+				--tw-ring-color: var(--accent-ring) !important;
+			}
+			.focus\:ring-fuchsia-400\/40:focus {
+				--tw-ring-color: var(--accent-ring-strong) !important;
 			}
 			/* Personal Space: Delete button only on hover (mouse), always on touch */
 			.ps-note-delete {
