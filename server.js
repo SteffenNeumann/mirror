@@ -254,8 +254,7 @@ function loadPersistedRoomState(rk) {
 
 function persistRoomState(rk, state) {
 	initDb();
-	const safeTs =
-		state && typeof state.ts === "number" ? state.ts : Date.now();
+	const safeTs = state && typeof state.ts === "number" ? state.ts : Date.now();
 	const text = state && typeof state.text === "string" ? state.text : "";
 	const ciphertext =
 		state && typeof state.ciphertext === "string" ? state.ciphertext : "";
@@ -1869,19 +1868,19 @@ wss.on("connection", (ws, req) => {
 		const payload =
 			existing.ciphertext && existing.iv
 				? {
-					type: "set",
-					room,
-					ciphertext: existing.ciphertext,
-					iv: existing.iv,
-					v: existing.v || "e2ee-v1",
-					ts: existing.ts,
-				}
+						type: "set",
+						room,
+						ciphertext: existing.ciphertext,
+						iv: existing.iv,
+						v: existing.v || "e2ee-v1",
+						ts: existing.ts,
+				  }
 				: {
-					type: "set",
-					room,
-					text: existing.text,
-					ts: existing.ts,
-				};
+						type: "set",
+						room,
+						text: existing.text,
+						ts: existing.ts,
+				  };
 		ws.send(JSON.stringify(payload));
 	}
 
@@ -1899,12 +1898,12 @@ wss.on("connection", (ws, req) => {
 			const text = typeof msg.text === "string" ? msg.text : "";
 			const nextState = isEncrypted
 				? {
-					text: "",
-					ts,
-					ciphertext: msg.ciphertext,
-					iv: msg.iv,
-					v: typeof msg.v === "string" ? msg.v : "e2ee-v1",
-				}
+						text: "",
+						ts,
+						ciphertext: msg.ciphertext,
+						iv: msg.iv,
+						v: typeof msg.v === "string" ? msg.v : "e2ee-v1",
+				  }
 				: { text, ts, ciphertext: "", iv: "", v: "" };
 
 			const prev = roomState.get(rk);
@@ -1944,13 +1943,13 @@ wss.on("connection", (ws, req) => {
 				const payload =
 					cur.ciphertext && cur.iv
 						? {
-							type: "set",
-							room,
-							ciphertext: cur.ciphertext,
-							iv: cur.iv,
-							v: cur.v || "e2ee-v1",
-							ts: cur.ts,
-						}
+								type: "set",
+								room,
+								ciphertext: cur.ciphertext,
+								iv: cur.iv,
+								v: cur.v || "e2ee-v1",
+								ts: cur.ts,
+						  }
 						: { type: "set", room, text: cur.text, ts: cur.ts };
 				ws.send(JSON.stringify(payload));
 			}
