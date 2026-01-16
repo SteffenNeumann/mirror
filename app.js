@@ -54,6 +54,30 @@
 	const mainGrid = document.getElementById("mainGrid");
 	const psPanel = document.getElementById("psPanel");
 	const togglePersonalSpaceBtn = document.getElementById("togglePersonalSpace");
+	const tableMenuBtn = document.getElementById("tableMenuBtn");
+	const tableModal = document.getElementById("tableModal");
+	const tableModalBackdrop = document.querySelector(
+		'[data-role="tableModalBackdrop"]'
+	);
+	const tableModalClose = document.getElementById("tableModalClose");
+	const tableModalCancel = document.getElementById("tableModalCancel");
+	const tableModalApply = document.getElementById("tableModalApply");
+	const tableGridWrap = document.getElementById("tableGridWrap");
+	const tableAddRowBtn = document.getElementById("tableAddRow");
+	const tableDelRowBtn = document.getElementById("tableDelRow");
+	const tableAddColBtn = document.getElementById("tableAddCol");
+	const tableDelColBtn = document.getElementById("tableDelCol");
+	const tableCalcScope = document.getElementById("tableCalcScope");
+	const tableCalcIndex = document.getElementById("tableCalcIndex");
+	const tableCalcSum = document.getElementById("tableCalcSum");
+	const tableCalcAvg = document.getElementById("tableCalcAvg");
+	const tableCalcMax = document.getElementById("tableCalcMax");
+	const tableCalcMin = document.getElementById("tableCalcMin");
+	const tableInsertSum = document.getElementById("tableInsertSum");
+	const tableInsertAvg = document.getElementById("tableInsertAvg");
+	const tableInsertMax = document.getElementById("tableInsertMax");
+	const tableInsertMin = document.getElementById("tableInsertMin");
+	const tableActiveCell = document.getElementById("tableActiveCell");
 
 	// Personal Space elements (optional)
 	const psUnauthed = document.getElementById("psUnauthed");
@@ -816,9 +840,7 @@
 	}
 
 	function isTableSeparator(line) {
-		return /^\s*\|?(?:\s*:?-{3,}:?\s*\|)+\s*$/.test(
-			String(line || "")
-		);
+		return /^\s*\|?(?:\s*:?-{3,}:?\s*\|)+\s*$/.test(String(line || ""));
 	}
 
 	function splitTableRow(line) {
@@ -884,15 +906,8 @@
 		const src = String(el.value || "");
 		const ctx = getTableContext(src, caretPos);
 		if (!ctx) return false;
-		const {
-			block,
-			sepOffset,
-			startPos,
-			endPos,
-			lineIndex,
-			start,
-			caretCol,
-		} = ctx;
+		const { block, sepOffset, startPos, endPos, lineIndex, start, caretCol } =
+			ctx;
 		const headerCells = splitTableRow(block[sepOffset - 1]);
 		const sepCellsRaw = splitTableRow(block[sepOffset]);
 		const bodyRowsRaw = block.slice(sepOffset + 1).map(splitTableRow);
@@ -910,7 +925,10 @@
 		let header = normalizeRow(headerCells);
 		let sepAligns = normalizeRow(sepCellsRaw).map((cell) => {
 			const s = String(cell || "").trim();
-			return { left: s.startsWith(":") || s.startsWith("-:"), right: s.endsWith(":") };
+			return {
+				left: s.startsWith(":") || s.startsWith("-:"),
+				right: s.endsWith(":"),
+			};
 		});
 		let body = bodyRowsRaw.map(normalizeRow);
 		if (!body.length) body = [Array.from({ length: colCount }, () => "")];
@@ -920,10 +938,15 @@
 		let bodyIndex = targetRow - (sepOffset + 1);
 		if (bodyIndex < 0) bodyIndex = 0;
 		if (bodyIndex >= body.length) bodyIndex = body.length - 1;
-		const lineForCol = block[Math.min(Math.max(relLine, 0), block.length - 1)] || "";
+		const lineForCol =
+			block[Math.min(Math.max(relLine, 0), block.length - 1)] || "";
 		const colIndex = getColumnIndexFromCaret(lineForCol, caretCol, colCount);
 		if (action === "add-row") {
-			body.splice(bodyIndex + 1, 0, Array.from({ length: colCount }, () => ""));
+			body.splice(
+				bodyIndex + 1,
+				0,
+				Array.from({ length: colCount }, () => "")
+			);
 		} else if (action === "del-row") {
 			if (body.length > 1) body.splice(bodyIndex, 1);
 			else body[0] = Array.from({ length: colCount }, () => "");
@@ -947,7 +970,10 @@
 			...body.map(renderTableRow),
 		].join("\n");
 		const relativeCaret = Math.max(0, Number(caretPos || 0) - startPos);
-		const nextCaret = Math.min(startPos + nextBlock.length, startPos + relativeCaret);
+		const nextCaret = Math.min(
+			startPos + nextBlock.length,
+			startPos + relativeCaret
+		);
 		replaceTextRange(el, startPos, endPos, nextBlock);
 		try {
 			el.setSelectionRange(nextCaret, nextCaret);
@@ -955,6 +981,282 @@
 			// ignore
 		}
 		return true;
+	}
+
+	const tableEditorState = {
+		startPos: 0,
+		endPos: 0,
+		header: [],
+		aligns: [],
+		body: [],
+		activeCell: { row: 0, col: 0, isHeader: false },
+	};
+
+	function setTableModalOpen(open) {
+		if (!tableModal || !tableModal.classList) return;
+		tableModal.classList.toggle("hidden", !open);
+		tableModal.classList.toggle("flex", open);
+		tableModal.setAttribute("aria-hidden", open ? "false" : "true");
+		try {
+			document.body.style.overflow = open ? "hidden" : "";
+		} catch {
+			// ignore
+		}
+	}
+
+	function escapeHtmlAttr(raw) {
+		return String(raw || "")
+			.replace(/&/g, "&amp;")
+			.replace(/"/g, "&quot;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;");
+	}
+
+	function parseTableFromContext(ctx) {
+		const block = ctx.block || [];
+		const sepOffset = Number(ctx.sepOffset || 0);
+		const headerCells = splitTableRow(block[sepOffset - 1]);
+		const sepCellsRaw = splitTableRow(block[sepOffset]);
+		const bodyRowsRaw = block.slice(sepOffset + 1).map(splitTableRow);
+		let colCount = Math.max(
+			1,
+			headerCells.length,
+			sepCellsRaw.length,
+			...bodyRowsRaw.map((row) => row.length)
+		);
+		const normalizeRow = (row) => {
+			const out = Array.isArray(row) ? row.slice(0, colCount) : [];
+			while (out.length < colCount) out.push("");
+			return out;
+		};
+		const header = normalizeRow(headerCells);
+		const aligns = normalizeRow(sepCellsRaw).map((cell) => {
+			const s = String(cell || "").trim();
+			return { left: s.startsWith(":") || s.startsWith("-:"), right: s.endsWith(":") };
+		});
+		let body = bodyRowsRaw.map(normalizeRow);
+		if (!body.length) body = [Array.from({ length: colCount }, () => "")];
+		return { header, aligns, body };
+	}
+
+	function renderTableEditorGrid() {
+		if (!tableGridWrap) return;
+		const cols = Math.max(1, tableEditorState.header.length || 1);
+		const rows = Math.max(1, tableEditorState.body.length || 1);
+		const gridStyle = `grid-template-columns: repeat(${cols}, minmax(140px, 1fr));`;
+		const headerHtml = tableEditorState.header
+			.map((cell, col) => {
+				const cls =
+					"table-cell-input w-full rounded-lg border border-white/10 bg-slate-950/60 px-2.5 py-2 text-xs text-slate-100 shadow-inner outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25";
+				return `
+					<div class="flex flex-col gap-1">
+						<input
+							data-table-header="1"
+							data-row="0"
+							data-col="${col}"
+							value="${escapeHtmlAttr(cell)}"
+							class="${cls}"
+							placeholder="Header" />
+					</div>
+				`;
+			})
+			.join("");
+		const bodyHtml = tableEditorState.body
+			.map((row, rowIdx) =>
+				row
+					.map((cell, col) => {
+						const cls =
+							"table-cell-input w-full rounded-lg border border-white/10 bg-slate-950/60 px-2.5 py-2 text-xs text-slate-100 shadow-inner outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25";
+						return `
+							<div class="flex flex-col gap-1">
+								<input
+									data-row="${rowIdx}"
+									data-col="${col}"
+									value="${escapeHtmlAttr(cell)}"
+									class="${cls}"
+									placeholder="" />
+							</div>
+						`;
+					})
+					.join("")
+			)
+			.join("");
+		tableGridWrap.innerHTML = `
+			<div class="grid gap-2" style="${gridStyle}">
+				${headerHtml}
+			</div>
+			<div class="mt-3 grid gap-2" style="${gridStyle}">
+				${bodyHtml}
+			</div>
+		`;
+
+		tableGridWrap.querySelectorAll("input[data-row]").forEach((input) => {
+			input.addEventListener("focus", () => {
+				const row = Number(input.getAttribute("data-row") || 0);
+				const col = Number(input.getAttribute("data-col") || 0);
+				const isHeader = input.hasAttribute("data-table-header");
+				tableEditorState.activeCell = { row, col, isHeader };
+				updateTableActiveCellLabel();
+				updateTableActiveInputHighlight();
+				if (tableCalcScope && tableCalcIndex && !isHeader) {
+					const scope = String(tableCalcScope.value || "col");
+					tableCalcIndex.value =
+						scope === "row" ? String(row + 1) : String(col + 1);
+				}
+				updateTableCalculations();
+			});
+			input.addEventListener("input", () => {
+				const row = Number(input.getAttribute("data-row") || 0);
+				const col = Number(input.getAttribute("data-col") || 0);
+				const isHeader = input.hasAttribute("data-table-header");
+				if (isHeader) tableEditorState.header[col] = String(input.value || "");
+				else tableEditorState.body[row][col] = String(input.value || "");
+				updateTableCalculations();
+			});
+		});
+		updateTableActiveInputHighlight();
+	}
+
+	function updateTableActiveCellLabel() {
+		if (!tableActiveCell) return;
+		const cell = tableEditorState.activeCell;
+		if (cell.isHeader) {
+			tableActiveCell.textContent = `Cell: Header ${cell.col + 1}`;
+			return;
+		}
+		tableActiveCell.textContent = `Cell: R${cell.row + 1} · C${cell.col + 1}`;
+	}
+
+	function updateTableActiveInputHighlight() {
+		if (!tableGridWrap) return;
+		const inputs = tableGridWrap.querySelectorAll("input.table-cell-input");
+		inputs.forEach((input) => {
+			input.classList.remove("ring-2", "ring-fuchsia-400/40");
+		});
+		const cell = tableEditorState.activeCell;
+		const selector = cell.isHeader
+			? `input[data-table-header="1"][data-col="${cell.col}"]`
+			: `input[data-row="${cell.row}"][data-col="${cell.col}"]`;
+		const target = tableGridWrap.querySelector(selector);
+		if (target) target.classList.add("ring-2", "ring-fuchsia-400/40");
+	}
+
+	function getNumericValuesForScope() {
+		const scope = tableCalcScope ? String(tableCalcScope.value || "col") : "col";
+		const idxRaw = tableCalcIndex ? Number(tableCalcIndex.value || 1) : 1;
+		const idx = Math.max(1, Math.floor(idxRaw || 1));
+		const values = [];
+		if (scope === "row") {
+			const row = tableEditorState.body[idx - 1] || [];
+			row.forEach((cell) => {
+				const v = Number(String(cell || "").replace(/,/g, "."));
+				if (Number.isFinite(v)) values.push(v);
+			});
+		} else {
+			for (const row of tableEditorState.body) {
+				const cell = row[idx - 1];
+				const v = Number(String(cell || "").replace(/,/g, "."));
+				if (Number.isFinite(v)) values.push(v);
+			}
+		}
+		return values;
+	}
+
+	function updateTableCalculations() {
+		if (!tableCalcSum || !tableCalcAvg || !tableCalcMax || !tableCalcMin) return;
+		const values = getNumericValuesForScope();
+		if (!values.length) {
+			tableCalcSum.textContent = "—";
+			tableCalcAvg.textContent = "—";
+			tableCalcMax.textContent = "—";
+			tableCalcMin.textContent = "—";
+			return;
+		}
+		const sum = values.reduce((acc, v) => acc + v, 0);
+		const avg = sum / values.length;
+		const max = Math.max(...values);
+		const min = Math.min(...values);
+		tableCalcSum.textContent = String(sum);
+		tableCalcAvg.textContent = String(Number.isFinite(avg) ? avg : "—");
+		tableCalcMax.textContent = String(max);
+		tableCalcMin.textContent = String(min);
+	}
+
+	function insertCalcResult(kind) {
+		const values = getNumericValuesForScope();
+		if (!values.length) return;
+		let result = 0;
+		if (kind === "avg") result = values.reduce((a, v) => a + v, 0) / values.length;
+		else if (kind === "max") result = Math.max(...values);
+		else if (kind === "min") result = Math.min(...values);
+		else result = values.reduce((a, v) => a + v, 0);
+		const cell = tableEditorState.activeCell;
+		if (cell.isHeader) return;
+		if (!tableEditorState.body[cell.row]) return;
+		tableEditorState.body[cell.row][cell.col] = String(result);
+		renderTableEditorGrid();
+		updateTableCalculations();
+	}
+
+	function applyTableEditorToTextarea() {
+		if (!textarea) return false;
+		const nextBlock = [
+			renderTableRow(tableEditorState.header),
+			renderTableSeparator(tableEditorState.aligns),
+			...tableEditorState.body.map(renderTableRow),
+		].join("\n");
+		replaceTextRange(
+			textarea,
+			tableEditorState.startPos,
+			tableEditorState.endPos,
+			nextBlock
+		);
+		try {
+			const caret = tableEditorState.startPos + nextBlock.length;
+			textarea.setSelectionRange(caret, caret);
+		} catch {
+			// ignore
+		}
+		updatePreview();
+		scheduleSend();
+		return true;
+	}
+
+	function openTableEditorFromCursor() {
+		if (!textarea) return;
+		const caret = Number(textarea.selectionEnd || 0);
+		const ctx = getTableContext(String(textarea.value || ""), caret);
+		if (!ctx) {
+			toast("No table found on this line.", "error");
+			return;
+		}
+		const parsed = parseTableFromContext(ctx);
+		tableEditorState.startPos = ctx.startPos;
+		tableEditorState.endPos = ctx.endPos;
+		tableEditorState.header = parsed.header.slice();
+		tableEditorState.aligns = parsed.aligns.slice();
+		tableEditorState.body = parsed.body.map((row) => row.slice());
+		tableEditorState.activeCell = { row: 0, col: 0, isHeader: false };
+		updateTableActiveCellLabel();
+		if (tableCalcIndex) tableCalcIndex.value = "1";
+		renderTableEditorGrid();
+		updateTableCalculations();
+		setTableModalOpen(true);
+		try {
+			const firstInput = tableGridWrap
+				? tableGridWrap.querySelector("input[data-row]")
+				: null;
+			if (firstInput) firstInput.focus();
+		} catch {
+			// ignore
+		}
+	}
+
+	function updateTableMenuVisibility() {
+		if (!tableMenuBtn || !textarea) return;
+		const caret = Number(textarea.selectionEnd || 0);
+		const ctx = getTableContext(String(textarea.value || ""), caret);
+		tableMenuBtn.classList.toggle("hidden", !ctx);
 	}
 
 	function applySlashCommand(el) {
@@ -1078,7 +1380,9 @@
 			return true;
 		}
 		if (cmd === "table" || cmd === "tbl") {
-			const rawArg = String(arg || "").trim().toLowerCase();
+			const rawArg = String(arg || "")
+				.trim()
+				.toLowerCase();
 			const dimMatch = rawArg.match(/^(\d+)\s*[x,]\s*(\d+)$/);
 			if (!rawArg || dimMatch) {
 				const cols = dimMatch ? Number(dimMatch[1]) : 2;
@@ -1091,13 +1395,25 @@
 				return true;
 			}
 			const action =
-				rawArg === "row+" || rawArg === "addrow" || rawArg === "row-add" || rawArg === "add-row"
+				rawArg === "row+" ||
+				rawArg === "addrow" ||
+				rawArg === "row-add" ||
+				rawArg === "add-row"
 					? "add-row"
-					: rawArg === "row-" || rawArg === "delrow" || rawArg === "row-del" || rawArg === "del-row"
+					: rawArg === "row-" ||
+					  rawArg === "delrow" ||
+					  rawArg === "row-del" ||
+					  rawArg === "del-row"
 					? "del-row"
-					: rawArg === "col+" || rawArg === "addcol" || rawArg === "col-add" || rawArg === "add-col"
+					: rawArg === "col+" ||
+					  rawArg === "addcol" ||
+					  rawArg === "col-add" ||
+					  rawArg === "add-col"
 					? "add-col"
-					: rawArg === "col-" || rawArg === "delcol" || rawArg === "col-del" || rawArg === "del-col"
+					: rawArg === "col-" ||
+					  rawArg === "delcol" ||
+					  rawArg === "col-del" ||
+					  rawArg === "del-col"
 					? "del-col"
 					: "";
 			if (!action) return false;
@@ -3951,6 +4267,11 @@ self.onmessage = async (e) => {
 			insertCodeBlock();
 		});
 	}
+	if (tableMenuBtn) {
+		tableMenuBtn.addEventListener("click", () => {
+			openTableEditorFromCursor();
+		});
+	}
 
 	textarea.addEventListener("input", () => {
 		metaLeft.textContent = "Typing…";
@@ -3958,19 +4279,23 @@ self.onmessage = async (e) => {
 		updatePreview();
 		updateSlashMenu();
 		updateCodeLangOverlay();
+		updateTableMenuVisibility();
 	});
 
 	textarea.addEventListener("click", () => {
 		updateSlashMenu();
 		updateCodeLangOverlay();
+		updateTableMenuVisibility();
 	});
 
 	textarea.addEventListener("focus", () => {
 		updateCodeLangOverlay();
+		updateTableMenuVisibility();
 	});
 
 	textarea.addEventListener("keyup", () => {
 		updateCodeLangOverlay();
+		updateTableMenuVisibility();
 	});
 
 	textarea.addEventListener("keydown", (ev) => {
@@ -3985,6 +4310,140 @@ self.onmessage = async (e) => {
 		metaRight.textContent = nowIso();
 		updatePreview();
 		scheduleSend();
+	});
+
+	if (tableModalClose) {
+		tableModalClose.addEventListener("click", () => setTableModalOpen(false));
+	}
+	if (tableModalCancel) {
+		tableModalCancel.addEventListener("click", () => setTableModalOpen(false));
+	}
+	if (tableModalBackdrop) {
+		tableModalBackdrop.addEventListener("click", () => {
+			setTableModalOpen(false);
+		});
+	}
+	if (tableModalApply) {
+		tableModalApply.addEventListener("click", () => {
+			const ok = applyTableEditorToTextarea();
+			if (ok) setTableModalOpen(false);
+		});
+	}
+	if (tableAddRowBtn) {
+		tableAddRowBtn.addEventListener("click", () => {
+			const cols = Math.max(1, tableEditorState.header.length || 1);
+			const idx = Math.max(0, tableEditorState.activeCell.row || 0);
+			tableEditorState.body.splice(
+				Math.min(idx + 1, tableEditorState.body.length),
+				0,
+				Array.from({ length: cols }, () => "")
+			);
+			renderTableEditorGrid();
+			updateTableCalculations();
+		});
+	}
+	if (tableDelRowBtn) {
+		tableDelRowBtn.addEventListener("click", () => {
+			const idx = Math.max(0, tableEditorState.activeCell.row || 0);
+			if (tableEditorState.body.length > 1) {
+				tableEditorState.body.splice(
+					Math.min(idx, tableEditorState.body.length - 1),
+					1
+				);
+				if (tableEditorState.activeCell.row >= tableEditorState.body.length) {
+					tableEditorState.activeCell.row = Math.max(
+						0,
+						tableEditorState.body.length - 1
+					);
+				}
+			} else {
+				tableEditorState.body[0] = tableEditorState.body[0].map(() => "");
+			}
+			renderTableEditorGrid();
+			updateTableCalculations();
+		});
+	}
+	if (tableAddColBtn) {
+		tableAddColBtn.addEventListener("click", () => {
+			const idx = Math.max(0, tableEditorState.activeCell.col || 0);
+			tableEditorState.header.splice(
+				Math.min(idx + 1, tableEditorState.header.length),
+				0,
+				"Header"
+			);
+			tableEditorState.aligns.splice(
+				Math.min(idx + 1, tableEditorState.aligns.length),
+				0,
+				{ left: false, right: false }
+			);
+			tableEditorState.body = tableEditorState.body.map((row) => {
+				const next = row.slice();
+				next.splice(Math.min(idx + 1, next.length), 0, "");
+				return next;
+			});
+			renderTableEditorGrid();
+			updateTableCalculations();
+		});
+	}
+	if (tableDelColBtn) {
+		tableDelColBtn.addEventListener("click", () => {
+			if (tableEditorState.header.length <= 1) return;
+			const idx = Math.max(0, tableEditorState.activeCell.col || 0);
+			tableEditorState.header.splice(
+				Math.min(idx, tableEditorState.header.length - 1),
+				1
+			);
+			tableEditorState.aligns.splice(
+				Math.min(idx, tableEditorState.aligns.length - 1),
+				1
+			);
+			tableEditorState.body = tableEditorState.body.map((row) => {
+				const next = row.slice();
+				next.splice(Math.min(idx, next.length - 1), 1);
+				return next;
+			});
+			if (tableEditorState.activeCell.col >= tableEditorState.header.length) {
+				tableEditorState.activeCell.col = Math.max(
+					0,
+					tableEditorState.header.length - 1
+				);
+			}
+			renderTableEditorGrid();
+			updateTableCalculations();
+		});
+	}
+	if (tableCalcScope) {
+		tableCalcScope.addEventListener("change", () => {
+			updateTableCalculations();
+		});
+	}
+	if (tableCalcIndex) {
+		tableCalcIndex.addEventListener("input", () => {
+			updateTableCalculations();
+		});
+	}
+	if (tableInsertSum) {
+		tableInsertSum.addEventListener("click", () => insertCalcResult("sum"));
+	}
+	if (tableInsertAvg) {
+		tableInsertAvg.addEventListener("click", () => insertCalcResult("avg"));
+	}
+	if (tableInsertMax) {
+		tableInsertMax.addEventListener("click", () => insertCalcResult("max"));
+	}
+	if (tableInsertMin) {
+		tableInsertMin.addEventListener("click", () => insertCalcResult("min"));
+	}
+	window.addEventListener("keydown", (ev) => {
+		if (!tableModal || tableModal.classList.contains("hidden")) return;
+		if (ev && ev.key === "Escape") {
+			ev.preventDefault();
+			setTableModalOpen(false);
+		}
+	});
+	document.addEventListener("selectionchange", () => {
+		if (document.activeElement !== textarea) return;
+		updateTableMenuVisibility();
 	});
 
 	window.addEventListener("hashchange", () => {
@@ -4365,4 +4824,5 @@ self.onmessage = async (e) => {
 	loadAiPrompt();
 	loadAiUsePreview();
 	applyAiContextMode();
+	updateTableMenuVisibility();
 })();
