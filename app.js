@@ -114,12 +114,8 @@
 	const settingsBackdrop = document.getElementById("settingsBackdrop");
 	const settingsPanel = document.getElementById("settingsPanel");
 	const settingsClose = document.getElementById("settingsClose");
-	const settingsNavButtons = document.querySelectorAll(
-		"[data-settings-nav]"
-	);
-	const settingsSections = document.querySelectorAll(
-		"[data-settings-section]"
-	);
+	const settingsNavButtons = document.querySelectorAll("[data-settings-nav]");
+	const settingsSections = document.querySelectorAll("[data-settings-section]");
 	const settingsThemeSelect = document.getElementById("settingsTheme");
 	const aiApiKeyInput = document.getElementById("aiApiKey");
 	const aiApiModelInput = document.getElementById("aiApiModel");
@@ -742,7 +738,9 @@
 					"</span>";
 				return (
 					`<button type="button" data-wiki-idx="${idx}" class="${base} ${cls}">` +
-					`<span class="font-medium">${escapeHtml(String(it.title || ""))}</span>` +
+					`<span class="font-medium">${escapeHtml(
+						String(it.title || "")
+					)}</span>` +
 					right +
 					"</button>"
 				);
@@ -799,9 +797,10 @@
 			return;
 		}
 		setSlashMenuOpen(false);
-		const q = String(ctx.query || "").trim().toLowerCase();
-		const notes =
-			psState && Array.isArray(psState.notes) ? psState.notes : [];
+		const q = String(ctx.query || "")
+			.trim()
+			.toLowerCase();
+		const notes = psState && Array.isArray(psState.notes) ? psState.notes : [];
 		const sorted = notes
 			.slice()
 			.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
@@ -1238,7 +1237,10 @@
 		const header = normalizeRow(headerCells);
 		const aligns = normalizeRow(sepCellsRaw).map((cell) => {
 			const s = String(cell || "").trim();
-			return { left: s.startsWith(":") || s.startsWith("-:"), right: s.endsWith(":") };
+			return {
+				left: s.startsWith(":") || s.startsWith("-:"),
+				right: s.endsWith(":"),
+			};
 		});
 		let body = bodyRowsRaw.map(normalizeRow);
 		if (!body.length) body = [Array.from({ length: colCount }, () => "")];
@@ -1348,7 +1350,9 @@
 	}
 
 	function getNumericValuesForScope() {
-		const scope = tableCalcScope ? String(tableCalcScope.value || "col") : "col";
+		const scope = tableCalcScope
+			? String(tableCalcScope.value || "col")
+			: "col";
 		const idxRaw = tableCalcIndex ? Number(tableCalcIndex.value || 1) : 1;
 		const idx = Math.max(1, Math.floor(idxRaw || 1));
 		const values = [];
@@ -1369,7 +1373,8 @@
 	}
 
 	function updateTableCalculations() {
-		if (!tableCalcSum || !tableCalcAvg || !tableCalcMax || !tableCalcMin) return;
+		if (!tableCalcSum || !tableCalcAvg || !tableCalcMax || !tableCalcMin)
+			return;
 		const values = getNumericValuesForScope();
 		if (!values.length) {
 			tableCalcSum.textContent = "—";
@@ -1392,7 +1397,8 @@
 		const values = getNumericValuesForScope();
 		if (!values.length) return;
 		let result = 0;
-		if (kind === "avg") result = values.reduce((a, v) => a + v, 0) / values.length;
+		if (kind === "avg")
+			result = values.reduce((a, v) => a + v, 0) / values.length;
 		else if (kind === "max") result = Math.max(...values);
 		else if (kind === "min") result = Math.min(...values);
 		else result = values.reduce((a, v) => a + v, 0);
@@ -2010,7 +2016,7 @@
 		},
 		{
 			q: "How do I activate Personal Space?",
-			a: "Click \"Add Personal Space\" in the left panel. You will receive a verification link by email; open it to sign in. Once signed in, your notes, tags, and favorites will sync to your account.",
+			a: 'Click "Add Personal Space" in the left panel. You will receive a verification link by email; open it to sign in. Once signed in, your notes, tags, and favorites will sync to your account.',
 		},
 		{
 			q: "Signing in and out",
@@ -2108,7 +2114,7 @@
 			.join("");
 		if (!items.length) {
 			faqList.innerHTML =
-				"<div class=\"rounded-xl border border-white/10 bg-slate-950/40 p-3 text-xs text-slate-400\">No results.</div>";
+				'<div class="rounded-xl border border-white/10 bg-slate-950/40 p-3 text-xs text-slate-400">No results.</div>';
 		}
 	}
 
@@ -2813,9 +2819,7 @@
 			// Nur sichere Link-Protokolle (kein javascript:, data:, etc.)
 			try {
 				md.validateLink = (url) =>
-					/^(https?:|mailto:|tel:|note:)/i.test(
-						String(url || "").trim()
-					);
+					/^(https?:|mailto:|tel:|note:)/i.test(String(url || "").trim());
 			} catch {
 				// ignore
 			}
@@ -2877,8 +2881,7 @@
 	}
 
 	function buildNoteTitleIndex() {
-		const notes =
-			psState && Array.isArray(psState.notes) ? psState.notes : [];
+		const notes = psState && Array.isArray(psState.notes) ? psState.notes : [];
 		const sorted = notes
 			.slice()
 			.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
@@ -3363,17 +3366,17 @@
 	}
 
 	function findNoteById(id) {
-		const notes =
-			psState && Array.isArray(psState.notes) ? psState.notes : [];
+		const notes = psState && Array.isArray(psState.notes) ? psState.notes : [];
 		const target = String(id || "");
 		if (!target) return null;
 		return notes.find((n) => String(n && n.id ? n.id : "") === target) || null;
 	}
 
 	function findNoteByTitle(title) {
-		const notes =
-			psState && Array.isArray(psState.notes) ? psState.notes : [];
-		const target = String(title || "").trim().toLowerCase();
+		const notes = psState && Array.isArray(psState.notes) ? psState.notes : [];
+		const target = String(title || "")
+			.trim()
+			.toLowerCase();
 		if (!target) return null;
 		const sorted = notes
 			.slice()
@@ -5314,12 +5317,7 @@ self.onmessage = async (e) => {
 	}
 
 	function canAutoSavePsNote() {
-		return Boolean(
-			psState &&
-				psState.authed &&
-				psEditingNoteId &&
-				textarea
-		);
+		return Boolean(psState && psState.authed && psEditingNoteId && textarea);
 	}
 
 	async function savePersonalSpaceNote(text, opts) {
@@ -5373,23 +5371,18 @@ self.onmessage = async (e) => {
 			return true;
 		}
 
-		const res = await api(
-			`/api/notes/${encodeURIComponent(psEditingNoteId)}`,
-			{
-				method: "PUT",
-				body: JSON.stringify({
-					text: trimmed,
-					tags: tagsPayload,
-				}),
-			}
-		);
+		const res = await api(`/api/notes/${encodeURIComponent(psEditingNoteId)}`, {
+			method: "PUT",
+			body: JSON.stringify({
+				text: trimmed,
+				tags: tagsPayload,
+			}),
+		});
 		const saved = res && res.note ? res.note : null;
 		if (saved && saved.id && psState && psState.authed) {
 			const notes = Array.isArray(psState.notes) ? psState.notes : [];
 			const id = String(saved.id);
-			const idx = notes.findIndex(
-				(n) => String(n && n.id ? n.id : "") === id
-			);
+			const idx = notes.findIndex((n) => String(n && n.id ? n.id : "") === id);
 			psState.notes =
 				idx >= 0
 					? [...notes.slice(0, idx), saved, ...notes.slice(idx + 1)]
@@ -5421,9 +5414,7 @@ self.onmessage = async (e) => {
 		psAutoSaveTimer = window.setTimeout(async () => {
 			if (psAutoSaveInFlight) return;
 			if (!canAutoSavePsNote()) return;
-			const latest = String(
-				textarea && textarea.value ? textarea.value : ""
-			);
+			const latest = String(textarea && textarea.value ? textarea.value : "");
 			if (latest === psAutoSaveLastSavedText) return;
 			psAutoSaveInFlight = true;
 			try {

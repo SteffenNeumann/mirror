@@ -373,7 +373,8 @@
 								stroke-linejoin="round"
 								class="h-4 w-4">
 								<path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" />
-								<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c0 .67.39 1.27 1 1.51H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+								<path
+									d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c0 .67.39 1.27 1 1.51H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
 							</svg>
 						</button>
 					</div>
@@ -698,71 +699,74 @@
 												>
 											</div>
 										</div>
-													<div class="mt-2 flex flex-col gap-2">
-														<div class="flex flex-wrap items-center gap-2">
-															<button
-																id="aiUsePreviewBtn"
-																type="button"
-																class="inline-flex items-center gap-2 rounded-full border border-fuchsia-500/30 bg-fuchsia-600/60 px-3 py-1 text-[11px] font-medium text-slate-50 shadow-soft transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/40"
-																title="Preview als Kontext verwenden"
-																aria-pressed="true">
-																<span
-																	class="inline-block h-2 w-2 rounded-full bg-white/80"></span>
-																<span>Preview als Kontext verwenden</span>
-															</button>
-															<div id="aiModeWrap" class="min-w-[220px] flex-1">
-																<select
-																	id="aiMode"
-																	class="h-9 w-full rounded-md border border-white/10 bg-slate-950/30 px-2.5 text-xs text-slate-200 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30"
-																	title="AI-Modus">
-																	<option value="explain" selected>
-																		Erklären / Antworten
-																	</option>
-																	<option value="fix">Fixen / Korrigieren</option>
-																	<option value="improve">Verbessern</option>
-																	<option value="run">Code ausführen</option>
-																	<option value="summarize">Zusammenfassen</option>
-																</select>
-															</div>
-														</div>
-														<div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
-															<div id="aiPromptWrap" class="relative min-w-0 flex-1 group">
-																<label for="aiPrompt" class="sr-only">Ask</label>
-																<input
-																	id="aiPrompt"
-																	type="text"
-																	autocomplete="off"
-																	spellcheck="false"
-																	placeholder="Ask something"
-																	class="h-9 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/30 px-3 pr-9 text-sm text-slate-100 shadow-soft backdrop-blur transition placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
-																<button
-																	id="aiPromptClear"
-																	type="button"
-																	class="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 w-7 rounded-md border border-white/10 bg-slate-950/10 text-sm text-slate-200 opacity-0 transition group-hover:opacity-100 focus:opacity-100 hover:bg-white/5 active:bg-white/10"
-																	title="Prompt leeren"
-																	aria-label="Prompt leeren">
-																	×
-																</button>
-															</div>
-															<button
-																id="aiAssist"
-																type="button"
-																class="h-9 w-9 shrink-0 rounded-md border border-fuchsia-500/30 bg-fuchsia-600/60 text-slate-50 shadow-soft transition hover:bg-fuchsia-600/70 active:bg-fuchsia-600/80 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/40"
-																title="Ask">
-																<span class="sr-only">Ask</span>
-																<svg
-																	viewBox="0 0 24 24"
-																	fill="none"
-																	stroke="currentColor"
-																	stroke-width="2"
-																	stroke-linecap="round"
-																	stroke-linejoin="round"
-																	class="mx-auto h-4 w-4">
-																	<path d="M5 12h12" />
-																	<path d="M13 6l6 6-6 6" />
-																</svg>
-															</button>
-														</div>
+										<div class="mt-2 flex flex-col gap-2">
+											<div class="flex flex-wrap items-center gap-2">
+												<button
+													id="aiUsePreviewBtn"
+													type="button"
+													class="inline-flex items-center gap-2 rounded-full border border-fuchsia-500/30 bg-fuchsia-600/60 px-3 py-1 text-[11px] font-medium text-slate-50 shadow-soft transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/40"
+													title="Preview als Kontext verwenden"
+													aria-pressed="true">
+													<span
+														class="inline-block h-2 w-2 rounded-full bg-white/80"></span>
+													<span>Preview als Kontext verwenden</span>
+												</button>
+												<div id="aiModeWrap" class="min-w-[220px] flex-1">
+													<select
+														id="aiMode"
+														class="h-9 w-full rounded-md border border-white/10 bg-slate-950/30 px-2.5 text-xs text-slate-200 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30"
+														title="AI-Modus">
+														<option value="explain" selected>
+															Erklären / Antworten
+														</option>
+														<option value="fix">Fixen / Korrigieren</option>
+														<option value="improve">Verbessern</option>
+														<option value="run">Code ausführen</option>
+														<option value="summarize">Zusammenfassen</option>
+													</select>
+												</div>
+											</div>
+											<div
+												class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+												<div
+													id="aiPromptWrap"
+													class="relative min-w-0 flex-1 group">
+													<label for="aiPrompt" class="sr-only">Ask</label>
+													<input
+														id="aiPrompt"
+														type="text"
+														autocomplete="off"
+														spellcheck="false"
+														placeholder="Ask something"
+														class="h-9 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/30 px-3 pr-9 text-sm text-slate-100 shadow-soft backdrop-blur transition placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
+													<button
+														id="aiPromptClear"
+														type="button"
+														class="absolute right-1.5 top-1/2 -translate-y-1/2 h-7 w-7 rounded-md border border-white/10 bg-slate-950/10 text-sm text-slate-200 opacity-0 transition group-hover:opacity-100 focus:opacity-100 hover:bg-white/5 active:bg-white/10"
+														title="Prompt leeren"
+														aria-label="Prompt leeren">
+														×
+													</button>
+												</div>
+												<button
+													id="aiAssist"
+													type="button"
+													class="h-9 w-9 shrink-0 rounded-md border border-fuchsia-500/30 bg-fuchsia-600/60 text-slate-50 shadow-soft transition hover:bg-fuchsia-600/70 active:bg-fuchsia-600/80 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/40"
+													title="Ask">
+													<span class="sr-only">Ask</span>
+													<svg
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														class="mx-auto h-4 w-4">
+														<path d="M5 12h12" />
+														<path d="M13 6l6 6-6 6" />
+													</svg>
+												</button>
+											</div>
 
 											<div>
 												<div
@@ -981,9 +985,12 @@
 				aria-modal="true"
 				aria-labelledby="settingsTitle"
 				class="relative flex h-full max-h-[86vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-950/80 shadow-soft backdrop-blur">
-				<header class="flex items-center justify-between border-b border-white/10 px-5 py-4">
+				<header
+					class="flex items-center justify-between border-b border-white/10 px-5 py-4">
 					<div>
-						<h3 id="settingsTitle" class="text-base font-semibold text-slate-100">
+						<h3
+							id="settingsTitle"
+							class="text-base font-semibold text-slate-100">
 							Settings
 						</h3>
 						<p class="mt-1 text-xs text-slate-400">
@@ -1034,18 +1041,18 @@
 						</button>
 					</nav>
 					<div class="min-h-0 flex-1 overflow-y-auto px-5 py-4">
-						<section
-							data-settings-section="user"
-							class="space-y-3">
+						<section data-settings-section="user" class="space-y-3">
 							<div>
 								<h4 class="text-sm font-semibold text-slate-100">
 									User Settings
 								</h4>
 								<p class="mt-1 text-xs text-slate-400">
-											Personal Space identity and sign-out.
+									Personal Space identity and sign-out.
 								</p>
 							</div>
-							<div id="psUserAuthed" class="hidden rounded-xl border border-white/10 bg-white/5 p-3">
+							<div
+								id="psUserAuthed"
+								class="hidden rounded-xl border border-white/10 bg-white/5 p-3">
 								<div class="text-xs text-slate-300">
 									Signed in as
 									<span id="psEmail" class="font-medium text-slate-100"></span>
@@ -1057,14 +1064,14 @@
 									Sign out
 								</button>
 							</div>
-							<div id="psUserUnauthed" class="rounded-xl border border-white/10 bg-slate-950/40 p-3 text-xs text-slate-400">
+							<div
+								id="psUserUnauthed"
+								class="rounded-xl border border-white/10 bg-slate-950/40 p-3 text-xs text-slate-400">
 								Not signed in. Use "Add Personal Space" to get started.
 							</div>
 						</section>
 
-						<section
-							data-settings-section="export"
-							class="hidden space-y-3">
+						<section data-settings-section="export" class="hidden space-y-3">
 							<div>
 								<h4 class="text-sm font-semibold text-slate-100">
 									Export/Import
@@ -1101,9 +1108,7 @@
 							<div id="psTransferHint" class="text-xs text-slate-400"></div>
 						</section>
 
-						<section
-							data-settings-section="themes"
-							class="hidden space-y-3">
+						<section data-settings-section="themes" class="hidden space-y-3">
 							<div>
 								<h4 class="text-sm font-semibold text-slate-100">Themes</h4>
 								<p class="mt-1 text-xs text-slate-400">
@@ -1124,9 +1129,7 @@
 							</div>
 						</section>
 
-						<section
-							data-settings-section="ai"
-							class="hidden space-y-3">
+						<section data-settings-section="ai" class="hidden space-y-3">
 							<div>
 								<h4 class="text-sm font-semibold text-slate-100">AI</h4>
 								<p class="mt-1 text-xs text-slate-400">
@@ -1172,9 +1175,7 @@
 							<div id="aiApiStatus" class="text-xs text-slate-400"></div>
 						</section>
 
-						<section
-							data-settings-section="faq"
-							class="hidden space-y-3">
+						<section data-settings-section="faq" class="hidden space-y-3">
 							<div>
 								<h4 class="text-sm font-semibold text-slate-100">FAQ</h4>
 								<p class="mt-1 text-xs text-slate-400">

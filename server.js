@@ -826,14 +826,7 @@ const server = http.createServer((req, res) => {
 				const userId = getOrCreateUserId(email);
 				const now = Date.now();
 				initDb();
-				stmtFavoriteUpsert.run(
-					userId,
-					room,
-					key,
-					textVal,
-					now,
-					now
-				);
+				stmtFavoriteUpsert.run(userId, room, key, textVal, now, now);
 				json(res, 200, {
 					ok: true,
 					favorite: {
@@ -1271,7 +1264,9 @@ const server = http.createServer((req, res) => {
 						: "text";
 
 				// Keep a larger ceiling for summarize; chunk later to avoid hard-truncation.
-				const MAX_TOTAL_CHARS = Number(process.env.AI_MAX_TOTAL_CHARS || 120000);
+				const MAX_TOTAL_CHARS = Number(
+					process.env.AI_MAX_TOTAL_CHARS || 120000
+				);
 				let truncated = false;
 				if (Number.isFinite(MAX_TOTAL_CHARS) && MAX_TOTAL_CHARS > 1000) {
 					if (input.length > MAX_TOTAL_CHARS) {
@@ -1297,22 +1292,24 @@ const server = http.createServer((req, res) => {
 							? "Fix bugs and issues. Briefly explain root cause, then propose minimal changes (steps or a small patch snippet)."
 							: "Correct errors and ambiguities in the text. Improve clarity and inclusive wording. Provide an improved version and a short rationale."
 						: mode === "improve"
-					? kind === "code"
-						? "Improve quality: readability, performance, safety. Keep changes minimal and practical."
-						: "Improve the text: clarity, structure, tone, inclusive language. Provide an improved version."
-					: mode === "run"
-					? kind === "code"
-						? "Simulate executing the code. Do NOT claim you actually ran it.\n\nIMPORTANT: Return ONLY the following lines/sections (no other text, no headings, no markdown). No emojis.\nOutput: <plain text output or (no output)>\n\nIf an error is likely, additionally include:\nError: <short>\nFix:\n```<same language>\n<corrected code>\n```\n\nDo NOT explain the code. Only give Output and, if needed, Error+Fix."
-						: "The user asked to run something, but the input is text. Explain that only code can be run, and ask for a code snippet or clarify what to execute."
-					: mode === "summarize"
-					? kind === "code"
-						? "Summarize what this code does. Include: purpose, inputs/outputs, key logic, risks, and 2-3 improvement ideas."
-						: "Summarize the text. Include: core points, decisions, next steps (if any), and key entities. Use bullet points."
-					: kind === "code"
-					? "Explain what this code does and how it works. Mention important details and edge cases."
-					: "If the input contains a question or instruction, answer it. Otherwise explain the content clearly.";
+						? kind === "code"
+							? "Improve quality: readability, performance, safety. Keep changes minimal and practical."
+							: "Improve the text: clarity, structure, tone, inclusive language. Provide an improved version."
+						: mode === "run"
+						? kind === "code"
+							? "Simulate executing the code. Do NOT claim you actually ran it.\n\nIMPORTANT: Return ONLY the following lines/sections (no other text, no headings, no markdown). No emojis.\nOutput: <plain text output or (no output)>\n\nIf an error is likely, additionally include:\nError: <short>\nFix:\n```<same language>\n<corrected code>\n```\n\nDo NOT explain the code. Only give Output and, if needed, Error+Fix."
+							: "The user asked to run something, but the input is text. Explain that only code can be run, and ask for a code snippet or clarify what to execute."
+						: mode === "summarize"
+						? kind === "code"
+							? "Summarize what this code does. Include: purpose, inputs/outputs, key logic, risks, and 2-3 improvement ideas."
+							: "Summarize the text. Include: core points, decisions, next steps (if any), and key entities. Use bullet points."
+						: kind === "code"
+						? "Explain what this code does and how it works. Mention important details and edge cases."
+						: "If the input contains a question or instruction, answer it. Otherwise explain the content clearly.";
 				const modeInstruction = prompt
-					? modeInstructionBase + "\n\nUser request (higher priority): " + prompt
+					? modeInstructionBase +
+					  "\n\nUser request (higher priority): " +
+					  prompt
 					: modeInstructionBase;
 
 				function formatInputForUserPrompt(kind, lang, input) {
@@ -1332,7 +1329,9 @@ const server = http.createServer((req, res) => {
 				function buildUserPrompt(instruction, inputText) {
 					return (
 						`Mode: ${mode}\nKind: ${kind}\nLanguageTag: ${lang || "(auto)"}\n` +
-						(truncated ? "Note: input may be truncated for safety/performance.\n" : "") +
+						(truncated
+							? "Note: input may be truncated for safety/performance.\n"
+							: "") +
 						"\nInstruction: " +
 						instruction +
 						"\n\n" +
@@ -1347,8 +1346,7 @@ const server = http.createServer((req, res) => {
 						? AI_MAX_OUTPUT_TOKENS
 						: 900;
 
-						const temperature =
-							mode === "run" && kind === "code" ? 0 : 0.3;
+					const temperature = mode === "run" && kind === "code" ? 0 : 0.3;
 
 					async function callAnthropic(model, userPrompt) {
 						const r = await fetch("https://api.anthropic.com/v1/messages", {
@@ -1360,7 +1358,7 @@ const server = http.createServer((req, res) => {
 							},
 							body: JSON.stringify({
 								model,
-									temperature,
+								temperature,
 								max_tokens: maxTokens,
 								system,
 								messages: [{ role: "user", content: userPrompt }],
@@ -1410,11 +1408,10 @@ const server = http.createServer((req, res) => {
 					}
 
 					function extractText(data) {
-						const parts = data && Array.isArray(data.content) ? data.content : [];
+						const parts =
+							data && Array.isArray(data.content) ? data.content : [];
 						return parts
-							.map((p) =>
-								p && p.type === "text" ? String(p.text || "") : ""
-							)
+							.map((p) => (p && p.type === "text" ? String(p.text || "") : ""))
 							.join("\n")
 							.trim();
 					}
@@ -1428,56 +1425,59 @@ const server = http.createServer((req, res) => {
 						if (/(^|\n)#{2,}\s/.test(raw)) return true;
 						if (t.includes("let me explain")) return true;
 						if (t.includes("code overview")) return true;
-						if (t.includes("this script") && t.includes("demonstrates")) return true;
+						if (t.includes("this script") && t.includes("demonstrates"))
+							return true;
 						if (t.includes("explain")) return true;
 						// If it doesn't look like the requested format, retry once.
 						return true;
 					}
 
-						function extractFencedCodeBlocks(text) {
-							const src = String(text || "");
-							const blocks = [];
-							const re = /```[^\n]*\n([\s\S]*?)```/g;
-							let m;
-							while ((m = re.exec(src))) {
-								blocks.push(String(m[1] || ""));
-								if (blocks.length >= 6) break;
-							}
-							return blocks;
+					function extractFencedCodeBlocks(text) {
+						const src = String(text || "");
+						const blocks = [];
+						const re = /```[^\n]*\n([\s\S]*?)```/g;
+						let m;
+						while ((m = re.exec(src))) {
+							blocks.push(String(m[1] || ""));
+							if (blocks.length >= 6) break;
+						}
+						return blocks;
+					}
+
+					function coerceRunModeText(text) {
+						const raw = String(text || "").trim();
+						if (!raw) return "Output: (no output)";
+						if (raw.toLowerCase().startsWith("output:")) return raw;
+
+						// Prefer any fenced code block as the most likely "stdout" snippet.
+						const blocks = extractFencedCodeBlocks(raw);
+						if (blocks.length) {
+							const last = String(blocks[blocks.length - 1] || "").trim();
+							return "Output:\n" + (last || "(no output)");
 						}
 
-						function coerceRunModeText(text) {
-							const raw = String(text || "").trim();
-							if (!raw) return "Output: (no output)";
-							if (raw.toLowerCase().startsWith("output:")) return raw;
-
-							// Prefer any fenced code block as the most likely "stdout" snippet.
-							const blocks = extractFencedCodeBlocks(raw);
-							if (blocks.length) {
-								const last = String(blocks[blocks.length - 1] || "").trim();
-								return "Output:\n" + (last || "(no output)");
+						// Fallback: try to salvage likely output-like lines.
+						const lines = raw.split("\n").map((l) => l.replace(/\s+$/g, ""));
+						const candidates = [];
+						for (const line of lines) {
+							const s = String(line || "").trim();
+							if (!s) continue;
+							if (/^(?:[-*•]|\d+\.)\s+/.test(s)) continue;
+							if (
+								/^(?:code overview|key components|execution flow|potential edge cases)\b/i.test(
+									s
+								)
+							)
+								continue;
+							if (/\b(run speed:|traceback|exception|error:)\b/i.test(s)) {
+								candidates.push(s);
 							}
-
-							// Fallback: try to salvage likely output-like lines.
-							const lines = raw
-								.split("\n")
-								.map((l) => l.replace(/\s+$/g, ""));
-							const candidates = [];
-							for (const line of lines) {
-								const s = String(line || "").trim();
-								if (!s) continue;
-								if (/^(?:[-*•]|\d+\.)\s+/.test(s)) continue;
-								if (/^(?:code overview|key components|execution flow|potential edge cases)\b/i.test(s))
-									continue;
-								if (/\b(run speed:|traceback|exception|error:)\b/i.test(s)) {
-									candidates.push(s);
-								}
-								if (candidates.length >= 12) break;
-							}
-							if (candidates.length) return "Output:\n" + candidates.join("\n");
-
-							return "Output: (no output)";
+							if (candidates.length >= 12) break;
 						}
+						if (candidates.length) return "Output:\n" + candidates.join("\n");
+
+						return "Output: (no output)";
+					}
 
 					function chunkText(text, maxChars) {
 						const src = String(text || "");
@@ -1495,7 +1495,11 @@ const server = http.createServer((req, res) => {
 					let finalData = null;
 					let chosenModel = "";
 					let chunkCount = 1;
-					if (mode === "summarize" && kind === "text" && input.length > AI_MAX_INPUT_CHARS) {
+					if (
+						mode === "summarize" &&
+						kind === "text" &&
+						input.length > AI_MAX_INPUT_CHARS
+					) {
 						const chunks = chunkText(input, AI_MAX_INPUT_CHARS);
 						chunkCount = chunks.length;
 						const partials = [];
@@ -1578,7 +1582,10 @@ const server = http.createServer((req, res) => {
 									"Your previous answer was invalid. Reply ONLY in this exact format (no extra text, no markdown headings, no explanations, no emojis):\n" +
 									"Output: <plain text output or (no output)>\n\n" +
 									"If an error is likely:\nError: <short>\nFix:\n```<same language>\n<corrected code>\n```";
-								const retryPrompt = buildUserPrompt(strictRunInstruction, input);
+								const retryPrompt = buildUserPrompt(
+									strictRunInstruction,
+									input
+								);
 								const retryOut = await runWithModelFallback(retryPrompt);
 								if (retryOut.ok && retryOut.data) out = retryOut;
 							}
@@ -1587,10 +1594,10 @@ const server = http.createServer((req, res) => {
 						finalData = out.data;
 					}
 
-						let outText = extractText(finalData);
-						if (mode === "run" && kind === "code") {
-							outText = coerceRunModeText(outText);
-						}
+					let outText = extractText(finalData);
+					if (mode === "run" && kind === "code") {
+						outText = coerceRunModeText(outText);
+					}
 					json(res, 200, {
 						ok: true,
 						text: outText,
