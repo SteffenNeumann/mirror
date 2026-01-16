@@ -3388,6 +3388,26 @@
 		return null;
 	}
 
+	function normalizeNoteTextForCompare(text) {
+		return String(text || "").replace(/\r\n?/g, "\n").trim();
+	}
+
+	function findNoteByText(text) {
+		const notes = psState && Array.isArray(psState.notes) ? psState.notes : [];
+		const target = normalizeNoteTextForCompare(text);
+		if (!target) return null;
+		const sorted = notes
+			.slice()
+			.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+		for (const note of sorted) {
+			const noteText = normalizeNoteTextForCompare(
+				note && note.text ? note.text : ""
+			);
+			if (noteText === target) return note;
+		}
+		return null;
+	}
+
 	function applyNoteToEditor(note, notesForList) {
 		if (!note || !textarea) return;
 		psEditingNoteId = String(note.id || "");
@@ -5341,6 +5361,16 @@ self.onmessage = async (e) => {
 		else if (psHint)
 			psHint.textContent = psEditingNoteId ? "Updating…" : "Saving…";
 		if (!psEditingNoteId) {
+			const existing = findNoteByText(trimmed);
+			if (existing && existing.id) {
+				applyNoteToEditor(existing);
+				psAutoSaveLastSavedNoteId = psEditingNoteId;
+				psAutoSaveLastSavedText = trimmed;
+				setPsAutoSaveStatus("Bereits gespeichert");
+				if (psHint) psHint.textContent = "Bereits gespeichert.";
+				if (!auto) toast("Personal Space: bereits gespeichert.", "info");
+				return true;
+			}
 			const res = await api("/api/notes", {
 				method: "POST",
 				body: JSON.stringify({
