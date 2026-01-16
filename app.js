@@ -537,7 +537,7 @@
 		await openModal({
 			title: "Slash commands",
 			message:
-				"/h1 /h2 /h3 · /b (bold) · /i (italic) · /s (strike) · /quote · /ul · /ol · /todo · /done · /tasks · /code [lang] · /link · /hr",
+				"/h1 /h2 /h3 · /b (bold) · /i (italic) · /s (strike) · /quote · /ul · /ol · /todo · /done · /tasks · /code [lang] · /link · /hr · /table · /table row+ · /table row- · /table col+ · /table col-",
 			okText: "OK",
 			cancelText: "Close",
 			backdropClose: true,
@@ -558,6 +558,12 @@
 		{ cmd: "todo", label: "Task list", snippet: "/todo" },
 		{ cmd: "done", label: "Task (checked)", snippet: "/done" },
 		{ cmd: "tasks", label: "Task template", snippet: "/tasks" },
+		{ cmd: "table", label: "Table", snippet: "/table" },
+		{ cmd: "table", label: "Table (3x2)", snippet: "/table 3x2" },
+		{ cmd: "table", label: "Table: row +", snippet: "/table row+" },
+		{ cmd: "table", label: "Table: row -", snippet: "/table row-" },
+		{ cmd: "table", label: "Table: col +", snippet: "/table col+" },
+		{ cmd: "table", label: "Table: col -", snippet: "/table col-" },
 		{ cmd: "hr", label: "Horizontal rule", snippet: "/hr" },
 		{ cmd: "link", label: "Link", snippet: "/link" },
 		{ cmd: "code", label: "Code block", snippet: "/code" },
@@ -764,6 +770,193 @@
 		return false;
 	}
 
+	function renderTableRow(cells) {
+		const safeCells = Array.isArray(cells) ? cells : [];
+		return `| ${safeCells
+			.map((cell) => String(cell || "").trim())
+			.join(" | ")} |`;
+	}
+
+	function renderTableSeparator(aligns) {
+		const safeAligns = Array.isArray(aligns) ? aligns : [];
+		const parts = safeAligns.map((a) => {
+			const left = a && a.left ? ":" : "";
+			const right = a && a.right ? ":" : "";
+			return `${left}---${right}`;
+		});
+		return `| ${parts.join(" | ")} |`;
+	}
+
+	function buildMarkdownTable(cols, rows) {
+		const c = Math.max(1, Number(cols) || 2);
+		const r = Math.max(1, Number(rows) || 2);
+		const header = Array.from({ length: c }, (_, i) => `Header ${i + 1}`);
+		const aligns = Array.from({ length: c }, () => ({
+			left: false,
+			right: false,
+		}));
+		const body = Array.from({ length: r }, () =>
+			Array.from({ length: c }, () => "")
+		);
+		return [
+			renderTableRow(header),
+			renderTableSeparator(aligns),
+			...body.map(renderTableRow),
+		].join("\n");
+	}
+
+	function getLineIndexAtPos(text, pos) {
+		const src = String(text || "");
+		const p = Math.max(0, Math.min(src.length, Number(pos) || 0));
+		let lineIndex = 0;
+		for (let i = 0; i < p; i++) {
+			if (src[i] === "\n") lineIndex += 1;
+		}
+		return lineIndex;
+	}
+
+	function isTableSeparator(line) {
+		return /^\s*\|?(?:\s*:?-{3,}:?\s*\|)+\s*$/.test(
+			String(line || "")
+		);
+	}
+
+	function splitTableRow(line) {
+		const raw = String(line || "").trim();
+		const inner = raw.replace(/^\|/, "").replace(/\|$/, "");
+		if (!inner) return [""];
+		return inner.split("|").map((cell) => String(cell || "").trim());
+	}
+
+	function getColumnIndexFromCaret(line, caretCol, colCount) {
+		const raw = String(line || "");
+		const pipes = [];
+		for (let i = 0; i < raw.length; i++) if (raw[i] === "|") pipes.push(i);
+		if (!pipes.length) return 0;
+		let before = 0;
+		for (let i = 0; i < pipes.length; i++) if (pipes[i] < caretCol) before += 1;
+		const hasLeadingPipe = /^\s*\|/.test(raw);
+		let col = hasLeadingPipe ? before - 1 : before;
+		if (col < 0) col = 0;
+		const maxCol = Math.max(0, Number(colCount || 1) - 1);
+		if (col > maxCol) col = maxCol;
+		return col;
+	}
+
+	function getTableContext(src, caretPos) {
+		const text = String(src || "");
+		const lines = text.split("\n");
+		const lineStarts = [];
+		let acc = 0;
+		for (let i = 0; i < lines.length; i++) {
+			lineStarts[i] = acc;
+			acc += lines[i].length + 1;
+		}
+		const lineIndex = getLineIndexAtPos(text, caretPos);
+		if (lineIndex < 0 || lineIndex >= lines.length) return null;
+		const isTableLine = (line) => /\|/.test(String(line || ""));
+		let start = lineIndex;
+		while (start > 0 && isTableLine(lines[start - 1])) start -= 1;
+		let end = lineIndex;
+		while (end < lines.length - 1 && isTableLine(lines[end + 1])) end += 1;
+		const block = lines.slice(start, end + 1);
+		const sepOffset = block.findIndex((line) => isTableSeparator(line));
+		if (sepOffset <= 0) return null;
+		const startPos = lineStarts[start];
+		const endPos = lineStarts[end] + lines[end].length;
+		const caretCol = Math.max(
+			0,
+			Number(caretPos || 0) - (lineStarts[lineIndex] || 0)
+		);
+		return {
+			block,
+			sepOffset,
+			startPos,
+			endPos,
+			lineIndex,
+			start,
+			caretCol,
+		};
+	}
+
+	function applyTableCommand(el, action, caretPos) {
+		if (!el) return false;
+		const src = String(el.value || "");
+		const ctx = getTableContext(src, caretPos);
+		if (!ctx) return false;
+		const {
+			block,
+			sepOffset,
+			startPos,
+			endPos,
+			lineIndex,
+			start,
+			caretCol,
+		} = ctx;
+		const headerCells = splitTableRow(block[sepOffset - 1]);
+		const sepCellsRaw = splitTableRow(block[sepOffset]);
+		const bodyRowsRaw = block.slice(sepOffset + 1).map(splitTableRow);
+		let colCount = Math.max(
+			1,
+			headerCells.length,
+			sepCellsRaw.length,
+			...bodyRowsRaw.map((row) => row.length)
+		);
+		const normalizeRow = (row) => {
+			const out = Array.isArray(row) ? row.slice(0, colCount) : [];
+			while (out.length < colCount) out.push("");
+			return out;
+		};
+		let header = normalizeRow(headerCells);
+		let sepAligns = normalizeRow(sepCellsRaw).map((cell) => {
+			const s = String(cell || "").trim();
+			return { left: s.startsWith(":") || s.startsWith("-:"), right: s.endsWith(":") };
+		});
+		let body = bodyRowsRaw.map(normalizeRow);
+		if (!body.length) body = [Array.from({ length: colCount }, () => "")];
+		const relLine = lineIndex - start;
+		let targetRow = relLine;
+		if (targetRow <= sepOffset) targetRow = sepOffset + 1;
+		let bodyIndex = targetRow - (sepOffset + 1);
+		if (bodyIndex < 0) bodyIndex = 0;
+		if (bodyIndex >= body.length) bodyIndex = body.length - 1;
+		const lineForCol = block[Math.min(Math.max(relLine, 0), block.length - 1)] || "";
+		const colIndex = getColumnIndexFromCaret(lineForCol, caretCol, colCount);
+		if (action === "add-row") {
+			body.splice(bodyIndex + 1, 0, Array.from({ length: colCount }, () => ""));
+		} else if (action === "del-row") {
+			if (body.length > 1) body.splice(bodyIndex, 1);
+			else body[0] = Array.from({ length: colCount }, () => "");
+		} else if (action === "add-col") {
+			header.splice(colIndex + 1, 0, "Header");
+			sepAligns.splice(colIndex + 1, 0, { left: false, right: false });
+			body.forEach((row) => row.splice(colIndex + 1, 0, ""));
+			colCount += 1;
+		} else if (action === "del-col") {
+			if (colCount <= 1) return false;
+			header.splice(colIndex, 1);
+			sepAligns.splice(colIndex, 1);
+			body.forEach((row) => row.splice(colIndex, 1));
+			colCount -= 1;
+		} else {
+			return false;
+		}
+		const nextBlock = [
+			renderTableRow(header),
+			renderTableSeparator(sepAligns),
+			...body.map(renderTableRow),
+		].join("\n");
+		const relativeCaret = Math.max(0, Number(caretPos || 0) - startPos);
+		const nextCaret = Math.min(startPos + nextBlock.length, startPos + relativeCaret);
+		replaceTextRange(el, startPos, endPos, nextBlock);
+		try {
+			el.setSelectionRange(nextCaret, nextCaret);
+		} catch {
+			// ignore
+		}
+		return true;
+	}
+
 	function applySlashCommand(el) {
 		if (!el) return false;
 		const value = String(el.value || "");
@@ -884,6 +1077,40 @@
 			}
 			return true;
 		}
+		if (cmd === "table" || cmd === "tbl") {
+			const rawArg = String(arg || "").trim().toLowerCase();
+			const dimMatch = rawArg.match(/^(\d+)\s*[x,]\s*(\d+)$/);
+			if (!rawArg || dimMatch) {
+				const cols = dimMatch ? Number(dimMatch[1]) : 2;
+				const rows = dimMatch ? Number(dimMatch[2]) : 2;
+				const block = buildMarkdownTable(cols, rows);
+				replaceTextRange(el, start, end, block);
+				const cursor = start + 2;
+				el.selectionStart = cursor;
+				el.selectionEnd = cursor;
+				return true;
+			}
+			const action =
+				rawArg === "row+" || rawArg === "addrow" || rawArg === "row-add" || rawArg === "add-row"
+					? "add-row"
+					: rawArg === "row-" || rawArg === "delrow" || rawArg === "row-del" || rawArg === "del-row"
+					? "del-row"
+					: rawArg === "col+" || rawArg === "addcol" || rawArg === "col-add" || rawArg === "add-col"
+					? "add-col"
+					: rawArg === "col-" || rawArg === "delcol" || rawArg === "col-del" || rawArg === "del-col"
+					? "del-col"
+					: "";
+			if (!action) return false;
+			const ok = applyTableCommand(el, action, caret);
+			if (!ok) {
+				toast("No table found on this line.", "error");
+				replaceTextRange(el, start, end, "");
+				el.selectionStart = start;
+				el.selectionEnd = start;
+				return true;
+			}
+			return true;
+		}
 		if (cmd === "code") {
 			const fallback = getSelectedCodeLang();
 			const lang = String(arg || fallback || "")
@@ -904,7 +1131,13 @@
 		return false;
 	}
 
-	let psState = { authed: false, email: "", tags: [], notes: [], favorites: [] };
+	let psState = {
+		authed: false,
+		email: "",
+		tags: [],
+		notes: [],
+		favorites: [],
+	};
 	let psActiveTags = new Set();
 	let psTagFilterMode = "and";
 	let psEditingNoteId = "";
@@ -1146,7 +1379,10 @@
 		psPinnedToggle.classList.toggle("border-white/10", !psPinnedOnly);
 		psPinnedToggle.classList.toggle("text-slate-300", !psPinnedOnly);
 		try {
-			psPinnedToggle.setAttribute("aria-pressed", psPinnedOnly ? "true" : "false");
+			psPinnedToggle.setAttribute(
+				"aria-pressed",
+				psPinnedOnly ? "true" : "false"
+			);
 		} catch {
 			// ignore
 		}
@@ -1323,16 +1559,19 @@
 				).trim()
 			);
 		const hasAnyOutput = Boolean(
-			String(previewRunState && previewRunState.output ? previewRunState.output : "")
-				.trim()
+			String(
+				previewRunState && previewRunState.output ? previewRunState.output : ""
+			).trim()
 		);
 		const hasAnyError = Boolean(
-			String(previewRunState && previewRunState.error ? previewRunState.error : "")
-				.trim()
+			String(
+				previewRunState && previewRunState.error ? previewRunState.error : ""
+			).trim()
 		);
 		const hasAnyStatus = Boolean(
-			String(previewRunState && previewRunState.status ? previewRunState.status : "")
-				.trim()
+			String(
+				previewRunState && previewRunState.status ? previewRunState.status : ""
+			).trim()
 		);
 		const canClear = hasAnyOutput || hasAnyError || hasAnyStatus;
 		if (runOutputTitleEl)
@@ -2100,9 +2339,7 @@
 					psEditingNoteTagsOverridden = updatedRaw.some(
 						(t) => String(t || "") === PS_MANUAL_TAGS_MARKER
 					);
-					psEditingNoteTags = stripPinnedTag(
-						stripManualTagsMarker(updatedRaw)
-					);
+					psEditingNoteTags = stripPinnedTag(stripManualTagsMarker(updatedRaw));
 					syncPsEditorTagsInput(true);
 					updatePsEditingTagsHint();
 				}
@@ -2179,9 +2416,7 @@
 				const id = String(n.id || "");
 				const active = id && id === psEditingNoteId;
 				const rawTags = Array.isArray(n.tags) ? n.tags : [];
-				const pinned = rawTags.some(
-					(t) => String(t || "") === PS_PINNED_TAG
-				);
+				const pinned = rawTags.some((t) => String(t || "") === PS_PINNED_TAG);
 				const tags = stripPinnedTag(stripManualTagsMarker(rawTags));
 				const showTags = tags.length > 6 ? tags.slice(-6) : tags;
 				const chips = showTags
@@ -2851,7 +3086,13 @@ self.onmessage = async (e) => {
 			const me = await api("/api/personal-space/me");
 			psState = me;
 		} catch (e) {
-			psState = { authed: false, email: "", tags: [], notes: [], favorites: [] };
+			psState = {
+				authed: false,
+				email: "",
+				tags: [],
+				notes: [],
+				favorites: [],
+			};
 			if (psHint) psHint.textContent = "";
 		}
 		psState.favorites = Array.isArray(psState.favorites)
@@ -3587,9 +3828,8 @@ self.onmessage = async (e) => {
 							.filter(Boolean)
 							.filter(
 								(f, i, arr) =>
-									arr.findIndex(
-										(x) => x.room === f.room && x.key === f.key
-									) === i
+									arr.findIndex((x) => x.room === f.room && x.key === f.key) ===
+									i
 							)
 							.slice(0, 20);
 						psState.favorites = next;
