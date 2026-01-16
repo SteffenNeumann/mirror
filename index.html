@@ -50,6 +50,8 @@
 				--accent-text-soft: rgba(244, 114, 182, 0.95);
 				--accent-ring: rgba(217, 70, 239, 0.25);
 				--accent-ring-strong: rgba(217, 70, 239, 0.4);
+				--blockquote-border: rgba(217, 70, 239, 0.45);
+				--blockquote-text: rgb(203 213 225);
 			}
 			.md-content {
 				font-size: 0.875rem;
@@ -193,10 +195,10 @@
 				padding: 6px 8px;
 			}
 			.md-content blockquote {
-				border-left: 3px solid rgba(217, 70, 239, 0.45);
+				border-left: 3px solid var(--blockquote-border);
 				margin: 0;
 				padding: 0 12px;
-				color: rgb(203 213 225);
+				color: var(--blockquote-text);
 			}
 			.md-content ul.task-list {
 				list-style: none;
@@ -538,6 +540,69 @@
 											class="max-h-56 overflow-auto p-1"></div>
 									</div>
 									<div
+										id="selectionMenu"
+										class="absolute z-40 hidden min-w-[240px] overflow-hidden rounded-xl border border-white/10 bg-slate-950/85 shadow-soft backdrop-blur">
+										<div class="flex flex-wrap items-center gap-1 p-1">
+											<button
+												type="button"
+												data-selection-action="bold"
+												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
+												title="Bold">
+												<strong>B</strong>
+											</button>
+											<button
+												type="button"
+												data-selection-action="italic"
+												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
+												title="Italic">
+												<em>I</em>
+											</button>
+											<button
+												type="button"
+												data-selection-action="strike"
+												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
+												title="Strikethrough">
+												<span class="line-through">S</span>
+											</button>
+											<button
+												type="button"
+												data-selection-action="quote"
+												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
+												title="Blockquote">
+												“
+											</button>
+											<button
+												type="button"
+												data-selection-action="ul"
+												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
+												title="Bullet list">
+												• List
+											</button>
+											<button
+												type="button"
+												data-selection-action="ol"
+												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
+												title="Numbered list">
+												1. List
+											</button>
+											<button
+												type="button"
+												data-selection-action="todo"
+												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
+												title="Task list">
+												☐ Task
+											</button>
+											<div class="mx-1 h-6 w-px bg-white/10"></div>
+											<button
+												type="button"
+												data-selection-action="sort"
+												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
+												title="Sort A–Z">
+												Sort A–Z
+											</button>
+										</div>
+									</div>
+									<div
 										id="codeLangWrap"
 										class="absolute left-2 top-2 hidden flex items-center gap-2">
 										<label for="codeLang" class="sr-only">Language</label>
@@ -636,6 +701,42 @@
 								<div
 									class="mt-3 flex flex-wrap items-center justify-between gap-2">
 									<div class="flex items-center gap-2">
+										<button
+											id="psNavBack"
+											type="button"
+											class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10 disabled:pointer-events-none disabled:opacity-40"
+											title="Back"
+											aria-label="Back"
+											disabled>
+											<svg
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												class="h-4 w-4">
+												<path d="M15 18l-6-6 6-6" />
+											</svg>
+										</button>
+										<button
+											id="psNavForward"
+											type="button"
+											class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10 disabled:pointer-events-none disabled:opacity-40"
+											title="Forward"
+											aria-label="Forward"
+											disabled>
+											<svg
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												class="h-4 w-4">
+												<path d="M9 6l6 6-6 6" />
+											</svg>
+										</button>
 										<button
 											id="psSaveMain"
 											type="button"

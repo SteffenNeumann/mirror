@@ -53,6 +53,7 @@
 	const slashMenuList = document.getElementById("slashMenuList");
 	const wikiMenu = document.getElementById("wikiMenu");
 	const wikiMenuList = document.getElementById("wikiMenuList");
+	const selectionMenu = document.getElementById("selectionMenu");
 	const mainGrid = document.getElementById("mainGrid");
 	const psPanel = document.getElementById("psPanel");
 	const togglePersonalSpaceBtn = document.getElementById("togglePersonalSpace");
@@ -109,6 +110,8 @@
 	const psSaveMain = document.getElementById("psSaveMain");
 	const psMainHint = document.getElementById("psMainHint");
 	const psAutoSaveStatus = document.getElementById("psAutoSaveStatus");
+	const psNavBackBtn = document.getElementById("psNavBack");
+	const psNavForwardBtn = document.getElementById("psNavForward");
 	const psSettingsBtn = document.getElementById("psSettingsBtn");
 	const settingsRoot = document.getElementById("settingsRoot");
 	const settingsBackdrop = document.getElementById("settingsBackdrop");
@@ -704,6 +707,95 @@
 	let wikiMenuOpen = false;
 	let wikiMenuItems = [];
 	let wikiMenuIndex = 0;
+	let selectionMenuOpen = false;
+	let psTagsAutoSaveTimer = null;
+	let psNoteHistory = [];
+	let psNoteHistoryIndex = -1;
+	let psNoteHistorySkip = false;
+
+	function getTextareaCaretCoords(el, pos) {
+		if (!el) return { left: 0, top: 0, height: 0 };
+		const value = String(el.value || "");
+		const caret = Math.max(0, Math.min(value.length, Number(pos) || 0));
+		const div = document.createElement("div");
+		const span = document.createElement("span");
+		const style = window.getComputedStyle(el);
+		const props = [
+			"direction",
+			"boxSizing",
+			"width",
+			"height",
+			"overflowX",
+			"overflowY",
+			"borderTopWidth",
+			"borderRightWidth",
+			"borderBottomWidth",
+			"borderLeftWidth",
+			"paddingTop",
+			"paddingRight",
+			"paddingBottom",
+			"paddingLeft",
+			"fontStyle",
+			"fontVariant",
+			"fontWeight",
+			"fontStretch",
+			"fontSize",
+			"lineHeight",
+			"fontFamily",
+			"textAlign",
+			"textTransform",
+			"textIndent",
+			"textDecoration",
+			"letterSpacing",
+			"wordSpacing",
+			"tabSize",
+			"MozTabSize",
+		];
+		props.forEach((p) => {
+			div.style[p] = style[p];
+		});
+		div.style.position = "absolute";
+		div.style.visibility = "hidden";
+		div.style.whiteSpace = "pre-wrap";
+		div.style.wordWrap = "break-word";
+		div.style.top = "0";
+		div.style.left = "-9999px";
+		div.textContent = value.slice(0, caret);
+		span.textContent = value.slice(caret) || ".";
+		div.appendChild(span);
+		document.body.appendChild(div);
+		const rect = span.getBoundingClientRect();
+		const divRect = div.getBoundingClientRect();
+		const height = rect.height || parseFloat(style.lineHeight) || 16;
+		const coords = {
+			left: rect.left - divRect.left,
+			top: rect.top - divRect.top,
+			height,
+		};
+		div.remove();
+		return coords;
+	}
+
+	function positionFloatingMenu(menu, el, caretPos, offsetY) {
+		if (!menu || !el) return;
+		const coords = getTextareaCaretCoords(el, caretPos);
+		const parent = el.parentElement;
+		if (!parent) return;
+		const elRect = el.getBoundingClientRect();
+		const parentRect = parent.getBoundingClientRect();
+		const left = coords.left - el.scrollLeft + (elRect.left - parentRect.left);
+		const top = coords.top - el.scrollTop + (elRect.top - parentRect.top);
+		const menuRect = menu.getBoundingClientRect();
+		const maxLeft = parentRect.width - Math.max(0, menuRect.width) - 8;
+		const maxTop = parentRect.height - Math.max(0, menuRect.height) - 8;
+		const nextLeft = Math.max(8, Math.min(left, maxLeft));
+		const nextTop = Math.max(
+			8,
+			Math.min(top + coords.height + (offsetY || 8), maxTop)
+		);
+		menu.style.left = `${Math.round(nextLeft)}px`;
+		menu.style.top = `${Math.round(nextTop)}px`;
+	}
 
 	function setSlashMenuOpen(open) {
 		slashMenuOpen = Boolean(open);
@@ -762,6 +854,141 @@
 		wikiMenuOpen = Boolean(open);
 		if (!wikiMenu || !wikiMenu.classList) return;
 		wikiMenu.classList.toggle("hidden", !wikiMenuOpen);
+	}
+
+	function setSelectionMenuOpen(open) {
+		selectionMenuOpen = Boolean(open);
+		if (!selectionMenu || !selectionMenu.classList) return;
+		selectionMenu.classList.toggle("hidden", !selectionMenuOpen);
+	}
+
+	function getSelectionRange() {
+		if (!textarea) return null;
+		const start = Number(textarea.selectionStart || 0);
+		const end = Number(textarea.selectionEnd || 0);
+		if (end <= start) return null;
+		return { start, end };
+	}
+
+	function getSelectionLineRange(value, start, end) {
+		const lineStart = value.lastIndexOf("\n", Math.max(0, start - 1)) + 1;
+		const lineEndIdx = value.indexOf("\n", end);
+		const lineEnd = lineEndIdx === -1 ? value.length : lineEndIdx;
+		return { lineStart, lineEnd };
+	}
+
+	function wrapSelection(el, left, right) {
+		if (!el) return;
+		const value = String(el.value || "");
+		const start = Number(el.selectionStart || 0);
+		const end = Number(el.selectionEnd || 0);
+		const inner = start < end ? value.slice(start, end) : "";
+		const next = `${left}${inner}${right}`;
+		el.value = value.slice(0, start) + next + value.slice(end);
+		el.selectionStart = start + left.length;
+		el.selectionEnd = start + left.length + inner.length;
+	}
+
+	function prefixSelectionLines(el, prefix, numbered) {
+		if (!el) return;
+		const value = String(el.value || "");
+		const start = Number(el.selectionStart || 0);
+		const end = Number(el.selectionEnd || 0);
+		const { lineStart, lineEnd } = getSelectionLineRange(value, start, end);
+		const block = value.slice(lineStart, lineEnd);
+		const lines = block.split("\n");
+		const nextLines = lines.map((line, idx) => {
+			const base = String(line || "");
+			if (!base.trim()) return base;
+			if (numbered) {
+				const clean = base.replace(/^\s*\d+\.\s+/, "");
+				return `${idx + 1}. ${clean}`;
+			}
+			return base.startsWith(prefix) ? base : `${prefix}${base}`;
+		});
+		const nextBlock = nextLines.join("\n");
+		el.value = value.slice(0, lineStart) + nextBlock + value.slice(lineEnd);
+		el.selectionStart = lineStart;
+		el.selectionEnd = lineStart + nextBlock.length;
+	}
+
+	function sortSelectionLines(el) {
+		if (!el) return;
+		const value = String(el.value || "");
+		const start = Number(el.selectionStart || 0);
+		const end = Number(el.selectionEnd || 0);
+		const { lineStart, lineEnd } = getSelectionLineRange(value, start, end);
+		const block = value.slice(lineStart, lineEnd);
+		const lines = block.split("\n");
+		const sorted = lines.slice().sort((a, b) =>
+			String(a || "").localeCompare(String(b || ""), undefined, {
+				numeric: true,
+				sensitivity: "base",
+			})
+		);
+		const nextBlock = sorted.join("\n");
+		el.value = value.slice(0, lineStart) + nextBlock + value.slice(lineEnd);
+		el.selectionStart = lineStart;
+		el.selectionEnd = lineStart + nextBlock.length;
+	}
+
+	function applySelectionAction(action) {
+		if (!textarea) return;
+		switch (action) {
+			case "bold":
+				wrapSelection(textarea, "**", "**");
+				break;
+			case "italic":
+				wrapSelection(textarea, "*", "*");
+				break;
+			case "strike":
+				wrapSelection(textarea, "~~", "~~");
+				break;
+			case "quote":
+				prefixSelectionLines(textarea, "> ");
+				break;
+			case "ul":
+				prefixSelectionLines(textarea, "- ");
+				break;
+			case "ol":
+				prefixSelectionLines(textarea, "", true);
+				break;
+			case "todo":
+				prefixSelectionLines(textarea, "- [ ] ");
+				break;
+			case "sort":
+				sortSelectionLines(textarea);
+				break;
+			default:
+				return;
+		}
+		try {
+			textarea.focus();
+		} catch {
+			// ignore
+		}
+		updatePreview();
+		scheduleSend();
+		setSelectionMenuOpen(false);
+	}
+
+	function updateSelectionMenu() {
+		if (!selectionMenu || !textarea) return;
+		if (slashMenuOpen || wikiMenuOpen) {
+			setSelectionMenuOpen(false);
+			return;
+		}
+		if (document.activeElement !== textarea) {
+			setSelectionMenuOpen(false);
+			return;
+		}
+		const range = getSelectionRange();
+		if (!range) {
+			setSelectionMenuOpen(false);
+			return;
+		}
+		setSelectionMenuOpen(true);
+		positionFloatingMenu(selectionMenu, textarea, range.end, 10);
 	}
 
 	function getWikiContext() {
@@ -1035,6 +1262,12 @@
 		slashMenuIndex = 0;
 		setSlashMenuOpen(true);
 		renderSlashMenu();
+		positionFloatingMenu(
+			slashMenu,
+			textarea,
+			Number(textarea.selectionEnd || 0),
+			6
+		);
 	}
 
 	function handleSlashMenuKey(ev) {
@@ -2023,12 +2256,26 @@
 				"--accent-ring-strong",
 				colors.accentRingStrong || colors.accentRing || colors.accentBorder
 			);
+			root.style.setProperty(
+				"--blockquote-border",
+				colors.blockquoteBorder ||
+					colors.accentBorderStrong ||
+					colors.accentBorder ||
+					"rgba(217, 70, 239, 0.45)"
+			);
+			root.style.setProperty(
+				"--blockquote-text",
+				colors.blockquoteText ||
+					colors.accentTextSoft ||
+					"rgba(203, 213, 225, 1)"
+			);
 		}
 		try {
 			document.body.setAttribute("data-theme", next);
 		} catch {
 			// ignore
 		}
+		if (previewOpen) updatePreview();
 	}
 
 	function saveTheme(next) {
@@ -3077,6 +3324,16 @@
 		} catch {
 			bodyHtml = "";
 		}
+		const themeColors = THEMES[activeTheme] || THEMES.fuchsia || {};
+		const blockquoteBorder =
+			themeColors.blockquoteBorder ||
+			themeColors.accentBorderStrong ||
+			themeColors.accentBorder ||
+			"rgba(217,70,239,.45)";
+		const blockquoteText =
+			themeColors.blockquoteText ||
+			themeColors.accentTextSoft ||
+			"rgba(203,213,225,1)";
 
 		// Token pro Preview-Render: erlaubt sichere postMessage-Validierung auch bei sandbox/null origin.
 		try {
@@ -3097,7 +3354,7 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
 	<!--ts:${stamp}-->
   <style>
-    :root{color-scheme:dark;}
+		:root{color-scheme:dark;--blockquote-border:${blockquoteBorder};--blockquote-text:${blockquoteText};}
     body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:#020617;color:#e2e8f0;}
     a{color:#60a5fa;}
     code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;}
@@ -3107,7 +3364,7 @@
     h1,h2,h3{line-height:1.25;}
     table{border-collapse:collapse;width:100%;}
     th,td{border:1px solid rgba(255,255,255,.12);padding:6px 8px;}
-    blockquote{border-left:3px solid rgba(217,70,239,.45);margin:0;padding:0 12px;color:#cbd5e1;}
+		blockquote{border-left:3px solid var(--blockquote-border);margin:0;padding:0 12px;color:var(--blockquote-text);}
     ul.task-list{list-style:none;padding-left:0;}
     ul.task-list li{display:flex;gap:.55rem;align-items:flex-start;}
 		ul.task-list li.task-list-item.checked{opacity:.75;text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:rgba(148,163,184,.7);}
@@ -3452,6 +3709,90 @@
 		return notes.find((n) => String(n && n.id ? n.id : "") === target) || null;
 	}
 
+	function updatePsNoteNavButtons() {
+		if (!psNavBackBtn || !psNavForwardBtn) return;
+		const canBack = psNoteHistoryIndex > 0;
+		const canForward =
+			psNoteHistoryIndex >= 0 && psNoteHistoryIndex < psNoteHistory.length - 1;
+		psNavBackBtn.disabled = !canBack;
+		psNavForwardBtn.disabled = !canForward;
+	}
+
+	function pushPsNoteHistory(noteId) {
+		if (psNoteHistorySkip) return;
+		const id = String(noteId || "");
+		if (!id) return;
+		const current =
+			psNoteHistoryIndex >= 0 ? psNoteHistory[psNoteHistoryIndex] : "";
+		if (current === id) return;
+		if (psNoteHistoryIndex < psNoteHistory.length - 1) {
+			psNoteHistory = psNoteHistory.slice(0, psNoteHistoryIndex + 1);
+		}
+		psNoteHistory.push(id);
+		psNoteHistoryIndex = psNoteHistory.length - 1;
+		updatePsNoteNavButtons();
+	}
+
+	function navigatePsNoteHistory(delta) {
+		const nextIndex = psNoteHistoryIndex + Number(delta || 0);
+		if (nextIndex < 0 || nextIndex >= psNoteHistory.length) return;
+		const id = psNoteHistory[nextIndex];
+		const note = findNoteById(id);
+		psNoteHistoryIndex = nextIndex;
+		updatePsNoteNavButtons();
+		if (!note) return;
+		psNoteHistorySkip = true;
+		applyNoteToEditor(note, null, { skipHistory: true });
+		psNoteHistorySkip = false;
+	}
+
+	function rebuildPsTagsFromNotes() {
+		if (!psState || !psState.authed) return;
+		const tags = new Set();
+		const notes = Array.isArray(psState.notes) ? psState.notes : [];
+		for (const note of notes) {
+			const raw = Array.isArray(note && note.tags) ? note.tags : [];
+			raw.forEach((t) => {
+				const tag = String(t || "");
+				if (!tag) return;
+				if (tag === PS_PINNED_TAG || tag === PS_MANUAL_TAGS_MARKER) return;
+				tags.add(tag);
+			});
+		}
+		psState.tags = Array.from(tags).sort();
+	}
+
+	function updateEditingNoteTagsLocal(nextTags) {
+		if (!psState || !psState.authed) return;
+		if (!psEditingNoteId) return;
+		const notes = Array.isArray(psState.notes) ? psState.notes : [];
+		const id = String(psEditingNoteId || "");
+		const idx = notes.findIndex((n) => String(n && n.id ? n.id : "") === id);
+		if (idx < 0) return;
+		const baseTags = Array.isArray(nextTags) ? nextTags : [];
+		const tagsWithPinned = psEditingNotePinned
+			? [...baseTags, PS_PINNED_TAG]
+			: baseTags;
+		const tagsPayload = buildPsTagsPayload(
+			tagsWithPinned,
+			psEditingNoteTagsOverridden
+		);
+		const updated = { ...notes[idx], tags: tagsPayload };
+		psState.notes = [...notes.slice(0, idx), updated, ...notes.slice(idx + 1)];
+		rebuildPsTagsFromNotes();
+		applyPersonalSpaceFiltersAndRender();
+	}
+
+	function schedulePsTagsAutoSave() {
+		if (!psEditingNoteId || !textarea) return;
+		if (!psState || !psState.authed) return;
+		if (psTagsAutoSaveTimer) window.clearTimeout(psTagsAutoSaveTimer);
+		psTagsAutoSaveTimer = window.setTimeout(() => {
+			psTagsAutoSaveTimer = null;
+			void savePersonalSpaceNote(String(textarea.value || ""), { auto: true });
+		}, 700);
+	}
+
 	function findNoteByTitle(title) {
 		const notes = psState && Array.isArray(psState.notes) ? psState.notes : [];
 		const target = String(title || "")
@@ -3490,10 +3831,13 @@
 		return null;
 	}
 
-	function applyNoteToEditor(note, notesForList) {
+	function applyNoteToEditor(note, notesForList, opts) {
 		if (!note || !textarea) return;
 		psEditingNoteId = String(note.id || "");
 		psEditingNoteKind = String(note.kind || "");
+		if (!(opts && opts.skipHistory)) {
+			pushPsNoteHistory(psEditingNoteId);
+		}
 		const rawTags = Array.isArray(note.tags) ? note.tags : [];
 		psEditingNoteTagsOverridden = rawTags.some(
 			(t) => String(t || "") === PS_MANUAL_TAGS_MARKER
@@ -4248,6 +4592,7 @@ self.onmessage = async (e) => {
 			updatePsPinnedToggle();
 			updateFavoritesUI();
 			setPsAutoSaveStatus("");
+			updatePsNoteNavButtons();
 			return;
 		}
 
@@ -4264,6 +4609,7 @@ self.onmessage = async (e) => {
 		syncPsEditorTagsInput();
 		updatePsPinnedToggle();
 		updateFavoritesUI();
+		updatePsNoteNavButtons();
 	}
 
 	function downloadJson(filename, obj) {
@@ -5140,6 +5486,26 @@ self.onmessage = async (e) => {
 			openTableEditorFromCursor();
 		});
 	}
+	if (selectionMenu) {
+		selectionMenu.querySelectorAll("[data-selection-action]").forEach((btn) => {
+			const handle = () => {
+				const action = String(btn.getAttribute("data-selection-action") || "");
+				applySelectionAction(action);
+			};
+			btn.addEventListener("pointerdown", (ev) => {
+				if (ev) ev.preventDefault();
+				btn.dataset.selectionHandled = "1";
+				handle();
+			});
+			btn.addEventListener("click", () => {
+				if (btn.dataset && btn.dataset.selectionHandled === "1") {
+					btn.dataset.selectionHandled = "0";
+					return;
+				}
+				handle();
+			});
+		});
+	}
 
 	textarea.addEventListener("input", () => {
 		metaLeft.textContent = "Typing…";
@@ -5149,6 +5515,7 @@ self.onmessage = async (e) => {
 		updateWikiMenu();
 		updateCodeLangOverlay();
 		updateTableMenuVisibility();
+		updateSelectionMenu();
 		schedulePsAutoSave();
 	});
 
@@ -5157,6 +5524,7 @@ self.onmessage = async (e) => {
 		updateWikiMenu();
 		updateCodeLangOverlay();
 		updateTableMenuVisibility();
+		updateSelectionMenu();
 	});
 
 	textarea.addEventListener("focus", () => {
@@ -5164,10 +5532,16 @@ self.onmessage = async (e) => {
 		updateTableMenuVisibility();
 	});
 
+	textarea.addEventListener("scroll", () => {
+		updateSlashMenu();
+		updateSelectionMenu();
+	});
+
 	textarea.addEventListener("keyup", () => {
 		updateCodeLangOverlay();
 		updateTableMenuVisibility();
 		updateWikiMenu();
+		updateSelectionMenu();
 	});
 
 	textarea.addEventListener("keydown", (ev) => {
@@ -5317,6 +5691,7 @@ self.onmessage = async (e) => {
 	document.addEventListener("selectionchange", () => {
 		if (document.activeElement !== textarea) return;
 		updateTableMenuVisibility();
+		updateSelectionMenu();
 	});
 
 	window.addEventListener("hashchange", () => {
@@ -5359,6 +5734,16 @@ self.onmessage = async (e) => {
 	if (addPersonalSpaceBtn) {
 		addPersonalSpaceBtn.addEventListener("click", requestPersonalSpaceLink);
 	}
+	if (psNavBackBtn) {
+		psNavBackBtn.addEventListener("click", () => {
+			navigatePsNoteHistory(-1);
+		});
+	}
+	if (psNavForwardBtn) {
+		psNavForwardBtn.addEventListener("click", () => {
+			navigatePsNoteHistory(1);
+		});
+	}
 	if (psNewNote) {
 		psNewNote.addEventListener("click", () => {
 			psEditingNoteId = "";
@@ -5389,6 +5774,8 @@ self.onmessage = async (e) => {
 			psEditingNoteTags = nextTags;
 			psEditingNoteTagsOverridden = true;
 			updatePsEditingTagsHint();
+			updateEditingNoteTagsLocal(nextTags);
+			schedulePsTagsAutoSave();
 		});
 		psEditorTagsInput.addEventListener("blur", () => {
 			if (psEditorTagsSyncing) return;
