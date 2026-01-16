@@ -51,6 +51,8 @@
 	const insertCodeBlockBtn = document.getElementById("insertCodeBlock");
 	const slashMenu = document.getElementById("slashMenu");
 	const slashMenuList = document.getElementById("slashMenuList");
+	const wikiMenu = document.getElementById("wikiMenu");
+	const wikiMenuList = document.getElementById("wikiMenuList");
 	const mainGrid = document.getElementById("mainGrid");
 	const psPanel = document.getElementById("psPanel");
 	const togglePersonalSpaceBtn = document.getElementById("togglePersonalSpace");
@@ -105,6 +107,7 @@
 	const psLogout = document.getElementById("psLogout");
 	const psSaveMain = document.getElementById("psSaveMain");
 	const psMainHint = document.getElementById("psMainHint");
+	const psAutoSaveStatus = document.getElementById("psAutoSaveStatus");
 
 	const params = new URLSearchParams(location.search);
 	const defaultWsUrl =
@@ -598,6 +601,9 @@
 	let slashMenuOpen = false;
 	let slashMenuItems = [];
 	let slashMenuIndex = 0;
+	let wikiMenuOpen = false;
+	let wikiMenuItems = [];
+	let wikiMenuIndex = 0;
 
 	function setSlashMenuOpen(open) {
 		slashMenuOpen = Boolean(open);
@@ -650,6 +656,177 @@
 			token: tokenLower,
 			exact,
 		};
+	}
+
+	function setWikiMenuOpen(open) {
+		wikiMenuOpen = Boolean(open);
+		if (!wikiMenu || !wikiMenu.classList) return;
+		wikiMenu.classList.toggle("hidden", !wikiMenuOpen);
+	}
+
+	function getWikiContext() {
+		if (!textarea)
+			return {
+				active: false,
+				start: 0,
+				end: 0,
+				query: "",
+			};
+		const value = String(textarea.value || "");
+		const caret = Math.max(
+			0,
+			Math.min(value.length, Number(textarea.selectionEnd || 0))
+		);
+		const lineStart = value.lastIndexOf("\n", caret - 1) + 1;
+		const lineEnd = value.indexOf("\n", caret);
+		const end = lineEnd === -1 ? value.length : lineEnd;
+		const line = value.slice(lineStart, end);
+		const relCaret = caret - lineStart;
+		const uptoCaret = line.slice(0, relCaret);
+		const startIdx = uptoCaret.lastIndexOf("[[");
+		if (startIdx === -1) return { active: false, start: 0, end: 0, query: "" };
+		if (uptoCaret.slice(startIdx + 2).includes("]]")) {
+			return { active: false, start: 0, end: 0, query: "" };
+		}
+		const query = uptoCaret.slice(startIdx + 2);
+		return {
+			active: true,
+			start: lineStart + startIdx,
+			end: lineStart + relCaret,
+			query,
+		};
+	}
+
+	function renderWikiMenu() {
+		if (!wikiMenuList) return;
+		if (!wikiMenuItems.length) {
+			wikiMenuList.innerHTML =
+				'<div class="px-3 py-2 text-xs text-slate-400">Keine Treffer.</div>';
+			return;
+		}
+		wikiMenuList.innerHTML = wikiMenuItems
+			.map((it, idx) => {
+				const active = idx === wikiMenuIndex;
+				const base =
+					"w-full text-left rounded-lg px-3 py-2 text-sm transition flex items-center justify-between gap-3";
+				const cls = active
+					? "bg-fuchsia-500/15 text-fuchsia-100"
+					: "hover:bg-white/5 text-slate-200";
+				const right =
+					'<span class="text-[11px] text-slate-500">' +
+					String(it.when || "") +
+					"</span>";
+				return (
+					`<button type="button" data-wiki-idx="${idx}" class="${base} ${cls}">` +
+					`<span class="font-medium">${escapeHtml(String(it.title || ""))}</span>` +
+					right +
+					"</button>"
+				);
+			})
+			.join("");
+
+		wikiMenuList.querySelectorAll("button[data-wiki-idx]").forEach((btn) => {
+			const pick = () => {
+				const idx = Number(btn.getAttribute("data-wiki-idx") || 0);
+				const it = wikiMenuItems[idx];
+				if (!it) return;
+				insertWikiLink(String(it.title || ""));
+			};
+			btn.addEventListener("pointerdown", (ev) => {
+				if (ev) ev.preventDefault();
+				btn.dataset.wikiHandled = "1";
+				pick();
+			});
+			btn.addEventListener("click", () => {
+				if (btn.dataset && btn.dataset.wikiHandled === "1") {
+					btn.dataset.wikiHandled = "0";
+					return;
+				}
+				pick();
+			});
+		});
+	}
+
+	function insertWikiLink(title) {
+		if (!textarea) return;
+		const t = String(title || "").trim();
+		if (!t) return;
+		const ctx = getWikiContext();
+		if (!ctx.active) return;
+		const insert = `[[${t}]]`;
+		replaceTextRange(textarea, ctx.start, ctx.end, insert + " ");
+		const pos = ctx.start + insert.length + 1;
+		textarea.selectionStart = pos;
+		textarea.selectionEnd = pos;
+		setWikiMenuOpen(false);
+		try {
+			textarea.focus();
+		} catch {
+			// ignore
+		}
+		updatePreview();
+	}
+
+	function updateWikiMenu() {
+		if (!textarea || !wikiMenu || !wikiMenuList) return;
+		const ctx = getWikiContext();
+		if (!ctx.active) {
+			setWikiMenuOpen(false);
+			return;
+		}
+		setSlashMenuOpen(false);
+		const q = String(ctx.query || "").trim().toLowerCase();
+		const notes =
+			psState && Array.isArray(psState.notes) ? psState.notes : [];
+		const sorted = notes
+			.slice()
+			.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+		const items = [];
+		for (const note of sorted) {
+			const title = getNoteTitle(note && note.text ? note.text : "");
+			if (!title) continue;
+			const titleLower = title.toLowerCase();
+			if (q && !titleLower.includes(q)) continue;
+			items.push({
+				title,
+				id: String(note && note.id ? note.id : ""),
+				when: fmtDate(note && note.createdAt ? note.createdAt : 0),
+			});
+			if (items.length >= 12) break;
+		}
+		wikiMenuItems = items;
+		wikiMenuIndex = 0;
+		setWikiMenuOpen(true);
+		renderWikiMenu();
+	}
+
+	function handleWikiMenuKey(ev) {
+		if (!wikiMenuOpen) return false;
+		if (!ev) return false;
+		if (ev.key === "Escape") {
+			ev.preventDefault();
+			setWikiMenuOpen(false);
+			return true;
+		}
+		if (ev.key === "ArrowDown") {
+			ev.preventDefault();
+			wikiMenuIndex = Math.min(wikiMenuItems.length - 1, wikiMenuIndex + 1);
+			renderWikiMenu();
+			return true;
+		}
+		if (ev.key === "ArrowUp") {
+			ev.preventDefault();
+			wikiMenuIndex = Math.max(0, wikiMenuIndex - 1);
+			renderWikiMenu();
+			return true;
+		}
+		if (ev.key === "Tab" || ev.key === "Enter") {
+			ev.preventDefault();
+			const it = wikiMenuItems[wikiMenuIndex];
+			if (it) insertWikiLink(String(it.title || ""));
+			return true;
+		}
+		return false;
 	}
 
 	function renderSlashMenu() {
@@ -724,6 +901,11 @@
 
 	function updateSlashMenu() {
 		if (!textarea || !slashMenu || !slashMenuList) return;
+		const wikiCtx = getWikiContext();
+		if (wikiCtx.active) {
+			setSlashMenuOpen(false);
+			return;
+		}
 		const ctx = getSlashContext();
 		if (!ctx.active) {
 			setSlashMenuOpen(false);
@@ -1461,6 +1643,10 @@
 	let psEditingNoteTags = [];
 	let psEditingNoteTagsOverridden = false;
 	let psEditingNotePinned = false;
+	let psAutoSaveTimer = 0;
+	let psAutoSaveLastSavedText = "";
+	let psAutoSaveLastSavedNoteId = "";
+	let psAutoSaveInFlight = false;
 	let previewOpen = false;
 	let md;
 	const clearMirrorBtn = document.getElementById("clearMirror");
@@ -1592,6 +1778,50 @@
 	function buildPsTagsPayload(tags, overridden) {
 		const cleaned = stripManualTagsMarker(tags);
 		return overridden ? [...cleaned, PS_MANUAL_TAGS_MARKER] : cleaned;
+	}
+
+	function setPsAutoSaveStatus(message) {
+		if (!psAutoSaveStatus) return;
+		const text = String(message || "").trim();
+		psAutoSaveStatus.textContent = text;
+		psAutoSaveStatus.classList.toggle("hidden", !text);
+	}
+
+	function cleanNoteTitleLine(line) {
+		return String(line || "")
+			.replace(/^#+\s*/, "")
+			.replace(/^[-*+]\s+/, "")
+			.replace(/^\d+[.)]\s+/, "")
+			.trim()
+			.slice(0, 120);
+	}
+
+	function getNoteTitleAndExcerpt(text) {
+		const lines = String(text || "").split("\n");
+		let title = "";
+		let titleLineIndex = 0;
+		for (let i = 0; i < lines.length; i++) {
+			const line = String(lines[i] || "").trim();
+			if (!line) continue;
+			title = cleanNoteTitleLine(line);
+			titleLineIndex = i;
+			break;
+		}
+		if (!title) title = "Untitled";
+		let rest = "";
+		for (let i = titleLineIndex + 1; i < lines.length; i++) {
+			const line = String(lines[i] || "").trim();
+			if (!line) continue;
+			rest += (rest ? " " : "") + cleanNoteTitleLine(line);
+			if (rest.length >= 220) break;
+		}
+		rest = rest.replace(/\s+/g, " ").trim();
+		if (rest.length > 240) rest = rest.slice(0, 240).trim() + "…";
+		return { title, excerpt: rest };
+	}
+
+	function getNoteTitle(text) {
+		return getNoteTitleAndExcerpt(text).title;
 	}
 	let psTagsCollapsed = false;
 	let psVisible = true;
@@ -2175,7 +2405,9 @@
 			// Nur sichere Link-Protokolle (kein javascript:, data:, etc.)
 			try {
 				md.validateLink = (url) =>
-					/^(https?:|mailto:|tel:)/i.test(String(url || "").trim());
+					/^(https?:|mailto:|tel:|note:)/i.test(
+						String(url || "").trim()
+					);
 			} catch {
 				// ignore
 			}
@@ -2236,6 +2468,39 @@
 		}
 	}
 
+	function buildNoteTitleIndex() {
+		const notes =
+			psState && Array.isArray(psState.notes) ? psState.notes : [];
+		const sorted = notes
+			.slice()
+			.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+		const index = new Map();
+		for (const note of sorted) {
+			const title = getNoteTitle(note && note.text ? note.text : "");
+			const key = String(title || "").toLowerCase();
+			if (!key || index.has(key)) continue;
+			index.set(key, {
+				id: String(note && note.id ? note.id : ""),
+				title,
+			});
+		}
+		return index;
+	}
+
+	function applyWikiLinksToMarkdown(src) {
+		const text = String(src || "");
+		if (!text.includes("[[")) return text;
+		const index = buildNoteTitleIndex();
+		return text.replace(/\[\[([^\[\]\n]+)\]\]/g, (raw, inner) => {
+			const label = String(inner || "").trim();
+			if (!label) return raw;
+			const key = label.toLowerCase();
+			const match = index.get(key);
+			const target = match && match.id ? match.id : label;
+			return `[${label}](note:${encodeURIComponent(target)})`;
+		});
+	}
+
 	function renderNoteHtml(note) {
 		const renderer = ensureMarkdown();
 		const text = String((note && note.text) || "");
@@ -2260,6 +2525,7 @@
 			const lang = langTag ? String(langTag).slice(5) : "";
 			src = `\n\n\`\`\`${lang}\n${text}\n\`\`\`\n`;
 		}
+		src = applyWikiLinksToMarkdown(src);
 		try {
 			const rendered = renderer.render(src);
 			return `<div class="md-content mt-2">${applyHljsToHtml(rendered)}</div>`;
@@ -2312,7 +2578,8 @@
 			setPreviewDocument(fallbackDoc);
 			return;
 		}
-		const src = String(textarea && textarea.value ? textarea.value : "");
+		const srcRaw = String(textarea && textarea.value ? textarea.value : "");
+		const src = applyWikiLinksToMarkdown(srcRaw);
 		let bodyHtml = "";
 		try {
 			bodyHtml = applyHljsToHtml(renderer.render(src));
@@ -2369,6 +2636,12 @@
 					// ignore
 				}
 			}
+				function getNoteHrefTarget(href){
+					if (!href || typeof href !== 'string') return '';
+					var raw = href.trim();
+					if (!raw.toLowerCase().startsWith('note:')) return '';
+					return raw.slice(5);
+				}
 			function toElement(t){
 				if (!t) return null;
 				if (t.nodeType === 1) return t;
@@ -2417,6 +2690,19 @@
 				if (idx === null) return;
 				send('mirror_task_toggle', { index: idx, checked: !!box.checked });
 			}, true);
+
+				document.addEventListener('click', function(ev){
+					var t = ev && ev.target ? ev.target : null;
+					var el = toElement(t);
+					if (!el) return;
+					var link = el.closest ? el.closest('a') : null;
+					if (!link || !link.getAttribute) return;
+					var href = link.getAttribute('href');
+					var target = getNoteHrefTarget(href);
+					if (!target) return;
+					ev.preventDefault();
+					send('mirror_note_open', { target: target });
+				}, true);
 
 			// Handshake: signalisiert dem Parent, dass Script+Messaging aktiv sind.
 			send('mirror_preview_ready', { ts: Date.now() });
@@ -2668,6 +2954,80 @@
 		}
 	}
 
+	function findNoteById(id) {
+		const notes =
+			psState && Array.isArray(psState.notes) ? psState.notes : [];
+		const target = String(id || "");
+		if (!target) return null;
+		return notes.find((n) => String(n && n.id ? n.id : "") === target) || null;
+	}
+
+	function findNoteByTitle(title) {
+		const notes =
+			psState && Array.isArray(psState.notes) ? psState.notes : [];
+		const target = String(title || "").trim().toLowerCase();
+		if (!target) return null;
+		const sorted = notes
+			.slice()
+			.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+		for (const note of sorted) {
+			const noteTitle = getNoteTitle(note && note.text ? note.text : "");
+			if (String(noteTitle || "").toLowerCase() === target) return note;
+		}
+		return null;
+	}
+
+	function applyNoteToEditor(note, notesForList) {
+		if (!note || !textarea) return;
+		psEditingNoteId = String(note.id || "");
+		psEditingNoteKind = String(note.kind || "");
+		const rawTags = Array.isArray(note.tags) ? note.tags : [];
+		psEditingNoteTagsOverridden = rawTags.some(
+			(t) => String(t || "") === PS_MANUAL_TAGS_MARKER
+		);
+		psEditingNotePinned = rawTags.some(
+			(t) => String(t || "") === PS_PINNED_TAG
+		);
+		psEditingNoteTags = stripPinnedTag(stripManualTagsMarker(rawTags));
+		syncPsEditorTagsInput(true);
+		textarea.value = String(note.text || "");
+		try {
+			textarea.focus();
+		} catch {
+			// ignore
+		}
+		if (psHint) psHint.textContent = "Editing: editor text updated.";
+		updatePsEditingTagsHint();
+		if (psMainHint) {
+			psMainHint.classList.remove("hidden");
+			psMainHint.textContent = "Editing active";
+		}
+		psAutoSaveLastSavedNoteId = psEditingNoteId;
+		psAutoSaveLastSavedText = String(textarea.value || "");
+		setPsAutoSaveStatus("");
+		updatePreview();
+		if (notesForList) renderPsList(notesForList);
+		else applyPersonalSpaceFiltersAndRender();
+	}
+
+	function openNoteFromWikiTarget(target) {
+		const raw = String(target || "");
+		if (!raw) return;
+		let decoded = raw;
+		try {
+			decoded = decodeURIComponent(raw);
+		} catch {
+			decoded = raw;
+		}
+		const byId = findNoteById(decoded);
+		const note = byId || findNoteByTitle(decoded);
+		if (!note) {
+			toast("Note not found.", "info");
+			return;
+		}
+		applyNoteToEditor(note);
+	}
+
 	function renderPsList(notes) {
 		if (!psList) return;
 		const escapeHtml = (raw) =>
@@ -2676,47 +3036,6 @@
 				.replace(/</g, "&lt;")
 				.replace(/>/g, "&gt;")
 				.replace(/\"/g, "&quot;");
-
-		const cleanTitleLine = (line) => {
-			let s = String(line || "").trim();
-			// headings
-			s = s.replace(/^#{1,6}\s+/, "");
-			// task list item
-			s = s.replace(/^(?:[-*+]|\d+[.)])\s+\[[ xX]\]\s+/, "");
-			// bullet/ordered list
-			s = s.replace(/^(?:[-*+]|\d+[.)])\s+/, "");
-			// blockquote
-			s = s.replace(/^>\s+/, "");
-			// inline code wrappers
-			s = s.replace(/^`+|`+$/g, "");
-			return s.trim();
-		};
-
-		const getTitleAndExcerpt = (text) => {
-			const src = String(text || "").replace(/\r\n?/g, "\n");
-			const lines = src.split("\n");
-			let title = "";
-			let titleLineIndex = -1;
-			for (let i = 0; i < lines.length; i++) {
-				const line = String(lines[i] || "").trim();
-				if (!line) continue;
-				title = cleanTitleLine(line);
-				titleLineIndex = i;
-				break;
-			}
-			if (!title) title = "Untitled";
-			// Excerpt: next non-empty lines after title, flattened.
-			let rest = "";
-			for (let i = titleLineIndex + 1; i < lines.length; i++) {
-				const line = String(lines[i] || "").trim();
-				if (!line) continue;
-				rest += (rest ? " " : "") + cleanTitleLine(line);
-				if (rest.length >= 220) break;
-			}
-			rest = rest.replace(/\s+/g, " ").trim();
-			if (rest.length > 240) rest = rest.slice(0, 240).trim() + "…";
-			return { title, excerpt: rest };
-		};
 
 		const items = Array.isArray(notes) ? notes : [];
 		if (items.length === 0) {
@@ -2741,7 +3060,7 @@
 							`<span class="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-slate-200">#${t}</span>`
 					)
 					.join("");
-				const info = getTitleAndExcerpt(n && n.text ? n.text : "");
+				const info = getNoteTitleAndExcerpt(n && n.text ? n.text : "");
 				const titleHtml = escapeHtml(info.title);
 				const excerptHtml = escapeHtml(info.excerpt);
 				return `
@@ -2814,28 +3133,8 @@
 			row.addEventListener("click", () => {
 				const id = row.getAttribute("data-note-id") || "";
 				const note = byId.get(id);
-				if (!note || !textarea) return;
-				psEditingNoteId = id;
-				psEditingNoteKind = String(note.kind || "");
-				const rawTags = Array.isArray(note.tags) ? note.tags : [];
-				psEditingNoteTagsOverridden = rawTags.some(
-					(t) => String(t || "") === PS_MANUAL_TAGS_MARKER
-				);
-				psEditingNotePinned = rawTags.some(
-					(t) => String(t || "") === PS_PINNED_TAG
-				);
-				psEditingNoteTags = stripPinnedTag(stripManualTagsMarker(rawTags));
-				syncPsEditorTagsInput(true);
-				textarea.value = String(note.text || "");
-				textarea.focus();
-				if (psHint) psHint.textContent = "Editing: editor text updated.";
-				updatePsEditingTagsHint();
-				if (psMainHint) {
-					psMainHint.classList.remove("hidden");
-					psMainHint.textContent = "Editing active";
-				}
-				updatePreview();
-				renderPsList(items);
+				if (!note) return;
+				applyNoteToEditor(note, items);
 			});
 
 			const delBtn = row.querySelector('[data-action="delete"]');
@@ -2924,6 +3223,12 @@
 			if (metaLeft)
 				metaLeft.textContent = ok ? "Todo updated." : "Todo not found.";
 			if (metaRight) metaRight.textContent = nowIso();
+			return;
+		}
+		if (data.type === "mirror_note_open") {
+			if (!previewMsgToken) return;
+			if (String(data.token || "") !== String(previewMsgToken)) return;
+			openNoteFromWikiTarget(String(data.target || ""));
 			return;
 		}
 		if (data.type !== "mirror_js_run_result") return;
@@ -3422,6 +3727,7 @@ self.onmessage = async (e) => {
 			setPsEditorTagsVisible(false);
 			updatePsPinnedToggle();
 			updateFavoritesUI();
+			setPsAutoSaveStatus("");
 			return;
 		}
 
@@ -4278,12 +4584,15 @@ self.onmessage = async (e) => {
 		scheduleSend();
 		updatePreview();
 		updateSlashMenu();
+		updateWikiMenu();
 		updateCodeLangOverlay();
 		updateTableMenuVisibility();
+		schedulePsAutoSave();
 	});
 
 	textarea.addEventListener("click", () => {
 		updateSlashMenu();
+		updateWikiMenu();
 		updateCodeLangOverlay();
 		updateTableMenuVisibility();
 	});
@@ -4296,9 +4605,11 @@ self.onmessage = async (e) => {
 	textarea.addEventListener("keyup", () => {
 		updateCodeLangOverlay();
 		updateTableMenuVisibility();
+		updateWikiMenu();
 	});
 
 	textarea.addEventListener("keydown", (ev) => {
+		if (handleWikiMenuKey(ev)) return;
 		if (handleSlashMenuKey(ev)) return;
 		if (!ev) return;
 		if (ev.key !== "Enter") return;
@@ -4490,6 +4801,10 @@ self.onmessage = async (e) => {
 			psEditingNoteTags = [];
 			psEditingNoteTagsOverridden = false;
 			psEditingNotePinned = false;
+			psAutoSaveLastSavedNoteId = "";
+			psAutoSaveLastSavedText = "";
+			if (psAutoSaveTimer) window.clearTimeout(psAutoSaveTimer);
+			setPsAutoSaveStatus("");
 			syncPsEditorTagsInput();
 			if (textarea) {
 				textarea.value = "";
@@ -4576,82 +4891,140 @@ self.onmessage = async (e) => {
 			})();
 		});
 	}
+
+	function canAutoSavePsNote() {
+		return Boolean(
+			psState &&
+				psState.authed &&
+				psEditingNoteId &&
+				textarea
+		);
+	}
+
+	async function savePersonalSpaceNote(text, opts) {
+		const auto = Boolean(opts && opts.auto);
+		const trimmed = String(text || "");
+		if (!trimmed.trim()) return false;
+		if (!psState || !psState.authed) {
+			if (!auto)
+				toast("Please enable Personal Space first (sign in).", "error");
+			return false;
+		}
+		const baseTags = Array.isArray(psEditingNoteTags) ? psEditingNoteTags : [];
+		const tagsWithPinned = psEditingNotePinned
+			? [...baseTags, PS_PINNED_TAG]
+			: baseTags;
+		const tagsPayload = buildPsTagsPayload(
+			tagsWithPinned,
+			psEditingNoteTagsOverridden
+		);
+		if (auto) setPsAutoSaveStatus("Speichern…");
+		else if (psHint)
+			psHint.textContent = psEditingNoteId ? "Updating…" : "Saving…";
+		if (!psEditingNoteId) {
+			const res = await api("/api/notes", {
+				method: "POST",
+				body: JSON.stringify({
+					text: trimmed,
+					tags: tagsPayload,
+				}),
+			});
+			const saved = res && res.note ? res.note : null;
+			if (saved && saved.id && psState && psState.authed) {
+				psEditingNoteId = String(saved.id);
+				psEditingNoteKind = String(saved.kind || "");
+				const notes = Array.isArray(psState.notes) ? psState.notes : [];
+				psState.notes = [saved, ...notes];
+				applyPersonalSpaceFiltersAndRender();
+				syncPsEditingNoteTagsFromState();
+				if (psMainHint) {
+					psMainHint.classList.remove("hidden");
+					psMainHint.textContent = "Editing active";
+				}
+			}
+			psAutoSaveLastSavedNoteId = psEditingNoteId;
+			psAutoSaveLastSavedText = trimmed;
+			if (auto) setPsAutoSaveStatus("Automatisch gespeichert");
+			else setPsAutoSaveStatus("Gespeichert");
+			if (psHint) psHint.textContent = auto ? "" : "Saved.";
+			if (!auto) toast("Personal Space: saved.", "success");
+			if (!auto) await refreshPersonalSpace();
+			return true;
+		}
+
+		const res = await api(
+			`/api/notes/${encodeURIComponent(psEditingNoteId)}`,
+			{
+				method: "PUT",
+				body: JSON.stringify({
+					text: trimmed,
+					tags: tagsPayload,
+				}),
+			}
+		);
+		const saved = res && res.note ? res.note : null;
+		if (saved && saved.id && psState && psState.authed) {
+			const notes = Array.isArray(psState.notes) ? psState.notes : [];
+			const id = String(saved.id);
+			const idx = notes.findIndex(
+				(n) => String(n && n.id ? n.id : "") === id
+			);
+			psState.notes =
+				idx >= 0
+					? [...notes.slice(0, idx), saved, ...notes.slice(idx + 1)]
+					: [saved, ...notes];
+			applyPersonalSpaceFiltersAndRender();
+			syncPsEditingNoteTagsFromState();
+		}
+		psAutoSaveLastSavedNoteId = psEditingNoteId;
+		psAutoSaveLastSavedText = trimmed;
+		if (auto) setPsAutoSaveStatus("Automatisch gespeichert");
+		else setPsAutoSaveStatus("Gespeichert");
+		if (psHint) psHint.textContent = auto ? "" : "Updated.";
+		if (!auto) toast("Personal Space: saved.", "success");
+		if (!auto) await refreshPersonalSpace();
+		return true;
+	}
+
+	function schedulePsAutoSave() {
+		if (!canAutoSavePsNote()) return;
+		const text = String(textarea && textarea.value ? textarea.value : "");
+		if (!text.trim()) return;
+		if (psAutoSaveLastSavedNoteId !== psEditingNoteId) {
+			psAutoSaveLastSavedNoteId = psEditingNoteId;
+			psAutoSaveLastSavedText = text;
+		}
+		if (text === psAutoSaveLastSavedText) return;
+		if (psAutoSaveTimer) window.clearTimeout(psAutoSaveTimer);
+		setPsAutoSaveStatus("Speichern…");
+		psAutoSaveTimer = window.setTimeout(async () => {
+			if (psAutoSaveInFlight) return;
+			if (!canAutoSavePsNote()) return;
+			const latest = String(
+				textarea && textarea.value ? textarea.value : ""
+			);
+			if (latest === psAutoSaveLastSavedText) return;
+			psAutoSaveInFlight = true;
+			try {
+				await savePersonalSpaceNote(latest, { auto: true });
+			} catch {
+				setPsAutoSaveStatus("Speichern fehlgeschlagen");
+			} finally {
+				psAutoSaveInFlight = false;
+			}
+		}, 900);
+	}
 	if (psSaveMain) {
 		psSaveMain.addEventListener("click", async () => {
 			const text = String(
 				textarea && textarea.value ? textarea.value : ""
 			).trim();
 			if (!text) return;
-			if (!psState || !psState.authed) {
-				toast("Please enable Personal Space first (sign in).", "error");
-				return;
-			}
 			try {
-				const baseTags = Array.isArray(psEditingNoteTags)
-					? psEditingNoteTags
-					: [];
-				const tagsWithPinned = psEditingNotePinned
-					? [...baseTags, PS_PINNED_TAG]
-					: baseTags;
-				const tagsPayload = buildPsTagsPayload(
-					tagsWithPinned,
-					psEditingNoteTagsOverridden
-				);
-				if (psHint)
-					psHint.textContent = psEditingNoteId ? "Updating…" : "Saving…";
-				if (!psEditingNoteId) {
-					const res = await api("/api/notes", {
-						method: "POST",
-						body: JSON.stringify({
-							text,
-							tags: tagsPayload,
-						}),
-					});
-					const saved = res && res.note ? res.note : null;
-					if (saved && saved.id && psState && psState.authed) {
-						psEditingNoteId = String(saved.id);
-						psEditingNoteKind = String(saved.kind || "");
-						const notes = Array.isArray(psState.notes) ? psState.notes : [];
-						psState.notes = [saved, ...notes];
-						applyPersonalSpaceFiltersAndRender();
-						syncPsEditingNoteTagsFromState();
-						if (psMainHint) {
-							psMainHint.classList.remove("hidden");
-							psMainHint.textContent = "Editing active";
-						}
-					}
-					if (psHint) psHint.textContent = "Saved.";
-				} else {
-					const res = await api(
-						`/api/notes/${encodeURIComponent(psEditingNoteId)}`,
-						{
-							method: "PUT",
-							body: JSON.stringify({
-								text,
-								tags: tagsPayload,
-							}),
-						}
-					);
-					const saved = res && res.note ? res.note : null;
-					if (saved && saved.id && psState && psState.authed) {
-						const notes = Array.isArray(psState.notes) ? psState.notes : [];
-						const id = String(saved.id);
-						const idx = notes.findIndex(
-							(n) => String(n && n.id ? n.id : "") === id
-						);
-						psState.notes =
-							idx >= 0
-								? [...notes.slice(0, idx), saved, ...notes.slice(idx + 1)]
-								: [saved, ...notes];
-						applyPersonalSpaceFiltersAndRender();
-						syncPsEditingNoteTagsFromState();
-					}
-					if (psHint) psHint.textContent = "Updated.";
-				}
-				toast("Personal Space: saved.", "success");
-				await refreshPersonalSpace();
+				await savePersonalSpaceNote(text, { auto: false });
 			} catch (e) {
 				if (psHint) psHint.textContent = "Not saved (sign in?).";
+				setPsAutoSaveStatus("");
 				const msg = e && e.message ? String(e.message) : "Error";
 				toast(`Save failed: ${msg}`, "error");
 			}

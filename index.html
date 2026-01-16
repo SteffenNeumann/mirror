@@ -465,6 +465,20 @@
 											class="max-h-56 overflow-auto p-1"></div>
 									</div>
 									<div
+										id="wikiMenu"
+										class="absolute left-2 top-12 z-40 hidden w-[min(92vw,380px)] overflow-hidden rounded-xl border border-white/10 bg-slate-950/80 shadow-soft backdrop-blur">
+										<div
+											class="border-b border-white/10 px-3 py-2 text-[11px] text-slate-300">
+											Notiz-Links
+											<span class="text-slate-500"
+												>(Enter/Tab to insert, ↑↓ to navigate)</span
+											>
+										</div>
+										<div
+											id="wikiMenuList"
+											class="max-h-56 overflow-auto p-1"></div>
+									</div>
+									<div
 										id="codeLangWrap"
 										class="absolute left-2 top-2 hidden flex items-center gap-2">
 										<label for="codeLang" class="sr-only">Language</label>
@@ -575,6 +589,9 @@
 											class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10">
 											Preview
 										</button>
+										<span
+											id="psAutoSaveStatus"
+											class="hidden text-xs text-slate-400"></span>
 									</div>
 									<div class="flex items-center gap-3 text-xs text-slate-400">
 										<span id="metaLeft">Ready.</span>
