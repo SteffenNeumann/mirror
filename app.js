@@ -104,10 +104,34 @@
 	const psPinnedToggle = document.getElementById("psPinnedToggle");
 	const psList = document.getElementById("psList");
 	const psHint = document.getElementById("psHint");
+	const psTransferHint = document.getElementById("psTransferHint");
 	const psLogout = document.getElementById("psLogout");
 	const psSaveMain = document.getElementById("psSaveMain");
 	const psMainHint = document.getElementById("psMainHint");
 	const psAutoSaveStatus = document.getElementById("psAutoSaveStatus");
+	const psSettingsBtn = document.getElementById("psSettingsBtn");
+	const settingsRoot = document.getElementById("settingsRoot");
+	const settingsBackdrop = document.getElementById("settingsBackdrop");
+	const settingsPanel = document.getElementById("settingsPanel");
+	const settingsClose = document.getElementById("settingsClose");
+	const settingsNavButtons = document.querySelectorAll(
+		"[data-settings-nav]"
+	);
+	const settingsSections = document.querySelectorAll(
+		"[data-settings-section]"
+	);
+	const settingsThemeSelect = document.getElementById("settingsTheme");
+	const aiApiKeyInput = document.getElementById("aiApiKey");
+	const aiApiModelInput = document.getElementById("aiApiModel");
+	const aiApiSaveBtn = document.getElementById("aiApiSave");
+	const aiApiClearBtn = document.getElementById("aiApiClear");
+	const aiApiStatus = document.getElementById("aiApiStatus");
+	const faqSearchInput = document.getElementById("faqSearch");
+	const faqList = document.getElementById("faqList");
+	const psUserAuthed = document.getElementById("psUserAuthed");
+	const psUserUnauthed = document.getElementById("psUserUnauthed");
+	const bgBlobTop = document.getElementById("bgBlobTop");
+	const bgBlobBottom = document.getElementById("bgBlobBottom");
 
 	const params = new URLSearchParams(location.search);
 	const defaultWsUrl =
@@ -1674,8 +1698,43 @@
 	const PS_PINNED_TAG = "pinned";
 	const AI_PROMPT_KEY = "mirror_ai_prompt";
 	const AI_USE_PREVIEW_KEY = "mirror_ai_use_preview";
+	const AI_API_KEY_KEY = "mirror_ai_api_key";
+	const AI_API_MODEL_KEY = "mirror_ai_api_model";
+	const THEME_KEY = "mirror_theme";
 	let aiPrompt = "";
 	let aiUsePreview = true;
+	let aiApiKey = "";
+	let aiApiModel = "";
+	let settingsOpen = false;
+	let settingsSection = "user";
+	let activeTheme = "fuchsia";
+	const THEMES = {
+		fuchsia: {
+			label: "Fuchsia",
+			top: "rgba(217, 70, 239, 0.15)",
+			bottom: "rgba(34, 211, 238, 0.1)",
+		},
+		cyan: {
+			label: "Cyan",
+			top: "rgba(14, 165, 233, 0.2)",
+			bottom: "rgba(59, 130, 246, 0.12)",
+		},
+		emerald: {
+			label: "Emerald",
+			top: "rgba(16, 185, 129, 0.18)",
+			bottom: "rgba(34, 197, 94, 0.12)",
+		},
+		amber: {
+			label: "Amber",
+			top: "rgba(251, 191, 36, 0.18)",
+			bottom: "rgba(244, 114, 182, 0.12)",
+		},
+		violet: {
+			label: "Violet",
+			top: "rgba(124, 58, 237, 0.2)",
+			bottom: "rgba(99, 102, 241, 0.12)",
+		},
+	};
 
 	function loadAiPrompt() {
 		try {
@@ -1712,6 +1771,184 @@
 		} catch {
 			// ignore
 		}
+	}
+
+	function loadAiApiConfig() {
+		try {
+			aiApiKey = String(localStorage.getItem(AI_API_KEY_KEY) || "");
+			aiApiModel = String(localStorage.getItem(AI_API_MODEL_KEY) || "");
+		} catch {
+			aiApiKey = "";
+			aiApiModel = "";
+		}
+		if (aiApiKeyInput) aiApiKeyInput.value = aiApiKey ? "••••••••" : "";
+		if (aiApiModelInput) aiApiModelInput.value = aiApiModel;
+	}
+
+	function saveAiApiConfig(nextKey, nextModel) {
+		aiApiKey = String(nextKey || "").trim();
+		aiApiModel = String(nextModel || "").trim();
+		try {
+			localStorage.setItem(AI_API_KEY_KEY, aiApiKey);
+			localStorage.setItem(AI_API_MODEL_KEY, aiApiModel);
+		} catch {
+			// ignore
+		}
+		if (aiApiKeyInput) aiApiKeyInput.value = aiApiKey ? "••••••••" : "";
+		if (aiApiModelInput) aiApiModelInput.value = aiApiModel;
+	}
+
+	function getAiApiConfig() {
+		return {
+			apiKey: String(aiApiKey || "").trim(),
+			model: String(aiApiModel || "").trim(),
+		};
+	}
+
+	function loadTheme() {
+		try {
+			activeTheme = String(localStorage.getItem(THEME_KEY) || "fuchsia");
+		} catch {
+			activeTheme = "fuchsia";
+		}
+		applyTheme(activeTheme);
+	}
+
+	function applyTheme(themeName) {
+		const next = THEMES[themeName] ? themeName : "fuchsia";
+		activeTheme = next;
+		if (settingsThemeSelect) settingsThemeSelect.value = next;
+		const colors = THEMES[next];
+		if (bgBlobTop && colors) bgBlobTop.style.background = colors.top;
+		if (bgBlobBottom && colors) bgBlobBottom.style.background = colors.bottom;
+		try {
+			document.body.setAttribute("data-theme", next);
+		} catch {
+			// ignore
+		}
+	}
+
+	function saveTheme(next) {
+		const safe = THEMES[next] ? next : "fuchsia";
+		try {
+			localStorage.setItem(THEME_KEY, safe);
+		} catch {
+			// ignore
+		}
+		applyTheme(safe);
+	}
+
+	function setSettingsOpen(open) {
+		settingsOpen = Boolean(open);
+		if (!settingsRoot || !settingsRoot.classList) return;
+		settingsRoot.classList.toggle("hidden", !settingsOpen);
+		settingsRoot.classList.toggle("flex", settingsOpen);
+		settingsRoot.setAttribute("aria-hidden", settingsOpen ? "false" : "true");
+		if (settingsOpen) {
+			setActiveSettingsSection(settingsSection || "user");
+			loadAiStatus();
+			renderFaq();
+		}
+	}
+
+	function setActiveSettingsSection(next) {
+		const target = String(next || "user");
+		settingsSection = target;
+		settingsSections.forEach((section) => {
+			const name = String(section.getAttribute("data-settings-section") || "");
+			section.classList.toggle("hidden", name !== target);
+		});
+		settingsNavButtons.forEach((btn) => {
+			const name = String(btn.getAttribute("data-settings-nav") || "");
+			const active = name === target;
+			btn.classList.toggle("bg-white/10", active);
+			btn.classList.toggle("text-slate-100", active);
+			btn.classList.toggle("text-slate-200", !active);
+		});
+	}
+
+	async function loadAiStatus() {
+		if (!aiApiStatus) return;
+		const localKey = String(aiApiKey || "").trim();
+		if (localKey) {
+			aiApiStatus.textContent = "Lokaler API-Key gesetzt (wird verwendet).";
+			return;
+		}
+		try {
+			const res = await api("/api/ai/status");
+			const configured = Boolean(res && res.configured);
+			const model = res && res.model ? String(res.model) : "";
+			aiApiStatus.textContent = configured
+				? `Server-Key aktiv${model ? ` (${model})` : ""}.`
+				: "Server-Key nicht konfiguriert.";
+		} catch {
+			aiApiStatus.textContent = "AI-Status nicht verfügbar.";
+		}
+	}
+
+	const FAQ_ITEMS = [
+		{
+			q: "Wie aktiviere ich Personal Space?",
+			a: "Klicke in der linken Spalte auf \"Add Personal Space\" und bestätige den Link aus der E-Mail.",
+		},
+		{
+			q: "Wie exportiere ich meine Notizen?",
+			a: "Öffne die Settings und nutze Export/Import → Export. Die JSON-Datei wird heruntergeladen.",
+		},
+		{
+			q: "Was macht der AI-Modus?",
+			a: "AI hilft beim Erklären, Verbessern, Fixen oder Ausführen von Code/Text. Du brauchst einen API-Key oder einen serverseitigen Key.",
+		},
+		{
+			q: "Wie ändere ich das Theme?",
+			a: "Unter Themes kannst du den Hintergrundstil auswählen. Die Auswahl wird lokal gespeichert.",
+		},
+		{
+			q: "Wie importiere ich Notizen?",
+			a: "In Export/Import kannst du Merge oder Replace wählen und eine JSON/Markdown-Datei auswählen.",
+		},
+	];
+
+	function renderFaq() {
+		if (!faqList) return;
+		const query = String(
+			faqSearchInput && faqSearchInput.value ? faqSearchInput.value : ""
+		)
+			.trim()
+			.toLowerCase();
+		const items = FAQ_ITEMS.filter((item) => {
+			const text = `${item.q} ${item.a}`.toLowerCase();
+			return !query || text.includes(query);
+		});
+		faqList.innerHTML = items
+			.map(
+				(item) =>
+					`<div class="rounded-xl border border-white/10 bg-white/5 p-3">
+						<div class="text-sm font-medium text-slate-100">${item.q}</div>
+						<p class="mt-1 text-xs text-slate-300">${item.a}</p>
+					</div>`
+			)
+			.join("");
+		if (!items.length) {
+			faqList.innerHTML =
+				"<div class=\"rounded-xl border border-white/10 bg-slate-950/40 p-3 text-xs text-slate-400\">Keine Treffer.</div>";
+		}
+	}
+
+	function readAiApiKeyInput() {
+		if (!aiApiKeyInput) return aiApiKey;
+		const raw = String(aiApiKeyInput.value || "").trim();
+		if (!raw || raw === "••••••••") return aiApiKey;
+		return raw;
+	}
+
+	function normalizeAiModelInput(raw) {
+		const v = String(raw || "")
+			.trim()
+			.replace(/\s+/g, "-")
+			.replace(/[^a-z0-9._:-]/gi, "")
+			.slice(0, 64);
+		return v;
 	}
 
 	function applyAiContextMode() {
@@ -3636,6 +3873,7 @@ self.onmessage = async (e) => {
 		let payloadText = kind === "code" ? code : editorText;
 		let payloadLang = kind === "code" ? lang || "" : "text";
 		let promptForRequest = prompt;
+		const aiConfig = getAiApiConfig();
 		if (mode !== "run" && !usePreview) {
 			if (!prompt) {
 				setPreviewRunOutput({ status: "", output: "", error: "", source: "" });
@@ -3666,15 +3904,18 @@ self.onmessage = async (e) => {
 			source: "ai",
 		});
 		try {
+			const body = {
+				mode,
+				lang: payloadLang,
+				kind,
+				code: payloadText,
+				prompt: promptForRequest,
+			};
+			if (aiConfig.apiKey) body.apiKey = aiConfig.apiKey;
+			if (aiConfig.model) body.model = aiConfig.model;
 			const res = await api("/api/ai", {
 				method: "POST",
-				body: JSON.stringify({
-					mode,
-					lang: payloadLang,
-					kind,
-					code: payloadText,
-					prompt: promptForRequest,
-				}),
+				body: JSON.stringify(body),
 			});
 			setPreviewRunOutput({
 				status: "AI",
@@ -3718,6 +3959,9 @@ self.onmessage = async (e) => {
 			psUnauthed.classList.remove("hidden");
 			psAuthed.classList.add("hidden");
 			if (psLogout) psLogout.classList.add("hidden");
+			if (psUserAuthed) psUserAuthed.classList.add("hidden");
+			if (psUserUnauthed) psUserUnauthed.classList.remove("hidden");
+			if (psEmail) psEmail.textContent = "";
 			setPsEditorTagsVisible(false);
 			updatePsPinnedToggle();
 			updateFavoritesUI();
@@ -3729,6 +3973,8 @@ self.onmessage = async (e) => {
 		psAuthed.classList.remove("hidden");
 		if (psLogout) psLogout.classList.remove("hidden");
 		if (psEmail) psEmail.textContent = psState.email || "";
+		if (psUserAuthed) psUserAuthed.classList.remove("hidden");
+		if (psUserUnauthed) psUserUnauthed.classList.add("hidden");
 		setPsEditorTagsVisible(true);
 
 		applyPersonalSpaceFiltersAndRender();
@@ -3772,17 +4018,18 @@ self.onmessage = async (e) => {
 			toast("Please enable Personal Space first (sign in).", "error");
 			return;
 		}
+		const hintEl = psTransferHint || psHint;
 		try {
-			if (psHint) psHint.textContent = "Exporting…";
+			if (hintEl) hintEl.textContent = "Exporting…";
 			const res = await api("/api/notes/export");
 			const payload =
 				res && res.export ? res.export : { version: 1, notes: [] };
 			downloadJson(`mirror-notes-${ymd() || "export"}.json`, payload);
-			if (psHint) psHint.textContent = "Export ready.";
+			if (hintEl) hintEl.textContent = "Export ready.";
 			toast("Export created.", "success");
 		} catch (e) {
 			const msg = e && e.message ? String(e.message) : "Error";
-			if (psHint) psHint.textContent = "Export failed.";
+			if (hintEl) hintEl.textContent = "Export failed.";
 			toast(`Export failed: ${msg}`, "error");
 		}
 	}
@@ -3792,8 +4039,9 @@ self.onmessage = async (e) => {
 			.trim()
 			.toLowerCase();
 		const safeMode = m === "replace" ? "replace" : "merge";
+		const hintEl = psTransferHint || psHint;
 		try {
-			if (psHint) psHint.textContent = "Importing…";
+			if (hintEl) hintEl.textContent = "Importing…";
 			const res = await api("/api/notes/import", {
 				method: "POST",
 				body: JSON.stringify({ mode: safeMode, notes }),
@@ -3804,11 +4052,11 @@ self.onmessage = async (e) => {
 				} updated, ${res.skipped || 0} skipped.`,
 				"success"
 			);
-			if (psHint) psHint.textContent = "Import complete.";
+			if (hintEl) hintEl.textContent = "Import complete.";
 			await refreshPersonalSpace();
 		} catch (e) {
 			const msg = e && e.message ? String(e.message) : "Error";
-			if (psHint) psHint.textContent = "Import failed.";
+			if (hintEl) hintEl.textContent = "Import failed.";
 			toast(`Import failed: ${msg}`, "error");
 		}
 	}
@@ -4783,6 +5031,8 @@ self.onmessage = async (e) => {
 	loadPsPinnedOnly();
 	loadPsVisible();
 	applyPsVisible();
+	loadTheme();
+	loadAiApiConfig();
 
 	// Personal Space wiring
 	if (addPersonalSpaceBtn) {
@@ -5172,6 +5422,69 @@ self.onmessage = async (e) => {
 			applyPsTagsCollapsed();
 		});
 	}
+	if (psSettingsBtn) {
+		psSettingsBtn.addEventListener("click", () => {
+			setSettingsOpen(true);
+		});
+	}
+	if (settingsClose) {
+		settingsClose.addEventListener("click", () => {
+			setSettingsOpen(false);
+		});
+	}
+	if (settingsBackdrop) {
+		settingsBackdrop.addEventListener("click", () => {
+			setSettingsOpen(false);
+		});
+	}
+	settingsNavButtons.forEach((btn) => {
+		btn.addEventListener("click", () => {
+			const target = btn.getAttribute("data-settings-nav") || "user";
+			setActiveSettingsSection(target);
+		});
+	});
+	if (settingsThemeSelect) {
+		settingsThemeSelect.addEventListener("change", () => {
+			saveTheme(settingsThemeSelect.value);
+		});
+	}
+	if (aiApiKeyInput) {
+		aiApiKeyInput.addEventListener("focus", () => {
+			if (aiApiKeyInput.value === "••••••••") aiApiKeyInput.value = "";
+		});
+	}
+	if (aiApiSaveBtn) {
+		aiApiSaveBtn.addEventListener("click", () => {
+			const nextKey = readAiApiKeyInput();
+			const nextModel = normalizeAiModelInput(
+				aiApiModelInput ? aiApiModelInput.value : ""
+			);
+			saveAiApiConfig(nextKey, nextModel);
+			loadAiStatus();
+			toast("AI settings gespeichert.", "success");
+		});
+	}
+	if (aiApiClearBtn) {
+		aiApiClearBtn.addEventListener("click", () => {
+			saveAiApiConfig("", "");
+			if (aiApiKeyInput) aiApiKeyInput.value = "";
+			if (aiApiModelInput) aiApiModelInput.value = "";
+			loadAiStatus();
+			toast("AI settings gelöscht.", "success");
+		});
+	}
+	if (faqSearchInput) {
+		faqSearchInput.addEventListener("input", () => {
+			renderFaq();
+		});
+	}
+	window.addEventListener("keydown", (ev) => {
+		if (!settingsRoot || settingsRoot.classList.contains("hidden")) return;
+		if (ev && ev.key === "Escape") {
+			ev.preventDefault();
+			setSettingsOpen(false);
+		}
+	});
 
 	// Show a small post-verify hint
 	try {

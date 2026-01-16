@@ -1180,15 +1180,26 @@ const server = http.createServer((req, res) => {
 	}
 
 	// --- API: AI helper (Claude via Anthropic) ---
-	if (url.pathname === "/api/ai" && req.method === "POST") {
-		const reqId = crypto.randomBytes(6).toString("hex");
+	if (url.pathname === "/api/ai/status" && req.method === "GET") {
 		const email = getAuthedEmail(req);
 		if (!email) {
 			json(res, 401, { ok: false, error: "unauthorized" });
 			return;
 		}
-		if (!ANTHROPIC_API_KEY) {
-			json(res, 503, { ok: false, error: "ai_not_configured" });
+		json(res, 200, {
+			ok: true,
+			provider: "anthropic",
+			configured: Boolean(ANTHROPIC_API_KEY),
+			model: ANTHROPIC_MODEL,
+		});
+		return;
+	}
+
+	if (url.pathname === "/api/ai" && req.method === "POST") {
+		const reqId = crypto.randomBytes(6).toString("hex");
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
 			return;
 		}
 		const ip = getClientIp(req);
@@ -1205,6 +1216,12 @@ const server = http.createServer((req, res) => {
 
 		readJson(req)
 			.then(async (body) => {
+				const apiKeyRaw = String(body && body.apiKey ? body.apiKey : "").trim();
+				const effectiveApiKey = apiKeyRaw || ANTHROPIC_API_KEY;
+				if (!effectiveApiKey) {
+					json(res, 503, { ok: false, error: "ai_not_configured" });
+					return;
+				}
 				const modeRaw = String(body && body.mode ? body.mode : "explain")
 					.trim()
 					.toLowerCase();
@@ -1224,6 +1241,10 @@ const server = http.createServer((req, res) => {
 					.toLowerCase();
 				const promptRaw = String(body && body.prompt ? body.prompt : "").trim();
 				const prompt = promptRaw ? promptRaw.slice(0, 800) : "";
+				const modelRaw = String(body && body.model ? body.model : "").trim();
+				const modelOverride = /^[a-z0-9._:-]{1,64}$/i.test(modelRaw)
+					? modelRaw
+					: "";
 				let input = String(body && body.code ? body.code : "");
 				if (!input.trim()) {
 					json(res, 400, { ok: false, error: "empty" });
@@ -1334,7 +1355,7 @@ const server = http.createServer((req, res) => {
 							method: "POST",
 							headers: {
 								"content-type": "application/json",
-								"x-api-key": ANTHROPIC_API_KEY,
+								"x-api-key": effectiveApiKey,
 								"anthropic-version": "2023-06-01",
 							},
 							body: JSON.stringify({
@@ -1352,6 +1373,7 @@ const server = http.createServer((req, res) => {
 					}
 
 					const candidates = uniq([
+						modelOverride,
 						ANTHROPIC_MODEL,
 						"claude-3-5-sonnet-20241022",
 						"claude-3-5-sonnet-20240620",
