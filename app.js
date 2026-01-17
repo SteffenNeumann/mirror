@@ -6197,12 +6197,34 @@ self.onmessage = async (e) => {
 		}
 	}
 
+	function hashKeyForWs(rawKey) {
+		const s = String(rawKey || "");
+		if (!s) return "";
+		let h1 = 0x811c9dc5;
+		let h2 = 0x9e3779b9;
+		for (let i = 0; i < s.length; i += 1) {
+			const c = s.charCodeAt(i);
+			h1 ^= c;
+			h1 = (h1 * 0x01000193) >>> 0;
+			h2 ^= c;
+			h2 = (h2 + ((h2 << 6) + (h2 << 16) - h2)) >>> 0;
+		}
+		const part1 = h1.toString(36);
+		const part2 = h2.toString(36);
+		return `${part1}${part2}`.slice(0, 24);
+	}
+
 	function wsUrlForRoom(base, roomName) {
 		// Key bleibt im Hash (Client-only), wird nicht an den Server gesendet.
 		// Viele Relays verwenden Query-Parameter. Falls dein Relay anders ist,
 		// setze ?ws=wss://... passend oder passe diese Funktion an.
 		const url = new URL(base, location.href);
 		url.searchParams.set("room", roomName);
+		if (key) {
+			url.searchParams.set("key", hashKeyForWs(key));
+		} else {
+			url.searchParams.delete("key");
+		}
 		url.searchParams.set("client", clientId);
 		return url.toString();
 	}
