@@ -3311,7 +3311,7 @@
 		if (!renderer) {
 			const fallbackDoc = `<!doctype html><html lang="en"><head><meta charset="utf-8" />
 			<meta name="viewport" content="width=device-width, initial-scale=1" />
-			<style>:root{color-scheme:dark;}body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:#020617;color:#e2e8f0;}a{color:#60a5fa;}</style>
+			<style>:root{color-scheme:dark;--scrollbar-thumb:rgba(148,163,184,.3);--scrollbar-thumb-hover:rgba(148,163,184,.45);}body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:#020617;color:#e2e8f0;}a{color:#60a5fa;}*{scrollbar-width:thin;scrollbar-color:var(--scrollbar-thumb) transparent;}*::-webkit-scrollbar{width:10px;height:10px;}*::-webkit-scrollbar-track{background:transparent;}*::-webkit-scrollbar-thumb{background-color:var(--scrollbar-thumb);border-radius:999px;border:2px solid rgba(2,6,23,.35);}*::-webkit-scrollbar-thumb:hover{background-color:var(--scrollbar-thumb-hover);}</style>
 			</head><body><!--ts:${stamp}--><strong>Markdown preview unavailable.</strong><div style="margin-top:8px;color:#94a3b8">Reload the page or check for CDN blocking (AdBlock / corporate proxy).</div></body></html>`;
 			setPreviewDocument(fallbackDoc);
 			return;
@@ -3334,6 +3334,14 @@
 			themeColors.blockquoteText ||
 			themeColors.accentTextSoft ||
 			"rgba(203,213,225,1)";
+		const scrollbarThumb =
+			themeColors.scrollbarThumb ||
+			themeColors.accentTextSoft ||
+			"rgba(148,163,184,.3)";
+		const scrollbarThumbHover =
+			themeColors.scrollbarThumbHover ||
+			themeColors.accentText ||
+			"rgba(148,163,184,.45)";
 
 		// Token pro Preview-Render: erlaubt sichere postMessage-Validierung auch bei sandbox/null origin.
 		try {
@@ -3354,13 +3362,18 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
 	<!--ts:${stamp}-->
   <style>
-		:root{color-scheme:dark;--blockquote-border:${blockquoteBorder};--blockquote-text:${blockquoteText};}
+		:root{color-scheme:dark;--blockquote-border:${blockquoteBorder};--blockquote-text:${blockquoteText};--scrollbar-thumb:${scrollbarThumb};--scrollbar-thumb-hover:${scrollbarThumbHover};}
     body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:#020617;color:#e2e8f0;}
     a{color:#60a5fa;}
     code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;}
     pre{overflow:auto;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;background:rgba(2,6,23,.6);}
     code{background:rgba(255,255,255,.06);padding:.15em .35em;border-radius:.35em;}
     pre code{background:transparent;padding:0;}
+		*{scrollbar-width:thin;scrollbar-color:var(--scrollbar-thumb) transparent;}
+		*::-webkit-scrollbar{width:10px;height:10px;}
+		*::-webkit-scrollbar-track{background:transparent;}
+		*::-webkit-scrollbar-thumb{background-color:var(--scrollbar-thumb);border-radius:999px;border:2px solid rgba(2,6,23,.35);}
+		*::-webkit-scrollbar-thumb:hover{background-color:var(--scrollbar-thumb-hover);}
     h1,h2,h3{line-height:1.25;}
     table{border-collapse:collapse;width:100%;}
     th,td{border:1px solid rgba(255,255,255,.12);padding:6px 8px;}
