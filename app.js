@@ -5746,8 +5746,9 @@ self.onmessage = async (e) => {
 		const roomName = normalizeRoom(it && it.room);
 		const keyName = normalizeKey(it && it.key);
 		const lastUsed = Number(it && it.lastUsed) || 0;
+		const text = String(it && it.text ? it.text : "");
 		if (!roomName) return null;
-		return { room: roomName, key: keyName, lastUsed };
+		return { room: roomName, key: keyName, lastUsed, text };
 	}
 
 	function loadLocalRoomTabs() {
@@ -5795,6 +5796,24 @@ self.onmessage = async (e) => {
 			return;
 		}
 		psState.roomTabs = [normalized, ...tabs];
+	}
+
+	function updateRoomTabTextLocal(roomName, keyName, textVal) {
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!nextRoom) return;
+		const tabs = loadRoomTabs();
+		const idx = tabs.findIndex(
+			(t) => t.room === nextRoom && t.key === nextKey
+		);
+		const text = String(textVal ?? "");
+		if (idx >= 0) {
+			const updated = { ...tabs[idx], text };
+			tabs.splice(idx, 1, updated);
+		} else {
+			tabs.push({ room: nextRoom, key: nextKey, lastUsed: Date.now(), text });
+		}
+		saveRoomTabs(tabs);
 	}
 
 	function upsertFavoriteInState(entry) {
@@ -6320,6 +6339,7 @@ self.onmessage = async (e) => {
 
 		metaLeft.textContent = "Synced.";
 		metaRight.textContent = nowIso();
+		updateRoomTabTextLocal(room, key, text);
 		updatePreview();
 		updatePasswordMaskOverlay();
 		scheduleRoomTabSync({
@@ -6694,6 +6714,7 @@ self.onmessage = async (e) => {
 	textarea.addEventListener("input", () => {
 		metaLeft.textContent = "Typing…";
 		scheduleSend();
+		updateRoomTabTextLocal(room, key, textarea.value);
 		scheduleRoomTabSync({
 			room,
 			key,
@@ -6898,6 +6919,10 @@ self.onmessage = async (e) => {
 		const nextKey = parsed.key;
 		if (!nextRoom) return;
 		if (nextRoom === room && nextKey === key) return;
+		if (textarea) {
+			updateRoomTabTextLocal(room, key, textarea.value);
+		}
+		flushRoomTabSync();
 		room = nextRoom;
 		key = nextKey;
 		resetE2eeKeyCache();
@@ -6911,6 +6936,21 @@ self.onmessage = async (e) => {
 		updateFavoritesUI();
 		touchRoomTab(room, key, { skipSync: true });
 		renderRoomTabs();
+		if (textarea) {
+			const cached = loadRoomTabs().find(
+				(t) => t.room === room && t.key === key
+			);
+			const nextText = cached && typeof cached.text === "string" ? cached.text : "";
+			textarea.value = nextText;
+			lastLocalText = textarea.value;
+			metaLeft.textContent = "Room geladen (lokal).";
+			metaRight.textContent = "";
+			updatePreview();
+			updatePasswordMaskOverlay();
+			updateCodeLangOverlay();
+			updateTableMenuVisibility();
+			updateSelectionMenu();
+		}
 		if (!key) toast("Public room (no key).", "info");
 		connect();
 	});
