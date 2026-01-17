@@ -3275,7 +3275,9 @@
 	function updatePasswordMaskOverlay() {
 		if (!textarea || !mirrorMask || !mirrorMaskContent) return;
 		const value = String(textarea.value || "");
-		const enabled = hasPasswordTokens(value) && !editorMaskDisabled;
+		const hasSelection = Boolean(getSelectionRange());
+		const enabled =
+			hasPasswordTokens(value) && !editorMaskDisabled && !hasSelection;
 		mirrorMask.classList.toggle("hidden", !enabled);
 		textarea.classList.toggle("pw-mask-enabled", enabled);
 		if (!enabled) {
