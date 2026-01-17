@@ -812,6 +812,12 @@ const roomState = new Map();
 /** roomKey -> Set<WebSocket> */
 const roomSockets = new Map();
 
+/** roomKey -> Map<clientId, presence> */
+const roomPresence = new Map();
+
+/** roomKey -> { update: string, text: string, ts: number } */
+const roomCrdtSnapshots = new Map();
+
 function getRoomSockets(roomKeyName) {
 	let set = roomSockets.get(roomKeyName);
 	if (!set) {
@@ -819,6 +825,33 @@ function getRoomSockets(roomKeyName) {
 		roomSockets.set(roomKeyName, set);
 	}
 	return set;
+}
+
+function getRoomPresence(roomKeyName) {
+	let map = roomPresence.get(roomKeyName);
+	if (!map) {
+		map = new Map();
+		roomPresence.set(roomKeyName, map);
+	}
+	return map;
+}
+
+function buildPresenceList(roomKeyName) {
+	return Array.from(getRoomPresence(roomKeyName).values());
+}
+
+function sendPresenceState(ws, roomKeyName, room) {
+	const users = buildPresenceList(roomKeyName);
+	try {
+		ws.send(JSON.stringify({ type: "presence_state", room, users }));
+	} catch {
+		// ignore
+	}
+}
+
+function broadcastPresenceState(roomKeyName, room, except) {
+	const users = buildPresenceList(roomKeyName);
+	broadcast(roomKeyName, { type: "presence_state", room, users }, except);
 }
 
 function broadcast(roomKeyName, data, except) {
@@ -2055,6 +2088,118 @@ wss.on("connection", (ws, req) => {
 		const msg = safeJsonParse(String(raw));
 		if (!msg || msg.room !== room) return;
 
+		if (msg.type === "hello") {
+			const clientId = String(msg.clientId || "").trim();
+			if (!clientId) return;
+			ws.clientId = clientId;
+			ws.clientMode = String(msg.mode || "lww");
+			const name = String(msg.name || "Guest").slice(0, 40);
+			const color = String(msg.color || "#94a3b8").slice(0, 32);
+			const avatar = String(msg.avatar || "🙂").slice(0, 8);
+			const presence = {
+				clientId,
+				name,
+				color,
+				avatar,
+				typing: false,
+				selection: null,
+				updatedAt: Date.now(),
+			};
+			getRoomPresence(rk).set(clientId, presence);
+			sendPresenceState(ws, rk, room);
+			broadcastPresenceState(rk, room, ws);
+			return;
+		}
+
+		if (msg.type === "typing") {
+			const clientId = String(msg.clientId || "").trim();
+			if (!clientId) return;
+			const map = getRoomPresence(rk);
+			const current = map.get(clientId);
+			if (!current) return;
+			const typing = Boolean(msg.typing);
+			map.set(clientId, {
+				...current,
+				typing,
+				updatedAt: Date.now(),
+			});
+			broadcast(rk, { type: "presence_update", room, clientId, typing });
+			return;
+		}
+
+		if (msg.type === "cursor") {
+			const clientId = String(msg.clientId || "").trim();
+			if (!clientId) return;
+			const map = getRoomPresence(rk);
+			const current = map.get(clientId);
+			if (!current) return;
+			const start = Number(msg.start);
+			const end = Number(msg.end);
+			const selection =
+				Number.isFinite(start) && Number.isFinite(end)
+					? { start, end }
+					: null;
+			map.set(clientId, {
+				...current,
+				selection,
+				updatedAt: Date.now(),
+			});
+			broadcast(rk, { type: "presence_update", room, clientId, selection });
+			return;
+		}
+
+		if (msg.type === "doc_update") {
+			if (typeof msg.update !== "string" || !msg.update) return;
+			broadcast(
+				rk,
+				{ type: "doc_update", room, update: msg.update, clientId: msg.clientId },
+				ws
+			);
+			return;
+		}
+
+		if (msg.type === "doc_snapshot") {
+			const update = typeof msg.update === "string" ? msg.update : "";
+			const text = typeof msg.text === "string" ? msg.text : "";
+			const ts = typeof msg.ts === "number" ? msg.ts : Date.now();
+			if (update) {
+				roomCrdtSnapshots.set(rk, { update, text, ts });
+			}
+			if (text || update) {
+				persistRoomState(rk, { text, ts });
+			}
+			return;
+		}
+
+		if (msg.type === "doc_request") {
+			const snap = roomCrdtSnapshots.get(rk);
+			if (snap && snap.update) {
+				ws.send(
+					JSON.stringify({
+						type: "doc_snapshot",
+						room,
+						update: snap.update,
+						text: snap.text,
+						ts: snap.ts,
+					})
+				);
+				return;
+			}
+			const cur = roomState.get(rk);
+			if (cur && typeof cur.text === "string") {
+				ws.send(
+					JSON.stringify({
+						type: "doc_snapshot",
+						room,
+						update: "",
+						text: cur.text,
+						ts: cur.ts || Date.now(),
+					})
+				);
+			}
+			return;
+		}
+
 		if (msg.type === "set") {
 			const ts = typeof msg.ts === "number" ? msg.ts : Date.now();
 			const isEncrypted =
@@ -2126,6 +2271,13 @@ wss.on("connection", (ws, req) => {
 
 	ws.on("close", () => {
 		sockets.delete(ws);
+		const clientId = ws.clientId ? String(ws.clientId) : "";
+		if (clientId) {
+			const map = getRoomPresence(rk);
+			map.delete(clientId);
+			broadcastPresenceState(rk, room);
+			if (map.size === 0) roomPresence.delete(rk);
+		}
 		if (sockets.size === 0) roomSockets.delete(rk);
 	});
 });

@@ -18,6 +18,9 @@
 	const roomTabs = document.getElementById("roomTabs");
 	const metaLeft = document.getElementById("metaLeft");
 	const metaRight = document.getElementById("metaRight");
+	const presenceSummary = document.getElementById("presenceSummary");
+	const presenceList = document.getElementById("presenceList");
+	const typingIndicator = document.getElementById("typingIndicator");
 	const toastRoot = document.getElementById("toastRoot");
 	const modalRoot = document.getElementById("modalRoot");
 	const modalBackdrop = document.querySelector('[data-role="modalBackdrop"]');
@@ -172,6 +175,119 @@
 		? crypto.randomUUID()
 		: String(Math.random()).slice(2);
 
+	const IDENTITY_KEY = "mirror_identity_v1";
+
+	function randomIdentity() {
+		const adjectives = [
+			"Nebula",
+			"Pixel",
+			"Silent",
+			"Neon",
+			"Cosmic",
+			"Swift",
+			"Electric",
+			"Shadow",
+			"Arctic",
+			"Crimson",
+			"Golden",
+			"Cobalt",
+			"Sienna",
+			"Mint",
+			"Quartz",
+			"Velvet",
+		];
+		const nouns = [
+			"Fox",
+			"Otter",
+			"Hawk",
+			"Lynx",
+			"Panda",
+			"Falcon",
+			"Raven",
+			"Tiger",
+			"Wolf",
+			"Koala",
+			"Badger",
+			"Orca",
+			"Moose",
+			"Heron",
+			"Geko",
+			"Stag",
+		];
+		const avatars = [
+			"🦊",
+			"🦦",
+			"🦅",
+			"🐾",
+			"🐼",
+			"🦉",
+			"🐺",
+			"🦄",
+			"🐯",
+			"🐨",
+			"🦝",
+			"🐬",
+			"🫎",
+			"🦩",
+			"🦎",
+			"🦌",
+		];
+		const colors = [
+			"#38bdf8",
+			"#a78bfa",
+			"#f472b6",
+			"#22d3ee",
+			"#f59e0b",
+			"#34d399",
+			"#e879f9",
+			"#60a5fa",
+			"#fb7185",
+			"#c084fc",
+			"#f97316",
+			"#2dd4bf",
+			"#facc15",
+			"#4ade80",
+			"#a3e635",
+			"#818cf8",
+		];
+		const name = `${adjectives[Math.floor(Math.random() * adjectives.length)]} ${nouns[Math.floor(Math.random() * nouns.length)]}`;
+		const avatar = avatars[Math.floor(Math.random() * avatars.length)];
+		const color = colors[Math.floor(Math.random() * colors.length)];
+		return { name, avatar, color };
+	}
+
+	function loadIdentity() {
+		try {
+			const raw = localStorage.getItem(IDENTITY_KEY);
+			if (!raw) return null;
+			const parsed = JSON.parse(raw);
+			if (!parsed || typeof parsed !== "object") return null;
+			const name = String(parsed.name || "").trim();
+			const avatar = String(parsed.avatar || "").trim();
+			const color = String(parsed.color || "").trim();
+			if (!name || !avatar || !color) return null;
+			return { name, avatar, color };
+		} catch {
+			return null;
+		}
+	}
+
+	function saveIdentity(identity) {
+		try {
+			localStorage.setItem(IDENTITY_KEY, JSON.stringify(identity));
+		} catch {
+			// ignore
+		}
+	}
+
+	const identity = (() => {
+		const existing = loadIdentity();
+		if (existing) return existing;
+		const fresh = randomIdentity();
+		saveIdentity(fresh);
+		return fresh;
+	})();
+
 	function normalizeRoom(raw) {
 		return String(raw || "")
 			.trim()
@@ -260,6 +376,25 @@
 		const padLen = (4 - (raw.length % 4)) % 4;
 		const padded = raw + "=".repeat(padLen);
 		const bin = atob(padded);
+		const out = new Uint8Array(bin.length);
+		for (let i = 0; i < bin.length; i += 1) {
+			out[i] = bin.charCodeAt(i);
+		}
+		return out;
+	}
+
+	function base64EncodeBytes(bytes) {
+		const input = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes || []);
+		let bin = "";
+		for (let i = 0; i < input.length; i += 1) {
+			bin += String.fromCharCode(input[i]);
+		}
+		return btoa(bin);
+	}
+
+	function base64DecodeBytes(input) {
+		const raw = String(input || "");
+		const bin = atob(raw);
 		const out = new Uint8Array(bin.length);
 		for (let i = 0; i < bin.length; i += 1) {
 			out[i] = bin.charCodeAt(i);
@@ -6342,6 +6477,25 @@ self.onmessage = async (e) => {
 	let suppressSend = false;
 	let sendTimer;
 	let connectionSeq = 0;
+	const presenceState = new Map();
+	let isTyping = false;
+	let typingTimer;
+	let selectionTimer;
+	let lastSelection = { start: 0, end: 0 };
+	let ydoc;
+	let ytext;
+	let crdtSuppressSend = false;
+	let crdtLastText = "";
+	let crdtHasSnapshot = false;
+	let crdtSnapshotTimer;
+
+	function isCrdtAvailable() {
+		return typeof window.Y !== "undefined";
+	}
+
+	function isCrdtEnabled() {
+		return !key && isCrdtAvailable();
+	}
 
 	function nowIso() {
 		return new Date().toLocaleString("de-DE", {
@@ -6365,6 +6519,245 @@ self.onmessage = async (e) => {
 	function sendMessage(message) {
 		if (!ws || ws.readyState !== WebSocket.OPEN) return;
 		ws.send(JSON.stringify(message));
+	}
+
+	function updatePresenceUI() {
+		if (!presenceSummary || !presenceList || !typingIndicator) return;
+		const users = Array.from(presenceState.values());
+		const count = users.length;
+		presenceSummary.textContent =
+			count === 1 ? "1 Nutzer online" : `${count} Nutzer online`;
+
+		const typingUsers = users.filter(
+			(u) => u.typing && u.clientId !== clientId
+		);
+		if (typingUsers.length === 0) {
+			typingIndicator.textContent = "";
+			typingIndicator.classList.add("hidden");
+		} else if (typingUsers.length === 1) {
+			typingIndicator.textContent = `${typingUsers[0].name} tippt…`;
+			typingIndicator.classList.remove("hidden");
+		} else {
+			typingIndicator.textContent = `${typingUsers.length} Personen tippen…`;
+			typingIndicator.classList.remove("hidden");
+		}
+
+		presenceList.innerHTML = "";
+		for (const user of users) {
+			const chip = document.createElement("span");
+			chip.className =
+				"inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-slate-200";
+			const avatar = document.createElement("span");
+			avatar.textContent = user.avatar || "🙂";
+			avatar.style.filter = "drop-shadow(0 0 6px rgba(0,0,0,0.25))";
+			const dot = document.createElement("span");
+			dot.className = "inline-block h-2 w-2 rounded-full";
+			dot.style.background = user.color || "#94a3b8";
+			const label = document.createElement("span");
+			label.textContent =
+				user.clientId === clientId ? `${user.name} (du)` : user.name;
+			chip.appendChild(avatar);
+			chip.appendChild(dot);
+			chip.appendChild(label);
+			if (user.selection && typeof user.selection.start === "number") {
+				const sel = document.createElement("span");
+				const len = Math.max(0, user.selection.end - user.selection.start);
+				sel.className = "text-[10px] text-slate-400";
+				sel.textContent = len > 0 ? `• Sel ${len}` : "• Cursor";
+				chip.appendChild(sel);
+			}
+			if (user.typing) {
+				const typing = document.createElement("span");
+				typing.className = "text-[10px] text-fuchsia-300";
+				typing.textContent = "• tippt";
+				chip.appendChild(typing);
+			}
+			presenceList.appendChild(chip);
+		}
+	}
+
+	function upsertPresence(user) {
+		if (!user || !user.clientId) return;
+		presenceState.set(user.clientId, user);
+		updatePresenceUI();
+	}
+
+	function applyPresenceUpdate(update) {
+		if (!update || !update.clientId) return;
+		const current = presenceState.get(update.clientId);
+		if (!current) return;
+		presenceState.set(update.clientId, { ...current, ...update });
+		updatePresenceUI();
+	}
+
+	function setTyping(active) {
+		const next = Boolean(active);
+		if (next === isTyping) return;
+		isTyping = next;
+		applyPresenceUpdate({ clientId, typing: isTyping });
+		sendMessage({ type: "typing", room, clientId, typing: isTyping });
+	}
+
+	function scheduleTypingStop() {
+		window.clearTimeout(typingTimer);
+		typingTimer = window.setTimeout(() => setTyping(false), 1200);
+	}
+
+	function scheduleSelectionSend() {
+		window.clearTimeout(selectionTimer);
+		selectionTimer = window.setTimeout(() => {
+			if (!textarea) return;
+			const start = Number(textarea.selectionStart || 0);
+			const end = Number(textarea.selectionEnd || 0);
+			if (start === lastSelection.start && end === lastSelection.end) return;
+			lastSelection = { start, end };
+			applyPresenceUpdate({ clientId, selection: { start, end } });
+			sendMessage({ type: "cursor", room, clientId, start, end });
+		}, 120);
+	}
+
+	function applySyncedText(text, label, lastUsedTs) {
+		suppressSend = true;
+		textarea.value = String(text ?? "");
+		lastLocalText = textarea.value;
+		suppressSend = false;
+
+		metaLeft.textContent = label || "Synced.";
+		metaRight.textContent = nowIso();
+		updateRoomTabTextLocal(room, key, text);
+		updatePreview();
+		updatePasswordMaskOverlay();
+		scheduleRoomTabSync({
+			room,
+			key,
+			text: String(text ?? ""),
+			lastUsed:
+				typeof lastUsedTs === "number" ? lastUsedTs : Date.now(),
+		});
+	}
+
+	function initCrdt() {
+		if (!isCrdtEnabled() || !textarea) return false;
+		if (!window.Y) return false;
+		const { Doc } = window.Y;
+		ydoc = new Doc();
+		ytext = ydoc.getText("mirror");
+		crdtLastText = ytext.toString();
+		crdtHasSnapshot = false;
+		ytext.observe(() => {
+			const next = ytext.toString();
+			if (next === textarea.value) return;
+			applySyncedText(next, "Synced (CRDT)." );
+			crdtLastText = next;
+		});
+		ydoc.on("update", (update) => {
+			if (crdtSuppressSend) return;
+			const encoded = base64EncodeBytes(update);
+			sendMessage({ type: "doc_update", room, clientId, update: encoded });
+			scheduleCrdtSnapshot();
+		});
+		return true;
+	}
+
+	function destroyCrdt() {
+		if (ydoc) {
+			try {
+				ydoc.destroy();
+			} catch {
+				// ignore
+			}
+		}
+		ydoc = null;
+		ytext = null;
+		crdtLastText = "";
+		crdtHasSnapshot = false;
+		window.clearTimeout(crdtSnapshotTimer);
+	}
+
+	function applyCrdtUpdate(encoded) {
+		if (!ydoc || !encoded) return;
+		try {
+			const update = base64DecodeBytes(encoded);
+			crdtSuppressSend = true;
+			window.Y.applyUpdate(ydoc, update);
+			crdtSuppressSend = false;
+			crdtHasSnapshot = true;
+		} catch {
+			// ignore
+		}
+	}
+
+	function setCrdtText(nextText) {
+		if (!ydoc || !ytext) return;
+		const current = ytext.toString();
+		if (current === nextText) return;
+		crdtSuppressSend = true;
+		try {
+			ydoc.transact(() => {
+				ytext.delete(0, ytext.length);
+				ytext.insert(0, String(nextText ?? ""));
+			});
+		} finally {
+			crdtSuppressSend = false;
+		}
+		crdtLastText = ytext.toString();
+		crdtHasSnapshot = true;
+		applySyncedText(crdtLastText, "Synced (CRDT)." );
+		scheduleCrdtSnapshot();
+	}
+
+	function updateCrdtFromTextarea() {
+		if (!ytext) return;
+		const next = String(textarea.value || "");
+		if (next === crdtLastText) return;
+		const prev = crdtLastText;
+		let start = 0;
+		while (
+			start < prev.length &&
+			start < next.length &&
+			prev[start] === next[start]
+		) {
+			start += 1;
+		}
+		let endPrev = prev.length - 1;
+		let endNext = next.length - 1;
+		while (
+			endPrev >= start &&
+			endNext >= start &&
+			prev[endPrev] === next[endNext]
+		) {
+			endPrev -= 1;
+			endNext -= 1;
+		}
+		const removeLen = endPrev >= start ? endPrev - start + 1 : 0;
+		const insertText = endNext >= start ? next.slice(start, endNext + 1) : "";
+		crdtSuppressSend = false;
+		ydoc.transact(() => {
+			if (removeLen > 0) ytext.delete(start, removeLen);
+			if (insertText) ytext.insert(start, insertText);
+		});
+		crdtLastText = next;
+	}
+
+	function scheduleCrdtSnapshot() {
+		window.clearTimeout(crdtSnapshotTimer);
+		crdtSnapshotTimer = window.setTimeout(() => {
+			if (!ydoc) return;
+			try {
+				const update = window.Y.encodeStateAsUpdate(ydoc);
+				const text = ytext ? ytext.toString() : "";
+				sendMessage({
+					type: "doc_snapshot",
+					room,
+					clientId,
+					update: base64EncodeBytes(update),
+					text,
+					ts: Date.now(),
+				});
+			} catch {
+				// ignore
+			}
+		}, 1200);
 	}
 
 	async function buildSetMessage(text, ts) {
@@ -6396,6 +6789,7 @@ self.onmessage = async (e) => {
 	}
 
 	function scheduleSend() {
+		if (isCrdtEnabled()) return;
 		if (suppressSend) return;
 		window.clearTimeout(sendTimer);
 		sendTimer = window.setTimeout(() => {
@@ -6418,23 +6812,7 @@ self.onmessage = async (e) => {
 	function applyRemoteText(text, ts) {
 		if (typeof ts !== "number" || ts < lastAppliedRemoteTs) return;
 		lastAppliedRemoteTs = ts;
-
-		suppressSend = true;
-		textarea.value = String(text ?? "");
-		lastLocalText = textarea.value;
-		suppressSend = false;
-
-		metaLeft.textContent = "Synced.";
-		metaRight.textContent = nowIso();
-		updateRoomTabTextLocal(room, key, text);
-		updatePreview();
-		updatePasswordMaskOverlay();
-		scheduleRoomTabSync({
-			room,
-			key,
-			text: String(text ?? ""),
-			lastUsed: typeof ts === "number" ? ts : Date.now(),
-		});
+		applySyncedText(text, "Synced.", ts);
 	}
 
 	function connect() {
@@ -6447,6 +6825,20 @@ self.onmessage = async (e) => {
 				// ignore
 			}
 		}
+
+		destroyCrdt();
+		if (isCrdtEnabled()) {
+			initCrdt();
+		}
+		presenceState.clear();
+		upsertPresence({
+			clientId,
+			name: identity.name,
+			avatar: identity.avatar,
+			color: identity.color,
+			typing: false,
+			selection: lastSelection,
+		});
 
 		setStatus("connecting", "Connecting…");
 		if (debug) {
@@ -6463,13 +6855,33 @@ self.onmessage = async (e) => {
 			if (mySeq !== connectionSeq) return;
 			setStatus("online", "Online");
 			metaLeft.textContent = "Online. Waiting for updates…";
-			sendMessage({ type: "hello", room, clientId, ts: Date.now() });
+			const mode = isCrdtEnabled() ? "crdt" : "lww";
 			sendMessage({
-				type: "request_state",
+				type: "hello",
 				room,
 				clientId,
+				mode,
+				name: identity.name,
+				color: identity.color,
+				avatar: identity.avatar,
 				ts: Date.now(),
 			});
+			if (mode === "crdt") {
+				sendMessage({
+					type: "doc_request",
+					room,
+					clientId,
+					ts: Date.now(),
+				});
+				scheduleCrdtSnapshot();
+			} else {
+				sendMessage({
+					type: "request_state",
+					room,
+					clientId,
+					ts: Date.now(),
+				});
+			}
 		});
 
 		ws.addEventListener("message", (ev) => {
@@ -6478,7 +6890,55 @@ self.onmessage = async (e) => {
 			if (!msg || msg.room !== room) return;
 			if (msg.clientId === clientId) return;
 
+			if (msg.type === "presence_state") {
+				presenceState.clear();
+				const list = Array.isArray(msg.users) ? msg.users : [];
+				for (const user of list) {
+					if (!user || !user.clientId) continue;
+					presenceState.set(user.clientId, {
+						clientId: String(user.clientId || ""),
+						name: String(user.name || "Guest"),
+						avatar: String(user.avatar || "🙂"),
+						color: String(user.color || "#94a3b8"),
+						typing: Boolean(user.typing),
+						selection: user.selection || null,
+					});
+				}
+				updatePresenceUI();
+				return;
+			}
+
+			if (msg.type === "presence_update") {
+				applyPresenceUpdate(msg);
+				return;
+			}
+
+			if (msg.type === "doc_update") {
+				if (isCrdtEnabled()) {
+					applyCrdtUpdate(msg.update);
+				}
+				return;
+			}
+
+			if (msg.type === "doc_snapshot") {
+				if (!isCrdtEnabled()) return;
+				if (msg.update) {
+					applyCrdtUpdate(msg.update);
+				}
+				if (!msg.update && typeof msg.text === "string") {
+					setCrdtText(msg.text);
+				}
+				crdtHasSnapshot = true;
+				return;
+			}
+
 			if (msg.type === "set") {
+				if (isCrdtEnabled()) {
+					if (!crdtHasSnapshot && typeof msg.text === "string") {
+						setCrdtText(msg.text);
+					}
+					return;
+				}
 				if (msg.ciphertext && msg.iv) {
 					decryptForRoom(msg.ciphertext, msg.iv)
 						.then((plain) => {
@@ -6495,7 +6955,11 @@ self.onmessage = async (e) => {
 
 			if (msg.type === "request_state") {
 				// Zustand an neue Teilnehmer schicken
-				sendCurrentState();
+				if (isCrdtEnabled() && ytext) {
+					scheduleCrdtSnapshot();
+				} else {
+					sendCurrentState();
+				}
 			}
 		});
 
@@ -6503,6 +6967,8 @@ self.onmessage = async (e) => {
 			if (mySeq !== connectionSeq) return;
 			setStatus("offline", "Offline — reconnecting…");
 			metaLeft.textContent = "Connection lost. Check server/network.";
+			presenceState.clear();
+			updatePresenceUI();
 			reconnectTimer = window.setTimeout(connect, 900);
 		});
 
@@ -6800,7 +7266,14 @@ self.onmessage = async (e) => {
 
 	textarea.addEventListener("input", () => {
 		metaLeft.textContent = "Typing…";
-		scheduleSend();
+		if (isCrdtEnabled()) {
+			updateCrdtFromTextarea();
+		} else {
+			scheduleSend();
+		}
+		setTyping(true);
+		scheduleTypingStop();
+		scheduleSelectionSend();
 		updateRoomTabTextLocal(room, key, textarea.value);
 		scheduleRoomTabSync({
 			room,
@@ -6826,12 +7299,18 @@ self.onmessage = async (e) => {
 		updateTableMenuVisibility();
 		updateSelectionMenu();
 		updatePasswordMaskOverlay();
+		scheduleSelectionSend();
 	});
 
 	textarea.addEventListener("focus", () => {
 		updateCodeLangOverlay();
 		updateTableMenuVisibility();
 		updatePasswordMaskOverlay();
+		scheduleSelectionSend();
+	});
+
+	textarea.addEventListener("blur", () => {
+		setTyping(false);
 	});
 
 	textarea.addEventListener("scroll", () => {
@@ -6847,6 +7326,7 @@ self.onmessage = async (e) => {
 		updateWikiMenu();
 		updateSelectionMenu();
 		updatePasswordMaskOverlay();
+		scheduleSelectionSend();
 	});
 
 	textarea.addEventListener("keydown", (ev) => {
@@ -6998,6 +7478,7 @@ self.onmessage = async (e) => {
 		updateTableMenuVisibility();
 		updateSelectionMenu();
 		updatePasswordMaskOverlay();
+		scheduleSelectionSend();
 	});
 
 	window.addEventListener("hashchange", () => {
@@ -7039,6 +7520,9 @@ self.onmessage = async (e) => {
 			updateSelectionMenu();
 		}
 		if (!key) toast("Public room (no key).", "info");
+		setTyping(false);
+		presenceState.clear();
+		updatePresenceUI();
 		connect();
 	});
 
