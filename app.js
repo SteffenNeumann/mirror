@@ -2629,6 +2629,13 @@
 		const pre = psMetaYaml.querySelector("pre");
 		if (pre) pre.textContent = yaml;
 		psMetaYaml.classList.toggle("hidden", !yaml);
+		updateEditorMetaScroll();
+	}
+
+	function updateEditorMetaScroll() {
+		if (!psMetaYaml || !textarea) return;
+		const y = Math.max(0, Number(textarea.scrollTop || 0));
+		psMetaYaml.style.transform = `translateY(${-y}px)`;
 	}
 
 	function cleanNoteTitleLine(line) {
@@ -5682,6 +5689,7 @@ self.onmessage = async (e) => {
 		updateCodeLangOverlay();
 		updateTableMenuVisibility();
 		updateSelectionMenu();
+		updateEditorMetaScroll();
 		schedulePsAutoSave();
 	});
 
@@ -5701,6 +5709,7 @@ self.onmessage = async (e) => {
 	textarea.addEventListener("scroll", () => {
 		updateSlashMenu();
 		updateSelectionMenu();
+		updateEditorMetaScroll();
 	});
 
 	textarea.addEventListener("keyup", () => {
