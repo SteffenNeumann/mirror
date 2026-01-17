@@ -5333,7 +5333,7 @@ self.onmessage = async (e) => {
 			if (psHint) psHint.textContent = "";
 		}
 		psState.favorites = Array.isArray(psState.favorites)
-			? psState.favorites
+			? dedupeFavorites(psState.favorites)
 			: [];
 		psState.roomTabs = Array.isArray(psState.roomTabs)
 			? psState.roomTabs
@@ -5742,6 +5742,30 @@ self.onmessage = async (e) => {
 		return { room: roomName, key: keyName, addedAt, text };
 	}
 
+	function dedupeFavorites(list) {
+		const out = [];
+		const index = new Map();
+		for (const entry of list) {
+			const normalized = normalizeFavoriteEntry(entry);
+			if (!normalized) continue;
+			const keyId = `${normalized.room}:${normalized.key}`;
+			if (!index.has(keyId)) {
+				index.set(keyId, out.length);
+				out.push(normalized);
+				continue;
+			}
+			const idx = index.get(keyId);
+			const prev = out[idx];
+			out[idx] = {
+				...prev,
+				...normalized,
+				addedAt: Math.max(prev.addedAt || 0, normalized.addedAt || 0),
+				text: normalized.text || prev.text || "",
+			};
+		}
+		return out;
+	}
+
 	function normalizeRoomTabEntry(it) {
 		const roomName = normalizeRoom(it && it.room);
 		const keyName = normalizeKey(it && it.key);
@@ -6134,7 +6158,7 @@ self.onmessage = async (e) => {
 			const raw = localStorage.getItem(FAVORITES_KEY);
 			const parsed = JSON.parse(raw || "[]");
 			if (!Array.isArray(parsed)) return [];
-			return parsed.map(normalizeFavoriteEntry).filter(Boolean);
+			return dedupeFavorites(parsed.map(normalizeFavoriteEntry).filter(Boolean));
 		} catch {
 			return [];
 		}
@@ -6143,16 +6167,20 @@ self.onmessage = async (e) => {
 	function loadFavorites() {
 		if (psState && psState.authed) {
 			const favs = Array.isArray(psState.favorites) ? psState.favorites : [];
-			return favs.map(normalizeFavoriteEntry).filter(Boolean);
+			return dedupeFavorites(favs.map(normalizeFavoriteEntry).filter(Boolean));
 		}
 		return loadLocalFavorites();
 	}
 
 	function saveFavorites(list) {
+		const cleaned = Array.isArray(list) ? dedupeFavorites(list) : [];
 		try {
-			localStorage.setItem(FAVORITES_KEY, JSON.stringify(list || []));
+			localStorage.setItem(FAVORITES_KEY, JSON.stringify(cleaned));
 		} catch {
 			// ignore
+		}
+		if (psState && psState.authed) {
+			psState.favorites = cleaned;
 		}
 	}
 
@@ -6163,7 +6191,7 @@ self.onmessage = async (e) => {
 
 	function renderFavorites() {
 		if (!favoritesSelect) return;
-		const favs = loadFavorites().sort(
+		const favs = dedupeFavorites(loadFavorites()).sort(
 			(a, b) => (b.addedAt || 0) - (a.addedAt || 0)
 		);
 		const escapeAttr = (raw) =>
