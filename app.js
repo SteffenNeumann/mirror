@@ -4367,6 +4367,23 @@
 		applyNoteToEditor(note);
 	}
 
+	function syncPsListHeight() {
+		if (!psPanel || !psList) return;
+		const panelRect = psPanel.getBoundingClientRect();
+		const listRect = psList.getBoundingClientRect();
+		if (!panelRect.height || !listRect.height) return;
+		let maxHeight = panelRect.bottom - listRect.top;
+		if (psSettingsBtn) {
+			const settingsRect = psSettingsBtn.getBoundingClientRect();
+			if (settingsRect.top > listRect.top) {
+				maxHeight = Math.min(maxHeight, settingsRect.top - listRect.top);
+			}
+		}
+		if (Number.isFinite(maxHeight) && maxHeight > 0) {
+			psList.style.maxHeight = `${Math.max(120, Math.floor(maxHeight))}px`;
+		}
+	}
+
 	function renderPsList(notes) {
 		if (!psList) return;
 		const escapeHtml = (raw) =>
@@ -4382,6 +4399,7 @@
 			psList.innerHTML = q
 				? '<div class="text-xs text-slate-400">No matches.</div>'
 				: '<div class="text-xs text-slate-400">No notes yet.</div>';
+			syncPsListHeight();
 			return;
 		}
 		const byId = new Map(items.map((n) => [String(n.id || ""), n]));
@@ -4518,6 +4536,7 @@
 				});
 			}
 		});
+		syncPsListHeight();
 	}
 
 	function ensureJsRunnerFrame() {
@@ -6647,6 +6666,7 @@ self.onmessage = async (e) => {
 	}
 	window.addEventListener("resize", () => {
 		updateRunOutputSizing();
+		syncPsListHeight();
 	});
 	if (aiPromptInput) {
 		aiPromptInput.addEventListener("input", () => {
