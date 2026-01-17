@@ -6885,8 +6885,8 @@ self.onmessage = async (e) => {
 				continue;
 			}
 			const meta = getAuthorMeta(String(authorId));
-			const bg = colorToRgba(meta.color, 0.18);
-			const border = colorToRgba(meta.color, 0.35);
+			const bg = colorToRgba(meta.color, 0.34);
+			const border = colorToRgba(meta.color, 0.7);
 			out += `<span class="author-span" style="background-color:${bg};box-shadow:inset 0 0 0 1px ${border};">${escapeHtml(
 				text
 			)}</span>`;
