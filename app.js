@@ -6762,24 +6762,26 @@ self.onmessage = async (e) => {
 	}
 
 	function updatePresenceUI() {
-		if (!presenceSummary || !presenceList || !typingIndicator) return;
+		if (!presenceSummary || !presenceList) return;
 		const users = Array.from(presenceState.values());
 		const count = users.length;
 		presenceSummary.textContent =
 			count === 1 ? "1 Nutzer online" : `${count} Nutzer online`;
 
-		const typingUsers = users.filter(
-			(u) => u.typing && u.clientId !== clientId
-		);
-		if (typingUsers.length === 0) {
-			typingIndicator.textContent = "";
-			typingIndicator.classList.add("hidden");
-		} else if (typingUsers.length === 1) {
-			typingIndicator.textContent = `${typingUsers[0].name} tippt…`;
-			typingIndicator.classList.remove("hidden");
-		} else {
-			typingIndicator.textContent = `${typingUsers.length} Personen tippen…`;
-			typingIndicator.classList.remove("hidden");
+		if (typingIndicator) {
+			const typingUsers = users.filter(
+				(u) => u.typing && u.clientId !== clientId
+			);
+			if (typingUsers.length === 0) {
+				typingIndicator.textContent = "";
+				typingIndicator.classList.add("hidden");
+			} else if (typingUsers.length === 1) {
+				typingIndicator.textContent = `${typingUsers[0].name} tippt…`;
+				typingIndicator.classList.remove("hidden");
+			} else {
+				typingIndicator.textContent = `${typingUsers.length} Personen tippen…`;
+				typingIndicator.classList.remove("hidden");
+			}
 		}
 
 		presenceList.innerHTML = "";
