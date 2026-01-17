@@ -327,6 +327,7 @@ function mimeTypeForPath(filePath) {
 	const ext = extname(filePath).toLowerCase();
 	if (ext === ".html") return "text/html; charset=utf-8";
 	if (ext === ".js") return "text/javascript; charset=utf-8";
+	if (ext === ".mjs") return "text/javascript; charset=utf-8";
 	if (ext === ".css") return "text/css; charset=utf-8";
 	if (ext === ".svg") return "image/svg+xml";
 	if (ext === ".png") return "image/png";
@@ -869,6 +870,12 @@ const server = http.createServer((req, res) => {
 	const url = new URL(req.url || "/", `http://${req.headers.host}`);
 
 	// --- API: Personal Space + Notes ---
+	if (url.pathname === "/favicon.ico") {
+		res.writeHead(204, { "Cache-Control": "no-store" });
+		res.end();
+		return;
+	}
+
 	if (
 		url.pathname === "/api/personal-space/request-link" &&
 		req.method === "POST"
