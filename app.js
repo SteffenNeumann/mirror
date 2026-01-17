@@ -5748,7 +5748,7 @@ self.onmessage = async (e) => {
 		for (const entry of list) {
 			const normalized = normalizeFavoriteEntry(entry);
 			if (!normalized) continue;
-			const keyId = `${normalized.room}:${normalized.key}`;
+			const keyId = normalized.room;
 			if (!index.has(keyId)) {
 				index.set(keyId, out.length);
 				out.push(normalized);
@@ -5782,7 +5782,7 @@ self.onmessage = async (e) => {
 			const roomName = normalizeRoom(entry && entry.room);
 			const keyName = normalizeKey(entry && entry.key);
 			if (!roomName) continue;
-			const keyId = `${roomName}:${keyName}`;
+			const keyId = roomName;
 			const normalized = normalizeRoomTabEntry({
 				...entry,
 				room: roomName,
