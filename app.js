@@ -5308,16 +5308,22 @@ self.onmessage = async (e) => {
 			.join("");
 	}
 
+	let shareHref = "";
+	function updateShareLink() {
+		shareHref =
+			location.pathname + location.search + buildShareHash(room, key);
+		if (shareLink) shareLink.href = shareHref;
+	}
+
 	roomLabel.textContent = room;
-	shareLink.href =
-		location.pathname + location.search + buildShareHash(room, key);
+	updateShareLink();
 	roomInput.value = room;
 	saveRecentRoom(room);
 	renderRecentRooms();
 	updateFavoritesUI();
 
 	function setStatus(kind, text) {
-		statusText.textContent = text;
+		if (statusText) statusText.textContent = text;
 		statusDot.className = "h-2.5 w-2.5 rounded-full";
 		if (kind === "online") statusDot.classList.add("bg-emerald-400");
 		else if (kind === "connecting") statusDot.classList.add("bg-amber-400");
@@ -5625,7 +5631,7 @@ self.onmessage = async (e) => {
 	}
 
 	copyLinkBtn.addEventListener("click", async () => {
-		const href = shareLink.href;
+		const href = shareHref || location.href;
 		try {
 			await navigator.clipboard.writeText(href);
 			toast("Link copied.", "success");
@@ -5938,8 +5944,7 @@ self.onmessage = async (e) => {
 		lastAppliedRemoteTs = 0;
 		lastLocalText = "";
 		roomLabel.textContent = room;
-		shareLink.href =
-			location.pathname + location.search + buildShareHash(room, key);
+		updateShareLink();
 		roomInput.value = room;
 		saveRecentRoom(room);
 		renderRecentRooms();
