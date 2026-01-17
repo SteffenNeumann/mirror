@@ -958,6 +958,12 @@
 				break;
 			case "password":
 				wrapSelection(textarea, "||", "||");
+				try {
+					const pos = Number(textarea.selectionEnd || 0);
+					textarea.setSelectionRange(pos, pos);
+				} catch {
+					// ignore
+				}
 				break;
 			case "masktoggle":
 				toggleEditorMaskView();
@@ -3289,9 +3295,7 @@
 	function updatePasswordMaskOverlay() {
 		if (!textarea || !mirrorMask || !mirrorMaskContent) return;
 		const value = String(textarea.value || "");
-		const hasSelection = Boolean(getSelectionRange());
-		const enabled =
-			hasPasswordTokens(value) && !editorMaskDisabled && !hasSelection;
+		const enabled = hasPasswordTokens(value) && !editorMaskDisabled;
 		mirrorMask.classList.toggle("hidden", !enabled);
 		textarea.classList.toggle("pw-mask-enabled", enabled);
 		if (!enabled) {
