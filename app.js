@@ -112,6 +112,7 @@
 	const psMainHint = document.getElementById("psMainHint");
 	const psAutoSaveStatus = document.getElementById("psAutoSaveStatus");
 	const psMetaYaml = document.getElementById("psMetaYaml");
+	const psMetaToggle = document.getElementById("psMetaToggle");
 	const psNavBackBtn = document.getElementById("psNavBack");
 	const psNavForwardBtn = document.getElementById("psNavForward");
 	const psSettingsBtn = document.getElementById("psSettingsBtn");
@@ -1989,6 +1990,7 @@
 	let psEditingNoteTagsOverridden = false;
 	let psEditingNotePinned = false;
 	let psSortMode = "updated";
+	let psMetaVisible = true;
 	let psAutoSaveTimer = 0;
 	let psAutoSaveLastSavedText = "";
 	let psAutoSaveLastSavedNoteId = "";
@@ -2017,6 +2019,7 @@
 	const PS_VISIBLE_KEY = "mirror_ps_visible";
 	const PS_PINNED_ONLY_KEY = "mirror_ps_pinned_only";
 	const PS_SORT_MODE_KEY = "mirror_ps_sort_mode";
+	const PS_META_VISIBLE_KEY = "mirror_ps_meta_visible";
 	const PS_MANUAL_TAGS_MARKER = "__manual_tags__";
 	const PS_PINNED_TAG = "pinned";
 	const AI_PROMPT_KEY = "mirror_ai_prompt";
@@ -2570,8 +2573,49 @@
 		return lines.join("\n");
 	}
 
+	function setPsMetaVisible(next) {
+		psMetaVisible = Boolean(next);
+		if (psMetaToggle) {
+			psMetaToggle.classList.toggle("bg-white/10", psMetaVisible);
+			psMetaToggle.classList.toggle("text-slate-100", psMetaVisible);
+			psMetaToggle.classList.toggle("text-slate-200", !psMetaVisible);
+			try {
+				psMetaToggle.setAttribute(
+					"aria-pressed",
+					psMetaVisible ? "true" : "false"
+				);
+			} catch {
+				// ignore
+			}
+		}
+		updateEditorMetaYaml();
+		if (previewOpen) updatePreview();
+	}
+
+	function loadPsMetaVisible() {
+		try {
+			const raw = localStorage.getItem(PS_META_VISIBLE_KEY);
+			psMetaVisible = raw === null ? true : raw !== "0";
+		} catch {
+			psMetaVisible = true;
+		}
+		setPsMetaVisible(psMetaVisible);
+	}
+
+	function savePsMetaVisible() {
+		try {
+			localStorage.setItem(PS_META_VISIBLE_KEY, psMetaVisible ? "1" : "0");
+		} catch {
+			// ignore
+		}
+	}
+
 	function updateEditorMetaYaml() {
 		if (!psMetaYaml || !psMetaYaml.classList) return;
+		if (!psMetaVisible) {
+			psMetaYaml.classList.add("hidden");
+			return;
+		}
 		if (!psState || !psState.authed || !psEditingNoteId) {
 			psMetaYaml.classList.add("hidden");
 			return;
@@ -3160,7 +3204,7 @@
 		const show = Boolean(open);
 		if (codeLangWrap.classList) codeLangWrap.classList.toggle("hidden", !show);
 		if (psMetaYaml && psMetaYaml.classList) {
-			psMetaYaml.classList.toggle("hidden", show);
+			psMetaYaml.classList.toggle("hidden", show || !psMetaVisible);
 		}
 		if (show && open && open.lang) {
 			try {
@@ -3440,7 +3484,8 @@
 			themeColors.accentText ||
 			"rgba(148,163,184,.45)";
 		const metaNote = psEditingNoteId ? findNoteById(psEditingNoteId) : null;
-		const metaYaml = metaNote ? buildNoteMetaYaml(metaNote) : "";
+		const metaYaml =
+			psMetaVisible && metaNote ? buildNoteMetaYaml(metaNote) : "";
 		const metaHtml = metaYaml
 			? `<pre class="meta-yaml">${escapeHtml(metaYaml)}</pre>`
 			: "";
@@ -5847,6 +5892,7 @@ self.onmessage = async (e) => {
 	loadPsSearchQuery();
 	loadPsPinnedOnly();
 	loadPsSortMode();
+	loadPsMetaVisible();
 	loadPsVisible();
 	applyPsVisible();
 	loadTheme();
@@ -5913,6 +5959,12 @@ self.onmessage = async (e) => {
 			}
 			savePsSortMode();
 			applyPersonalSpaceFiltersAndRender();
+		});
+	}
+	if (psMetaToggle) {
+		psMetaToggle.addEventListener("click", () => {
+			setPsMetaVisible(!psMetaVisible);
+			savePsMetaVisible();
 		});
 	}
 	if (psExportNotesBtn) {

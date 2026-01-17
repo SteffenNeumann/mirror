@@ -776,6 +776,13 @@
 											class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10">
 											Preview
 										</button>
+										<button
+											id="psMetaToggle"
+											type="button"
+											class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+											aria-pressed="true">
+											Meta
+										</button>
 										<span
 											id="psAutoSaveStatus"
 											class="hidden text-xs text-slate-400"></span>
@@ -862,11 +869,6 @@
 													class="relative min-w-0 flex-1 group">
 													<label for="aiPrompt" class="sr-only">Ask</label>
 													<input
-														id="aiPrompt"
-														type="text"
-														autocomplete="off"
-														spellcheck="false"
-														placeholder="Ask something"
 														class="h-9 w-full min-w-0 rounded-md border border-white/10 bg-slate-950/30 px-3 pr-9 text-sm text-slate-100 shadow-soft backdrop-blur transition placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
 													<button
 														id="aiPromptClear"
