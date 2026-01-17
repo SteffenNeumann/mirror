@@ -131,6 +131,7 @@ function initDb() {
 				content_hash TEXT,
 			tags_json TEXT NOT NULL,
 			created_at INTEGER NOT NULL,
+				updated_at INTEGER NOT NULL,
 			FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 		);
 		CREATE INDEX IF NOT EXISTS idx_notes_user_created ON notes(user_id, created_at DESC);
@@ -147,6 +148,19 @@ function initDb() {
 	if (!hasHash) {
 		try {
 			db.exec("ALTER TABLE notes ADD COLUMN content_hash TEXT");
+		} catch {
+			// ignore
+		}
+	}
+	const hasUpdatedAt = noteCols.some(
+		(c) => String(c && c.name) === "updated_at"
+	);
+	if (!hasUpdatedAt) {
+		try {
+			db.exec("ALTER TABLE notes ADD COLUMN updated_at INTEGER");
+			db.exec(
+				"UPDATE notes SET updated_at = created_at WHERE updated_at IS NULL"
+			);
 		} catch {
 			// ignore
 		}
@@ -188,24 +202,24 @@ function initDb() {
 		"INSERT INTO users(email, created_at) VALUES(?, ?) ON CONFLICT(email) DO NOTHING"
 	);
 	stmtNoteInsert = db.prepare(
-		"INSERT INTO notes(id, user_id, text, kind, content_hash, tags_json, created_at) VALUES(?, ?, ?, ?, ?, ?, ?)"
+		"INSERT INTO notes(id, user_id, text, kind, content_hash, tags_json, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?)"
 	);
 	stmtNoteGetByIdUser = db.prepare(
-		"SELECT id, text, kind, tags_json, created_at FROM notes WHERE id = ? AND user_id = ?"
+		"SELECT id, text, kind, tags_json, created_at, updated_at FROM notes WHERE id = ? AND user_id = ?"
 	);
 	stmtNoteGetByHashUser = db.prepare(
-		"SELECT id, text, kind, tags_json, created_at FROM notes WHERE user_id = ? AND content_hash = ? LIMIT 1"
+		"SELECT id, text, kind, tags_json, created_at, updated_at FROM notes WHERE user_id = ? AND content_hash = ? LIMIT 1"
 	);
 	stmtNoteUpdate = db.prepare(
-		"UPDATE notes SET text = ?, kind = ?, content_hash = ?, tags_json = ? WHERE id = ? AND user_id = ?"
+		"UPDATE notes SET text = ?, kind = ?, content_hash = ?, tags_json = ?, updated_at = ? WHERE id = ? AND user_id = ?"
 	);
 	stmtNoteDelete = db.prepare("DELETE FROM notes WHERE id = ? AND user_id = ?");
 	stmtNotesDeleteAll = db.prepare("DELETE FROM notes WHERE user_id = ?");
 	stmtNotesByUser = db.prepare(
-		"SELECT id, text, kind, tags_json, created_at FROM notes WHERE user_id = ? ORDER BY created_at DESC LIMIT 500"
+		"SELECT id, text, kind, tags_json, created_at, updated_at FROM notes WHERE user_id = ? ORDER BY created_at DESC LIMIT 500"
 	);
 	stmtNotesByUserAndTag = db.prepare(
-		"SELECT id, text, kind, tags_json, created_at FROM notes WHERE user_id = ? AND tags_json LIKE ? ORDER BY created_at DESC LIMIT 500"
+		"SELECT id, text, kind, tags_json, created_at, updated_at FROM notes WHERE user_id = ? AND tags_json LIKE ? ORDER BY created_at DESC LIMIT 500"
 	);
 	stmtTagsByUser = db.prepare(
 		"SELECT tags_json FROM notes WHERE user_id = ? ORDER BY created_at DESC LIMIT 500"
@@ -626,6 +640,10 @@ function listNotes(userId, tag) {
 			kind: r.kind,
 			tags: parseTagsJson(r.tags_json),
 			createdAt: r.created_at,
+			updatedAt:
+				typeof r.updated_at === "number" && Number.isFinite(r.updated_at)
+					? r.updated_at
+					: r.created_at,
 		}));
 	}
 	const like = `%"${String(tag).replace(/"/g, "")}"%`;
@@ -635,6 +653,10 @@ function listNotes(userId, tag) {
 		kind: r.kind,
 		tags: parseTagsJson(r.tags_json),
 		createdAt: r.created_at,
+		updatedAt:
+			typeof r.updated_at === "number" && Number.isFinite(r.updated_at)
+				? r.updated_at
+				: r.created_at,
 	}));
 }
 
@@ -1007,6 +1029,11 @@ const server = http.createServer((req, res) => {
 								kind: existing.kind,
 								tags: parseTagsJson(existing.tags_json),
 								createdAt: existing.created_at,
+								updatedAt:
+									typeof existing.updated_at === "number" &&
+									Number.isFinite(existing.updated_at)
+										? existing.updated_at
+										: existing.created_at,
 							},
 						});
 						return;
@@ -1016,6 +1043,7 @@ const server = http.createServer((req, res) => {
 					id: crypto.randomBytes(12).toString("base64url"),
 					text: textVal,
 					createdAt: Date.now(),
+					updatedAt: Date.now(),
 					kind,
 					tags,
 				};
@@ -1027,7 +1055,8 @@ const server = http.createServer((req, res) => {
 						note.kind,
 						contentHash,
 						JSON.stringify(note.tags),
-						note.createdAt
+						note.createdAt,
+						note.updatedAt
 					);
 				} catch (e) {
 					if (contentHash && /UNIQUE/i.test(String(e && e.message))) {
@@ -1041,6 +1070,11 @@ const server = http.createServer((req, res) => {
 									kind: existing.kind,
 									tags: parseTagsJson(existing.tags_json),
 									createdAt: existing.created_at,
+									updatedAt:
+										typeof existing.updated_at === "number" &&
+										Number.isFinite(existing.updated_at)
+											? existing.updated_at
+											: existing.created_at,
 								},
 							});
 							return;
@@ -1111,11 +1145,13 @@ const server = http.createServer((req, res) => {
 							return;
 						}
 					}
+					const updatedAt = Date.now();
 					stmtNoteUpdate.run(
 						nextText,
 						kind,
 						contentHash,
 						JSON.stringify(tags),
+						updatedAt,
 						noteId,
 						userId
 					);
@@ -1127,6 +1163,7 @@ const server = http.createServer((req, res) => {
 							kind,
 							tags,
 							createdAt: existing.created_at,
+							updatedAt,
 						},
 					});
 				})
@@ -1243,6 +1280,11 @@ const server = http.createServer((req, res) => {
 							Number.isFinite(createdAtRaw) && createdAtRaw > 0
 								? createdAtRaw
 								: Date.now();
+						const updatedAtRaw = Number(n && n.updatedAt ? n.updatedAt : 0);
+						const updatedAt =
+							Number.isFinite(updatedAtRaw) && updatedAtRaw > 0
+								? updatedAtRaw
+								: createdAt;
 						const kindRaw = String(n && n.kind ? n.kind : "").trim();
 						const tagsRaw = n && n.tags ? n.tags : [];
 						const tags = normalizeImportTags(tagsRaw);
@@ -1268,6 +1310,7 @@ const server = http.createServer((req, res) => {
 								kind,
 								contentHash,
 								JSON.stringify(tagsFinal),
+								updatedAt,
 								noteId,
 								userId
 							);
@@ -1294,7 +1337,8 @@ const server = http.createServer((req, res) => {
 							kind,
 							contentHash,
 							JSON.stringify(tagsFinal),
-							createdAt
+							createdAt,
+							updatedAt
 						);
 						imported += 1;
 						seenHashes.add(contentHash);
