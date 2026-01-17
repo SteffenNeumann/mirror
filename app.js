@@ -5751,12 +5751,44 @@ self.onmessage = async (e) => {
 		return { room: roomName, key: keyName, lastUsed, text };
 	}
 
+	function dedupeRoomTabs(list) {
+		const out = [];
+		const index = new Map();
+		for (const entry of list) {
+			const roomName = normalizeRoom(entry && entry.room);
+			const keyName = normalizeKey(entry && entry.key);
+			if (!roomName) continue;
+			const keyId = `${roomName}:${keyName}`;
+			const normalized = normalizeRoomTabEntry({
+				...entry,
+				room: roomName,
+				key: keyName,
+			});
+			if (!normalized) continue;
+			if (!index.has(keyId)) {
+				index.set(keyId, out.length);
+				out.push(normalized);
+				continue;
+			}
+			const idx = index.get(keyId);
+			const prev = out[idx];
+			const merged = {
+				...prev,
+				...normalized,
+				lastUsed: Math.max(prev.lastUsed || 0, normalized.lastUsed || 0),
+				text: normalized.text || prev.text || "",
+			};
+			out[idx] = merged;
+		}
+		return out;
+	}
+
 	function loadLocalRoomTabs() {
 		try {
 			const raw = localStorage.getItem(ROOM_TABS_KEY);
 			const parsed = JSON.parse(raw || "[]");
 			if (!Array.isArray(parsed)) return [];
-			return parsed.map(normalizeRoomTabEntry).filter(Boolean);
+			return dedupeRoomTabs(parsed.map(normalizeRoomTabEntry).filter(Boolean));
 		} catch {
 			return [];
 		}
@@ -5765,18 +5797,19 @@ self.onmessage = async (e) => {
 	function loadRoomTabs() {
 		if (psState && psState.authed) {
 			const tabs = Array.isArray(psState.roomTabs) ? psState.roomTabs : [];
-			return tabs.map(normalizeRoomTabEntry).filter(Boolean);
+			return dedupeRoomTabs(tabs.map(normalizeRoomTabEntry).filter(Boolean));
 		}
 		return loadLocalRoomTabs();
 	}
 
 	function saveRoomTabs(list) {
 		if (psState && psState.authed) {
-			psState.roomTabs = Array.isArray(list) ? list : [];
+			psState.roomTabs = Array.isArray(list) ? dedupeRoomTabs(list) : [];
 			return;
 		}
 		try {
-			localStorage.setItem(ROOM_TABS_KEY, JSON.stringify(list || []));
+			const cleaned = Array.isArray(list) ? dedupeRoomTabs(list) : [];
+			localStorage.setItem(ROOM_TABS_KEY, JSON.stringify(cleaned));
 		} catch {
 			// ignore
 		}
@@ -5802,7 +5835,7 @@ self.onmessage = async (e) => {
 		const nextRoom = normalizeRoom(roomName);
 		const nextKey = normalizeKey(keyName);
 		if (!nextRoom) return;
-		const tabs = loadRoomTabs();
+		const tabs = dedupeRoomTabs(loadRoomTabs());
 		const idx = tabs.findIndex(
 			(t) => t.room === nextRoom && t.key === nextKey
 		);
@@ -5938,7 +5971,7 @@ self.onmessage = async (e) => {
 		const nextRoom = normalizeRoom(roomName);
 		const nextKey = normalizeKey(keyName);
 		if (!nextRoom) return;
-		const tabs = loadRoomTabs();
+		const tabs = dedupeRoomTabs(loadRoomTabs());
 		const now = Date.now();
 		const idx = tabs.findIndex(
 			(t) => t.room === nextRoom && t.key === nextKey
