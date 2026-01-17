@@ -47,6 +47,7 @@
 	const aiPromptInput = document.getElementById("aiPrompt");
 	const aiPromptClearBtn = document.getElementById("aiPromptClear");
 	const aiUsePreviewBtn = document.getElementById("aiUsePreviewBtn");
+	const aiUseAnswerBtn = document.getElementById("aiUseAnswerBtn");
 	const aiModeWrap = document.getElementById("aiModeWrap");
 	const aiPromptWrap = document.getElementById("aiPromptWrap");
 	const copyMirrorBtn = document.getElementById("copyMirror");
@@ -145,6 +146,8 @@
 	const aiApiStatus = document.getElementById("aiApiStatus");
 	const faqSearchInput = document.getElementById("faqSearch");
 	const faqList = document.getElementById("faqList");
+	const favoritesManageList = document.getElementById("favoritesManageList");
+	const favoritesManageEmpty = document.getElementById("favoritesManageEmpty");
 	const psUserAuthed = document.getElementById("psUserAuthed");
 	const psUserUnauthed = document.getElementById("psUserUnauthed");
 	const bgBlobTop = document.getElementById("bgBlobTop");
@@ -2214,11 +2217,13 @@
 	const PS_PINNED_TAG = "pinned";
 	const AI_PROMPT_KEY = "mirror_ai_prompt";
 	const AI_USE_PREVIEW_KEY = "mirror_ai_use_preview";
+	const AI_USE_ANSWER_KEY = "mirror_ai_use_answer";
 	const AI_API_KEY_KEY = "mirror_ai_api_key";
 	const AI_API_MODEL_KEY = "mirror_ai_api_model";
 	const THEME_KEY = "mirror_theme";
 	let aiPrompt = "";
 	let aiUsePreview = true;
+	let aiUseAnswer = true;
 	let aiApiKey = "";
 	let aiApiModel = "";
 	let settingsOpen = false;
@@ -2372,10 +2377,29 @@
 		setAiUsePreviewUi(aiUsePreview);
 	}
 
+	function loadAiUseAnswer() {
+		try {
+			const raw = localStorage.getItem(AI_USE_ANSWER_KEY);
+			aiUseAnswer = raw === null ? true : raw !== "0";
+		} catch {
+			aiUseAnswer = true;
+		}
+		setAiUseAnswerUi(aiUseAnswer);
+	}
+
 	function saveAiPrompt(next) {
 		aiPrompt = String(next || "");
 		try {
 			localStorage.setItem(AI_PROMPT_KEY, aiPrompt);
+		} catch {
+			// ignore
+		}
+	}
+
+	function saveAiUseAnswer(next) {
+		aiUseAnswer = Boolean(next);
+		try {
+			localStorage.setItem(AI_USE_ANSWER_KEY, aiUseAnswer ? "1" : "0");
 		} catch {
 			// ignore
 		}
@@ -2531,6 +2555,7 @@
 			setActiveSettingsSection(settingsSection || "user");
 			loadAiStatus();
 			renderFaq();
+			renderFavoritesManager();
 		}
 	}
 
@@ -2627,6 +2652,14 @@
 			a: "Star a room to add it to Favorites. Use the Favorites dropdown to jump back to a saved room quickly.",
 		},
 		{
+			q: "Tabs / Multiuser",
+			a: "Room tabs help you jump between rooms quickly. The multiuser presence list and typing indicator keep you aware of activity in shared rooms.",
+		},
+		{
+			q: "Multiuser-Anzeige & Passwort-Maske",
+			a: "The presence list shows who is online. Use the selection menu actions to hide password-like tokens or toggle masking on/off when sharing screens.",
+		},
+		{
 			q: "Preview",
 			a: "Toggle the preview panel to render Markdown and code highlights. Task lists, tables, and code blocks render in the preview.",
 		},
@@ -2718,6 +2751,10 @@
 		return aiUsePreview;
 	}
 
+	function getAiUseAnswer() {
+		return aiUseAnswer;
+	}
+
 	function setAiUsePreviewUi(active) {
 		if (!aiUsePreviewBtn || !aiUsePreviewBtn.classList) return;
 		aiUsePreviewBtn.classList.toggle("bg-fuchsia-600/60", active);
@@ -2729,6 +2766,22 @@
 		aiUsePreviewBtn.classList.toggle("text-slate-300", !active);
 		try {
 			aiUsePreviewBtn.setAttribute("aria-pressed", active ? "true" : "false");
+		} catch {
+			// ignore
+		}
+	}
+
+	function setAiUseAnswerUi(active) {
+		if (!aiUseAnswerBtn || !aiUseAnswerBtn.classList) return;
+		aiUseAnswerBtn.classList.toggle("bg-fuchsia-600/60", active);
+		aiUseAnswerBtn.classList.toggle("border-fuchsia-500/30", active);
+		aiUseAnswerBtn.classList.toggle("text-slate-50", active);
+		aiUseAnswerBtn.classList.toggle("shadow-soft", active);
+		aiUseAnswerBtn.classList.toggle("bg-slate-950/30", !active);
+		aiUseAnswerBtn.classList.toggle("border-white/15", !active);
+		aiUseAnswerBtn.classList.toggle("text-slate-300", !active);
+		try {
+			aiUseAnswerBtn.setAttribute("aria-pressed", active ? "true" : "false");
 		} catch {
 			// ignore
 		}
@@ -5381,6 +5434,15 @@ self.onmessage = async (e) => {
 		const prompt = getAiPrompt();
 		if (prompt) saveAiPrompt(prompt);
 		const usePreview = getAiUsePreview();
+		const followUpEnabled = getAiUseAnswer();
+		const lastAiOutput =
+			followUpEnabled && previewRunState && previewRunState.source === "ai"
+				? String(previewRunState.output || "")
+				: "";
+		const followUpSnippet = String(lastAiOutput || "")
+			.trim()
+			.slice(0, 2000);
+		const hasFollowUpContext = Boolean(followUpSnippet);
 		const hasCode = Boolean(String(code || "").trim());
 		if (mode === "run" && !hasCode) {
 			setPreviewRunOutput({ status: "", output: "", error: "", source: "" });
@@ -5402,9 +5464,9 @@ self.onmessage = async (e) => {
 				return;
 			}
 			kind = "text";
-			payloadText = prompt;
+			payloadText = hasFollowUpContext ? followUpSnippet : prompt;
 			payloadLang = "text";
-			promptForRequest = "";
+			promptForRequest = hasFollowUpContext ? prompt : "";
 		} else if (mode !== "run" && usePreview) {
 			if (!String(editorText || "").trim() && prompt) {
 				kind = "text";
@@ -5412,6 +5474,9 @@ self.onmessage = async (e) => {
 				payloadLang = "text";
 				promptForRequest = "";
 			}
+		}
+		if (mode !== "run" && usePreview && prompt && hasFollowUpContext) {
+			promptForRequest = `Nachfrage: ${prompt}\n\nVorherige AI-Antwort:\n${followUpSnippet}`;
 		}
 		if (!String(payloadText || "").trim()) {
 			setPreviewRunOutput({ status: "", output: "", error: "", source: "" });
@@ -6355,6 +6420,103 @@ self.onmessage = async (e) => {
 		favoritesSelect.innerHTML = `<option value="">Favoriten…</option>${options}`;
 	}
 
+	function renderFavoritesManager() {
+		if (!favoritesManageList) return;
+		const favs = dedupeFavorites(loadFavorites()).sort(
+			(a, b) => (b.addedAt || 0) - (a.addedAt || 0)
+		);
+		if (favoritesManageEmpty && favoritesManageEmpty.classList) {
+			favoritesManageEmpty.classList.toggle("hidden", favs.length > 0);
+		}
+		if (!favs.length) {
+			favoritesManageList.innerHTML = "";
+			return;
+		}
+		favoritesManageList.innerHTML = favs
+			.map((f) => {
+				const badge = f.key
+					? '<span class="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300">privat</span>'
+					: "";
+				const textVal = String(f.text || "");
+				return `
+					<div class="rounded-lg border border-white/10 bg-slate-950/30 p-2">
+						<div class="flex items-center justify-between gap-2">
+							<div class="flex items-center gap-2 text-xs text-slate-200">
+								<span class="font-medium">${escapeHtml(f.room)}</span>
+								${badge}
+							</div>
+							<button
+								type="button"
+								data-fav-remove
+								data-fav-room="${escapeAttr(f.room)}"
+								data-fav-key="${escapeAttr(f.key)}"
+								class="rounded-md border border-white/10 bg-transparent px-2 py-1 text-[11px] text-slate-200 transition hover:bg-white/5 active:bg-white/10">
+								Entfernen
+							</button>
+						</div>
+						<label class="mt-2 block text-[11px] text-slate-400">Notiz</label>
+						<input
+							type="text"
+							value="${escapeAttr(textVal)}"
+							data-fav-text
+							data-fav-room="${escapeAttr(f.room)}"
+							data-fav-key="${escapeAttr(f.key)}"
+							class="mt-1 w-full rounded-md border border-white/10 bg-slate-950/40 px-2.5 py-1.5 text-[12px] text-slate-100 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/25"
+							placeholder="Kurze Notiz (optional)" />
+					</div>`;
+			})
+			.join("");
+	}
+
+	function updateFavoriteText(roomName, keyName, nextText) {
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!nextRoom) return;
+		const text = String(nextText || "").slice(0, 2000);
+		const favs = dedupeFavorites(loadFavorites());
+		const idx = favs.findIndex(
+			(f) => f.room === nextRoom && f.key === nextKey
+		);
+		if (idx >= 0) {
+			favs.splice(idx, 1, { ...favs[idx], text });
+		} else {
+			favs.push({ room: nextRoom, key: nextKey, addedAt: Date.now(), text });
+		}
+		saveFavorites(favs);
+		updateFavoritesUI();
+		if (psState && psState.authed) {
+			api("/api/favorites", {
+				method: "POST",
+				body: JSON.stringify({
+					room: nextRoom,
+					key: nextKey,
+					text,
+				}),
+			}).catch(() => {
+				// ignore
+			});
+		}
+	}
+
+	function removeFavorite(roomName, keyName) {
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!nextRoom) return;
+		const favs = dedupeFavorites(loadFavorites()).filter(
+			(f) => !(f.room === nextRoom && f.key === nextKey)
+		);
+		saveFavorites(favs);
+		updateFavoritesUI();
+		if (psState && psState.authed) {
+			api("/api/favorites", {
+				method: "DELETE",
+				body: JSON.stringify({ room: nextRoom, key: nextKey }),
+			}).catch(() => {
+				// ignore
+			});
+		}
+	}
+
 	function updateFavoriteButton() {
 		if (!toggleFavoriteBtn) return;
 		const active = findFavoriteIndex(room, key) >= 0;
@@ -6375,6 +6537,7 @@ self.onmessage = async (e) => {
 			const has = favoritesSelect.querySelector(`option[value="${esc}"]`);
 			favoritesSelect.value = has ? current : "";
 		}
+		renderFavoritesManager();
 	}
 	function loadRecentRooms() {
 		try {
@@ -8046,6 +8209,12 @@ self.onmessage = async (e) => {
 			applyAiContextMode();
 		});
 	}
+	if (aiUseAnswerBtn) {
+		aiUseAnswerBtn.addEventListener("click", () => {
+			saveAiUseAnswer(!aiUseAnswer);
+			setAiUseAnswerUi(aiUseAnswer);
+		});
+	}
 	if (aiPromptClearBtn) {
 		aiPromptClearBtn.addEventListener("click", () => {
 			if (aiPromptInput) aiPromptInput.value = "";
@@ -8134,6 +8303,26 @@ self.onmessage = async (e) => {
 			saveTheme(settingsThemeSelect.value);
 		});
 	}
+	if (favoritesManageList) {
+		favoritesManageList.addEventListener("click", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLElement)) return;
+			const btn = target.closest("[data-fav-remove]");
+			if (!btn) return;
+			const roomName = btn.getAttribute("data-fav-room") || "";
+			const keyName = btn.getAttribute("data-fav-key") || "";
+			removeFavorite(roomName, keyName);
+		});
+		favoritesManageList.addEventListener("change", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLInputElement)) return;
+			const input = target.closest("[data-fav-text]");
+			if (!input) return;
+			const roomName = input.getAttribute("data-fav-room") || "";
+			const keyName = input.getAttribute("data-fav-key") || "";
+			updateFavoriteText(roomName, keyName, input.value);
+		});
+	}
 	if (aiApiKeyInput) {
 		aiApiKeyInput.addEventListener("focus", () => {
 			if (aiApiKeyInput.value === "••••••••") aiApiKeyInput.value = "";
@@ -8189,6 +8378,7 @@ self.onmessage = async (e) => {
 	refreshPersonalSpace();
 	loadAiPrompt();
 	loadAiUsePreview();
+	loadAiUseAnswer();
 	applyAiContextMode();
 	updateTableMenuVisibility();
 })();
