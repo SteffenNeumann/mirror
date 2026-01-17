@@ -21,6 +21,7 @@
 	const presenceSummary = document.getElementById("presenceSummary");
 	const presenceList = document.getElementById("presenceList");
 	const typingIndicator = document.getElementById("typingIndicator");
+	const crdtStatus = document.getElementById("crdtStatus");
 	const toastRoot = document.getElementById("toastRoot");
 	const modalRoot = document.getElementById("modalRoot");
 	const modalBackdrop = document.querySelector('[data-role="modalBackdrop"]');
@@ -7030,6 +7031,10 @@ self.onmessage = async (e) => {
 			scheduleCrdtSnapshot();
 		});
 		updateAttributionOverlay();
+		if (crdtStatus) {
+			crdtStatus.textContent = "CRDT aktiv";
+			crdtStatus.classList.remove("hidden");
+		}
 		return true;
 	}
 
@@ -7047,6 +7052,10 @@ self.onmessage = async (e) => {
 		crdtHasSnapshot = false;
 		window.clearTimeout(crdtSnapshotTimer);
 		updateAttributionOverlay();
+		if (crdtStatus) {
+			crdtStatus.textContent = "";
+			crdtStatus.classList.add("hidden");
+		}
 	}
 
 	function applyCrdtUpdate(encoded) {
@@ -7238,6 +7247,10 @@ self.onmessage = async (e) => {
 				if (mySeq !== connectionSeq) return;
 				if (!ok) {
 					metaLeft.textContent = "CRDT nicht verfügbar.";
+					if (crdtStatus) {
+						crdtStatus.textContent = "CRDT nicht verfügbar";
+						crdtStatus.classList.remove("hidden");
+					}
 					sendMessage({
 						type: "request_state",
 						room,
