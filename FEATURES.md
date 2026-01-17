@@ -95,6 +95,18 @@ This list is intentionally broad. It’s an idea backlog for future iterations.
 - Sharing: QR code for room link
 - “Broadcast” mode (only one sender can write)
 
+## Integrationen & Live Updates (neuer Raum)
+
+- Live-Update von Webseiten/Feeds per API (Zweck: aktuelle Infos im Raum bündeln; Nutzen: weniger Kontextwechsel; Möglichkeiten: Polling/Webhooks, Anzeige als Karten/Markdown)
+- News/Breaking-Feeds (Zweck: schnelle Lagebilder; Nutzen: Team bleibt synchron; Möglichkeiten: Tagesschau/NewsAPI, Filter nach Keywords)
+- Wetter/Unwetterwarnungen (Zweck: operative Planung; Nutzen: rechtzeitige Hinweise; Möglichkeiten: DWD/Open-Meteo, Push bei Warnstufe)
+- Börse/Krypto/Preise (Zweck: Marktüberblick; Nutzen: Entscheidungen im Team; Möglichkeiten: Alpha Vantage/CoinGecko, Alarme bei Schwellen)
+- Statusseiten (Zweck: Störungen erkennen; Nutzen: weniger Support-Noise; Möglichkeiten: Statuspage.io/Atlassian, Auto-Post in Raum)
+- GitHub/GitLab Activity (Zweck: Dev-Transparenz; Nutzen: weniger Tool-Hopping; Möglichkeiten: PR/Issue-Events, Build-Status)
+- Kalender/Termine (Zweck: gemeinsame Planung; Nutzen: Termine im Blick; Möglichkeiten: ICS/Google Calendar, Tagesagenda)
+- Verkehr/ÖPNV (Zweck: Reiseplanung; Nutzen: weniger Überraschungen; Möglichkeiten: GTFS-Realtime, Störungsmeldungen)
+- Monitoring/Alerts (Zweck: Betriebssicherheit; Nutzen: schnellere Reaktion; Möglichkeiten: Prometheus/Alertmanager, Severity-Filter)
+
 ## Developer Quality
 
 - E2E test: two clients, sync, room switch
