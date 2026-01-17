@@ -191,18 +191,9 @@
 				font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
 					"Liberation Mono", "Courier New", monospace;
 			}
-			#mirror.pw-mask-enabled {
-				font-size: 0.72rem;
-				line-height: 1.35;
-			}
-			#mirrorMask {
+			#mirrorMaskView {
 				white-space: pre-wrap;
 				word-break: break-word;
-			}
-			#mirrorMaskContent {
-				min-height: 100%;
-				transform: translate(0, 0);
-				will-change: transform;
 			}
 			.md-content .pw-field {
 				display: inline-flex;
@@ -663,11 +654,11 @@
 										placeholder="Type something — everyone with this link sees it instantly…"
 										autocomplete="off"
 										spellcheck="false"></textarea>
-									<div
-										id="mirrorMask"
-										class="pointer-events-none absolute inset-0 hidden overflow-hidden rounded-xl px-4 pt-20 pb-12 pr-11 font-sans text-base leading-relaxed text-slate-100">
-										<div id="mirrorMaskContent"></div>
-									</div>
+									<textarea
+										id="mirrorMaskView"
+										class="absolute inset-0 hidden h-full min-h-0 w-full resize-none rounded-xl border border-white/10 bg-slate-950/40 px-4 pt-20 pb-12 pr-11 font-sans text-base leading-relaxed text-slate-100 shadow-inner outline-none"
+										readonly
+										aria-hidden="true"></textarea>
 									<div
 										id="slashMenu"
 										class="absolute left-2 top-12 z-40 hidden w-[min(92vw,360px)] overflow-hidden rounded-xl border border-white/10 bg-slate-950/80 shadow-soft backdrop-blur">
@@ -950,6 +941,13 @@
 											type="button"
 											class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10">
 											Preview
+										</button>
+										<button
+											id="toggleMaskView"
+											type="button"
+											class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+											aria-pressed="false">
+											Mask
 										</button>
 										<button
 											id="psSaveMain"

@@ -31,6 +31,7 @@
 	const previewPanel = document.getElementById("previewPanel");
 	const mdPreview = document.getElementById("mdPreview");
 	const togglePreview = document.getElementById("togglePreview");
+	const toggleMaskViewBtn = document.getElementById("toggleMaskView");
 	const aiModeSelect = document.getElementById("aiMode");
 	const aiAssistBtn = document.getElementById("aiAssist");
 	const clearRunOutputBtn = document.getElementById("clearRunOutput");
@@ -54,8 +55,7 @@
 	const wikiMenu = document.getElementById("wikiMenu");
 	const wikiMenuList = document.getElementById("wikiMenuList");
 	const selectionMenu = document.getElementById("selectionMenu");
-	const mirrorMask = document.getElementById("mirrorMask");
-	const mirrorMaskContent = document.getElementById("mirrorMaskContent");
+	const mirrorMaskView = document.getElementById("mirrorMaskView");
 	const mainGrid = document.getElementById("mainGrid");
 	const psPanel = document.getElementById("psPanel");
 	const togglePersonalSpaceBtn = document.getElementById("togglePersonalSpace");
@@ -722,7 +722,6 @@
 	let psNoteHistory = [];
 	let psNoteHistoryIndex = -1;
 	let psNoteHistorySkip = false;
-	let maskSelecting = false;
 	let editorMaskDisabled = false;
 	const EDITOR_MASK_DISABLED_KEY = "mirror_mask_disabled";
 
@@ -961,10 +960,7 @@
 				wrapSelection(textarea, "||", "||");
 				break;
 			case "masktoggle":
-				editorMaskDisabled = !editorMaskDisabled;
-				saveEditorMaskDisabled();
-				setEditorMaskToggleUi();
-				updatePasswordMaskOverlay();
+				toggleEditorMaskView();
 				return;
 			case "quote":
 				prefixSelectionLines(textarea, "> ");
@@ -3233,20 +3229,40 @@
 		}
 	}
 
+	function toggleEditorMaskView() {
+		editorMaskDisabled = !editorMaskDisabled;
+		saveEditorMaskDisabled();
+		setEditorMaskToggleUi();
+		updatePasswordMaskOverlay();
+	}
+
 	function setEditorMaskToggleUi() {
-		if (!selectionMenu) return;
-		const btn = selectionMenu.querySelector(
-			'[data-selection-action="masktoggle"]'
-		);
-		if (!btn) return;
 		const enabled = !editorMaskDisabled;
-		btn.setAttribute("aria-pressed", enabled ? "true" : "false");
-		btn.textContent = enabled ? "Mask" : "Unmask";
-		btn.setAttribute("title", enabled ? "Maskierung aus" : "Maskierung an");
-		btn.setAttribute(
-			"aria-label",
-			enabled ? "Maskierung aus" : "Maskierung an"
-		);
+		if (selectionMenu) {
+			const btn = selectionMenu.querySelector(
+				'[data-selection-action="masktoggle"]'
+			);
+			if (btn) {
+				btn.setAttribute("aria-pressed", enabled ? "true" : "false");
+				btn.textContent = enabled ? "Mask" : "Unmask";
+				btn.setAttribute("title", enabled ? "Maskierung aus" : "Maskierung an");
+				btn.setAttribute(
+					"aria-label",
+					enabled ? "Maskierung aus" : "Maskierung an"
+				);
+			}
+		}
+		if (toggleMaskViewBtn) {
+			toggleMaskViewBtn.setAttribute(
+				"aria-pressed",
+				enabled ? "true" : "false"
+			);
+			toggleMaskViewBtn.textContent = enabled ? "Mask" : "Unmask";
+			toggleMaskViewBtn.setAttribute(
+				"title",
+				enabled ? "Maskierung aus" : "Maskierung an"
+			);
+		}
 	}
 
 	function hasPasswordTokens(text) {
@@ -3260,20 +3276,13 @@
 		});
 	}
 
-	function syncPasswordMaskScroll() {
-		if (!mirrorMaskContent || !textarea) return;
-		const x = Number(textarea.scrollLeft || 0);
-		const y = Number(textarea.scrollTop || 0);
-		mirrorMaskContent.style.transform = `translate(${-x}px, ${-y}px)`;
-	}
-
 	function updatePasswordMaskOverlay() {
-		if (!textarea || !mirrorMask || !mirrorMaskContent) return;
+		if (!textarea || !mirrorMaskView) return;
 		const value = String(textarea.value || "");
 		const enabled = hasPasswordTokens(value) && !editorMaskDisabled;
-		mirrorMask.classList.add("hidden");
-		textarea.classList.toggle("pw-mask-enabled", enabled);
-		mirrorMaskContent.textContent = "";
+		mirrorMaskView.classList.toggle("hidden", !enabled);
+		textarea.classList.toggle("hidden", enabled);
+		mirrorMaskView.value = enabled ? maskPasswordTokens(value) : "";
 	}
 
 	function getPreviewRunCombinedText(state) {
@@ -6178,28 +6187,6 @@ self.onmessage = async (e) => {
 		updatePasswordMaskOverlay();
 	});
 
-	textarea.addEventListener("mousedown", () => {
-		maskSelecting = true;
-		updatePasswordMaskOverlay();
-	});
-
-	document.addEventListener("mouseup", () => {
-		if (!maskSelecting) return;
-		maskSelecting = false;
-		updatePasswordMaskOverlay();
-	});
-
-	textarea.addEventListener("touchstart", () => {
-		maskSelecting = true;
-		updatePasswordMaskOverlay();
-	});
-
-	document.addEventListener("touchend", () => {
-		if (!maskSelecting) return;
-		maskSelecting = false;
-		updatePasswordMaskOverlay();
-	});
-
 	textarea.addEventListener("focus", () => {
 		updateCodeLangOverlay();
 		updateTableMenuVisibility();
@@ -6210,7 +6197,6 @@ self.onmessage = async (e) => {
 		updateSlashMenu();
 		updateSelectionMenu();
 		updateEditorMetaScroll();
-		syncPasswordMaskScroll();
 	});
 
 	textarea.addEventListener("keyup", () => {
@@ -6722,6 +6708,11 @@ self.onmessage = async (e) => {
 	if (togglePreview) {
 		togglePreview.addEventListener("click", () => {
 			setPreviewVisible(!previewOpen);
+		});
+	}
+	if (toggleMaskViewBtn) {
+		toggleMaskViewBtn.addEventListener("click", () => {
+			toggleEditorMaskView();
 		});
 	}
 	if (mdPreview) {
