@@ -2551,7 +2551,14 @@
 	function formatMetaDate(ts) {
 		if (!ts || !Number.isFinite(ts)) return "";
 		try {
-			return new Date(ts).toISOString();
+			const d = new Date(ts);
+			if (Number.isNaN(d.getTime())) return "";
+			const dd = String(d.getDate()).padStart(2, "0");
+			const mm = String(d.getMonth() + 1).padStart(2, "0");
+			const yyyy = String(d.getFullYear());
+			const hh = String(d.getHours()).padStart(2, "0");
+			const min = String(d.getMinutes()).padStart(2, "0");
+			return `${dd}.${mm}.${yyyy} ${hh}:${min}`;
 		} catch {
 			return "";
 		}
@@ -2659,7 +2666,7 @@
 		}
 		const rect = psMetaYaml.getBoundingClientRect();
 		const height = Math.max(0, rect.height || 0);
-		const next = psMetaBasePaddingTop + height + 8;
+		const next = psMetaBasePaddingTop + height + 4;
 		textarea.style.paddingTop = `${Math.round(next)}px`;
 	}
 
