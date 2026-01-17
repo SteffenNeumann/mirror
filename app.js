@@ -4373,6 +4373,12 @@
 		const listRect = psList.getBoundingClientRect();
 		if (!panelRect.height || !listRect.height) return;
 		let maxHeight = panelRect.bottom - listRect.top;
+		if (psSettingsBtn) {
+			const settingsRect = psSettingsBtn.getBoundingClientRect();
+			if (settingsRect.top > listRect.top) {
+				maxHeight = Math.min(maxHeight, settingsRect.top - listRect.top);
+			}
+		}
 		if (Number.isFinite(maxHeight) && maxHeight > 0) {
 			psList.style.maxHeight = `${Math.max(120, Math.floor(maxHeight))}px`;
 		}
