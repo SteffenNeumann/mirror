@@ -3240,7 +3240,7 @@
 			);
 			if (btn) {
 				btn.setAttribute("aria-pressed", enabled ? "true" : "false");
-				btn.textContent = enabled ? "Mask" : "Unmask";
+				btn.textContent = enabled ? "Unmask" : "Mask";
 				btn.setAttribute("title", enabled ? "Maskierung aus" : "Maskierung an");
 				btn.setAttribute(
 					"aria-label",
