@@ -15,6 +15,7 @@
 	const newRoomBtn = document.getElementById("newRoom");
 	const favoritesSelect = document.getElementById("favoritesSelect");
 	const toggleFavoriteBtn = document.getElementById("toggleFavorite");
+	const roomTabs = document.getElementById("roomTabs");
 	const metaLeft = document.getElementById("metaLeft");
 	const metaRight = document.getElementById("metaRight");
 	const toastRoot = document.getElementById("toastRoot");
@@ -5721,6 +5722,8 @@ self.onmessage = async (e) => {
 
 	const RECENT_KEY = "mirror_recent_rooms";
 	const FAVORITES_KEY = "mirror_favorites_v1";
+	const ROOM_TABS_KEY = "mirror_room_tabs_v1";
+	const MAX_ROOM_TABS = 10;
 
 	function normalizeFavoriteEntry(it) {
 		const roomName = normalizeRoom(it && it.room);
@@ -5729,6 +5732,144 @@ self.onmessage = async (e) => {
 		const text = String(it && it.text ? it.text : "");
 		if (!roomName) return null;
 		return { room: roomName, key: keyName, addedAt, text };
+	}
+
+	function normalizeRoomTabEntry(it) {
+		const roomName = normalizeRoom(it && it.room);
+		const keyName = normalizeKey(it && it.key);
+		const lastUsed = Number(it && it.lastUsed) || 0;
+		if (!roomName) return null;
+		return { room: roomName, key: keyName, lastUsed };
+	}
+
+	function loadRoomTabs() {
+		try {
+			const raw = localStorage.getItem(ROOM_TABS_KEY);
+			const parsed = JSON.parse(raw || "[]");
+			if (!Array.isArray(parsed)) return [];
+			return parsed.map(normalizeRoomTabEntry).filter(Boolean);
+		} catch {
+			return [];
+		}
+	}
+
+	function saveRoomTabs(list) {
+		try {
+			localStorage.setItem(ROOM_TABS_KEY, JSON.stringify(list || []));
+		} catch {
+			// ignore
+		}
+	}
+
+	function touchRoomTab(roomName, keyName) {
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!nextRoom) return;
+		const tabs = loadRoomTabs();
+		const now = Date.now();
+		const idx = tabs.findIndex(
+			(t) => t.room === nextRoom && t.key === nextKey
+		);
+		if (idx >= 0) {
+			tabs[idx].lastUsed = now;
+		} else {
+			tabs.push({ room: nextRoom, key: nextKey, lastUsed: now });
+		}
+		if (tabs.length > MAX_ROOM_TABS) {
+			const sorted = tabs
+				.map((t, i) => ({ ...t, _i: i }))
+				.sort((a, b) => (a.lastUsed || 0) - (b.lastUsed || 0));
+			const toRemove = new Set(sorted.slice(0, tabs.length - MAX_ROOM_TABS).map((t) => t._i));
+			const trimmed = tabs.filter((_, i) => !toRemove.has(i));
+			saveRoomTabs(trimmed);
+			return;
+		}
+		saveRoomTabs(tabs);
+	}
+
+	function escapeHtml(raw) {
+		return String(raw || "")
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;");
+	}
+
+	function escapeAttr(raw) {
+		return String(raw || "")
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;")
+			.replace(/"/g, "&quot;");
+	}
+
+	function renderRoomTabs() {
+		if (!roomTabs) return;
+		const tabs = loadRoomTabs();
+		if (!tabs.length) {
+			roomTabs.innerHTML = "";
+			return;
+		}
+		const html = tabs
+			.map((t) => {
+				const isActive = t.room === room && t.key === key;
+				const base =
+					"inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs transition";
+				const active =
+					"border-fuchsia-400/40 bg-fuchsia-500/15 text-fuchsia-100";
+				const idle =
+					"border-white/10 bg-slate-950/40 text-slate-200 hover:bg-white/10";
+				const badge = t.key
+					? '<span class="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300">privat</span>'
+					: "";
+				return `
+					<div class="flex items-center gap-1">
+						<button
+							type="button"
+							data-tab-select
+							data-room="${escapeAttr(t.room)}"
+							data-key="${escapeAttr(t.key)}"
+							class="${base} ${isActive ? active : idle}">
+							<span class="max-w-[140px] truncate">${escapeHtml(t.room)}</span>
+							${badge}
+						</button>
+						<button
+							type="button"
+							data-tab-close
+							data-room="${escapeAttr(t.room)}"
+							data-key="${escapeAttr(t.key)}"
+							class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-400 transition hover:bg-white/10 hover:text-slate-100"
+							title="Tab schließen"
+							aria-label="Tab schließen">
+							<span aria-hidden="true">×</span>
+						</button>
+					</div>`;
+			})
+			.join("");
+		roomTabs.innerHTML = html;
+	}
+
+	function closeRoomTab(roomName, keyName) {
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!nextRoom) return;
+		const tabs = loadRoomTabs();
+		const idx = tabs.findIndex(
+			(t) => t.room === nextRoom && t.key === nextKey
+		);
+		if (idx < 0) return;
+		tabs.splice(idx, 1);
+		saveRoomTabs(tabs);
+		renderRoomTabs();
+		if (room === nextRoom && key === nextKey) {
+			const fallback = tabs[idx] || tabs[idx - 1] || null;
+			if (fallback) {
+				location.hash = buildShareHash(fallback.room, fallback.key);
+				return;
+			}
+			const next = randomRoom();
+			const nextKeyAuto = randomKey();
+			location.hash = buildShareHash(next, nextKeyAuto);
+		}
 	}
 
 	function loadLocalFavorites() {
@@ -5847,6 +5988,8 @@ self.onmessage = async (e) => {
 	saveRecentRoom(room);
 	renderRecentRooms();
 	updateFavoritesUI();
+	touchRoomTab(room, key);
+	renderRoomTabs();
 
 	function setStatus(kind, text) {
 		if (statusText) statusText.textContent = text;
@@ -6063,6 +6206,13 @@ self.onmessage = async (e) => {
 		location.hash = buildShareHash(next, key);
 	}
 
+	function goToRoomWithKey(roomName, keyName) {
+		const next = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!next) return;
+		location.hash = buildShareHash(next, nextKey);
+	}
+
 	joinRoomBtn.addEventListener("click", () => {
 		goToRoom(roomInput.value);
 	});
@@ -6077,6 +6227,29 @@ self.onmessage = async (e) => {
 		key = randomKey();
 		location.hash = buildShareHash(nextRoom, key);
 	});
+
+	if (roomTabs) {
+		roomTabs.addEventListener("click", (ev) => {
+			const target = ev && ev.target ? ev.target : null;
+			if (!(target instanceof Element)) return;
+			const closeBtn = target.closest("[data-tab-close]");
+			if (closeBtn) {
+				ev.preventDefault();
+				closeRoomTab(
+					closeBtn.getAttribute("data-room"),
+					closeBtn.getAttribute("data-key")
+				);
+				return;
+			}
+			const selectBtn = target.closest("[data-tab-select]");
+			if (!selectBtn) return;
+			ev.preventDefault();
+			goToRoomWithKey(
+				selectBtn.getAttribute("data-room"),
+				selectBtn.getAttribute("data-key")
+			);
+		});
+	}
 
 	if (favoritesSelect) {
 		favoritesSelect.addEventListener("change", () => {
@@ -6520,6 +6693,8 @@ self.onmessage = async (e) => {
 		saveRecentRoom(room);
 		renderRecentRooms();
 		updateFavoritesUI();
+		touchRoomTab(room, key);
+		renderRoomTabs();
 		if (!key) toast("Public room (no key).", "info");
 		connect();
 	});
