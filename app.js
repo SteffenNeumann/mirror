@@ -54,6 +54,8 @@
 	const wikiMenu = document.getElementById("wikiMenu");
 	const wikiMenuList = document.getElementById("wikiMenuList");
 	const selectionMenu = document.getElementById("selectionMenu");
+	const mirrorMask = document.getElementById("mirrorMask");
+	const mirrorMaskContent = document.getElementById("mirrorMaskContent");
 	const mainGrid = document.getElementById("mainGrid");
 	const psPanel = document.getElementById("psPanel");
 	const togglePersonalSpaceBtn = document.getElementById("togglePersonalSpace");
@@ -979,6 +981,7 @@
 			// ignore
 		}
 		updatePreview();
+		updatePasswordMaskOverlay();
 		scheduleSend();
 		setSelectionMenuOpen(false);
 	}
@@ -1754,6 +1757,7 @@
 			// ignore
 		}
 		updatePreview();
+		updatePasswordMaskOverlay();
 		scheduleSend();
 		return true;
 	}
@@ -3200,6 +3204,38 @@
 		return next;
 	}
 
+	function hasPasswordTokens(text) {
+		return /\|\|[^\n]+?\|\|/.test(String(text || ""));
+	}
+
+	function maskPasswordTokens(text) {
+		return String(text || "").replace(/\|\|[^\n]+?\|\|/g, (m) => {
+			const len = Math.max(4, String(m || "").length);
+			return "•".repeat(len);
+		});
+	}
+
+	function syncPasswordMaskScroll() {
+		if (!mirrorMaskContent || !textarea) return;
+		const x = Number(textarea.scrollLeft || 0);
+		const y = Number(textarea.scrollTop || 0);
+		mirrorMaskContent.style.transform = `translate(${-x}px, ${-y}px)`;
+	}
+
+	function updatePasswordMaskOverlay() {
+		if (!textarea || !mirrorMask || !mirrorMaskContent) return;
+		const value = String(textarea.value || "");
+		const enabled = hasPasswordTokens(value);
+		mirrorMask.classList.toggle("hidden", !enabled);
+		textarea.classList.toggle("pw-mask-enabled", enabled);
+		if (!enabled) {
+			mirrorMaskContent.textContent = "";
+			return;
+		}
+		mirrorMaskContent.textContent = maskPasswordTokens(value);
+		syncPasswordMaskScroll();
+	}
+
 	function getPreviewRunCombinedText(state) {
 		const s = state || { output: "", error: "" };
 		const out = s.output ? String(s.output) : "";
@@ -3429,6 +3465,7 @@
 			// ignore
 		}
 		updatePreview();
+		updatePasswordMaskOverlay();
 		scheduleSend();
 		return true;
 	}
@@ -3481,6 +3518,7 @@
 		metaLeft.textContent = "Inserted code block.";
 		metaRight.textContent = nowIso();
 		updatePreview();
+		updatePasswordMaskOverlay();
 		updateCodeLangOverlay();
 		scheduleSend();
 	}
@@ -4341,6 +4379,7 @@
 		psAutoSaveLastSavedText = String(textarea.value || "");
 		setPsAutoSaveStatus("");
 		updatePreview();
+		updatePasswordMaskOverlay();
 		updateEditorMetaYaml();
 		if (notesForList && psSortMode !== "accessed") {
 			renderPsList(notesForList);
@@ -5745,6 +5784,7 @@ self.onmessage = async (e) => {
 		metaLeft.textContent = "Synced.";
 		metaRight.textContent = nowIso();
 		updatePreview();
+		updatePasswordMaskOverlay();
 	}
 
 	function connect() {
@@ -6079,6 +6119,7 @@ self.onmessage = async (e) => {
 		metaLeft.textContent = "Typing…";
 		scheduleSend();
 		updatePreview();
+		updatePasswordMaskOverlay();
 		updateSlashMenu();
 		updateWikiMenu();
 		updateCodeLangOverlay();
@@ -6094,17 +6135,20 @@ self.onmessage = async (e) => {
 		updateCodeLangOverlay();
 		updateTableMenuVisibility();
 		updateSelectionMenu();
+		updatePasswordMaskOverlay();
 	});
 
 	textarea.addEventListener("focus", () => {
 		updateCodeLangOverlay();
 		updateTableMenuVisibility();
+		updatePasswordMaskOverlay();
 	});
 
 	textarea.addEventListener("scroll", () => {
 		updateSlashMenu();
 		updateSelectionMenu();
 		updateEditorMetaScroll();
+		syncPasswordMaskScroll();
 	});
 
 	textarea.addEventListener("keyup", () => {
@@ -6112,6 +6156,7 @@ self.onmessage = async (e) => {
 		updateTableMenuVisibility();
 		updateWikiMenu();
 		updateSelectionMenu();
+		updatePasswordMaskOverlay();
 	});
 
 	textarea.addEventListener("keydown", (ev) => {
@@ -6310,6 +6355,7 @@ self.onmessage = async (e) => {
 	applyPsVisible();
 	loadTheme();
 	loadAiApiConfig();
+	updatePasswordMaskOverlay();
 
 	// Personal Space wiring
 	if (addPersonalSpaceBtn) {
@@ -6346,6 +6392,7 @@ self.onmessage = async (e) => {
 			metaLeft.textContent = "Bereit.";
 			metaRight.textContent = "";
 			updatePreview();
+			updatePasswordMaskOverlay();
 		});
 	}
 	if (psEditorTagsInput) {
@@ -6460,6 +6507,7 @@ self.onmessage = async (e) => {
 				metaLeft.textContent = "Cleared.";
 				metaRight.textContent = nowIso();
 				updatePreview();
+				updatePasswordMaskOverlay();
 				scheduleSend();
 			})();
 		});
@@ -6643,6 +6691,7 @@ self.onmessage = async (e) => {
 			if (metaLeft) metaLeft.textContent = "AI output replaced editor.";
 			if (metaRight) metaRight.textContent = nowIso();
 			updatePreview();
+			updatePasswordMaskOverlay();
 			scheduleSend();
 			toast("AI output applied (replaced).", "success");
 		});
@@ -6666,6 +6715,7 @@ self.onmessage = async (e) => {
 			if (metaLeft) metaLeft.textContent = "AI output appended to editor.";
 			if (metaRight) metaRight.textContent = nowIso();
 			updatePreview();
+			updatePasswordMaskOverlay();
 			scheduleSend();
 			toast("AI output applied (appended).", "success");
 		});
