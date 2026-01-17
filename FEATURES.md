@@ -90,6 +90,7 @@ This list is intentionally broad. It’s an idea backlog for future iterations.
 
 - Room overview (local/admin only): list active rooms
 - Favorites/recents (client) – partially exists, expand
+- Favoriten in Einstellungen bearbeiten (z. B. umbenennen, neu sortieren, entfernen)
 - Templates (predefined content: meeting notes, standup, retro)
 - Tags/labels per room
 - Sharing: QR code for room link
