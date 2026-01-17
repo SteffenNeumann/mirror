@@ -2558,19 +2558,8 @@
 
 	function buildNoteMetaYaml(note) {
 		if (!note) return "";
-		const safe = ensureNoteUpdatedAt({ ...note });
-		const tags = Array.isArray(safe.tags) ? safe.tags : [];
-		const cleanTags = stripPinnedTag(stripManualTagsMarker(tags));
-		const lines = [
-			"---",
-			`id: ${String(safe.id || "")}`,
-			`kind: ${String(safe.kind || "note")}`,
-			`created: ${formatMetaDate(safe.createdAt)}`,
-			`updated: ${formatMetaDate(safe.updatedAt)}`,
-			`tags: [${cleanTags.map((t) => JSON.stringify(String(t))).join(", ")}]`,
-			"---",
-		];
-		return lines.join("\n");
+		const title = getNoteTitle(String(note.text || ""));
+		return title ? `# ${title}` : "";
 	}
 
 	function setPsMetaVisible(next) {
