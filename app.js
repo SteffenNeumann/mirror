@@ -3255,6 +3255,9 @@
 		);
 		const show = Boolean(open);
 		if (codeLangWrap.classList) codeLangWrap.classList.toggle("hidden", !show);
+		if (psMetaToggle && psMetaToggle.classList) {
+			psMetaToggle.classList.toggle("hidden", show);
+		}
 		if (psMetaYaml && psMetaYaml.classList) {
 			psMetaYaml.classList.toggle("hidden", show || !psMetaVisible);
 			if (show || !psMetaVisible) {
