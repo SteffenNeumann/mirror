@@ -741,7 +741,9 @@ function getOrigin(req) {
 			.trim() || "http";
 	const host = String(
 		req.headers["x-forwarded-host"] || req.headers.host || ""
-	);
+	)
+		.split(",")[0]
+		.trim();
 	return `${proto}://${host}`;
 }
 
