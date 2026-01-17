@@ -136,7 +136,16 @@
 				border-color: rgba(15, 23, 42, 0.12) !important;
 			}
 			body[data-theme="monoLight"] .shadow-soft {
-				box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08) !important;
+				box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06) !important;
+			}
+			body[data-theme="monoLight"] .shadow-inner {
+				box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06) !important;
+			}
+			#mirror.pw-mask-enabled + #mirrorMask {
+				background: rgba(2, 6, 23, 0.25);
+			}
+			body[data-theme="monoLight"] #mirror.pw-mask-enabled + #mirrorMask {
+				background: rgba(15, 23, 42, 0.06);
 			}
 			body[data-theme="monoDark"] {
 				background-color: #020617 !important;
