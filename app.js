@@ -4373,6 +4373,12 @@
 		const listRect = psList.getBoundingClientRect();
 		if (!panelRect.height || !listRect.height) return;
 		let maxHeight = panelRect.bottom - listRect.top;
+		if (textarea) {
+			const editorRect = textarea.getBoundingClientRect();
+			if (editorRect.bottom > listRect.top) {
+				maxHeight = Math.min(maxHeight, editorRect.bottom - listRect.top);
+			}
+		}
 		if (psSettingsBtn) {
 			const settingsRect = psSettingsBtn.getBoundingClientRect();
 			if (settingsRect.top > listRect.top) {
