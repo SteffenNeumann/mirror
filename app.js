@@ -6684,6 +6684,7 @@ self.onmessage = async (e) => {
 		if (isCrdtAvailable()) return Promise.resolve(true);
 		if (yjsLoadingPromise) return yjsLoadingPromise;
 		const sources = [
+			"/node_modules/yjs/dist/yjs.js",
 			"https://unpkg.com/yjs@13.6.14/dist/yjs.js",
 			"https://cdn.jsdelivr.net/npm/yjs@13.6.14/dist/yjs.js",
 		];
