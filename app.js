@@ -3270,19 +3270,10 @@
 	function updatePasswordMaskOverlay() {
 		if (!textarea || !mirrorMask || !mirrorMaskContent) return;
 		const value = String(textarea.value || "");
-		const enabled =
-			hasPasswordTokens(value) &&
-			!editorMaskDisabled &&
-			!maskSelecting &&
-			!getSelectionRange();
-		mirrorMask.classList.toggle("hidden", !enabled);
+		const enabled = hasPasswordTokens(value) && !editorMaskDisabled;
+		mirrorMask.classList.add("hidden");
 		textarea.classList.toggle("pw-mask-enabled", enabled);
-		if (!enabled) {
-			mirrorMaskContent.textContent = "";
-			return;
-		}
-		mirrorMaskContent.textContent = maskPasswordTokens(value);
-		syncPasswordMaskScroll();
+		mirrorMaskContent.textContent = "";
 	}
 
 	function getPreviewRunCombinedText(state) {
