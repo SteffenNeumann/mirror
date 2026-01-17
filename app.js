@@ -2534,6 +2534,12 @@
 		const text = String(message || "").trim();
 		psAutoSaveStatus.textContent = text;
 		psAutoSaveStatus.classList.toggle("hidden", !text);
+		updatePsSaveVisibility();
+	}
+
+	function updatePsSaveVisibility() {
+		if (!psSaveMain || !psSaveMain.classList) return;
+		psSaveMain.classList.toggle("hidden", canAutoSavePsNote());
 	}
 
 	function ensureNoteUpdatedAt(note) {
