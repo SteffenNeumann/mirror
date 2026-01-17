@@ -722,6 +722,9 @@
 	let psNoteHistory = [];
 	let psNoteHistoryIndex = -1;
 	let psNoteHistorySkip = false;
+	let maskSelecting = false;
+	let editorMaskDisabled = false;
+	const EDITOR_MASK_DISABLED_KEY = "mirror_mask_disabled";
 
 	function getTextareaCaretCoords(el, pos) {
 		if (!el) return { left: 0, top: 0, height: 0 };
@@ -957,6 +960,12 @@
 			case "password":
 				wrapSelection(textarea, "||", "||");
 				break;
+			case "masktoggle":
+				editorMaskDisabled = !editorMaskDisabled;
+				saveEditorMaskDisabled();
+				setEditorMaskToggleUi();
+				updatePasswordMaskOverlay();
+				return;
 			case "quote":
 				prefixSelectionLines(textarea, "> ");
 				break;
@@ -3204,6 +3213,42 @@
 		return next;
 	}
 
+	function loadEditorMaskDisabled() {
+		try {
+			const raw = String(localStorage.getItem(EDITOR_MASK_DISABLED_KEY) || "");
+			editorMaskDisabled = raw === "1";
+		} catch {
+			editorMaskDisabled = false;
+		}
+	}
+
+	function saveEditorMaskDisabled() {
+		try {
+			localStorage.setItem(
+				EDITOR_MASK_DISABLED_KEY,
+				editorMaskDisabled ? "1" : "0"
+			);
+		} catch {
+			// ignore
+		}
+	}
+
+	function setEditorMaskToggleUi() {
+		if (!selectionMenu) return;
+		const btn = selectionMenu.querySelector(
+			'[data-selection-action="masktoggle"]'
+		);
+		if (!btn) return;
+		const enabled = !editorMaskDisabled;
+		btn.setAttribute("aria-pressed", enabled ? "true" : "false");
+		btn.textContent = enabled ? "Mask" : "Unmask";
+		btn.setAttribute("title", enabled ? "Maskierung aus" : "Maskierung an");
+		btn.setAttribute(
+			"aria-label",
+			enabled ? "Maskierung aus" : "Maskierung an"
+		);
+	}
+
 	function hasPasswordTokens(text) {
 		return /\|\|[^\n]+?\|\|/.test(String(text || ""));
 	}
@@ -3225,7 +3270,11 @@
 	function updatePasswordMaskOverlay() {
 		if (!textarea || !mirrorMask || !mirrorMaskContent) return;
 		const value = String(textarea.value || "");
-		const enabled = hasPasswordTokens(value);
+		const enabled =
+			hasPasswordTokens(value) &&
+			!editorMaskDisabled &&
+			!maskSelecting &&
+			!getSelectionRange();
 		mirrorMask.classList.toggle("hidden", !enabled);
 		textarea.classList.toggle("pw-mask-enabled", enabled);
 		if (!enabled) {
@@ -6138,6 +6187,28 @@ self.onmessage = async (e) => {
 		updatePasswordMaskOverlay();
 	});
 
+	textarea.addEventListener("mousedown", () => {
+		maskSelecting = true;
+		updatePasswordMaskOverlay();
+	});
+
+	document.addEventListener("mouseup", () => {
+		if (!maskSelecting) return;
+		maskSelecting = false;
+		updatePasswordMaskOverlay();
+	});
+
+	textarea.addEventListener("touchstart", () => {
+		maskSelecting = true;
+		updatePasswordMaskOverlay();
+	});
+
+	document.addEventListener("touchend", () => {
+		if (!maskSelecting) return;
+		maskSelecting = false;
+		updatePasswordMaskOverlay();
+	});
+
 	textarea.addEventListener("focus", () => {
 		updateCodeLangOverlay();
 		updateTableMenuVisibility();
@@ -6307,6 +6378,7 @@ self.onmessage = async (e) => {
 		if (document.activeElement !== textarea) return;
 		updateTableMenuVisibility();
 		updateSelectionMenu();
+		updatePasswordMaskOverlay();
 	});
 
 	window.addEventListener("hashchange", () => {
@@ -6355,6 +6427,8 @@ self.onmessage = async (e) => {
 	applyPsVisible();
 	loadTheme();
 	loadAiApiConfig();
+	loadEditorMaskDisabled();
+	setEditorMaskToggleUi();
 	updatePasswordMaskOverlay();
 
 	// Personal Space wiring
