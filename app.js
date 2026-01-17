@@ -107,7 +107,8 @@
 	const psCount = document.getElementById("psCount");
 	const psSearchInput = document.getElementById("psSearch");
 	const psPinnedToggle = document.getElementById("psPinnedToggle");
-	const psSortModeSelect = document.getElementById("psSortMode");
+	const psSortMenuBtn = document.getElementById("psSortMenuBtn");
+	const psSortMenu = document.getElementById("psSortMenu");
 	const psList = document.getElementById("psList");
 	const psHint = document.getElementById("psHint");
 	const psTransferHint = document.getElementById("psTransferHint");
@@ -2017,6 +2018,7 @@
 	let psSearchQuery = "";
 	let psSearchDebounceTimer = 0;
 	let psPinnedOnly = false;
+	let psNoteAccessedById = new Map();
 	const PS_ACTIVE_TAGS_KEY = "mirror_ps_active_tags";
 	const PS_TAG_FILTER_MODE_KEY = "mirror_ps_tag_filter_mode";
 	const PS_TAGS_COLLAPSED_KEY = "mirror_ps_tags_collapsed";
@@ -2024,6 +2026,7 @@
 	const PS_VISIBLE_KEY = "mirror_ps_visible";
 	const PS_PINNED_ONLY_KEY = "mirror_ps_pinned_only";
 	const PS_SORT_MODE_KEY = "mirror_ps_sort_mode";
+	const PS_NOTE_ACCESSED_KEY = "mirror_ps_note_accessed_v1";
 	const PS_META_VISIBLE_KEY = "mirror_ps_meta_visible";
 	const PS_MANUAL_TAGS_MARKER = "__manual_tags__";
 	const PS_PINNED_TAG = "pinned";
@@ -2796,20 +2799,112 @@
 		if (psSearchInput) psSearchInput.value = psSearchQuery;
 	}
 
+	function normalizePsSortMode(raw) {
+		const mode = String(raw || "")
+			.trim()
+			.toLowerCase();
+		if (
+			mode === "created" ||
+			mode === "updated" ||
+			mode === "accessed" ||
+			mode === "text"
+		) {
+			return mode;
+		}
+		return "updated";
+	}
+
+	function setPsSortMenuOpen(open) {
+		if (!psSortMenu) return;
+		psSortMenu.classList.toggle("hidden", !open);
+		if (psSortMenuBtn) {
+			try {
+				psSortMenuBtn.setAttribute("aria-expanded", open ? "true" : "false");
+			} catch {
+				// ignore
+			}
+		}
+	}
+
+	function syncPsSortMenu() {
+		if (!psSortMenu) return;
+		const items = psSortMenu.querySelectorAll("[data-sort]");
+		items.forEach((el) => {
+			const btn = el;
+			const mode = btn.getAttribute("data-sort") || "";
+			const active = mode === psSortMode;
+			btn.classList.toggle("bg-fuchsia-500/20", active);
+			btn.classList.toggle("text-fuchsia-50", active);
+			const check = btn.querySelector(".ps-sort-check");
+			if (check && check.classList) {
+				check.classList.toggle("invisible", !active);
+			}
+			try {
+				btn.setAttribute("aria-checked", active ? "true" : "false");
+			} catch {
+				// ignore
+			}
+		});
+	}
+
+	function loadPsNoteAccessed() {
+		try {
+			const raw = localStorage.getItem(PS_NOTE_ACCESSED_KEY);
+			if (!raw) {
+				psNoteAccessedById = new Map();
+				return;
+			}
+			const parsed = JSON.parse(raw);
+			const next = new Map();
+			if (parsed && typeof parsed === "object") {
+				Object.keys(parsed).forEach((id) => {
+					const val = Number(parsed[id] || 0);
+					if (Number.isFinite(val) && val > 0) {
+						next.set(String(id), val);
+					}
+				});
+			}
+			psNoteAccessedById = next;
+		} catch {
+			psNoteAccessedById = new Map();
+		}
+	}
+
+	function savePsNoteAccessed() {
+		try {
+			const entries = Array.from(psNoteAccessedById.entries())
+				.sort((a, b) => b[1] - a[1])
+				.slice(0, 300);
+			psNoteAccessedById = new Map(entries);
+			const payload = Object.fromEntries(entries);
+			localStorage.setItem(PS_NOTE_ACCESSED_KEY, JSON.stringify(payload));
+		} catch {
+			// ignore
+		}
+	}
+
+	function markPsNoteAccessed(noteId) {
+		const id = String(noteId || "").trim();
+		if (!id) return;
+		psNoteAccessedById.set(id, Date.now());
+		savePsNoteAccessed();
+	}
+
 	function loadPsSortMode() {
 		try {
-			psSortMode = String(localStorage.getItem(PS_SORT_MODE_KEY) || "updated");
+			psSortMode = normalizePsSortMode(
+				localStorage.getItem(PS_SORT_MODE_KEY) || "updated"
+			);
 		} catch {
-			psSortMode = "updated";
+			psSortMode = normalizePsSortMode("updated");
 		}
-		if (psSortMode !== "created" && psSortMode !== "updated") {
-			psSortMode = "updated";
-		}
-		if (psSortModeSelect) psSortModeSelect.value = psSortMode;
+		psSortMode = normalizePsSortMode(psSortMode);
+		syncPsSortMenu();
 	}
 
 	function savePsSortMode() {
 		try {
+			psSortMode = normalizePsSortMode(psSortMode);
 			localStorage.setItem(PS_SORT_MODE_KEY, psSortMode);
 		} catch {
 			// ignore
@@ -2889,15 +2984,32 @@
 			.map((n) => ensureNoteUpdatedAt(n))
 			.slice()
 			.sort((a, b) => {
+				if (psSortMode === "text") {
+					const aTitle = getNoteTitle(a && a.text ? a.text : "")
+						.toLowerCase()
+						.trim();
+					const bTitle = getNoteTitle(b && b.text ? b.text : "")
+						.toLowerCase()
+						.trim();
+					if (aTitle < bTitle) return -1;
+					if (aTitle > bTitle) return 1;
+				}
 				const aTime =
 					psSortMode === "created"
 						? Number(a.createdAt || 0)
-						: Number(a.updatedAt || a.createdAt || 0);
+						: psSortMode === "accessed"
+							? Number(psNoteAccessedById.get(String(a.id || "")) || 0)
+							: Number(a.updatedAt || a.createdAt || 0);
 				const bTime =
 					psSortMode === "created"
 						? Number(b.createdAt || 0)
-						: Number(b.updatedAt || b.createdAt || 0);
-				return bTime - aTime;
+						: psSortMode === "accessed"
+							? Number(psNoteAccessedById.get(String(b.id || "")) || 0)
+							: Number(b.updatedAt || b.createdAt || 0);
+				if (bTime !== aTime) return bTime - aTime;
+				const bFallback = Number(b.updatedAt || b.createdAt || 0);
+				const aFallback = Number(a.updatedAt || a.createdAt || 0);
+				return bFallback - aFallback;
 			});
 		let notes = sortedAll;
 		if (psPinnedOnly) {
@@ -4063,6 +4175,7 @@
 	function applyNoteToEditor(note, notesForList, opts) {
 		if (!note || !textarea) return;
 		psEditingNoteId = String(note.id || "");
+		markPsNoteAccessed(psEditingNoteId);
 		psEditingNoteKind = String(note.kind || "");
 		if (!(opts && opts.skipHistory)) {
 			pushPsNoteHistory(psEditingNoteId);
@@ -4093,8 +4206,11 @@
 		setPsAutoSaveStatus("");
 		updatePreview();
 		updateEditorMetaYaml();
-		if (notesForList) renderPsList(notesForList);
-		else applyPersonalSpaceFiltersAndRender();
+		if (notesForList && psSortMode !== "accessed") {
+			renderPsList(notesForList);
+		} else {
+			applyPersonalSpaceFiltersAndRender();
+		}
 	}
 
 	function openNoteFromWikiTarget(target) {
@@ -5985,6 +6101,7 @@ self.onmessage = async (e) => {
 	applyPsTagsCollapsed();
 	loadPsSearchQuery();
 	loadPsPinnedOnly();
+	loadPsNoteAccessed();
 	loadPsSortMode();
 	loadPsMetaVisible();
 	loadPsVisible();
@@ -6045,14 +6162,37 @@ self.onmessage = async (e) => {
 			syncPsEditorTagsInput();
 		});
 	}
-	if (psSortModeSelect) {
-		psSortModeSelect.addEventListener("change", () => {
-			psSortMode = String(psSortModeSelect.value || "updated");
-			if (psSortMode !== "created" && psSortMode !== "updated") {
-				psSortMode = "updated";
-			}
+	if (psSortMenuBtn && psSortMenu) {
+		psSortMenuBtn.addEventListener("click", (ev) => {
+			ev.preventDefault();
+			const open = psSortMenu.classList.contains("hidden");
+			setPsSortMenuOpen(open);
+		});
+		psSortMenu.addEventListener("click", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLElement)) return;
+			const btn = target.closest("[data-sort]");
+			if (!btn) return;
+			const mode = normalizePsSortMode(btn.getAttribute("data-sort"));
+			psSortMode = mode;
 			savePsSortMode();
+			syncPsSortMenu();
+			setPsSortMenuOpen(false);
 			applyPersonalSpaceFiltersAndRender();
+		});
+		document.addEventListener("click", (ev) => {
+			if (psSortMenu.classList.contains("hidden")) return;
+			const target = ev.target;
+			if (!(target instanceof Node)) return;
+			if (psSortMenu.contains(target) || psSortMenuBtn.contains(target)) return;
+			setPsSortMenuOpen(false);
+		});
+		window.addEventListener("keydown", (ev) => {
+			if (psSortMenu.classList.contains("hidden")) return;
+			if (ev && ev.key === "Escape") {
+				ev.preventDefault();
+				setPsSortMenuOpen(false);
+			}
 		});
 	}
 	if (psMetaToggle) {

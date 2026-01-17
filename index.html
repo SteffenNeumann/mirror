@@ -370,11 +370,70 @@
 										</svg>
 									</button>
 								</div>
-								<input
-									id="psSearch"
-									type="search"
-									placeholder="Search…"
-									class="w-40 rounded-lg border border-white/10 bg-slate-950/30 px-2.5 py-1.5 text-xs text-slate-200 shadow-soft backdrop-blur transition placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
+								<div class="relative flex items-center gap-2">
+									<input
+										id="psSearch"
+										type="search"
+										placeholder="Search…"
+										class="w-40 rounded-lg border border-white/10 bg-slate-950/30 px-2.5 py-1.5 text-xs text-slate-200 shadow-soft backdrop-blur transition placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
+									<button
+										id="psSortMenuBtn"
+										type="button"
+										class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
+										title="Sortierung"
+										aria-label="Sortierung"
+										aria-expanded="false">
+										<svg
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											class="h-4 w-4">
+											<circle cx="12" cy="5" r="1.5" />
+											<circle cx="12" cy="12" r="1.5" />
+											<circle cx="12" cy="19" r="1.5" />
+										</svg>
+									</button>
+									<div
+										id="psSortMenu"
+										class="absolute right-0 top-10 z-30 hidden w-48 overflow-hidden rounded-xl border border-white/10 bg-slate-950/80 shadow-soft backdrop-blur">
+										<div class="border-b border-white/10 px-3 py-2 text-[11px] text-slate-300">
+											Sort by
+										</div>
+										<div class="flex flex-col gap-1 p-1 text-xs">
+											<button
+												type="button"
+												data-sort="updated"
+												class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
+												<span>Modified</span>
+												<span class="ps-sort-check text-fuchsia-200">✓</span>
+											</button>
+											<button
+												type="button"
+												data-sort="created"
+												class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
+												<span>Created</span>
+												<span class="ps-sort-check text-fuchsia-200">✓</span>
+											</button>
+											<button
+												type="button"
+												data-sort="accessed"
+												class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
+												<span>Accessed</span>
+												<span class="ps-sort-check text-fuchsia-200">✓</span>
+											</button>
+											<button
+												type="button"
+												data-sort="text"
+												class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
+												<span>Text</span>
+												<span class="ps-sort-check text-fuchsia-200">✓</span>
+											</button>
+										</div>
+									</div>
+								</div>
 							</div>
 							<div
 								id="psList"
@@ -1086,13 +1145,6 @@
 							<div class="mt-3 grid grid-cols-2 gap-2">
 								<button
 									id="tableInsertSum"
-										<select
-											id="psSortMode"
-											class="rounded-lg border border-white/10 bg-slate-950/30 px-2 py-1.5 text-xs text-slate-200 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30"
-											title="Sortierung">
-											<option value="updated" selected>Updated</option>
-											<option value="created">Created</option>
-										</select>
 									type="button"
 									class="rounded-lg border border-white/10 bg-white/10 px-2 py-1.5 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">
 									Insert Sum
