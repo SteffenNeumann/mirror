@@ -967,6 +967,8 @@
 				break;
 			case "masktoggle":
 				toggleEditorMaskView();
+				schedulePsAutoSave();
+				scheduleSend();
 				return;
 			case "quote":
 				prefixSelectionLines(textarea, "> ");
@@ -994,6 +996,7 @@
 		updatePreview();
 		updatePasswordMaskOverlay();
 		scheduleSend();
+		schedulePsAutoSave();
 		setSelectionMenuOpen(false);
 	}
 
