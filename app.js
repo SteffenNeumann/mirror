@@ -2008,6 +2008,7 @@
 		tags: [],
 		notes: [],
 		favorites: [],
+		roomTabs: [],
 	};
 	let psActiveTags = new Set();
 	let psTagFilterMode = "and";
@@ -5327,11 +5328,15 @@ self.onmessage = async (e) => {
 				tags: [],
 				notes: [],
 				favorites: [],
+				roomTabs: [],
 			};
 			if (psHint) psHint.textContent = "";
 		}
 		psState.favorites = Array.isArray(psState.favorites)
 			? psState.favorites
+			: [];
+		psState.roomTabs = Array.isArray(psState.roomTabs)
+			? psState.roomTabs
 			: [];
 		psState.notes = Array.isArray(psState.notes)
 			? psState.notes.map((n) => ensureNoteUpdatedAt(n))
@@ -5347,6 +5352,7 @@ self.onmessage = async (e) => {
 			setPsEditorTagsVisible(false);
 			updatePsPinnedToggle();
 			updateFavoritesUI();
+			renderRoomTabs();
 			setPsAutoSaveStatus("");
 			updatePsNoteNavButtons();
 			return;
@@ -5365,8 +5371,10 @@ self.onmessage = async (e) => {
 		syncPsEditorTagsInput();
 		updatePsPinnedToggle();
 		updateFavoritesUI();
+		renderRoomTabs();
 		updateEditorMetaYaml();
 		updatePsNoteNavButtons();
+		await syncLocalRoomTabsToServer();
 	}
 
 	function downloadJson(filename, obj) {
@@ -5742,7 +5750,7 @@ self.onmessage = async (e) => {
 		return { room: roomName, key: keyName, lastUsed };
 	}
 
-	function loadRoomTabs() {
+	function loadLocalRoomTabs() {
 		try {
 			const raw = localStorage.getItem(ROOM_TABS_KEY);
 			const parsed = JSON.parse(raw || "[]");
@@ -5753,7 +5761,19 @@ self.onmessage = async (e) => {
 		}
 	}
 
+	function loadRoomTabs() {
+		if (psState && psState.authed) {
+			const tabs = Array.isArray(psState.roomTabs) ? psState.roomTabs : [];
+			return tabs.map(normalizeRoomTabEntry).filter(Boolean);
+		}
+		return loadLocalRoomTabs();
+	}
+
 	function saveRoomTabs(list) {
+		if (psState && psState.authed) {
+			psState.roomTabs = Array.isArray(list) ? list : [];
+			return;
+		}
 		try {
 			localStorage.setItem(ROOM_TABS_KEY, JSON.stringify(list || []));
 		} catch {
@@ -5761,7 +5781,141 @@ self.onmessage = async (e) => {
 		}
 	}
 
-	function touchRoomTab(roomName, keyName) {
+	function upsertRoomTabInState(entry) {
+		if (!psState || !psState.authed) return;
+		const normalized = normalizeRoomTabEntry(entry);
+		if (!normalized) return;
+		const tabs = Array.isArray(psState.roomTabs) ? psState.roomTabs : [];
+		const idx = tabs.findIndex(
+			(t) => t.room === normalized.room && t.key === normalized.key
+		);
+		if (idx >= 0) {
+			const updated = { ...tabs[idx], ...normalized };
+			psState.roomTabs = [...tabs.slice(0, idx), updated, ...tabs.slice(idx + 1)];
+			return;
+		}
+		psState.roomTabs = [normalized, ...tabs];
+	}
+
+	function upsertFavoriteInState(entry) {
+		if (!psState || !psState.authed) return;
+		const normalized = normalizeFavoriteEntry(entry);
+		if (!normalized) return;
+		const favs = Array.isArray(psState.favorites) ? psState.favorites : [];
+		const idx = favs.findIndex(
+			(f) => f.room === normalized.room && f.key === normalized.key
+		);
+		if (idx >= 0) {
+			const updated = { ...favs[idx], ...normalized };
+			psState.favorites = [...favs.slice(0, idx), updated, ...favs.slice(idx + 1)];
+			return;
+		}
+		psState.favorites = [normalized, ...favs];
+	}
+
+	let roomTabSyncTimer = 0;
+	let roomTabSyncPayload = null;
+	let roomTabSyncInFlight = false;
+	let roomTabSyncQueued = false;
+	let roomTabsSyncedFromLocal = false;
+
+	async function syncRoomTabToServer(payload) {
+		if (!psState || !psState.authed) return;
+		if (!payload || !payload.room) return;
+		const roomName = normalizeRoom(payload.room);
+		const keyName = normalizeKey(payload.key);
+		if (!roomName) return;
+		const textSnapshot = String(payload.text || "");
+		const lastUsed = Number(payload.lastUsed) || Date.now();
+		try {
+			const res = await api("/api/room-tabs", {
+				method: "POST",
+				body: JSON.stringify({
+					room: roomName,
+					key: keyName,
+					text: textSnapshot,
+					lastUsed,
+				}),
+			});
+			if (res && res.roomTab) {
+				upsertRoomTabInState(res.roomTab);
+			}
+			const fav = await api("/api/favorites", {
+				method: "POST",
+				body: JSON.stringify({
+					room: roomName,
+					key: keyName,
+					text: textSnapshot,
+				}),
+			});
+			if (fav && fav.favorite) {
+				upsertFavoriteInState(fav.favorite);
+			}
+			updateFavoritesUI();
+			renderRoomTabs();
+		} catch {
+			// ignore
+		}
+	}
+
+	function scheduleRoomTabSync(payload) {
+		if (!psState || !psState.authed) return;
+		roomTabSyncPayload = payload;
+		if (roomTabSyncTimer) window.clearTimeout(roomTabSyncTimer);
+		roomTabSyncTimer = window.setTimeout(async () => {
+			roomTabSyncTimer = 0;
+			if (roomTabSyncInFlight) {
+				roomTabSyncQueued = true;
+				return;
+			}
+			roomTabSyncInFlight = true;
+			const nextPayload = roomTabSyncPayload;
+			roomTabSyncPayload = null;
+			await syncRoomTabToServer(nextPayload);
+			roomTabSyncInFlight = false;
+			if (roomTabSyncQueued) {
+				roomTabSyncQueued = false;
+				if (roomTabSyncPayload) scheduleRoomTabSync(roomTabSyncPayload);
+			}
+		}, 1200);
+	}
+
+	function flushRoomTabSync() {
+		if (!psState || !psState.authed) return;
+		const snapshot = textarea ? String(textarea.value || "") : "";
+		scheduleRoomTabSync({
+			room,
+			key,
+			text: snapshot,
+			lastUsed: Date.now(),
+		});
+	}
+
+	async function syncLocalRoomTabsToServer() {
+		if (!psState || !psState.authed) return;
+		if (roomTabsSyncedFromLocal) return;
+		roomTabsSyncedFromLocal = true;
+		const localTabs = loadLocalRoomTabs();
+		if (!localTabs.length) return;
+		const serverTabs = Array.isArray(psState.roomTabs) ? psState.roomTabs : [];
+		const has = new Set(
+			serverTabs.map((t) => `${normalizeRoom(t.room)}:${normalizeKey(t.key)}`)
+		);
+		for (const t of localTabs) {
+			const roomName = normalizeRoom(t.room);
+			const keyName = normalizeKey(t.key);
+			const k = `${roomName}:${keyName}`;
+			if (!roomName || has.has(k)) continue;
+			await syncRoomTabToServer({
+				room: roomName,
+				key: keyName,
+				text: "",
+				lastUsed: t.lastUsed || Date.now(),
+			});
+		}
+	}
+
+	function touchRoomTab(roomName, keyName, opts) {
 		const nextRoom = normalizeRoom(roomName);
 		const nextKey = normalizeKey(keyName);
 		if (!nextRoom) return;
@@ -5779,12 +5933,32 @@ self.onmessage = async (e) => {
 			const sorted = tabs
 				.map((t, i) => ({ ...t, _i: i }))
 				.sort((a, b) => (a.lastUsed || 0) - (b.lastUsed || 0));
-			const toRemove = new Set(sorted.slice(0, tabs.length - MAX_ROOM_TABS).map((t) => t._i));
+			const toRemove = new Set(
+				sorted.slice(0, tabs.length - MAX_ROOM_TABS).map((t) => t._i)
+			);
 			const trimmed = tabs.filter((_, i) => !toRemove.has(i));
 			saveRoomTabs(trimmed);
+			if (!(opts && opts.skipSync)) {
+				const snapshot = textarea ? String(textarea.value || "") : "";
+				scheduleRoomTabSync({
+					room: nextRoom,
+					key: nextKey,
+					text: snapshot,
+					lastUsed: now,
+				});
+			}
 			return;
 		}
 		saveRoomTabs(tabs);
+		if (!(opts && opts.skipSync)) {
+			const snapshot = textarea ? String(textarea.value || "") : "";
+			scheduleRoomTabSync({
+				room: nextRoom,
+				key: nextKey,
+				text: snapshot,
+				lastUsed: now,
+			});
+		}
 	}
 
 	function escapeHtml(raw) {
@@ -5860,6 +6034,14 @@ self.onmessage = async (e) => {
 		tabs.splice(idx, 1);
 		saveRoomTabs(tabs);
 		renderRoomTabs();
+		if (psState && psState.authed) {
+			api("/api/room-tabs", {
+				method: "DELETE",
+				body: JSON.stringify({ room: nextRoom, key: nextKey }),
+			}).catch(() => {
+				// ignore
+			});
+		}
 		if (room === nextRoom && key === nextKey) {
 			const fallback = tabs[idx] || tabs[idx - 1] || null;
 			if (fallback) {
@@ -5988,7 +6170,7 @@ self.onmessage = async (e) => {
 	saveRecentRoom(room);
 	renderRecentRooms();
 	updateFavoritesUI();
-	touchRoomTab(room, key);
+	touchRoomTab(room, key, { skipSync: true });
 	renderRoomTabs();
 
 	function setStatus(kind, text) {
@@ -6121,6 +6303,12 @@ self.onmessage = async (e) => {
 		metaRight.textContent = nowIso();
 		updatePreview();
 		updatePasswordMaskOverlay();
+		scheduleRoomTabSync({
+			room,
+			key,
+			text: String(text ?? ""),
+			lastUsed: typeof ts === "number" ? ts : Date.now(),
+		});
 	}
 
 	function connect() {
@@ -6203,6 +6391,7 @@ self.onmessage = async (e) => {
 	function goToRoom(roomName) {
 		const next = normalizeRoom(roomName);
 		if (!next) return;
+		flushRoomTabSync();
 		location.hash = buildShareHash(next, key);
 	}
 
@@ -6210,6 +6399,7 @@ self.onmessage = async (e) => {
 		const next = normalizeRoom(roomName);
 		const nextKey = normalizeKey(keyName);
 		if (!next) return;
+		flushRoomTabSync();
 		location.hash = buildShareHash(next, nextKey);
 	}
 
@@ -6225,6 +6415,7 @@ self.onmessage = async (e) => {
 	newRoomBtn.addEventListener("click", () => {
 		const nextRoom = randomRoom();
 		key = randomKey();
+		flushRoomTabSync();
 		location.hash = buildShareHash(nextRoom, key);
 	});
 
@@ -6484,6 +6675,12 @@ self.onmessage = async (e) => {
 	textarea.addEventListener("input", () => {
 		metaLeft.textContent = "Typing…";
 		scheduleSend();
+		scheduleRoomTabSync({
+			room,
+			key,
+			text: String(textarea.value || ""),
+			lastUsed: Date.now(),
+		});
 		updatePreview();
 		updatePasswordMaskOverlay();
 		updateSlashMenu();
@@ -6693,7 +6890,7 @@ self.onmessage = async (e) => {
 		saveRecentRoom(room);
 		renderRecentRooms();
 		updateFavoritesUI();
-		touchRoomTab(room, key);
+		touchRoomTab(room, key, { skipSync: true });
 		renderRoomTabs();
 		if (!key) toast("Public room (no key).", "info");
 		connect();

@@ -52,6 +52,9 @@ let stmtRoomStateUpsert;
 let stmtFavoriteUpsert;
 let stmtFavoriteDelete;
 let stmtFavoritesByUser;
+let stmtRoomTabUpsert;
+let stmtRoomTabDelete;
+let stmtRoomTabsByUser;
 
 // In-memory rate limit: ip -> { count, resetAt }
 const aiRate = new Map();
@@ -118,6 +121,19 @@ function initDb() {
 			UNIQUE(user_id, room, room_key)
 		);
 		CREATE INDEX IF NOT EXISTS idx_room_favorites_user_added ON room_favorites(user_id, added_at DESC);
+			CREATE TABLE IF NOT EXISTS room_tabs (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				user_id INTEGER NOT NULL,
+				room TEXT NOT NULL,
+				room_key TEXT NOT NULL,
+				text TEXT NOT NULL,
+				last_used INTEGER NOT NULL,
+				added_at INTEGER NOT NULL,
+				updated_at INTEGER NOT NULL,
+				FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+				UNIQUE(user_id, room, room_key)
+			);
+			CREATE INDEX IF NOT EXISTS idx_room_tabs_user_used ON room_tabs(user_id, last_used DESC);
 		CREATE TABLE IF NOT EXISTS users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			email TEXT NOT NULL UNIQUE,
@@ -249,6 +265,15 @@ function initDb() {
 	);
 	stmtFavoritesByUser = db.prepare(
 		"SELECT room, room_key, text, added_at FROM room_favorites WHERE user_id = ? ORDER BY added_at DESC LIMIT 200"
+	);
+	stmtRoomTabUpsert = db.prepare(
+		"INSERT INTO room_tabs(user_id, room, room_key, text, last_used, added_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, room, room_key) DO UPDATE SET text = excluded.text, last_used = excluded.last_used, updated_at = excluded.updated_at"
+	);
+	stmtRoomTabDelete = db.prepare(
+		"DELETE FROM room_tabs WHERE user_id = ? AND room = ? AND room_key = ?"
+	);
+	stmtRoomTabsByUser = db.prepare(
+		"SELECT room, room_key, text, last_used, added_at FROM room_tabs WHERE user_id = ? ORDER BY last_used DESC LIMIT 50"
 	);
 }
 
@@ -683,6 +708,17 @@ function listFavorites(userId) {
 	}));
 }
 
+function listRoomTabs(userId) {
+	initDb();
+	return stmtRoomTabsByUser.all(userId).map((r) => ({
+		room: r.room,
+		key: r.room_key,
+		text: r.text,
+		lastUsed: r.last_used,
+		addedAt: r.added_at,
+	}));
+}
+
 function saveLoginToken(token, email, exp) {
 	initDb();
 	stmtTokenInsert.run(token, email, exp);
@@ -886,6 +922,7 @@ const server = http.createServer((req, res) => {
 		const notes = listNotes(userId, "");
 		const tags = listTags(userId);
 		const favorites = listFavorites(userId);
+		const roomTabs = listRoomTabs(userId);
 		json(res, 200, {
 			ok: true,
 			authed: true,
@@ -893,7 +930,93 @@ const server = http.createServer((req, res) => {
 			tags,
 			notes,
 			favorites,
+			roomTabs,
 		});
+		return;
+	}
+
+	if (url.pathname === "/api/room-tabs" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const roomTabs = listRoomTabs(userId);
+		json(res, 200, { ok: true, roomTabs });
+		return;
+	}
+
+	if (url.pathname === "/api/room-tabs" && req.method === "POST") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		readJson(req)
+			.then((body) => {
+				const room = clampRoom(body && body.room);
+				const key = clampKey(body && body.key);
+				const textVal = String(body && body.text ? body.text : "");
+				const lastUsedRaw = Number(body && body.lastUsed);
+				const lastUsed = Number.isFinite(lastUsedRaw)
+					? lastUsedRaw
+					: Date.now();
+				if (!room) {
+					json(res, 400, { ok: false, error: "invalid_room" });
+					return;
+				}
+				const userId = getOrCreateUserId(email);
+				const now = Date.now();
+				initDb();
+				stmtRoomTabUpsert.run(userId, room, key, textVal, lastUsed, now, now);
+				json(res, 200, {
+					ok: true,
+					roomTab: {
+						room,
+						key,
+						text: textVal,
+						lastUsed,
+						addedAt: now,
+					},
+				});
+			})
+			.catch((e) => {
+				if (String(e && e.message) === "body_too_large") {
+					json(res, 413, { ok: false, error: "body_too_large" });
+					return;
+				}
+				json(res, 400, { ok: false, error: "invalid_json" });
+			});
+		return;
+	}
+
+	if (url.pathname === "/api/room-tabs" && req.method === "DELETE") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		readJson(req)
+			.then((body) => {
+				const room = clampRoom(body && body.room);
+				const key = clampKey(body && body.key);
+				if (!room) {
+					json(res, 400, { ok: false, error: "invalid_room" });
+					return;
+				}
+				const userId = getOrCreateUserId(email);
+				initDb();
+				stmtRoomTabDelete.run(userId, room, key);
+				json(res, 200, { ok: true });
+			})
+			.catch((e) => {
+				if (String(e && e.message) === "body_too_large") {
+					json(res, 413, { ok: false, error: "body_too_large" });
+					return;
+				}
+				json(res, 400, { ok: false, error: "invalid_json" });
+			});
 		return;
 	}
 
