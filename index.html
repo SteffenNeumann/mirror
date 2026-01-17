@@ -341,7 +341,7 @@
 						</div>
 
 						<div class="mt-4 flex min-h-0 flex-1 flex-col">
-							<div class="flex items-center justify-between gap-2">
+							<div class="flex flex-col gap-2">
 								<div class="flex items-center gap-2">
 									<div class="text-xs font-medium text-slate-200">Notes</div>
 									<div
@@ -350,6 +350,8 @@
 										title="Number of notes">
 										0
 									</div>
+								</div>
+								<div class="flex items-center gap-2">
 									<button
 										id="psPinnedToggle"
 										type="button"
@@ -369,36 +371,35 @@
 											<path d="M4 4h12l-2 5 2 5H4" />
 										</svg>
 									</button>
-								</div>
-								<div class="relative flex items-center gap-2">
-									<input
-										id="psSearch"
-										type="search"
-										placeholder="Search…"
-										class="w-40 rounded-lg border border-white/10 bg-slate-950/30 px-2.5 py-1.5 text-xs text-slate-200 shadow-soft backdrop-blur transition placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
-									<button
-										id="psSortMenuBtn"
-										type="button"
-										class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
-										title="Sortierung"
-										aria-label="Sortierung"
-										aria-expanded="false">
-										<svg
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											class="h-4 w-4">
-											<circle cx="12" cy="5" r="1.5" />
-											<circle cx="12" cy="12" r="1.5" />
-											<circle cx="12" cy="19" r="1.5" />
-										</svg>
-									</button>
-									<div
-										id="psSortMenu"
-										class="absolute right-0 top-10 z-30 hidden w-48 overflow-hidden rounded-xl border border-white/10 bg-slate-950/80 shadow-soft backdrop-blur">
+									<div class="relative flex flex-1 items-center gap-2">
+										<input
+											id="psSearch"
+											type="search"
+											placeholder="Search…"
+											class="w-full min-w-0 rounded-lg border border-white/10 bg-slate-950/30 px-2.5 py-1.5 text-xs text-slate-200 shadow-soft backdrop-blur transition placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
+										<button
+											id="psSortMenuBtn"
+											type="button"
+											class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
+											title="Sortierung"
+											aria-label="Sortierung"
+											aria-expanded="false">
+											<svg
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												class="h-4 w-4">
+												<circle cx="12" cy="5" r="1.5" />
+												<circle cx="12" cy="12" r="1.5" />
+												<circle cx="12" cy="19" r="1.5" />
+											</svg>
+										</button>
+										<div
+											id="psSortMenu"
+											class="absolute right-0 top-10 z-30 hidden w-48 overflow-hidden rounded-xl border border-white/10 bg-slate-950/80 shadow-soft backdrop-blur">
 										<div class="border-b border-white/10 px-3 py-2 text-[11px] text-slate-300">
 											Sort by
 										</div>
