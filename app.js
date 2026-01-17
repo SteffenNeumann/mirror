@@ -6899,23 +6899,35 @@ self.onmessage = async (e) => {
 		if (!isCrdtEnabled() || !ytext) {
 			attributionOverlay.classList.add("hidden");
 			attributionOverlayContent.textContent = "";
+			if (textarea && textarea.classList) {
+				textarea.classList.remove("attribution-active");
+			}
 			return;
 		}
 		const maskVisible =
 			mirrorMask && !mirrorMask.classList.contains("hidden");
 		if (maskVisible) {
 			attributionOverlay.classList.add("hidden");
+			if (textarea && textarea.classList) {
+				textarea.classList.remove("attribution-active");
+			}
 			return;
 		}
 		const html = buildAttributionHtml();
 		if (!html) {
 			attributionOverlay.classList.add("hidden");
 			attributionOverlayContent.textContent = "";
+			if (textarea && textarea.classList) {
+				textarea.classList.remove("attribution-active");
+			}
 			return;
 		}
 		attributionOverlayContent.innerHTML = html;
 		attributionOverlay.classList.remove("hidden");
 		syncAttributionOverlayScroll();
+		if (textarea && textarea.classList) {
+			textarea.classList.add("attribution-active");
+		}
 	}
 
 	function setTyping(active) {

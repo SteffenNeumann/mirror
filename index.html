@@ -281,9 +281,22 @@
 				white-space: pre-wrap;
 				word-break: break-word;
 			}
+			#attributionOverlay {
+				z-index: 5;
+			}
 			#attributionOverlayContent {
 				white-space: pre-wrap;
 				word-break: break-word;
+			}
+			#mirror.attribution-active {
+				color: transparent;
+				caret-color: rgb(226 232 240);
+			}
+			#mirror.attribution-active::selection {
+				background: rgba(217, 70, 239, 0.25);
+			}
+			#mirror.attribution-active::-moz-selection {
+				background: rgba(217, 70, 239, 0.25);
 			}
 			.author-span {
 				border-radius: 0.35rem;
