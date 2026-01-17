@@ -3150,17 +3150,7 @@
 
 	function renderPasswordToken(raw) {
 		const value = String(raw || "");
-		const safeAttr = escapeHtmlAttr(value);
-		const safeText = escapeHtml(value);
-		const mask = "••••••";
-		return (
-			`<span class="pw-field" data-pw="${safeAttr}">` +
-			`<span class="pw-mask">${mask}</span>` +
-			`<span class="pw-value">${safeText}</span>` +
-			`<button type="button" class="pw-toggle" aria-label="Passwort anzeigen" title="Anzeigen">👁</button>` +
-			`<button type="button" class="pw-copy" aria-label="Passwort kopieren" title="Kopieren">⧉</button>` +
-			`</span>`
-		);
+		return escapeHtml(value);
 	}
 
 	async function copyTextToClipboard(value) {
@@ -3265,6 +3255,30 @@
 		});
 	}
 
+	function buildEditorMaskHtml(text) {
+		const src = String(text || "");
+		if (!src) return "";
+		let out = "";
+		let last = 0;
+		const re = /\|\|[^\n]+?\|\|/g;
+		let match;
+		while ((match = re.exec(src))) {
+			const start = match.index;
+			const end = start + match[0].length;
+			if (start > last) {
+				out += escapeHtml(src.slice(last, start));
+			}
+			out += `<span class="pw-editor-token">${escapeHtml(
+				src.slice(start, end)
+			)}</span>`;
+			last = end;
+		}
+		if (last < src.length) {
+			out += escapeHtml(src.slice(last));
+		}
+		return out;
+	}
+
 	function syncPasswordMaskScroll() {
 		if (!mirrorMaskContent || !textarea) return;
 		const x = Number(textarea.scrollLeft || 0);
@@ -3284,7 +3298,7 @@
 			mirrorMaskContent.textContent = "";
 			return;
 		}
-		mirrorMaskContent.textContent = maskPasswordTokens(value);
+		mirrorMaskContent.innerHTML = buildEditorMaskHtml(value);
 		syncPasswordMaskScroll();
 	}
 
