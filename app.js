@@ -952,6 +952,9 @@
 			case "strike":
 				wrapSelection(textarea, "~~", "~~");
 				break;
+			case "password":
+				wrapSelection(textarea, "||", "||");
+				break;
 			case "quote":
 				prefixSelectionLines(textarea, "> ");
 				break;
@@ -3136,6 +3139,67 @@
 			.replace(/>/g, "&gt;");
 	}
 
+	function renderPasswordToken(raw) {
+		const value = String(raw || "");
+		const safeAttr = escapeHtmlAttr(value);
+		const safeText = escapeHtml(value);
+		const mask = "••••••";
+		return (
+			`<span class="pw-field" data-pw="${safeAttr}">` +
+			`<span class="pw-mask">${mask}</span>` +
+			`<span class="pw-value">${safeText}</span>` +
+			`<button type="button" class="pw-toggle" aria-label="Passwort anzeigen" title="Anzeigen">👁</button>` +
+			`<button type="button" class="pw-copy" aria-label="Passwort kopieren" title="Kopieren">⧉</button>` +
+			`</span>`
+		);
+	}
+
+	async function copyTextToClipboard(value) {
+		const text = String(value || "");
+		if (!text) return false;
+		try {
+			await navigator.clipboard.writeText(text);
+			return true;
+		} catch {
+			// ignore
+		}
+		try {
+			const ta = document.createElement("textarea");
+			ta.value = text;
+			ta.setAttribute("readonly", "");
+			ta.style.position = "fixed";
+			ta.style.opacity = "0";
+			document.body.appendChild(ta);
+			ta.select();
+			document.execCommand("copy");
+			ta.remove();
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
+	function togglePasswordField(field, force) {
+		if (!field || !field.classList) return false;
+		const next =
+			typeof force === "boolean"
+				? force
+				: !field.classList.contains("pw-revealed");
+			field.classList.toggle("pw-revealed", next);
+		const toggleBtn = field.querySelector
+			? field.querySelector(".pw-toggle")
+			: null;
+		if (toggleBtn) {
+			toggleBtn.setAttribute(
+				"aria-label",
+				next ? "Passwort verbergen" : "Passwort anzeigen"
+			);
+			toggleBtn.setAttribute("title", next ? "Verbergen" : "Anzeigen");
+			toggleBtn.textContent = next ? "🙈" : "👁";
+		}
+		return next;
+	}
+
 	function getPreviewRunCombinedText(state) {
 		const s = state || { output: "", error: "" };
 		const out = s.output ? String(s.output) : "";
@@ -3484,6 +3548,39 @@
 					labelAfter: true,
 				});
 			}
+			// Inline Passwords: ||secret|| -> masked token
+			try {
+				const tokenizePassword = (state, silent) => {
+					const start = state.pos;
+					if (state.src.charCodeAt(start) !== 124) return false;
+					if (state.src.charCodeAt(start + 1) !== 124) return false;
+					let pos = start + 2;
+					const max = state.posMax;
+					while (pos < max - 1) {
+						if (
+							state.src.charCodeAt(pos) === 124 &&
+							state.src.charCodeAt(pos + 1) === 124
+						) {
+							break;
+						}
+						pos += 1;
+					}
+					if (pos >= max - 1) return false;
+					const content = state.src.slice(start + 2, pos);
+					if (!content) return false;
+					if (!silent) {
+						const token = state.push("password", "", 0);
+						token.content = content;
+					}
+					state.pos = pos + 2;
+					return true;
+				};
+				md.inline.ruler.before("emphasis", "password", tokenizePassword);
+				md.renderer.rules.password = (tokens, idx) =>
+					renderPasswordToken(tokens[idx].content || "");
+			} catch {
+				// ignore
+			}
 			// Links in neuer Tab + sicher
 			const defaultRender =
 				md.renderer.rules.link_open ||
@@ -3696,6 +3793,13 @@
     pre{overflow:auto;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;background:rgba(2,6,23,.6);}
     code{background:rgba(255,255,255,.06);padding:.15em .35em;border-radius:.35em;}
     pre code{background:transparent;padding:0;}
+		.pw-field{display:inline-flex;align-items:center;gap:.35rem;padding:.1rem .45rem;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(15,23,42,.6);font-size:.85em;line-height:1.2;}
+		.pw-mask{letter-spacing:.18em;font-weight:600;color:rgba(226,232,240,.9);}
+		.pw-value{display:none;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;color:rgba(226,232,240,.95);}
+		.pw-field.pw-revealed .pw-mask{display:none;}
+		.pw-field.pw-revealed .pw-value{display:inline;}
+		.pw-toggle,.pw-copy{display:inline-flex;align-items:center;justify-content:center;height:1.4rem;min-width:1.4rem;padding:0 .35rem;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:rgba(226,232,240,.9);font-size:.75rem;line-height:1;cursor:pointer;}
+		.pw-toggle:hover,.pw-copy:hover{background:rgba(255,255,255,.12);}
 		.meta-yaml{margin:0 0 12px 0;font-size:11px;line-height:1.4;color:rgba(148,163,184,.9);background:rgba(15,23,42,.55);border:1px solid rgba(148,163,184,.18);border-radius:10px;padding:8px 10px;white-space:pre-wrap;}
 		*{scrollbar-width:thin;scrollbar-color:var(--scrollbar-thumb) transparent;}
 		*::-webkit-scrollbar{width:10px;height:10px;}
@@ -3792,6 +3896,38 @@
 					ev.preventDefault();
 					send('mirror_note_open', { target: target });
 				}, true);
+
+					function setPasswordRevealed(field, on){
+						if (!field || !field.classList) return;
+						if (on) field.classList.add('pw-revealed');
+						else field.classList.remove('pw-revealed');
+						var toggleBtn = field.querySelector ? field.querySelector('.pw-toggle') : null;
+						if (toggleBtn) {
+							toggleBtn.textContent = on ? '🙈' : '👁';
+							toggleBtn.setAttribute('aria-label', on ? 'Passwort verbergen' : 'Passwort anzeigen');
+							toggleBtn.setAttribute('title', on ? 'Verbergen' : 'Anzeigen');
+						}
+					}
+
+					document.addEventListener('click', function(ev){
+						var t = ev && ev.target ? ev.target : null;
+						var btn = t && t.closest ? t.closest('.pw-toggle, .pw-copy') : null;
+						if (!btn) return;
+						var field = btn.closest ? btn.closest('.pw-field') : null;
+						if (!field) return;
+						ev.preventDefault();
+						ev.stopPropagation();
+						if (btn.classList.contains('pw-toggle')) {
+							var next = !field.classList.contains('pw-revealed');
+							setPasswordRevealed(field, next);
+							return;
+						}
+						if (btn.classList.contains('pw-copy')) {
+							var value = field.getAttribute('data-pw') || '';
+							if (!value) return;
+							send('mirror_password_copy', { value: value });
+						}
+					}, true);
 
 			// Handshake: signalisiert dem Parent, dass Script+Messaging aktiv sind.
 			send('mirror_preview_ready', { ts: Date.now() });
@@ -4432,6 +4568,19 @@
 			if (!previewMsgToken) return;
 			if (String(data.token || "") !== String(previewMsgToken)) return;
 			openNoteFromWikiTarget(String(data.target || ""));
+			return;
+		}
+		if (data.type === "mirror_password_copy") {
+			if (!previewMsgToken) return;
+			if (String(data.token || "") !== String(previewMsgToken)) return;
+			const value = String(data.value || "");
+			if (!value) return;
+			copyTextToClipboard(value).then((ok) => {
+				toast(
+					ok ? "Passwort kopiert." : "Kopieren nicht verfügbar.",
+					ok ? "success" : "error"
+				);
+			});
 			return;
 		}
 		if (data.type !== "mirror_js_run_result") return;
@@ -5872,6 +6021,34 @@ self.onmessage = async (e) => {
 			});
 		});
 	}
+
+	document.addEventListener("click", (ev) => {
+		const target = ev && ev.target ? ev.target : null;
+		const btn = target && target.closest ? target.closest(".pw-toggle, .pw-copy") : null;
+		if (!btn) return;
+		const field = btn.closest ? btn.closest(".pw-field") : null;
+		if (!field) return;
+		try {
+			ev.preventDefault();
+			ev.stopPropagation();
+		} catch {
+			// ignore
+		}
+		if (btn.classList.contains("pw-toggle")) {
+			togglePasswordField(field);
+			return;
+		}
+		if (btn.classList.contains("pw-copy")) {
+			const value = String(field.getAttribute("data-pw") || "");
+			if (!value) return;
+			copyTextToClipboard(value).then((ok) => {
+				toast(
+					ok ? "Passwort kopiert." : "Kopieren nicht verfügbar.",
+					ok ? "success" : "error"
+				);
+			});
+		}
+	});
 
 	textarea.addEventListener("input", () => {
 		metaLeft.textContent = "Typing…";

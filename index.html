@@ -191,6 +191,54 @@
 				font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
 					"Liberation Mono", "Courier New", monospace;
 			}
+			.md-content .pw-field {
+				display: inline-flex;
+				align-items: center;
+				gap: 0.35rem;
+				padding: 0.1rem 0.45rem;
+				border-radius: 999px;
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				background: rgba(15, 23, 42, 0.6);
+				font-size: 0.85em;
+				line-height: 1.2;
+			}
+			.md-content .pw-mask {
+				letter-spacing: 0.18em;
+				font-weight: 600;
+				color: rgba(226, 232, 240, 0.9);
+			}
+			.md-content .pw-value {
+				display: none;
+				font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+					"Liberation Mono", "Courier New", monospace;
+				color: rgba(226, 232, 240, 0.95);
+			}
+			.md-content .pw-field.pw-revealed .pw-mask {
+				display: none;
+			}
+			.md-content .pw-field.pw-revealed .pw-value {
+				display: inline;
+			}
+			.md-content .pw-toggle,
+			.md-content .pw-copy {
+				display: inline-flex;
+				align-items: center;
+				justify-content: center;
+				height: 1.4rem;
+				min-width: 1.4rem;
+				padding: 0 0.35rem;
+				border-radius: 999px;
+				border: 1px solid rgba(255, 255, 255, 0.12);
+				background: rgba(255, 255, 255, 0.06);
+				color: rgba(226, 232, 240, 0.9);
+				font-size: 0.75rem;
+				line-height: 1;
+				cursor: pointer;
+			}
+			.md-content .pw-toggle:hover,
+			.md-content .pw-copy:hover {
+				background: rgba(255, 255, 255, 0.12);
+			}
 			.md-content pre {
 				overflow: auto;
 				border: 1px solid rgba(255, 255, 255, 0.08);
@@ -663,6 +711,14 @@
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
 												title="Strikethrough">
 												<span class="line-through">S</span>
+											</button>
+											<button
+												type="button"
+												data-selection-action="password"
+												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
+												title="Passwort verstecken"
+												aria-label="Passwort verstecken">
+												PW
 											</button>
 											<button
 												type="button"
