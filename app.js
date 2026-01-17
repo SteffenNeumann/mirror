@@ -6404,7 +6404,10 @@ self.onmessage = async (e) => {
 	let shareHref = "";
 	function updateShareLink() {
 		shareHref =
-			location.pathname + location.search + buildShareHash(room, key);
+			location.origin +
+			location.pathname +
+			location.search +
+			buildShareHash(room, key);
 		if (shareLink) shareLink.href = shareHref;
 	}
 
