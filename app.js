@@ -5783,6 +5783,32 @@ self.onmessage = async (e) => {
 		return out;
 	}
 
+	function mergeRoomTabs(localTabs, serverTabs) {
+		const map = new Map();
+		const add = (entry, preferText) => {
+			const normalized = normalizeRoomTabEntry(entry);
+			if (!normalized) return;
+			const keyId = `${normalized.room}:${normalized.key}`;
+			const existing = map.get(keyId);
+			if (!existing) {
+				map.set(keyId, normalized);
+				return;
+			}
+			const useText = preferText
+				? normalized.text || existing.text || ""
+				: existing.text || normalized.text || "";
+			map.set(keyId, {
+				...existing,
+				...normalized,
+				text: useText,
+				lastUsed: Math.max(existing.lastUsed || 0, normalized.lastUsed || 0),
+			});
+		};
+		for (const s of serverTabs || []) add(s, false);
+		for (const l of localTabs || []) add(l, true);
+		return Array.from(map.values());
+	}
+
 	function loadLocalRoomTabs() {
 		try {
 			const raw = localStorage.getItem(ROOM_TABS_KEY);
@@ -5796,22 +5822,22 @@ self.onmessage = async (e) => {
 
 	function loadRoomTabs() {
 		if (psState && psState.authed) {
-			const tabs = Array.isArray(psState.roomTabs) ? psState.roomTabs : [];
-			return dedupeRoomTabs(tabs.map(normalizeRoomTabEntry).filter(Boolean));
+			const serverTabs = Array.isArray(psState.roomTabs) ? psState.roomTabs : [];
+			const localTabs = loadLocalRoomTabs();
+			return dedupeRoomTabs(mergeRoomTabs(localTabs, serverTabs));
 		}
 		return loadLocalRoomTabs();
 	}
 
 	function saveRoomTabs(list) {
-		if (psState && psState.authed) {
-			psState.roomTabs = Array.isArray(list) ? dedupeRoomTabs(list) : [];
-			return;
-		}
 		try {
 			const cleaned = Array.isArray(list) ? dedupeRoomTabs(list) : [];
 			localStorage.setItem(ROOM_TABS_KEY, JSON.stringify(cleaned));
 		} catch {
 			// ignore
+		}
+		if (psState && psState.authed) {
+			psState.roomTabs = Array.isArray(list) ? dedupeRoomTabs(list) : [];
 		}
 	}
 
