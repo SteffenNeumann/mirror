@@ -53,8 +53,8 @@
 				--blockquote-border: rgba(217, 70, 239, 0.45);
 				--blockquote-text: rgb(203 213 225);
 				--scrollbar-track: rgba(2, 6, 23, 0.35);
-				--scrollbar-thumb: rgba(148, 163, 184, 0.6);
-				--scrollbar-thumb-hover: rgba(148, 163, 184, 0.85);
+				--scrollbar-thumb: rgba(148, 163, 184, 0.25);
+				--scrollbar-thumb-hover: rgba(148, 163, 184, 0.4);
 			}
 			* {
 				scrollbar-width: thin;
@@ -74,28 +74,6 @@
 			}
 			*::-webkit-scrollbar-thumb:hover {
 				background-color: var(--scrollbar-thumb-hover);
-			}
-			#psList {
-				overflow-anchor: none;
-				overflow-y: auto;
-				-webkit-overflow-scrolling: touch;
-				scrollbar-gutter: stable;
-				scrollbar-color: rgba(148, 163, 184, 0.85) rgba(2, 6, 23, 0.25);
-			}
-			#psList::-webkit-scrollbar {
-				width: 12px;
-				height: 12px;
-			}
-			#psList::-webkit-scrollbar-track {
-				background: rgba(2, 6, 23, 0.25);
-			}
-			#psList::-webkit-scrollbar-thumb {
-				background-color: rgba(148, 163, 184, 0.85);
-				border-radius: 999px;
-				border: 2px solid rgba(2, 6, 23, 0.25);
-			}
-			#psList::-webkit-scrollbar-thumb:hover {
-				background-color: rgba(148, 163, 184, 0.95);
 			}
 			.md-content {
 				font-size: 0.875rem;
@@ -411,7 +389,7 @@
 						</div>
 
 						<div class="mt-4 flex min-h-0 flex-1 flex-col">
-							<div class="shrink-0 flex flex-col gap-2">
+							<div class="flex flex-col gap-2">
 								<div class="flex items-center gap-2">
 									<div class="text-xs font-medium text-slate-200">Notes</div>
 									<div
@@ -508,14 +486,14 @@
 							</div>
 							<div
 								id="psList"
-								class="mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-scroll pr-1"></div>
+								class="mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1"></div>
 						</div>
 					</div>
 					<div class="mt-auto pt-4">
 						<button
 							id="psSettingsBtn"
 							type="button"
-							class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-xs text-slate-200 transition hover:bg-white/10 active:bg-white/15"
+							class="inline-flex items-center rounded-lg border border-white/10 bg-white/5 p-2 text-xs text-slate-200 transition hover:bg-white/10 active:bg-white/15"
 							aria-label="Open settings"
 							title="Settings">
 							<svg
