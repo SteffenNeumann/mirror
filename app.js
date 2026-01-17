@@ -5996,27 +5996,24 @@ self.onmessage = async (e) => {
 					? '<span class="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300">privat</span>'
 					: "";
 				return `
-					<div class="flex items-center gap-1">
-						<button
-							type="button"
-							data-tab-select
-							data-room="${escapeAttr(t.room)}"
-							data-key="${escapeAttr(t.key)}"
-							class="${base} ${isActive ? active : idle}">
-							<span class="max-w-[140px] truncate">${escapeHtml(t.room)}</span>
-							${badge}
-						</button>
-						<button
-							type="button"
+					<button
+						type="button"
+						data-tab-select
+						data-room="${escapeAttr(t.room)}"
+						data-key="${escapeAttr(t.key)}"
+						class="${base} ${isActive ? active : idle}">
+						<span class="max-w-[140px] truncate">${escapeHtml(t.room)}</span>
+						${badge}
+						<span
 							data-tab-close
 							data-room="${escapeAttr(t.room)}"
 							data-key="${escapeAttr(t.key)}"
-							class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-400 transition hover:bg-white/10 hover:text-slate-100"
+							class="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-md border border-white/10 text-[11px] text-slate-400 transition hover:bg-white/10 hover:text-slate-100"
 							title="Tab schließen"
 							aria-label="Tab schließen">
 							<span aria-hidden="true">×</span>
-						</button>
-					</div>`;
+						</span>
+					</button>`;
 			})
 			.join("");
 		roomTabs.innerHTML = html;
