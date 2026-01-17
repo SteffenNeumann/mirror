@@ -2023,6 +2023,26 @@
 	let psAutoSaveLastSavedNoteId = "";
 	let psAutoSaveInFlight = false;
 	let previewOpen = false;
+	function isMobileViewport() {
+		try {
+			return (
+				window.matchMedia &&
+				window.matchMedia("(max-width: 1023px)").matches
+			);
+		} catch {
+			return false;
+		}
+	}
+
+	function syncMobileFocusState() {
+		if (!document.body || !document.body.classList) return;
+		const isMobile = isMobileViewport();
+		const previewActive = isMobile && previewOpen;
+		const editorActive =
+			isMobile && !previewOpen && Boolean(String(psEditingNoteId || ""));
+		document.body.classList.toggle("mobile-preview-open", previewActive);
+		document.body.classList.toggle("mobile-editor-open", editorActive);
+	}
 	let md;
 	const clearMirrorBtn = document.getElementById("clearMirror");
 	let mdLibWarned = false;
@@ -3867,6 +3887,7 @@
 			if (metaLeft) metaLeft.textContent = "Ready.";
 			if (metaRight) metaRight.textContent = "";
 		}
+		syncMobileFocusState();
 	}
 
 	function updatePreview() {
@@ -4552,6 +4573,11 @@
 		} else {
 			applyPersonalSpaceFiltersAndRender();
 		}
+		if (isMobileViewport()) {
+			setPreviewVisible(true);
+		} else {
+			syncMobileFocusState();
+		}
 	}
 
 	function openNoteFromWikiTarget(target) {
@@ -4727,6 +4753,7 @@
 						if (psEditingNoteId === id) {
 							psEditingNoteId = "";
 							if (psMainHint) psMainHint.classList.add("hidden");
+							syncMobileFocusState();
 						}
 						toast("Note deleted.", "success");
 						await refreshPersonalSpace();
@@ -6562,6 +6589,7 @@ self.onmessage = async (e) => {
 			metaRight.textContent = "";
 			updatePreview();
 			updatePasswordMaskOverlay();
+			syncMobileFocusState();
 		});
 	}
 	if (psEditorTagsInput) {
@@ -6892,6 +6920,7 @@ self.onmessage = async (e) => {
 	window.addEventListener("resize", () => {
 		updateRunOutputSizing();
 		syncPsListHeight();
+		syncMobileFocusState();
 	});
 	if (aiPromptInput) {
 		aiPromptInput.addEventListener("input", () => {

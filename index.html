@@ -394,6 +394,53 @@
 			.md-content ul.task-list input[type="checkbox"] {
 				margin-top: 0.2rem;
 			}
+			@media (max-width: 1023px) {
+				body.mobile-preview-open::before,
+				body.mobile-editor-open::before {
+					content: "";
+					position: fixed;
+					inset: 0;
+					background: rgba(2, 6, 23, 0.6);
+					z-index: 60;
+				}
+				body.mobile-preview-open main,
+				body.mobile-editor-open main {
+					width: 100vw;
+					height: 100vh;
+					margin: 0;
+				}
+				body.mobile-preview-open #psPanel,
+				body.mobile-editor-open #psPanel {
+					display: none;
+				}
+				body.mobile-preview-open #previewPanel {
+					position: fixed;
+					inset: 5vh 5vw;
+					width: 90vw;
+					height: 90vh;
+					z-index: 70;
+					display: flex;
+					flex-direction: column;
+					pointer-events: auto;
+				}
+				body.mobile-preview-open #previewPanel.hidden {
+					display: none;
+				}
+				body.mobile-preview-open #editorPreviewGrid > div:first-child {
+					display: none;
+				}
+				body.mobile-editor-open #editorPanel {
+					position: fixed;
+					inset: 5vh 5vw;
+					width: 90vw;
+					height: 90vh;
+					z-index: 70;
+					pointer-events: auto;
+				}
+				body.mobile-editor-open #editorPanel > header {
+					flex: 0 0 auto;
+				}
+			}
 		</style>
 	</head>
 	<body class="min-h-screen bg-slate-950 text-slate-100 antialiased">
@@ -612,6 +659,7 @@
 				</section>
 
 				<section
+					id="editorPanel"
 					class="flex h-full min-h-0 w-full flex-col rounded-2xl border border-white/10 bg-white/5 p-4 sm:p-6 shadow-soft backdrop-blur">
 					<header
 						class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
