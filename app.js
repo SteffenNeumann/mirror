@@ -6665,6 +6665,7 @@ self.onmessage = async (e) => {
 	let crdtLastText = "";
 	let crdtHasSnapshot = false;
 	let crdtSnapshotTimer;
+	let yjsLoadingPromise;
 
 	function isCrdtAvailable() {
 		return typeof window.Y !== "undefined";
@@ -6676,6 +6677,35 @@ self.onmessage = async (e) => {
 
 	function isE2eeActive() {
 		return Boolean(key);
+	}
+
+	function ensureYjsLoaded() {
+		if (isCrdtAvailable()) return Promise.resolve(true);
+		if (yjsLoadingPromise) return yjsLoadingPromise;
+		const sources = [
+			"https://unpkg.com/yjs@13.6.14/dist/yjs.js",
+			"https://cdn.jsdelivr.net/npm/yjs@13.6.14/dist/yjs.js",
+		];
+		yjsLoadingPromise = new Promise((resolve) => {
+			let idx = 0;
+			const loadNext = () => {
+				if (idx >= sources.length) {
+					resolve(false);
+					return;
+				}
+				const script = document.createElement("script");
+				script.src = sources[idx];
+				script.async = true;
+				script.onload = () => resolve(true);
+				script.onerror = () => {
+					idx += 1;
+					loadNext();
+				};
+				document.head.appendChild(script);
+			};
+			loadNext();
+		});
+		return yjsLoadingPromise;
 	}
 
 	function nowIso() {
@@ -7168,9 +7198,6 @@ self.onmessage = async (e) => {
 		}
 
 		destroyCrdt();
-		if (isCrdtEnabled()) {
-			initCrdt();
-		}
 		presenceState.clear();
 		upsertPresence({
 			clientId,
@@ -7196,7 +7223,7 @@ self.onmessage = async (e) => {
 			if (mySeq !== connectionSeq) return;
 			setStatus("online", "Online");
 			metaLeft.textContent = "Online. Waiting for updates…";
-			const mode = isCrdtEnabled() ? "crdt" : "lww";
+			const mode = isCrdtAvailable() ? "crdt" : "lww";
 			sendMessage({
 				type: "hello",
 				room,
@@ -7207,7 +7234,19 @@ self.onmessage = async (e) => {
 				avatar: identity.avatar,
 				ts: Date.now(),
 			});
-			if (mode === "crdt") {
+			ensureYjsLoaded().then((ok) => {
+				if (mySeq !== connectionSeq) return;
+				if (!ok) {
+					metaLeft.textContent = "CRDT nicht verfügbar.";
+					sendMessage({
+						type: "request_state",
+						room,
+						clientId,
+						ts: Date.now(),
+					});
+					return;
+				}
+				initCrdt();
 				sendMessage({
 					type: "doc_request",
 					room,
@@ -7215,14 +7254,7 @@ self.onmessage = async (e) => {
 					ts: Date.now(),
 				});
 				scheduleCrdtSnapshot();
-			} else {
-				sendMessage({
-					type: "request_state",
-					room,
-					clientId,
-					ts: Date.now(),
-				});
-			}
+			});
 		});
 
 		ws.addEventListener("message", (ev) => {
