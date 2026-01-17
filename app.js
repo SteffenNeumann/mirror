@@ -6684,28 +6684,34 @@ self.onmessage = async (e) => {
 		if (isCrdtAvailable()) return Promise.resolve(true);
 		if (yjsLoadingPromise) return yjsLoadingPromise;
 		const sources = [
-			"/node_modules/yjs/dist/yjs.js",
 			"https://unpkg.com/yjs@13.6.14/dist/yjs.js",
 			"https://cdn.jsdelivr.net/npm/yjs@13.6.14/dist/yjs.js",
 		];
 		yjsLoadingPromise = new Promise((resolve) => {
-			let idx = 0;
-			const loadNext = () => {
-				if (idx >= sources.length) {
-					resolve(false);
-					return;
-				}
-				const script = document.createElement("script");
-				script.src = sources[idx];
-				script.async = true;
-				script.onload = () => resolve(true);
-				script.onerror = () => {
-					idx += 1;
+			import("/node_modules/yjs/dist/yjs.mjs")
+				.then((mod) => {
+					window.Y = mod;
+					resolve(true);
+				})
+				.catch(() => {
+					let idx = 0;
+					const loadNext = () => {
+						if (idx >= sources.length) {
+							resolve(false);
+							return;
+						}
+						const script = document.createElement("script");
+						script.src = sources[idx];
+						script.async = true;
+						script.onload = () => resolve(true);
+						script.onerror = () => {
+							idx += 1;
+							loadNext();
+						};
+						document.head.appendChild(script);
+					};
 					loadNext();
-				};
-				document.head.appendChild(script);
-			};
-			loadNext();
+				});
 		});
 		return yjsLoadingPromise;
 	}
