@@ -75,6 +75,12 @@
 			*::-webkit-scrollbar-thumb:hover {
 				background-color: var(--scrollbar-thumb-hover);
 			}
+			#psList {
+				overflow-anchor: none;
+				overflow-y: auto;
+				-webkit-overflow-scrolling: touch;
+				scrollbar-gutter: stable;
+			}
 			.md-content {
 				font-size: 0.875rem;
 				line-height: 1.55;
@@ -493,7 +499,7 @@
 						<button
 							id="psSettingsBtn"
 							type="button"
-							class="inline-flex items-center rounded-lg border border-white/10 bg-white/5 p-2 text-xs text-slate-200 transition hover:bg-white/10 active:bg-white/15"
+							class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-xs text-slate-200 transition hover:bg-white/10 active:bg-white/15"
 							aria-label="Open settings"
 							title="Settings">
 							<svg
