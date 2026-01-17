@@ -6587,7 +6587,7 @@ self.onmessage = async (e) => {
 	}
 
 	function canAutoSavePsNote() {
-		return Boolean(psState && psState.authed && psEditingNoteId && textarea);
+		return Boolean(psState && psState.authed && textarea);
 	}
 
 	async function savePersonalSpaceNote(text, opts) {
@@ -6691,7 +6691,7 @@ self.onmessage = async (e) => {
 		if (!text.trim()) return;
 		if (psAutoSaveLastSavedNoteId !== psEditingNoteId) {
 			psAutoSaveLastSavedNoteId = psEditingNoteId;
-			psAutoSaveLastSavedText = text;
+			psAutoSaveLastSavedText = psEditingNoteId ? text : "";
 		}
 		if (text === psAutoSaveLastSavedText) return;
 		if (psAutoSaveTimer) window.clearTimeout(psAutoSaveTimer);
