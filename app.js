@@ -60,6 +60,10 @@
 	const selectionMenu = document.getElementById("selectionMenu");
 	const mirrorMask = document.getElementById("mirrorMask");
 	const mirrorMaskContent = document.getElementById("mirrorMaskContent");
+	const attributionOverlay = document.getElementById("attributionOverlay");
+	const attributionOverlayContent = document.getElementById(
+		"attributionOverlayContent"
+	);
 	const mainGrid = document.getElementById("mainGrid");
 	const psPanel = document.getElementById("psPanel");
 	const togglePersonalSpaceBtn = document.getElementById("togglePersonalSpace");
@@ -3496,10 +3500,12 @@
 		textarea.classList.toggle("pw-mask-enabled", enabled);
 		if (!enabled) {
 			mirrorMaskContent.textContent = "";
+			updateAttributionOverlay();
 			return;
 		}
 		mirrorMaskContent.innerHTML = buildEditorMaskHtml(value);
 		syncPasswordMaskScroll();
+		updateAttributionOverlay();
 	}
 
 	function getPreviewRunCombinedText(state) {
@@ -6574,6 +6580,7 @@ self.onmessage = async (e) => {
 			}
 			presenceList.appendChild(chip);
 		}
+		updateAttributionOverlay();
 	}
 
 	function upsertPresence(user) {
@@ -6588,6 +6595,93 @@ self.onmessage = async (e) => {
 		if (!current) return;
 		presenceState.set(update.clientId, { ...current, ...update });
 		updatePresenceUI();
+	}
+
+	function getAuthorMeta(authorId) {
+		if (!authorId) return { name: "User", color: "#64748b" };
+		const user = presenceState.get(authorId);
+		if (user) return user;
+		return { name: "User", color: "#64748b" };
+	}
+
+	function parseHexColor(input) {
+		const raw = String(input || "").trim();
+		if (!raw) return null;
+		const hex = raw.startsWith("#") ? raw.slice(1) : raw;
+		if (hex.length === 3) {
+			const r = parseInt(hex[0] + hex[0], 16);
+			const g = parseInt(hex[1] + hex[1], 16);
+			const b = parseInt(hex[2] + hex[2], 16);
+			if ([r, g, b].some((v) => Number.isNaN(v))) return null;
+			return { r, g, b };
+		}
+		if (hex.length === 6) {
+			const r = parseInt(hex.slice(0, 2), 16);
+			const g = parseInt(hex.slice(2, 4), 16);
+			const b = parseInt(hex.slice(4, 6), 16);
+			if ([r, g, b].some((v) => Number.isNaN(v))) return null;
+			return { r, g, b };
+		}
+		return null;
+	}
+
+	function colorToRgba(color, alpha) {
+		const parsed = parseHexColor(color);
+		if (!parsed) return `rgba(148, 163, 184, ${alpha})`;
+		return `rgba(${parsed.r}, ${parsed.g}, ${parsed.b}, ${alpha})`;
+	}
+
+	function syncAttributionOverlayScroll() {
+		if (!attributionOverlayContent || !textarea) return;
+		const x = Number(textarea.scrollLeft || 0);
+		const y = Number(textarea.scrollTop || 0);
+		attributionOverlayContent.style.transform = `translate(${-x}px, ${-y}px)`;
+	}
+
+	function buildAttributionHtml() {
+		if (!ytext) return "";
+		const delta = ytext.toDelta();
+		let out = "";
+		for (const op of delta) {
+			if (typeof op.insert !== "string") continue;
+			const text = op.insert;
+			const authorId = op.attributes ? op.attributes.author : "";
+			if (!authorId) {
+				out += escapeHtml(text);
+				continue;
+			}
+			const meta = getAuthorMeta(String(authorId));
+			const bg = colorToRgba(meta.color, 0.18);
+			const border = colorToRgba(meta.color, 0.35);
+			out += `<span class="author-span" style="background-color:${bg};box-shadow:inset 0 0 0 1px ${border};">${escapeHtml(
+				text
+			)}</span>`;
+		}
+		return out;
+	}
+
+	function updateAttributionOverlay() {
+		if (!attributionOverlay || !attributionOverlayContent) return;
+		if (!isCrdtEnabled() || !ytext) {
+			attributionOverlay.classList.add("hidden");
+			attributionOverlayContent.textContent = "";
+			return;
+		}
+		const maskVisible =
+			mirrorMask && !mirrorMask.classList.contains("hidden");
+		if (maskVisible) {
+			attributionOverlay.classList.add("hidden");
+			return;
+		}
+		const html = buildAttributionHtml();
+		if (!html) {
+			attributionOverlay.classList.add("hidden");
+			attributionOverlayContent.textContent = "";
+			return;
+		}
+		attributionOverlayContent.innerHTML = html;
+		attributionOverlay.classList.remove("hidden");
+		syncAttributionOverlayScroll();
 	}
 
 	function setTyping(active) {
@@ -6649,6 +6743,7 @@ self.onmessage = async (e) => {
 			if (next === textarea.value) return;
 			applySyncedText(next, "Synced (CRDT)." );
 			crdtLastText = next;
+			updateAttributionOverlay();
 		});
 		ydoc.on("update", (update) => {
 			if (crdtSuppressSend) return;
@@ -6656,6 +6751,7 @@ self.onmessage = async (e) => {
 			sendMessage({ type: "doc_update", room, clientId, update: encoded });
 			scheduleCrdtSnapshot();
 		});
+		updateAttributionOverlay();
 		return true;
 	}
 
@@ -6672,6 +6768,7 @@ self.onmessage = async (e) => {
 		crdtLastText = "";
 		crdtHasSnapshot = false;
 		window.clearTimeout(crdtSnapshotTimer);
+		updateAttributionOverlay();
 	}
 
 	function applyCrdtUpdate(encoded) {
@@ -6703,6 +6800,7 @@ self.onmessage = async (e) => {
 		crdtLastText = ytext.toString();
 		crdtHasSnapshot = true;
 		applySyncedText(crdtLastText, "Synced (CRDT)." );
+		updateAttributionOverlay();
 		scheduleCrdtSnapshot();
 	}
 
@@ -6734,9 +6832,10 @@ self.onmessage = async (e) => {
 		crdtSuppressSend = false;
 		ydoc.transact(() => {
 			if (removeLen > 0) ytext.delete(start, removeLen);
-			if (insertText) ytext.insert(start, insertText);
+			if (insertText) ytext.insert(start, insertText, { author: clientId });
 		});
 		crdtLastText = next;
+		updateAttributionOverlay();
 	}
 
 	function scheduleCrdtSnapshot() {
@@ -7318,6 +7417,7 @@ self.onmessage = async (e) => {
 		updateSelectionMenu();
 		updateEditorMetaScroll();
 		syncPasswordMaskScroll();
+		syncAttributionOverlayScroll();
 	});
 
 	textarea.addEventListener("keyup", () => {
