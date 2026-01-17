@@ -103,6 +103,7 @@
 	const psCount = document.getElementById("psCount");
 	const psSearchInput = document.getElementById("psSearch");
 	const psPinnedToggle = document.getElementById("psPinnedToggle");
+	const psSortModeSelect = document.getElementById("psSortMode");
 	const psList = document.getElementById("psList");
 	const psHint = document.getElementById("psHint");
 	const psTransferHint = document.getElementById("psTransferHint");
@@ -110,6 +111,7 @@
 	const psSaveMain = document.getElementById("psSaveMain");
 	const psMainHint = document.getElementById("psMainHint");
 	const psAutoSaveStatus = document.getElementById("psAutoSaveStatus");
+	const psMetaYaml = document.getElementById("psMetaYaml");
 	const psNavBackBtn = document.getElementById("psNavBack");
 	const psNavForwardBtn = document.getElementById("psNavForward");
 	const psSettingsBtn = document.getElementById("psSettingsBtn");
@@ -1986,6 +1988,7 @@
 	let psEditingNoteTags = [];
 	let psEditingNoteTagsOverridden = false;
 	let psEditingNotePinned = false;
+	let psSortMode = "updated";
 	let psAutoSaveTimer = 0;
 	let psAutoSaveLastSavedText = "";
 	let psAutoSaveLastSavedNoteId = "";
@@ -2013,6 +2016,7 @@
 	const PS_SEARCH_QUERY_KEY = "mirror_ps_search_query";
 	const PS_VISIBLE_KEY = "mirror_ps_visible";
 	const PS_PINNED_ONLY_KEY = "mirror_ps_pinned_only";
+	const PS_SORT_MODE_KEY = "mirror_ps_sort_mode";
 	const PS_MANUAL_TAGS_MARKER = "__manual_tags__";
 	const PS_PINNED_TAG = "pinned";
 	const AI_PROMPT_KEY = "mirror_ai_prompt";
@@ -2528,6 +2532,61 @@
 		psAutoSaveStatus.classList.toggle("hidden", !text);
 	}
 
+	function ensureNoteUpdatedAt(note) {
+		if (!note || typeof note !== "object") return note;
+		if (
+			typeof note.updatedAt !== "number" ||
+			!Number.isFinite(note.updatedAt)
+		) {
+			note.updatedAt =
+				typeof note.createdAt === "number" ? note.createdAt : Date.now();
+		}
+		return note;
+	}
+
+	function formatMetaDate(ts) {
+		if (!ts || !Number.isFinite(ts)) return "";
+		try {
+			return new Date(ts).toISOString();
+		} catch {
+			return "";
+		}
+	}
+
+	function buildNoteMetaYaml(note) {
+		if (!note) return "";
+		const safe = ensureNoteUpdatedAt({ ...note });
+		const tags = Array.isArray(safe.tags) ? safe.tags : [];
+		const cleanTags = stripPinnedTag(stripManualTagsMarker(tags));
+		const lines = [
+			"---",
+			`id: ${String(safe.id || "")}`,
+			`kind: ${String(safe.kind || "note")}`,
+			`created: ${formatMetaDate(safe.createdAt)}`,
+			`updated: ${formatMetaDate(safe.updatedAt)}`,
+			`tags: [${cleanTags.map((t) => JSON.stringify(String(t))).join(", ")}]`,
+			"---",
+		];
+		return lines.join("\n");
+	}
+
+	function updateEditorMetaYaml() {
+		if (!psMetaYaml || !psMetaYaml.classList) return;
+		if (!psState || !psState.authed || !psEditingNoteId) {
+			psMetaYaml.classList.add("hidden");
+			return;
+		}
+		const note = findNoteById(psEditingNoteId);
+		if (!note) {
+			psMetaYaml.classList.add("hidden");
+			return;
+		}
+		const yaml = buildNoteMetaYaml(note);
+		const pre = psMetaYaml.querySelector("pre");
+		if (pre) pre.textContent = yaml;
+		psMetaYaml.classList.toggle("hidden", !yaml);
+	}
+
 	function cleanNoteTitleLine(line) {
 		return String(line || "")
 			.replace(/^#+\s*/, "")
@@ -2631,6 +2690,26 @@
 		if (psSearchInput) psSearchInput.value = psSearchQuery;
 	}
 
+	function loadPsSortMode() {
+		try {
+			psSortMode = String(localStorage.getItem(PS_SORT_MODE_KEY) || "updated");
+		} catch {
+			psSortMode = "updated";
+		}
+		if (psSortMode !== "created" && psSortMode !== "updated") {
+			psSortMode = "updated";
+		}
+		if (psSortModeSelect) psSortModeSelect.value = psSortMode;
+	}
+
+	function savePsSortMode() {
+		try {
+			localStorage.setItem(PS_SORT_MODE_KEY, psSortMode);
+		} catch {
+			// ignore
+		}
+	}
+
 	function savePsSearchQuery() {
 		try {
 			localStorage.setItem(PS_SEARCH_QUERY_KEY, String(psSearchQuery || ""));
@@ -2700,7 +2779,21 @@
 	function applyPersonalSpaceFiltersAndRender() {
 		if (!psState || !psState.authed) return;
 		const allNotes = Array.isArray(psState.notes) ? psState.notes : [];
-		let notes = allNotes;
+		const sortedAll = allNotes
+			.map((n) => ensureNoteUpdatedAt(n))
+			.slice()
+			.sort((a, b) => {
+				const aTime =
+					psSortMode === "created"
+						? Number(a.createdAt || 0)
+						: Number(a.updatedAt || a.createdAt || 0);
+				const bTime =
+					psSortMode === "created"
+						? Number(b.createdAt || 0)
+						: Number(b.updatedAt || b.createdAt || 0);
+				return bTime - aTime;
+			});
+		let notes = sortedAll;
 		if (psPinnedOnly) {
 			notes = notes.filter((n) => noteIsPinned(n));
 		}
@@ -2731,6 +2824,7 @@
 		}
 		renderPsTags(psState.tags || []);
 		renderPsList(notes);
+		updateEditorMetaYaml();
 	}
 
 	function loadPsTagsCollapsed() {
@@ -3065,6 +3159,9 @@
 		);
 		const show = Boolean(open);
 		if (codeLangWrap.classList) codeLangWrap.classList.toggle("hidden", !show);
+		if (psMetaYaml && psMetaYaml.classList) {
+			psMetaYaml.classList.toggle("hidden", show);
+		}
 		if (show && open && open.lang) {
 			try {
 				codeLangSelect.value = String(open.lang);
@@ -3342,6 +3439,11 @@
 			themeColors.scrollbarThumbHover ||
 			themeColors.accentText ||
 			"rgba(148,163,184,.45)";
+		const metaNote = psEditingNoteId ? findNoteById(psEditingNoteId) : null;
+		const metaYaml = metaNote ? buildNoteMetaYaml(metaNote) : "";
+		const metaHtml = metaYaml
+			? `<pre class="meta-yaml">${escapeHtml(metaYaml)}</pre>`
+			: "";
 
 		// Token pro Preview-Render: erlaubt sichere postMessage-Validierung auch bei sandbox/null origin.
 		try {
@@ -3369,6 +3471,7 @@
     pre{overflow:auto;border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px;background:rgba(2,6,23,.6);}
     code{background:rgba(255,255,255,.06);padding:.15em .35em;border-radius:.35em;}
     pre code{background:transparent;padding:0;}
+		.meta-yaml{margin:0 0 12px 0;font-size:11px;line-height:1.4;color:rgba(148,163,184,.9);background:rgba(15,23,42,.55);border:1px solid rgba(148,163,184,.18);border-radius:10px;padding:8px 10px;white-space:pre-wrap;}
 		*{scrollbar-width:thin;scrollbar-color:var(--scrollbar-thumb) transparent;}
 		*::-webkit-scrollbar{width:10px;height:10px;}
 		*::-webkit-scrollbar-track{background:transparent;}
@@ -3386,7 +3489,7 @@
   </style>
 </head>
 <body>
-  <div id="content">${bodyHtml}</div>
+	<div id="content">${metaHtml}${bodyHtml}</div>
 	<script>
 		(function(){
 			var TOKEN = ${tokenJs};
@@ -3876,6 +3979,7 @@
 		psAutoSaveLastSavedText = String(textarea.value || "");
 		setPsAutoSaveStatus("");
 		updatePreview();
+		updateEditorMetaYaml();
 		if (notesForList) renderPsList(notesForList);
 		else applyPersonalSpaceFiltersAndRender();
 	}
@@ -4593,6 +4697,9 @@ self.onmessage = async (e) => {
 		psState.favorites = Array.isArray(psState.favorites)
 			? psState.favorites
 			: [];
+		psState.notes = Array.isArray(psState.notes)
+			? psState.notes.map((n) => ensureNoteUpdatedAt(n))
+			: [];
 
 		if (!psState.authed) {
 			psUnauthed.classList.remove("hidden");
@@ -4622,6 +4729,7 @@ self.onmessage = async (e) => {
 		syncPsEditorTagsInput();
 		updatePsPinnedToggle();
 		updateFavoritesUI();
+		updateEditorMetaYaml();
 		updatePsNoteNavButtons();
 	}
 
@@ -5738,6 +5846,7 @@ self.onmessage = async (e) => {
 	applyPsTagsCollapsed();
 	loadPsSearchQuery();
 	loadPsPinnedOnly();
+	loadPsSortMode();
 	loadPsVisible();
 	applyPsVisible();
 	loadTheme();
@@ -5789,10 +5898,21 @@ self.onmessage = async (e) => {
 			updatePsEditingTagsHint();
 			updateEditingNoteTagsLocal(nextTags);
 			schedulePsTagsAutoSave();
+			updateEditorMetaYaml();
 		});
 		psEditorTagsInput.addEventListener("blur", () => {
 			if (psEditorTagsSyncing) return;
 			syncPsEditorTagsInput();
+		});
+	}
+	if (psSortModeSelect) {
+		psSortModeSelect.addEventListener("change", () => {
+			psSortMode = String(psSortModeSelect.value || "updated");
+			if (psSortMode !== "created" && psSortMode !== "updated") {
+				psSortMode = "updated";
+			}
+			savePsSortMode();
+			applyPersonalSpaceFiltersAndRender();
 		});
 	}
 	if (psExportNotesBtn) {
@@ -5901,12 +6021,15 @@ self.onmessage = async (e) => {
 			});
 			const saved = res && res.note ? res.note : null;
 			if (saved && saved.id && psState && psState.authed) {
+				saved.updatedAt = Date.now();
+				saved.createdAt = Number(saved.createdAt || Date.now());
 				psEditingNoteId = String(saved.id);
 				psEditingNoteKind = String(saved.kind || "");
 				const notes = Array.isArray(psState.notes) ? psState.notes : [];
 				psState.notes = [saved, ...notes];
 				applyPersonalSpaceFiltersAndRender();
 				syncPsEditingNoteTagsFromState();
+				updateEditorMetaYaml();
 				if (psMainHint) {
 					psMainHint.classList.remove("hidden");
 					psMainHint.textContent = "Editing active";
@@ -5931,6 +6054,7 @@ self.onmessage = async (e) => {
 		});
 		const saved = res && res.note ? res.note : null;
 		if (saved && saved.id && psState && psState.authed) {
+			saved.updatedAt = Date.now();
 			const notes = Array.isArray(psState.notes) ? psState.notes : [];
 			const id = String(saved.id);
 			const idx = notes.findIndex((n) => String(n && n.id ? n.id : "") === id);
@@ -5940,6 +6064,7 @@ self.onmessage = async (e) => {
 					: [saved, ...notes];
 			applyPersonalSpaceFiltersAndRender();
 			syncPsEditingNoteTagsFromState();
+			updateEditorMetaYaml();
 		}
 		psAutoSaveLastSavedNoteId = psEditingNoteId;
 		psAutoSaveLastSavedText = trimmed;
