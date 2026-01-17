@@ -1991,6 +1991,7 @@
 	let psEditingNotePinned = false;
 	let psSortMode = "updated";
 	let psMetaVisible = true;
+	let psMetaBasePaddingTop = null;
 	let psAutoSaveTimer = 0;
 	let psAutoSaveLastSavedText = "";
 	let psAutoSaveLastSavedNoteId = "";
@@ -2603,21 +2604,29 @@
 		if (!psMetaYaml || !psMetaYaml.classList) return;
 		if (!psMetaVisible) {
 			psMetaYaml.classList.add("hidden");
+			resetEditorMetaPadding();
 			return;
 		}
 		if (!psState || !psState.authed || !psEditingNoteId) {
 			psMetaYaml.classList.add("hidden");
+			resetEditorMetaPadding();
 			return;
 		}
 		const note = findNoteById(psEditingNoteId);
 		if (!note) {
 			psMetaYaml.classList.add("hidden");
+			resetEditorMetaPadding();
 			return;
 		}
 		const yaml = buildNoteMetaYaml(note);
 		const pre = psMetaYaml.querySelector("pre");
 		if (pre) pre.textContent = yaml;
 		psMetaYaml.classList.toggle("hidden", !yaml);
+		if (!yaml) {
+			resetEditorMetaPadding();
+			return;
+		}
+		updateEditorMetaPadding();
 		updateEditorMetaScroll();
 	}
 
@@ -2625,6 +2634,35 @@
 		if (!psMetaYaml || !textarea) return;
 		const y = Math.max(0, Number(textarea.scrollTop || 0));
 		psMetaYaml.style.transform = `translateY(${-y}px)`;
+	}
+
+	function updateEditorMetaPadding() {
+		if (!textarea || !psMetaYaml) return;
+		if (psMetaBasePaddingTop === null) {
+			try {
+				psMetaBasePaddingTop =
+					parseFloat(getComputedStyle(textarea).paddingTop) || 0;
+			} catch {
+				psMetaBasePaddingTop = 0;
+			}
+		}
+		const rect = psMetaYaml.getBoundingClientRect();
+		const height = Math.max(0, rect.height || 0);
+		const next = psMetaBasePaddingTop + height + 8;
+		textarea.style.paddingTop = `${Math.round(next)}px`;
+	}
+
+	function resetEditorMetaPadding() {
+		if (!textarea) return;
+		if (psMetaBasePaddingTop === null) {
+			try {
+				psMetaBasePaddingTop =
+					parseFloat(getComputedStyle(textarea).paddingTop) || 0;
+			} catch {
+				psMetaBasePaddingTop = 0;
+			}
+		}
+		textarea.style.paddingTop = `${Math.round(psMetaBasePaddingTop)}px`;
 	}
 
 	function cleanNoteTitleLine(line) {
@@ -3201,6 +3239,9 @@
 		if (codeLangWrap.classList) codeLangWrap.classList.toggle("hidden", !show);
 		if (psMetaYaml && psMetaYaml.classList) {
 			psMetaYaml.classList.toggle("hidden", show || !psMetaVisible);
+			if (show || !psMetaVisible) {
+				resetEditorMetaPadding();
+			}
 		}
 		if (show && open && open.lang) {
 			try {
