@@ -57,6 +57,10 @@
 	const mainGrid = document.getElementById("mainGrid");
 	const psPanel = document.getElementById("psPanel");
 	const togglePersonalSpaceBtn = document.getElementById("togglePersonalSpace");
+	const toggleHeaderBtn = document.getElementById("toggleHeader");
+	const headerDetailEls = document.querySelectorAll(
+		'[data-header-detail="true"]'
+	);
 	const tableMenuBtn = document.getElementById("tableMenuBtn");
 	const tableModal = document.getElementById("tableModal");
 	const tableModalBackdrop = document.querySelector(
@@ -5330,6 +5334,16 @@ self.onmessage = async (e) => {
 		else statusDot.classList.add("bg-slate-500");
 	}
 
+	function setHeaderCollapsed(collapsed) {
+		headerDetailEls.forEach((el) => {
+			el.classList.toggle("hidden", collapsed);
+		});
+		if (!toggleHeaderBtn) return;
+		toggleHeaderBtn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+		const icon = toggleHeaderBtn.querySelector("[data-role=\"headerChevron\"]");
+		if (icon) icon.classList.toggle("rotate-180", collapsed);
+	}
+
 	function wsDisplay(base) {
 		try {
 			const u = new URL(base, location.href);
@@ -5952,6 +5966,15 @@ self.onmessage = async (e) => {
 		if (!key) toast("Public room (no key).", "info");
 		connect();
 	});
+
+	if (toggleHeaderBtn) {
+		let headerCollapsed = false;
+		setHeaderCollapsed(headerCollapsed);
+		toggleHeaderBtn.addEventListener("click", () => {
+			headerCollapsed = !headerCollapsed;
+			setHeaderCollapsed(headerCollapsed);
+		});
+	}
 
 	// Initial
 	setStatus("offline", "Offline");

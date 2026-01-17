@@ -433,13 +433,33 @@
 										<path d="M14 7l-5 5 5 5" />
 									</svg>
 								</button>
+								<button
+									id="toggleHeader"
+									type="button"
+									class="ml-1 inline-flex h-8 items-center justify-center rounded-lg border border-white/10 bg-transparent px-2 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+									title="Toggle Header"
+									aria-label="Toggle Header"
+									aria-expanded="true">
+									<svg
+										data-role="headerChevron"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										class="h-4 w-4 text-slate-300 transition-transform">
+										<path d="M18 15l-6-6-6 6" />
+									</svg>
+								</button>
 							</div>
-							<div
-								id="buildStamp"
-								class="mt-1 text-sm text-slate-400"
-								title="Build info"
-								aria-label="Build info"></div>
-							<div class="mt-4 flex flex-wrap items-center gap-2">
+							<div data-header-detail="true">
+								<div
+									id="buildStamp"
+									class="mt-1 text-sm text-slate-400"
+									title="Build info"
+									aria-label="Build info"></div>
+								<div class="mt-4 flex flex-wrap items-center gap-2">
 								<div class="relative">
 									<label for="roomInput" class="sr-only">Room</label>
 									<input
@@ -460,12 +480,6 @@
 									type="button"
 									class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10">
 									New
-								</button>
-								<button
-									id="copyLink"
-									type="button"
-									class="px-1 text-sm text-slate-300 transition hover:text-slate-100">
-									Copy link
 								</button>
 								<div class="flex items-center gap-2">
 									<label for="favoritesSelect" class="sr-only">Favorites</label>
@@ -495,14 +509,24 @@
 								</div>
 							</div>
 						</div>
+						</div>
 
 						<div
 							class="shrink-0 text-left text-xs text-slate-300 sm:text-right">
-							<div>
-								Room:
-								<span id="roomLabel" class="font-medium text-slate-100"></span>
+							<div class="flex items-center justify-end gap-2">
+								<div>
+									Room:
+									<span id="roomLabel" class="font-medium text-slate-100"></span>
+								</div>
+								<button
+									id="copyLink"
+									type="button"
+									data-header-detail="true"
+									class="rounded-md border border-white/10 bg-white/10 px-2.5 py-1.5 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">
+									Copy link
+								</button>
 							</div>
-							<div class="mt-1 hidden text-slate-400" id="wsHint"></div>
+							<div class="mt-1 hidden text-slate-400" id="wsHint" data-header-detail="true"></div>
 						</div>
 					</header>
 
