@@ -817,7 +817,7 @@ const roomSockets = new Map();
 /** roomKey -> Map<clientId, presence> */
 const roomPresence = new Map();
 
-/** roomKey -> { update: string, text: string, ts: number } */
+/** roomKey -> { update?: string, text?: string, ts?: number, ciphertext?: string, iv?: string, v?: string } */
 const roomCrdtSnapshots = new Map();
 
 function getRoomSockets(roomKeyName) {
@@ -2151,23 +2151,64 @@ wss.on("connection", (ws, req) => {
 		}
 
 		if (msg.type === "doc_update") {
-			if (typeof msg.update !== "string" || !msg.update) return;
-			broadcast(
-				rk,
-				{ type: "doc_update", room, update: msg.update, clientId: msg.clientId },
-				ws
-			);
+			if (typeof msg.update === "string" && msg.update) {
+				broadcast(
+					rk,
+					{ type: "doc_update", room, update: msg.update, clientId: msg.clientId },
+					ws
+				);
+				return;
+			}
+			const hasCiphertext =
+				typeof msg.ciphertext === "string" &&
+				msg.ciphertext &&
+				typeof msg.iv === "string" &&
+				msg.iv;
+			if (hasCiphertext) {
+				broadcast(
+					rk,
+					{
+						type: "doc_update",
+						room,
+						ciphertext: msg.ciphertext,
+						iv: msg.iv,
+						v: typeof msg.v === "string" ? msg.v : "e2ee-v1",
+						clientId: msg.clientId,
+					},
+					ws
+				);
+				return;
+			}
 			return;
 		}
 
 		if (msg.type === "doc_snapshot") {
+			const ts = typeof msg.ts === "number" ? msg.ts : Date.now();
+			const hasCiphertext =
+				typeof msg.ciphertext === "string" &&
+				msg.ciphertext &&
+				typeof msg.iv === "string" &&
+				msg.iv;
+			if (hasCiphertext) {
+				roomCrdtSnapshots.set(rk, {
+					ciphertext: msg.ciphertext,
+					iv: msg.iv,
+					v: typeof msg.v === "string" ? msg.v : "e2ee-v1",
+					ts,
+				});
+				persistRoomState(rk, {
+					text: "",
+					ts,
+					ciphertext: msg.ciphertext,
+					iv: msg.iv,
+					v: typeof msg.v === "string" ? msg.v : "e2ee-v1",
+				});
+				return;
+			}
 			const update = typeof msg.update === "string" ? msg.update : "";
 			const text = typeof msg.text === "string" ? msg.text : "";
-			const ts = typeof msg.ts === "number" ? msg.ts : Date.now();
-			if (update) {
+			if (update || text) {
 				roomCrdtSnapshots.set(rk, { update, text, ts });
-			}
-			if (text || update) {
 				persistRoomState(rk, { text, ts });
 			}
 			return;
@@ -2175,29 +2216,59 @@ wss.on("connection", (ws, req) => {
 
 		if (msg.type === "doc_request") {
 			const snap = roomCrdtSnapshots.get(rk);
-			if (snap && snap.update) {
-				ws.send(
-					JSON.stringify({
-						type: "doc_snapshot",
-						room,
-						update: snap.update,
-						text: snap.text,
-						ts: snap.ts,
-					})
-				);
-				return;
+			if (snap) {
+				if (snap.ciphertext && snap.iv) {
+					ws.send(
+						JSON.stringify({
+							type: "doc_snapshot",
+							room,
+							ciphertext: snap.ciphertext,
+							iv: snap.iv,
+							v: snap.v || "e2ee-v1",
+							ts: snap.ts,
+						})
+					);
+					return;
+				}
+				if (snap.update || snap.text) {
+					ws.send(
+						JSON.stringify({
+							type: "doc_snapshot",
+							room,
+							update: snap.update || "",
+							text: snap.text || "",
+							ts: snap.ts,
+						})
+					);
+					return;
+				}
 			}
 			const cur = roomState.get(rk);
-			if (cur && typeof cur.text === "string") {
-				ws.send(
-					JSON.stringify({
-						type: "doc_snapshot",
-						room,
-						update: "",
-						text: cur.text,
-						ts: cur.ts || Date.now(),
-					})
-				);
+			if (cur) {
+				if (cur.ciphertext && cur.iv) {
+					ws.send(
+						JSON.stringify({
+							type: "doc_snapshot",
+							room,
+							ciphertext: cur.ciphertext,
+							iv: cur.iv,
+							v: cur.v || "e2ee-v1",
+							ts: cur.ts || Date.now(),
+						})
+					);
+					return;
+				}
+				if (typeof cur.text === "string") {
+					ws.send(
+						JSON.stringify({
+							type: "doc_snapshot",
+							room,
+							update: "",
+							text: cur.text,
+							ts: cur.ts || Date.now(),
+						})
+					);
+				}
 			}
 			return;
 		}

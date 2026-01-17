@@ -5938,6 +5938,7 @@ self.onmessage = async (e) => {
 	const FAVORITES_KEY = "mirror_favorites_v1";
 	const ROOM_TABS_KEY = "mirror_room_tabs_v1";
 	const MAX_ROOM_TABS = 10;
+	let pendingRoomBootstrapText = "";
 
 	function normalizeFavoriteEntry(it) {
 		const roomName = normalizeRoom(it && it.room);
@@ -6565,12 +6566,16 @@ self.onmessage = async (e) => {
 	}
 
 	let shareHref = "";
-	function updateShareLink() {
-		shareHref =
+	function buildShareHref(roomName, keyName) {
+		return (
 			location.origin +
 			location.pathname +
 			location.search +
-			buildShareHash(room, key);
+			buildShareHash(roomName, keyName)
+		);
+	}
+	function updateShareLink() {
+		shareHref = buildShareHref(room, key);
 		if (shareLink) shareLink.href = shareHref;
 	}
 
@@ -6666,7 +6671,11 @@ self.onmessage = async (e) => {
 	}
 
 	function isCrdtEnabled() {
-		return !key && isCrdtAvailable();
+		return isCrdtAvailable();
+	}
+
+	function isE2eeActive() {
+		return Boolean(key);
 	}
 
 	function nowIso() {
@@ -6691,6 +6700,65 @@ self.onmessage = async (e) => {
 	function sendMessage(message) {
 		if (!ws || ws.readyState !== WebSocket.OPEN) return;
 		ws.send(JSON.stringify(message));
+	}
+
+	function sendCrdtUpdate(updateStr) {
+		if (!updateStr) return;
+		if (!isE2eeActive()) {
+			sendMessage({ type: "doc_update", room, clientId, update: updateStr });
+			return;
+		}
+		encryptForRoom(updateStr)
+			.then((enc) => {
+				if (!enc || enc.mode !== "e2ee") return;
+				sendMessage({
+					type: "doc_update",
+					room,
+					clientId,
+					ciphertext: enc.ciphertext,
+					iv: enc.iv,
+					v: "e2ee-v1",
+				});
+			})
+			.catch(() => {
+				// ignore
+			});
+	}
+
+	function sendCrdtSnapshot(updateStr, textSnapshot, ts) {
+		const safeTs = typeof ts === "number" ? ts : Date.now();
+		if (!isE2eeActive()) {
+			sendMessage({
+				type: "doc_snapshot",
+				room,
+				clientId,
+				update: updateStr,
+				text: textSnapshot,
+				ts: safeTs,
+			});
+			return;
+		}
+		const payload = JSON.stringify({
+			update: updateStr,
+			text: textSnapshot,
+			ts: safeTs,
+		});
+		encryptForRoom(payload)
+			.then((enc) => {
+				if (!enc || enc.mode !== "e2ee") return;
+				sendMessage({
+					type: "doc_snapshot",
+					room,
+					clientId,
+					ciphertext: enc.ciphertext,
+					iv: enc.iv,
+					v: "e2ee-v1",
+					ts: safeTs,
+				});
+			})
+			.catch(() => {
+				// ignore
+			});
 	}
 
 	function updatePresenceUI() {
@@ -6914,7 +6982,7 @@ self.onmessage = async (e) => {
 		ydoc.on("update", (update) => {
 			if (crdtSuppressSend) return;
 			const encoded = base64EncodeBytes(update);
-			sendMessage({ type: "doc_update", room, clientId, update: encoded });
+			sendCrdtUpdate(encoded);
 			scheduleCrdtSnapshot();
 		});
 		updateAttributionOverlay();
@@ -6945,6 +7013,7 @@ self.onmessage = async (e) => {
 			window.Y.applyUpdate(ydoc, update);
 			crdtSuppressSend = false;
 			crdtHasSnapshot = true;
+			updateAttributionOverlay();
 		} catch {
 			// ignore
 		}
@@ -7011,14 +7080,7 @@ self.onmessage = async (e) => {
 			try {
 				const update = window.Y.encodeStateAsUpdate(ydoc);
 				const text = ytext ? ytext.toString() : "";
-				sendMessage({
-					type: "doc_snapshot",
-					room,
-					clientId,
-					update: base64EncodeBytes(update),
-					text,
-					ts: Date.now(),
-				});
+				sendCrdtSnapshot(base64EncodeBytes(update), text, Date.now());
 			} catch {
 				// ignore
 			}
@@ -7179,19 +7241,47 @@ self.onmessage = async (e) => {
 			}
 
 			if (msg.type === "doc_update") {
-				if (isCrdtEnabled()) {
+				if (!isCrdtEnabled()) return;
+				if (msg.update) {
 					applyCrdtUpdate(msg.update);
+					return;
+				}
+				if (msg.ciphertext && msg.iv) {
+					decryptForRoom(msg.ciphertext, msg.iv)
+						.then((plain) => {
+							if (typeof plain !== "string") return;
+							applyCrdtUpdate(plain);
+						})
+						.catch(() => {
+							// ignore
+						});
 				}
 				return;
 			}
 
 			if (msg.type === "doc_snapshot") {
 				if (!isCrdtEnabled()) return;
-				if (msg.update) {
-					applyCrdtUpdate(msg.update);
-				}
-				if (!msg.update && typeof msg.text === "string") {
-					setCrdtText(msg.text);
+				if (msg.ciphertext && msg.iv) {
+					decryptForRoom(msg.ciphertext, msg.iv)
+						.then((plain) => {
+							if (typeof plain !== "string") return;
+							const payload = safeJsonParse(plain);
+							if (!payload || typeof payload !== "object") return;
+							if (payload.update) applyCrdtUpdate(payload.update);
+							if (!payload.update && typeof payload.text === "string") {
+								setCrdtText(payload.text);
+							}
+						})
+						.catch(() => {
+							// ignore
+						});
+				} else {
+					if (msg.update) {
+						applyCrdtUpdate(msg.update);
+					}
+					if (!msg.update && typeof msg.text === "string") {
+						setCrdtText(msg.text);
+					}
 				}
 				crdtHasSnapshot = true;
 				return;
@@ -7199,6 +7289,18 @@ self.onmessage = async (e) => {
 
 			if (msg.type === "set") {
 				if (isCrdtEnabled()) {
+					if (msg.ciphertext && msg.iv) {
+						decryptForRoom(msg.ciphertext, msg.iv)
+							.then((plain) => {
+								if (!crdtHasSnapshot && typeof plain === "string") {
+									setCrdtText(plain);
+								}
+							})
+							.catch(() => {
+								// ignore
+							});
+						return;
+					}
 					if (!crdtHasSnapshot && typeof msg.text === "string") {
 						setCrdtText(msg.text);
 					}
@@ -7389,7 +7491,25 @@ self.onmessage = async (e) => {
 	}
 
 	copyLinkBtn.addEventListener("click", async () => {
-		const href = shareHref || location.href;
+		let usePublic = false;
+		if (isModalReady()) {
+			const choice = await openModal({
+				title: "Link teilen",
+				message:
+					"Soll der Raum öffentlich (ohne Key) oder privat (mit Key) geteilt werden?",
+				okText: "Öffentlich",
+				cancelText: "Privat",
+			});
+			usePublic = Boolean(choice && choice.ok);
+		}
+		if (!usePublic && !key) {
+			pendingRoomBootstrapText = String(textarea.value || "");
+			key = randomKey();
+			location.hash = buildShareHash(room, key);
+			return;
+		}
+		const shareKey = usePublic ? "" : key;
+		const href = buildShareHref(room, shareKey) || location.href;
 		try {
 			await navigator.clipboard.writeText(href);
 			toast("Link copied.", "success");
@@ -7774,7 +7894,11 @@ self.onmessage = async (e) => {
 			const cached = loadRoomTabs().find(
 				(t) => t.room === room && t.key === key
 			);
-			const nextText = cached && typeof cached.text === "string" ? cached.text : "";
+			const nextText =
+				cached && typeof cached.text === "string"
+					? cached.text
+					: pendingRoomBootstrapText || "";
+			pendingRoomBootstrapText = "";
 			textarea.value = nextText;
 			lastLocalText = textarea.value;
 			metaLeft.textContent = "Room geladen (lokal).";
