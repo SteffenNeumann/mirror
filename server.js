@@ -554,10 +554,11 @@ function cleanupUploads() {
 function sanitizeFilename(raw) {
 	const base = String(raw || "upload").trim() || "upload";
 	const cleaned = base
-		.replace(/[^a-zA-Z0-9._-]/g, "-")
-		.replace(/-+/g, "-")
+		.replace(/[<>:"/\\|?*\x00-\x1F]/g, "-")
+		.replace(/\s+/g, " ")
+		.trim()
 		.replace(/^[-_.]+/, "");
-	const truncated = cleaned.slice(0, 80);
+	const truncated = cleaned.slice(0, 120);
 	return truncated || "upload";
 }
 
@@ -1050,7 +1051,7 @@ const server = http.createServer((req, res) => {
 				writeFileSync(join(UPLOADS_DIR, fileName), buf);
 				json(res, 200, {
 					ok: true,
-					url: `/uploads/${fileName}`,
+					url: `/uploads/${encodeURIComponent(fileName)}`,
 					name: finalName,
 					mime,
 					size: buf.length,
@@ -1068,8 +1069,24 @@ const server = http.createServer((req, res) => {
 
 	if (url.pathname.startsWith("/uploads/")) {
 		const rel = url.pathname.replace(/^\/uploads\//, "");
-		const safeName = rel.replace(/[^a-zA-Z0-9._-]/g, "-");
-		if (!safeName || safeName !== rel) {
+		let decoded;
+		try {
+			decoded = decodeURIComponent(rel);
+		} catch {
+			decoded = "";
+		}
+		if (!decoded) {
+			res.writeHead(400, { "Content-Type": "text/plain; charset=utf-8" });
+			res.end("Invalid filename");
+			return;
+		}
+		if (decoded.includes("/") || decoded.includes("\\") || decoded.includes("..")) {
+			res.writeHead(400, { "Content-Type": "text/plain; charset=utf-8" });
+			res.end("Invalid filename");
+			return;
+		}
+		const safeName = sanitizeFilename(decoded);
+		if (!safeName || safeName !== decoded) {
 			res.writeHead(400, { "Content-Type": "text/plain; charset=utf-8" });
 			res.end("Invalid filename");
 			return;
