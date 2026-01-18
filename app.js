@@ -854,7 +854,7 @@
 		await openModal({
 			title: "Slash commands",
 			message:
-				"/h1 /h2 /h3 · /b (bold) · /i (italic) · /s (strike) · /quote · /ul · /ol · /todo · /done · /tasks · /code [lang] · /link · /hr · /table · /table row+ · /table row- · /table col+ · /table col-",
+				"/h1 /h2 /h3 · /b (bold) · /i (italic) · /s (strike) · /quote · /ul · /ol · /todo · /done · /tasks · /code [lang] · /link · /hr · /divider · /table · /table row+ · /table row- · /table col+ · /table col-",
 			okText: "OK",
 			cancelText: "Close",
 			backdropClose: true,
@@ -882,6 +882,7 @@
 		{ cmd: "table", label: "Table: col +", snippet: "/table col+" },
 		{ cmd: "table", label: "Table: col -", snippet: "/table col-" },
 		{ cmd: "hr", label: "Horizontal rule", snippet: "/hr" },
+		{ cmd: "divider", label: "Divider", snippet: "/divider" },
 		{ cmd: "link", label: "Link", snippet: "/link" },
 		{ cmd: "code", label: "Code block", snippet: "/code" },
 		{ cmd: "code", label: "Code block (js)", snippet: "/code javascript" },
@@ -2252,7 +2253,7 @@
 			el.selectionEnd = cursor;
 			return true;
 		}
-		if (cmd === "hr") {
+		if (cmd === "hr" || cmd === "divider") {
 			insertLine("---");
 			return true;
 		}
