@@ -5989,7 +5989,7 @@ self.onmessage = async (e) => {
 		for (const entry of list) {
 			const normalized = normalizeFavoriteEntry(entry);
 			if (!normalized) continue;
-			const keyId = normalized.room;
+			const keyId = `${normalized.room}:${normalized.key}`;
 			if (!index.has(keyId)) {
 				index.set(keyId, out.length);
 				out.push(normalized);
@@ -6023,7 +6023,7 @@ self.onmessage = async (e) => {
 			const roomName = normalizeRoom(entry && entry.room);
 			const keyName = normalizeKey(entry && entry.key);
 			if (!roomName) continue;
-			const keyId = roomName;
+			const keyId = `${roomName}:${keyName}`;
 			const normalized = normalizeRoomTabEntry({
 				...entry,
 				room: roomName,
@@ -6183,18 +6183,6 @@ self.onmessage = async (e) => {
 			if (res && res.roomTab) {
 				upsertRoomTabInState(res.roomTab);
 			}
-			const fav = await api("/api/favorites", {
-				method: "POST",
-				body: JSON.stringify({
-					room: roomName,
-					key: keyName,
-					text: textSnapshot,
-				}),
-			});
-			if (fav && fav.favorite) {
-				upsertFavoriteInState(fav.favorite);
-			}
-			updateFavoritesUI();
 			renderRoomTabs();
 		} catch {
 			// ignore
