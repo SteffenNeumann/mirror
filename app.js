@@ -8059,6 +8059,26 @@ self.onmessage = async (e) => {
 		connect();
 	});
 
+	function refreshSyncOnFocus() {
+		if (!ws || ws.readyState !== WebSocket.OPEN) {
+			connect();
+			return;
+		}
+		if (isCrdtEnabled()) {
+			sendMessage({ type: "doc_request", room, clientId, ts: Date.now() });
+			return;
+		}
+		sendMessage({ type: "request_state", room, clientId, ts: Date.now() });
+	}
+
+	window.addEventListener("visibilitychange", () => {
+		if (document.visibilityState !== "visible") return;
+		refreshSyncOnFocus();
+	});
+	window.addEventListener("focus", () => {
+		refreshSyncOnFocus();
+	});
+
 	if (toggleHeaderBtn) {
 		let headerCollapsed = false;
 		setHeaderCollapsed(headerCollapsed);
