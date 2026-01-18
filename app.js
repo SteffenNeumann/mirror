@@ -3121,8 +3121,11 @@
 			resetEditorMetaPadding();
 			return;
 		}
-		updateEditorMetaPadding();
-		updateEditorMetaScroll();
+		requestAnimationFrame(() => {
+			if (!psMetaYaml || psMetaYaml.classList.contains("hidden")) return;
+			updateEditorMetaPadding();
+			updateEditorMetaScroll();
+		});
 	}
 
 	function updateEditorMetaScroll() {
@@ -3142,7 +3145,12 @@
 			}
 		}
 		const rect = psMetaYaml.getBoundingClientRect();
-		const height = Math.max(0, rect.height || 0);
+		const height = Math.max(
+			0,
+			rect.height || 0,
+			psMetaYaml.offsetHeight || 0,
+			psMetaYaml.scrollHeight || 0
+		);
 		const next = psMetaBasePaddingTop + height + 4;
 		textarea.style.paddingTop = `${Math.round(next)}px`;
 	}
