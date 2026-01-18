@@ -6699,6 +6699,7 @@ self.onmessage = async (e) => {
 	let crdtSnapshotTimer;
 	let yjsLoadingPromise;
 	let crdtReady = false;
+	let pendingCrdtBootstrap = null;
 
 	function isCrdtAvailable() {
 		return typeof window.Y !== "undefined";
@@ -6980,6 +6981,19 @@ self.onmessage = async (e) => {
 		}
 	}
 
+	function applyPendingCrdtBootstrap() {
+		if (!pendingCrdtBootstrap || !crdtReady) return;
+		const payload = pendingCrdtBootstrap;
+		pendingCrdtBootstrap = null;
+		if (payload.update) {
+			applyCrdtUpdate(payload.update);
+			return;
+		}
+		if (typeof payload.text === "string") {
+			setCrdtText(payload.text);
+		}
+	}
+
 	function setTyping(active) {
 		const next = Boolean(active);
 		if (next === isTyping) return;
@@ -7053,6 +7067,7 @@ self.onmessage = async (e) => {
 			crdtStatus.classList.remove("hidden");
 		}
 		crdtReady = true;
+		applyPendingCrdtBootstrap();
 		return true;
 	}
 
@@ -7408,6 +7423,31 @@ self.onmessage = async (e) => {
 						setCrdtText(msg.text);
 					}
 					return;
+				}
+				if (isCrdtAvailable()) {
+					if (msg.ciphertext && msg.iv) {
+						decryptForRoom(msg.ciphertext, msg.iv)
+							.then((plain) => {
+								if (typeof plain !== "string") return;
+								const payload = safeJsonParse(plain);
+								if (payload && typeof payload === "object") {
+									pendingCrdtBootstrap = payload;
+									return;
+								}
+								applyRemoteText(plain, msg.ts);
+							})
+							.catch(() => {
+								// ignore
+							});
+						return;
+					}
+					if (typeof msg.text === "string") {
+						const payload = safeJsonParse(msg.text);
+						if (payload && typeof payload === "object") {
+							pendingCrdtBootstrap = payload;
+							return;
+						}
+					}
 				}
 				if (msg.ciphertext && msg.iv) {
 					decryptForRoom(msg.ciphertext, msg.iv)
