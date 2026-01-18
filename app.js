@@ -7072,13 +7072,13 @@ self.onmessage = async (e) => {
 
 		metaLeft.textContent = label || "Synced.";
 		metaRight.textContent = nowIso();
-		updateRoomTabTextLocal(room, key, text);
+		updateRoomTabTextLocal(room, key, cleaned);
 		updatePreview();
 		updatePasswordMaskOverlay();
 		scheduleRoomTabSync({
 			room,
 			key,
-			text: String(text ?? ""),
+			text: String(cleaned ?? ""),
 			lastUsed:
 				typeof lastUsedTs === "number" ? lastUsedTs : Date.now(),
 		});
