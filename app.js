@@ -6683,36 +6683,13 @@ self.onmessage = async (e) => {
 	function ensureYjsLoaded() {
 		if (isCrdtAvailable()) return Promise.resolve(true);
 		if (yjsLoadingPromise) return yjsLoadingPromise;
-		const sources = [
-			"https://unpkg.com/yjs@13.6.14/dist/yjs.mjs",
-			"https://cdn.jsdelivr.net/npm/yjs@13.6.14/dist/yjs.mjs",
-		];
 		yjsLoadingPromise = new Promise((resolve) => {
-			const localUrl = `/node_modules/yjs/dist/yjs.mjs?v=${Date.now()}`;
-			import(localUrl)
-				.then((mod) => {
-					window.Y = mod;
-					resolve(true);
-				})
-				.catch(() => {
-					let idx = 0;
-					const loadNext = () => {
-						if (idx >= sources.length) {
-							resolve(false);
-							return;
-						}
-						import(`${sources[idx]}?v=${Date.now()}`)
-							.then((mod) => {
-								window.Y = mod;
-								resolve(true);
-							})
-							.catch(() => {
-								idx += 1;
-								loadNext();
-							});
-					};
-					loadNext();
-				});
+			const script = document.createElement("script");
+			script.src = `/vendor/yjs.bundle.js?v=${Date.now()}`;
+			script.async = true;
+			script.onload = () => resolve(true);
+			script.onerror = () => resolve(false);
+			document.head.appendChild(script);
 		});
 		return yjsLoadingPromise;
 	}
