@@ -1,5 +1,12 @@
 import http from "node:http";
-import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import {
+	mkdirSync,
+	readFileSync,
+	readdirSync,
+	statSync,
+	unlinkSync,
+	writeFileSync,
+} from "node:fs";
 import { dirname, extname, join } from "node:path";
 import crypto from "node:crypto";
 import { WebSocketServer } from "ws";
@@ -18,8 +25,18 @@ const SESSION_COOKIE = "mirror_ps";
 const MAGIC_LINK_TTL_MS = 1000 * 60 * 30; // 30 min
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 const MAX_BODY_BYTES = 1024 * 1024; // 1MB
-const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // 8MB
+const UPLOAD_MAX_MB = Math.max(
+	1,
+	Math.min(50, Number(process.env.MIRROR_UPLOAD_MAX_MB || 8))
+);
+const MAX_UPLOAD_BYTES = Math.floor(UPLOAD_MAX_MB * 1024 * 1024);
 const MAX_UPLOAD_BODY_BYTES = Math.ceil(MAX_UPLOAD_BYTES * 1.4);
+const UPLOAD_REQUIRE_AUTH =
+	String(process.env.MIRROR_UPLOAD_REQUIRE_AUTH || "").toLowerCase() === "true";
+const UPLOAD_RETENTION_HOURS = Math.max(
+	0,
+	Number(process.env.MIRROR_UPLOAD_RETENTION_HOURS || 0)
+);
 
 const ANTHROPIC_API_KEY = String(process.env.ANTHROPIC_API_KEY || "").trim();
 const ANTHROPIC_MODEL = String(
@@ -503,6 +520,35 @@ function ensureUploadsDir() {
 	}
 }
 
+function cleanupUploads() {
+	if (!UPLOAD_RETENTION_HOURS) return;
+	ensureUploadsDir();
+	const cutoff = Date.now() - UPLOAD_RETENTION_HOURS * 60 * 60 * 1000;
+	let entries = [];
+	try {
+		entries = readdirSync(UPLOADS_DIR);
+	} catch {
+		entries = [];
+	}
+	for (const name of entries) {
+		const filePath = join(UPLOADS_DIR, name);
+		let stat;
+		try {
+			stat = statSync(filePath);
+		} catch {
+			stat = null;
+		}
+		if (!stat || !stat.isFile()) continue;
+		const mtime = Number(stat.mtimeMs || 0);
+		if (!mtime || mtime > cutoff) continue;
+		try {
+			unlinkSync(filePath);
+		} catch {
+			// ignore
+		}
+	}
+}
+
 function sanitizeFilename(raw) {
 	const base = String(raw || "upload").trim() || "upload";
 	const cleaned = base
@@ -957,6 +1003,13 @@ const server = http.createServer((req, res) => {
 	}
 
 	if (url.pathname === "/api/uploads" && req.method === "POST") {
+		if (UPLOAD_REQUIRE_AUTH) {
+			const email = getAuthedEmail(req);
+			if (!email) {
+				json(res, 401, { ok: false, error: "unauthorized" });
+				return;
+			}
+		}
 		readJsonWithLimit(req, MAX_UPLOAD_BODY_BYTES)
 			.then((body) => {
 				if (!body || typeof body !== "object") {
@@ -2199,6 +2252,14 @@ const server = http.createServer((req, res) => {
 		res.end("Not found");
 	}
 });
+
+if (UPLOAD_RETENTION_HOURS) {
+	cleanupUploads();
+	setInterval(
+		() => cleanupUploads(),
+		Math.max(1, UPLOAD_RETENTION_HOURS) * 60 * 60 * 1000
+	);
+}
 
 const wss = new WebSocketServer({ server, path: "/ws" });
 

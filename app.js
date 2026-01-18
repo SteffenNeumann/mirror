@@ -56,6 +56,7 @@
 	const uploadFileName = document.getElementById("uploadFileName");
 	const uploadFileMeta = document.getElementById("uploadFileMeta");
 	const uploadLinkPreview = document.getElementById("uploadLinkPreview");
+	const uploadOpenLink = document.getElementById("uploadOpenLink");
 	const uploadCancel = document.getElementById("uploadCancel");
 	const uploadInsert = document.getElementById("uploadInsert");
 	const editorPreviewGrid = document.getElementById("editorPreviewGrid");
@@ -790,6 +791,7 @@
 	const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
 	let uploadSelectedFile = null;
 	let uploadBusy = false;
+	let uploadLastUrl = "";
 
 	function isUploadModalReady() {
 		return (
@@ -799,6 +801,7 @@
 			uploadFileName &&
 			uploadFileMeta &&
 			uploadLinkPreview &&
+			uploadOpenLink &&
 			uploadCancel &&
 			uploadInsert
 		);
@@ -839,12 +842,32 @@
 		return mime.startsWith("image/") || mime === "application/pdf";
 	}
 
+	function setUploadOpenLinkDisabled(disabled) {
+		if (!uploadOpenLink) return;
+		uploadOpenLink.disabled = Boolean(disabled);
+		uploadOpenLink.classList.toggle("opacity-60", Boolean(disabled));
+		uploadOpenLink.classList.toggle("pointer-events-none", Boolean(disabled));
+	}
+
+	function setUploadLinkPreview(url, file) {
+		const safeUrl = String(url || "").trim();
+		uploadLastUrl = safeUrl;
+		if (!uploadLinkPreview) return;
+		if (!safeUrl) {
+			uploadLinkPreview.textContent = "—";
+			setUploadOpenLinkDisabled(true);
+			return;
+		}
+		uploadLinkPreview.textContent = buildUploadMarkdown(safeUrl, file);
+		setUploadOpenLinkDisabled(false);
+	}
+
 	function updateUploadPreview(file) {
 		if (!uploadFileName || !uploadFileMeta || !uploadLinkPreview) return;
 		if (!file) {
 			uploadFileName.textContent = "Keine Datei ausgewählt.";
 			uploadFileMeta.textContent = "";
-			uploadLinkPreview.textContent = "—";
+			setUploadLinkPreview("", null);
 			return;
 		}
 		const name = String(file.name || "Datei").trim() || "Datei";
@@ -854,7 +877,7 @@
 		].filter(Boolean);
 		uploadFileName.textContent = name;
 		uploadFileMeta.textContent = meta.join(" · ");
-		uploadLinkPreview.textContent = buildUploadMarkdown("/uploads/...", file);
+		setUploadLinkPreview("/uploads/...", file);
 	}
 
 	function setUploadInsertDisabled(disabled, label) {
@@ -868,9 +891,11 @@
 	function resetUploadModalState() {
 		uploadSelectedFile = null;
 		uploadBusy = false;
+		uploadLastUrl = "";
 		if (uploadFileInput) uploadFileInput.value = "";
 		updateUploadPreview(null);
 		setUploadInsertDisabled(true);
+		setUploadOpenLinkDisabled(true);
 	}
 
 	function openUploadModal() {
@@ -8430,6 +8455,20 @@ self.onmessage = async (e) => {
 	if (uploadPickBtn && uploadFileInput) {
 		uploadPickBtn.addEventListener("click", () => uploadFileInput.click());
 	}
+	if (uploadOpenLink) {
+		uploadOpenLink.addEventListener("click", () => {
+			const url = String(uploadLastUrl || "").trim();
+			if (!url) {
+				toast("Kein Link verfügbar.", "error");
+				return;
+			}
+			try {
+				window.open(url, "_blank", "noopener,noreferrer");
+			} catch {
+				toast("Link konnte nicht geöffnet werden.", "error");
+			}
+		});
+	}
 	if (uploadFileInput) {
 		uploadFileInput.addEventListener("change", () => {
 			const file = uploadFileInput.files
@@ -8494,6 +8533,7 @@ self.onmessage = async (e) => {
 				const url = String(res && res.url ? res.url : "");
 				if (!url) throw new Error("invalid_response");
 				const markdown = buildUploadMarkdown(url, uploadSelectedFile);
+				setUploadLinkPreview(url, uploadSelectedFile);
 				if (textarea) {
 					insertTextAtCursor(textarea, markdown);
 					updatePreview();
