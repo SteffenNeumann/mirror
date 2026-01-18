@@ -832,7 +832,9 @@
 		const name = nameRaw.replace(/\s+/g, " ").trim() || "file";
 		const safeUrl = String(url || "").trim();
 		if (!safeUrl) return name;
-		return `[📎 ${name}](${safeUrl})`;
+		const mime = file ? String(file.type || "") : "";
+		if (mime.startsWith("image/")) return `![${name}](${safeUrl})`;
+		return `[${name}](${safeUrl})`;
 	}
 
 	function isAllowedUploadType(file) {
