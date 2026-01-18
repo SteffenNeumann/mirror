@@ -6667,13 +6667,14 @@ self.onmessage = async (e) => {
 	let crdtHasSnapshot = false;
 	let crdtSnapshotTimer;
 	let yjsLoadingPromise;
+	let crdtReady = false;
 
 	function isCrdtAvailable() {
 		return typeof window.Y !== "undefined";
 	}
 
 	function isCrdtEnabled() {
-		return isCrdtAvailable();
+		return crdtReady;
 	}
 
 	function isE2eeActive() {
@@ -6914,7 +6915,7 @@ self.onmessage = async (e) => {
 
 	function updateAttributionOverlay() {
 		if (!attributionOverlay || !attributionOverlayContent) return;
-		if (!isCrdtEnabled() || !ytext) {
+		if (!crdtReady || !ytext || presenceState.size <= 1) {
 			attributionOverlay.classList.add("hidden");
 			attributionOverlayContent.textContent = "";
 			if (textarea && textarea.classList) {
@@ -6995,7 +6996,7 @@ self.onmessage = async (e) => {
 	}
 
 	function initCrdt() {
-		if (!isCrdtEnabled() || !textarea) return false;
+		if (!isCrdtAvailable() || !textarea) return false;
 		if (!window.Y) return false;
 		const { Doc } = window.Y;
 		ydoc = new Doc();
@@ -7020,6 +7021,7 @@ self.onmessage = async (e) => {
 			crdtStatus.textContent = "CRDT aktiv";
 			crdtStatus.classList.remove("hidden");
 		}
+		crdtReady = true;
 		return true;
 	}
 
@@ -7041,6 +7043,7 @@ self.onmessage = async (e) => {
 			crdtStatus.textContent = "";
 			crdtStatus.classList.add("hidden");
 		}
+		crdtReady = false;
 	}
 
 	function applyCrdtUpdate(encoded) {
@@ -7051,6 +7054,7 @@ self.onmessage = async (e) => {
 			window.Y.applyUpdate(ydoc, update);
 			crdtSuppressSend = false;
 			crdtHasSnapshot = true;
+			crdtReady = true;
 			updateAttributionOverlay();
 		} catch {
 			// ignore
@@ -7072,13 +7076,14 @@ self.onmessage = async (e) => {
 		}
 		crdtLastText = ytext.toString();
 		crdtHasSnapshot = true;
+		crdtReady = true;
 		applySyncedText(crdtLastText, "Synced (CRDT)." );
 		updateAttributionOverlay();
 		scheduleCrdtSnapshot();
 	}
 
 	function updateCrdtFromTextarea() {
-		if (!ytext) return;
+		if (!ytext || !crdtReady) return;
 		const next = String(textarea.value || "");
 		if (next === crdtLastText) return;
 		const prev = crdtLastText;
@@ -7244,7 +7249,21 @@ self.onmessage = async (e) => {
 					});
 					return;
 				}
-				initCrdt();
+				const started = initCrdt();
+				if (!started) {
+					metaLeft.textContent = "CRDT nicht verfügbar.";
+					if (crdtStatus) {
+						crdtStatus.textContent = "CRDT nicht verfügbar";
+						crdtStatus.classList.remove("hidden");
+					}
+					sendMessage({
+						type: "request_state",
+						room,
+						clientId,
+						ts: Date.now(),
+					});
+					return;
+				}
 				sendMessage({
 					type: "doc_request",
 					room,
