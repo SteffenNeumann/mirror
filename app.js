@@ -6748,6 +6748,28 @@ self.onmessage = async (e) => {
 		}
 	}
 
+	function sanitizeLegacySnapshotText(rawText) {
+		const text = String(rawText ?? "");
+		const trimmed = text.trim();
+		if (!trimmed) return text;
+		const direct = safeJsonParse(trimmed);
+		if (direct && typeof direct === "object" && typeof direct.text === "string") {
+			return direct.text;
+		}
+		const idx = text.lastIndexOf('{"update"');
+		if (idx <= 0) return text;
+		const suffix = text.slice(idx).trim();
+		const payload = safeJsonParse(suffix);
+		if (!payload || typeof payload !== "object" || typeof payload.text !== "string") {
+			return text;
+		}
+		if (text.startsWith(payload.text)) {
+			const rest = text.slice(payload.text.length).trim();
+			if (rest.startsWith('{"update"')) return payload.text;
+		}
+		return text;
+	}
+
 	function sendMessage(message) {
 		if (!ws || ws.readyState !== WebSocket.OPEN) return;
 		ws.send(JSON.stringify(message));
@@ -7024,7 +7046,8 @@ self.onmessage = async (e) => {
 
 	function applySyncedText(text, label, lastUsedTs) {
 		suppressSend = true;
-		textarea.value = String(text ?? "");
+		const cleaned = sanitizeLegacySnapshotText(text);
+		textarea.value = String(cleaned ?? "");
 		lastLocalText = textarea.value;
 		suppressSend = false;
 
@@ -7111,13 +7134,14 @@ self.onmessage = async (e) => {
 
 	function setCrdtText(nextText) {
 		if (!ydoc || !ytext) return;
+		const cleanedText = sanitizeLegacySnapshotText(nextText);
 		const current = ytext.toString();
-		if (current === nextText) return;
+		if (current === cleanedText) return;
 		crdtSuppressSend = true;
 		try {
 			ydoc.transact(() => {
 				ytext.delete(0, ytext.length);
-				ytext.insert(0, String(nextText ?? ""));
+				ytext.insert(0, String(cleanedText ?? ""));
 			});
 		} finally {
 			crdtSuppressSend = false;
