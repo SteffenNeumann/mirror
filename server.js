@@ -1067,6 +1067,76 @@ const server = http.createServer((req, res) => {
 		return;
 	}
 
+	if (url.pathname === "/api/uploads/list" && req.method === "GET") {
+		if (UPLOAD_REQUIRE_AUTH) {
+			const email = getAuthedEmail(req);
+			if (!email) {
+				json(res, 401, { ok: false, error: "unauthorized" });
+				return;
+			}
+		}
+		ensureUploadsDir();
+		let entries = [];
+		try {
+			entries = readdirSync(UPLOADS_DIR);
+		} catch {
+			entries = [];
+		}
+		const items = [];
+		for (const name of entries) {
+			if (!name) continue;
+			const filePath = join(UPLOADS_DIR, name);
+			let stat;
+			try {
+				stat = statSync(filePath);
+			} catch {
+				stat = null;
+			}
+			if (!stat || !stat.isFile()) continue;
+			items.push({
+				name,
+				size: Number(stat.size || 0),
+				updatedAt: Number(stat.mtimeMs || 0),
+				url: `/uploads/${encodeURIComponent(name)}`,
+			});
+		}
+		items.sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+		json(res, 200, { ok: true, items: items.slice(0, 200) });
+		return;
+	}
+
+	if (url.pathname === "/api/uploads/delete" && req.method === "POST") {
+		if (UPLOAD_REQUIRE_AUTH) {
+			const email = getAuthedEmail(req);
+			if (!email) {
+				json(res, 401, { ok: false, error: "unauthorized" });
+				return;
+			}
+		}
+		readJson(req)
+			.then((body) => {
+				const name = String(body && body.name ? body.name : "").trim();
+				if (!name || name.includes("/") || name.includes("\\") || name.includes("..")) {
+					json(res, 400, { ok: false, error: "invalid_name" });
+					return;
+				}
+				try {
+					unlinkSync(join(UPLOADS_DIR, name));
+					json(res, 200, { ok: true });
+				} catch {
+					json(res, 404, { ok: false, error: "not_found" });
+				}
+			})
+			.catch((e) => {
+				if (String(e && e.message) === "body_too_large") {
+					json(res, 413, { ok: false, error: "body_too_large" });
+					return;
+				}
+				json(res, 400, { ok: false, error: "invalid_json" });
+			});
+		return;
+	}
+
 	if (url.pathname.startsWith("/uploads/")) {
 		const rel = url.pathname.replace(/^\/uploads\//, "");
 		let decoded;

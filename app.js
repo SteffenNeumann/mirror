@@ -174,6 +174,9 @@
 	const faqList = document.getElementById("faqList");
 	const favoritesManageList = document.getElementById("favoritesManageList");
 	const favoritesManageEmpty = document.getElementById("favoritesManageEmpty");
+	const uploadsRefreshBtn = document.getElementById("uploadsRefresh");
+	const uploadsManageList = document.getElementById("uploadsManageList");
+	const uploadsManageEmpty = document.getElementById("uploadsManageEmpty");
 	const psUserAuthed = document.getElementById("psUserAuthed");
 	const psUserUnauthed = document.getElementById("psUserUnauthed");
 	const bgBlobTop = document.getElementById("bgBlobTop");
@@ -2993,6 +2996,9 @@
 			btn.classList.toggle("text-slate-100", active);
 			btn.classList.toggle("text-slate-200", !active);
 		});
+		if (target === "uploads") {
+			loadUploadsManage();
+		}
 	}
 
 	async function loadAiStatus() {
@@ -4699,8 +4705,8 @@
 		const highlightCssUrl = isMonoLight
 			? "https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css"
 			: "https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css";
-		const pdfJsUrl =
-			"https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.js";
+		const pdfJsUrl = "/vendor/pdfjs/pdf.mjs";
+		const pdfWorkerUrl = "/vendor/pdfjs/pdf.worker.mjs";
 		const previewBase =
 			typeof location !== "undefined" && location.origin
 				? location.origin
@@ -4729,7 +4735,15 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 	${previewBase ? `<base href="${previewBase}">` : ""}
-	<script src="${pdfJsUrl}"></script>
+	<script type="module">
+		import * as pdfjsLib from "${pdfJsUrl}";
+		window.pdfjsLib = pdfjsLib;
+		try {
+			window.pdfjsLib.GlobalWorkerOptions.workerSrc = "${pdfWorkerUrl}";
+		} catch (e) {
+			// ignore
+		}
+	</script>
   <link rel="stylesheet" href="${highlightCssUrl}">
 	<!--ts:${stamp}-->
   <style>
@@ -4925,14 +4939,7 @@
 						if (!canvas || !window.pdfjsLib) return;
 						var src = canvas.getAttribute('data-pdf-src');
 						if (!src) return;
-						try {
-							if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
-								window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-									"https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.js";
-							}
-						} catch (e) {
-							// ignore
-						}
+						// workerSrc set during module load
 						window.pdfjsLib.getDocument(src).promise.then(function(pdf){
 							return pdf.getPage(1).then(function(page){
 								var viewport = page.getViewport({ scale: 1.2 });
@@ -4974,12 +4981,7 @@
 							});
 							return;
 						}
-						try {
-							window.pdfjsLib.GlobalWorkerOptions.workerSrc =
-								"https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.js";
-						} catch {
-							// ignore
-						}
+						// workerSrc set during module load
 						try {
 							window.pdfjsLib.disableWorker = true;
 						} catch {
@@ -7134,6 +7136,98 @@ self.onmessage = async (e) => {
 					</div>`;
 			})
 			.join("");
+	}
+
+	function formatUploadUpdatedAt(ts) {
+		const next = Number(ts || 0);
+		if (!Number.isFinite(next) || next <= 0) return "";
+		const date = new Date(next);
+		if (Number.isNaN(date.getTime())) return "";
+		return date.toLocaleString();
+	}
+
+	function renderUploadsManageList(items) {
+		if (!uploadsManageList) return;
+		const list = Array.isArray(items) ? items : [];
+		if (uploadsManageEmpty && uploadsManageEmpty.classList) {
+			uploadsManageEmpty.textContent = "Keine Uploads vorhanden.";
+			uploadsManageEmpty.classList.toggle("hidden", list.length > 0);
+		}
+		if (!list.length) {
+			uploadsManageList.innerHTML = "";
+			return;
+		}
+		uploadsManageList.innerHTML = list
+			.map((item) => {
+				const name = String(item && item.name ? item.name : "").trim();
+				const url = String(item && item.url ? item.url : "").trim();
+				const size = formatBytes(item && item.size ? item.size : 0);
+				const updated = formatUploadUpdatedAt(item && item.updatedAt);
+				const metaParts = [size, updated].filter(Boolean).join(" · ");
+				return `
+					<div class="rounded-lg border border-white/10 bg-slate-950/30 p-2">
+						<div class="flex items-center justify-between gap-2">
+							<div class="min-w-0">
+								<div class="flex flex-wrap items-center gap-2 text-xs text-slate-200">
+									<a
+										href="${escapeAttr(url)}"
+										target="_blank"
+										rel="noreferrer"
+										class="font-medium text-fuchsia-200 hover:text-fuchsia-100">
+										${escapeHtml(name)}
+									</a>
+									<span class="text-[11px] text-slate-400">${escapeHtml(
+										metaParts
+									)}</span>
+								</div>
+							</div>
+							<button
+								type="button"
+								data-upload-delete
+								data-upload-name="${escapeAttr(name)}"
+								class="rounded-md border border-white/10 bg-transparent px-2 py-1 text-[11px] text-slate-200 transition hover:bg-white/5 active:bg-white/10">
+								Löschen
+							</button>
+						</div>
+					</div>`;
+			})
+			.join("");
+	}
+
+	async function loadUploadsManage() {
+		if (!uploadsManageList) return;
+		uploadsManageList.innerHTML = "";
+		if (uploadsManageEmpty && uploadsManageEmpty.classList) {
+			uploadsManageEmpty.textContent = "Lade Uploads…";
+			uploadsManageEmpty.classList.remove("hidden");
+		}
+		try {
+			const res = await api("/api/uploads/list");
+			const items = Array.isArray(res && res.items) ? res.items : [];
+			renderUploadsManageList(items);
+		} catch {
+			if (uploadsManageEmpty && uploadsManageEmpty.classList) {
+				uploadsManageEmpty.textContent =
+					"Uploads konnten nicht geladen werden.";
+				uploadsManageEmpty.classList.remove("hidden");
+			}
+		}
+	}
+
+	async function deleteUpload(name) {
+		const safeName = String(name || "").trim();
+		if (!safeName) return;
+		if (!window.confirm(`Upload löschen?\n${safeName}`)) return;
+		try {
+			await api("/api/uploads/delete", {
+				method: "DELETE",
+				body: JSON.stringify({ name: safeName }),
+			});
+			toast("Upload gelöscht.", "success");
+			loadUploadsManage();
+		} catch {
+			toast("Upload konnte nicht gelöscht werden.", "error");
+		}
 	}
 
 	function updateFavoriteText(roomName, keyName, nextText) {
@@ -9405,6 +9499,21 @@ self.onmessage = async (e) => {
 			const roomName = input.getAttribute("data-fav-room") || "";
 			const keyName = input.getAttribute("data-fav-key") || "";
 			updateFavoriteText(roomName, keyName, input.value);
+		});
+	}
+	if (uploadsRefreshBtn) {
+		uploadsRefreshBtn.addEventListener("click", () => {
+			loadUploadsManage();
+		});
+	}
+	if (uploadsManageList) {
+		uploadsManageList.addEventListener("click", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLElement)) return;
+			const btn = target.closest("[data-upload-delete]");
+			if (!btn) return;
+			const name = btn.getAttribute("data-upload-name") || "";
+			deleteUpload(name);
 		});
 	}
 	if (aiApiKeyInput) {

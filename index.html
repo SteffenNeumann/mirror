@@ -1576,6 +1576,12 @@
 							class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-left text-xs text-slate-200 transition hover:bg-white/5">
 							AI
 						</button>
+							<button
+								type="button"
+								data-settings-nav="uploads"
+								class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-left text-xs text-slate-200 transition hover:bg-white/5">
+								Uploads
+							</button>
 						<button
 							type="button"
 							data-settings-nav="faq"
@@ -1747,6 +1753,27 @@
 									class="w-full rounded-lg border border-white/10 bg-slate-950/30 px-3 py-2 text-sm text-slate-200 shadow-soft backdrop-blur transition placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
 							</div>
 							<div id="faqList" class="space-y-3"></div>
+						</section>
+
+						<section data-settings-section="uploads" class="hidden space-y-3">
+							<div>
+								<h4 class="text-sm font-semibold text-slate-100">Uploads</h4>
+								<p class="mt-1 text-xs text-slate-400">
+									Manage uploaded files.
+								</p>
+							</div>
+							<div class="flex items-center gap-2">
+								<button
+									id="uploadsRefresh"
+									type="button"
+									class="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">
+									Refresh
+								</button>
+							</div>
+							<div id="uploadsManageEmpty" class="text-xs text-slate-400">
+								Keine Uploads vorhanden.
+							</div>
+							<div id="uploadsManageList" class="space-y-2"></div>
 						</section>
 					</div>
 				</div>
