@@ -1066,6 +1066,31 @@ const server = http.createServer((req, res) => {
 		return;
 	}
 
+	if (url.pathname.startsWith("/uploads/")) {
+		const rel = url.pathname.replace(/^\/uploads\//, "");
+		const safeName = rel.replace(/[^a-zA-Z0-9._-]/g, "-");
+		if (!safeName || safeName !== rel) {
+			res.writeHead(400, { "Content-Type": "text/plain; charset=utf-8" });
+			res.end("Invalid filename");
+			return;
+		}
+		try {
+			const targetPath = join(UPLOADS_DIR, safeName);
+			const stat = statSync(targetPath);
+			if (!stat.isFile()) throw new Error("not a file");
+			const buf = readFileSync(targetPath);
+			res.writeHead(200, {
+				"Content-Type": mimeTypeForPath(targetPath),
+				"Cache-Control": "no-store",
+			});
+			res.end(buf);
+		} catch {
+			res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+			res.end("Not found");
+		}
+		return;
+	}
+
 	if (
 		url.pathname === "/api/personal-space/request-link" &&
 		req.method === "POST"
