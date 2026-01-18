@@ -4472,6 +4472,41 @@
 		}
 	}
 
+	function embedPdfLinks(html) {
+		try {
+			const container = document.createElement("div");
+			container.innerHTML = String(html || "");
+			const links = container.querySelectorAll("a[href]");
+			links.forEach((link) => {
+				const href = String(link.getAttribute("href") || "").trim();
+				if (!href) return;
+				const lower = href.toLowerCase();
+				if (!lower.includes(".pdf")) return;
+				const wrapper = document.createElement("div");
+				wrapper.className = "pdf-embed";
+				const iframe = document.createElement("iframe");
+				iframe.src = href;
+				iframe.title = link.textContent || "PDF";
+				iframe.loading = "lazy";
+				iframe.className = "pdf-frame";
+				const actions = document.createElement("div");
+				actions.className = "pdf-actions";
+				const open = document.createElement("a");
+				open.href = href;
+				open.target = "_blank";
+				open.rel = "noopener noreferrer";
+				open.textContent = "Open PDF";
+				actions.appendChild(open);
+				wrapper.appendChild(iframe);
+				wrapper.appendChild(actions);
+				link.replaceWith(wrapper);
+			});
+			return container.innerHTML;
+		} catch {
+			return html;
+		}
+	}
+
 	function buildNoteTitleIndex() {
 		const notes = psState && Array.isArray(psState.notes) ? psState.notes : [];
 		const sorted = notes
@@ -4601,7 +4636,7 @@
 		const src = applyWikiLinksToMarkdown(srcRaw);
 		let bodyHtml = "";
 		try {
-			bodyHtml = applyHljsToHtml(renderer.render(src));
+			bodyHtml = embedPdfLinks(applyHljsToHtml(renderer.render(src)));
 		} catch {
 			bodyHtml = "";
 		}
@@ -4732,6 +4767,9 @@
 		ul.task-list li.task-list-item.checked{opacity:.75;text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:rgba(148,163,184,.7);}
 		ul.task-list li.task-list-item.checked input[type=checkbox]{opacity:1;}
     ul.task-list input[type=checkbox]{margin-top:.2rem;}
+		.pdf-embed{margin:12px 0;border:1px solid ${previewTableBorder};border-radius:12px;overflow:hidden;background:${previewPreBg};}
+		.pdf-frame{width:100%;height:520px;border:0;display:block;background:${previewBg};}
+		.pdf-actions{display:flex;justify-content:flex-end;padding:6px 10px;border-top:1px solid ${previewTableBorder};font-size:12px;background:${previewMetaBg};}
   </style>
 </head>
 <body>
