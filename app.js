@@ -45,6 +45,19 @@
 	const shareModalShare = document.getElementById("shareModalShare");
 	const shareModalMail = document.getElementById("shareModalMail");
 	const shareModalOpen = document.getElementById("shareModalOpen");
+	const openUploadModalBtn = document.getElementById("openUploadModal");
+	const uploadModal = document.getElementById("uploadModal");
+	const uploadModalBackdrop = document.querySelector(
+		'[data-role="uploadModalBackdrop"]'
+	);
+	const uploadModalClose = document.getElementById("uploadModalClose");
+	const uploadPickBtn = document.getElementById("uploadPick");
+	const uploadFileInput = document.getElementById("uploadFile");
+	const uploadFileName = document.getElementById("uploadFileName");
+	const uploadFileMeta = document.getElementById("uploadFileMeta");
+	const uploadLinkPreview = document.getElementById("uploadLinkPreview");
+	const uploadCancel = document.getElementById("uploadCancel");
+	const uploadInsert = document.getElementById("uploadInsert");
 	const editorPreviewGrid = document.getElementById("editorPreviewGrid");
 	const previewPanel = document.getElementById("previewPanel");
 	const mdPreview = document.getElementById("mdPreview");
@@ -774,6 +787,114 @@
 		}, 0);
 	}
 
+	const MAX_UPLOAD_BYTES = 8 * 1024 * 1024;
+	let uploadSelectedFile = null;
+	let uploadBusy = false;
+
+	function isUploadModalReady() {
+		return (
+			uploadModal &&
+			uploadPickBtn &&
+			uploadFileInput &&
+			uploadFileName &&
+			uploadFileMeta &&
+			uploadLinkPreview &&
+			uploadCancel &&
+			uploadInsert
+		);
+	}
+
+	function setUploadModalOpen(open) {
+		if (!uploadModal || !uploadModal.classList) return;
+		uploadModal.classList.toggle("hidden", !open);
+		uploadModal.classList.toggle("flex", open);
+		uploadModal.setAttribute("aria-hidden", open ? "false" : "true");
+		try {
+			document.body.style.overflow = open ? "hidden" : "";
+		} catch {
+			// ignore
+		}
+	}
+
+	function formatBytes(bytes) {
+		const size = Number(bytes || 0);
+		if (!Number.isFinite(size) || size <= 0) return "";
+		if (size < 1024) return `${size} B`;
+		if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+		return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+	}
+
+	function buildUploadMarkdown(url, file) {
+		const nameRaw = file ? String(file.name || "file") : "file";
+		const name = nameRaw.replace(/\s+/g, " ").trim() || "file";
+		const safeUrl = String(url || "").trim();
+		if (!safeUrl) return name;
+		const mime = file ? String(file.type || "") : "";
+		if (mime.startsWith("image/")) return `![${name}](${safeUrl})`;
+		return `[${name}](${safeUrl})`;
+	}
+
+	function isAllowedUploadType(file) {
+		const mime = file ? String(file.type || "") : "";
+		return mime.startsWith("image/") || mime === "application/pdf";
+	}
+
+	function updateUploadPreview(file) {
+		if (!uploadFileName || !uploadFileMeta || !uploadLinkPreview) return;
+		if (!file) {
+			uploadFileName.textContent = "Keine Datei ausgewählt.";
+			uploadFileMeta.textContent = "";
+			uploadLinkPreview.textContent = "—";
+			return;
+		}
+		const name = String(file.name || "Datei").trim() || "Datei";
+		const meta = [
+			String(file.type || "unbekannter Typ"),
+			formatBytes(file.size || 0),
+		].filter(Boolean);
+		uploadFileName.textContent = name;
+		uploadFileMeta.textContent = meta.join(" · ");
+		uploadLinkPreview.textContent = buildUploadMarkdown("/uploads/...", file);
+	}
+
+	function setUploadInsertDisabled(disabled, label) {
+		if (!uploadInsert) return;
+		uploadInsert.disabled = Boolean(disabled);
+		uploadInsert.classList.toggle("opacity-60", Boolean(disabled));
+		uploadInsert.classList.toggle("pointer-events-none", Boolean(disabled));
+		uploadInsert.textContent = label || "Upload & Insert";
+	}
+
+	function resetUploadModalState() {
+		uploadSelectedFile = null;
+		uploadBusy = false;
+		if (uploadFileInput) uploadFileInput.value = "";
+		updateUploadPreview(null);
+		setUploadInsertDisabled(true);
+	}
+
+	function openUploadModal() {
+		if (!isUploadModalReady()) return;
+		resetUploadModalState();
+		setUploadModalOpen(true);
+		window.setTimeout(() => {
+			try {
+				uploadPickBtn.focus();
+			} catch {
+				// ignore
+			}
+		}, 0);
+	}
+
+	function readFileAsDataUrl(file) {
+		return new Promise((resolve, reject) => {
+			const reader = new FileReader();
+			reader.onload = () => resolve(String(reader.result || ""));
+			reader.onerror = () => reject(new Error("file_read_failed"));
+			reader.readAsDataURL(file);
+		});
+	}
+
 	async function api(path, opts) {
 		const res = await fetch(path, {
 			credentials: "same-origin",
@@ -923,6 +1044,21 @@
 		const e = Math.max(s, Math.min(v.length, Number(end) || 0));
 		el.value = v.slice(0, s) + String(replacement || "") + v.slice(e);
 		return s + String(replacement || "").length;
+	}
+
+	function insertTextAtCursor(el, text) {
+		if (!el) return;
+		const value = String(el.value || "");
+		const start = Math.max(0, Math.min(value.length, Number(el.selectionStart) || 0));
+		const end = Math.max(start, Math.min(value.length, Number(el.selectionEnd) || 0));
+		const next = value.slice(0, start) + String(text || "") + value.slice(end);
+		el.value = next;
+		const caret = start + String(text || "").length;
+		try {
+			el.setSelectionRange(caret, caret);
+		} catch {
+			// ignore
+		}
 	}
 
 	async function showSlashHelp() {
@@ -8275,6 +8411,111 @@ self.onmessage = async (e) => {
 		if (ev && ev.key === "Escape") {
 			ev.preventDefault();
 			setShareModalOpen(false);
+		}
+	});
+	if (openUploadModalBtn) {
+		openUploadModalBtn.addEventListener("click", () => openUploadModal());
+	}
+	if (uploadModalClose) {
+		uploadModalClose.addEventListener("click", () => setUploadModalOpen(false));
+	}
+	if (uploadModalBackdrop) {
+		uploadModalBackdrop.addEventListener("click", () =>
+			setUploadModalOpen(false)
+		);
+	}
+	if (uploadCancel) {
+		uploadCancel.addEventListener("click", () => setUploadModalOpen(false));
+	}
+	if (uploadPickBtn && uploadFileInput) {
+		uploadPickBtn.addEventListener("click", () => uploadFileInput.click());
+	}
+	if (uploadFileInput) {
+		uploadFileInput.addEventListener("change", () => {
+			const file = uploadFileInput.files
+				? uploadFileInput.files[0]
+				: null;
+			if (!file) {
+				uploadSelectedFile = null;
+				updateUploadPreview(null);
+				setUploadInsertDisabled(true);
+				return;
+			}
+			if (!isAllowedUploadType(file)) {
+				toast("Nur Bilder oder PDFs sind erlaubt.", "error");
+				uploadSelectedFile = null;
+				uploadFileInput.value = "";
+				updateUploadPreview(null);
+				setUploadInsertDisabled(true);
+				return;
+			}
+			if (file.size > MAX_UPLOAD_BYTES) {
+				toast("Datei zu groß (max. 8 MB).", "error");
+				uploadSelectedFile = null;
+				uploadFileInput.value = "";
+				updateUploadPreview(null);
+				setUploadInsertDisabled(true);
+				return;
+			}
+			uploadSelectedFile = file;
+			updateUploadPreview(file);
+			setUploadInsertDisabled(false);
+		});
+	}
+	if (uploadInsert) {
+		uploadInsert.addEventListener("click", async () => {
+			if (uploadBusy) return;
+			if (!uploadSelectedFile) {
+				toast("Bitte zuerst eine Datei auswählen.", "error");
+				return;
+			}
+			if (!isAllowedUploadType(uploadSelectedFile)) {
+				toast("Nur Bilder oder PDFs sind erlaubt.", "error");
+				return;
+			}
+			if (uploadSelectedFile.size > MAX_UPLOAD_BYTES) {
+				toast("Datei zu groß (max. 8 MB).", "error");
+				return;
+			}
+			uploadBusy = true;
+			setUploadInsertDisabled(true, "Uploading...");
+			try {
+				const dataUrl = await readFileAsDataUrl(uploadSelectedFile);
+				const payload = {
+					filename: uploadSelectedFile.name,
+					dataUrl,
+					type: uploadSelectedFile.type,
+					size: uploadSelectedFile.size,
+				};
+				const res = await api("/api/uploads", {
+					method: "POST",
+					body: JSON.stringify(payload),
+				});
+				const url = String(res && res.url ? res.url : "");
+				if (!url) throw new Error("invalid_response");
+				const markdown = buildUploadMarkdown(url, uploadSelectedFile);
+				if (textarea) {
+					insertTextAtCursor(textarea, markdown);
+					updatePreview();
+					updatePasswordMaskOverlay();
+					scheduleSend();
+				}
+				toast("Upload eingefügt.", "success");
+				setUploadModalOpen(false);
+			} catch (e) {
+				const msg = e && e.message ? String(e.message) : "Upload fehlgeschlagen.";
+				toast(`Upload fehlgeschlagen: ${msg}`, "error");
+			} finally {
+				uploadBusy = false;
+				setUploadInsertDisabled(false);
+			}
+		});
+	}
+	window.addEventListener("keydown", (ev) => {
+		if (!uploadModal || uploadModal.classList.contains("hidden")) return;
+		if (ev && ev.key === "Escape") {
+			ev.preventDefault();
+			setUploadModalOpen(false);
 		}
 	});
 	if (tableAddRowBtn) {

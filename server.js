@@ -1,5 +1,5 @@
 import http from "node:http";
-import { mkdirSync, readFileSync, statSync } from "node:fs";
+import { mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, extname, join } from "node:path";
 import crypto from "node:crypto";
 import { WebSocketServer } from "ws";
@@ -12,11 +12,14 @@ const ROOT_DIR = process.env.ROOT_DIR || process.cwd();
 const INDEX_PATH = join(ROOT_DIR, "index.html");
 const DB_PATH =
 	process.env.MIRROR_DB_PATH || join(ROOT_DIR, "data", "mirror.sqlite");
+const UPLOADS_DIR = join(ROOT_DIR, "uploads");
 
 const SESSION_COOKIE = "mirror_ps";
 const MAGIC_LINK_TTL_MS = 1000 * 60 * 30; // 30 min
 const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 30; // 30 days
 const MAX_BODY_BYTES = 1024 * 1024; // 1MB
+const MAX_UPLOAD_BYTES = 8 * 1024 * 1024; // 8MB
+const MAX_UPLOAD_BODY_BYTES = Math.ceil(MAX_UPLOAD_BYTES * 1.4);
 
 const ANTHROPIC_API_KEY = String(process.env.ANTHROPIC_API_KEY || "").trim();
 const ANTHROPIC_MODEL = String(
@@ -332,6 +335,7 @@ function mimeTypeForPath(filePath) {
 	if (ext === ".svg") return "image/svg+xml";
 	if (ext === ".png") return "image/png";
 	if (ext === ".jpg" || ext === ".jpeg") return "image/jpeg";
+	if (ext === ".pdf") return "application/pdf";
 	if (ext === ".ico") return "image/x-icon";
 	return "application/octet-stream";
 }
@@ -459,10 +463,86 @@ function readBody(req) {
 	});
 }
 
+function readBodyWithLimit(req, maxBytes) {
+	const limit = Number.isFinite(maxBytes) ? Number(maxBytes) : MAX_BODY_BYTES;
+	return new Promise((resolve, reject) => {
+		let size = 0;
+		let buf = "";
+		req.setEncoding("utf8");
+		req.on("data", (chunk) => {
+			size += chunk.length;
+			if (size > limit) {
+				reject(new Error("body_too_large"));
+				req.destroy();
+				return;
+			}
+			buf += chunk;
+		});
+		req.on("end", () => resolve(buf));
+		req.on("error", reject);
+	});
+}
+
 async function readJson(req) {
 	const raw = await readBody(req);
 	const parsed = safeJsonParse(raw);
 	return parsed && typeof parsed === "object" ? parsed : null;
+}
+
+async function readJsonWithLimit(req, maxBytes) {
+	const raw = await readBodyWithLimit(req, maxBytes);
+	const parsed = safeJsonParse(raw);
+	return parsed && typeof parsed === "object" ? parsed : null;
+}
+
+function ensureUploadsDir() {
+	try {
+		mkdirSync(UPLOADS_DIR, { recursive: true });
+	} catch {
+		// ignore
+	}
+}
+
+function sanitizeFilename(raw) {
+	const base = String(raw || "upload").trim() || "upload";
+	const cleaned = base
+		.replace(/[^a-zA-Z0-9._-]/g, "-")
+		.replace(/-+/g, "-")
+		.replace(/^[-_.]+/, "");
+	const truncated = cleaned.slice(0, 80);
+	return truncated || "upload";
+}
+
+function decodeDataUrl(input) {
+	const raw = String(input || "").trim();
+	const match = raw.match(/^data:([^;]+);base64,(.+)$/);
+	if (!match) return null;
+	const mime = String(match[1] || "").trim();
+	const b64 = String(match[2] || "").trim();
+	if (!mime || !b64) return null;
+	let buf;
+	try {
+		buf = Buffer.from(b64, "base64");
+	} catch {
+		return null;
+	}
+	return { mime, buf };
+}
+
+function isAllowedUploadMime(mime) {
+	const m = String(mime || "").toLowerCase();
+	return m.startsWith("image/") || m === "application/pdf";
+}
+
+function extForMime(mime) {
+	const m = String(mime || "").toLowerCase();
+	if (m === "application/pdf") return ".pdf";
+	if (m === "image/png") return ".png";
+	if (m === "image/jpeg") return ".jpg";
+	if (m === "image/webp") return ".webp";
+	if (m === "image/gif") return ".gif";
+	if (m === "image/svg+xml") return ".svg";
+	return "";
 }
 
 function uniq(arr) {
@@ -873,6 +953,61 @@ const server = http.createServer((req, res) => {
 	if (url.pathname === "/favicon.ico") {
 		res.writeHead(204, { "Cache-Control": "no-store" });
 		res.end();
+		return;
+	}
+
+	if (url.pathname === "/api/uploads" && req.method === "POST") {
+		readJsonWithLimit(req, MAX_UPLOAD_BODY_BYTES)
+			.then((body) => {
+				if (!body || typeof body !== "object") {
+					json(res, 400, { ok: false, error: "invalid_json" });
+					return;
+				}
+				const dataUrl = String(body && body.dataUrl ? body.dataUrl : "");
+				if (!dataUrl) {
+					json(res, 400, { ok: false, error: "missing_data" });
+					return;
+				}
+				const decoded = decodeDataUrl(dataUrl);
+				if (!decoded) {
+					json(res, 400, { ok: false, error: "invalid_data_url" });
+					return;
+				}
+				const mime = String(decoded.mime || "").toLowerCase();
+				if (!isAllowedUploadMime(mime)) {
+					json(res, 415, { ok: false, error: "unsupported_type" });
+					return;
+				}
+				const buf = decoded.buf;
+				if (!buf || buf.length > MAX_UPLOAD_BYTES) {
+					json(res, 413, { ok: false, error: "file_too_large" });
+					return;
+				}
+				const rawName = sanitizeFilename(body && body.filename ? body.filename : "upload");
+				const extFromMime = extForMime(mime);
+				const hasExt = extname(rawName);
+				const finalName = hasExt
+					? rawName
+					: `${rawName}${extFromMime || ""}`;
+				const id = crypto.randomBytes(6).toString("hex");
+				const fileName = `${Date.now().toString(36)}-${id}-${finalName}`;
+				ensureUploadsDir();
+				writeFileSync(join(UPLOADS_DIR, fileName), buf);
+				json(res, 200, {
+					ok: true,
+					url: `/uploads/${fileName}`,
+					name: finalName,
+					mime,
+					size: buf.length,
+				});
+			})
+			.catch((e) => {
+				if (String(e && e.message) === "body_too_large") {
+					json(res, 413, { ok: false, error: "body_too_large" });
+					return;
+				}
+				json(res, 400, { ok: false, error: "invalid_json" });
+			});
 		return;
 	}
 

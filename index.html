@@ -1172,6 +1172,14 @@
 											Preview
 										</button>
 										<button
+											id="openUploadModal"
+											type="button"
+											class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+											title="Datei hochladen"
+											aria-label="Datei hochladen">
+											Upload
+										</button>
+										<button
 											id="psSaveMain"
 											type="button"
 											class="rounded-xl border border-fuchsia-400/30 bg-fuchsia-500/15 px-3 py-2 text-sm font-semibold text-slate-100 shadow-soft transition hover:bg-fuchsia-500/20 active:opacity-90">
@@ -1794,6 +1802,84 @@
 						type="button"
 						class="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm font-medium text-slate-100 transition hover:bg-white/15 active:bg-white/20">
 						OK
+					</button>
+				</div>
+			</div>
+		</div>
+
+		<div
+			id="uploadModal"
+			class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+			aria-hidden="true">
+			<div
+				data-role="uploadModalBackdrop"
+				class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"></div>
+			<div
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby="uploadModalTitle"
+				class="relative w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-slate-950/70 shadow-soft backdrop-blur">
+				<div class="p-5">
+					<div class="flex items-start justify-between gap-3">
+						<div>
+							<h3
+								id="uploadModalTitle"
+								class="text-base font-semibold text-slate-100">
+								Datei hochladen
+							</h3>
+							<p class="mt-1 text-xs text-slate-400">
+								Bilder oder PDFs hochladen und als internen Link einfügen.
+							</p>
+						</div>
+						<button
+							id="uploadModalClose"
+							type="button"
+							class="rounded-lg border border-white/10 bg-transparent px-2.5 py-1.5 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+							aria-label="Close upload">
+							Esc
+						</button>
+					</div>
+					<div class="mt-4 space-y-3">
+						<input
+							id="uploadFile"
+							type="file"
+							accept="image/*,application/pdf"
+							class="hidden" />
+						<button
+							id="uploadPick"
+							type="button"
+							class="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-xs font-medium text-slate-100 transition hover:bg-white/15 active:bg-white/20">
+							Datei auswählen
+						</button>
+						<div
+							class="rounded-xl border border-white/10 bg-slate-950/40 p-3 text-xs">
+							<div id="uploadFileName" class="text-slate-200">
+								Keine Datei ausgewählt.
+							</div>
+							<div id="uploadFileMeta" class="mt-1 text-slate-400"></div>
+						</div>
+						<div
+							class="rounded-xl border border-white/10 bg-slate-950/40 p-3 text-xs">
+							<div class="text-slate-400">Link-Vorschau</div>
+							<div
+								id="uploadLinkPreview"
+								class="mt-1 break-all font-mono text-slate-100"></div>
+						</div>
+					</div>
+				</div>
+				<div
+					class="flex items-center justify-end gap-2 border-t border-white/10 bg-slate-950/30 px-5 py-3">
+					<button
+						id="uploadCancel"
+						type="button"
+						class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10">
+						Cancel
+					</button>
+					<button
+						id="uploadInsert"
+						type="button"
+						class="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm font-medium text-slate-100 transition hover:bg-white/15 active:bg-white/20">
+						Upload & Insert
 					</button>
 				</div>
 			</div>
