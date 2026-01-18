@@ -1078,6 +1078,47 @@
 		el.selectionEnd = start + left.length + inner.length;
 	}
 
+	function wrapSelectionToggle(el, left, right) {
+		if (!el) return false;
+		const value = String(el.value || "");
+		const start = Number(el.selectionStart || 0);
+		const end = Number(el.selectionEnd || 0);
+		if (end <= start) return false;
+		const selected = value.slice(start, end);
+		if (
+			selected.startsWith(left) &&
+			selected.endsWith(right) &&
+			selected.length >= left.length + right.length
+		) {
+			const inner = selected.slice(left.length, selected.length - right.length);
+			el.value = value.slice(0, start) + inner + value.slice(end);
+			el.selectionStart = start;
+			el.selectionEnd = start + inner.length;
+			return true;
+		}
+		const beforeStart = start - left.length;
+		const afterEnd = end + right.length;
+		if (
+			beforeStart >= 0 &&
+			afterEnd <= value.length &&
+			value.slice(beforeStart, start) === left &&
+			value.slice(end, afterEnd) === right
+		) {
+			el.value =
+				value.slice(0, beforeStart) +
+				value.slice(start, end) +
+				value.slice(afterEnd);
+			el.selectionStart = beforeStart;
+			el.selectionEnd = beforeStart + (end - start);
+			return true;
+		}
+		const next = `${left}${selected}${right}`;
+		el.value = value.slice(0, start) + next + value.slice(end);
+		el.selectionStart = start + left.length;
+		el.selectionEnd = start + left.length + selected.length;
+		return true;
+	}
+
 	function prefixSelectionLines(el, prefix, numbered) {
 		if (!el) return;
 		const value = String(el.value || "");
@@ -1099,6 +1140,116 @@
 		el.value = value.slice(0, lineStart) + nextBlock + value.slice(lineEnd);
 		el.selectionStart = lineStart;
 		el.selectionEnd = lineStart + nextBlock.length;
+	}
+
+	function togglePrefixSelectionLines(el, prefix, mode) {
+		if (!el) return;
+		const value = String(el.value || "");
+		const start = Number(el.selectionStart || 0);
+		const end = Number(el.selectionEnd || 0);
+		const { lineStart, lineEnd } = getSelectionLineRange(value, start, end);
+		const block = value.slice(lineStart, lineEnd);
+		const lines = block.split("\n");
+		const nonEmpty = lines.filter((line) => String(line || "").trim());
+		const hasPrefix = nonEmpty.length
+			? nonEmpty.every((line) => {
+				const src = String(line || "");
+				if (mode === "numbered") return /^\s*\d+\.\s+/.test(src);
+				if (mode === "task") return /^\s*-\s\[(?: |x|X)\]\s+/.test(src);
+				if (mode === "ul") return /^\s*[-*+]\s+/.test(src);
+				if (mode === "quote") return /^\s*>\s?/.test(src);
+				return src.startsWith(prefix);
+			})
+			: false;
+		const nextLines = lines.map((line, idx) => {
+			const src = String(line || "");
+			if (!src.trim()) return src;
+			if (hasPrefix) {
+				if (mode === "numbered") return src.replace(/^\s*\d+\.\s+/, "");
+				if (mode === "task")
+					return src.replace(/^\s*-\s\[(?: |x|X)\]\s+/, "");
+				if (mode === "ul") return src.replace(/^\s*[-*+]\s+/, "");
+				if (mode === "quote") return src.replace(/^\s*>\s?/, "");
+				return src.startsWith(prefix) ? src.slice(prefix.length) : src;
+			}
+			if (mode === "numbered") {
+				const clean = src.replace(/^\s*\d+\.\s+/, "");
+				return `${idx + 1}. ${clean}`;
+			}
+			return `${prefix}${src}`;
+		});
+		const nextBlock = nextLines.join("\n");
+		el.value = value.slice(0, lineStart) + nextBlock + value.slice(lineEnd);
+		el.selectionStart = lineStart;
+		el.selectionEnd = lineStart + nextBlock.length;
+	}
+
+	function toggleDividerAtSelection(el) {
+		if (!el) return;
+		const value = String(el.value || "");
+		const start = Number(el.selectionStart || 0);
+		const end = Number(el.selectionEnd || 0);
+		const { lineStart, lineEnd } = getSelectionLineRange(value, start, end);
+		const block = value.slice(lineStart, lineEnd);
+		const lines = block.split("\n");
+		const nonEmpty = lines.filter((line) => String(line || "").trim());
+		const isSingleDivider =
+			nonEmpty.length === 1 && String(nonEmpty[0] || "").trim() === "---";
+		if (isSingleDivider) {
+			const afterLine = lineEnd < value.length ? lineEnd + 1 : lineEnd;
+			el.value = value.slice(0, lineStart) + value.slice(afterLine);
+			el.selectionStart = lineStart;
+			el.selectionEnd = lineStart;
+			return;
+		}
+		const nextBlock = "---";
+		el.value = value.slice(0, lineStart) + nextBlock + value.slice(lineEnd);
+		el.selectionStart = lineStart;
+		el.selectionEnd = lineStart + nextBlock.length;
+	}
+
+	function toggleFencedCodeBlock(el) {
+		if (!el) return;
+		const value = String(el.value || "");
+		const start = Number(el.selectionStart || 0);
+		const end = Number(el.selectionEnd || 0);
+		if (end <= start) return;
+		const selected = value.slice(start, end);
+		const selectedLines = selected.split("\n");
+		const firstLine = String(selectedLines[0] || "");
+		const lastLine = String(selectedLines[selectedLines.length - 1] || "");
+		const isWrappedInSelection =
+			/^\s*```/.test(firstLine) && /^\s*```/.test(lastLine);
+		if (isWrappedInSelection && selectedLines.length >= 2) {
+			const innerLines = selectedLines.slice(1, -1);
+			const inner = innerLines.join("\n");
+			el.value = value.slice(0, start) + inner + value.slice(end);
+			el.selectionStart = start;
+			el.selectionEnd = start + inner.length;
+			return;
+		}
+		const { lineStart, lineEnd } = getSelectionLineRange(value, start, end);
+		const prevLineStart = value.lastIndexOf("\n", Math.max(0, lineStart - 2)) + 1;
+		const prevLineEnd = Math.max(prevLineStart, lineStart - 1);
+		const nextLineStart = lineEnd < value.length ? lineEnd + 1 : value.length;
+		let nextLineEnd = value.indexOf("\n", nextLineStart);
+		if (nextLineEnd === -1) nextLineEnd = value.length;
+		const prevLine = value.slice(prevLineStart, prevLineEnd);
+		const nextLine = value.slice(nextLineStart, nextLineEnd);
+		if (/^\s*```/.test(prevLine) && /^\s*```/.test(nextLine)) {
+			const afterNext = nextLineEnd < value.length ? nextLineEnd + 1 : nextLineEnd;
+			const inner = value.slice(lineStart, lineEnd);
+			el.value = value.slice(0, prevLineStart) + inner + value.slice(afterNext);
+			el.selectionStart = prevLineStart;
+			el.selectionEnd = prevLineStart + inner.length;
+			return;
+		}
+		const lang = getSelectedCodeLang();
+		const opening = "```" + String(lang || "");
+		const insert = `${opening}\n${selected}\n\`\`\``;
+		el.value = value.slice(0, start) + insert + value.slice(end);
+		el.selectionStart = start + opening.length + 1;
+		el.selectionEnd = start + opening.length + 1 + selected.length;
 	}
 
 	function sortSelectionLines(el) {
@@ -1125,13 +1276,13 @@
 		if (!textarea) return;
 		switch (action) {
 			case "bold":
-				wrapSelection(textarea, "**", "**");
+				wrapSelectionToggle(textarea, "**", "**");
 				break;
 			case "italic":
-				wrapSelection(textarea, "*", "*");
+				wrapSelectionToggle(textarea, "*", "*");
 				break;
 			case "strike":
-				wrapSelection(textarea, "~~", "~~");
+				wrapSelectionToggle(textarea, "~~", "~~");
 				break;
 			case "password":
 				wrapSelection(textarea, "||", "||");
@@ -1148,16 +1299,23 @@
 				scheduleSend();
 				return;
 			case "quote":
-				prefixSelectionLines(textarea, "> ");
+				togglePrefixSelectionLines(textarea, "> ", "quote");
 				break;
 			case "ul":
-				prefixSelectionLines(textarea, "- ");
+				togglePrefixSelectionLines(textarea, "- ", "ul");
 				break;
 			case "ol":
-				prefixSelectionLines(textarea, "", true);
+				togglePrefixSelectionLines(textarea, "", "numbered");
 				break;
 			case "todo":
-				prefixSelectionLines(textarea, "- [ ] ");
+				togglePrefixSelectionLines(textarea, "- [ ] ", "task");
+				break;
+			case "divider":
+				toggleDividerAtSelection(textarea);
+				break;
+			case "code":
+				toggleFencedCodeBlock(textarea);
+				updateCodeLangOverlay();
 				break;
 			case "sort":
 				sortSelectionLines(textarea);
