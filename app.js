@@ -4484,11 +4484,9 @@
 				if (!lower.includes(".pdf")) return;
 				const wrapper = document.createElement("div");
 				wrapper.className = "pdf-embed";
-				const iframe = document.createElement("iframe");
-				iframe.src = href;
-				iframe.title = link.textContent || "PDF";
-				iframe.loading = "lazy";
-				iframe.className = "pdf-frame";
+				const canvas = document.createElement("canvas");
+				canvas.className = "pdf-frame";
+				canvas.setAttribute("data-pdf-src", href);
 				const actions = document.createElement("div");
 				actions.className = "pdf-actions";
 				const open = document.createElement("a");
@@ -4497,7 +4495,7 @@
 				open.rel = "noopener noreferrer";
 				open.textContent = "Open PDF";
 				actions.appendChild(open);
-				wrapper.appendChild(iframe);
+				wrapper.appendChild(canvas);
 				wrapper.appendChild(actions);
 				link.replaceWith(wrapper);
 			});
@@ -4701,6 +4699,8 @@
 		const highlightCssUrl = isMonoLight
 			? "https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css"
 			: "https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css";
+		const pdfJsUrl =
+			"https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.js";
 		const previewBase =
 			typeof location !== "undefined" && location.origin
 				? location.origin
@@ -4729,6 +4729,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 	${previewBase ? `<base href="${previewBase}">` : ""}
+	<script src="${pdfJsUrl}"></script>
   <link rel="stylesheet" href="${highlightCssUrl}">
 	<!--ts:${stamp}-->
   <style>
@@ -4768,7 +4769,7 @@
 		ul.task-list li.task-list-item.checked input[type=checkbox]{opacity:1;}
     ul.task-list input[type=checkbox]{margin-top:.2rem;}
 		.pdf-embed{margin:12px 0;border:1px solid ${previewTableBorder};border-radius:12px;overflow:hidden;background:${previewPreBg};}
-		.pdf-frame{width:100%;height:520px;border:0;display:block;background:${previewBg};}
+		.pdf-frame{width:100%;height:auto;display:block;background:${previewBg};}
 		.pdf-actions{display:flex;justify-content:flex-end;padding:6px 10px;border-top:1px solid ${previewTableBorder};font-size:12px;background:${previewMetaBg};}
   </style>
 </head>
@@ -4919,7 +4920,41 @@
 						});
 					}
 
+					function renderPdfCanvas(canvas){
+						if (!canvas || !window.pdfjsLib) return;
+						var src = canvas.getAttribute('data-pdf-src');
+						if (!src) return;
+						try {
+							if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
+								window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+									"https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.js";
+							}
+						} catch (e) {
+							// ignore
+						}
+						window.pdfjsLib.getDocument(src).promise.then(function(pdf){
+							return pdf.getPage(1).then(function(page){
+								var viewport = page.getViewport({ scale: 1.2 });
+								canvas.width = viewport.width;
+								canvas.height = viewport.height;
+								var ctx = canvas.getContext('2d');
+								return page.render({ canvasContext: ctx, viewport: viewport }).promise;
+							});
+						}).catch(function(){
+							// ignore
+						});
+					}
+
+					function initPdfEmbeds(){
+						var canvases = document.querySelectorAll('canvas[data-pdf-src]');
+						if (!canvases || !canvases.length) return;
+						canvases.forEach(function(c){
+							renderPdfCanvas(c);
+						});
+					}
+
 					initImageTools();
+					initPdfEmbeds();
 
 			// Handshake: signalisiert dem Parent, dass Script+Messaging aktiv sind.
 			send('mirror_preview_ready', { ts: Date.now() });
