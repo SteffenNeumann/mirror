@@ -6811,6 +6811,7 @@ self.onmessage = async (e) => {
 			.join("");
 	}
 
+	const presenceState = new Map();
 	let shareHref = "";
 	function buildShareHref(roomName, keyName) {
 		return (
@@ -6900,7 +6901,6 @@ self.onmessage = async (e) => {
 	let suppressSend = false;
 	let sendTimer;
 	let connectionSeq = 0;
-	const presenceState = new Map();
 	let isTyping = false;
 	let typingTimer;
 	let selectionTimer;
