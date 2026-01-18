@@ -179,9 +179,14 @@
 		"https://pyodide-cdn2.iodide.io/v0.25.1/full/",
 	].filter(Boolean);
 
-	const clientId = crypto.randomUUID
-		? crypto.randomUUID()
-		: String(Math.random()).slice(2);
+	function createClientId() {
+		const base = crypto.randomUUID
+			? crypto.randomUUID()
+			: String(Math.random()).slice(2);
+		return `${base}-${Date.now().toString(36)}`;
+	}
+
+	let clientId = createClientId();
 
 	const IDENTITY_KEY = "mirror_identity_v1";
 
@@ -7188,6 +7193,7 @@ self.onmessage = async (e) => {
 	function connect() {
 		const mySeq = ++connectionSeq;
 		window.clearTimeout(reconnectTimer);
+		clientId = createClientId();
 		if (ws) {
 			try {
 				ws.close();
