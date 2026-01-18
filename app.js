@@ -4666,6 +4666,10 @@
 		const highlightCssUrl = isMonoLight
 			? "https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css"
 			: "https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css";
+		const previewBase =
+			typeof location !== "undefined" && location.origin
+				? location.origin
+				: "";
 		const metaNote = psEditingNoteId ? findNoteById(psEditingNoteId) : null;
 		const metaYaml =
 			psMetaVisible && metaNote ? buildNoteMetaYaml(metaNote) : "";
@@ -4689,6 +4693,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+	${previewBase ? `<base href="${previewBase}">` : ""}
   <link rel="stylesheet" href="${highlightCssUrl}">
 	<!--ts:${stamp}-->
   <style>
