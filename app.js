@@ -6051,13 +6051,13 @@ self.onmessage = async (e) => {
 			}
 			const idx = index.get(keyId);
 			const prev = out[idx];
-			const merged = {
+			out[idx] = {
 				...prev,
 				...normalized,
 				lastUsed: Math.max(prev.lastUsed || 0, normalized.lastUsed || 0),
 				text: normalized.text || prev.text || "",
 			};
-			out[idx] = merged;
+		}
 		const byRoom = new Map();
 		for (const entry of out) {
 			const roomName = entry.room;
@@ -6073,7 +6073,6 @@ self.onmessage = async (e) => {
 			}
 		}
 		return trimmed;
-		return out;
 	}
 
 	function mergeRoomTabs(localTabs, serverTabs) {
