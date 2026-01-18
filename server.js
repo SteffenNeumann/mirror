@@ -2033,13 +2033,29 @@ const server = http.createServer((req, res) => {
 	}
 
 	// Optional static files if you add assets later
-	const filePath = join(ROOT_DIR, url.pathname.replace(/^\/+/, ""));
+	const relPath = url.pathname.replace(/^\/+/, "");
+	const filePath = join(ROOT_DIR, relPath);
 	try {
-		const stat = statSync(filePath);
-		if (!stat.isFile()) throw new Error("not a file");
-		const buf = readFileSync(filePath);
+		let targetPath = filePath;
+		let stat;
+		try {
+			stat = statSync(targetPath);
+		} catch {
+			stat = null;
+		}
+		if (!stat && !extname(relPath)) {
+			const jsPath = `${filePath}.js`;
+			try {
+				stat = statSync(jsPath);
+				if (stat.isFile()) targetPath = jsPath;
+			} catch {
+				// ignore
+			}
+		}
+		if (!stat || !stat.isFile()) throw new Error("not a file");
+		const buf = readFileSync(targetPath);
 		res.writeHead(200, {
-			"Content-Type": mimeTypeForPath(filePath),
+			"Content-Type": mimeTypeForPath(targetPath),
 			"Cache-Control": "no-store",
 		});
 		res.end(buf);
