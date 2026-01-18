@@ -4700,6 +4700,12 @@
 		:root{color-scheme:${previewColorScheme};--blockquote-border:${blockquoteBorder};--blockquote-text:${blockquoteText};--scrollbar-thumb:${scrollbarThumb};--scrollbar-thumb-hover:${scrollbarThumbHover};}
     body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:${previewBg};color:${previewText};}
     a{color:${previewLink};}
+		img{max-width:100%;height:auto;}
+		.img-wrap{position:relative;display:inline-block;max-width:100%;}
+		.img-tools{position:absolute;top:8px;right:8px;display:inline-flex;gap:6px;align-items:center;padding:4px 6px;border-radius:999px;background:rgba(2,6,23,.55);border:1px solid rgba(148,163,184,.25);opacity:0;transition:opacity .16s ease;}
+		.img-wrap:hover .img-tools{opacity:1;}
+		.img-tools button{border:0;background:rgba(148,163,184,.15);color:${previewText};font-size:11px;line-height:1;padding:4px 6px;border-radius:999px;cursor:pointer;}
+		.img-tools button:hover{background:rgba(148,163,184,.3);}
     code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;}
     pre{overflow:auto;border:1px solid ${previewPreBorder};border-radius:12px;padding:12px;background:${previewPreBg};}
     code{background:${previewCodeBg};padding:.15em .35em;border-radius:.35em;}
@@ -4839,6 +4845,43 @@
 							send('mirror_password_copy', { value: value });
 						}
 					}, true);
+
+					function wrapImage(img){
+						if (!img || img.closest('.img-wrap')) return;
+						var wrap = document.createElement('span');
+						wrap.className = 'img-wrap';
+						var tools = document.createElement('span');
+						tools.className = 'img-tools';
+						var sizes = [
+							{ label: 'S', width: '30%' },
+							{ label: 'M', width: '60%' },
+							{ label: 'L', width: '100%' }
+						];
+						sizes.forEach(function(s){
+							var btn = document.createElement('button');
+							btn.type = 'button';
+							btn.textContent = s.label;
+							btn.addEventListener('click', function(ev){
+								ev.preventDefault();
+								ev.stopPropagation();
+								img.style.width = s.width;
+							});
+							tools.appendChild(btn);
+						});
+						img.parentNode.insertBefore(wrap, img);
+						wrap.appendChild(img);
+						wrap.appendChild(tools);
+					}
+
+					function initImageTools(){
+						var imgs = document.querySelectorAll('#content img');
+						if (!imgs || !imgs.length) return;
+						imgs.forEach(function(img){
+							wrapImage(img);
+						});
+					}
+
+					initImageTools();
 
 			// Handshake: signalisiert dem Parent, dass Script+Messaging aktiv sind.
 			send('mirror_preview_ready', { ts: Date.now() });
