@@ -4003,6 +4003,9 @@
 			psMetaYaml.classList.toggle("hidden", show || !psMetaVisible);
 			if (show || !psMetaVisible) {
 				resetEditorMetaPadding();
+			} else {
+				updateEditorMetaPadding();
+				updateEditorMetaScroll();
 			}
 		}
 		if (show && open && open.lang) {
