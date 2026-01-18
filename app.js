@@ -6004,7 +6004,21 @@ self.onmessage = async (e) => {
 				text: normalized.text || prev.text || "",
 			};
 		}
-		return out;
+		const byRoom = new Map();
+		for (const entry of out) {
+			const roomName = entry.room;
+			if (!byRoom.has(roomName)) byRoom.set(roomName, []);
+			byRoom.get(roomName).push(entry);
+		}
+		const trimmed = [];
+		for (const entries of byRoom.values()) {
+			const hasKey = entries.some((e) => e.key);
+			for (const e of entries) {
+				if (!e.key && hasKey) continue;
+				trimmed.push(e);
+			}
+		}
+		return trimmed;
 	}
 
 	function normalizeRoomTabEntry(it) {
@@ -6044,7 +6058,21 @@ self.onmessage = async (e) => {
 				text: normalized.text || prev.text || "",
 			};
 			out[idx] = merged;
+		const byRoom = new Map();
+		for (const entry of out) {
+			const roomName = entry.room;
+			if (!byRoom.has(roomName)) byRoom.set(roomName, []);
+			byRoom.get(roomName).push(entry);
 		}
+		const trimmed = [];
+		for (const entries of byRoom.values()) {
+			const hasKey = entries.some((e) => e.key);
+			for (const e of entries) {
+				if (!e.key && hasKey) continue;
+				trimmed.push(e);
+			}
+		}
+		return trimmed;
 		return out;
 	}
 
@@ -6079,7 +6107,11 @@ self.onmessage = async (e) => {
 			const raw = localStorage.getItem(ROOM_TABS_KEY);
 			const parsed = JSON.parse(raw || "[]");
 			if (!Array.isArray(parsed)) return [];
-			return dedupeRoomTabs(parsed.map(normalizeRoomTabEntry).filter(Boolean));
+			const cleaned = dedupeRoomTabs(
+				parsed.map(normalizeRoomTabEntry).filter(Boolean)
+			);
+			if (cleaned.length !== parsed.length) saveRoomTabs(cleaned);
+			return cleaned;
 		} catch {
 			return [];
 		}
