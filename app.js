@@ -7334,6 +7334,10 @@ self.onmessage = async (e) => {
 
 	function updateCrdtFromTextarea() {
 		if (!ytext || !crdtReady) return;
+		const current = ytext.toString();
+		if (crdtLastText !== current) {
+			crdtLastText = current;
+		}
 		const next = String(textarea.value || "");
 		if (next === crdtLastText) return;
 		const prev = crdtLastText;
