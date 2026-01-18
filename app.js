@@ -187,6 +187,32 @@
 	}
 
 	let clientId = createClientId();
+	const clientIdChannel =
+		typeof BroadcastChannel !== "undefined"
+			? new BroadcastChannel("mirror-client-id")
+			: null;
+
+	function announceClientId() {
+		if (!clientIdChannel) return;
+		try {
+			clientIdChannel.postMessage({ type: "client_id", clientId });
+		} catch {
+			// ignore
+		}
+	}
+
+	if (clientIdChannel) {
+		clientIdChannel.addEventListener("message", (ev) => {
+			const data = ev && ev.data ? ev.data : null;
+			if (!data || data.type !== "client_id") return;
+			if (data.clientId !== clientId) return;
+			clientId = createClientId();
+			announceClientId();
+			connect();
+		});
+	}
+
+	announceClientId();
 
 	const IDENTITY_KEY = "mirror_identity_v1";
 
@@ -7194,6 +7220,7 @@ self.onmessage = async (e) => {
 		const mySeq = ++connectionSeq;
 		window.clearTimeout(reconnectTimer);
 		clientId = createClientId();
+		announceClientId();
 		if (ws) {
 			try {
 				ws.close();
