@@ -849,7 +849,7 @@
 		uploadOpenLink.classList.toggle("pointer-events-none", Boolean(disabled));
 	}
 
-	function setUploadLinkPreview(url, file) {
+	function setUploadLinkPreview(url, file, allowOpen) {
 		const safeUrl = String(url || "").trim();
 		uploadLastUrl = safeUrl;
 		if (!uploadLinkPreview) return;
@@ -868,7 +868,7 @@
 		link.target = "_blank";
 		link.rel = "noreferrer noopener";
 		uploadLinkPreview.appendChild(link);
-		setUploadOpenLinkDisabled(false);
+		setUploadOpenLinkDisabled(allowOpen === false);
 	}
 
 	function updateUploadPreview(file) {
@@ -886,7 +886,7 @@
 		].filter(Boolean);
 		uploadFileName.textContent = name;
 		uploadFileMeta.textContent = meta.join(" · ");
-		setUploadLinkPreview("/uploads/...", file);
+		setUploadLinkPreview("/uploads/...", file, false);
 	}
 
 	function setUploadInsertDisabled(disabled, label) {
@@ -4408,8 +4408,15 @@
 			});
 			// Nur sichere Link-Protokolle (kein javascript:, data:, etc.)
 			try {
-				md.validateLink = (url) =>
-					/^(https?:|mailto:|tel:|note:)/i.test(String(url || "").trim());
+				md.validateLink = (url) => {
+					const raw = String(url || "").trim();
+					if (!raw) return false;
+					if (/^(https?:|mailto:|tel:|note:)/i.test(raw)) return true;
+					if (raw.startsWith("/") || raw.startsWith("./") || raw.startsWith("../"))
+						return true;
+					if (raw.startsWith("#")) return true;
+					return false;
+				};
 			} catch {
 				// ignore
 			}
@@ -8543,7 +8550,7 @@ self.onmessage = async (e) => {
 				const url = String(res && res.url ? res.url : "");
 				if (!url) throw new Error("invalid_response");
 				const markdown = buildUploadMarkdown(url, uploadSelectedFile);
-				setUploadLinkPreview(url, uploadSelectedFile);
+				setUploadLinkPreview(url, uploadSelectedFile, true);
 				if (textarea) {
 					insertTextAtCursor(textarea, markdown);
 					updatePreview();
