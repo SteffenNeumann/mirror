@@ -33,6 +33,18 @@
 	const modalClose = document.getElementById("modalClose");
 	const modalCancel = document.getElementById("modalCancel");
 	const modalOk = document.getElementById("modalOk");
+	const shareModal = document.getElementById("shareModal");
+	const shareModalBackdrop = document.querySelector(
+		'[data-role="shareModalBackdrop"]'
+	);
+	const shareModalClose = document.getElementById("shareModalClose");
+	const shareModeSelect = document.getElementById("shareMode");
+	const shareModalLink = document.getElementById("shareModalLink");
+	const shareModalCopy = document.getElementById("shareModalCopy");
+	const shareModalQr = document.getElementById("shareModalQr");
+	const shareModalShare = document.getElementById("shareModalShare");
+	const shareModalMail = document.getElementById("shareModalMail");
+	const shareModalOpen = document.getElementById("shareModalOpen");
 	const editorPreviewGrid = document.getElementById("editorPreviewGrid");
 	const previewPanel = document.getElementById("previewPanel");
 	const mdPreview = document.getElementById("mdPreview");
@@ -698,6 +710,68 @@
 		});
 		if (!res || !res.ok) return null;
 		return String(res.value || "");
+	}
+
+	let shareModalMode = "private";
+	function isShareModalReady() {
+		return (
+			shareModal &&
+			shareModeSelect &&
+			shareModalLink &&
+			shareModalCopy &&
+			shareModalQr &&
+			shareModalMail &&
+			shareModalOpen
+		);
+	}
+
+	function setShareModalOpen(open) {
+		if (!shareModal || !shareModal.classList) return;
+		shareModal.classList.toggle("hidden", !open);
+		shareModal.classList.toggle("flex", open);
+		shareModal.setAttribute("aria-hidden", open ? "false" : "true");
+		try {
+			document.body.style.overflow = open ? "hidden" : "";
+		} catch {
+			// ignore
+		}
+	}
+
+	function buildQrUrl(value) {
+		const data = encodeURIComponent(String(value || ""));
+		return `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${data}`;
+	}
+
+	function updateShareModalLink() {
+		if (!isShareModalReady()) return;
+		const usePublic = shareModalMode === "public";
+		const shareKey = usePublic ? "" : key;
+		const href = buildShareHref(room, shareKey) || location.href;
+		shareModalLink.value = href;
+		shareModalOpen.href = href;
+		shareModalMail.href = `mailto:?subject=${encodeURIComponent(
+			"Mirror Link"
+		)}&body=${encodeURIComponent(href)}`;
+		shareModalQr.src = buildQrUrl(href);
+		if (shareModalShare) {
+			const canShare = typeof navigator !== "undefined" && navigator.share;
+			shareModalShare.classList.toggle("hidden", !canShare);
+		}
+	}
+
+	function openShareModal() {
+		if (!isShareModalReady()) return;
+		shareModalMode = key ? "private" : "public";
+		shareModeSelect.value = shareModalMode;
+		updateShareModalLink();
+		setShareModalOpen(true);
+		window.setTimeout(() => {
+			try {
+				shareModeSelect.focus();
+			} catch {
+				// ignore
+			}
+		}, 0);
 	}
 
 	async function api(path, opts) {
@@ -6873,6 +6947,7 @@ self.onmessage = async (e) => {
 	function updateShareLink() {
 		shareHref = buildShareHref(room, key);
 		if (shareLink) shareLink.href = shareHref;
+		updateShareModalLink();
 	}
 
 	roomLabel.textContent = room;
@@ -7933,45 +8008,7 @@ self.onmessage = async (e) => {
 	}
 
 	copyLinkBtn.addEventListener("click", async () => {
-		let usePublic = false;
-		if (isModalReady()) {
-			const choice = await openModal({
-				title: "Link teilen",
-				message:
-					"Soll der Raum öffentlich (ohne Key) oder privat (mit Key) geteilt werden?",
-				okText: "Öffentlich",
-				cancelText: "Privat",
-			});
-			usePublic = Boolean(choice && choice.ok);
-		}
-		if (!usePublic && !key) {
-			pendingRoomBootstrapText = String(textarea.value || "");
-			key = randomKey();
-			location.hash = buildShareHash(room, key);
-			return;
-		}
-		const shareKey = usePublic ? "" : key;
-		const href = buildShareHref(room, shareKey) || location.href;
-		try {
-			await navigator.clipboard.writeText(href);
-			toast("Link copied.", "success");
-		} catch {
-			// Fallback: in-page selection (funktioniert ohne Clipboard API)
-			try {
-				const ta = document.createElement("textarea");
-				ta.value = href;
-				ta.setAttribute("readonly", "");
-				ta.style.position = "fixed";
-				ta.style.opacity = "0";
-				document.body.appendChild(ta);
-				ta.select();
-				document.execCommand("copy");
-				ta.remove();
-				toast("Link copied.", "success");
-			} catch {
-				toast("Copy not available.", "error");
-			}
-		}
+		openShareModal();
 	});
 
 	if (copyMirrorBtn && textarea) {
@@ -8189,6 +8226,57 @@ self.onmessage = async (e) => {
 			if (ok) setTableModalOpen(false);
 		});
 	}
+	if (shareModeSelect) {
+		shareModeSelect.addEventListener("change", () => {
+			shareModalMode = shareModeSelect.value === "public" ? "public" : "private";
+			if (shareModalMode === "private" && !key) {
+				pendingRoomBootstrapText = String(textarea.value || "");
+				key = randomKey();
+				location.hash = buildShareHash(room, key);
+			}
+			updateShareModalLink();
+		});
+	}
+	if (shareModalCopy) {
+		shareModalCopy.addEventListener("click", async () => {
+			const href = String(
+				shareModalLink && shareModalLink.value ? shareModalLink.value : ""
+			);
+			const ok = await copyTextToClipboard(href);
+			toast(ok ? "Link copied." : "Copy not available.", ok ? "success" : "error");
+		});
+	}
+	if (shareModalShare) {
+		shareModalShare.addEventListener("click", async () => {
+			const href = String(
+				shareModalLink && shareModalLink.value ? shareModalLink.value : ""
+			);
+			if (!href || !navigator.share) return;
+			try {
+				await navigator.share({
+					title: "Mirror",
+					text: "Mirror Link",
+					url: href,
+				});
+				toast("Shared.", "success");
+			} catch {
+				// ignore
+			}
+		});
+	}
+	if (shareModalClose) {
+		shareModalClose.addEventListener("click", () => setShareModalOpen(false));
+	}
+	if (shareModalBackdrop) {
+		shareModalBackdrop.addEventListener("click", () => setShareModalOpen(false));
+	}
+	window.addEventListener("keydown", (ev) => {
+		if (!shareModal || shareModal.classList.contains("hidden")) return;
+		if (ev && ev.key === "Escape") {
+			ev.preventDefault();
+			setShareModalOpen(false);
+		}
+	});
 	if (tableAddRowBtn) {
 		tableAddRowBtn.addEventListener("click", () => {
 			const cols = Math.max(1, tableEditorState.header.length || 1);
