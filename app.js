@@ -7561,9 +7561,9 @@ self.onmessage = async (e) => {
 	});
 	newRoomBtn.addEventListener("click", () => {
 		const nextRoom = randomRoom();
-		key = randomKey();
+		const nextKey = randomKey();
 		flushRoomTabSync();
-		location.hash = buildShareHash(nextRoom, key);
+		location.hash = buildShareHash(nextRoom, nextKey);
 	});
 
 	if (roomTabs) {
