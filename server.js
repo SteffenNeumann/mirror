@@ -19,7 +19,9 @@ const ROOT_DIR = process.env.ROOT_DIR || process.cwd();
 const INDEX_PATH = join(ROOT_DIR, "index.html");
 const DB_PATH =
 	process.env.MIRROR_DB_PATH || join(ROOT_DIR, "data", "mirror.sqlite");
-const UPLOADS_DIR = join(ROOT_DIR, "uploads");
+const UPLOADS_DIR = process.env.MIRROR_UPLOADS_DIR
+	? String(process.env.MIRROR_UPLOADS_DIR).trim()
+	: join(ROOT_DIR, "uploads");
 
 const SESSION_COOKIE = "mirror_ps";
 const MAGIC_LINK_TTL_MS = 1000 * 60 * 30; // 30 min
