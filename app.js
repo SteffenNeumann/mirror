@@ -7388,9 +7388,16 @@ self.onmessage = async (e) => {
 					if (msg.ciphertext && msg.iv) {
 						decryptForRoom(msg.ciphertext, msg.iv)
 							.then((plain) => {
-								if (!crdtHasSnapshot && typeof plain === "string") {
-									setCrdtText(plain);
+								if (typeof plain !== "string") return;
+								const payload = safeJsonParse(plain);
+								if (payload && typeof payload === "object") {
+									if (payload.update) applyCrdtUpdate(payload.update);
+									if (!payload.update && typeof payload.text === "string") {
+										setCrdtText(payload.text);
+									}
+									return;
 								}
+								if (!crdtHasSnapshot) setCrdtText(plain);
 							})
 							.catch(() => {
 								// ignore
