@@ -186,6 +186,7 @@
 		return `${base}-${Date.now().toString(36)}`;
 	}
 
+	const tabId = createClientId();
 	let clientId = createClientId();
 	const clientIdChannel =
 		typeof BroadcastChannel !== "undefined"
@@ -195,7 +196,7 @@
 	function announceClientId() {
 		if (!clientIdChannel) return;
 		try {
-			clientIdChannel.postMessage({ type: "client_id", clientId });
+			clientIdChannel.postMessage({ type: "client_id", clientId, sender: tabId });
 		} catch {
 			// ignore
 		}
@@ -205,6 +206,7 @@
 		clientIdChannel.addEventListener("message", (ev) => {
 			const data = ev && ev.data ? ev.data : null;
 			if (!data || data.type !== "client_id") return;
+			if (data.sender && data.sender === tabId) return;
 			if (data.clientId !== clientId) return;
 			clientId = createClientId();
 			announceClientId();
