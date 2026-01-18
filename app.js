@@ -22,6 +22,7 @@
 	const presenceList = document.getElementById("presenceList");
 	const typingIndicator = document.getElementById("typingIndicator");
 	const crdtStatus = document.getElementById("crdtStatus");
+	const toggleCrdtMarksBtn = document.getElementById("toggleCrdtMarks");
 	const toastRoot = document.getElementById("toastRoot");
 	const modalRoot = document.getElementById("modalRoot");
 	const modalBackdrop = document.querySelector('[data-role="modalBackdrop"]');
@@ -901,7 +902,9 @@
 	let psNoteHistoryIndex = -1;
 	let psNoteHistorySkip = false;
 	let editorMaskDisabled = false;
+	let crdtMarksEnabled = true;
 	const EDITOR_MASK_DISABLED_KEY = "mirror_mask_disabled";
+	const CRDT_MARKS_DISABLED_KEY = "mirror_crdt_marks_disabled";
 
 	function getTextareaCaretCoords(el, pos) {
 		if (!el) return { left: 0, top: 0, height: 0 };
@@ -3720,6 +3723,52 @@
 				);
 			}
 		}
+	}
+
+	function loadCrdtMarksPreference() {
+		try {
+			const raw = String(localStorage.getItem(CRDT_MARKS_DISABLED_KEY) || "");
+			crdtMarksEnabled = raw !== "1";
+		} catch {
+			crdtMarksEnabled = true;
+		}
+	}
+
+	function saveCrdtMarksPreference() {
+		try {
+			localStorage.setItem(
+				CRDT_MARKS_DISABLED_KEY,
+				crdtMarksEnabled ? "0" : "1"
+			);
+		} catch {
+			// ignore
+		}
+	}
+
+	function setCrdtMarksToggleUi() {
+		if (!toggleCrdtMarksBtn) return;
+		const enabled = crdtMarksEnabled;
+		toggleCrdtMarksBtn.setAttribute(
+			"aria-pressed",
+			enabled ? "true" : "false"
+		);
+		toggleCrdtMarksBtn.setAttribute(
+			"title",
+			enabled ? "CRDT-Markierung ausblenden" : "CRDT-Markierung einblenden"
+		);
+		toggleCrdtMarksBtn.setAttribute(
+			"aria-label",
+			enabled ? "CRDT-Markierung ausblenden" : "CRDT-Markierung einblenden"
+		);
+		toggleCrdtMarksBtn.classList.toggle("text-fuchsia-200", enabled);
+		toggleCrdtMarksBtn.classList.toggle("text-slate-400", !enabled);
+	}
+
+	function toggleCrdtMarks() {
+		crdtMarksEnabled = !crdtMarksEnabled;
+		saveCrdtMarksPreference();
+		setCrdtMarksToggleUi();
+		updateAttributionOverlay();
 	}
 
 	function hasPasswordTokens(text) {
@@ -7183,6 +7232,14 @@ self.onmessage = async (e) => {
 
 	function updateAttributionOverlay() {
 		if (!attributionOverlay || !attributionOverlayContent) return;
+		if (!crdtMarksEnabled) {
+			attributionOverlay.classList.add("hidden");
+			attributionOverlayContent.textContent = "";
+			if (textarea && textarea.classList) {
+				textarea.classList.remove("attribution-active");
+			}
+			return;
+		}
 		if (!crdtReady || !ytext || presenceState.size <= 1) {
 			attributionOverlay.classList.add("hidden");
 			attributionOverlayContent.textContent = "";
@@ -8329,6 +8386,11 @@ self.onmessage = async (e) => {
 			setHeaderCollapsed(headerCollapsed);
 		});
 	}
+	if (toggleCrdtMarksBtn) {
+		toggleCrdtMarksBtn.addEventListener("click", () => {
+			toggleCrdtMarks();
+		});
+	}
 
 	// Initial
 	setStatus("offline", "Offline");
@@ -8348,6 +8410,8 @@ self.onmessage = async (e) => {
 	loadAiApiConfig();
 	loadEditorMaskDisabled();
 	setEditorMaskToggleUi();
+	loadCrdtMarksPreference();
+	setCrdtMarksToggleUi();
 	updatePasswordMaskOverlay();
 
 	// Personal Space wiring

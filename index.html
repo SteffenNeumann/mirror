@@ -820,7 +820,29 @@
 								class="mt-1 flex flex-col items-end gap-1 text-[11px] text-slate-400"
 								data-header-detail="true">
 								<div id="presenceSummary">0 Nutzer online</div>
-								<div id="crdtStatus" class="hidden text-[10px] text-slate-500"></div>
+								<div class="flex items-center justify-end gap-2">
+									<div id="crdtStatus" class="hidden text-[10px] text-slate-500"></div>
+									<button
+										id="toggleCrdtMarks"
+										type="button"
+										class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-400 transition hover:bg-white/5 active:bg-white/10"
+										title="CRDT-Markierung ausblenden"
+										aria-label="CRDT-Markierung ausblenden"
+										aria-pressed="true">
+										<svg
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											class="h-3.5 w-3.5">
+											<path d="M12 2l8 4-8 4-8-4 8-4z" />
+											<path d="M4 10l8 4 8-4" />
+											<path d="M4 14l8 4 8-4" />
+										</svg>
+									</button>
+								</div>
 								<div
 									id="presenceList"
 									class="flex flex-wrap justify-end gap-1"></div>
