@@ -858,7 +858,16 @@
 			setUploadOpenLinkDisabled(true);
 			return;
 		}
-		uploadLinkPreview.textContent = buildUploadMarkdown(safeUrl, file);
+		const labelRaw = file ? String(file.name || "") : "";
+		const label = labelRaw.replace(/\s+/g, " ").trim() || safeUrl;
+		uploadLinkPreview.innerHTML = "";
+		const link = document.createElement("a");
+		link.href = safeUrl;
+		link.textContent = label;
+		link.className = "underline text-slate-100";
+		link.target = "_blank";
+		link.rel = "noreferrer noopener";
+		uploadLinkPreview.appendChild(link);
 		setUploadOpenLinkDisabled(false);
 	}
 
@@ -4543,7 +4552,8 @@
 			return `<pre class="mt-2 whitespace-pre-wrap break-words text-sm text-slate-100">${body}</pre>`;
 		}
 		let src = text;
-		if (kind === "code" && !/```/.test(text)) {
+		const hasMdLink = /!?\[[^\]]+\]\([^)]+\)/.test(text);
+		if (kind === "code" && !/```/.test(text) && !hasMdLink) {
 			const langTag = tags.find((t) =>
 				/^lang-[a-z0-9_+-]{1,32}$/i.test(String(t || ""))
 			);

@@ -1085,14 +1085,8 @@ const server = http.createServer((req, res) => {
 			res.end("Invalid filename");
 			return;
 		}
-		const safeName = sanitizeFilename(decoded);
-		if (!safeName || safeName !== decoded) {
-			res.writeHead(400, { "Content-Type": "text/plain; charset=utf-8" });
-			res.end("Invalid filename");
-			return;
-		}
 		try {
-			const targetPath = join(UPLOADS_DIR, safeName);
+			const targetPath = join(UPLOADS_DIR, decoded);
 			const stat = statSync(targetPath);
 			if (!stat.isFile()) throw new Error("not a file");
 			const buf = readFileSync(targetPath);
