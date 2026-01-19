@@ -1163,6 +1163,7 @@ const server = http.createServer((req, res) => {
 			res.writeHead(200, {
 				"Content-Type": mimeTypeForPath(targetPath),
 				"Cache-Control": "no-store",
+				"Access-Control-Allow-Origin": "*",
 			});
 			res.end(buf);
 		} catch {
@@ -2350,10 +2351,14 @@ const server = http.createServer((req, res) => {
 		}
 		if (!stat || !stat.isFile()) throw new Error("not a file");
 		const buf = readFileSync(targetPath);
-		res.writeHead(200, {
+		const headers = {
 			"Content-Type": mimeTypeForPath(targetPath),
 			"Cache-Control": "no-store",
-		});
+		};
+		if (relPath.startsWith("vendor/pdfjs/")) {
+			headers["Access-Control-Allow-Origin"] = "*";
+		}
+		res.writeHead(200, headers);
 		res.end(buf);
 	} catch {
 		res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
