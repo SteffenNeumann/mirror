@@ -6789,7 +6789,7 @@ self.onmessage = async (e) => {
 	const RECENT_KEY = "mirror_recent_rooms";
 	const FAVORITES_KEY = "mirror_favorites_v1";
 	const ROOM_TABS_KEY = "mirror_room_tabs_v1";
-	const MAX_ROOM_TABS = 10;
+	const MAX_ROOM_TABS = 5;
 	let pendingRoomBootstrapText = "";
 
 	function normalizeFavoriteEntry(it) {
@@ -7163,6 +7163,7 @@ self.onmessage = async (e) => {
 			roomTabs.innerHTML = "";
 			return;
 		}
+		const canClose = tabs.length > 1;
 		const html = tabs
 			.map((t) => {
 				const isActive = t.room === room && t.key === key;
@@ -7179,6 +7180,18 @@ self.onmessage = async (e) => {
 				const collab = isCollab
 					? '<span class="ml-1 inline-flex h-2 w-2 rounded-full bg-emerald-400/80 shadow-[0_0_6px_rgba(16,185,129,0.6)]" title="Collaboration aktiv" aria-label="Collaboration aktiv"></span>'
 					: "";
+				const closeBtn = canClose
+					? `
+							<span
+								data-tab-close
+								data-room="${escapeAttr(t.room)}"
+								data-key="${escapeAttr(t.key)}"
+								class="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-md text-[11px] text-slate-400 transition hover:bg-white/10 hover:text-slate-100"
+								title="Tab schließen"
+								aria-label="Tab schließen">
+								<span aria-hidden="true">×</span>
+							</span>`
+					: "";
 				return `
 					<button
 						type="button"
@@ -7189,15 +7202,7 @@ self.onmessage = async (e) => {
 						<span class="max-w-[140px] truncate">${escapeHtml(t.room)}</span>
 						${badge}
 						${collab}
-						<span
-							data-tab-close
-							data-room="${escapeAttr(t.room)}"
-							data-key="${escapeAttr(t.key)}"
-							class="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-md text-[11px] text-slate-400 transition hover:bg-white/10 hover:text-slate-100"
-							title="Tab schließen"
-							aria-label="Tab schließen">
-							<span aria-hidden="true">×</span>
-						</span>
+						${closeBtn}
 					</button>`;
 			})
 			.join("");
@@ -7209,6 +7214,7 @@ self.onmessage = async (e) => {
 		const nextKey = normalizeKey(keyName);
 		if (!nextRoom) return;
 		const tabs = loadRoomTabs();
+		if (tabs.length <= 1) return;
 		const idx = tabs.findIndex(
 			(t) => t.room === nextRoom && t.key === nextKey
 		);
