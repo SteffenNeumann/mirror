@@ -234,6 +234,36 @@
 		"https://pyodide-cdn2.iodide.io/v0.25.1/full/",
 	].filter(Boolean);
 
+	function tryRenderSharedNote() {
+		const sp = new URLSearchParams(location.search || "");
+		if (sp.get("shareNote") !== "1") return false;
+		const title = String(sp.get("title") || "Shared note");
+		const rawHash = String(location.hash || "");
+		const hash = rawHash.startsWith("#") ? rawHash.slice(1) : rawHash;
+		const hsp = new URLSearchParams(hash);
+		const data = String(hsp.get("data") || "");
+		let text = "";
+		if (data) {
+			try {
+				const bytes = base64UrlDecode(data);
+				text = textDecoder.decode(bytes);
+			} catch {
+				text = "";
+			}
+		}
+		const html = buildNoteShareHtmlDocument(text, title);
+		try {
+			document.open();
+			document.write(html);
+			document.close();
+		} catch {
+			// ignore
+		}
+		return true;
+	}
+
+	if (tryRenderSharedNote()) return;
+
 	let pdfJsPreloadPromise = null;
 	function ensurePdfJsLoaded() {
 		if (pdfJsPreloadPromise) return pdfJsPreloadPromise;
@@ -873,8 +903,9 @@
 	}
 
 	let noteSharePayload = null;
-	let noteShareModalBlobUrl = "";
+	let noteShareModalShareUrl = "";
 	const NOTE_SHARE_QR_MAX_CHARS = 900;
+	const NOTE_SHARE_URL_MAX_CHARS = 1800;
 	function isNoteShareModalReady() {
 		return (
 			noteShareModal &&
@@ -888,14 +919,8 @@
 		);
 	}
 
-	function revokeNoteShareBlobUrl() {
-		if (!noteShareModalBlobUrl) return;
-		try {
-			URL.revokeObjectURL(noteShareModalBlobUrl);
-		} catch {
-			// ignore
-		}
-		noteShareModalBlobUrl = "";
+	function revokeNoteShareShareUrl() {
+		noteShareModalShareUrl = "";
 	}
 
 	function buildNoteShareHtmlDocument(text, title) {
@@ -926,7 +951,7 @@
 		noteShareModal.classList.toggle("hidden", !open);
 		noteShareModal.classList.toggle("flex", open);
 		noteShareModal.setAttribute("aria-hidden", open ? "false" : "true");
-		if (!open) revokeNoteShareBlobUrl();
+		if (!open) revokeNoteShareShareUrl();
 		try {
 			document.body.style.overflow = open ? "hidden" : "";
 		} catch {
@@ -959,6 +984,20 @@
 		};
 	}
 
+	function buildNoteShareUrl(payload) {
+		const text = String(payload && payload.text ? payload.text : "");
+		if (!text) return "";
+		const title = String(payload && payload.title ? payload.title : "").trim();
+		const data = base64UrlEncode(textEncoder.encode(text));
+		if (!data) return "";
+		const sp = new URLSearchParams();
+		sp.set("shareNote", "1");
+		if (title) sp.set("title", title);
+		const hash = new URLSearchParams();
+		hash.set("data", data);
+		return `${location.origin}${location.pathname}?${sp.toString()}#${hash.toString()}`;
+	}
+
 	function buildNoteShareQrPayload(payload) {
 		const raw = String(payload && payload.text ? payload.text : "");
 		if (!raw) return { text: "", truncated: false };
@@ -966,8 +1005,8 @@
 			return { text: raw, truncated: false };
 		}
 		const title = String(payload && payload.title ? payload.title : "").trim();
-		const prefix = title ? `Titel: ${title}\n\n` : "";
-		const suffix = "\n\n… (gekürzt für QR)";
+		const prefix = title ? `Title: ${title}\n\n` : "";
+		const suffix = "\n\n… (truncated for QR)";
 		const maxBody = Math.max(
 			0,
 			NOTE_SHARE_QR_MAX_CHARS - prefix.length - suffix.length
@@ -982,41 +1021,38 @@
 	function updateNoteShareModal(payload) {
 		if (!isNoteShareModalReady() || !payload) return;
 		noteSharePayload = payload;
-		noteShareModalTitle.textContent = "Notiz teilen";
+		noteShareModalTitle.textContent = "Share note";
 		const baseMeta =
 			payload.count && payload.count > 1
-				? `${payload.count} Notizen ausgewählt.`
+				? `${payload.count} notes selected.`
 				: payload.title
-				? `„${payload.title}“ wird geteilt.`
-				: "Notiz teilen.";
+				? `“${payload.title}” is being shared.`
+				: "Share note.";
 		noteShareModalText.value = String(payload.text || "");
-		revokeNoteShareBlobUrl();
-		let shareUrl = "";
-		try {
-			const html = buildNoteShareHtmlDocument(
-				String(payload.text || ""),
-				String(payload.title || "Mirror Notiz")
-			);
-			const blob = new Blob([html], { type: "text/html;charset=utf-8" });
-			noteShareModalBlobUrl = URL.createObjectURL(blob);
-			shareUrl = noteShareModalBlobUrl;
-		} catch {
-			shareUrl = "";
+		revokeNoteShareShareUrl();
+		const shareUrl = buildNoteShareUrl(payload);
+		if (shareUrl && shareUrl.length <= NOTE_SHARE_URL_MAX_CHARS) {
+			noteShareModalShareUrl = shareUrl;
 		}
-		noteShareModalOpen.href = shareUrl || "#";
-		const subject = payload.title ? `Mirror Notiz: ${payload.title}` : "Mirror Notiz";
-		const mailBody = shareUrl
-			? `HTML-Link:\n${shareUrl}\n\nText:\n${String(payload.text || "")}`
+		noteShareModalOpen.href = noteShareModalShareUrl || "#";
+		const subject = payload.title
+			? `Mirror note: ${payload.title}`
+			: "Mirror note";
+		const mailBody = noteShareModalShareUrl
+			? `HTML link:\n${noteShareModalShareUrl}\n\nText:\n${String(payload.text || "")}`
 			: String(payload.text || "");
 		noteShareModalMail.href = `mailto:?subject=${encodeURIComponent(
 			subject
 		)}&body=${encodeURIComponent(mailBody)}`;
-		const qrPayload = shareUrl
-			? { text: shareUrl, truncated: false }
+		const qrPayload = noteShareModalShareUrl
+			? { text: noteShareModalShareUrl, truncated: false, reason: "" }
 			: buildNoteShareQrPayload(payload);
+		const metaSuffix = noteShareModalShareUrl
+			? ""
+			: " Share link too long for QR.";
 		noteShareModalMeta.textContent = qrPayload.truncated
-			? `${baseMeta} QR wurde gekürzt.`
-			: baseMeta;
+			? `${baseMeta} QR was truncated.${metaSuffix}`
+			: `${baseMeta}${metaSuffix}`;
 		noteShareModalQr.src = buildQrUrl(String(qrPayload.text || ""));
 		if (noteShareModalShare) {
 			const canShare = typeof navigator !== "undefined" && navigator.share;
@@ -1028,7 +1064,7 @@
 		if (!isNoteShareModalReady()) return;
 		const payload = buildNoteSharePayloadFromIds(noteIds);
 		if (!payload || !String(payload.text || "").trim()) {
-			toast("Keine Notiz zum Teilen.", "info");
+			toast("No note to share.", "info");
 			return;
 		}
 		updateNoteShareModal(payload);
@@ -9573,22 +9609,22 @@ self.onmessage = async (e) => {
 		noteShareModalCopy.addEventListener("click", async () => {
 			const text = String(noteSharePayload && noteSharePayload.text ? noteSharePayload.text : "");
 			const ok = await copyTextToClipboard(text);
-			toast(ok ? "Notiz kopiert." : "Kopieren nicht verfügbar.", ok ? "success" : "error");
+			toast(ok ? "Note copied." : "Copy not available.", ok ? "success" : "error");
 		});
 	}
 	if (noteShareModalShare) {
 		noteShareModalShare.addEventListener("click", async () => {
 			const text = String(noteSharePayload && noteSharePayload.text ? noteSharePayload.text : "");
-			const title = String(noteSharePayload && noteSharePayload.title ? noteSharePayload.title : "Mirror Notiz");
+			const title = String(noteSharePayload && noteSharePayload.title ? noteSharePayload.title : "Mirror note");
 			if (!text || !navigator.share) return;
 			try {
-				const url = noteShareModalBlobUrl || undefined;
+				const url = noteShareModalShareUrl || undefined;
 				await navigator.share({
 					title,
 					text,
 					url,
 				});
-				toast("Geteilt.", "success");
+				toast("Shared.", "success");
 			} catch {
 				// ignore
 			}
