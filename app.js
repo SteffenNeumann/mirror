@@ -7012,6 +7012,10 @@ self.onmessage = async (e) => {
 			const updated = { ...tabs[idx], text };
 			tabs.splice(idx, 1, updated);
 		} else {
+			if (tabs.length >= MAX_ROOM_TABS) {
+				showRoomTabLimitModal();
+				return;
+			}
 			tabs.push({ room: nextRoom, key: nextKey, lastUsed: Date.now(), text });
 		}
 		saveRoomTabs(tabs);
