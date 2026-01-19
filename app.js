@@ -9140,7 +9140,9 @@ self.onmessage = async (e) => {
 		if (textarea && !suppressRestore) {
 			updateRoomTabTextLocal(room, key, textarea.value);
 		}
-		flushRoomTabSync();
+		if (!suppressRestore) {
+			flushRoomTabSync();
+		}
 		room = nextRoom;
 		key = nextKey;
 		resetE2eeKeyCache();
