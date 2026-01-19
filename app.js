@@ -874,6 +874,7 @@
 
 	let noteSharePayload = null;
 	let noteShareModalBlobUrl = "";
+	const NOTE_SHARE_QR_MAX_CHARS = 900;
 	function isNoteShareModalReady() {
 		return (
 			noteShareModal &&
@@ -935,11 +936,31 @@
 		};
 	}
 
+	function buildNoteShareQrPayload(payload) {
+		const raw = String(payload && payload.text ? payload.text : "");
+		if (!raw) return { text: "", truncated: false };
+		if (raw.length <= NOTE_SHARE_QR_MAX_CHARS) {
+			return { text: raw, truncated: false };
+		}
+		const title = String(payload && payload.title ? payload.title : "").trim();
+		const prefix = title ? `Titel: ${title}\n\n` : "";
+		const suffix = "\n\n… (gekürzt für QR)";
+		const maxBody = Math.max(
+			0,
+			NOTE_SHARE_QR_MAX_CHARS - prefix.length - suffix.length
+		);
+		const body = maxBody > 0 ? raw.slice(0, maxBody) : "";
+		return {
+			text: `${prefix}${body}${suffix}`.trim(),
+			truncated: true,
+		};
+	}
+
 	function updateNoteShareModal(payload) {
 		if (!isNoteShareModalReady() || !payload) return;
 		noteSharePayload = payload;
 		noteShareModalTitle.textContent = "Notiz teilen";
-		noteShareModalMeta.textContent =
+		const baseMeta =
 			payload.count && payload.count > 1
 				? `${payload.count} Notizen ausgewählt.`
 				: payload.title
@@ -950,7 +971,11 @@
 		noteShareModalMail.href = `mailto:?subject=${encodeURIComponent(
 			subject
 		)}&body=${encodeURIComponent(String(payload.text || ""))}`;
-		noteShareModalQr.src = buildQrUrl(String(payload.text || ""));
+		const qrPayload = buildNoteShareQrPayload(payload);
+		noteShareModalMeta.textContent = qrPayload.truncated
+			? `${baseMeta} QR wurde gekürzt.`
+			: baseMeta;
+		noteShareModalQr.src = buildQrUrl(String(qrPayload.text || ""));
 		if (noteShareModalShare) {
 			const canShare = typeof navigator !== "undefined" && navigator.share;
 			noteShareModalShare.classList.toggle("hidden", !canShare);
