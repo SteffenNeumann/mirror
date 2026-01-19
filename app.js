@@ -5499,6 +5499,55 @@
 		return null;
 	}
 
+	function clearPsEditingNoteState(opts) {
+		psEditingNoteId = "";
+		psEditingNoteKind = "";
+		psEditingNoteTags = [];
+		psEditingNoteTagsOverridden = false;
+		psEditingNotePinned = false;
+		syncPsEditorTagsInput(true);
+		updatePsEditingTagsHint();
+		if (psMainHint && !(opts && opts.keepHint)) {
+			psMainHint.classList.add("hidden");
+		}
+		updateEditorMetaYaml();
+	}
+
+	function syncPsEditingNoteFromEditorText(text, opts) {
+		if (!psState || !psState.authed) return false;
+		const target = normalizeNoteTextForCompare(text);
+		if (!target) {
+			if (opts && opts.clear) clearPsEditingNoteState();
+			return false;
+		}
+		const note = findNoteByText(target);
+		if (!note || !note.id) {
+			if (opts && opts.clear) clearPsEditingNoteState();
+			return false;
+		}
+		psEditingNoteId = String(note.id || "");
+		psEditingNoteKind = String(note.kind || "");
+		const rawTags = Array.isArray(note.tags) ? note.tags : [];
+		psEditingNoteTagsOverridden = rawTags.some(
+			(t) => String(t || "") === PS_MANUAL_TAGS_MARKER
+		);
+		psEditingNotePinned = rawTags.some(
+			(t) => String(t || "") === PS_PINNED_TAG
+		);
+		psEditingNoteTags = stripPinnedTag(stripManualTagsMarker(rawTags));
+		syncPsEditorTagsInput(true);
+		updatePsEditingTagsHint();
+		psAutoSaveLastSavedNoteId = psEditingNoteId;
+		psAutoSaveLastSavedText = String(text || "");
+		if (psMainHint) {
+			psMainHint.classList.remove("hidden");
+			psMainHint.textContent = "Editing active";
+		}
+		updateEditorMetaYaml();
+		if (opts && opts.updateList) applyPersonalSpaceFiltersAndRender();
+		return true;
+	}
+
 	function applyNoteToEditor(note, notesForList, opts) {
 		if (!note || !textarea) return;
 		psEditingNoteId = String(note.id || "");
@@ -9095,6 +9144,10 @@ self.onmessage = async (e) => {
 			updateCodeLangOverlay();
 			updateTableMenuVisibility();
 			updateSelectionMenu();
+			syncPsEditingNoteFromEditorText(nextText, {
+				clear: true,
+				updateList: true,
+			});
 		}
 		if (!key) toast("Public room (no key).", "info");
 		setTyping(false);
@@ -9365,7 +9418,10 @@ self.onmessage = async (e) => {
 				psEditingNoteId = String(saved.id);
 				psEditingNoteKind = String(saved.kind || "");
 				const notes = Array.isArray(psState.notes) ? psState.notes : [];
-				psState.notes = [saved, ...notes];
+				const nextNotes = notes.filter(
+					(n) => String(n && n.id ? n.id : "") !== psEditingNoteId
+				);
+				psState.notes = [saved, ...nextNotes];
 				applyPersonalSpaceFiltersAndRender();
 				syncPsEditingNoteTagsFromState();
 				updateEditorMetaYaml();
