@@ -3818,6 +3818,9 @@
 		);
 		const next = psMetaBasePaddingTop + height + 4;
 		textarea.style.paddingTop = `${Math.round(next)}px`;
+		if (mirrorMask) mirrorMask.style.paddingTop = `${Math.round(next)}px`;
+		if (attributionOverlay)
+			attributionOverlay.style.paddingTop = `${Math.round(next)}px`;
 	}
 
 	function resetEditorMetaPadding() {
@@ -3831,6 +3834,10 @@
 			}
 		}
 		textarea.style.paddingTop = `${Math.round(psMetaBasePaddingTop)}px`;
+		if (mirrorMask)
+			mirrorMask.style.paddingTop = `${Math.round(psMetaBasePaddingTop)}px`;
+		if (attributionOverlay)
+			attributionOverlay.style.paddingTop = `${Math.round(psMetaBasePaddingTop)}px`;
 	}
 
 	function cleanNoteTitleLine(line) {
