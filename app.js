@@ -7318,6 +7318,7 @@ self.onmessage = async (e) => {
 		uploadsManageList.innerHTML = list
 			.map((item) => {
 				const name = String(item && item.name ? item.name : "").trim();
+				const displayName = name.replace(/^[^-]+-[^-]+-/, "") || name;
 				const url = String(item && item.url ? item.url : "").trim();
 				const size = formatBytes(item && item.size ? item.size : 0);
 				const updated = formatUploadUpdatedAt(item && item.updatedAt);
@@ -7332,7 +7333,7 @@ self.onmessage = async (e) => {
 										target="_blank"
 										rel="noreferrer"
 										class="font-medium text-fuchsia-200 hover:text-fuchsia-100">
-										${escapeHtml(name)}
+										${escapeHtml(displayName)}
 									</a>
 									<span class="text-[11px] text-slate-400">${escapeHtml(
 										metaParts
