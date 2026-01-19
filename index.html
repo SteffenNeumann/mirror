@@ -227,6 +227,12 @@
 				transition: opacity 160ms ease, transform 160ms ease;
 				transform: translateY(-1px);
 			}
+			.ps-note-share {
+				opacity: 0;
+				pointer-events: none;
+				transition: opacity 160ms ease, transform 160ms ease;
+				transform: translateY(-1px);
+			}
 			.ps-note-excerpt {
 				overflow: hidden;
 				display: -webkit-box;
@@ -245,6 +251,12 @@
 				pointer-events: auto;
 				transform: translateY(0);
 			}
+			.group:hover .ps-note-share,
+			.group:focus-within .ps-note-share {
+				opacity: 1;
+				pointer-events: auto;
+				transform: translateY(0);
+			}
 			@media (hover: none), (pointer: coarse) {
 				.ps-note-delete {
 					opacity: 1 !important;
@@ -252,6 +264,11 @@
 					transform: none !important;
 				}
 				.ps-note-pin {
+					opacity: 1 !important;
+					pointer-events: auto !important;
+					transform: none !important;
+				}
+				.ps-note-share {
 					opacity: 1 !important;
 					pointer-events: auto !important;
 					transform: none !important;
@@ -2043,6 +2060,101 @@
 		</div>
 
 		<div
+			id="noteShareModal"
+			class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+			aria-hidden="true">
+			<div
+				data-role="noteShareModalBackdrop"
+				class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"></div>
+			<div
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby="noteShareModalTitle"
+				class="relative w-full max-w-2xl overflow-hidden rounded-2xl border border-white/10 bg-slate-950/70 shadow-soft backdrop-blur">
+				<div class="p-5">
+					<div class="flex items-start justify-between gap-3">
+						<div>
+							<h3
+								id="noteShareModalTitle"
+								class="text-base font-semibold text-slate-100">
+								Notiz teilen
+							</h3>
+							<p id="noteShareModalMeta" class="mt-1 text-xs text-slate-400">
+								Teile die Notiz per QR, Mail oder Zwischenablage.
+							</p>
+						</div>
+						<button
+							id="noteShareModalClose"
+							type="button"
+							class="rounded-lg border border-white/10 bg-transparent px-2 py-1 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+							aria-label="Close">
+							Esc
+						</button>
+					</div>
+
+					<div class="mt-4 grid gap-4">
+						<div>
+							<label for="noteShareModalText" class="text-xs text-slate-400">Inhalt</label>
+							<div class="mt-1 flex flex-wrap items-stretch gap-2">
+								<textarea
+									id="noteShareModalText"
+									rows="6"
+									readonly
+									class="min-w-0 flex-1 rounded-lg border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-100 shadow-inner outline-none"></textarea>
+								<button
+									id="noteShareModalCopy"
+									type="button"
+									class="self-start rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-slate-100 transition hover:bg-white/15 active:bg-white/20">
+									In Zwischenablage
+								</button>
+							</div>
+						</div>
+
+						<div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+							<div
+								class="rounded-xl border border-white/10 bg-white/5 p-3">
+								<div class="text-xs text-slate-400">QR-Code</div>
+								<div
+									class="mt-2 flex items-center justify-center rounded-lg bg-slate-950/60 p-3">
+									<img
+										id="noteShareModalQr"
+										alt="QR Code"
+										class="h-40 w-40 rounded-md bg-white" />
+								</div>
+							</div>
+							<div
+								class="rounded-xl border border-white/10 bg-white/5 p-3">
+								<div class="text-xs text-slate-400">Optionen</div>
+								<div class="mt-2 grid gap-2">
+									<button
+										id="noteShareModalShare"
+										type="button"
+										class="hidden w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-100 transition hover:bg-white/5 active:bg-white/10">
+										System teilen
+									</button>
+									<a
+										id="noteShareModalMail"
+										href="#"
+										class="w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-100 transition hover:bg-white/5 active:bg-white/10">
+										Per E-Mail
+									</a>
+									<a
+										id="noteShareModalOpen"
+										href="#"
+										target="_blank"
+										rel="noopener"
+										class="w-full rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-100 transition hover:bg-white/5 active:bg-white/10">
+										Im neuen Tab öffnen
+									</a>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div
 			id="psContextMenu"
 			class="hidden fixed z-[99999] min-w-[180px] rounded-xl border border-white/10 bg-slate-950/90 p-1 text-xs text-slate-200 shadow-soft backdrop-blur">
 			<button
@@ -2069,6 +2181,12 @@
 				type="button"
 				class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-white/5">
 				<span>Tags ändern</span>
+			</button>
+			<button
+				id="psContextShare"
+				type="button"
+				class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-white/5">
+				<span>Teilen</span>
 			</button>
 			<button
 				id="psContextDelete"

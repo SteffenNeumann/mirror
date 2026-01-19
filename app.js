@@ -45,6 +45,19 @@
 	const shareModalShare = document.getElementById("shareModalShare");
 	const shareModalMail = document.getElementById("shareModalMail");
 	const shareModalOpen = document.getElementById("shareModalOpen");
+	const noteShareModal = document.getElementById("noteShareModal");
+	const noteShareModalBackdrop = document.querySelector(
+		'[data-role="noteShareModalBackdrop"]'
+	);
+	const noteShareModalClose = document.getElementById("noteShareModalClose");
+	const noteShareModalTitle = document.getElementById("noteShareModalTitle");
+	const noteShareModalMeta = document.getElementById("noteShareModalMeta");
+	const noteShareModalText = document.getElementById("noteShareModalText");
+	const noteShareModalCopy = document.getElementById("noteShareModalCopy");
+	const noteShareModalQr = document.getElementById("noteShareModalQr");
+	const noteShareModalShare = document.getElementById("noteShareModalShare");
+	const noteShareModalMail = document.getElementById("noteShareModalMail");
+	const noteShareModalOpen = document.getElementById("noteShareModalOpen");
 	const openUploadModalBtn = document.getElementById("openUploadModal");
 	const uploadModal = document.getElementById("uploadModal");
 	const uploadModalBackdrop = document.querySelector(
@@ -167,6 +180,7 @@
 	const psContextSelectAll = document.getElementById("psContextSelectAll");
 	const psContextClear = document.getElementById("psContextClear");
 	const psContextTags = document.getElementById("psContextTags");
+	const psContextShare = document.getElementById("psContextShare");
 	const psContextDelete = document.getElementById("psContextDelete");
 	const settingsRoot = document.getElementById("settingsRoot");
 	const settingsBackdrop = document.getElementById("settingsBackdrop");
@@ -852,6 +866,119 @@
 		window.setTimeout(() => {
 			try {
 				shareModeSelect.focus();
+			} catch {
+				// ignore
+			}
+		}, 0);
+	}
+
+	let noteSharePayload = null;
+	let noteShareModalBlobUrl = "";
+	function isNoteShareModalReady() {
+		return (
+			noteShareModal &&
+			noteShareModalTitle &&
+			noteShareModalMeta &&
+			noteShareModalText &&
+			noteShareModalCopy &&
+			noteShareModalQr &&
+			noteShareModalMail &&
+			noteShareModalOpen
+		);
+	}
+
+	function revokeNoteShareBlobUrl() {
+		if (!noteShareModalBlobUrl) return;
+		try {
+			URL.revokeObjectURL(noteShareModalBlobUrl);
+		} catch {
+			// ignore
+		}
+		noteShareModalBlobUrl = "";
+	}
+
+	function setNoteShareModalOpen(open) {
+		if (!noteShareModal || !noteShareModal.classList) return;
+		noteShareModal.classList.toggle("hidden", !open);
+		noteShareModal.classList.toggle("flex", open);
+		noteShareModal.setAttribute("aria-hidden", open ? "false" : "true");
+		if (!open) revokeNoteShareBlobUrl();
+		try {
+			document.body.style.overflow = open ? "hidden" : "";
+		} catch {
+			// ignore
+		}
+	}
+
+	function buildNoteSharePayloadFromIds(noteIds) {
+		const ids = Array.isArray(noteIds) ? noteIds : [];
+		const notes = ids
+			.map((id) => findNoteById(id))
+			.filter((n) => n && n.id);
+		if (!notes.length) return null;
+		if (notes.length === 1) {
+			const note = notes[0];
+			const text = String(note.text || "");
+			const title = getNoteTitle(text);
+			return { title, text, count: 1 };
+		}
+		const blocks = notes.map((note, idx) => {
+			const text = String(note.text || "").trim();
+			if (text) return text;
+			const fallbackTitle = getNoteTitle(String(note.text || ""));
+			return fallbackTitle ? `# ${fallbackTitle}` : `# Note ${idx + 1}`;
+		});
+		return {
+			title: `Mirror Notes (${notes.length})`,
+			text: blocks.join("\n\n---\n\n"),
+			count: notes.length,
+		};
+	}
+
+	function updateNoteShareModal(payload) {
+		if (!isNoteShareModalReady() || !payload) return;
+		noteSharePayload = payload;
+		noteShareModalTitle.textContent = "Notiz teilen";
+		noteShareModalMeta.textContent =
+			payload.count && payload.count > 1
+				? `${payload.count} Notizen ausgewählt.`
+				: payload.title
+				? `„${payload.title}“ wird geteilt.`
+				: "Notiz teilen.";
+		noteShareModalText.value = String(payload.text || "");
+		const subject = payload.title ? `Mirror Notiz: ${payload.title}` : "Mirror Notiz";
+		noteShareModalMail.href = `mailto:?subject=${encodeURIComponent(
+			subject
+		)}&body=${encodeURIComponent(String(payload.text || ""))}`;
+		noteShareModalQr.src = buildQrUrl(String(payload.text || ""));
+		if (noteShareModalShare) {
+			const canShare = typeof navigator !== "undefined" && navigator.share;
+			noteShareModalShare.classList.toggle("hidden", !canShare);
+		}
+		revokeNoteShareBlobUrl();
+		try {
+			const blob = new Blob([String(payload.text || "")], {
+				type: "text/plain;charset=utf-8",
+			});
+			noteShareModalBlobUrl = URL.createObjectURL(blob);
+			noteShareModalOpen.href = noteShareModalBlobUrl;
+		} catch {
+			noteShareModalOpen.href = "#";
+		}
+	}
+
+	function openNoteShareModal(noteIds) {
+		if (!isNoteShareModalReady()) return;
+		const payload = buildNoteSharePayloadFromIds(noteIds);
+		if (!payload || !String(payload.text || "").trim()) {
+			toast("Keine Notiz zum Teilen.", "info");
+			return;
+		}
+		updateNoteShareModal(payload);
+		setNoteShareModalOpen(true);
+		window.setTimeout(() => {
+			try {
+				noteShareModalCopy.focus();
 			} catch {
 				// ignore
 			}
@@ -6013,6 +6140,20 @@
 								</button>
 								<button
 									type="button"
+									data-action="share"
+									class="ps-note-share inline-flex rounded-md border border-white/10 bg-slate-950/60 p-1.5 text-slate-200 shadow-soft backdrop-blur transition hover:bg-slate-950/80"
+									title="Teilen"
+									aria-label="Teilen">
+									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+										<circle cx="18" cy="5" r="3" />
+										<circle cx="6" cy="12" r="3" />
+										<circle cx="18" cy="19" r="3" />
+										<path d="M8.5 10.5L15.5 6.5" />
+										<path d="M8.5 13.5L15.5 17.5" />
+									</svg>
+								</button>
+								<button
+									type="button"
 									data-action="delete"
 									class="ps-note-delete inline-flex rounded-md border border-white/10 bg-slate-950/60 p-1.5 text-slate-200 shadow-soft backdrop-blur transition hover:bg-slate-950/80"
 									title="Delete"
@@ -6094,6 +6235,16 @@
 					} catch {
 						toast("Löschen fehlgeschlagen.", "error");
 					}
+				});
+			}
+			const shareBtn = row.querySelector('[data-action="share"]');
+			if (shareBtn) {
+				shareBtn.addEventListener("click", (ev) => {
+					ev.preventDefault();
+					ev.stopPropagation();
+					const id = row.getAttribute("data-note-id") || "";
+					if (!id) return;
+					openNoteShareModal([id]);
 				});
 			}
 			const pinBtn = row.querySelector('[data-action="pin"]');
@@ -9361,6 +9512,46 @@ self.onmessage = async (e) => {
 			setShareModalOpen(false);
 		}
 	});
+	if (noteShareModalCopy) {
+		noteShareModalCopy.addEventListener("click", async () => {
+			const text = String(noteSharePayload && noteSharePayload.text ? noteSharePayload.text : "");
+			const ok = await copyTextToClipboard(text);
+			toast(ok ? "Notiz kopiert." : "Kopieren nicht verfügbar.", ok ? "success" : "error");
+		});
+	}
+	if (noteShareModalShare) {
+		noteShareModalShare.addEventListener("click", async () => {
+			const text = String(noteSharePayload && noteSharePayload.text ? noteSharePayload.text : "");
+			const title = String(noteSharePayload && noteSharePayload.title ? noteSharePayload.title : "Mirror Notiz");
+			if (!text || !navigator.share) return;
+			try {
+				await navigator.share({
+					title,
+					text,
+				});
+				toast("Geteilt.", "success");
+			} catch {
+				// ignore
+			}
+		});
+	}
+	if (noteShareModalClose) {
+		noteShareModalClose.addEventListener("click", () =>
+			setNoteShareModalOpen(false)
+		);
+	}
+	if (noteShareModalBackdrop) {
+		noteShareModalBackdrop.addEventListener("click", () =>
+			setNoteShareModalOpen(false)
+		);
+	}
+	window.addEventListener("keydown", (ev) => {
+		if (!noteShareModal || noteShareModal.classList.contains("hidden")) return;
+		if (ev && ev.key === "Escape") {
+			ev.preventDefault();
+			setNoteShareModalOpen(false);
+		}
+	});
 	if (openUploadModalBtn) {
 		openUploadModalBtn.addEventListener("click", () => openUploadModal());
 	}
@@ -10273,6 +10464,16 @@ self.onmessage = async (e) => {
 			await applyBulkTagsToNotes(ids, tags);
 			await refreshPersonalSpace();
 			clearPsSelection();
+		});
+	}
+	if (psContextShare) {
+		psContextShare.addEventListener("click", () => {
+			const selected = getSelectedNoteIds();
+			const fallbackId = String(psContextMenuTargetId || "");
+			closePsContextMenu();
+			const ids = selected.length ? selected : fallbackId ? [fallbackId] : [];
+			if (!ids.length) return;
+			openNoteShareModal(ids);
 		});
 	}
 	if (psContextDelete) {
