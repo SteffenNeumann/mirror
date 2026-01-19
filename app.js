@@ -898,6 +898,29 @@
 		noteShareModalBlobUrl = "";
 	}
 
+	function buildNoteShareHtmlDocument(text, title) {
+		const safeTitle = escapeHtml(String(title || "Mirror Notiz"));
+		const safeBody = escapeHtml(String(text || ""));
+		return `<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${safeTitle}</title>
+  <style>
+    :root { color-scheme: light dark; }
+    body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; margin: 24px; }
+    h1 { font-size: 20px; margin: 0 0 12px; }
+    pre { white-space: pre-wrap; word-break: break-word; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; background: rgba(0,0,0,.04); padding: 12px; border-radius: 8px; }
+  </style>
+</head>
+<body>
+  <h1>${safeTitle}</h1>
+  <pre>${safeBody}</pre>
+</body>
+</html>`;
+	}
+
 	function setNoteShareModalOpen(open) {
 		if (!noteShareModal || !noteShareModal.classList) return;
 		noteShareModal.classList.toggle("hidden", !open);
@@ -967,11 +990,30 @@
 				? `„${payload.title}“ wird geteilt.`
 				: "Notiz teilen.";
 		noteShareModalText.value = String(payload.text || "");
+		revokeNoteShareBlobUrl();
+		let shareUrl = "";
+		try {
+			const html = buildNoteShareHtmlDocument(
+				String(payload.text || ""),
+				String(payload.title || "Mirror Notiz")
+			);
+			const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+			noteShareModalBlobUrl = URL.createObjectURL(blob);
+			shareUrl = noteShareModalBlobUrl;
+		} catch {
+			shareUrl = "";
+		}
+		noteShareModalOpen.href = shareUrl || "#";
 		const subject = payload.title ? `Mirror Notiz: ${payload.title}` : "Mirror Notiz";
+		const mailBody = shareUrl
+			? `HTML-Link:\n${shareUrl}\n\nText:\n${String(payload.text || "")}`
+			: String(payload.text || "");
 		noteShareModalMail.href = `mailto:?subject=${encodeURIComponent(
 			subject
-		)}&body=${encodeURIComponent(String(payload.text || ""))}`;
-		const qrPayload = buildNoteShareQrPayload(payload);
+		)}&body=${encodeURIComponent(mailBody)}`;
+		const qrPayload = shareUrl
+			? { text: shareUrl, truncated: false }
+			: buildNoteShareQrPayload(payload);
 		noteShareModalMeta.textContent = qrPayload.truncated
 			? `${baseMeta} QR wurde gekürzt.`
 			: baseMeta;
@@ -979,16 +1021,6 @@
 		if (noteShareModalShare) {
 			const canShare = typeof navigator !== "undefined" && navigator.share;
 			noteShareModalShare.classList.toggle("hidden", !canShare);
-		}
-		revokeNoteShareBlobUrl();
-		try {
-			const blob = new Blob([String(payload.text || "")], {
-				type: "text/plain;charset=utf-8",
-			});
-			noteShareModalBlobUrl = URL.createObjectURL(blob);
-			noteShareModalOpen.href = noteShareModalBlobUrl;
-		} catch {
-			noteShareModalOpen.href = "#";
 		}
 	}
 
@@ -9550,9 +9582,11 @@ self.onmessage = async (e) => {
 			const title = String(noteSharePayload && noteSharePayload.title ? noteSharePayload.title : "Mirror Notiz");
 			if (!text || !navigator.share) return;
 			try {
+				const url = noteShareModalBlobUrl || undefined;
 				await navigator.share({
 					title,
 					text,
+					url,
 				});
 				toast("Geteilt.", "success");
 			} catch {
