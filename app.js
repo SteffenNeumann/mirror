@@ -6793,6 +6793,7 @@ self.onmessage = async (e) => {
 	let pendingRoomBootstrapText = "";
 	let pendingClosedTab = null;
 	let roomTabLimitNoticeAt = 0;
+	let skipTabLimitCheck = false;
 
 	function normalizeFavoriteEntry(it) {
 		const roomName = normalizeRoom(it && it.room);
@@ -6899,7 +6900,7 @@ self.onmessage = async (e) => {
 		const minGap = 3000;
 		if (Date.now() - roomTabLimitNoticeAt <= minGap) return;
 		roomTabLimitNoticeAt = Date.now();
-		openModal({
+		return openModal({
 			title: "Tab-Limit erreicht",
 			message: `Maximal ${MAX_ROOM_TABS} Tabs erlaubt.`,
 			okText: "OK",
@@ -9131,6 +9132,29 @@ self.onmessage = async (e) => {
 		const nextKey = parsed.key;
 		if (!nextRoom) return;
 		if (nextRoom === room && nextKey === key) return;
+		if (skipTabLimitCheck) {
+			skipTabLimitCheck = false;
+		} else {
+			const tabs = loadRoomTabs();
+			const exists = tabs.some(
+				(t) => t.room === normalizeRoom(nextRoom) && t.key === normalizeKey(nextKey)
+			);
+			if (!exists && tabs.length >= MAX_ROOM_TABS) {
+				const prevRoom = room;
+				const prevKey = key;
+				const modalPromise = showRoomTabLimitModal();
+				if (modalPromise && modalPromise.then) {
+					modalPromise.finally(() => {
+						skipTabLimitCheck = true;
+						location.hash = buildShareHash(prevRoom, prevKey);
+					});
+				} else {
+					skipTabLimitCheck = true;
+					location.hash = buildShareHash(prevRoom, prevKey);
+				}
+				return;
+			}
+		}
 		const suppressRestore =
 			pendingClosedTab &&
 			pendingClosedTab.room === room &&
