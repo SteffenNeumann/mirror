@@ -6972,6 +6972,19 @@ self.onmessage = async (e) => {
 		psState.roomTabs = [normalized, ...tabs];
 	}
 
+	function removeRoomTabFromState(roomName, keyName) {
+		if (!psState || !psState.authed) return;
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!nextRoom) return;
+		const tabs = Array.isArray(psState.roomTabs) ? psState.roomTabs : [];
+		const idx = tabs.findIndex(
+			(t) => t.room === nextRoom && t.key === nextKey
+		);
+		if (idx < 0) return;
+		psState.roomTabs = [...tabs.slice(0, idx), ...tabs.slice(idx + 1)];
+	}
+
 	function updateRoomTabTextLocal(roomName, keyName, textVal) {
 		const nextRoom = normalizeRoom(roomName);
 		const nextKey = normalizeKey(keyName);
@@ -7222,6 +7235,7 @@ self.onmessage = async (e) => {
 		if (idx < 0) return;
 		tabs.splice(idx, 1);
 		saveRoomTabs(tabs);
+		removeRoomTabFromState(nextRoom, nextKey);
 		renderRoomTabs();
 		if (psState && psState.authed) {
 			api("/api/room-tabs", {
