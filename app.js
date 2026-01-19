@@ -177,6 +177,9 @@
 	const uploadsRefreshBtn = document.getElementById("uploadsRefresh");
 	const uploadsManageList = document.getElementById("uploadsManageList");
 	const uploadsManageEmpty = document.getElementById("uploadsManageEmpty");
+	const trashRefreshBtn = document.getElementById("trashRefresh");
+	const trashManageList = document.getElementById("trashManageList");
+	const trashManageEmpty = document.getElementById("trashManageEmpty");
 	const psUserAuthed = document.getElementById("psUserAuthed");
 	const psUserUnauthed = document.getElementById("psUserUnauthed");
 	const bgBlobTop = document.getElementById("bgBlobTop");
@@ -3055,6 +3058,9 @@
 		if (target === "uploads") {
 			loadUploadsManage();
 		}
+		if (target === "trash") {
+			loadTrashManage();
+		}
 	}
 
 	async function loadAiStatus() {
@@ -5754,14 +5760,6 @@
 					ev.stopPropagation();
 					const id = row.getAttribute("data-note-id") || "";
 					if (!id) return;
-					const ok = await modalConfirm("Delete this note?", {
-						title: "Delete note",
-						okText: "Delete",
-						cancelText: "Cancel",
-						danger: true,
-						backdropClose: true,
-					});
-					if (!ok) return;
 					try {
 						await api(`/api/notes/${encodeURIComponent(id)}`, {
 							method: "DELETE",
@@ -5771,10 +5769,10 @@
 							if (psMainHint) psMainHint.classList.add("hidden");
 							syncMobileFocusState();
 						}
-						toast("Note deleted.", "success");
+						toast("Notiz im Papierkorb abgelegt.", "success");
 						await refreshPersonalSpace();
 					} catch {
-						toast("Delete failed.", "error");
+						toast("Löschen fehlgeschlagen.", "error");
 					}
 				});
 			}
@@ -7426,6 +7424,72 @@ self.onmessage = async (e) => {
 			.join("");
 	}
 
+	function formatTrashDeletedAt(ts) {
+		const next = Number(ts || 0);
+		if (!Number.isFinite(next) || next <= 0) return "";
+		const date = new Date(next);
+		if (Number.isNaN(date.getTime())) return "";
+		return date.toLocaleString();
+	}
+
+	function renderTrashManageList(items) {
+		if (!trashManageList) return;
+		const list = Array.isArray(items) ? items : [];
+		if (trashManageEmpty && trashManageEmpty.classList) {
+			trashManageEmpty.textContent = "Keine gelöschten Notizen.";
+			trashManageEmpty.classList.toggle("hidden", list.length > 0);
+		}
+		if (!list.length) {
+			trashManageList.innerHTML = "";
+			return;
+		}
+		trashManageList.innerHTML = list
+			.map((note) => {
+				const id = String(note && note.id ? note.id : "");
+				const info = getNoteTitleAndExcerpt(note && note.text ? note.text : "");
+				const title = escapeHtml(info.title || "Unbenannt");
+				const excerpt = escapeHtml(info.excerpt || "");
+				const deletedAt = formatTrashDeletedAt(
+					note && note.deletedAt ? note.deletedAt : 0
+				);
+				const createdAt = note && note.createdAt ? fmtDate(note.createdAt) : "";
+				const meta = [
+					deletedAt ? `Gelöscht: ${deletedAt}` : "",
+					createdAt ? `Erstellt: ${createdAt}` : "",
+				]
+					.filter(Boolean)
+					.join(" · ");
+				return `
+					<div class="rounded-lg border border-white/10 bg-slate-950/30 p-3">
+						<div class="flex items-start justify-between gap-3">
+							<div class="min-w-0">
+								<div class="text-xs font-semibold text-slate-100">${title}</div>
+								${
+									excerpt
+										? `<div class="mt-1 text-[11px] text-slate-300">${excerpt}</div>`
+										: ""
+								}
+								${
+									meta
+										? `<div class="mt-1 text-[11px] text-slate-400">${escapeHtml(
+											meta
+										)}</div>`
+										: ""
+								}
+							</div>
+							<button
+								type="button"
+								data-trash-restore
+								data-trash-id="${escapeAttr(id)}"
+								class="shrink-0 rounded-md border border-white/10 bg-transparent px-2 py-1 text-[11px] text-slate-200 transition hover:bg-white/5 active:bg-white/10">
+								Wiederherstellen
+							</button>
+						</div>
+					</div>`;
+			})
+			.join("");
+	}
+
 	async function loadUploadsManage() {
 		if (!uploadsManageList) return;
 		uploadsManageList.innerHTML = "";
@@ -7443,6 +7507,49 @@ self.onmessage = async (e) => {
 					"Uploads konnten nicht geladen werden.";
 				uploadsManageEmpty.classList.remove("hidden");
 			}
+		}
+	}
+
+	async function loadTrashManage() {
+		if (!trashManageList) return;
+		trashManageList.innerHTML = "";
+		if (trashManageEmpty && trashManageEmpty.classList) {
+			trashManageEmpty.textContent = "Lade Papierkorb…";
+			trashManageEmpty.classList.remove("hidden");
+		}
+		if (!psState || !psState.authed) {
+			if (trashManageEmpty && trashManageEmpty.classList) {
+				trashManageEmpty.textContent =
+					"Bitte Personal Space aktivieren, um den Papierkorb zu sehen.";
+				trashManageEmpty.classList.remove("hidden");
+			}
+			return;
+		}
+		try {
+			const res = await api("/api/notes/trash");
+			const items = Array.isArray(res && res.notes) ? res.notes : [];
+			renderTrashManageList(items);
+		} catch {
+			if (trashManageEmpty && trashManageEmpty.classList) {
+				trashManageEmpty.textContent =
+					"Papierkorb konnte nicht geladen werden.";
+				trashManageEmpty.classList.remove("hidden");
+			}
+		}
+	}
+
+	async function restoreTrashNote(noteId) {
+		const safeId = String(noteId || "").trim();
+		if (!safeId) return;
+		try {
+			await api(`/api/notes/${encodeURIComponent(safeId)}/restore`, {
+				method: "POST",
+			});
+			toast("Notiz wiederhergestellt.", "success");
+			await refreshPersonalSpace();
+			loadTrashManage();
+		} catch {
+			toast("Wiederherstellen fehlgeschlagen.", "error");
 		}
 	}
 
@@ -9776,6 +9883,11 @@ self.onmessage = async (e) => {
 			loadUploadsManage();
 		});
 	}
+	if (trashRefreshBtn) {
+		trashRefreshBtn.addEventListener("click", () => {
+			loadTrashManage();
+		});
+	}
 	if (uploadsManageList) {
 		uploadsManageList.addEventListener("click", (ev) => {
 			const target = ev.target;
@@ -9784,6 +9896,16 @@ self.onmessage = async (e) => {
 			if (!btn) return;
 			const name = btn.getAttribute("data-upload-name") || "";
 			deleteUpload(name);
+		});
+	}
+	if (trashManageList) {
+		trashManageList.addEventListener("click", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLElement)) return;
+			const btn = target.closest("[data-trash-restore]");
+			if (!btn) return;
+			const id = btn.getAttribute("data-trash-id") || "";
+			restoreTrashNote(id);
 		});
 	}
 	if (aiApiKeyInput) {

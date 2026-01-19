@@ -49,6 +49,8 @@ const AI_MAX_OUTPUT_TOKENS = Number(process.env.AI_MAX_OUTPUT_TOKENS || 900);
 const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 30000);
 const AI_RATE_WINDOW_MS = Number(process.env.AI_RATE_WINDOW_MS || 60_000);
 const AI_RATE_MAX = Number(process.env.AI_RATE_MAX || 10);
+const TRASH_RETENTION_DAYS = 30;
+const TRASH_RETENTION_MS = 1000 * 60 * 60 * 24 * TRASH_RETENTION_DAYS;
 
 let signingSecret = String(process.env.MIRROR_SECRET || "");
 
@@ -64,6 +66,11 @@ let stmtNotesDeleteAll;
 let stmtNotesByUser;
 let stmtNotesByUserAndTag;
 let stmtTagsByUser;
+let stmtTrashInsert;
+let stmtTrashGetByIdUser;
+let stmtTrashDeleteByIdUser;
+let stmtTrashListByUser;
+let stmtTrashDeleteExpired;
 let stmtTokenInsert;
 let stmtTokenGet;
 let stmtTokenDelete;
@@ -173,6 +180,20 @@ function initDb() {
 			FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 		);
 		CREATE INDEX IF NOT EXISTS idx_notes_user_created ON notes(user_id, created_at DESC);
+		CREATE TABLE IF NOT EXISTS notes_trash (
+			id TEXT NOT NULL,
+			user_id INTEGER NOT NULL,
+			text TEXT NOT NULL,
+			kind TEXT NOT NULL,
+			content_hash TEXT,
+			tags_json TEXT NOT NULL,
+			created_at INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL,
+			deleted_at INTEGER NOT NULL,
+			FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+			PRIMARY KEY(user_id, id)
+		);
+		CREATE INDEX IF NOT EXISTS idx_notes_trash_user_deleted ON notes_trash(user_id, deleted_at DESC);
 		CREATE TABLE IF NOT EXISTS login_tokens (
 			token TEXT PRIMARY KEY,
 			email TEXT NOT NULL,
@@ -243,7 +264,7 @@ function initDb() {
 		"INSERT INTO notes(id, user_id, text, kind, content_hash, tags_json, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?)"
 	);
 	stmtNoteGetByIdUser = db.prepare(
-		"SELECT id, text, kind, tags_json, created_at, updated_at FROM notes WHERE id = ? AND user_id = ?"
+		"SELECT id, text, kind, content_hash, tags_json, created_at, updated_at FROM notes WHERE id = ? AND user_id = ?"
 	);
 	stmtNoteGetByHashUser = db.prepare(
 		"SELECT id, text, kind, tags_json, created_at, updated_at FROM notes WHERE user_id = ? AND content_hash = ? LIMIT 1"
@@ -261,6 +282,21 @@ function initDb() {
 	);
 	stmtTagsByUser = db.prepare(
 		"SELECT tags_json FROM notes WHERE user_id = ? ORDER BY created_at DESC LIMIT 500"
+	);
+	stmtTrashInsert = db.prepare(
+		"INSERT INTO notes_trash(id, user_id, text, kind, content_hash, tags_json, created_at, updated_at, deleted_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, id) DO UPDATE SET text = excluded.text, kind = excluded.kind, content_hash = excluded.content_hash, tags_json = excluded.tags_json, created_at = excluded.created_at, updated_at = excluded.updated_at, deleted_at = excluded.deleted_at"
+	);
+	stmtTrashGetByIdUser = db.prepare(
+		"SELECT id, text, kind, content_hash, tags_json, created_at, updated_at, deleted_at FROM notes_trash WHERE id = ? AND user_id = ?"
+	);
+	stmtTrashDeleteByIdUser = db.prepare(
+		"DELETE FROM notes_trash WHERE id = ? AND user_id = ?"
+	);
+	stmtTrashListByUser = db.prepare(
+		"SELECT id, text, kind, tags_json, created_at, updated_at, deleted_at FROM notes_trash WHERE user_id = ? ORDER BY deleted_at DESC LIMIT 500"
+	);
+	stmtTrashDeleteExpired = db.prepare(
+		"DELETE FROM notes_trash WHERE deleted_at < ?"
 	);
 	stmtTokenInsert = db.prepare(
 		"INSERT INTO login_tokens(token, email, exp) VALUES(?, ?, ?)"
@@ -812,6 +848,29 @@ function listNotes(userId, tag) {
 			typeof r.updated_at === "number" && Number.isFinite(r.updated_at)
 				? r.updated_at
 				: r.created_at,
+	}));
+}
+
+function purgeExpiredTrash() {
+	initDb();
+	const cutoff = Date.now() - TRASH_RETENTION_MS;
+	if (!Number.isFinite(cutoff)) return;
+	stmtTrashDeleteExpired.run(cutoff);
+}
+
+function listTrashNotes(userId) {
+	initDb();
+	return stmtTrashListByUser.all(userId).map((r) => ({
+		id: r.id,
+		text: r.text,
+		kind: r.kind,
+		tags: parseTagsJson(r.tags_json),
+		createdAt: r.created_at,
+		updatedAt:
+			typeof r.updated_at === "number" && Number.isFinite(r.updated_at)
+				? r.updated_at
+				: r.created_at,
+		deletedAt: r.deleted_at,
 	}));
 }
 
@@ -1640,14 +1699,132 @@ const server = http.createServer((req, res) => {
 			}
 			const userId = getOrCreateUserId(email);
 			initDb();
-			const info = stmtNoteDelete.run(noteId, userId);
-			if (!info || info.changes < 1) {
+			purgeExpiredTrash();
+			const existing = stmtNoteGetByIdUser.get(noteId, userId);
+			if (!existing) {
 				json(res, 404, { ok: false, error: "not_found" });
 				return;
 			}
-			json(res, 200, { ok: true });
+			const now = Date.now();
+			const contentHash = existing.content_hash
+				? String(existing.content_hash || "")
+				: computeNoteContentHash(existing.text);
+			const tx = db.transaction(() => {
+				stmtTrashInsert.run(
+					existing.id,
+					userId,
+					existing.text,
+					existing.kind,
+					contentHash,
+					existing.tags_json,
+					existing.created_at,
+					existing.updated_at,
+					now
+				);
+				stmtNoteDelete.run(noteId, userId);
+			});
+			tx();
+			json(res, 200, { ok: true, trashedAt: now });
 			return;
 		}
+	}
+
+	{
+		const m = url.pathname.match(
+			/^\/api\/notes\/([a-zA-Z0-9_-]{8,80})\/restore$/
+		);
+		const noteId = m ? String(m[1] || "") : "";
+		if (noteId && req.method === "POST") {
+			const email = getAuthedEmail(req);
+			if (!email) {
+				json(res, 401, { ok: false, error: "unauthorized" });
+				return;
+			}
+			const userId = getOrCreateUserId(email);
+			initDb();
+			purgeExpiredTrash();
+			const trashed = stmtTrashGetByIdUser.get(noteId, userId);
+			if (!trashed) {
+				json(res, 404, { ok: false, error: "not_found" });
+				return;
+			}
+			const textVal = String(trashed.text || "");
+			const contentHash = trashed.content_hash
+				? String(trashed.content_hash || "")
+				: computeNoteContentHash(textVal);
+			if (contentHash) {
+				const dupe = stmtNoteGetByHashUser.get(userId, contentHash);
+				if (dupe) {
+					stmtTrashDeleteByIdUser.run(noteId, userId);
+					json(res, 200, {
+						ok: true,
+						note: {
+							id: dupe.id,
+							text: dupe.text,
+							kind: dupe.kind,
+							tags: parseTagsJson(dupe.tags_json),
+							createdAt: dupe.created_at,
+							updatedAt:
+								typeof dupe.updated_at === "number" &&
+								Number.isFinite(dupe.updated_at)
+									? dupe.updated_at
+									: dupe.created_at,
+						},
+					});
+					return;
+				}
+			}
+			let restoreId = String(trashed.id || "");
+			if (stmtNoteGetByIdUser.get(restoreId, userId)) {
+				restoreId = crypto.randomBytes(12).toString("base64url");
+			}
+			const tags = parseTagsJson(trashed.tags_json);
+			const createdAt = Number(trashed.created_at || 0) || Date.now();
+			const updatedAt = Date.now();
+			const tx = db.transaction(() => {
+				stmtNoteInsert.run(
+					restoreId,
+					userId,
+					textVal,
+					String(trashed.kind || "note"),
+					contentHash,
+					JSON.stringify(tags),
+					createdAt,
+					updatedAt
+				);
+				stmtTrashDeleteByIdUser.run(noteId, userId);
+			});
+			tx();
+			json(res, 200, {
+				ok: true,
+				note: {
+					id: restoreId,
+					text: textVal,
+					kind: String(trashed.kind || "note"),
+					tags,
+					createdAt,
+					updatedAt,
+				},
+			});
+			return;
+		}
+	}
+
+	if (url.pathname === "/api/notes/trash" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		purgeExpiredTrash();
+		const notes = listTrashNotes(userId);
+		json(res, 200, {
+			ok: true,
+			retentionDays: TRASH_RETENTION_DAYS,
+			notes,
+		});
+		return;
 	}
 
 	if (url.pathname === "/api/notes" && req.method === "GET") {

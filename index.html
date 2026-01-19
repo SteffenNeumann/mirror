@@ -1566,6 +1566,12 @@
 						</button>
 						<button
 							type="button"
+							data-settings-nav="trash"
+							class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-left text-xs text-slate-200 transition hover:bg-white/5">
+							Papierkorb
+						</button>
+						<button
+							type="button"
 							data-settings-nav="themes"
 							class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-left text-xs text-slate-200 transition hover:bg-white/5">
 							Themes
@@ -1665,6 +1671,29 @@
 									class="hidden" />
 							</div>
 							<div id="psTransferHint" class="text-xs text-slate-400"></div>
+						</section>
+
+						<section data-settings-section="trash" class="hidden space-y-3">
+							<div>
+								<h4 class="text-sm font-semibold text-slate-100">
+									Papierkorb
+								</h4>
+								<p class="mt-1 text-xs text-slate-400">
+									Gelöschte Notizen bleiben 30 Tage im Papierkorb und können wiederhergestellt werden.
+								</p>
+							</div>
+							<div class="flex items-center gap-2">
+								<button
+									id="trashRefresh"
+									type="button"
+									class="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">
+									Aktualisieren
+								</button>
+							</div>
+							<div id="trashManageEmpty" class="text-xs text-slate-400">
+								Keine gelöschten Notizen.
+							</div>
+							<div id="trashManageList" class="space-y-2"></div>
 						</section>
 
 						<section data-settings-section="themes" class="hidden space-y-3">
