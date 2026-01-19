@@ -7436,7 +7436,7 @@ self.onmessage = async (e) => {
 		if (!trashManageList) return;
 		const list = Array.isArray(items) ? items : [];
 		if (trashManageEmpty && trashManageEmpty.classList) {
-			trashManageEmpty.textContent = "Keine gelöschten Notizen.";
+			trashManageEmpty.textContent = "No deleted notes.";
 			trashManageEmpty.classList.toggle("hidden", list.length > 0);
 		}
 		if (!list.length) {
@@ -7514,13 +7514,13 @@ self.onmessage = async (e) => {
 		if (!trashManageList) return;
 		trashManageList.innerHTML = "";
 		if (trashManageEmpty && trashManageEmpty.classList) {
-			trashManageEmpty.textContent = "Lade Papierkorb…";
+			trashManageEmpty.textContent = "Loading trash…";
 			trashManageEmpty.classList.remove("hidden");
 		}
 		if (!psState || !psState.authed) {
 			if (trashManageEmpty && trashManageEmpty.classList) {
 				trashManageEmpty.textContent =
-					"Bitte Personal Space aktivieren, um den Papierkorb zu sehen.";
+					"Please enable Personal Space to view the trash.";
 				trashManageEmpty.classList.remove("hidden");
 			}
 			return;
@@ -7532,7 +7532,7 @@ self.onmessage = async (e) => {
 		} catch {
 			if (trashManageEmpty && trashManageEmpty.classList) {
 				trashManageEmpty.textContent =
-					"Papierkorb konnte nicht geladen werden.";
+					"Trash could not be loaded.";
 				trashManageEmpty.classList.remove("hidden");
 			}
 		}
