@@ -692,6 +692,41 @@
 							<div
 								id="psList"
 								class="mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1"></div>
+							<div
+								id="psContextMenu"
+								class="hidden fixed z-50 min-w-[180px] rounded-xl border border-white/10 bg-slate-950/90 p-1 text-xs text-slate-200 shadow-soft backdrop-blur">
+								<button
+									id="psContextSelect"
+									type="button"
+									class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-white/5">
+									<span data-role="psContextSelectLabel">Auswählen</span>
+								</button>
+								<button
+									id="psContextSelectAll"
+									type="button"
+									class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-white/5">
+									<span>Alle auswählen</span>
+								</button>
+								<button
+									id="psContextClear"
+									type="button"
+									class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-white/5">
+									<span>Auswahl aufheben</span>
+								</button>
+								<div class="my-1 h-px bg-white/10"></div>
+								<button
+									id="psContextTags"
+									type="button"
+									class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-white/5">
+									<span>Tags ändern</span>
+								</button>
+								<button
+									id="psContextDelete"
+									type="button"
+									class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-rose-100 hover:bg-rose-500/20">
+									<span>Löschen</span>
+								</button>
+							</div>
 						</div>
 					</div>
 				</div>

@@ -165,6 +165,15 @@
 	const psNavBackBtn = document.getElementById("psNavBack");
 	const psNavForwardBtn = document.getElementById("psNavForward");
 	const psSettingsBtn = document.getElementById("psSettingsBtn");
+	const psContextMenu = document.getElementById("psContextMenu");
+	const psContextSelect = document.getElementById("psContextSelect");
+	const psContextSelectLabel = document.querySelector(
+		"[data-role=\"psContextSelectLabel\"]"
+	);
+	const psContextSelectAll = document.getElementById("psContextSelectAll");
+	const psContextClear = document.getElementById("psContextClear");
+	const psContextTags = document.getElementById("psContextTags");
+	const psContextDelete = document.getElementById("psContextDelete");
 	const settingsRoot = document.getElementById("settingsRoot");
 	const settingsBackdrop = document.getElementById("settingsBackdrop");
 	const settingsPanel = document.getElementById("settingsPanel");
@@ -1314,6 +1323,8 @@
 	let psNoteHistorySkip = false;
 	let psSelectedNoteIds = new Set();
 	let psRenderedNoteIds = [];
+	let psContextMenuOpen = false;
+	let psContextMenuTargetId = "";
 	let editorMaskDisabled = false;
 	let crdtMarksEnabled = true;
 	const EDITOR_MASK_DISABLED_KEY = "mirror_mask_disabled";
@@ -5801,6 +5812,42 @@
 		psBulkBar.classList.toggle("flex", visible);
 	}
 
+	function setPsContextMenuOpen(open) {
+		if (!psContextMenu || !psContextMenu.classList) return;
+		psContextMenuOpen = Boolean(open);
+		psContextMenu.classList.toggle("hidden", !psContextMenuOpen);
+	}
+
+	function positionPsContextMenu(x, y) {
+		if (!psContextMenu) return;
+		const rect = psContextMenu.getBoundingClientRect();
+		const maxLeft = window.innerWidth - rect.width - 8;
+		const maxTop = window.innerHeight - rect.height - 8;
+		const left = Math.max(8, Math.min(Number(x || 0), maxLeft));
+		const top = Math.max(8, Math.min(Number(y || 0), maxTop));
+		psContextMenu.style.left = `${Math.round(left)}px`;
+		psContextMenu.style.top = `${Math.round(top)}px`;
+	}
+
+	function openPsContextMenu(noteId, x, y) {
+		const id = String(noteId || "");
+		if (!id || !psContextMenu) return;
+		psContextMenuTargetId = id;
+		const isSelected = psSelectedNoteIds.has(id);
+		if (psContextSelectLabel) {
+			psContextSelectLabel.textContent = isSelected
+				? "Auswahl entfernen"
+				: "Auswählen";
+		}
+		positionPsContextMenu(x, y);
+		setPsContextMenuOpen(true);
+	}
+
+	function closePsContextMenu() {
+		psContextMenuTargetId = "";
+		setPsContextMenuOpen(false);
+	}
+
 	function updatePsBulkBar() {
 		const count = psSelectedNoteIds ? psSelectedNoteIds.size : 0;
 		if (psBulkCount) psBulkCount.textContent = String(count);
@@ -6028,6 +6075,17 @@
 				const note = byId.get(id);
 				if (!note) return;
 				applyNoteToEditor(note, items);
+			});
+
+			row.addEventListener("contextmenu", (ev) => {
+				const id = row.getAttribute("data-note-id") || "";
+				if (!id) return;
+				ev.preventDefault();
+				ev.stopPropagation();
+				if (!psSelectedNoteIds.has(id)) {
+					setPsNoteSelected(id, true);
+				}
+				openPsContextMenu(id, ev.clientX, ev.clientY);
 			});
 
 			const delBtn = row.querySelector('[data-action="delete"]');
@@ -10174,6 +10232,82 @@ self.onmessage = async (e) => {
 			psSearchDebounceTimer = window.setTimeout(() => {
 				savePsSearchQuery();
 			}, 150);
+		});
+	}
+	if (psContextMenu) {
+		document.addEventListener("click", (ev) => {
+			if (!psContextMenuOpen) return;
+			const target = ev && ev.target ? ev.target : null;
+			if (target && psContextMenu.contains(target)) return;
+			closePsContextMenu();
+		});
+		document.addEventListener("keydown", (ev) => {
+			if (!psContextMenuOpen) return;
+			if (ev && ev.key === "Escape") {
+				ev.preventDefault();
+				closePsContextMenu();
+			}
+		});
+		window.addEventListener("scroll", () => {
+			if (psContextMenuOpen) closePsContextMenu();
+		});
+	}
+	if (psContextSelect) {
+		psContextSelect.addEventListener("click", () => {
+			const id = String(psContextMenuTargetId || "");
+			if (!id) return;
+			setPsNoteSelected(id, !psSelectedNoteIds.has(id));
+			closePsContextMenu();
+		});
+	}
+	if (psContextSelectAll) {
+		psContextSelectAll.addEventListener("click", () => {
+			togglePsSelectAll();
+			closePsContextMenu();
+		});
+	}
+	if (psContextClear) {
+		psContextClear.addEventListener("click", () => {
+			clearPsSelection();
+			closePsContextMenu();
+		});
+	}
+	if (psContextTags) {
+		psContextTags.addEventListener("click", async () => {
+			const ids = getSelectedNoteIds();
+			closePsContextMenu();
+			if (!ids.length) return;
+			const value = await modalPrompt("Tags setzen (Komma oder Leerzeichen getrennt).", {
+				title: "Tags ändern",
+				okText: "Übernehmen",
+				cancelText: "Abbrechen",
+				placeholder: "tag1, tag2",
+			});
+			if (value === null) return;
+			const tags = normalizeManualTags(value);
+			await applyBulkTagsToNotes(ids, tags);
+			await refreshPersonalSpace();
+			clearPsSelection();
+		});
+	}
+	if (psContextDelete) {
+		psContextDelete.addEventListener("click", async () => {
+			const ids = getSelectedNoteIds();
+			closePsContextMenu();
+			if (!ids.length) return;
+			const ok = await modalConfirm(
+				`${ids.length} Notizen löschen? (Papierkorb)`,
+				{
+					title: "Mehrfach löschen",
+					okText: "Löschen",
+					cancelText: "Abbrechen",
+					danger: true,
+				}
+			);
+			if (!ok) return;
+			await deleteBulkNotes(ids);
+			await refreshPersonalSpace();
+			clearPsSelection();
 		});
 	}
 	if (psBulkSelectAll) {
