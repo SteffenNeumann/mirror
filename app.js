@@ -4818,6 +4818,7 @@
 		.pdf-page-label{color:${previewMetaText};font-size:12px;}
 		.pdf-actions{display:flex;justify-content:flex-end;gap:8px;}
 		.pdf-frame{width:100%;height:auto;display:block;background:${previewBg};}
+		.pdf-native{width:100%;height:520px;border:0;display:block;background:${previewBg};}
 		.pdf-fallback{padding:10px 12px;font-size:12px;color:${previewMetaText};background:${previewMetaBg};border-bottom:1px solid ${previewTableBorder};}
   </style>
 </head>
@@ -4979,6 +4980,23 @@
 						return Promise.resolve(window.pdfjsLib || null);
 					}
 
+					function insertNativePdf(wrap){
+						if (!wrap) return;
+						var src = wrap.getAttribute('data-pdf-src');
+						if (!src) return;
+						var existing = wrap.querySelector('iframe.pdf-native');
+						if (existing) return;
+						try {
+							var iframe = document.createElement('iframe');
+							iframe.className = 'pdf-native';
+							iframe.src = src;
+							iframe.setAttribute('loading', 'lazy');
+							wrap.appendChild(iframe);
+						} catch {
+							// ignore
+						}
+					}
+
 					var pdfCache = {};
 					function loadPdfDoc(src){
 						if (!src || !window.pdfjsLib) return Promise.reject(new Error('no_pdfjs'));
@@ -5043,6 +5061,7 @@
 									} catch {
 										// ignore
 									}
+									insertNativePdf(wrap);
 								});
 								return;
 							}
