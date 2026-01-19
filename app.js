@@ -4511,9 +4511,17 @@
 				if (!href) return;
 				const lower = href.toLowerCase();
 				if (!lower.includes(".pdf")) return;
+				let resolved = href;
+				try {
+					if (typeof location !== "undefined" && location.origin) {
+						resolved = new URL(href, location.origin).href;
+					}
+				} catch {
+					resolved = href;
+				}
 				const wrapper = document.createElement("div");
 				wrapper.className = "pdf-embed";
-				wrapper.setAttribute("data-pdf-src", href);
+				wrapper.setAttribute("data-pdf-src", resolved);
 				wrapper.setAttribute("data-pdf-page", "1");
 				const toolbar = document.createElement("div");
 				toolbar.className = "pdf-toolbar";
@@ -4542,7 +4550,7 @@
 				const actions = document.createElement("div");
 				actions.className = "pdf-actions";
 				const open = document.createElement("a");
-				open.href = href;
+				open.href = resolved;
 				open.target = "_blank";
 				open.rel = "noopener noreferrer";
 				open.textContent = "Open PDF";
