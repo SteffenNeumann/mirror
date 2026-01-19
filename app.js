@@ -5804,11 +5804,6 @@
 	function updatePsBulkBar() {
 		const count = psSelectedNoteIds ? psSelectedNoteIds.size : 0;
 		if (psBulkCount) psBulkCount.textContent = String(count);
-		const total = Array.isArray(psRenderedNoteIds) ? psRenderedNoteIds.length : 0;
-		if (psBulkSelectAll) {
-			psBulkSelectAll.checked = Boolean(count && total && count >= total);
-			psBulkSelectAll.indeterminate = Boolean(count && total && count < total);
-		}
 		setPsBulkBarVisible(count > 0);
 		syncPsBulkSelectionToDom();
 	}
@@ -5820,10 +5815,6 @@
 			const selected = id && psSelectedNoteIds.has(id);
 			row.classList.toggle("ring-2", Boolean(selected));
 			row.classList.toggle("ring-fuchsia-400/30", Boolean(selected));
-			const checkbox = row.querySelector('[data-action="select"]');
-			if (checkbox && checkbox instanceof HTMLInputElement) {
-				checkbox.checked = Boolean(selected);
-			}
 		});
 	}
 
@@ -5971,14 +5962,7 @@
 						: "border-white/10 bg-slate-950/25 hover:bg-slate-950/35"
 				} p-3${selected ? " ring-2 ring-fuchsia-400/30" : ""}">
 						<div class="flex items-center justify-between gap-2">
-							<div class="flex items-center gap-2">
-								<input
-									type="checkbox"
-									data-action="select"
-									class="h-4 w-4 rounded border-white/20 bg-slate-950/60 text-fuchsia-400 focus:ring-fuchsia-400/30"
-									${selected ? "checked" : ""} />
-								<div class="text-xs text-slate-400">${fmtDate(n.createdAt)}</div>
-							</div>
+							<div class="text-xs text-slate-400">${fmtDate(n.createdAt)}</div>
 							<div class="flex items-center gap-2">
 								<button
 									type="button"
@@ -6031,21 +6015,16 @@
 					ev.stopPropagation();
 				});
 			});
-			row.querySelectorAll('input[type="checkbox"]').forEach((i) => {
-				i.addEventListener("click", (ev) => {
-					ev.stopPropagation();
-				});
-				i.addEventListener("change", (ev) => {
-					ev.stopPropagation();
-					const input = ev.target;
-					if (!(input instanceof HTMLInputElement)) return;
-					const id = row.getAttribute("data-note-id") || "";
-					setPsNoteSelected(id, input.checked);
-				});
-			});
-
-			row.addEventListener("click", () => {
+			row.addEventListener("click", (ev) => {
 				const id = row.getAttribute("data-note-id") || "";
+				if (!id) return;
+				const toggle = Boolean(ev && (ev.metaKey || ev.ctrlKey));
+				if (toggle) {
+					ev.preventDefault();
+					ev.stopPropagation();
+					setPsNoteSelected(id, !psSelectedNoteIds.has(id));
+					return;
+				}
 				const note = byId.get(id);
 				if (!note) return;
 				applyNoteToEditor(note, items);
@@ -10198,7 +10177,7 @@ self.onmessage = async (e) => {
 		});
 	}
 	if (psBulkSelectAll) {
-		psBulkSelectAll.addEventListener("change", () => {
+		psBulkSelectAll.addEventListener("click", () => {
 			togglePsSelectAll();
 		});
 	}
