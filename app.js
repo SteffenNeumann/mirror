@@ -4490,6 +4490,29 @@
 				if (!lower.includes(".pdf")) return;
 				const wrapper = document.createElement("div");
 				wrapper.className = "pdf-embed";
+				wrapper.setAttribute("data-pdf-src", href);
+				wrapper.setAttribute("data-pdf-page", "1");
+				const toolbar = document.createElement("div");
+				toolbar.className = "pdf-toolbar";
+				const nav = document.createElement("div");
+				nav.className = "pdf-nav";
+				const prev = document.createElement("button");
+				prev.type = "button";
+				prev.className = "pdf-nav-btn";
+				prev.setAttribute("data-pdf-prev", "true");
+				prev.textContent = "‹";
+				const pageLabel = document.createElement("span");
+				pageLabel.className = "pdf-page-label";
+				pageLabel.setAttribute("data-pdf-page-label", "true");
+				pageLabel.textContent = "Seite 1";
+				const next = document.createElement("button");
+				next.type = "button";
+				next.className = "pdf-nav-btn";
+				next.setAttribute("data-pdf-next", "true");
+				next.textContent = "›";
+				nav.appendChild(prev);
+				nav.appendChild(pageLabel);
+				nav.appendChild(next);
 				const canvas = document.createElement("canvas");
 				canvas.className = "pdf-frame";
 				canvas.setAttribute("data-pdf-src", href);
@@ -4501,8 +4524,10 @@
 				open.rel = "noopener noreferrer";
 				open.textContent = "Open PDF";
 				actions.appendChild(open);
+				toolbar.appendChild(nav);
+				toolbar.appendChild(actions);
+				wrapper.appendChild(toolbar);
 				wrapper.appendChild(canvas);
-				wrapper.appendChild(actions);
 				link.replaceWith(wrapper);
 			});
 			return container.innerHTML;
@@ -4736,13 +4761,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 	${previewBase ? `<base href="${previewBase}">` : ""}
 	<script type="module">
-		import * as pdfjsLib from "${pdfJsUrl}";
-		window.pdfjsLib = pdfjsLib;
-		try {
-			window.pdfjsLib.GlobalWorkerOptions.workerSrc = "${pdfWorkerUrl}";
-		} catch (e) {
-			// ignore
-		}
+		window.__pdfjsReady = (async () => {
+			const pdfjsLib = await import("${pdfJsUrl}");
+			window.pdfjsLib = pdfjsLib;
+			try {
+				window.pdfjsLib.GlobalWorkerOptions.workerSrc = "${pdfWorkerUrl}";
+			} catch (e) {
+				// ignore
+			}
+			return pdfjsLib;
+		})();
 	</script>
   <link rel="stylesheet" href="${highlightCssUrl}">
 	<!--ts:${stamp}-->
@@ -4783,8 +4811,13 @@
 		ul.task-list li.task-list-item.checked input[type=checkbox]{opacity:1;}
     ul.task-list input[type=checkbox]{margin-top:.2rem;}
 		.pdf-embed{margin:12px 0;border:1px solid ${previewTableBorder};border-radius:12px;overflow:hidden;background:${previewPreBg};}
+		.pdf-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;border-bottom:1px solid ${previewTableBorder};font-size:12px;background:${previewMetaBg};}
+		.pdf-nav{display:flex;align-items:center;gap:6px;}
+		.pdf-nav-btn{border:1px solid ${previewTableBorder};background:${previewPreBg};color:${previewText};font-size:12px;line-height:1;padding:3px 8px;border-radius:999px;cursor:pointer;}
+		.pdf-nav-btn:disabled{opacity:.45;cursor:default;}
+		.pdf-page-label{color:${previewMetaText};font-size:12px;}
+		.pdf-actions{display:flex;justify-content:flex-end;gap:8px;}
 		.pdf-frame{width:100%;height:auto;display:block;background:${previewBg};}
-		.pdf-actions{display:flex;justify-content:flex-end;padding:6px 10px;border-top:1px solid ${previewTableBorder};font-size:12px;background:${previewMetaBg};}
 		.pdf-fallback{padding:10px 12px;font-size:12px;color:${previewMetaText};background:${previewMetaBg};border-bottom:1px solid ${previewTableBorder};}
   </style>
 </head>
@@ -4935,28 +4968,61 @@
 						});
 					}
 
-					function renderPdfCanvas(canvas){
-						if (!canvas || !window.pdfjsLib) return;
-						var src = canvas.getAttribute('data-pdf-src');
+					function waitForPdfJs(){
+						try {
+							if (window.__pdfjsReady && typeof window.__pdfjsReady.then === 'function') {
+								return window.__pdfjsReady;
+							}
+						} catch (e) {
+							// ignore
+						}
+						return Promise.resolve(window.pdfjsLib || null);
+					}
+
+					var pdfCache = {};
+					function loadPdfDoc(src){
+						if (!src || !window.pdfjsLib) return Promise.reject(new Error('no_pdfjs'));
+						if (pdfCache[src]) return pdfCache[src];
+						pdfCache[src] = window.pdfjsLib.getDocument(src).promise;
+						return pdfCache[src];
+					}
+
+					function updatePdfNav(wrapper, page, total){
+						if (!wrapper) return;
+						var label = wrapper.querySelector('[data-pdf-page-label]');
+						var prev = wrapper.querySelector('[data-pdf-prev]');
+						var next = wrapper.querySelector('[data-pdf-next]');
+						if (label) label.textContent = 'Seite ' + page + ' / ' + total;
+						if (prev) prev.disabled = page <= 1;
+						if (next) next.disabled = page >= total;
+					}
+
+					function renderPdfPage(wrapper, pageNum){
+						if (!wrapper || !window.pdfjsLib) return;
+						var src = wrapper.getAttribute('data-pdf-src');
 						if (!src) return;
-						// workerSrc set during module load
-						window.pdfjsLib.getDocument(src).promise.then(function(pdf){
-							return pdf.getPage(1).then(function(page){
+						var canvas = wrapper.querySelector('canvas');
+						if (!canvas) return;
+						loadPdfDoc(src).then(function(pdf){
+							var total = pdf.numPages || 1;
+							var target = Math.min(Math.max(1, pageNum || 1), total);
+							wrapper.setAttribute('data-pdf-page', String(target));
+							wrapper.setAttribute('data-pdf-pages', String(total));
+							return pdf.getPage(target).then(function(page){
 								var viewport = page.getViewport({ scale: 1.2 });
 								canvas.width = viewport.width;
 								canvas.height = viewport.height;
 								var ctx = canvas.getContext('2d');
-								return page.render({ canvasContext: ctx, viewport: viewport }).promise;
+								return page.render({ canvasContext: ctx, viewport: viewport }).promise.then(function(){
+									updatePdfNav(wrapper, target, total);
+								});
 							});
 						}).catch(function(){
 							try {
-								var box = canvas.parentElement;
-								if (box) {
-									var msg = document.createElement('div');
-									msg.className = 'pdf-fallback';
-									msg.textContent = 'PDF-Vorschau nicht verfügbar.';
-									box.insertBefore(msg, box.firstChild);
-								}
+								var msg = document.createElement('div');
+								msg.className = 'pdf-fallback';
+								msg.textContent = 'PDF-Vorschau nicht verfügbar.';
+								wrapper.insertBefore(msg, wrapper.firstChild);
 							} catch {
 								// ignore
 							}
@@ -4964,31 +5030,44 @@
 					}
 
 					function initPdfEmbeds(){
-						var canvases = document.querySelectorAll('canvas[data-pdf-src]');
-						if (!canvases || !canvases.length) return;
-						if (!window.pdfjsLib) {
-							canvases.forEach(function(c){
-								try {
-									var box = c.parentElement;
-									if (!box) return;
-									var msg = document.createElement('div');
-									msg.className = 'pdf-fallback';
-									msg.textContent = 'PDF-Vorschau blockiert (CDN).';
-									box.insertBefore(msg, box.firstChild);
-								} catch {
-									// ignore
-								}
+						var wrappers = document.querySelectorAll('.pdf-embed[data-pdf-src]');
+						if (!wrappers || !wrappers.length) return;
+						waitForPdfJs().then(function(lib){
+							if (!lib) {
+								wrappers.forEach(function(wrap){
+									try {
+										var msg = document.createElement('div');
+										msg.className = 'pdf-fallback';
+										msg.textContent = 'PDF-Vorschau blockiert (CDN).';
+										wrap.insertBefore(msg, wrap.firstChild);
+									} catch {
+										// ignore
+									}
+								});
+								return;
+							}
+							try {
+								window.pdfjsLib.disableWorker = true;
+							} catch {
+								// ignore
+							}
+							wrappers.forEach(function(wrap){
+								var page = parseInt(wrap.getAttribute('data-pdf-page') || '1', 10);
+								if (!isFinite(page) || page < 1) page = 1;
+								var prev = wrap.querySelector('[data-pdf-prev]');
+								var next = wrap.querySelector('[data-pdf-next]');
+								if (prev) prev.addEventListener('click', function(ev){
+									ev.preventDefault();
+									var current = parseInt(wrap.getAttribute('data-pdf-page') || '1', 10);
+									renderPdfPage(wrap, current - 1);
+								});
+								if (next) next.addEventListener('click', function(ev){
+									ev.preventDefault();
+									var current = parseInt(wrap.getAttribute('data-pdf-page') || '1', 10);
+									renderPdfPage(wrap, current + 1);
+								});
+								renderPdfPage(wrap, page);
 							});
-							return;
-						}
-						// workerSrc set during module load
-						try {
-							window.pdfjsLib.disableWorker = true;
-						} catch {
-							// ignore
-						}
-						canvases.forEach(function(c){
-							renderPdfCanvas(c);
 						});
 					}
 
@@ -8755,6 +8834,7 @@ self.onmessage = async (e) => {
 					updatePreview();
 					updatePasswordMaskOverlay();
 					scheduleSend();
+					schedulePsAutoSave();
 				}
 				toast("Upload eingefügt.", "success");
 				setUploadModalOpen(false);
