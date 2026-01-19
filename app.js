@@ -207,6 +207,29 @@
 		"https://pyodide-cdn2.iodide.io/v0.25.1/full/",
 	].filter(Boolean);
 
+	let pdfJsPreloadPromise = null;
+	function ensurePdfJsLoaded() {
+		if (pdfJsPreloadPromise) return pdfJsPreloadPromise;
+		try {
+			pdfJsPreloadPromise = import("/vendor/pdfjs/pdf.mjs")
+				.then((pdfjsLib) => {
+					window.pdfjsLib = pdfjsLib;
+					try {
+						window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+							"/vendor/pdfjs/pdf.worker.mjs";
+					} catch {
+						// ignore
+					}
+					return pdfjsLib;
+				})
+				.catch(() => null);
+			window.__pdfjsReady = pdfJsPreloadPromise;
+		} catch {
+			pdfJsPreloadPromise = Promise.resolve(null);
+		}
+		return pdfJsPreloadPromise;
+	}
+
 	function createClientId() {
 		const base = crypto.randomUUID
 			? crypto.randomUUID()
@@ -4742,6 +4765,9 @@
 		const metaHtml = metaYaml
 			? `<pre class="meta-yaml">${escapeHtml(metaYaml)}</pre>`
 			: "";
+		if (bodyHtml && bodyHtml.includes("pdf-embed")) {
+			ensurePdfJsLoaded();
+		}
 
 		// Token pro Preview-Render: erlaubt sichere postMessage-Validierung auch bei sandbox/null origin.
 		try {
@@ -4760,17 +4786,17 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
 	${previewBase ? `<base href="${previewBase}">` : ""}
-	<script type="module">
-		window.__pdfjsReady = (async () => {
-			const pdfjsLib = await import("${pdfJsUrl}");
-			window.pdfjsLib = pdfjsLib;
-			try {
-				window.pdfjsLib.GlobalWorkerOptions.workerSrc = "${pdfWorkerUrl}";
-			} catch (e) {
-				// ignore
+	<script>
+		try {
+			if (!window.pdfjsLib && parent && parent.pdfjsLib) {
+				window.pdfjsLib = parent.pdfjsLib;
 			}
-			return pdfjsLib;
-		})();
+			if (!window.__pdfjsReady && parent && parent.__pdfjsReady) {
+				window.__pdfjsReady = parent.__pdfjsReady;
+			}
+		} catch (e) {
+			// ignore
+		}
 	</script>
   <link rel="stylesheet" href="${highlightCssUrl}">
 	<!--ts:${stamp}-->
@@ -4818,7 +4844,6 @@
 		.pdf-page-label{color:${previewMetaText};font-size:12px;}
 		.pdf-actions{display:flex;justify-content:flex-end;gap:8px;}
 		.pdf-frame{width:100%;height:auto;display:block;background:${previewBg};}
-		.pdf-native{width:100%;height:520px;border:0;display:block;background:${previewBg};}
 		.pdf-fallback{padding:10px 12px;font-size:12px;color:${previewMetaText};background:${previewMetaBg};border-bottom:1px solid ${previewTableBorder};}
   </style>
 </head>
@@ -4980,23 +5005,6 @@
 						return Promise.resolve(window.pdfjsLib || null);
 					}
 
-					function insertNativePdf(wrap){
-						if (!wrap) return;
-						var src = wrap.getAttribute('data-pdf-src');
-						if (!src) return;
-						var existing = wrap.querySelector('iframe.pdf-native');
-						if (existing) return;
-						try {
-							var iframe = document.createElement('iframe');
-							iframe.className = 'pdf-native';
-							iframe.src = src;
-							iframe.setAttribute('loading', 'lazy');
-							wrap.appendChild(iframe);
-						} catch {
-							// ignore
-						}
-					}
-
 					var pdfCache = {};
 					function loadPdfDoc(src){
 						if (!src || !window.pdfjsLib) return Promise.reject(new Error('no_pdfjs'));
@@ -5061,7 +5069,6 @@
 									} catch {
 										// ignore
 									}
-									insertNativePdf(wrap);
 								});
 								return;
 							}
