@@ -143,6 +143,12 @@
 	const psImportNotesBtn = document.getElementById("psImportNotes");
 	const psImportFileInput = document.getElementById("psImportFile");
 	const psCount = document.getElementById("psCount");
+	const psBulkBar = document.getElementById("psBulkBar");
+	const psBulkCount = document.getElementById("psBulkCount");
+	const psBulkSelectAll = document.getElementById("psBulkSelectAll");
+	const psBulkTags = document.getElementById("psBulkTags");
+	const psBulkDelete = document.getElementById("psBulkDelete");
+	const psBulkClear = document.getElementById("psBulkClear");
 	const psSearchInput = document.getElementById("psSearch");
 	const psPinnedToggle = document.getElementById("psPinnedToggle");
 	const psSortMenuBtn = document.getElementById("psSortMenuBtn");
@@ -1306,6 +1312,8 @@
 	let psNoteHistory = [];
 	let psNoteHistoryIndex = -1;
 	let psNoteHistorySkip = false;
+	let psSelectedNoteIds = new Set();
+	let psRenderedNoteIds = [];
 	let editorMaskDisabled = false;
 	let crdtMarksEnabled = true;
 	const EDITOR_MASK_DISABLED_KEY = "mirror_mask_disabled";
@@ -5787,6 +5795,134 @@
 		}
 	}
 
+	function setPsBulkBarVisible(visible) {
+		if (!psBulkBar || !psBulkBar.classList) return;
+		psBulkBar.classList.toggle("hidden", !visible);
+		psBulkBar.classList.toggle("flex", visible);
+	}
+
+	function updatePsBulkBar() {
+		const count = psSelectedNoteIds ? psSelectedNoteIds.size : 0;
+		if (psBulkCount) psBulkCount.textContent = String(count);
+		const total = Array.isArray(psRenderedNoteIds) ? psRenderedNoteIds.length : 0;
+		if (psBulkSelectAll) {
+			psBulkSelectAll.checked = Boolean(count && total && count >= total);
+			psBulkSelectAll.indeterminate = Boolean(count && total && count < total);
+		}
+		setPsBulkBarVisible(count > 0);
+		syncPsBulkSelectionToDom();
+	}
+
+	function syncPsBulkSelectionToDom() {
+		if (!psList) return;
+		psList.querySelectorAll("[data-note-id]").forEach((row) => {
+			const id = String(row.getAttribute("data-note-id") || "");
+			const selected = id && psSelectedNoteIds.has(id);
+			row.classList.toggle("ring-2", Boolean(selected));
+			row.classList.toggle("ring-fuchsia-400/30", Boolean(selected));
+			const checkbox = row.querySelector('[data-action="select"]');
+			if (checkbox && checkbox instanceof HTMLInputElement) {
+				checkbox.checked = Boolean(selected);
+			}
+		});
+	}
+
+	function prunePsSelectedNotes(nextIds) {
+		const nextSet = new Set(Array.isArray(nextIds) ? nextIds : []);
+		let changed = false;
+		for (const id of psSelectedNoteIds) {
+			if (!nextSet.has(id)) {
+				psSelectedNoteIds.delete(id);
+				changed = true;
+			}
+		}
+		if (changed) updatePsBulkBar();
+	}
+
+	function setPsNoteSelected(noteId, selected) {
+		const id = String(noteId || "");
+		if (!id) return;
+		if (selected) psSelectedNoteIds.add(id);
+		else psSelectedNoteIds.delete(id);
+		updatePsBulkBar();
+	}
+
+	function togglePsSelectAll() {
+		const ids = Array.isArray(psRenderedNoteIds) ? psRenderedNoteIds : [];
+		const allSelected = ids.length > 0 && ids.every((id) => psSelectedNoteIds.has(id));
+		if (allSelected) {
+			ids.forEach((id) => psSelectedNoteIds.delete(id));
+		} else {
+			ids.forEach((id) => psSelectedNoteIds.add(id));
+		}
+		updatePsBulkBar();
+	}
+
+	function clearPsSelection() {
+		psSelectedNoteIds = new Set();
+		updatePsBulkBar();
+	}
+
+	function getSelectedNoteIds() {
+		return Array.from(psSelectedNoteIds || []);
+	}
+
+	async function applyBulkTagsToNotes(noteIds, tags) {
+		const ids = Array.isArray(noteIds) ? noteIds : [];
+		if (!ids.length) return;
+		const nextTags = Array.isArray(tags) ? tags : [];
+		const tasks = ids.map(async (id) => {
+			const note = findNoteById(id);
+			if (!note) return { ok: false };
+			const rawTags = Array.isArray(note.tags) ? note.tags : [];
+			const pinned = rawTags.some((t) => String(t || "") === PS_PINNED_TAG);
+			const tagsPayload = buildPsTagsPayload(
+				pinned ? [...nextTags, PS_PINNED_TAG] : nextTags,
+				true
+			);
+			const text = String(note.text || "");
+			try {
+				await api(`/api/notes/${encodeURIComponent(id)}`, {
+					method: "PUT",
+					body: JSON.stringify({ text, tags: tagsPayload }),
+				});
+				return { ok: true };
+			} catch {
+				return { ok: false };
+			}
+		});
+		const results = await Promise.allSettled(tasks);
+		const okCount = results.filter((r) => r.status === "fulfilled" && r.value && r.value.ok).length;
+		if (okCount) toast(`Tags aktualisiert: ${okCount}.`, "success");
+		else toast("Tags aktualisieren fehlgeschlagen.", "error");
+	}
+
+	async function deleteBulkNotes(noteIds) {
+		const ids = Array.isArray(noteIds) ? noteIds : [];
+		if (!ids.length) return;
+		const tasks = ids.map(async (id) => {
+			try {
+				await api(`/api/notes/${encodeURIComponent(id)}`, {
+					method: "DELETE",
+				});
+				return { ok: true, id };
+			} catch {
+				return { ok: false, id };
+			}
+		});
+		const results = await Promise.allSettled(tasks);
+		const okIds = results
+			.filter((r) => r.status === "fulfilled" && r.value && r.value.ok)
+			.map((r) => r.value.id);
+		if (okIds.includes(psEditingNoteId)) {
+			psEditingNoteId = "";
+			if (psMainHint) psMainHint.classList.add("hidden");
+			syncMobileFocusState();
+		}
+		if (okIds.length) toast(`Notizen gelöscht: ${okIds.length}.`, "success");
+		else toast("Löschen fehlgeschlagen.", "error");
+	}
+
 	function renderPsList(notes) {
 		if (!psList) return;
 		const escapeHtml = (raw) =>
@@ -5798,6 +5934,8 @@
 
 		const items = Array.isArray(notes) ? notes : [];
 		if (items.length === 0) {
+			psRenderedNoteIds = [];
+			prunePsSelectedNotes(psRenderedNoteIds);
 			const q = normalizeSearchQuery(psSearchQuery);
 			psList.innerHTML = q
 				? '<div class="text-xs text-slate-400">No matches.</div>'
@@ -5806,10 +5944,13 @@
 			return;
 		}
 		const byId = new Map(items.map((n) => [String(n.id || ""), n]));
+		psRenderedNoteIds = items.map((n) => String(n.id || "")).filter(Boolean);
+		prunePsSelectedNotes(psRenderedNoteIds);
 		psList.innerHTML = items
 			.map((n) => {
 				const id = String(n.id || "");
 				const active = id && id === psEditingNoteId;
+				const selected = id && psSelectedNoteIds.has(id);
 				const rawTags = Array.isArray(n.tags) ? n.tags : [];
 				const pinned = rawTags.some((t) => String(t || "") === PS_PINNED_TAG);
 				const tags = stripPinnedTag(stripManualTagsMarker(rawTags));
@@ -5828,9 +5969,16 @@
 					active
 						? "border-fuchsia-400/40 bg-fuchsia-500/10"
 						: "border-white/10 bg-slate-950/25 hover:bg-slate-950/35"
-				} p-3">
+				} p-3${selected ? " ring-2 ring-fuchsia-400/30" : ""}">
 						<div class="flex items-center justify-between gap-2">
-							<div class="text-xs text-slate-400">${fmtDate(n.createdAt)}</div>
+							<div class="flex items-center gap-2">
+								<input
+									type="checkbox"
+									data-action="select"
+									class="h-4 w-4 rounded border-white/20 bg-slate-950/60 text-fuchsia-400 focus:ring-fuchsia-400/30"
+									${selected ? "checked" : ""} />
+								<div class="text-xs text-slate-400">${fmtDate(n.createdAt)}</div>
+							</div>
 							<div class="flex items-center gap-2">
 								<button
 									type="button"
@@ -5885,8 +6033,14 @@
 			});
 			row.querySelectorAll('input[type="checkbox"]').forEach((i) => {
 				i.addEventListener("click", (ev) => {
-					ev.preventDefault();
 					ev.stopPropagation();
+				});
+				i.addEventListener("change", (ev) => {
+					ev.stopPropagation();
+					const input = ev.target;
+					if (!(input instanceof HTMLInputElement)) return;
+					const id = row.getAttribute("data-note-id") || "";
+					setPsNoteSelected(id, input.checked);
 				});
 			});
 
@@ -6550,6 +6704,7 @@ self.onmessage = async (e) => {
 			if (psUserAuthed) psUserAuthed.classList.add("hidden");
 			if (psUserUnauthed) psUserUnauthed.classList.remove("hidden");
 			if (psEmail) psEmail.textContent = "";
+			clearPsSelection();
 			setPsEditorTagsVisible(false);
 			updatePsPinnedToggle();
 			updateFavoritesUI();
@@ -10040,6 +10195,52 @@ self.onmessage = async (e) => {
 			psSearchDebounceTimer = window.setTimeout(() => {
 				savePsSearchQuery();
 			}, 150);
+		});
+	}
+	if (psBulkSelectAll) {
+		psBulkSelectAll.addEventListener("change", () => {
+			togglePsSelectAll();
+		});
+	}
+	if (psBulkClear) {
+		psBulkClear.addEventListener("click", () => {
+			clearPsSelection();
+		});
+	}
+	if (psBulkTags) {
+		psBulkTags.addEventListener("click", async () => {
+			const ids = getSelectedNoteIds();
+			if (!ids.length) return;
+			const value = await modalPrompt("Tags setzen (Komma oder Leerzeichen getrennt).", {
+				title: "Tags ändern",
+				okText: "Übernehmen",
+				cancelText: "Abbrechen",
+				placeholder: "tag1, tag2",
+			});
+			if (value === null) return;
+			const tags = normalizeManualTags(value);
+			await applyBulkTagsToNotes(ids, tags);
+			await refreshPersonalSpace();
+			clearPsSelection();
+		});
+	}
+	if (psBulkDelete) {
+		psBulkDelete.addEventListener("click", async () => {
+			const ids = getSelectedNoteIds();
+			if (!ids.length) return;
+			const ok = await modalConfirm(
+				`${ids.length} Notizen löschen? (Papierkorb)`,
+				{
+					title: "Mehrfach löschen",
+					okText: "Löschen",
+					cancelText: "Abbrechen",
+					danger: true,
+				}
+			);
+			if (!ok) return;
+			await deleteBulkNotes(ids);
+			await refreshPersonalSpace();
+			clearPsSelection();
 		});
 	}
 	if (psPinnedToggle) {
