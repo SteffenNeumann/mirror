@@ -5217,13 +5217,17 @@
 
 	function setPreviewDocument(html) {
 		if (!mdPreview) return;
+		const htmlText = String(html || "");
+		const prefersSrcDoc =
+			htmlText.includes("pdf-embed") || htmlText.includes("data-pdf-src");
 		// Robust: statt srcdoc eine blob: URL nutzen (Safari/Reload/Room-Switch ist damit stabil).
 		try {
+			if (prefersSrcDoc) throw new Error("prefer_srcdoc");
 			if (previewObjectUrl) {
 				URL.revokeObjectURL(previewObjectUrl);
 				previewObjectUrl = "";
 			}
-			const blob = new Blob([String(html || "")], { type: "text/html" });
+			const blob = new Blob([htmlText], { type: "text/html" });
 			previewObjectUrl = URL.createObjectURL(blob);
 			mdPreview.removeAttribute("srcdoc");
 			mdPreview.src = previewObjectUrl;
@@ -5239,7 +5243,7 @@
 				// ignore
 			}
 			try {
-				mdPreview.srcdoc = String(html || "");
+				mdPreview.srcdoc = htmlText;
 				window.setTimeout(() => {
 					attachPreviewCheckboxWriteback();
 				}, 0);
