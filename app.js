@@ -143,12 +143,6 @@
 	const psImportNotesBtn = document.getElementById("psImportNotes");
 	const psImportFileInput = document.getElementById("psImportFile");
 	const psCount = document.getElementById("psCount");
-	const psBulkBar = document.getElementById("psBulkBar");
-	const psBulkCount = document.getElementById("psBulkCount");
-	const psBulkSelectAll = document.getElementById("psBulkSelectAll");
-	const psBulkTags = document.getElementById("psBulkTags");
-	const psBulkDelete = document.getElementById("psBulkDelete");
-	const psBulkClear = document.getElementById("psBulkClear");
 	const psSearchInput = document.getElementById("psSearch");
 	const psPinnedToggle = document.getElementById("psPinnedToggle");
 	const psSortMenuBtn = document.getElementById("psSortMenuBtn");
@@ -5806,12 +5800,6 @@
 		}
 	}
 
-	function setPsBulkBarVisible(visible) {
-		if (!psBulkBar || !psBulkBar.classList) return;
-		psBulkBar.classList.toggle("hidden", !visible);
-		psBulkBar.classList.toggle("flex", visible);
-	}
-
 	function setPsContextMenuOpen(open) {
 		if (!psContextMenu || !psContextMenu.classList) return;
 		psContextMenuOpen = Boolean(open);
@@ -5849,9 +5837,6 @@
 	}
 
 	function updatePsBulkBar() {
-		const count = psSelectedNoteIds ? psSelectedNoteIds.size : 0;
-		if (psBulkCount) psBulkCount.textContent = String(count);
-		setPsBulkBarVisible(count > 0);
 		syncPsBulkSelectionToDom();
 	}
 
@@ -10294,52 +10279,6 @@ self.onmessage = async (e) => {
 		psContextDelete.addEventListener("click", async () => {
 			const ids = getSelectedNoteIds();
 			closePsContextMenu();
-			if (!ids.length) return;
-			const ok = await modalConfirm(
-				`${ids.length} Notizen löschen? (Papierkorb)`,
-				{
-					title: "Mehrfach löschen",
-					okText: "Löschen",
-					cancelText: "Abbrechen",
-					danger: true,
-				}
-			);
-			if (!ok) return;
-			await deleteBulkNotes(ids);
-			await refreshPersonalSpace();
-			clearPsSelection();
-		});
-	}
-	if (psBulkSelectAll) {
-		psBulkSelectAll.addEventListener("click", () => {
-			togglePsSelectAll();
-		});
-	}
-	if (psBulkClear) {
-		psBulkClear.addEventListener("click", () => {
-			clearPsSelection();
-		});
-	}
-	if (psBulkTags) {
-		psBulkTags.addEventListener("click", async () => {
-			const ids = getSelectedNoteIds();
-			if (!ids.length) return;
-			const value = await modalPrompt("Tags setzen (Komma oder Leerzeichen getrennt).", {
-				title: "Tags ändern",
-				okText: "Übernehmen",
-				cancelText: "Abbrechen",
-				placeholder: "tag1, tag2",
-			});
-			if (value === null) return;
-			const tags = normalizeManualTags(value);
-			await applyBulkTagsToNotes(ids, tags);
-			await refreshPersonalSpace();
-			clearPsSelection();
-		});
-	}
-	if (psBulkDelete) {
-		psBulkDelete.addEventListener("click", async () => {
-			const ids = getSelectedNoteIds();
 			if (!ids.length) return;
 			const ok = await modalConfirm(
 				`${ids.length} Notizen löschen? (Papierkorb)`,
