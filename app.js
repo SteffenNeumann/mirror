@@ -137,6 +137,7 @@
 	const psNewNote = document.getElementById("psNewNote");
 	const psEditorTagsBar = document.getElementById("psEditorTagsBar");
 	const psEditorTagsInput = document.getElementById("psEditorTagsInput");
+	const psEditorTagsSuggest = document.getElementById("psEditorTagsSuggest");
 	const psExportNotesBtn = document.getElementById("psExportNotes");
 	const psImportModeSelect = document.getElementById("psImportMode");
 	const psImportNotesBtn = document.getElementById("psImportNotes");
@@ -1066,6 +1067,142 @@
 		psEditorTagsSyncing = true;
 		psEditorTagsInput.value = formatTagsForEditor(psEditingNoteTags);
 		psEditorTagsSyncing = false;
+	}
+
+	let psEditorTagsSuggestOpen = false;
+	let psEditorTagsSuggestItems = [];
+	let psEditorTagsSuggestIndex = -1;
+
+	function getPsEditorTagTokenBounds(inputEl) {
+		const value = String(inputEl && inputEl.value ? inputEl.value : "");
+		const caret = Math.max(
+			0,
+			Math.min(value.length, Number(inputEl.selectionStart) || 0)
+		);
+		const isSep = (ch) => /[\s,]/.test(ch || "");
+		let start = caret;
+		while (start > 0 && !isSep(value[start - 1])) start -= 1;
+		let end = caret;
+		while (end < value.length && !isSep(value[end])) end += 1;
+		return { value, start, end, token: value.slice(start, end) };
+	}
+
+	function buildPsEditorTagsSuggestItems() {
+		if (!psEditorTagsInput) return [];
+		const tags = Array.isArray(psState && psState.tags) ? psState.tags : [];
+		if (!tags.length) return [];
+		const { token } = getPsEditorTagTokenBounds(psEditorTagsInput);
+		const prefix = String(token || "")
+			.trim()
+			.replace(/^#/, "")
+			.toLowerCase();
+		const existing = new Set(normalizeManualTags(psEditorTagsInput.value));
+		if (prefix) existing.delete(prefix);
+		const items = [];
+		for (const t of tags) {
+			const raw = String(t || "").trim();
+			if (!raw) continue;
+			if (raw === PS_PINNED_TAG || raw === PS_MANUAL_TAGS_MARKER) continue;
+			const lower = raw.toLowerCase();
+			if (existing.has(lower)) continue;
+			if (prefix && !lower.startsWith(prefix)) continue;
+			items.push(raw);
+			if (items.length >= 8) break;
+		}
+		return items;
+	}
+
+	function closePsEditorTagsSuggest() {
+		if (!psEditorTagsSuggest) return;
+		psEditorTagsSuggestOpen = false;
+		psEditorTagsSuggestItems = [];
+		psEditorTagsSuggestIndex = -1;
+		psEditorTagsSuggest.classList.add("hidden");
+		psEditorTagsSuggest.innerHTML = "";
+	}
+
+	function renderPsEditorTagsSuggest(items, activeIndex) {
+		if (!psEditorTagsSuggest) return;
+		if (!items.length) {
+			closePsEditorTagsSuggest();
+			return;
+		}
+		psEditorTagsSuggestOpen = true;
+		psEditorTagsSuggestItems = items;
+		psEditorTagsSuggestIndex = activeIndex;
+		psEditorTagsSuggest.innerHTML = items
+			.map((tag, idx) => {
+				const active = idx === activeIndex;
+				const btnClass = active
+					? "bg-white/10 text-white"
+					: "text-slate-200 hover:bg-white/5";
+				return `\n\t\t\t<button type="button" class="flex w-full items-center gap-2 px-2.5 py-1.5 text-left ${btnClass}" data-tag="${escapeHtmlAttr(
+					tag
+				)}" data-index="${idx}"><span class="text-slate-400">#</span><span class="font-medium">${escapeHtml(
+					tag
+				)}</span></button>`;
+			})
+			.join("");
+		psEditorTagsSuggest.classList.remove("hidden");
+	}
+
+	function updatePsEditorTagsSuggest(forceOpen) {
+		if (!psEditorTagsInput || !psEditorTagsSuggest) return;
+		if (!psState || !psState.authed) {
+			closePsEditorTagsSuggest();
+			return;
+		}
+		if (psEditorTagsBar && psEditorTagsBar.classList.contains("hidden")) {
+			closePsEditorTagsSuggest();
+			return;
+		}
+		const focused = (() => {
+			try {
+				return document && document.activeElement === psEditorTagsInput;
+			} catch {
+				return false;
+			}
+		})();
+		if (!forceOpen && !focused) {
+			closePsEditorTagsSuggest();
+			return;
+		}
+		const items = buildPsEditorTagsSuggestItems();
+		if (!items.length) {
+			closePsEditorTagsSuggest();
+			return;
+		}
+		let nextIndex = psEditorTagsSuggestIndex;
+		if (nextIndex < 0 || nextIndex >= items.length) nextIndex = 0;
+		renderPsEditorTagsSuggest(items, nextIndex);
+	}
+
+	function updatePsEditorTagsFromInput() {
+		if (!psEditorTagsInput) return;
+		if (psEditorTagsSyncing) return;
+		const nextTags = normalizeManualTags(psEditorTagsInput.value);
+		psEditingNoteTags = nextTags;
+		psEditingNoteTagsOverridden = true;
+		updatePsEditingTagsHint();
+		updateEditingNoteTagsLocal(nextTags);
+		schedulePsTagsAutoSave();
+		updateEditorMetaYaml();
+	}
+
+	function applyPsEditorTagSuggestion(tag) {
+		if (!psEditorTagsInput) return;
+		const { value, start, end } = getPsEditorTagTokenBounds(psEditorTagsInput);
+		const nextValue =
+			value.slice(0, start) + String(tag || "") + value.slice(end);
+		psEditorTagsInput.value = nextValue;
+		const caret = start + String(tag || "").length;
+		try {
+			psEditorTagsInput.setSelectionRange(caret, caret);
+		} catch {
+			// ignore
+		}
+		updatePsEditorTagsFromInput();
+		updatePsEditorTagsSuggest(true);
 	}
 
 	function syncPsEditingNoteTagsFromState() {
@@ -5435,6 +5572,13 @@
 			});
 		}
 		psState.tags = Array.from(tags).sort();
+		try {
+			if (document && document.activeElement === psEditorTagsInput) {
+				updatePsEditorTagsSuggest(true);
+			}
+		} catch {
+			// ignore
+		}
 	}
 
 	function updateEditingNoteTagsLocal(nextTags) {
@@ -9414,18 +9558,66 @@ self.onmessage = async (e) => {
 	}
 	if (psEditorTagsInput) {
 		psEditorTagsInput.addEventListener("input", () => {
-			if (psEditorTagsSyncing) return;
-			const nextTags = normalizeManualTags(psEditorTagsInput.value);
-			psEditingNoteTags = nextTags;
-			psEditingNoteTagsOverridden = true;
-			updatePsEditingTagsHint();
-			updateEditingNoteTagsLocal(nextTags);
-			schedulePsTagsAutoSave();
-			updateEditorMetaYaml();
+			updatePsEditorTagsFromInput();
+			updatePsEditorTagsSuggest(true);
+		});
+		psEditorTagsInput.addEventListener("focus", () => {
+			updatePsEditorTagsSuggest(true);
+		});
+		psEditorTagsInput.addEventListener("keydown", (ev) => {
+			if (!psEditorTagsSuggestOpen) return;
+			if (!psEditorTagsSuggestItems.length) return;
+			if (ev.key === "ArrowDown") {
+				ev.preventDefault();
+				const next = Math.min(
+					psEditorTagsSuggestItems.length - 1,
+					psEditorTagsSuggestIndex + 1
+				);
+				psEditorTagsSuggestIndex = next;
+				renderPsEditorTagsSuggest(psEditorTagsSuggestItems, next);
+				return;
+			}
+			if (ev.key === "ArrowUp") {
+				ev.preventDefault();
+				const next = Math.max(0, psEditorTagsSuggestIndex - 1);
+				psEditorTagsSuggestIndex = next;
+				renderPsEditorTagsSuggest(psEditorTagsSuggestItems, next);
+				return;
+			}
+			if (ev.key === "Enter" || ev.key === "Tab") {
+				const item = psEditorTagsSuggestItems[psEditorTagsSuggestIndex];
+				if (item) {
+					ev.preventDefault();
+					applyPsEditorTagSuggestion(item);
+				}
+				return;
+			}
+			if (ev.key === "Escape") {
+				ev.preventDefault();
+				closePsEditorTagsSuggest();
+			}
 		});
 		psEditorTagsInput.addEventListener("blur", () => {
 			if (psEditorTagsSyncing) return;
 			syncPsEditorTagsInput();
+			closePsEditorTagsSuggest();
+		});
+	}
+	if (psEditorTagsSuggest) {
+		psEditorTagsSuggest.addEventListener("mousedown", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLElement)) return;
+			if (!target.closest("[data-tag]")) return;
+			ev.preventDefault();
+		});
+		psEditorTagsSuggest.addEventListener("click", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLElement)) return;
+			const btn = target.closest("[data-tag]");
+			if (!btn) return;
+			const tag = String(btn.getAttribute("data-tag") || "");
+			if (!tag) return;
+			applyPsEditorTagSuggestion(tag);
 		});
 	}
 	if (psSortMenuBtn && psSortMenu) {
