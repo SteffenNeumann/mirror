@@ -5160,6 +5160,7 @@
 			// ignore
 		}
 		updatePreview();
+		schedulePsAutoSave();
 		scheduleSend();
 		return true;
 	}
