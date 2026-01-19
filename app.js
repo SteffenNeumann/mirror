@@ -6792,6 +6792,7 @@ self.onmessage = async (e) => {
 	const MAX_ROOM_TABS = 5;
 	let pendingRoomBootstrapText = "";
 	let pendingClosedTab = null;
+	let roomTabLimitNoticeAt = 0;
 
 	function normalizeFavoriteEntry(it) {
 		const roomName = normalizeRoom(it && it.room);
@@ -6894,6 +6895,19 @@ self.onmessage = async (e) => {
 		return trimmed;
 	}
 
+	function trimRoomTabs(list) {
+		const tabs = Array.isArray(list) ? list.slice() : [];
+		if (tabs.length <= MAX_ROOM_TABS) return { tabs, trimmed: [] };
+		const sorted = tabs
+			.map((t, i) => ({ ...t, _i: i }))
+			.sort((a, b) => (a.lastUsed || 0) - (b.lastUsed || 0));
+		const removeCount = tabs.length - MAX_ROOM_TABS;
+		const toRemove = new Set(sorted.slice(0, removeCount).map((t) => t._i));
+		const trimmed = tabs.filter((_, i) => !toRemove.has(i));
+		const removed = tabs.filter((_, i) => toRemove.has(i));
+		return { tabs: trimmed, trimmed: removed };
+	}
+
 	function mergeRoomTabs(localTabs, serverTabs) {
 		const map = new Map();
 		const add = (entry, preferText) => {
@@ -6939,9 +6953,15 @@ self.onmessage = async (e) => {
 		if (psState && psState.authed) {
 			const serverTabs = Array.isArray(psState.roomTabs) ? psState.roomTabs : [];
 			const localTabs = loadLocalRoomTabs();
-			return dedupeRoomTabs(mergeRoomTabs(localTabs, serverTabs));
+			const merged = dedupeRoomTabs(mergeRoomTabs(localTabs, serverTabs));
+			const limited = trimRoomTabs(merged).tabs;
+			if (limited.length !== merged.length) saveRoomTabs(limited);
+			return limited;
 		}
-		return loadLocalRoomTabs();
+		const localTabs = loadLocalRoomTabs();
+		const limited = trimRoomTabs(localTabs).tabs;
+		if (limited.length !== localTabs.length) saveRoomTabs(limited);
+		return limited;
 	}
 
 	function saveRoomTabs(list) {
@@ -7124,14 +7144,21 @@ self.onmessage = async (e) => {
 			tabs.push({ room: nextRoom, key: nextKey, lastUsed: now });
 		}
 		if (tabs.length > MAX_ROOM_TABS) {
-			const sorted = tabs
-				.map((t, i) => ({ ...t, _i: i }))
-				.sort((a, b) => (a.lastUsed || 0) - (b.lastUsed || 0));
-			const toRemove = new Set(
-				sorted.slice(0, tabs.length - MAX_ROOM_TABS).map((t) => t._i)
-			);
-			const trimmed = tabs.filter((_, i) => !toRemove.has(i));
-			saveRoomTabs(trimmed);
+			const trimmedResult = trimRoomTabs(tabs);
+			if (trimmedResult.trimmed.length) {
+				const minGap = 3000;
+				if (Date.now() - roomTabLimitNoticeAt > minGap) {
+					roomTabLimitNoticeAt = Date.now();
+					openModal({
+						title: "Tab-Limit erreicht",
+						message: `Maximal ${MAX_ROOM_TABS} Tabs erlaubt. Älteste Tabs wurden entfernt.`,
+						okText: "OK",
+						cancelText: "Schließen",
+						backdropClose: true,
+					});
+				}
+			}
+			saveRoomTabs(trimmedResult.tabs);
 			if (!(opts && opts.skipSync)) {
 				const snapshot = textarea ? String(textarea.value || "") : "";
 				scheduleRoomTabSync({
