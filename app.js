@@ -9932,10 +9932,15 @@ self.onmessage = async (e) => {
 			);
 			const cachedNoteId = cached && cached.noteId ? String(cached.noteId || "") : "";
 			const note = cachedNoteId ? findNoteById(cachedNoteId) : null;
-			const cachedText = cached && typeof cached.text === "string" ? cached.text : "";
+			const cachedText =
+				!cachedNoteId && cached && typeof cached.text === "string"
+					? cached.text
+					: "";
 			const nextText = note
 				? String(note.text || "")
-				: cachedText || pendingRoomBootstrapText || "";
+				: !cachedNoteId
+					? cachedText || pendingRoomBootstrapText || ""
+					: "";
 			pendingRoomBootstrapText = "";
 			if (note) {
 				applyNoteToEditor(note, null, { skipHistory: true });
