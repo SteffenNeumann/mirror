@@ -6791,6 +6791,7 @@ self.onmessage = async (e) => {
 	const ROOM_TABS_KEY = "mirror_room_tabs_v1";
 	const MAX_ROOM_TABS = 5;
 	let pendingRoomBootstrapText = "";
+	let pendingClosedTab = null;
 
 	function normalizeFavoriteEntry(it) {
 		const roomName = normalizeRoom(it && it.room);
@@ -7233,11 +7234,13 @@ self.onmessage = async (e) => {
 		if (room === nextRoom && key === nextKey) {
 			const fallback = tabs[idx] || tabs[idx - 1] || null;
 			if (fallback) {
+				pendingClosedTab = { room: nextRoom, key: nextKey };
 				location.hash = buildShareHash(fallback.room, fallback.key);
 				return;
 			}
 			const next = randomRoom();
 			const nextKeyAuto = randomKey();
+			pendingClosedTab = { room: nextRoom, key: nextKey };
 			location.hash = buildShareHash(next, nextKeyAuto);
 		}
 	}
@@ -9115,7 +9118,12 @@ self.onmessage = async (e) => {
 		const nextKey = parsed.key;
 		if (!nextRoom) return;
 		if (nextRoom === room && nextKey === key) return;
-		if (textarea) {
+		const suppressRestore =
+			pendingClosedTab &&
+			pendingClosedTab.room === room &&
+			pendingClosedTab.key === key;
+		pendingClosedTab = null;
+		if (textarea && !suppressRestore) {
 			updateRoomTabTextLocal(room, key, textarea.value);
 		}
 		flushRoomTabSync();
