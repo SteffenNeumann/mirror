@@ -273,10 +273,23 @@
 				</section>
 					transform: none !important;
 				}
-				.ps-note-share {
+				.ps-note-item.ps-note-active .ps-note-actions,
+				.ps-note-item:hover .ps-note-actions {
 					opacity: 1 !important;
 					pointer-events: auto !important;
 					transform: none !important;
+				}
+				.ps-note-actions {
+					opacity: 0;
+					pointer-events: none;
+					transform: translateY(-2px);
+					transition: opacity 0.2s ease, transform 0.2s ease;
+				}
+				.ps-note-item:hover .ps-note-actions,
+				.ps-note-item.ps-note-active .ps-note-actions {
+					opacity: 1;
+					pointer-events: auto;
+					transform: none;
 				}
 			}
 			.md-content a {

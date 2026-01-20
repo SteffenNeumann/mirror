@@ -6349,14 +6349,14 @@
 				const titleHtml = escapeHtml(info.title);
 				const excerptHtml = escapeHtml(info.excerpt);
 				return `
-					<div data-note-id="${id}" class="group relative cursor-pointer rounded-xl border ${
+					<div data-note-id="${id}" class="group ps-note-item relative cursor-pointer rounded-xl border ${
 					active
-						? "border-fuchsia-400/40 bg-fuchsia-500/10"
+						? "ps-note-active border-fuchsia-400/40 bg-fuchsia-500/10"
 						: "border-white/10 bg-slate-950/25 hover:bg-slate-950/35"
 				} p-3${selected ? " ring-2 ring-fuchsia-400/30" : ""}">
 						<div class="flex items-center justify-between gap-2">
 							<div class="text-xs text-slate-400">${fmtDate(n.createdAt)}</div>
-							<div class="flex items-center gap-2">
+							<div class="ps-note-actions flex items-center gap-2">
 								<button
 									type="button"
 									data-action="pin"
