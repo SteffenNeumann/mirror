@@ -1231,11 +1231,14 @@
 										</svg>
 									</button>
 									<div
+										id="psEditorTagsBlur"
+										class="pointer-events-none absolute left-12 right-12 top-2 h-9 rounded-lg bg-slate-950/20 backdrop-blur-2xl"></div>
+									<div
 										id="psEditorTagsBar"
-										class="absolute left-12 right-12 top-2 hidden">
+										class="absolute left-12 right-12 top-2 hidden z-10">
 										<label for="psEditorTagsInput" class="sr-only">Tags</label>
 										<div
-											class="flex h-9 items-center gap-2 rounded-lg border border-white/10 bg-slate-950/40 px-2.5 text-xs text-slate-200 shadow-soft backdrop-blur-2xl">
+											class="flex h-9 items-center gap-2 rounded-lg border border-white/10 bg-slate-950/40 px-2.5 text-xs text-slate-200 shadow-soft backdrop-blur">
 											<span class="text-slate-400">Tags:</span>
 											<input
 												id="psEditorTagsInput"
