@@ -487,6 +487,12 @@
 					flex-direction: column;
 					pointer-events: auto;
 					border-radius: 0;
+					overflow: hidden;
+				}
+				body.mobile-ps-open #psList {
+					overflow-y: auto;
+					-webkit-overflow-scrolling: touch;
+					max-height: none;
 				}
 				body.mobile-note-open #editorPanel,
 				body.mobile-editor-open #editorPanel {

@@ -6068,7 +6068,11 @@
 		const listRect = psList.getBoundingClientRect();
 		if (!panelRect.height || !listRect.height) return;
 		let maxHeight = panelRect.bottom - listRect.top;
-		if (textarea) {
+		const isMobilePsOpen =
+			document.body &&
+			document.body.classList &&
+			document.body.classList.contains("mobile-ps-open");
+		if (textarea && !isMobilePsOpen) {
 			const editorRect = textarea.getBoundingClientRect();
 			if (editorRect.bottom > listRect.top) {
 				maxHeight = Math.min(maxHeight, editorRect.bottom - listRect.top);
