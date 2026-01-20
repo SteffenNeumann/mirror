@@ -986,9 +986,7 @@
 							</div>
 
 						</div>
-						<div
-							class="shrink-0 text-left text-xs text-slate-300 sm:text-right"
-							data-header-detail="true">
+						<div class="shrink-0 text-left text-xs text-slate-300 sm:text-right">
 							<div class="flex items-center justify-start gap-2 sm:justify-end">
 								<div>
 									Room:
@@ -996,7 +994,8 @@
 								</div>
 							</div>
 							<div
-								class="mt-1 flex flex-col items-start gap-1 text-[11px] text-slate-400 sm:items-end">
+								class="mt-1 flex flex-col items-start gap-1 text-[11px] text-slate-400 sm:items-end"
+								data-header-detail="true">
 								<div id="presenceSummary">0 Nutzer online</div>
 								<div class="flex items-center justify-start gap-2 sm:justify-end">
 									<div id="crdtStatus" class="hidden text-[10px] text-slate-500"></div>
@@ -1603,6 +1602,24 @@
 												<path d="M9 6l6 6-6 6" />
 											</svg>
 										</button>
+										<button
+											id="calendarSidebarToggle"
+											type="button"
+											class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
+											title="Toggle sidebar"
+											aria-label="Toggle sidebar"
+											aria-expanded="true">
+											<svg
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												class="h-4 w-4">
+												<path d="M9 18l6-6-6-6" />
+											</svg>
+										</button>
 									</div>
 								</div>
 								<div class="mt-3 flex flex-wrap items-center gap-2">
@@ -1640,24 +1657,6 @@
 									class="rounded-xl border border-white/10 bg-slate-950/30 p-3">
 									<div class="flex items-center justify-between gap-2">
 										<div class="text-xs text-slate-400">Kalender</div>
-										<button
-											id="calendarSidebarToggle"
-											type="button"
-											class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-transparent text-[11px] text-slate-300 transition hover:bg-white/5 active:bg-white/10"
-											title="Toggle sidebar"
-											aria-label="Toggle sidebar"
-											aria-expanded="true">
-											<svg
-												viewBox="0 0 24 24"
-												fill="none"
-												stroke="currentColor"
-												stroke-width="2"
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												class="h-3.5 w-3.5">
-												<path d="M9 18l6-6-6-6" />
-											</svg>
-										</button>
 									</div>
 									<div id="calendarLegend" class="mt-2 space-y-2"></div>
 									<div id="calendarStatus" class="mt-3 text-[11px] text-slate-500"></div>
