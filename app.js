@@ -204,6 +204,25 @@
 	const trashRefreshBtn = document.getElementById("trashRefresh");
 	const trashManageList = document.getElementById("trashManageList");
 	const trashManageEmpty = document.getElementById("trashManageEmpty");
+	const calendarDefaultViewSelect = document.getElementById("calendarDefaultView");
+	const calendarSourcesList = document.getElementById("calendarSourcesList");
+	const calendarSourcesEmpty = document.getElementById("calendarSourcesEmpty");
+	const calendarAddName = document.getElementById("calendarAddName");
+	const calendarAddUrl = document.getElementById("calendarAddUrl");
+	const calendarAddColor = document.getElementById("calendarAddColor");
+	const calendarAddEnabled = document.getElementById("calendarAddEnabled");
+	const calendarAddBtn = document.getElementById("calendarAddBtn");
+	const calendarPanel = document.getElementById("calendarPanel");
+	const calendarTitle = document.getElementById("calendarTitle");
+	const calendarGrid = document.getElementById("calendarGrid");
+	const calendarLegend = document.getElementById("calendarLegend");
+	const calendarStatus = document.getElementById("calendarStatus");
+	const calendarPrevBtn = document.getElementById("calendarPrev");
+	const calendarNextBtn = document.getElementById("calendarNext");
+	const calendarTodayBtn = document.getElementById("calendarToday");
+	const calendarRefreshBtn = document.getElementById("calendarRefresh");
+	const calendarOpenSettingsBtn = document.getElementById("calendarOpenSettings");
+	const calendarViewButtons = document.querySelectorAll("[data-calendar-view]");
 	const psUserAuthed = document.getElementById("psUserAuthed");
 	const psUserUnauthed = document.getElementById("psUserUnauthed");
 	const bgBlobTop = document.getElementById("bgBlobTop");
@@ -3411,6 +3430,11 @@
 		}
 	}
 
+	function openSettingsAt(section) {
+		setSettingsOpen(true);
+		setActiveSettingsSection(section || "user");
+	}
+
 	function setActiveSettingsSection(next) {
 		const target = String(next || "user");
 		settingsSection = target;
@@ -3430,6 +3454,9 @@
 		}
 		if (target === "trash") {
 			loadTrashManage();
+		}
+		if (target === "calendar") {
+			renderCalendarSettings();
 		}
 	}
 
@@ -7360,11 +7387,23 @@ self.onmessage = async (e) => {
 	const RECENT_KEY = "mirror_recent_rooms";
 	const FAVORITES_KEY = "mirror_favorites_v1";
 	const ROOM_TABS_KEY = "mirror_room_tabs_v1";
+	const CALENDAR_SOURCES_KEY = "mirror_calendar_sources_v1";
+	const CALENDAR_DEFAULT_VIEW_KEY = "mirror_calendar_default_view_v1";
+	const CALENDAR_VIEWS = ["day", "week", "month"];
 	const MAX_ROOM_TABS = 5;
 	let pendingRoomBootstrapText = "";
 	let pendingClosedTab = null;
 	let roomTabLimitNoticeAt = 0;
 	let skipTabLimitCheck = false;
+	let calendarPanelActive = false;
+	let calendarRefreshTimer = 0;
+	const calendarState = {
+		view: "month",
+		cursor: new Date(),
+		events: [],
+		loading: false,
+		lastLoadedAt: 0,
+	};
 
 	function normalizeFavoriteEntry(it) {
 		const roomName = normalizeRoom(it && it.room);
@@ -7774,10 +7813,6 @@ self.onmessage = async (e) => {
 	function renderRoomTabs() {
 		if (!roomTabs) return;
 		const tabs = loadRoomTabs();
-		if (!tabs.length) {
-			roomTabs.innerHTML = "";
-			return;
-		}
 		const canClose = tabs.length > 1;
 		const html = tabs
 			.map((t) => {
@@ -7821,7 +7856,22 @@ self.onmessage = async (e) => {
 					</button>`;
 			})
 			.join("");
-		roomTabs.innerHTML = html;
+		const calendarBase =
+			"inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs transition";
+		const calendarActive =
+			"border-fuchsia-400/40 bg-fuchsia-500/15 text-fuchsia-100";
+		const calendarIdle =
+			"border-white/10 bg-slate-950/40 text-slate-200 hover:bg-white/10";
+		const calendarHtml = `
+			<button
+				type="button"
+				data-calendar-tab
+				class="${calendarBase} ${
+					calendarPanelActive ? calendarActive : calendarIdle
+				}">
+				<span class="max-w-[140px] truncate">Kalender</span>
+			</button>`;
+		roomTabs.innerHTML = `${html}${calendarHtml}`;
 	}
 
 	function closeRoomTab(roomName, keyName) {
@@ -8090,6 +8140,549 @@ self.onmessage = async (e) => {
 					</div>`;
 			})
 			.join("");
+	}
+
+	function normalizeCalendarSource(it) {
+		if (!it) return null;
+		const id = String(it.id || "").trim() || createClientId();
+		const name = String(it.name || "").trim() || "Kalender";
+		const url = String(it.url || "").trim();
+		const color = String(it.color || "").trim() || "#a855f7";
+		const enabled = typeof it.enabled === "boolean" ? it.enabled : true;
+		return { id, name, url, color, enabled };
+	}
+
+	function loadCalendarSources() {
+		try {
+			const raw = localStorage.getItem(CALENDAR_SOURCES_KEY);
+			const parsed = JSON.parse(raw || "[]");
+			if (!Array.isArray(parsed)) return [];
+			return parsed.map(normalizeCalendarSource).filter(Boolean);
+		} catch {
+			return [];
+		}
+	}
+
+	function saveCalendarSources(list) {
+		try {
+			const cleaned = Array.isArray(list)
+				? list.map(normalizeCalendarSource).filter(Boolean)
+				: [];
+			localStorage.setItem(CALENDAR_SOURCES_KEY, JSON.stringify(cleaned));
+		} catch {
+			// ignore
+		}
+	}
+
+	function loadCalendarDefaultView() {
+		try {
+			const raw = String(localStorage.getItem(CALENDAR_DEFAULT_VIEW_KEY) || "");
+			return CALENDAR_VIEWS.includes(raw) ? raw : "month";
+		} catch {
+			return "month";
+		}
+	}
+
+	function saveCalendarDefaultView(view) {
+		const safe = CALENDAR_VIEWS.includes(view) ? view : "month";
+		try {
+			localStorage.setItem(CALENDAR_DEFAULT_VIEW_KEY, safe);
+		} catch {
+			// ignore
+		}
+		calendarState.view = safe;
+		updateCalendarViewButtons();
+		renderCalendarPanel();
+	}
+
+	function renderCalendarSettings() {
+		if (calendarDefaultViewSelect) {
+			calendarDefaultViewSelect.value = loadCalendarDefaultView();
+		}
+		if (!calendarSourcesList) return;
+		const list = loadCalendarSources();
+		if (calendarSourcesEmpty && calendarSourcesEmpty.classList) {
+			calendarSourcesEmpty.classList.toggle("hidden", list.length > 0);
+		}
+		if (!list.length) {
+			calendarSourcesList.innerHTML = "";
+			return;
+		}
+		calendarSourcesList.innerHTML = list
+			.map((src) => {
+				const safeId = escapeAttr(src.id);
+				return `
+					<div class="rounded-lg border border-white/10 bg-slate-950/30 p-3" data-cal-id="${safeId}">
+						<div class="flex items-start justify-between gap-3">
+							<div class="min-w-0 flex-1">
+								<label class="text-[11px] text-slate-400">Name</label>
+								<input
+									type="text"
+									data-cal-field="name"
+									value="${escapeAttr(src.name)}"
+									class="mt-1 w-full rounded-md border border-white/10 bg-slate-950/40 px-2.5 py-1.5 text-xs text-slate-100 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/25" />
+								<label class="mt-2 block text-[11px] text-slate-400">ICS-URL</label>
+								<input
+									type="url"
+									data-cal-field="url"
+									value="${escapeAttr(src.url)}"
+									class="mt-1 w-full rounded-md border border-white/10 bg-slate-950/40 px-2.5 py-1.5 text-xs text-slate-100 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/25" />
+							</div>
+							<div class="flex flex-col items-end gap-2">
+								<input
+									type="color"
+									data-cal-field="color"
+									value="${escapeAttr(src.color)}"
+									class="h-9 w-16 rounded-md border border-white/10 bg-slate-950/40" />
+								<label class="flex items-center gap-2 text-[11px] text-slate-300">
+									<input
+										type="checkbox"
+										data-cal-field="enabled"
+										${src.enabled ? "checked" : ""}
+										class="h-4 w-4 rounded border-white/20 bg-slate-950/40 text-fuchsia-400" />
+									Aktiv
+								</label>
+								<button
+									type="button"
+									data-cal-remove="1"
+									class="rounded-md border border-white/10 bg-transparent px-2 py-1 text-[11px] text-slate-200 transition hover:bg-white/5 active:bg-white/10">
+									Entfernen
+								</button>
+							</div>
+						</div>
+					</div>`;
+			})
+			.join("");
+	}
+
+	function setCalendarPanelActive(active) {
+		calendarPanelActive = Boolean(active);
+		if (editorPreviewGrid && editorPreviewGrid.classList) {
+			editorPreviewGrid.classList.toggle("hidden", calendarPanelActive);
+		}
+		if (calendarPanel && calendarPanel.classList) {
+			calendarPanel.classList.toggle("hidden", !calendarPanelActive);
+		}
+		if (calendarPanelActive) {
+			calendarState.view = loadCalendarDefaultView();
+			updateCalendarViewButtons();
+			renderCalendarPanel();
+			refreshCalendarEvents(true);
+		}
+		renderRoomTabs();
+	}
+
+	function startOfDay(date) {
+		return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+	}
+
+	function addDays(date, days) {
+		const next = new Date(date);
+		next.setDate(next.getDate() + days);
+		return next;
+	}
+
+	function startOfWeek(date) {
+		const d = startOfDay(date);
+		const dow = (d.getDay() + 6) % 7; // Monday start
+		d.setDate(d.getDate() - dow);
+		return d;
+	}
+
+	function startOfMonth(date) {
+		return new Date(date.getFullYear(), date.getMonth(), 1);
+	}
+
+	function formatTime(date) {
+		return date.toLocaleTimeString("de-DE", {
+			hour: "2-digit",
+			minute: "2-digit",
+		});
+	}
+
+	function formatDayLabel(date) {
+		return date.toLocaleDateString("de-DE", {
+			weekday: "short",
+			day: "2-digit",
+			month: "2-digit",
+		});
+	}
+
+	function formatCalendarTitle(view, date) {
+		if (view === "day") {
+			return date.toLocaleDateString("de-DE", {
+				weekday: "long",
+				day: "2-digit",
+				month: "long",
+				year: "numeric",
+			});
+		}
+		if (view === "week") {
+			const start = startOfWeek(date);
+			const end = addDays(start, 6);
+			return `${start.toLocaleDateString("de-DE", {
+				day: "2-digit",
+				month: "2-digit",
+				year: "numeric",
+			})} – ${end.toLocaleDateString("de-DE", {
+				day: "2-digit",
+				month: "2-digit",
+				year: "numeric",
+			})}`;
+		}
+		return date.toLocaleDateString("de-DE", {
+			month: "long",
+			year: "numeric",
+		});
+	}
+
+	function parseIcsDate(value) {
+		const raw = String(value || "").trim();
+		if (!raw) return null;
+		if (/^\d{8}$/.test(raw)) {
+			const y = Number(raw.slice(0, 4));
+			const m = Number(raw.slice(4, 6)) - 1;
+			const d = Number(raw.slice(6, 8));
+			return { date: new Date(y, m, d), allDay: true };
+		}
+		const match = raw.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})?(Z)?$/);
+		if (!match) return null;
+		const y = Number(match[1]);
+		const mo = Number(match[2]) - 1;
+		const d = Number(match[3]);
+		const h = Number(match[4] || 0);
+		const mi = Number(match[5] || 0);
+		const s = Number(match[6] || 0);
+		if (match[7] === "Z") {
+			return { date: new Date(Date.UTC(y, mo, d, h, mi, s)), allDay: false };
+		}
+		return { date: new Date(y, mo, d, h, mi, s), allDay: false };
+	}
+
+	function unfoldIcsLines(text) {
+		const rawLines = String(text || "")
+			.replace(/\r\n/g, "\n")
+			.replace(/\r/g, "\n")
+			.split("\n");
+		const out = [];
+		for (const line of rawLines) {
+			if (!line) continue;
+			if (/^[ \t]/.test(line) && out.length) {
+				out[out.length - 1] += line.trimStart();
+				continue;
+			}
+			out.push(line.trim());
+		}
+		return out;
+	}
+
+	function parseIcsEvents(text) {
+		const lines = unfoldIcsLines(text);
+		const events = [];
+		let current = null;
+		for (const line of lines) {
+			if (line === "BEGIN:VEVENT") {
+				current = {};
+				continue;
+			}
+			if (line === "END:VEVENT") {
+				if (current && current.start) {
+					const start = current.start;
+					let end = current.end;
+					if (!end) {
+						end = current.allDay
+							? addDays(start, 1)
+							: new Date(start.getTime() + 60 * 60 * 1000);
+					}
+					events.push({
+						id: current.uid || createClientId(),
+						start,
+						end,
+						allDay: Boolean(current.allDay),
+						title: current.summary || "(Ohne Titel)",
+						location: current.location || "",
+					});
+				}
+				current = null;
+				continue;
+			}
+			if (!current) continue;
+			const idx = line.indexOf(":");
+			if (idx < 0) continue;
+			const keyPart = line.slice(0, idx);
+			const value = line.slice(idx + 1);
+			const [rawKey] = keyPart.split(";");
+			const key = rawKey.toUpperCase();
+			if (key === "DTSTART") {
+				const parsed = parseIcsDate(value);
+				if (parsed) {
+					current.start = parsed.date;
+					current.allDay = parsed.allDay;
+				}
+			}
+			if (key === "DTEND") {
+				const parsed = parseIcsDate(value);
+				if (parsed) {
+					current.end = parsed.date;
+				}
+			}
+			if (key === "SUMMARY") {
+				current.summary = value;
+			}
+			if (key === "LOCATION") {
+				current.location = value;
+			}
+			if (key === "UID") {
+				current.uid = value;
+			}
+		}
+		return events;
+	}
+
+	function mergeCalendarEvents(sources, results) {
+		const merged = [];
+		results.forEach((res, idx) => {
+			if (res.status !== "fulfilled") return;
+			const source = sources[idx];
+			const events = Array.isArray(res.value) ? res.value : [];
+			events.forEach((evt) => {
+				merged.push({
+					...evt,
+					calendarId: source.id,
+					calendarName: source.name,
+					color: source.color,
+				});
+			});
+		});
+		return merged;
+	}
+
+	async function refreshCalendarEvents(force) {
+		if (calendarState.loading) return;
+		const now = Date.now();
+		if (!force && now - calendarState.lastLoadedAt < 60 * 1000) return;
+		const sources = loadCalendarSources().filter((s) => s.enabled && s.url);
+		if (!calendarStatus || !calendarGrid) return;
+		if (!sources.length) {
+			calendarState.events = [];
+			calendarStatus.textContent = "Keine Kalenderquellen aktiv.";
+			renderCalendarPanel();
+			return;
+		}
+		calendarState.loading = true;
+		calendarStatus.textContent = "Kalender werden geladen…";
+		if (calendarGrid) {
+			calendarGrid.innerHTML =
+				'<div class="text-sm text-slate-400">Kalender werden geladen…</div>';
+		}
+		const results = await Promise.allSettled(
+			sources.map(async (src) => {
+				const res = await fetch(src.url, { cache: "no-store" });
+				if (!res.ok) throw new Error("fetch_failed");
+				const text = await res.text();
+				return parseIcsEvents(text);
+			})
+		);
+		const errors = results.filter((r) => r.status === "rejected").length;
+		calendarState.events = mergeCalendarEvents(sources, results);
+		calendarState.lastLoadedAt = Date.now();
+		calendarState.loading = false;
+		const okCount = results.length - errors;
+		calendarStatus.textContent = `${okCount} Kalender geladen${
+			errors ? ` · ${errors} Fehler` : ""
+		}`;
+		renderCalendarPanel();
+	}
+
+	function scheduleCalendarRefresh() {
+		if (calendarRefreshTimer) window.clearTimeout(calendarRefreshTimer);
+		calendarRefreshTimer = window.setTimeout(() => {
+			calendarRefreshTimer = 0;
+			refreshCalendarEvents(true);
+		}, 400);
+	}
+
+	function updateCalendarViewButtons() {
+		if (!calendarViewButtons || !calendarViewButtons.length) return;
+		calendarViewButtons.forEach((btn) => {
+			const name = String(btn.getAttribute("data-calendar-view") || "");
+			const active = name === calendarState.view;
+			btn.classList.toggle("bg-white/10", active);
+			btn.classList.toggle("text-slate-100", active);
+			btn.classList.toggle("text-slate-300", !active);
+		});
+	}
+
+	function renderCalendarLegend() {
+		if (!calendarLegend) return;
+		const sources = loadCalendarSources();
+		if (!sources.length) {
+			calendarLegend.innerHTML =
+				'<div class="text-xs text-slate-400">Keine Kalender verbunden.</div>';
+			return;
+		}
+		calendarLegend.innerHTML = sources
+			.map((src) => {
+				const dot = `<span class="inline-flex h-2.5 w-2.5 rounded-full" style="background:${escapeAttr(
+					src.color
+				)}"></span>`;
+				const state = src.enabled ? "" : "<span class=\"text-[10px] text-slate-500\">inaktiv</span>";
+				return `
+					<div class="flex items-center justify-between gap-2 text-xs text-slate-300">
+						<div class="flex items-center gap-2">
+							${dot}
+							<span class="truncate">${escapeHtml(src.name)}</span>
+						</div>
+						${state}
+					</div>`;
+			})
+			.join("");
+	}
+
+	function moveCalendarCursor(direction) {
+		const dir = Number(direction) || 0;
+		if (!dir) return;
+		const view = calendarState.view;
+		const base = calendarState.cursor || new Date();
+		const next = new Date(base);
+		if (view === "day") {
+			next.setDate(next.getDate() + dir);
+		} else if (view === "week") {
+			next.setDate(next.getDate() + dir * 7);
+		} else {
+			next.setMonth(next.getMonth() + dir);
+		}
+		calendarState.cursor = next;
+		renderCalendarPanel();
+	}
+
+	function renderCalendarPanel() {
+		if (!calendarGrid) return;
+		const view = calendarState.view;
+		const cursor = calendarState.cursor || new Date();
+		const sources = loadCalendarSources().filter((s) => s.enabled && s.url);
+		const events = Array.isArray(calendarState.events)
+			? calendarState.events.slice()
+			: [];
+		events.sort((a, b) => a.start.getTime() - b.start.getTime());
+		if (calendarTitle) {
+			calendarTitle.textContent = formatCalendarTitle(view, cursor);
+		}
+		renderCalendarLegend();
+		if (!sources.length) {
+			calendarGrid.innerHTML =
+				'<div class="text-sm text-slate-400">Keine Kalenderquellen aktiv.</div>';
+			return;
+		}
+		if (!events.length) {
+			calendarGrid.innerHTML =
+				'<div class="text-sm text-slate-400">Keine Termine in diesem Zeitraum.</div>';
+			return;
+		}
+		if (view === "day") {
+			const start = startOfDay(cursor);
+			const end = addDays(start, 1);
+			const dayEvents = events.filter(
+				(evt) => evt.start < end && evt.end > start
+			);
+			calendarGrid.innerHTML = dayEvents.length
+				? dayEvents
+					.map((evt) => {
+						const time = evt.allDay
+							? "Ganztägig"
+							: `${formatTime(evt.start)} – ${formatTime(evt.end)}`;
+						const loc = evt.location
+							? `<div class=\"text-[11px] text-slate-400\">${escapeHtml(
+									evt.location
+								)}\</div>`
+							: "";
+						return `
+							<div class="rounded-lg border border-white/10 bg-slate-950/40 p-3">
+								<div class="flex items-center justify-between gap-2">
+									<div class="text-xs font-semibold text-slate-100">${escapeHtml(
+										evt.title
+									)}
+									</div>
+									<span class="text-[11px] text-slate-400">${time}</span>
+								</div>
+								${loc}
+							</div>`;
+					})
+					.join("")
+				: '<div class="text-sm text-slate-400">Keine Termine heute.</div>';
+			return;
+		}
+		if (view === "week") {
+			const start = startOfWeek(cursor);
+			const cols = Array.from({ length: 7 }).map((_, idx) => {
+				const day = addDays(start, idx);
+				const dayEnd = addDays(day, 1);
+				const dayEvents = events.filter(
+					(evt) => evt.start < dayEnd && evt.end > day
+				);
+				const list = dayEvents.length
+					? dayEvents
+						.map((evt) => {
+							const time = evt.allDay
+								? "Ganztägig"
+								: formatTime(evt.start);
+							return `
+								<div class="rounded-md border border-white/10 bg-slate-950/50 px-2 py-1 text-[11px] text-slate-200">
+									<div class="flex items-center gap-2">
+										<span class="inline-flex h-2 w-2 rounded-full" style="background:${escapeAttr(
+											evt.color
+										)}"></span>
+										<span class="truncate">${escapeHtml(
+											evt.title
+										)} · ${time}</span>
+									</div>
+								</div>`;
+						})
+						.join("")
+					: '<div class="text-[11px] text-slate-500">Keine Termine</div>';
+				return `
+					<div class="rounded-lg border border-white/10 bg-slate-950/40 p-2">
+						<div class="text-[11px] text-slate-400">${formatDayLabel(
+							day
+						)}</div>
+						<div class="mt-2 space-y-1">${list}</div>
+					</div>`;
+			});
+			calendarGrid.innerHTML = `<div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-7">${cols.join(
+				"")}</div>`;
+			return;
+		}
+		const monthStart = startOfMonth(cursor);
+		const gridStart = startOfWeek(monthStart);
+		const cells = Array.from({ length: 42 }).map((_, idx) => {
+			const day = addDays(gridStart, idx);
+			const dayEnd = addDays(day, 1);
+			const dayEvents = events.filter(
+				(evt) => evt.start < dayEnd && evt.end > day
+			);
+			const dots = dayEvents.slice(0, 3).map((evt) => {
+				return `<span class="h-2 w-2 rounded-full" title="${escapeAttr(
+					evt.title
+				)}" style="background:${escapeAttr(evt.color)}"></span>`;
+			});
+			const extra =
+				dayEvents.length > 3
+					? `<span class=\"text-[10px] text-slate-500\">+${
+						dayEvents.length - 3
+					} </span>`
+					: "";
+			const isToday = startOfDay(day).getTime() === startOfDay(new Date()).getTime();
+			return `
+				<div class="min-h-[88px] rounded-lg border ${
+					isToday ? "border-fuchsia-400/40" : "border-white/10"
+				} bg-slate-950/40 p-2">
+					<div class="text-[11px] text-slate-400">${day.getDate()}</div>
+					<div class="mt-1 flex flex-wrap items-center gap-1">${dots.join(
+						"")}${extra}</div>
+				</div>`;
+		});
+		calendarGrid.innerHTML = `<div class="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">${cells.join(
+			"")}</div>`;
 	}
 
 	async function loadUploadsManage() {
@@ -9201,6 +9794,7 @@ self.onmessage = async (e) => {
 	function goToRoom(roomName) {
 		const next = normalizeRoom(roomName);
 		if (!next) return;
+		setCalendarPanelActive(false);
 		flushRoomTabSync();
 		location.hash = buildShareHash(next, key);
 	}
@@ -9209,6 +9803,7 @@ self.onmessage = async (e) => {
 		const next = normalizeRoom(roomName);
 		const nextKey = normalizeKey(keyName);
 		if (!next) return;
+		setCalendarPanelActive(false);
 		flushRoomTabSync();
 		location.hash = buildShareHash(next, nextKey);
 	}
@@ -9233,6 +9828,12 @@ self.onmessage = async (e) => {
 		roomTabs.addEventListener("click", (ev) => {
 			const target = ev && ev.target ? ev.target : null;
 			if (!(target instanceof Element)) return;
+			const calendarBtn = target.closest("[data-calendar-tab]");
+			if (calendarBtn) {
+				ev.preventDefault();
+				setCalendarPanelActive(true);
+				return;
+			}
 			const closeBtn = target.closest("[data-tab-close]");
 			if (closeBtn) {
 				ev.preventDefault();
@@ -10649,6 +11250,128 @@ self.onmessage = async (e) => {
 	if (settingsThemeSelect) {
 		settingsThemeSelect.addEventListener("change", () => {
 			saveTheme(settingsThemeSelect.value);
+		});
+	}
+	if (calendarDefaultViewSelect) {
+		calendarDefaultViewSelect.addEventListener("change", () => {
+			saveCalendarDefaultView(calendarDefaultViewSelect.value);
+		});
+	}
+	if (calendarAddBtn) {
+		calendarAddBtn.addEventListener("click", () => {
+			const name = String(calendarAddName ? calendarAddName.value : "").trim();
+			const url = String(calendarAddUrl ? calendarAddUrl.value : "").trim();
+			const color = String(
+				calendarAddColor ? calendarAddColor.value : "#a855f7"
+			).trim();
+			const enabled = Boolean(calendarAddEnabled && calendarAddEnabled.checked);
+			if (!url) {
+				toast("Bitte eine ICS-URL angeben.", "error");
+				return;
+			}
+			const list = loadCalendarSources();
+			list.push(
+				normalizeCalendarSource({
+					id: createClientId(),
+					name: name || "Kalender",
+					url,
+					color,
+					enabled,
+				})
+			);
+			saveCalendarSources(list);
+			renderCalendarSettings();
+			scheduleCalendarRefresh();
+			if (calendarAddName) calendarAddName.value = "";
+			if (calendarAddUrl) calendarAddUrl.value = "";
+			if (calendarAddEnabled) calendarAddEnabled.checked = true;
+		});
+	}
+	if (calendarSourcesList) {
+		calendarSourcesList.addEventListener("input", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLInputElement)) return;
+			const field = target.getAttribute("data-cal-field");
+			if (field !== "name" && field !== "url") return;
+			const row = target.closest("[data-cal-id]");
+			if (!row) return;
+			const id = row.getAttribute("data-cal-id");
+			if (!id) return;
+			const list = loadCalendarSources();
+			const idx = list.findIndex((s) => s.id === id);
+			if (idx < 0) return;
+			list[idx] = { ...list[idx], [field]: target.value };
+			saveCalendarSources(list);
+			scheduleCalendarRefresh();
+		});
+		calendarSourcesList.addEventListener("change", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLInputElement)) return;
+			const field = target.getAttribute("data-cal-field");
+			if (field !== "color" && field !== "enabled") return;
+			const row = target.closest("[data-cal-id]");
+			if (!row) return;
+			const id = row.getAttribute("data-cal-id");
+			if (!id) return;
+			const list = loadCalendarSources();
+			const idx = list.findIndex((s) => s.id === id);
+			if (idx < 0) return;
+			const value =
+				field === "enabled" ? target.checked : String(target.value || "");
+			list[idx] = { ...list[idx], [field]: value };
+			saveCalendarSources(list);
+			scheduleCalendarRefresh();
+		});
+		calendarSourcesList.addEventListener("click", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLElement)) return;
+			const btn = target.closest("[data-cal-remove]");
+			if (!btn) return;
+			const row = btn.closest("[data-cal-id]");
+			if (!row) return;
+			const id = row.getAttribute("data-cal-id");
+			if (!id) return;
+			const list = loadCalendarSources().filter((s) => s.id !== id);
+			saveCalendarSources(list);
+			renderCalendarSettings();
+			scheduleCalendarRefresh();
+		});
+	}
+	if (calendarViewButtons && calendarViewButtons.length) {
+		calendarViewButtons.forEach((btn) => {
+			btn.addEventListener("click", () => {
+				const view = String(btn.getAttribute("data-calendar-view") || "month");
+				if (!CALENDAR_VIEWS.includes(view)) return;
+				calendarState.view = view;
+				updateCalendarViewButtons();
+				renderCalendarPanel();
+			});
+		});
+	}
+	if (calendarPrevBtn) {
+		calendarPrevBtn.addEventListener("click", () => {
+			moveCalendarCursor(-1);
+		});
+	}
+	if (calendarNextBtn) {
+		calendarNextBtn.addEventListener("click", () => {
+			moveCalendarCursor(1);
+		});
+	}
+	if (calendarTodayBtn) {
+		calendarTodayBtn.addEventListener("click", () => {
+			calendarState.cursor = new Date();
+			renderCalendarPanel();
+		});
+	}
+	if (calendarRefreshBtn) {
+		calendarRefreshBtn.addEventListener("click", () => {
+			refreshCalendarEvents(true);
+		});
+	}
+	if (calendarOpenSettingsBtn) {
+		calendarOpenSettingsBtn.addEventListener("click", () => {
+			openSettingsAt("calendar");
 		});
 	}
 	if (favoritesManageList) {

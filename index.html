@@ -1372,6 +1372,109 @@
 								</div>
 							</div>
 						</div>
+						<div
+							id="calendarPanel"
+							class="hidden min-h-0 flex-1 flex-col gap-3">
+							<div class="rounded-xl border border-white/10 bg-slate-950/40 p-4">
+								<div class="flex flex-wrap items-start justify-between gap-3">
+									<div>
+										<h3 class="text-sm font-semibold text-slate-100">Kalender</h3>
+										<p class="mt-1 text-xs text-slate-400">
+											Deine verbundenen Kalender im Überblick.
+										</p>
+									</div>
+									<div class="flex items-center gap-2">
+										<button
+											id="calendarPrev"
+											type="button"
+											class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
+											title="Zurück"
+											aria-label="Zurück">
+											<svg
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												class="h-4 w-4">
+												<path d="M15 18l-6-6 6-6" />
+											</svg>
+										</button>
+										<button
+											id="calendarToday"
+											type="button"
+											class="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">
+											Heute
+										</button>
+										<button
+											id="calendarNext"
+											type="button"
+											class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
+											title="Weiter"
+											aria-label="Weiter">
+											<svg
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												class="h-4 w-4">
+												<path d="M9 6l6 6-6 6" />
+											</svg>
+										</button>
+									</div>
+								</div>
+								<div class="mt-3 flex flex-wrap items-center gap-2">
+									<div class="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-slate-950/40 p-1">
+										<button
+											data-calendar-view="day"
+											type="button"
+											class="rounded-md px-2.5 py-1.5 text-xs text-slate-300 transition hover:bg-white/5">
+											Tag
+										</button>
+										<button
+											data-calendar-view="week"
+											type="button"
+											class="rounded-md px-2.5 py-1.5 text-xs text-slate-300 transition hover:bg-white/5">
+											Woche
+										</button>
+										<button
+											data-calendar-view="month"
+											type="button"
+											class="rounded-md px-2.5 py-1.5 text-xs text-slate-300 transition hover:bg-white/5">
+											Monat
+										</button>
+									</div>
+									<div id="calendarTitle" class="ml-auto text-xs text-slate-400"></div>
+								</div>
+							</div>
+							<div class="grid gap-3 lg:grid-cols-[minmax(0,1fr)_260px]">
+								<div
+									id="calendarGrid"
+									class="min-h-[40vh] rounded-xl border border-white/10 bg-slate-950/30 p-3"></div>
+								<div class="rounded-xl border border-white/10 bg-slate-950/30 p-3">
+									<div class="text-xs text-slate-400">Kalender</div>
+									<div id="calendarLegend" class="mt-2 space-y-2"></div>
+									<div id="calendarStatus" class="mt-3 text-[11px] text-slate-500"></div>
+									<div class="mt-3 flex flex-col gap-2">
+										<button
+											id="calendarRefresh"
+											type="button"
+											class="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">
+											Aktualisieren
+										</button>
+										<button
+											id="calendarOpenSettings"
+											type="button"
+											class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10">
+											Einstellungen öffnen
+										</button>
+									</div>
+								</div>
+							</div>
+						</div>
 					</div>
 				</section>
 			</div>
@@ -1592,6 +1695,12 @@
 						</button>
 						<button
 							type="button"
+							data-settings-nav="calendar"
+							class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-left text-xs text-slate-200 transition hover:bg-white/5">
+							Kalender
+						</button>
+						<button
+							type="button"
 							data-settings-nav="ai"
 							class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-left text-xs text-slate-200 transition hover:bg-white/5">
 							AI
@@ -1691,6 +1800,94 @@
 									class="hidden" />
 							</div>
 							<div id="psTransferHint" class="text-xs text-slate-400"></div>
+						</section>
+
+						<section data-settings-section="calendar" class="hidden space-y-3">
+							<div>
+								<h4 class="text-sm font-semibold text-slate-100">Kalender</h4>
+								<p class="mt-1 text-xs text-slate-400">
+									Kalender verbinden und Standardansicht festlegen.
+								</p>
+							</div>
+							<div class="grid gap-3 sm:grid-cols-2">
+								<div>
+									<label for="calendarDefaultView" class="text-xs text-slate-300">
+										Standardansicht
+									</label>
+									<select
+										id="calendarDefaultView"
+										class="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/30 px-3 py-2 text-sm text-slate-200 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30">
+										<option value="day">Tag</option>
+										<option value="week">Woche</option>
+										<option value="month">Monat</option>
+									</select>
+								</div>
+							</div>
+							<div class="rounded-xl border border-white/10 bg-white/5 p-3">
+								<div class="text-xs font-semibold text-slate-200">
+									Kalenderquellen
+								</div>
+								<p class="mt-1 text-xs text-slate-400">
+									Füge öffentliche ICS-Links hinzu (CORS muss erlaubt sein).
+								</p>
+								<div id="calendarSourcesEmpty" class="mt-2 text-xs text-slate-400">
+									Keine Kalender verbunden.
+								</div>
+								<div id="calendarSourcesList" class="mt-3 space-y-2"></div>
+							</div>
+							<div class="rounded-xl border border-white/10 bg-slate-950/40 p-3">
+								<div class="text-xs font-semibold text-slate-200">
+									Neuen Kalender hinzufügen
+								</div>
+								<div class="mt-2 grid gap-2 sm:grid-cols-2">
+									<div>
+										<label for="calendarAddName" class="text-xs text-slate-300">
+											Name
+										</label>
+										<input
+											id="calendarAddName"
+											type="text"
+											placeholder="Team, Privat, Urlaub"
+											class="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/30 px-3 py-2 text-sm text-slate-100 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
+									</div>
+									<div>
+										<label for="calendarAddColor" class="text-xs text-slate-300">
+											Farbe
+										</label>
+										<input
+											id="calendarAddColor"
+											type="color"
+											value="#a855f7"
+											class="mt-1 h-10 w-full rounded-lg border border-white/10 bg-slate-950/30" />
+									</div>
+									<div class="sm:col-span-2">
+										<label for="calendarAddUrl" class="text-xs text-slate-300">
+											ICS-URL
+										</label>
+										<input
+											id="calendarAddUrl"
+											type="url"
+											placeholder="https://example.com/calendar.ics"
+											class="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/30 px-3 py-2 text-sm text-slate-100 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
+									</div>
+									<label class="flex items-center gap-2 text-xs text-slate-300">
+										<input
+											id="calendarAddEnabled"
+											type="checkbox"
+											checked
+											class="h-4 w-4 rounded border-white/20 bg-slate-950/40 text-fuchsia-400" />
+										Aktiv
+									</label>
+									<div class="sm:col-span-2">
+										<button
+											id="calendarAddBtn"
+											type="button"
+											class="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">
+											Hinzufügen
+										</button>
+									</div>
+								</div>
+							</div>
 						</section>
 
 						<section data-settings-section="trash" class="hidden space-y-3">
@@ -2201,6 +2398,6 @@
 		<script src="https://cdn.jsdelivr.net/npm/markdown-it-task-lists@2.1.1/dist/markdown-it-task-lists.min.js"></script>
 		<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
 		<script src="/vendor/yjs.bundle.js"></script>
-		<script src="/app.js?v=2026-01-15-17"></script>
+		<script src="/app.js?v=2026-01-20-01"></script>
 	</body>
 </html>
