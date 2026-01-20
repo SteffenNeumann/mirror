@@ -8681,17 +8681,26 @@ self.onmessage = async (e) => {
 			const dayEvents = events.filter(
 				(evt) => evt.start < dayEnd && evt.end > day
 			);
-			const dots = dayEvents.slice(0, 3).map((evt) => {
+			const visibleEvents = dayEvents.slice(0, 2).map((evt) => {
 				const time = evt.allDay ? "Ganztägig" : formatTime(evt.start);
-				return `<span class="h-2 w-2 rounded-full" title="${escapeAttr(
-					time ? `${time} · ${evt.title}` : evt.title
-				)}" style="background:${escapeAttr(evt.color)}"></span>`;
+				const title = `${time} · ${evt.title}`;
+				return `
+					<div class="truncate rounded-md border border-white/10 bg-slate-950/50 px-2 py-1 text-[10px] text-slate-200" title="${escapeAttr(
+						title
+					)}">
+						<div class="flex items-center gap-2">
+							<span class="inline-flex h-2 w-2 rounded-full" style="background:${escapeAttr(
+								evt.color
+							)}"></span>
+							<span class="truncate">${escapeHtml(title)}</span>
+						</div>
+					</div>`;
 			});
 			const extra =
-				dayEvents.length > 3
+				dayEvents.length > 2
 					? `<span class=\"text-[10px] text-slate-500\">+${
-						dayEvents.length - 3
-					} </span>`
+						dayEvents.length - 2
+					} weitere</span>`
 					: "";
 			const isToday = startOfDay(day).getTime() === startOfDay(new Date()).getTime();
 			return `
@@ -8699,8 +8708,9 @@ self.onmessage = async (e) => {
 					isToday ? "border-fuchsia-400/40" : "border-white/10"
 				} bg-slate-950/40 p-2">
 					<div class="text-[11px] text-slate-400">${day.getDate()}</div>
-					<div class="mt-1 flex flex-wrap items-center gap-1">${dots.join(
-						"")}${extra}</div>
+					<div class="mt-1 space-y-1">${visibleEvents.join("")}${
+						visibleEvents.length && extra ? `<div>${extra}</div>` : extra
+					}</div>
 				</div>`;
 		});
 		calendarGrid.innerHTML = `<div class="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">${cells.join(
