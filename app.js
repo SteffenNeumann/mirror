@@ -10868,7 +10868,7 @@ self.onmessage = async (e) => {
 	});
 
 	if (toggleHeaderBtn) {
-		let headerCollapsed = false;
+		let headerCollapsed = isMobileViewport();
 		setHeaderCollapsed(headerCollapsed);
 		toggleHeaderBtn.addEventListener("click", () => {
 			headerCollapsed = !headerCollapsed;
