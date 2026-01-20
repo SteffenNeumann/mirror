@@ -8675,6 +8675,13 @@ self.onmessage = async (e) => {
 		}
 		const monthStart = startOfMonth(cursor);
 		const gridStart = startOfWeek(monthStart);
+		const weekdayLabels = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+		const weekdayHeader = weekdayLabels
+			.map(
+				(label) =>
+					`<div class="text-[11px] text-slate-400 uppercase tracking-wide">${label}</div>`
+			)
+			.join("");
 		const cells = Array.from({ length: 42 }).map((_, idx) => {
 			const day = addDays(gridStart, idx);
 			const dayEnd = addDays(day, 1);
@@ -8713,8 +8720,13 @@ self.onmessage = async (e) => {
 					}</div>
 				</div>`;
 		});
-		calendarGrid.innerHTML = `<div class="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">${cells.join(
-			"")}</div>`;
+			calendarGrid.innerHTML = `
+				<div class="grid grid-cols-7 gap-2 text-center">
+					${weekdayHeader}
+				</div>
+				<div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+					${cells.join("")}
+				</div>`;
 	}
 
 	async function loadUploadsManage() {
