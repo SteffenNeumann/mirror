@@ -74,6 +74,7 @@
 	const previewPanel = document.getElementById("previewPanel");
 	const mdPreview = document.getElementById("mdPreview");
 	const togglePreview = document.getElementById("togglePreview");
+	const previewCloseMobile = document.getElementById("previewCloseMobile");
 	const aiModeSelect = document.getElementById("aiMode");
 	const aiAssistBtn = document.getElementById("aiAssist");
 	const clearRunOutputBtn = document.getElementById("clearRunOutput");
@@ -107,7 +108,9 @@
 	const mainGrid = document.getElementById("mainGrid");
 	const psPanel = document.getElementById("psPanel");
 	const togglePersonalSpaceBtn = document.getElementById("togglePersonalSpace");
+	const psCloseMobile = document.getElementById("psCloseMobile");
 	const toggleHeaderBtn = document.getElementById("toggleHeader");
+	const noteCloseMobile = document.getElementById("noteCloseMobile");
 	const headerDetailEls = document.querySelectorAll(
 		'[data-header-detail="true"]'
 	);
@@ -3035,6 +3038,8 @@
 	let psAutoSaveLastSavedNoteId = "";
 	let psAutoSaveInFlight = false;
 	let previewOpen = false;
+	let mobilePsOpen = false;
+	let mobileNoteReturn = "editor";
 	function isMobileViewport() {
 		try {
 			return (
@@ -3050,9 +3055,14 @@
 		if (!document.body || !document.body.classList) return;
 		const isMobile = isMobileViewport();
 		const previewActive = isMobile && previewOpen;
-		const editorActive =
+		const noteActive =
 			isMobile && !previewOpen && Boolean(String(psEditingNoteId || ""));
+		const psActive = isMobile && !previewOpen && !noteActive && mobilePsOpen;
+		const editorActive =
+			isMobile && !previewOpen && !noteActive && !mobilePsOpen;
 		document.body.classList.toggle("mobile-preview-open", previewActive);
+		document.body.classList.toggle("mobile-note-open", noteActive);
+		document.body.classList.toggle("mobile-ps-open", psActive);
 		document.body.classList.toggle("mobile-editor-open", editorActive);
 	}
 	let md;
@@ -6022,7 +6032,13 @@
 			applyPersonalSpaceFiltersAndRender();
 		}
 		if (isMobileViewport()) {
-			setPreviewVisible(true);
+			mobileNoteReturn = notesForList ? "ps" : "editor";
+			mobilePsOpen = false;
+			if (previewOpen) {
+				setPreviewVisible(false);
+			} else {
+				syncMobileFocusState();
+			}
 		} else {
 			syncMobileFocusState();
 		}
@@ -11387,9 +11403,39 @@ self.onmessage = async (e) => {
 	}
 	if (togglePersonalSpaceBtn) {
 		togglePersonalSpaceBtn.addEventListener("click", () => {
+			if (isMobileViewport()) {
+				mobilePsOpen = !mobilePsOpen;
+				if (mobilePsOpen && !psVisible) {
+					psVisible = true;
+					savePsVisible();
+					applyPsVisible();
+				}
+				syncMobileFocusState();
+				return;
+			}
 			psVisible = !psVisible;
 			savePsVisible();
 			applyPsVisible();
+		});
+	}
+	if (psCloseMobile) {
+		psCloseMobile.addEventListener("click", () => {
+			mobilePsOpen = false;
+			syncMobileFocusState();
+		});
+	}
+	if (previewCloseMobile) {
+		previewCloseMobile.addEventListener("click", () => {
+			setPreviewVisible(false);
+		});
+	}
+	if (noteCloseMobile) {
+		noteCloseMobile.addEventListener("click", () => {
+			clearPsEditingNoteState();
+			if (psMainHint) psMainHint.classList.add("hidden");
+			mobilePsOpen = mobileNoteReturn === "ps";
+			mobileNoteReturn = "editor";
+			syncMobileFocusState();
 		});
 	}
 	if (psToggleTags) {
@@ -11662,4 +11708,5 @@ self.onmessage = async (e) => {
 	loadAiUseAnswer();
 	applyAiContextMode();
 	updateTableMenuVisibility();
+	syncMobileFocusState();
 })();

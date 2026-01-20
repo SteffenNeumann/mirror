@@ -437,51 +437,74 @@
 			.md-content ul.task-list input[type="checkbox"] {
 				margin-top: 0.2rem;
 			}
+			.mobile-only {
+				display: none;
+			}
 			@media (max-width: 1023px) {
-				body.mobile-preview-open::before,
-				body.mobile-editor-open::before {
-					content: "";
-					position: fixed;
-					inset: 0;
-					background: rgba(2, 6, 23, 0.6);
-					z-index: 60;
+				.mobile-only {
+					display: inline-flex;
 				}
 				body.mobile-preview-open main,
-				body.mobile-editor-open main {
+				body.mobile-editor-open main,
+				body.mobile-ps-open main,
+				body.mobile-note-open main {
 					width: 100vw;
 					height: 100vh;
 					margin: 0;
 				}
 				body.mobile-preview-open #psPanel,
+				body.mobile-preview-open #editorPanel,
+				body.mobile-note-open #psPanel,
+				body.mobile-ps-open #editorPanel,
+				body.mobile-ps-open #previewPanel,
+				body.mobile-note-open #previewPanel,
 				body.mobile-editor-open #psPanel {
 					display: none;
 				}
 				body.mobile-preview-open #previewPanel {
 					position: fixed;
-					inset: 5vh 5vw;
-					width: 90vw;
-					height: 90vh;
+					inset: 0;
+					width: 100vw;
+					height: 100vh;
 					z-index: 70;
 					display: flex;
 					flex-direction: column;
 					pointer-events: auto;
+					border-radius: 0;
 				}
-				body.mobile-preview-open #previewPanel.hidden {
-					display: none;
+				body.mobile-ps-open #psPanel {
+					position: fixed;
+					inset: 0;
+					width: 100vw;
+					height: 100vh;
+					z-index: 70;
+					display: flex;
+					flex-direction: column;
+					pointer-events: auto;
+					border-radius: 0;
 				}
-				body.mobile-preview-open #editorPreviewGrid > div:first-child {
-					display: none;
-				}
+				body.mobile-note-open #editorPanel,
 				body.mobile-editor-open #editorPanel {
 					position: fixed;
-					inset: 5vh 5vw;
-					width: 90vw;
-					height: 90vh;
+					inset: 0;
+					width: 100vw;
+					height: 100vh;
 					z-index: 70;
 					pointer-events: auto;
+					border-radius: 0;
 				}
+				body.mobile-note-open #editorPanel > header,
 				body.mobile-editor-open #editorPanel > header {
 					flex: 0 0 auto;
+				}
+				body:not(.mobile-preview-open) #previewCloseMobile {
+					display: none;
+				}
+				body:not(.mobile-ps-open) #psCloseMobile {
+					display: none;
+				}
+				body:not(.mobile-note-open) #noteCloseMobile {
+					display: none;
 				}
 			}
 		</style>
@@ -513,6 +536,24 @@
 								Personal Space
 							</h2>
 						</div>
+							<button
+								id="psCloseMobile"
+								type="button"
+								class="mobile-only inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10 active:bg-white/15"
+								title="Schließen"
+								aria-label="Schließen">
+								<svg
+									viewBox="0 0 24 24"
+									fill="none"
+									stroke="currentColor"
+									stroke-width="2"
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									class="h-4 w-4">
+									<path d="M18 6L6 18" />
+									<path d="M6 6l12 12" />
+								</svg>
+							</button>
 					</header>
 
 					<div id="psUnauthed" class="mt-4 flex-1">
@@ -749,6 +790,24 @@
 										stroke-linejoin="round"
 										class="h-4 w-4 text-slate-300 transition-transform">
 										<path d="M18 15l-6-6-6 6" />
+									</svg>
+								</button>
+								<button
+									id="noteCloseMobile"
+									type="button"
+									class="mobile-only inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xs text-slate-200 transition hover:bg-white/10 active:bg-white/15"
+									title="Notiz schließen"
+									aria-label="Notiz schließen">
+									<svg
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										class="h-4 w-4">
+										<path d="M18 6L6 18" />
+										<path d="M6 6l12 12" />
 									</svg>
 								</button>
 							</div>
@@ -1225,6 +1284,24 @@
 										<div class="text-xs font-medium text-slate-200">
 											Preview
 										</div>
+										<button
+											id="previewCloseMobile"
+											type="button"
+											class="mobile-only inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xs text-slate-200 transition hover:bg-white/10 active:bg-white/15"
+											title="Preview schließen"
+											aria-label="Preview schließen">
+											<svg
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												class="h-4 w-4">
+												<path d="M18 6L6 18" />
+												<path d="M6 6l12 12" />
+											</svg>
+										</button>
 									</div>
 									<iframe
 										id="mdPreview"
