@@ -159,6 +159,34 @@
 	const psImportModeSelect = document.getElementById("psImportMode");
 	const psImportNotesBtn = document.getElementById("psImportNotes");
 	const psImportFileInput = document.getElementById("psImportFile");
+	const psAutoBackupEnabledInput = document.getElementById(
+		"psAutoBackupEnabled"
+	);
+	const psAutoBackupIntervalInput = document.getElementById(
+		"psAutoBackupInterval"
+	);
+	const psAutoBackupFolderBtn = document.getElementById("psAutoBackupFolder");
+	const psAutoBackupFolderLabel = document.getElementById(
+		"psAutoBackupFolderLabel"
+	);
+	const psAutoBackupStatus = document.getElementById("psAutoBackupStatus");
+	const psAutoBackupUnsupported = document.getElementById(
+		"psAutoBackupUnsupported"
+	);
+	const psAutoImportEnabledInput = document.getElementById(
+		"psAutoImportEnabled"
+	);
+	const psAutoImportIntervalInput = document.getElementById(
+		"psAutoImportInterval"
+	);
+	const psAutoImportFolderBtn = document.getElementById("psAutoImportFolder");
+	const psAutoImportFolderLabel = document.getElementById(
+		"psAutoImportFolderLabel"
+	);
+	const psAutoImportStatus = document.getElementById("psAutoImportStatus");
+	const psAutoImportUnsupported = document.getElementById(
+		"psAutoImportUnsupported"
+	);
 	const psCount = document.getElementById("psCount");
 	const psSearchInput = document.getElementById("psSearch");
 	const psPinnedToggle = document.getElementById("psPinnedToggle");
@@ -3096,6 +3124,11 @@
 	const PS_SORT_MODE_KEY = "mirror_ps_sort_mode";
 	const PS_NOTE_ACCESSED_KEY = "mirror_ps_note_accessed_v1";
 	const PS_META_VISIBLE_KEY = "mirror_ps_meta_visible";
+	const PS_AUTO_BACKUP_ENABLED_KEY = "mirror_ps_auto_backup_enabled";
+	const PS_AUTO_BACKUP_INTERVAL_KEY = "mirror_ps_auto_backup_interval";
+	const PS_AUTO_IMPORT_ENABLED_KEY = "mirror_ps_auto_import_enabled";
+	const PS_AUTO_IMPORT_INTERVAL_KEY = "mirror_ps_auto_import_interval";
+	const PS_AUTO_IMPORT_SEEN_KEY = "mirror_ps_auto_import_seen_v1";
 	const PS_MANUAL_TAGS_MARKER = "__manual_tags__";
 	const PS_PINNED_TAG = "pinned";
 	const AI_PROMPT_KEY = "mirror_ai_prompt";
@@ -3116,6 +3149,17 @@
 	let activeTheme = "fuchsia";
 	let mobileAutoNoteSeconds = 0;
 	let mobileAutoNoteChecked = false;
+	let psAutoBackupEnabled = false;
+	let psAutoBackupInterval = 60;
+	let psAutoBackupTimer = 0;
+	let psAutoBackupInFlight = false;
+	let psAutoBackupHandle = null;
+	let psAutoImportEnabled = false;
+	let psAutoImportInterval = 5;
+	let psAutoImportTimer = 0;
+	let psAutoImportInFlight = false;
+	let psAutoImportHandle = null;
+	let psAutoImportSeen = new Map();
 	const THEMES = {
 		fuchsia: {
 			label: "Fuchsia",
@@ -3355,6 +3399,397 @@
 		if (psNewNote) {
 			psNewNote.click();
 		}
+	}
+
+	const FS_HANDLE_DB = "mirror_fs_handles_v1";
+	const FS_HANDLE_STORE = "handles";
+	const AUTO_BACKUP_HANDLE_KEY = "ps_auto_backup_dir";
+	const AUTO_IMPORT_HANDLE_KEY = "ps_auto_import_dir";
+	const AUTO_IMPORT_MAX_PER_RUN = 5;
+
+	function supportsDirectoryAccess() {
+		return typeof window.showDirectoryPicker === "function";
+	}
+
+	function setAutoBackupStatus(message) {
+		if (!psAutoBackupStatus) return;
+		psAutoBackupStatus.textContent = String(message || "");
+	}
+
+	function setAutoImportStatus(message) {
+		if (!psAutoImportStatus) return;
+		psAutoImportStatus.textContent = String(message || "");
+	}
+
+	function normalizeAutoInterval(raw, fallback) {
+		const n = Number(raw);
+		if (!Number.isFinite(n) || n < 1) return fallback;
+		return Math.min(1440, Math.round(n));
+	}
+
+	function openFsHandleDb() {
+		return new Promise((resolve, reject) => {
+			if (!window.indexedDB) {
+				reject(new Error("IndexedDB unavailable"));
+				return;
+			}
+			const req = window.indexedDB.open(FS_HANDLE_DB, 1);
+			req.onupgradeneeded = () => {
+				const db = req.result;
+				if (!db.objectStoreNames.contains(FS_HANDLE_STORE)) {
+					db.createObjectStore(FS_HANDLE_STORE);
+				}
+			};
+			req.onsuccess = () => resolve(req.result);
+			req.onerror = () => reject(req.error || new Error("DB open failed"));
+		});
+	}
+
+	async function readFsHandle(key) {
+		if (!supportsDirectoryAccess()) return null;
+		try {
+			const db = await openFsHandleDb();
+			return await new Promise((resolve) => {
+				const tx = db.transaction(FS_HANDLE_STORE, "readonly");
+				const store = tx.objectStore(FS_HANDLE_STORE);
+				const req = store.get(key);
+				req.onsuccess = () => resolve(req.result || null);
+				req.onerror = () => resolve(null);
+			});
+		} catch {
+			return null;
+		}
+	}
+
+	async function writeFsHandle(key, handle) {
+		if (!supportsDirectoryAccess()) return false;
+		try {
+			const db = await openFsHandleDb();
+			return await new Promise((resolve) => {
+				const tx = db.transaction(FS_HANDLE_STORE, "readwrite");
+				const store = tx.objectStore(FS_HANDLE_STORE);
+				const req = store.put(handle, key);
+				req.onsuccess = () => resolve(true);
+				req.onerror = () => resolve(false);
+			});
+		} catch {
+			return false;
+		}
+	}
+
+	async function ensureDirPermission(handle, write) {
+		if (!handle || !handle.queryPermission) return false;
+		const opts = { mode: write ? "readwrite" : "read" };
+		try {
+			const current = await handle.queryPermission(opts);
+			if (current === "granted") return true;
+		} catch {
+			// ignore
+		}
+		try {
+			const next = await handle.requestPermission(opts);
+			return next === "granted";
+		} catch {
+			return false;
+		}
+	}
+
+	function updateAutoBackupFolderLabel() {
+		if (!psAutoBackupFolderLabel) return;
+		psAutoBackupFolderLabel.textContent = psAutoBackupHandle
+			? String(psAutoBackupHandle.name || "Ordner ausgewählt")
+			: "Kein Ordner gewählt";
+	}
+
+	function updateAutoImportFolderLabel() {
+		if (!psAutoImportFolderLabel) return;
+		psAutoImportFolderLabel.textContent = psAutoImportHandle
+			? String(psAutoImportHandle.name || "Ordner ausgewählt")
+			: "Kein Ordner gewählt";
+	}
+
+	function applyAutoAccessSupportUi() {
+		const supported = supportsDirectoryAccess();
+		if (psAutoBackupUnsupported)
+			psAutoBackupUnsupported.classList.toggle("hidden", supported);
+		if (psAutoImportUnsupported)
+			psAutoImportUnsupported.classList.toggle("hidden", supported);
+		if (psAutoBackupEnabledInput) psAutoBackupEnabledInput.disabled = !supported;
+		if (psAutoBackupIntervalInput) psAutoBackupIntervalInput.disabled = !supported;
+		if (psAutoBackupFolderBtn) psAutoBackupFolderBtn.disabled = !supported;
+		if (psAutoImportEnabledInput) psAutoImportEnabledInput.disabled = !supported;
+		if (psAutoImportIntervalInput) psAutoImportIntervalInput.disabled = !supported;
+		if (psAutoImportFolderBtn) psAutoImportFolderBtn.disabled = !supported;
+	}
+
+	function loadAutoBackupSettings() {
+		try {
+			const rawEnabled = localStorage.getItem(PS_AUTO_BACKUP_ENABLED_KEY);
+			psAutoBackupEnabled = rawEnabled === "1";
+		} catch {
+			psAutoBackupEnabled = false;
+		}
+		try {
+			const rawInterval = localStorage.getItem(PS_AUTO_BACKUP_INTERVAL_KEY);
+			psAutoBackupInterval = normalizeAutoInterval(rawInterval, 60);
+		} catch {
+			psAutoBackupInterval = 60;
+		}
+		if (psAutoBackupEnabledInput)
+			psAutoBackupEnabledInput.checked = psAutoBackupEnabled;
+		if (psAutoBackupIntervalInput)
+			psAutoBackupIntervalInput.value = String(psAutoBackupInterval || 60);
+	}
+
+	function saveAutoBackupSettings() {
+		try {
+			localStorage.setItem(
+				PS_AUTO_BACKUP_ENABLED_KEY,
+				psAutoBackupEnabled ? "1" : "0"
+			);
+			localStorage.setItem(
+				PS_AUTO_BACKUP_INTERVAL_KEY,
+				String(psAutoBackupInterval || 60)
+			);
+		} catch {
+			// ignore
+		}
+	}
+
+	function loadAutoImportSettings() {
+		try {
+			const rawEnabled = localStorage.getItem(PS_AUTO_IMPORT_ENABLED_KEY);
+			psAutoImportEnabled = rawEnabled === "1";
+		} catch {
+			psAutoImportEnabled = false;
+		}
+		try {
+			const rawInterval = localStorage.getItem(PS_AUTO_IMPORT_INTERVAL_KEY);
+			psAutoImportInterval = normalizeAutoInterval(rawInterval, 5);
+		} catch {
+			psAutoImportInterval = 5;
+		}
+		if (psAutoImportEnabledInput)
+			psAutoImportEnabledInput.checked = psAutoImportEnabled;
+		if (psAutoImportIntervalInput)
+			psAutoImportIntervalInput.value = String(psAutoImportInterval || 5);
+	}
+
+	function saveAutoImportSettings() {
+		try {
+			localStorage.setItem(
+				PS_AUTO_IMPORT_ENABLED_KEY,
+				psAutoImportEnabled ? "1" : "0"
+			);
+			localStorage.setItem(
+				PS_AUTO_IMPORT_INTERVAL_KEY,
+				String(psAutoImportInterval || 5)
+			);
+		} catch {
+			// ignore
+		}
+	}
+
+	function loadAutoImportSeen() {
+		try {
+			const raw = localStorage.getItem(PS_AUTO_IMPORT_SEEN_KEY);
+			const parsed = raw ? JSON.parse(raw) : [];
+			if (Array.isArray(parsed)) {
+				psAutoImportSeen = new Map(parsed.map((k) => [String(k), 1]));
+				return;
+			}
+		} catch {
+			// ignore
+		}
+		psAutoImportSeen = new Map();
+	}
+
+	function saveAutoImportSeen() {
+		try {
+			const keys = Array.from(psAutoImportSeen.keys());
+			const trimmed = keys.slice(-500);
+			localStorage.setItem(PS_AUTO_IMPORT_SEEN_KEY, JSON.stringify(trimmed));
+		} catch {
+			// ignore
+		}
+	}
+
+	function buildAutoImportKey(file) {
+		const name = file && file.name ? String(file.name) : "";
+		const size = file && typeof file.size === "number" ? file.size : 0;
+		const mod =
+			file && typeof file.lastModified === "number" ? file.lastModified : 0;
+		return `${name}|${size}|${mod}`;
+	}
+
+	function scheduleAutoBackup() {
+		if (psAutoBackupTimer) window.clearTimeout(psAutoBackupTimer);
+		psAutoBackupTimer = 0;
+		if (!psAutoBackupEnabled || !psAutoBackupInterval) return;
+		if (!supportsDirectoryAccess()) return;
+		psAutoBackupTimer = window.setTimeout(async () => {
+			await runAutoBackup();
+			scheduleAutoBackup();
+		}, psAutoBackupInterval * 60 * 1000);
+	}
+
+	function scheduleAutoImport() {
+		if (psAutoImportTimer) window.clearTimeout(psAutoImportTimer);
+		psAutoImportTimer = 0;
+		if (!psAutoImportEnabled || !psAutoImportInterval) return;
+		if (!supportsDirectoryAccess()) return;
+		psAutoImportTimer = window.setTimeout(async () => {
+			await runAutoImport();
+			scheduleAutoImport();
+		}, psAutoImportInterval * 60 * 1000);
+	}
+
+	async function runAutoBackup() {
+		if (psAutoBackupInFlight) return;
+		if (!psAutoBackupEnabled) return;
+		if (!psState || !psState.authed) {
+			setAutoBackupStatus("Bitte anmelden, um Auto-Backup zu nutzen.");
+			return;
+		}
+		if (!psAutoBackupHandle) {
+			setAutoBackupStatus("Kein Ordner gewählt.");
+			return;
+		}
+		psAutoBackupInFlight = true;
+		try {
+			setAutoBackupStatus("Backup wird erstellt…");
+			const ok = await ensureDirPermission(psAutoBackupHandle, true);
+			if (!ok) {
+				setAutoBackupStatus("Ordnerzugriff erforderlich.");
+				return;
+			}
+			const payload = await fetchPersonalSpaceExport();
+			const text = JSON.stringify(payload, null, 2);
+			const timestamp = new Date();
+			const stamp = `${timestamp.getFullYear()}${String(
+				timestamp.getMonth() + 1
+			).padStart(2, "0")}${String(timestamp.getDate()).padStart(
+				2,
+				"0"
+			)}-${String(timestamp.getHours()).padStart(2, "0")}${String(
+				timestamp.getMinutes()
+			).padStart(2, "0")}`;
+			const filename = `mirror-notes-${stamp}.json`;
+			const fileHandle = await psAutoBackupHandle.getFileHandle(filename, {
+				create: true,
+			});
+			const writable = await fileHandle.createWritable();
+			await writable.write(text);
+			await writable.close();
+			setAutoBackupStatus(`Backup gespeichert: ${filename}`);
+		} catch (e) {
+			const msg = e && e.message ? String(e.message) : "Fehler";
+			setAutoBackupStatus(`Backup fehlgeschlagen: ${msg}`);
+		} finally {
+			psAutoBackupInFlight = false;
+		}
+	}
+
+	async function runAutoImport() {
+		if (psAutoImportInFlight) return;
+		if (!psAutoImportEnabled) return;
+		if (!psState || !psState.authed) {
+			setAutoImportStatus("Bitte anmelden, um Auto-Import zu nutzen.");
+			return;
+		}
+		if (!psAutoImportHandle) {
+			setAutoImportStatus("Kein Ordner gewählt.");
+			return;
+		}
+		psAutoImportInFlight = true;
+		try {
+			setAutoImportStatus("Suche nach neuen Dateien…");
+			const ok = await ensureDirPermission(psAutoImportHandle, false);
+			if (!ok) {
+				setAutoImportStatus("Ordnerzugriff erforderlich.");
+				return;
+			}
+			const entries = [];
+			if (psAutoImportHandle && psAutoImportHandle.values) {
+				for await (const entry of psAutoImportHandle.values()) {
+					if (entry && entry.kind === "file") entries.push(entry);
+				}
+			}
+			const candidates = entries.filter((entry) => {
+				const name = String(entry && entry.name ? entry.name : "").toLowerCase();
+				return (
+					name.endsWith(".json") ||
+					name.endsWith(".md") ||
+					name.endsWith(".markdown") ||
+					name.endsWith(".txt")
+				);
+			});
+			let imported = 0;
+			for (const entry of candidates) {
+				if (imported >= AUTO_IMPORT_MAX_PER_RUN) break;
+				const file = await entry.getFile();
+				const key = buildAutoImportKey(file);
+				if (psAutoImportSeen.has(key)) continue;
+				const text = await file.text();
+				await importPersonalSpaceNotesFromText(text, "merge");
+				psAutoImportSeen.set(key, Date.now());
+				imported += 1;
+			}
+			saveAutoImportSeen();
+			setAutoImportStatus(
+				imported ? `Auto-Import: ${imported} Datei(en).` : "Keine neuen Dateien."
+			);
+		} catch (e) {
+			const msg = e && e.message ? String(e.message) : "Fehler";
+			setAutoImportStatus(`Auto-Import fehlgeschlagen: ${msg}`);
+		} finally {
+			psAutoImportInFlight = false;
+		}
+	}
+
+	async function pickAutoBackupFolder() {
+		if (!supportsDirectoryAccess()) return;
+		try {
+			const handle = await window.showDirectoryPicker({ mode: "readwrite" });
+			psAutoBackupHandle = handle;
+			updateAutoBackupFolderLabel();
+			await writeFsHandle(AUTO_BACKUP_HANDLE_KEY, handle);
+			setAutoBackupStatus("Ordner gespeichert.");
+			if (psAutoBackupEnabled) await runAutoBackup();
+		} catch {
+			// ignore
+		}
+	}
+
+	async function pickAutoImportFolder() {
+		if (!supportsDirectoryAccess()) return;
+		try {
+			const handle = await window.showDirectoryPicker({ mode: "read" });
+			psAutoImportHandle = handle;
+			updateAutoImportFolderLabel();
+			await writeFsHandle(AUTO_IMPORT_HANDLE_KEY, handle);
+			setAutoImportStatus("Ordner gespeichert.");
+			if (psAutoImportEnabled) await runAutoImport();
+		} catch {
+			// ignore
+		}
+	}
+
+	async function initAutoBackup() {
+		applyAutoAccessSupportUi();
+		loadAutoBackupSettings();
+		psAutoBackupHandle = await readFsHandle(AUTO_BACKUP_HANDLE_KEY);
+		updateAutoBackupFolderLabel();
+		scheduleAutoBackup();
+	}
+
+	async function initAutoImport() {
+		applyAutoAccessSupportUi();
+		loadAutoImportSettings();
+		loadAutoImportSeen();
+		psAutoImportHandle = await readFsHandle(AUTO_IMPORT_HANDLE_KEY);
+		updateAutoImportFolderLabel();
+		scheduleAutoImport();
 	}
 
 	function saveAiPrompt(next) {
@@ -7193,6 +7628,14 @@ self.onmessage = async (e) => {
 		}
 	}
 
+	async function fetchPersonalSpaceExport() {
+		if (!psState || !psState.authed) {
+			throw new Error("Personal Space not enabled");
+		}
+		const res = await api("/api/notes/export");
+		return res && res.export ? res.export : { version: 1, notes: [] };
+	}
+
 	async function exportPersonalSpaceNotes() {
 		if (!psState || !psState.authed) {
 			toast("Please enable Personal Space first (sign in).", "error");
@@ -7201,9 +7644,7 @@ self.onmessage = async (e) => {
 		const hintEl = psTransferHint || psHint;
 		try {
 			if (hintEl) hintEl.textContent = "Exporting…";
-			const res = await api("/api/notes/export");
-			const payload =
-				res && res.export ? res.export : { version: 1, notes: [] };
+			const payload = await fetchPersonalSpaceExport();
 			downloadJson(`mirror-notes-${ymd() || "export"}.json`, payload);
 			if (hintEl) hintEl.textContent = "Export ready.";
 			toast("Export created.", "success");
@@ -11113,6 +11554,56 @@ self.onmessage = async (e) => {
 			await importPersonalSpaceFile(file, psNextImportMode);
 		});
 	}
+	if (psAutoBackupEnabledInput) {
+		psAutoBackupEnabledInput.addEventListener("change", async () => {
+			psAutoBackupEnabled = Boolean(psAutoBackupEnabledInput.checked);
+			saveAutoBackupSettings();
+			scheduleAutoBackup();
+			if (psAutoBackupEnabled) await runAutoBackup();
+			else setAutoBackupStatus("Auto-Backup deaktiviert.");
+		});
+	}
+	if (psAutoBackupIntervalInput) {
+		psAutoBackupIntervalInput.addEventListener("change", () => {
+			psAutoBackupInterval = normalizeAutoInterval(
+				psAutoBackupIntervalInput.value,
+				60
+			);
+			psAutoBackupIntervalInput.value = String(psAutoBackupInterval || 60);
+			saveAutoBackupSettings();
+			scheduleAutoBackup();
+		});
+	}
+	if (psAutoBackupFolderBtn) {
+		psAutoBackupFolderBtn.addEventListener("click", async () => {
+			await pickAutoBackupFolder();
+		});
+	}
+	if (psAutoImportEnabledInput) {
+		psAutoImportEnabledInput.addEventListener("change", async () => {
+			psAutoImportEnabled = Boolean(psAutoImportEnabledInput.checked);
+			saveAutoImportSettings();
+			scheduleAutoImport();
+			if (psAutoImportEnabled) await runAutoImport();
+			else setAutoImportStatus("Auto-Import deaktiviert.");
+		});
+	}
+	if (psAutoImportIntervalInput) {
+		psAutoImportIntervalInput.addEventListener("change", () => {
+			psAutoImportInterval = normalizeAutoInterval(
+				psAutoImportIntervalInput.value,
+				5
+			);
+			psAutoImportIntervalInput.value = String(psAutoImportInterval || 5);
+			saveAutoImportSettings();
+			scheduleAutoImport();
+		});
+	}
+	if (psAutoImportFolderBtn) {
+		psAutoImportFolderBtn.addEventListener("click", async () => {
+			await pickAutoImportFolder();
+		});
+	}
 	if (clearMirrorBtn && textarea) {
 		clearMirrorBtn.addEventListener("click", () => {
 			if (!textarea.value) return;
@@ -11829,6 +12320,8 @@ self.onmessage = async (e) => {
 	}
 
 	loadMobileAutoNoteSeconds();
+	void initAutoBackup();
+	void initAutoImport();
 	refreshPersonalSpace();
 	loadAiPrompt();
 	loadAiUsePreview();
