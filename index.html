@@ -517,6 +517,31 @@
 				body:not(.mobile-note-open) #noteCloseMobile {
 					display: none;
 				}
+				#settingsRoot {
+					padding: 0;
+					align-items: stretch;
+					justify-content: stretch;
+				}
+				#settingsPanel {
+					width: 100vw;
+					height: 100vh;
+					max-height: none;
+					border-radius: 0;
+				}
+				#settingsNav {
+					position: sticky;
+					top: 0;
+					z-index: 1;
+					background: rgba(2, 6, 23, 0.85);
+					backdrop-filter: blur(8px);
+				}
+				#settingsPanel > header {
+					position: sticky;
+					top: 0;
+					z-index: 2;
+					background: rgba(2, 6, 23, 0.85);
+					backdrop-filter: blur(8px);
+				}
 			}
 		</style>
 	</head>
