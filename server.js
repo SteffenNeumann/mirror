@@ -84,6 +84,8 @@ let stmtFavoritesByUser;
 let stmtRoomTabUpsert;
 let stmtRoomTabDelete;
 let stmtRoomTabsByUser;
+let stmtUserSettingsGet;
+let stmtUserSettingsUpsert;
 
 // In-memory rate limit: ip -> { count, resetAt }
 const aiRate = new Map();
@@ -167,6 +169,12 @@ function initDb() {
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			email TEXT NOT NULL UNIQUE,
 			created_at INTEGER NOT NULL
+		);
+		CREATE TABLE IF NOT EXISTS user_settings (
+			user_id INTEGER PRIMARY KEY,
+			calendar_json TEXT NOT NULL,
+			updated_at INTEGER NOT NULL,
+			FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 		);
 		CREATE TABLE IF NOT EXISTS notes (
 			id TEXT PRIMARY KEY,
@@ -332,6 +340,12 @@ function initDb() {
 	);
 	stmtRoomTabsByUser = db.prepare(
 		"SELECT room, room_key, text, last_used, added_at FROM room_tabs WHERE user_id = ? ORDER BY last_used DESC LIMIT 50"
+	);
+	stmtUserSettingsGet = db.prepare(
+		"SELECT calendar_json, updated_at FROM user_settings WHERE user_id = ?"
+	);
+	stmtUserSettingsUpsert = db.prepare(
+		"INSERT INTO user_settings(user_id, calendar_json, updated_at) VALUES(?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET calendar_json = excluded.calendar_json, updated_at = excluded.updated_at"
 	);
 }
 
@@ -908,6 +922,67 @@ function listRoomTabs(userId) {
 	}));
 }
 
+function sanitizeCalendarSettings(input) {
+	const safe = input && typeof input === "object" ? input : {};
+	const rawSources = Array.isArray(safe.sources) ? safe.sources : [];
+	const sources = rawSources
+		.slice(0, 25)
+		.map((src) => {
+			const id = String(src && src.id ? src.id : "")
+				.trim()
+				.slice(0, 64);
+			const name = String(src && src.name ? src.name : "")
+				.trim()
+				.slice(0, 80);
+			const url = String(src && src.url ? src.url : "")
+				.trim()
+				.slice(0, 2000);
+			const color = String(src && src.color ? src.color : "")
+				.trim()
+				.slice(0, 32);
+			const enabled = Boolean(src && src.enabled);
+			if (!url) return null;
+			return { id, name, url, color, enabled };
+		})
+		.filter(Boolean);
+	const rawView = String(safe.defaultView || "").trim();
+	const defaultView = ["day", "week", "month"].includes(rawView)
+		? rawView
+		: "month";
+	return { sources, defaultView };
+}
+
+function parseCalendarJson(raw) {
+	if (!raw) return null;
+	try {
+		const parsed = JSON.parse(raw);
+		if (!parsed || typeof parsed !== "object") return null;
+		return sanitizeCalendarSettings(parsed);
+	} catch {
+		return null;
+	}
+}
+
+function getUserSettings(userId) {
+	initDb();
+	const row = stmtUserSettingsGet.get(userId);
+	if (!row) return null;
+	const calendar = parseCalendarJson(row.calendar_json);
+	return {
+		calendar: calendar || { sources: [], defaultView: "month" },
+		updatedAt: Number(row.updated_at) || 0,
+	};
+}
+
+function upsertUserSettings(userId, settings) {
+	initDb();
+	const now = Date.now();
+	const calendar = sanitizeCalendarSettings(settings && settings.calendar);
+	const calendarJson = JSON.stringify(calendar || { sources: [], defaultView: "month" });
+	stmtUserSettingsUpsert.run(userId, calendarJson, now);
+	return { calendar, updatedAt: now };
+}
+
 function saveLoginToken(token, email, exp) {
 	initDb();
 	stmtTokenInsert.run(token, email, exp);
@@ -1371,6 +1446,7 @@ const server = http.createServer((req, res) => {
 		const tags = listTags(userId);
 		const favorites = listFavorites(userId);
 		const roomTabs = listRoomTabs(userId);
+		const settings = getUserSettings(userId);
 		json(res, 200, {
 			ok: true,
 			authed: true,
@@ -1379,7 +1455,43 @@ const server = http.createServer((req, res) => {
 			notes,
 			favorites,
 			roomTabs,
+			settings,
 		});
+		return;
+	}
+
+	if (url.pathname === "/api/user-settings" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const settings = getUserSettings(userId);
+		json(res, 200, { ok: true, settings });
+		return;
+	}
+
+	if (url.pathname === "/api/user-settings" && req.method === "POST") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		readJson(req)
+			.then((body) => {
+				const userId = getOrCreateUserId(email);
+				const calendar = sanitizeCalendarSettings(body && body.calendar);
+				const settings = upsertUserSettings(userId, { calendar });
+				json(res, 200, { ok: true, settings });
+			})
+			.catch((e) => {
+				if (String(e && e.message) === "body_too_large") {
+					json(res, 413, { ok: false, error: "body_too_large" });
+					return;
+				}
+				json(res, 400, { ok: false, error: "invalid_json" });
+			});
 		return;
 	}
 

@@ -7033,6 +7033,7 @@ self.onmessage = async (e) => {
 		if (psUserAuthed) psUserAuthed.classList.remove("hidden");
 		if (psUserUnauthed) psUserUnauthed.classList.add("hidden");
 		setPsEditorTagsVisible(true);
+		syncCalendarSettingsFromServer();
 
 		applyPersonalSpaceFiltersAndRender();
 		syncPsEditingNoteTagsFromState();
@@ -7402,6 +7403,7 @@ self.onmessage = async (e) => {
 	const CALENDAR_SOURCES_KEY = "mirror_calendar_sources_v1";
 	const CALENDAR_DEFAULT_VIEW_KEY = "mirror_calendar_default_view_v1";
 	const CALENDAR_VIEWS = ["day", "week", "month"];
+	const CALENDAR_SETTINGS_SYNC_DELAY = 1200;
 	const MAX_ROOM_TABS = 5;
 	let pendingRoomBootstrapText = "";
 	let pendingClosedTab = null;
@@ -7409,6 +7411,10 @@ self.onmessage = async (e) => {
 	let skipTabLimitCheck = false;
 	let calendarPanelActive = false;
 	let calendarRefreshTimer = 0;
+	let calendarSettingsSyncTimer = 0;
+	let calendarSettingsSyncPayload = null;
+	let calendarSettingsSyncInFlight = false;
+	let calendarSettingsSyncQueued = false;
 	const calendarState = {
 		view: "month",
 		cursor: new Date(),
@@ -8175,7 +8181,7 @@ self.onmessage = async (e) => {
 		}
 	}
 
-	function saveCalendarSources(list) {
+	function saveCalendarSources(list, opts) {
 		try {
 			const cleaned = Array.isArray(list)
 				? list.map(normalizeCalendarSource).filter(Boolean)
@@ -8183,6 +8189,9 @@ self.onmessage = async (e) => {
 			localStorage.setItem(CALENDAR_SOURCES_KEY, JSON.stringify(cleaned));
 		} catch {
 			// ignore
+		}
+		if (!(opts && opts.skipSync)) {
+			scheduleCalendarSettingsSync();
 		}
 	}
 
@@ -8195,7 +8204,7 @@ self.onmessage = async (e) => {
 		}
 	}
 
-	function saveCalendarDefaultView(view) {
+	function saveCalendarDefaultView(view, opts) {
 		const safe = CALENDAR_VIEWS.includes(view) ? view : "month";
 		try {
 			localStorage.setItem(CALENDAR_DEFAULT_VIEW_KEY, safe);
@@ -8204,7 +8213,105 @@ self.onmessage = async (e) => {
 		}
 		calendarState.view = safe;
 		updateCalendarViewButtons();
-		renderCalendarPanel();
+		if (!(opts && opts.skipRender)) {
+			renderCalendarPanel();
+		}
+		if (!(opts && opts.skipSync)) {
+			scheduleCalendarSettingsSync();
+		}
+	}
+
+	function getLocalCalendarSettings() {
+		return {
+			sources: loadCalendarSources(),
+			defaultView: loadCalendarDefaultView(),
+		};
+	}
+
+	function applyCalendarSettings(calendar, opts) {
+		if (!calendar || typeof calendar !== "object") return false;
+		const hasSources = Array.isArray(calendar.sources);
+		const hasView = CALENDAR_VIEWS.includes(calendar.defaultView);
+		if (hasSources) saveCalendarSources(calendar.sources, { skipSync: true });
+		if (hasView) {
+			saveCalendarDefaultView(calendar.defaultView, {
+				skipSync: true,
+				skipRender: true,
+			});
+		}
+		if (hasSources || hasView) {
+			renderCalendarSettings();
+			scheduleCalendarRefresh();
+			if (!(opts && opts.skipRender)) renderCalendarPanel();
+		}
+		return hasSources || hasView;
+	}
+
+	async function syncCalendarSettingsToServer(calendar) {
+		if (!psState || !psState.authed) return;
+		try {
+			const res = await api("/api/user-settings", {
+				method: "POST",
+				body: JSON.stringify({ calendar }),
+			});
+			if (res && res.settings) {
+				psState.settings = res.settings;
+			}
+		} catch {
+			// ignore
+		}
+	}
+
+	function scheduleCalendarSettingsSync(nextCalendar) {
+		if (!psState || !psState.authed) return;
+		calendarSettingsSyncPayload =
+			nextCalendar && typeof nextCalendar === "object"
+				? nextCalendar
+				: getLocalCalendarSettings();
+		if (calendarSettingsSyncTimer) window.clearTimeout(calendarSettingsSyncTimer);
+		calendarSettingsSyncTimer = window.setTimeout(async () => {
+			calendarSettingsSyncTimer = 0;
+			if (calendarSettingsSyncInFlight) {
+				calendarSettingsSyncQueued = true;
+				return;
+			}
+			calendarSettingsSyncInFlight = true;
+			const payload =
+				calendarSettingsSyncPayload || getLocalCalendarSettings();
+			calendarSettingsSyncPayload = null;
+			await syncCalendarSettingsToServer(payload);
+			calendarSettingsSyncInFlight = false;
+			if (calendarSettingsSyncQueued) {
+				calendarSettingsSyncQueued = false;
+				if (calendarSettingsSyncPayload) {
+					scheduleCalendarSettingsSync(calendarSettingsSyncPayload);
+				}
+			}
+		}, CALENDAR_SETTINGS_SYNC_DELAY);
+	}
+
+	function syncCalendarSettingsFromServer() {
+		if (!psState || !psState.authed) return;
+		const serverCalendar =
+			psState.settings && psState.settings.calendar
+				? psState.settings.calendar
+				: null;
+		const hasServer =
+			serverCalendar &&
+			(Array.isArray(serverCalendar.sources) ||
+				CALENDAR_VIEWS.includes(serverCalendar.defaultView));
+		if (hasServer) {
+			applyCalendarSettings(serverCalendar);
+			return;
+		}
+		const local = getLocalCalendarSettings();
+		const hasLocalSources =
+			Array.isArray(local.sources) && local.sources.length > 0;
+		const hasLocalCustomView =
+			CALENDAR_VIEWS.includes(local.defaultView) && local.defaultView !== "month";
+		if (hasLocalSources || hasLocalCustomView) {
+			scheduleCalendarSettingsSync(local);
+		}
 	}
 
 	function renderCalendarSettings() {
