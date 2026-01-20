@@ -3150,12 +3150,12 @@
 	let mobileAutoNoteSeconds = 0;
 	let mobileAutoNoteChecked = false;
 	let psAutoBackupEnabled = false;
-	let psAutoBackupInterval = 60;
+	let psAutoBackupInterval = "daily";
 	let psAutoBackupTimer = 0;
 	let psAutoBackupInFlight = false;
 	let psAutoBackupHandle = null;
 	let psAutoImportEnabled = false;
-	let psAutoImportInterval = 5;
+	let psAutoImportInterval = "daily";
 	let psAutoImportTimer = 0;
 	let psAutoImportInFlight = false;
 	let psAutoImportHandle = null;
@@ -3422,9 +3422,22 @@
 	}
 
 	function normalizeAutoInterval(raw, fallback) {
-		const n = Number(raw);
-		if (!Number.isFinite(n) || n < 1) return fallback;
-		return Math.min(1440, Math.round(n));
+		const val = String(raw || "").trim().toLowerCase();
+		if (val === "weekly" || val === "monthly") return val;
+		if (val === "daily") return "daily";
+		return fallback;
+	}
+
+	function autoIntervalToMs(interval) {
+		switch (String(interval || "").toLowerCase()) {
+			case "weekly":
+				return 7 * 24 * 60 * 60 * 1000;
+			case "monthly":
+				return 30 * 24 * 60 * 60 * 1000;
+			case "daily":
+			default:
+				return 24 * 60 * 60 * 1000;
+		}
 	}
 
 	function openFsHandleDb() {
@@ -3531,14 +3544,14 @@
 		}
 		try {
 			const rawInterval = localStorage.getItem(PS_AUTO_BACKUP_INTERVAL_KEY);
-			psAutoBackupInterval = normalizeAutoInterval(rawInterval, 60);
+			psAutoBackupInterval = normalizeAutoInterval(rawInterval, "daily");
 		} catch {
-			psAutoBackupInterval = 60;
+			psAutoBackupInterval = "daily";
 		}
 		if (psAutoBackupEnabledInput)
 			psAutoBackupEnabledInput.checked = psAutoBackupEnabled;
 		if (psAutoBackupIntervalInput)
-			psAutoBackupIntervalInput.value = String(psAutoBackupInterval || 60);
+			psAutoBackupIntervalInput.value = String(psAutoBackupInterval || "daily");
 	}
 
 	function saveAutoBackupSettings() {
@@ -3549,7 +3562,7 @@
 			);
 			localStorage.setItem(
 				PS_AUTO_BACKUP_INTERVAL_KEY,
-				String(psAutoBackupInterval || 60)
+				String(psAutoBackupInterval || "daily")
 			);
 		} catch {
 			// ignore
@@ -3565,14 +3578,14 @@
 		}
 		try {
 			const rawInterval = localStorage.getItem(PS_AUTO_IMPORT_INTERVAL_KEY);
-			psAutoImportInterval = normalizeAutoInterval(rawInterval, 5);
+			psAutoImportInterval = normalizeAutoInterval(rawInterval, "daily");
 		} catch {
-			psAutoImportInterval = 5;
+			psAutoImportInterval = "daily";
 		}
 		if (psAutoImportEnabledInput)
 			psAutoImportEnabledInput.checked = psAutoImportEnabled;
 		if (psAutoImportIntervalInput)
-			psAutoImportIntervalInput.value = String(psAutoImportInterval || 5);
+			psAutoImportIntervalInput.value = String(psAutoImportInterval || "daily");
 	}
 
 	function saveAutoImportSettings() {
@@ -3583,7 +3596,7 @@
 			);
 			localStorage.setItem(
 				PS_AUTO_IMPORT_INTERVAL_KEY,
-				String(psAutoImportInterval || 5)
+				String(psAutoImportInterval || "daily")
 			);
 		} catch {
 			// ignore
@@ -3630,7 +3643,7 @@
 		psAutoBackupTimer = window.setTimeout(async () => {
 			await runAutoBackup();
 			scheduleAutoBackup();
-		}, psAutoBackupInterval * 60 * 1000);
+		}, autoIntervalToMs(psAutoBackupInterval));
 	}
 
 	function scheduleAutoImport() {
@@ -3641,7 +3654,7 @@
 		psAutoImportTimer = window.setTimeout(async () => {
 			await runAutoImport();
 			scheduleAutoImport();
-		}, psAutoImportInterval * 60 * 1000);
+		}, autoIntervalToMs(psAutoImportInterval));
 	}
 
 	async function runAutoBackup() {
@@ -11567,9 +11580,9 @@ self.onmessage = async (e) => {
 		psAutoBackupIntervalInput.addEventListener("change", () => {
 			psAutoBackupInterval = normalizeAutoInterval(
 				psAutoBackupIntervalInput.value,
-				60
+				"daily"
 			);
-			psAutoBackupIntervalInput.value = String(psAutoBackupInterval || 60);
+			psAutoBackupIntervalInput.value = String(psAutoBackupInterval || "daily");
 			saveAutoBackupSettings();
 			scheduleAutoBackup();
 		});
@@ -11592,9 +11605,9 @@ self.onmessage = async (e) => {
 		psAutoImportIntervalInput.addEventListener("change", () => {
 			psAutoImportInterval = normalizeAutoInterval(
 				psAutoImportIntervalInput.value,
-				5
+				"daily"
 			);
-			psAutoImportIntervalInput.value = String(psAutoImportInterval || 5);
+			psAutoImportIntervalInput.value = String(psAutoImportInterval || "daily");
 			saveAutoImportSettings();
 			scheduleAutoImport();
 		});

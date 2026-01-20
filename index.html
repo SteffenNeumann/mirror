@@ -2055,14 +2055,13 @@
 											class="h-4 w-4 rounded border-white/20 bg-slate-950/40 text-fuchsia-400 focus:ring-fuchsia-400/40" />
 										<span>Aktiv</span>
 									</label>
-									<input
+									<select
 										id="psAutoBackupInterval"
-										type="number"
-										min="1"
-										step="1"
-										class="w-24 rounded-lg border border-white/10 bg-slate-950/30 px-2.5 py-1.5 text-xs text-slate-200 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30"
-										placeholder="60" />
-									<span class="text-xs text-slate-400">Minuten</span>
+										class="rounded-lg border border-white/10 bg-slate-950/30 px-2.5 py-1.5 text-xs text-slate-200 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30">
+										<option value="daily" selected>Täglich</option>
+										<option value="weekly">Wöchentlich</option>
+										<option value="monthly">Monatlich</option>
+									</select>
 									<button
 										id="psAutoBackupFolder"
 										type="button"
@@ -2091,14 +2090,13 @@
 											class="h-4 w-4 rounded border-white/20 bg-slate-950/40 text-fuchsia-400 focus:ring-fuchsia-400/40" />
 										<span>Aktiv</span>
 									</label>
-									<input
+									<select
 										id="psAutoImportInterval"
-										type="number"
-										min="1"
-										step="1"
-										class="w-24 rounded-lg border border-white/10 bg-slate-950/30 px-2.5 py-1.5 text-xs text-slate-200 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30"
-										placeholder="5" />
-									<span class="text-xs text-slate-400">Minuten</span>
+										class="rounded-lg border border-white/10 bg-slate-950/30 px-2.5 py-1.5 text-xs text-slate-200 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30">
+										<option value="daily" selected>Täglich</option>
+										<option value="weekly">Wöchentlich</option>
+										<option value="monthly">Monatlich</option>
+									</select>
 									<button
 										id="psAutoImportFolder"
 										type="button"
