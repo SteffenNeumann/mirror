@@ -1064,6 +1064,56 @@ const server = http.createServer((req, res) => {
 		return;
 	}
 
+	if (url.pathname === "/api/calendar/ics" && req.method === "GET") {
+		const rawUrl = String(url.searchParams.get("url") || "").trim();
+		if (!rawUrl) {
+			json(res, 400, { ok: false, error: "missing_url" });
+			return;
+		}
+		let target;
+		try {
+			target = new URL(rawUrl);
+		} catch {
+			json(res, 400, { ok: false, error: "invalid_url" });
+			return;
+		}
+		if (target.protocol !== "https:") {
+			json(res, 400, { ok: false, error: "invalid_protocol" });
+			return;
+		}
+		const controller = new AbortController();
+		const timer = setTimeout(() => controller.abort(), 12000);
+		fetch(target.toString(), {
+			signal: controller.signal,
+			redirect: "follow",
+			headers: {
+				"User-Agent": "Mirror/1.0",
+				Accept: "text/calendar,text/plain,*/*",
+			},
+		})
+			.then((upstream) => {
+				clearTimeout(timer);
+				if (!upstream.ok) {
+					json(res, 502, { ok: false, error: "calendar_fetch_failed" });
+					return null;
+				}
+				return upstream.text();
+			})
+			.then((text) => {
+				if (text === null || typeof text !== "string") return;
+				res.writeHead(200, {
+					"Content-Type": "text/calendar; charset=utf-8",
+					"Cache-Control": "no-store",
+				});
+				res.end(text);
+			})
+			.catch(() => {
+				clearTimeout(timer);
+				json(res, 502, { ok: false, error: "calendar_fetch_failed" });
+			});
+		return;
+	}
+
 	if (url.pathname === "/api/uploads" && req.method === "POST") {
 		if (UPLOAD_REQUIRE_AUTH) {
 			const email = getAuthedEmail(req);

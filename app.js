@@ -8477,7 +8477,10 @@ self.onmessage = async (e) => {
 		}
 		const results = await Promise.allSettled(
 			sources.map(async (src) => {
-				const res = await fetch(src.url, { cache: "no-store" });
+				const proxyUrl = `/api/calendar/ics?url=${encodeURIComponent(
+					src.url
+				)}`;
+				const res = await fetch(proxyUrl, { cache: "no-store" });
 				if (!res.ok) throw new Error("fetch_failed");
 				const text = await res.text();
 				return parseIcsEvents(text);
