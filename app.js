@@ -8592,6 +8592,9 @@ self.onmessage = async (e) => {
 			const dayEvents = events.filter(
 				(evt) => evt.start < end && evt.end > start
 			);
+			const isToday =
+				startOfDay(start).getTime() === startOfDay(new Date()).getTime();
+			const dayBorder = isToday ? "border-fuchsia-400/40" : "border-white/10";
 			calendarGrid.innerHTML = dayEvents.length
 				? dayEvents
 					.map((evt) => {
@@ -8604,7 +8607,7 @@ self.onmessage = async (e) => {
 								)}\</div>`
 							: "";
 						return `
-							<div class="rounded-lg border border-white/10 bg-slate-950/40 p-3">
+							<div class="rounded-lg border ${dayBorder} bg-slate-950/40 p-3">
 								<div class="flex items-center justify-between gap-2">
 									<div class="text-xs font-semibold text-slate-100">${escapeHtml(
 										evt.title
@@ -8624,6 +8627,9 @@ self.onmessage = async (e) => {
 			const cols = Array.from({ length: 7 }).map((_, idx) => {
 				const day = addDays(start, idx);
 				const dayEnd = addDays(day, 1);
+				const isToday =
+					startOfDay(day).getTime() === startOfDay(new Date()).getTime();
+				const dayBorder = isToday ? "border-fuchsia-400/40" : "border-white/10";
 				const dayEvents = events.filter(
 					(evt) => evt.start < dayEnd && evt.end > day
 				);
@@ -8648,7 +8654,7 @@ self.onmessage = async (e) => {
 						.join("")
 					: '<div class="text-[11px] text-slate-500">Keine Termine</div>';
 				return `
-					<div class="rounded-lg border border-white/10 bg-slate-950/40 p-2">
+					<div class="rounded-lg border ${dayBorder} bg-slate-950/40 p-2">
 						<div class="text-[11px] text-slate-400">${formatDayLabel(
 							day
 						)}</div>
