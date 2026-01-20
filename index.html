@@ -51,221 +51,226 @@
 				--accent-ring: rgba(217, 70, 239, 0.25);
 				--accent-ring-strong: rgba(217, 70, 239, 0.4);
 				--blockquote-border: rgba(217, 70, 239, 0.45);
-				--blockquote-text: rgb(203 213 225);
-				--scrollbar-track: rgba(2, 6, 23, 0.35);
-				--scrollbar-thumb: rgba(148, 163, 184, 0.25);
-				--scrollbar-thumb-hover: rgba(148, 163, 184, 0.4);
-			}
-			* {
-				scrollbar-width: thin;
-				scrollbar-color: var(--scrollbar-thumb) transparent;
-			}
-			*::-webkit-scrollbar {
-				width: 10px;
-				height: 10px;
-			}
-			*::-webkit-scrollbar-track {
-				background: transparent;
-			}
-			*::-webkit-scrollbar-thumb {
-				background-color: var(--scrollbar-thumb);
-				border-radius: 999px;
-				border: 2px solid var(--scrollbar-track);
-			}
-			*::-webkit-scrollbar-thumb:hover {
-				background-color: var(--scrollbar-thumb-hover);
-			}
-			body[data-theme="monoLight"] {
-				background-color: #f8fafc !important;
-				color: #0f172a;
-			}
-			body[data-theme="monoLight"] .bg-slate-950 {
-				background-color: #f8fafc !important;
-			}
-			body[data-theme="monoLight"] .text-slate-100 {
-				color: #0f172a !important;
-			}
-			body[data-theme="monoLight"] .text-slate-200 {
-				color: #1e293b !important;
-			}
-			body[data-theme="monoLight"] .text-slate-300 {
-				color: #334155 !important;
-			}
-			body[data-theme="monoLight"] .text-slate-400 {
-				color: #94a3b8 !important;
-			}
-			body[data-theme="monoLight"] .bg-white\/5 {
-				background-color: rgba(15, 23, 42, 0.03) !important;
-			}
-			body[data-theme="monoLight"] .bg-white\/10 {
-				background-color: rgba(15, 23, 42, 0.05) !important;
-			}
-			body[data-theme="monoLight"] .bg-white\/15 {
-				background-color: rgba(15, 23, 42, 0.08) !important;
-			}
-			body[data-theme="monoLight"] .bg-white\/20 {
-				background-color: rgba(15, 23, 42, 0.1) !important;
-			}
-			body[data-theme="monoLight"] .border-white\/10 {
-				border-color: rgba(15, 23, 42, 0.1) !important;
-			}
-			body[data-theme="monoLight"] .bg-slate-950\/30 {
-				background-color: #ffffff !important;
-			}
-			body[data-theme="monoLight"] .bg-slate-950\/10,
-			body[data-theme="monoLight"] .bg-slate-950\/20,
-			body[data-theme="monoLight"] .bg-slate-950\/25,
-			body[data-theme="monoLight"] .bg-slate-950\/40,
-			body[data-theme="monoLight"] .bg-slate-950\/60,
-			body[data-theme="monoLight"] .bg-slate-950\/70,
-			body[data-theme="monoLight"] .bg-slate-950\/80,
-			body[data-theme="monoLight"] .bg-slate-950\/85 {
-				background-color: #ffffff !important;
-			}
-			body[data-theme="monoLight"] .border-white\/15 {
-				border-color: rgba(15, 23, 42, 0.12) !important;
-			}
-			body[data-theme="monoLight"] .text-slate-50 {
-				color: #0f172a !important;
-			}
-			body[data-theme="monoLight"] input,
-			body[data-theme="monoLight"] textarea,
-			body[data-theme="monoLight"] select {
-				background-color: #ffffff !important;
-				color: #0f172a !important;
-				border-color: rgba(15, 23, 42, 0.12) !important;
-			}
-			body[data-theme="monoLight"] .shadow-soft {
-				box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06) !important;
-			}
-			body[data-theme="monoLight"] .shadow-inner {
-				box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.06) !important;
-			}
-			#mirror.pw-mask-enabled + #mirrorMask {
-				background: rgba(2, 6, 23, 0.25);
-			}
-			body[data-theme="monoLight"] #mirror.pw-mask-enabled + #mirrorMask {
-				background: rgba(2, 6, 23, 0.25);
-			}
-			body[data-theme="monoDark"] {
-				background-color: #020617 !important;
-				color: #e2e8f0;
-			}
-			.md-content {
-				font-size: 0.875rem;
-				line-height: 1.55;
-				color: rgb(226 232 240);
-			}
-			/* Theme overrides for accent utility classes */
-			.bg-fuchsia-500\/15 {
-				background-color: var(--accent-bg) !important;
-			}
-			.bg-fuchsia-500\/10 {
-				background-color: var(--accent-bg-soft) !important;
-			}
-			.bg-fuchsia-500\/20 {
-				background-color: var(--accent-bg-hover) !important;
-			}
-			.bg-fuchsia-600\/20 {
-				background-color: var(--accent-badge-bg) !important;
-			}
-			.bg-fuchsia-600\/60 {
-				background-color: var(--accent-strong) !important;
-			}
-			.hover\:bg-fuchsia-500\/20:hover {
-				background-color: var(--accent-bg-hover) !important;
-			}
-			.hover\:bg-fuchsia-600\/70:hover {
-				background-color: var(--accent-strong-hover) !important;
-			}
-			.active\:bg-fuchsia-600\/80:active {
-				background-color: var(--accent-strong-active) !important;
-			}
-			.border-fuchsia-400\/30 {
-				border-color: var(--accent-border) !important;
-			}
-			.border-fuchsia-400\/40 {
-				border-color: var(--accent-border-strong) !important;
-			}
-			.border-fuchsia-500\/30 {
-				border-color: var(--accent-border-strong) !important;
-			}
-			.text-fuchsia-100 {
-				color: var(--accent-text) !important;
-			}
-			.text-fuchsia-300 {
-				color: var(--accent-text-soft) !important;
-			}
-			.ring-fuchsia-400\/25 {
-				--tw-ring-color: var(--accent-ring) !important;
-			}
-			.ring-fuchsia-400\/30 {
-				--tw-ring-color: var(--accent-ring) !important;
-			}
-			.ring-fuchsia-400\/40 {
-				--tw-ring-color: var(--accent-ring-strong) !important;
-			}
-			.focus\:ring-fuchsia-400\/25:focus {
-				--tw-ring-color: var(--accent-ring) !important;
-			}
-			.focus\:ring-fuchsia-400\/30:focus {
-				--tw-ring-color: var(--accent-ring) !important;
-			}
-			.focus\:ring-fuchsia-400\/40:focus {
-				--tw-ring-color: var(--accent-ring-strong) !important;
-			}
-			/* Personal Space: Delete button only on hover (mouse), always on touch */
-			.ps-note-delete {
-				opacity: 0;
-				pointer-events: none;
-				transition: opacity 160ms ease, transform 160ms ease;
-				transform: translateY(-1px);
-			}
-			.ps-note-pin {
-				opacity: 0;
-				pointer-events: none;
-				transition: opacity 160ms ease, transform 160ms ease;
-				transform: translateY(-1px);
-			}
-			.ps-note-share {
-				opacity: 0;
-				pointer-events: none;
-				transition: opacity 160ms ease, transform 160ms ease;
-				transform: translateY(-1px);
-			}
-			.ps-note-excerpt {
-				overflow: hidden;
-				display: -webkit-box;
-				-webkit-box-orient: vertical;
-				-webkit-line-clamp: 3;
-			}
-			.group:hover .ps-note-delete,
-			.group:focus-within .ps-note-delete {
-				opacity: 1;
-				pointer-events: auto;
-				transform: translateY(0);
-			}
-			.group:hover .ps-note-pin,
-			.group:focus-within .ps-note-pin {
-				opacity: 1;
-				pointer-events: auto;
-				transform: translateY(0);
-			}
-			.group:hover .ps-note-share,
-			.group:focus-within .ps-note-share {
-				opacity: 1;
-				pointer-events: auto;
-				transform: translateY(0);
-			}
-			@media (hover: none), (pointer: coarse) {
-				.ps-note-delete {
-					opacity: 1 !important;
-					pointer-events: auto !important;
-					transform: none !important;
-				}
-				.ps-note-pin {
-					opacity: 1 !important;
-					pointer-events: auto !important;
+				<section
+					id="psPanel"
+					class="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 shadow-soft backdrop-blur sm:p-6">
+					<header class="flex items-start justify-between gap-3">
+						<div>
+							<h2 class="text-sm font-semibold tracking-tight">
+								Personal Space
+							</h2>
+						</div>
+						<button
+							id="psCloseMobile"
+							type="button"
+							class="mobile-only inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10 active:bg-white/15"
+							title="Schließen"
+							aria-label="Schließen">
+							<svg
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								class="h-4 w-4">
+								<path d="M18 6L6 18" />
+								<path d="M6 6l12 12" />
+							</svg>
+						</button>
+					</header>
+
+					<div id="psUnauthed" class="mt-4 flex-1">
+						<button
+							id="addPersonalSpace"
+							type="button"
+							class="w-full rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-sm text-slate-100 transition hover:bg-white/15 active:bg-white/20">
+							Add Personal Space
+						</button>
+						<p class="mt-2 text-xs text-slate-400">
+							You’ll receive a verification link by email.
+						</p>
+						<div
+							id="psDevLink"
+							class="mt-2 hidden rounded-lg border border-white/10 bg-slate-950/30 p-2 text-xs text-slate-200"></div>
+					</div>
+
+					<div id="psAuthed" class="mt-4 hidden flex min-h-0 flex-1 flex-col">
+						<div class="mt-1">
+							<div class="flex items-start gap-3">
+								<button
+									id="psNewNote"
+									type="button"
+									class="inline-flex shrink-0 items-center whitespace-nowrap rounded-xl border border-fuchsia-400/30 bg-fuchsia-500/15 px-4 py-2.5 text-sm font-semibold text-slate-100 shadow-soft transition hover:bg-fuchsia-500/20 active:opacity-90">
+									New note
+								</button>
+							</div>
+						</div>
+						<div id="psHint" class="mt-2 text-xs text-slate-400"></div>
+
+						<div class="mt-4">
+							<div class="flex items-center justify-between gap-2">
+								<button
+									id="psToggleTags"
+									type="button"
+									class="inline-flex items-center gap-1 text-xs font-medium text-slate-200 transition hover:text-slate-100"
+									aria-expanded="true">
+									<span>Tags</span>
+									<svg
+										data-role="chevron"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										class="h-4 w-4 text-slate-400 transition-transform">
+										<path d="M6 9l6 6 6-6" />
+									</svg>
+								</button>
+								<div id="psTagControls" class="flex items-center gap-2">
+									<select
+										id="psTagFilterMode"
+										class="rounded-lg border border-white/10 bg-slate-950/30 px-2 py-1.5 text-xs text-slate-200 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30">
+										<option value="and" selected>AND</option>
+										<option value="or">OR</option>
+									</select>
+								</div>
+							</div>
+							<div id="psTagsPanel" class="mt-2">
+								<div class="flex flex-wrap gap-2" id="psTags"></div>
+							</div>
+						</div>
+
+						<div class="mt-4 flex min-h-0 flex-1 flex-col">
+							<div class="flex flex-col gap-2">
+								<div class="flex items-center gap-2">
+									<div class="text-xs font-medium text-slate-200">Notes</div>
+									<div
+										id="psCount"
+										class="rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[11px] text-slate-300"
+										title="Number of notes">
+										0
+									</div>
+								</div>
+								<div class="flex items-center gap-2">
+									<button
+										id="psPinnedToggle"
+										type="button"
+										class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
+										title="Pinned only"
+										aria-label="Pinned only"
+										aria-pressed="false">
+										<svg
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											class="h-4 w-4">
+											<path d="M4 4v16" />
+											<path d="M4 4h12l-2 5 2 5H4" />
+										</svg>
+									</button>
+									<div class="relative flex flex-1 items-center gap-2">
+										<input
+											id="psSearch"
+											type="search"
+											placeholder="Search…"
+											class="w-full min-w-0 rounded-lg border border-white/10 bg-slate-950/30 px-2.5 py-1.5 text-xs text-slate-200 shadow-soft backdrop-blur transition placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
+										<button
+											id="psSortMenuBtn"
+											type="button"
+											class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
+											title="Sortierung"
+											aria-label="Sortierung"
+											aria-expanded="false">
+											<svg
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												class="h-4 w-4">
+												<circle cx="12" cy="5" r="1.5" />
+												<circle cx="12" cy="12" r="1.5" />
+												<circle cx="12" cy="19" r="1.5" />
+											</svg>
+										</button>
+										<div
+											id="psSortMenu"
+											class="absolute right-0 top-10 z-30 hidden w-48 overflow-hidden rounded-xl border border-white/10 bg-slate-950/80 shadow-soft backdrop-blur">
+											<div class="border-b border-white/10 px-3 py-2 text-[11px] text-slate-300">
+												Sort by
+											</div>
+											<div class="flex flex-col gap-1 p-1 text-xs">
+												<button
+													type="button"
+													data-sort="updated"
+													class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
+													<span>Modified</span>
+													<span class="ps-sort-check text-fuchsia-200">✓</span>
+												</button>
+												<button
+													type="button"
+													data-sort="created"
+													class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
+													<span>Created</span>
+													<span class="ps-sort-check text-fuchsia-200">✓</span>
+												</button>
+												<button
+													type="button"
+													data-sort="accessed"
+													class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
+													<span>Accessed</span>
+													<span class="ps-sort-check text-fuchsia-200">✓</span>
+												</button>
+												<button
+													type="button"
+													data-sort="text"
+													class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
+													<span>Text</span>
+													<span class="ps-sort-check text-fuchsia-200">✓</span>
+												</button>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+							</div>
+							</div>
+						</div>
+					</div>
+				</div>
+						<div
+								id="psList"
+								class="mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1"></div>
+						</div>
+					</div>
+					<div class="mt-auto pt-3">
+						<button
+							id="psSettingsBtn"
+							type="button"
+							class="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-xs text-slate-200 transition hover:bg-white/10 active:bg-white/15"
+							aria-label="Open settings"
+							title="Settings">
+							<svg
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								class="h-4 w-4">
+								<path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" />
+								<path
+									d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.09a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c0 .67.39 1.27 1 1.51H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+							</svg>
+						</button>
+					</div>
+				</section>
 					transform: none !important;
 				}
 				.ps-note-share {
@@ -716,48 +721,48 @@
 										<div
 											id="psSortMenu"
 											class="absolute right-0 top-10 z-30 hidden w-48 overflow-hidden rounded-xl border border-white/10 bg-slate-950/80 shadow-soft backdrop-blur">
-										<div class="border-b border-white/10 px-3 py-2 text-[11px] text-slate-300">
-											Sort by
-										</div>
-										<div class="flex flex-col gap-1 p-1 text-xs">
-											<button
-												type="button"
-												data-sort="updated"
-												class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
-												<span>Modified</span>
-												<span class="ps-sort-check text-fuchsia-200">✓</span>
-											</button>
-											<button
-												type="button"
-												data-sort="created"
-												class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
-												<span>Created</span>
-												<span class="ps-sort-check text-fuchsia-200">✓</span>
-											</button>
-											<button
-												type="button"
-												data-sort="accessed"
-												class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
-												<span>Accessed</span>
-												<span class="ps-sort-check text-fuchsia-200">✓</span>
-											</button>
-											<button
-												type="button"
-												data-sort="text"
-												class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
-												<span>Text</span>
-												<span class="ps-sort-check text-fuchsia-200">✓</span>
-											</button>
+											<div class="border-b border-white/10 px-3 py-2 text-[11px] text-slate-300">
+												Sort by
+											</div>
+											<div class="flex flex-col gap-1 p-1 text-xs">
+												<button
+													type="button"
+													data-sort="updated"
+													class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
+													<span>Modified</span>
+													<span class="ps-sort-check text-fuchsia-200">✓</span>
+												</button>
+												<button
+													type="button"
+													data-sort="created"
+													class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
+													<span>Created</span>
+													<span class="ps-sort-check text-fuchsia-200">✓</span>
+												</button>
+												<button
+													type="button"
+													data-sort="accessed"
+													class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
+													<span>Accessed</span>
+													<span class="ps-sort-check text-fuchsia-200">✓</span>
+												</button>
+												<button
+													type="button"
+													data-sort="text"
+													class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
+													<span>Text</span>
+													<span class="ps-sort-check text-fuchsia-200">✓</span>
+												</button>
+											</div>
 										</div>
 									</div>
 								</div>
 							</div>
-							<div
-								id="psList"
-								class="mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1"></div>
 						</div>
+						<div
+							id="psList"
+							class="mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1"></div>
 					</div>
-				</div>
 					<div class="mt-auto pt-3">
 						<button
 							id="psSettingsBtn"
@@ -855,7 +860,8 @@
 									class="mt-1 text-sm text-slate-400"
 									title="Build info"
 									aria-label="Build info"></div>
-								<div class="mt-4 flex flex-wrap items-center gap-2">
+							</div>
+							<div class="mt-4 flex flex-wrap items-center gap-2">
 								<div class="relative">
 									<label for="roomInput" class="sr-only">Room</label>
 									<input
@@ -909,19 +915,17 @@
 										</svg>
 									</button>
 								</div>
-								<div class="mt-3 flex w-full flex-col gap-2">
-									<div class="flex items-center gap-2 text-[11px] text-slate-400">
-										<span>Tabs</span>
-										<span class="text-slate-500">Schneller Wechsel zwischen Räumen</span>
-									</div>
-									<div
-										id="roomTabs"
-											class="flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto whitespace-nowrap pb-1"></div>
+							</div>
+							<div class="mt-2 flex w-full flex-col gap-2 sm:mt-3">
+								<div class="hidden items-center gap-2 text-[11px] text-slate-400 sm:flex">
+									<span>Tabs</span>
+									<span class="text-slate-500">Schneller Wechsel zwischen Räumen</span>
 								</div>
+								<div
+									id="roomTabs"
+										class="flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto whitespace-nowrap pb-1"></div>
 							</div>
 						</div>
-					</div>
-
 						<div
 							class="shrink-0 text-left text-xs text-slate-300 sm:text-right">
 							<div class="flex items-center justify-end gap-2">
@@ -931,8 +935,7 @@
 								</div>
 							</div>
 							<div
-								class="mt-1 flex flex-col items-end gap-1 text-[11px] text-slate-400"
-								data-header-detail="true">
+								class="mt-1 flex flex-col items-end gap-1 text-[11px] text-slate-400">
 								<div id="presenceSummary">0 Nutzer online</div>
 								<div class="flex items-center justify-end gap-2">
 									<div id="crdtStatus" class="hidden text-[10px] text-slate-500"></div>
