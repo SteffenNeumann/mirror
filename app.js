@@ -8653,9 +8653,9 @@ self.onmessage = async (e) => {
 										<span class="inline-flex h-2 w-2 rounded-full" style="background:${escapeAttr(
 											evt.color
 										)}"></span>
-										<span class="truncate">${escapeHtml(
+										<span class="truncate">${time} · ${escapeHtml(
 											evt.title
-										)} · ${time}</span>
+										)}</span>
 									</div>
 								</div>`;
 						})
@@ -8682,8 +8682,9 @@ self.onmessage = async (e) => {
 				(evt) => evt.start < dayEnd && evt.end > day
 			);
 			const dots = dayEvents.slice(0, 3).map((evt) => {
+				const time = evt.allDay ? "Ganztägig" : formatTime(evt.start);
 				return `<span class="h-2 w-2 rounded-full" title="${escapeAttr(
-					evt.title
+					time ? `${time} · ${evt.title}` : evt.title
 				)}" style="background:${escapeAttr(evt.color)}"></span>`;
 			});
 			const extra =
