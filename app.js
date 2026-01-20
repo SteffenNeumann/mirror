@@ -9839,6 +9839,7 @@ self.onmessage = async (e) => {
 			if (calendarBtn) {
 				ev.preventDefault();
 				setCalendarPanelActive(true);
+				refreshCalendarEvents(true);
 				return;
 			}
 			const closeBtn = target.closest("[data-tab-close]");
