@@ -453,7 +453,6 @@
 					margin: 0;
 				}
 				body.mobile-preview-open #psPanel,
-				body.mobile-preview-open #editorPanel,
 				body.mobile-note-open #psPanel,
 				body.mobile-ps-open #editorPanel,
 				body.mobile-ps-open #previewPanel,
@@ -471,6 +470,12 @@
 					flex-direction: column;
 					pointer-events: auto;
 					border-radius: 0;
+				}
+				body.mobile-preview-open #editorPanel > header {
+					display: none;
+				}
+				body.mobile-preview-open #editorPreviewGrid > div:first-child {
+					display: none;
 				}
 				body.mobile-ps-open #psPanel {
 					position: fixed;
@@ -878,7 +883,7 @@
 									</div>
 									<div
 										id="roomTabs"
-											class="flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto pb-1 lg:flex-wrap"></div>
+											class="flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto whitespace-nowrap pb-1"></div>
 								</div>
 							</div>
 						</div>

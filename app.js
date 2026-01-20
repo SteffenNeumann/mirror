@@ -9070,7 +9070,10 @@ self.onmessage = async (e) => {
 	saveRecentRoom(room);
 	renderRecentRooms();
 	updateFavoritesUI();
-	touchRoomTab(room, key, { skipSync: true });
+	const initialTabs = loadRoomTabs();
+	if (!initialTabs.length) {
+		touchRoomTab(room, key, { skipSync: true });
+	}
 	renderRoomTabs();
 
 	function setStatus(kind, text) {
