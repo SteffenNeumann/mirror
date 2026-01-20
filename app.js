@@ -8506,6 +8506,10 @@ self.onmessage = async (e) => {
 				"aria-expanded",
 				next ? "false" : "true"
 			);
+			const icon = calendarSidebarToggle.querySelector(
+				"[data-role=\"calendarSidebarChevron\"]"
+			);
+			if (icon) icon.classList.toggle("rotate-180", next);
 		}
 	}
 
