@@ -819,7 +819,7 @@
 									</div>
 									<div
 										id="roomTabs"
-										class="flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto pb-1 sm:flex-wrap"></div>
+											class="flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto pb-1 lg:flex-wrap"></div>
 								</div>
 							</div>
 						</div>
@@ -1450,12 +1450,36 @@
 									<div id="calendarTitle" class="ml-auto text-xs text-slate-400"></div>
 								</div>
 							</div>
-							<div class="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_260px]">
+							<div
+								id="calendarLayout"
+								class="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,1fr)_260px]">
 								<div
 									id="calendarGrid"
 									class="h-full min-h-0 overflow-auto rounded-xl border border-white/10 bg-slate-950/30 p-3"></div>
-								<div class="rounded-xl border border-white/10 bg-slate-950/30 p-3">
-									<div class="text-xs text-slate-400">Kalender</div>
+								<div
+									id="calendarSidebar"
+									class="rounded-xl border border-white/10 bg-slate-950/30 p-3">
+									<div class="flex items-center justify-between gap-2">
+										<div class="text-xs text-slate-400">Kalender</div>
+										<button
+											id="calendarSidebarToggle"
+											type="button"
+											class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-transparent text-[11px] text-slate-300 transition hover:bg-white/5 active:bg-white/10"
+											title="Toggle sidebar"
+											aria-label="Toggle sidebar"
+											aria-expanded="true">
+											<svg
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												class="h-3.5 w-3.5">
+												<path d="M9 18l6-6-6-6" />
+											</svg>
+										</button>
+									</div>
 									<div id="calendarLegend" class="mt-2 space-y-2"></div>
 									<div id="calendarStatus" class="mt-3 text-[11px] text-slate-500"></div>
 									<div class="mt-3 flex flex-col gap-2">

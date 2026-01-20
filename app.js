@@ -217,6 +217,9 @@
 	const calendarGrid = document.getElementById("calendarGrid");
 	const calendarLegend = document.getElementById("calendarLegend");
 	const calendarStatus = document.getElementById("calendarStatus");
+	const calendarLayout = document.getElementById("calendarLayout");
+	const calendarSidebar = document.getElementById("calendarSidebar");
+	const calendarSidebarToggle = document.getElementById("calendarSidebarToggle");
 	const calendarPrevBtn = document.getElementById("calendarPrev");
 	const calendarNextBtn = document.getElementById("calendarNext");
 	const calendarTodayBtn = document.getElementById("calendarToday");
@@ -7411,6 +7414,7 @@ self.onmessage = async (e) => {
 	let skipTabLimitCheck = false;
 	let calendarPanelActive = false;
 	let calendarRefreshTimer = 0;
+	let calendarSidebarCollapsed = false;
 	let calendarSettingsSyncTimer = 0;
 	let calendarSettingsSyncPayload = null;
 	let calendarSettingsSyncInFlight = false;
@@ -8389,6 +8393,23 @@ self.onmessage = async (e) => {
 			refreshCalendarEvents(true);
 		}
 		renderRoomTabs();
+	}
+
+	function setCalendarSidebarCollapsed(collapsed) {
+		const next = Boolean(collapsed);
+		if (calendarSidebar && calendarSidebar.classList) {
+			calendarSidebar.classList.toggle("hidden", next);
+		}
+		if (calendarLayout && calendarLayout.classList) {
+			calendarLayout.classList.toggle("lg:grid-cols-[minmax(0,1fr)_260px]", !next);
+			calendarLayout.classList.toggle("lg:grid-cols-1", next);
+		}
+		if (calendarSidebarToggle) {
+			calendarSidebarToggle.setAttribute(
+				"aria-expanded",
+				next ? "false" : "true"
+			);
+		}
 	}
 
 	function startOfDay(date) {
@@ -11519,6 +11540,13 @@ self.onmessage = async (e) => {
 	if (calendarRefreshBtn) {
 		calendarRefreshBtn.addEventListener("click", () => {
 			refreshCalendarEvents(true);
+		});
+	}
+	if (calendarSidebarToggle) {
+		setCalendarSidebarCollapsed(calendarSidebarCollapsed);
+		calendarSidebarToggle.addEventListener("click", () => {
+			calendarSidebarCollapsed = !calendarSidebarCollapsed;
+			setCalendarSidebarCollapsed(calendarSidebarCollapsed);
 		});
 	}
 	if (calendarOpenSettingsBtn) {
