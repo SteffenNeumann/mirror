@@ -192,6 +192,9 @@
 	const settingsNavButtons = document.querySelectorAll("[data-settings-nav]");
 	const settingsSections = document.querySelectorAll("[data-settings-section]");
 	const settingsThemeSelect = document.getElementById("settingsTheme");
+	const mobileAutoNoteSecondsInput = document.getElementById(
+		"mobileAutoNoteSeconds"
+	);
 	const aiApiKeyInput = document.getElementById("aiApiKey");
 	const aiApiModelInput = document.getElementById("aiApiModel");
 	const aiApiSaveBtn = document.getElementById("aiApiSave");
@@ -3099,6 +3102,8 @@
 	const AI_API_KEY_KEY = "mirror_ai_api_key";
 	const AI_API_MODEL_KEY = "mirror_ai_api_model";
 	const THEME_KEY = "mirror_theme";
+	const MOBILE_AUTO_NOTE_SECONDS_KEY = "mirror_mobile_auto_note_seconds";
+	const MOBILE_LAST_ACTIVE_KEY = "mirror_mobile_last_active";
 	let aiPrompt = "";
 	let aiUsePreview = true;
 	let aiUseAnswer = true;
@@ -3107,6 +3112,8 @@
 	let settingsOpen = false;
 	let settingsSection = "user";
 	let activeTheme = "fuchsia";
+	let mobileAutoNoteSeconds = 0;
+	let mobileAutoNoteChecked = false;
 	const THEMES = {
 		fuchsia: {
 			label: "Fuchsia",
@@ -3281,6 +3288,71 @@
 			aiUseAnswer = true;
 		}
 		setAiUseAnswerUi(aiUseAnswer);
+	}
+
+	function normalizeMobileAutoNoteSeconds(raw) {
+		const n = Number(raw);
+		if (!Number.isFinite(n) || n < 0) return 0;
+		return Math.min(3600, Math.round(n));
+	}
+
+	function loadMobileAutoNoteSeconds() {
+		try {
+			const raw = localStorage.getItem(MOBILE_AUTO_NOTE_SECONDS_KEY);
+			mobileAutoNoteSeconds = normalizeMobileAutoNoteSeconds(raw);
+		} catch {
+			mobileAutoNoteSeconds = 0;
+		}
+		if (mobileAutoNoteSecondsInput)
+			mobileAutoNoteSecondsInput.value = String(mobileAutoNoteSeconds || 0);
+	}
+
+	function saveMobileAutoNoteSeconds(next) {
+		mobileAutoNoteSeconds = normalizeMobileAutoNoteSeconds(next);
+		try {
+			localStorage.setItem(
+				MOBILE_AUTO_NOTE_SECONDS_KEY,
+				String(mobileAutoNoteSeconds)
+			);
+		} catch {
+			// ignore
+		}
+		if (mobileAutoNoteSecondsInput)
+			mobileAutoNoteSecondsInput.value = String(mobileAutoNoteSeconds || 0);
+	}
+
+	function recordMobileLastActive() {
+		try {
+			localStorage.setItem(MOBILE_LAST_ACTIVE_KEY, String(Date.now()));
+		} catch {
+			// ignore
+		}
+	}
+
+	function shouldStartMobileAutoNote() {
+		if (!isMobileViewport()) return false;
+		if (!psState || !psState.authed) return false;
+		if (!mobileAutoNoteSeconds || mobileAutoNoteSeconds <= 0) return false;
+		try {
+			const raw = localStorage.getItem(MOBILE_LAST_ACTIVE_KEY);
+			const last = Number(raw || 0);
+			if (!Number.isFinite(last) || last <= 0) return true;
+			return Date.now() - last >= mobileAutoNoteSeconds * 1000;
+		} catch {
+			return true;
+		}
+	}
+
+	function maybeStartMobileAutoNoteSession() {
+		if (mobileAutoNoteChecked) return;
+		mobileAutoNoteChecked = true;
+		if (!shouldStartMobileAutoNote()) return;
+		mobilePsOpen = false;
+		if (previewOpen) setPreviewVisible(false);
+		syncMobileFocusState();
+		if (psNewNote) {
+			psNewNote.click();
+		}
 	}
 
 	function saveAiPrompt(next) {
@@ -7046,6 +7118,7 @@ self.onmessage = async (e) => {
 			renderRoomTabs();
 			setPsAutoSaveStatus("");
 			updatePsNoteNavButtons();
+			maybeStartMobileAutoNoteSession();
 			return;
 		}
 
@@ -7066,6 +7139,7 @@ self.onmessage = async (e) => {
 		renderRoomTabs();
 		updateEditorMetaYaml();
 		updatePsNoteNavButtons();
+		maybeStartMobileAutoNoteSession();
 		await syncLocalRoomTabsToServer();
 	}
 
@@ -11249,6 +11323,12 @@ self.onmessage = async (e) => {
 		syncPsListHeight();
 		syncMobileFocusState();
 	});
+	window.addEventListener("pagehide", () => {
+		recordMobileLastActive();
+	});
+	document.addEventListener("visibilitychange", () => {
+		if (document.hidden) recordMobileLastActive();
+	});
 	if (aiPromptInput) {
 		aiPromptInput.addEventListener("input", () => {
 			// Don't persist every keystroke (privacy-ish); we persist on send.
@@ -11476,6 +11556,11 @@ self.onmessage = async (e) => {
 	if (settingsThemeSelect) {
 		settingsThemeSelect.addEventListener("change", () => {
 			saveTheme(settingsThemeSelect.value);
+		});
+	}
+	if (mobileAutoNoteSecondsInput) {
+		mobileAutoNoteSecondsInput.addEventListener("change", () => {
+			saveMobileAutoNoteSeconds(mobileAutoNoteSecondsInput.value);
 		});
 	}
 	if (calendarDefaultViewSelect) {
@@ -11709,6 +11794,7 @@ self.onmessage = async (e) => {
 		// ignore
 	}
 
+	loadMobileAutoNoteSeconds();
 	refreshPersonalSpace();
 	loadAiPrompt();
 	loadAiUsePreview();
