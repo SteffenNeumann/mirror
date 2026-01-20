@@ -8584,15 +8584,15 @@ self.onmessage = async (e) => {
 		if (!calendarStatus || !calendarGrid) return;
 		if (!sources.length) {
 			calendarState.events = [];
-			calendarStatus.textContent = "Keine Kalenderquellen aktiv.";
+			calendarStatus.textContent = "No calendar sources enabled.";
 			renderCalendarPanel();
 			return;
 		}
 		calendarState.loading = true;
-		calendarStatus.textContent = "Kalender werden geladen…";
+		calendarStatus.textContent = "Loading calendars…";
 		if (calendarGrid) {
 			calendarGrid.innerHTML =
-				'<div class="text-sm text-slate-400">Kalender werden geladen…</div>';
+				'<div class="text-sm text-slate-400">Loading calendars…</div>';
 		}
 		const results = await Promise.allSettled(
 			sources.map(async (src) => {
@@ -8610,8 +8610,8 @@ self.onmessage = async (e) => {
 		calendarState.lastLoadedAt = Date.now();
 		calendarState.loading = false;
 		const okCount = results.length - errors;
-		calendarStatus.textContent = `${okCount} Kalender geladen${
-			errors ? ` · ${errors} Fehler` : ""
+		calendarStatus.textContent = `${okCount} calendars loaded${
+			errors ? ` · ${errors} errors` : ""
 		}`;
 		renderCalendarPanel();
 	}
