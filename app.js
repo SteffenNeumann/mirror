@@ -7935,7 +7935,7 @@ self.onmessage = async (e) => {
 				const isActive = t.room === room && t.key === key;
 				const isCollab = isActive && presenceState && presenceState.size > 1;
 				const base =
-					"inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs transition";
+					"inline-flex items-center gap-1 rounded-lg border text-xs transition";
 				const active =
 					"border-fuchsia-400/40 bg-fuchsia-500/15 text-fuchsia-100";
 				const idle =
@@ -7948,28 +7948,31 @@ self.onmessage = async (e) => {
 					: "";
 				const closeBtn = canClose
 					? `
-							<span
+							<button
+								type="button"
 								data-tab-close
 								data-room="${escapeAttr(t.room)}"
 								data-key="${escapeAttr(t.key)}"
-								class="ml-1 inline-flex h-5 w-5 items-center justify-center rounded-md text-[11px] text-slate-400 transition hover:bg-white/10 hover:text-slate-100"
+								class="mr-1 inline-flex h-6 w-6 items-center justify-center rounded-md text-[11px] text-slate-400 transition hover:bg-white/10 hover:text-slate-100"
 								title="Tab schließen"
 								aria-label="Tab schließen">
 								<span aria-hidden="true">×</span>
-							</span>`
+							</button>`
 					: "";
 				return `
-					<button
-						type="button"
-						data-tab-select
-						data-room="${escapeAttr(t.room)}"
-						data-key="${escapeAttr(t.key)}"
-						class="${base} ${isActive ? active : idle}">
-						<span class="max-w-[140px] truncate">${escapeHtml(t.room)}</span>
-						${badge}
-						${collab}
+					<div class="${base} ${isActive ? active : idle}">
+						<button
+							type="button"
+							data-tab-select
+							data-room="${escapeAttr(t.room)}"
+							data-key="${escapeAttr(t.key)}"
+							class="inline-flex items-center gap-2 px-3 py-1.5">
+							<span class="max-w-[140px] truncate">${escapeHtml(t.room)}</span>
+							${badge}
+							${collab}
+						</button>
 						${closeBtn}
-					</button>`;
+					</div>`;
 			})
 			.join("");
 		const calendarBase =
