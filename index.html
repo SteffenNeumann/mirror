@@ -1555,16 +1555,16 @@
 						<div
 							id="calendarPanel"
 								class="hidden flex min-h-0 flex-1 flex-col gap-3">
-							<div class="rounded-xl border border-white/10 bg-slate-950/40 p-4">
-								<div class="flex flex-wrap items-start justify-between gap-3">
-									<div>
+							<div class="rounded-xl border border-white/10 bg-slate-950/40 p-3 sm:p-4">
+								<div class="flex flex-wrap items-center justify-between gap-2">
+									<div class="flex items-center gap-2">
 										<h3 class="text-sm font-semibold text-slate-100">Kalender</h3>
 									</div>
-									<div class="flex items-center gap-2">
+									<div class="flex items-center gap-1.5">
 										<button
 											id="calendarPrev"
 											type="button"
-											class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
+												class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
 											title="Zurück"
 											aria-label="Zurück">
 											<svg
@@ -1581,13 +1581,13 @@
 										<button
 											id="calendarToday"
 											type="button"
-											class="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">
+												class="rounded-md border border-white/10 bg-white/10 px-2.5 py-1.5 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">
 											Heute
 										</button>
 										<button
 											id="calendarNext"
 											type="button"
-											class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
+												class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
 											title="Weiter"
 											aria-label="Weiter">
 											<svg
@@ -1603,28 +1603,28 @@
 										</button>
 									</div>
 								</div>
-								<div class="mt-3 flex flex-wrap items-center gap-2">
-									<div class="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-slate-950/40 p-1">
+								<div class="mt-2 flex flex-wrap items-center gap-2">
+									<div class="inline-flex items-center gap-1 rounded-full border border-white/10 bg-slate-950/40 p-1">
 										<button
 											data-calendar-view="day"
 											type="button"
-											class="rounded-md px-2.5 py-1.5 text-xs text-slate-300 transition hover:bg-white/5">
+											class="rounded-full px-2.5 py-1 text-[11px] text-slate-300 transition hover:bg-white/5">
 											Tag
 										</button>
 										<button
 											data-calendar-view="week"
 											type="button"
-											class="rounded-md px-2.5 py-1.5 text-xs text-slate-300 transition hover:bg-white/5">
+											class="rounded-full px-2.5 py-1 text-[11px] text-slate-300 transition hover:bg-white/5">
 											Woche
 										</button>
 										<button
 											data-calendar-view="month"
 											type="button"
-											class="rounded-md px-2.5 py-1.5 text-xs text-slate-300 transition hover:bg-white/5">
+											class="rounded-full px-2.5 py-1 text-[11px] text-slate-300 transition hover:bg-white/5">
 											Monat
 										</button>
 									</div>
-									<div id="calendarTitle" class="ml-auto text-xs text-slate-400"></div>
+									<div id="calendarTitle" class="w-full text-right text-xs text-slate-400 sm:ml-auto sm:w-auto"></div>
 								</div>
 							</div>
 							<div
