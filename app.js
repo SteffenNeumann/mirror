@@ -74,6 +74,7 @@
 	const previewPanel = document.getElementById("previewPanel");
 	const mdPreview = document.getElementById("mdPreview");
 	const togglePreview = document.getElementById("togglePreview");
+	const toggleFullPreview = document.getElementById("toggleFullPreview");
 	const previewCloseMobile = document.getElementById("previewCloseMobile");
 	const aiModeSelect = document.getElementById("aiMode");
 	const aiAssistBtn = document.getElementById("aiAssist");
@@ -3041,6 +3042,7 @@
 	let psAutoSaveLastSavedNoteId = "";
 	let psAutoSaveInFlight = false;
 	let previewOpen = false;
+	let fullPreview = false;
 	let mobilePsOpen = false;
 	let mobileNoteReturn = "editor";
 	function isMobileViewport() {
@@ -5177,6 +5179,24 @@
 		}
 	}
 
+	function setFullPreview(next) {
+		const shouldEnable = Boolean(next) && previewOpen;
+		fullPreview = shouldEnable;
+		if (document.body && document.body.classList) {
+			document.body.classList.toggle("preview-only", fullPreview);
+		}
+		if (toggleFullPreview) {
+			toggleFullPreview.textContent = fullPreview
+				? "Show input"
+				: "Full preview";
+			toggleFullPreview.setAttribute(
+				"aria-pressed",
+				fullPreview ? "true" : "false"
+			);
+		}
+		updateRunOutputSizing();
+	}
+
 	function setPreviewVisible(next) {
 		previewOpen = Boolean(next);
 		if (!previewPanel || !editorPreviewGrid) return;
@@ -5203,6 +5223,7 @@
 			if (metaLeft) metaLeft.textContent = "Ready.";
 			if (metaRight) metaRight.textContent = "";
 		}
+		setFullPreview(fullPreview);
 		syncMobileFocusState();
 	}
 
@@ -11262,6 +11283,12 @@ self.onmessage = async (e) => {
 	if (togglePreview) {
 		togglePreview.addEventListener("click", () => {
 			setPreviewVisible(!previewOpen);
+		});
+	}
+	if (toggleFullPreview) {
+		toggleFullPreview.addEventListener("click", () => {
+			if (!previewOpen) setPreviewVisible(true);
+			setFullPreview(!fullPreview);
 		});
 	}
 	if (mdPreview) {

@@ -463,6 +463,12 @@
 			.mobile-only {
 				display: none !important;
 			}
+			body.preview-only #editorPreviewGrid {
+				grid-template-columns: 1fr !important;
+			}
+			body.preview-only #editorPreviewGrid > div:first-child {
+				display: none !important;
+			}
 			@media (max-width: 1023px) {
 				.mobile-only {
 					display: inline-flex !important;
@@ -1387,24 +1393,35 @@
 										<div class="text-xs font-medium text-slate-200">
 											Preview
 										</div>
-										<button
-											id="previewCloseMobile"
-											type="button"
-											class="mobile-only inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xs text-slate-200 transition hover:bg-white/10 active:bg-white/15"
-											title="Preview schließen"
-											aria-label="Preview schließen">
-											<svg
-												viewBox="0 0 24 24"
-												fill="none"
-												stroke="currentColor"
-												stroke-width="2"
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												class="h-4 w-4">
-												<path d="M18 6L6 18" />
-												<path d="M6 6l12 12" />
-											</svg>
-										</button>
+										<div class="flex items-center gap-2">
+											<button
+												id="toggleFullPreview"
+												type="button"
+												class="hidden lg:inline-flex h-8 items-center justify-center rounded-lg border border-white/10 bg-transparent px-2.5 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+												title="Full preview"
+												aria-label="Full preview"
+												aria-pressed="false">
+												Full preview
+											</button>
+											<button
+												id="previewCloseMobile"
+												type="button"
+												class="mobile-only inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xs text-slate-200 transition hover:bg-white/10 active:bg-white/15"
+												title="Preview schließen"
+												aria-label="Preview schließen">
+												<svg
+													viewBox="0 0 24 24"
+													fill="none"
+													stroke="currentColor"
+													stroke-width="2"
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													class="h-4 w-4">
+													<path d="M18 6L6 18" />
+													<path d="M6 6l12 12" />
+												</svg>
+											</button>
+										</div>
 									</div>
 									<iframe
 										id="mdPreview"
