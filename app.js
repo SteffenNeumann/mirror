@@ -6596,6 +6596,129 @@
 		}
 	}
 
+	function normalizeSingleTag(raw) {
+		const first = normalizeManualTags(raw)[0];
+		return first ? String(first) : "";
+	}
+
+	function dedupeRawTags(rawTags) {
+		const out = [];
+		const seen = new Set();
+		const list = Array.isArray(rawTags) ? rawTags : [];
+		for (const t of list) {
+			const s = String(t || "");
+			if (!s) continue;
+			if (seen.has(s)) continue;
+			seen.add(s);
+			out.push(s);
+		}
+		return out;
+	}
+
+	async function updateNotesForTagChange(oldTag, nextTag) {
+		if (!psState || !psState.authed) {
+			toast("Please enable Personal Space first (sign in).", "error");
+			return;
+		}
+		const notes = Array.isArray(psState.notes) ? psState.notes : [];
+		const target = String(oldTag || "");
+		const next = nextTag ? String(nextTag) : "";
+		if (!target) return;
+		let updatedCount = 0;
+		for (const note of notes) {
+			const rawTags = Array.isArray(note && note.tags) ? note.tags : [];
+			if (!rawTags.includes(target)) continue;
+			const nextTags = [];
+			let replaced = false;
+			for (const t of rawTags) {
+				const s = String(t || "");
+				if (s === target) {
+					replaced = true;
+					if (next) nextTags.push(next);
+					continue;
+				}
+				nextTags.push(s);
+			}
+			if (!replaced) continue;
+			const finalTags = dedupeRawTags(nextTags);
+			try {
+				const res = await api(`/api/notes/${encodeURIComponent(note.id)}`, {
+					method: "PUT",
+					body: JSON.stringify({
+						text: String(note.text || ""),
+						tags: finalTags,
+					}),
+				});
+				const saved = res && res.note ? res.note : null;
+				if (saved) {
+					psState.notes = psState.notes.map((n) =>
+						String(n && n.id ? n.id : "") === String(saved.id)
+							? saved
+							: n
+					);
+					updatedCount += 1;
+				}
+			} catch (e) {
+				const msg = e && e.message ? String(e.message) : "Error";
+				toast(`Tag update failed: ${msg}`, "error");
+				break;
+			}
+		}
+		if (updatedCount) {
+			if (psActiveTags && psActiveTags.size) {
+				const nextActive = new Set(psActiveTags);
+				if (next) {
+					if (nextActive.has(target)) {
+						nextActive.delete(target);
+						nextActive.add(next);
+					}
+				} else {
+					nextActive.delete(target);
+				}
+				psActiveTags = nextActive;
+			}
+			rebuildPsTagsFromNotes();
+			applyPersonalSpaceFiltersAndRender();
+			toast(`Updated ${updatedCount} note${updatedCount === 1 ? "" : "s"}.`, "success");
+		} else {
+			toast("No notes updated.", "info");
+		}
+	}
+
+	async function handleTagContextMenu(tag) {
+		const current = String(tag || "");
+		if (!current) return;
+		const input = await modalPrompt("Rename tag or leave empty to delete:", {
+			title: "Edit tag",
+			okText: "Apply",
+			cancelText: "Cancel",
+			value: current,
+		});
+		if (input === null) return;
+		const next = String(input || "").trim();
+		if (!next) {
+			const ok = await modalConfirm(
+				`Delete tag "#${current}" from all notes?`,
+				{
+					title: "Delete tag",
+					okText: "Delete",
+					cancelText: "Cancel",
+					danger: true,
+				}
+			);
+			if (!ok) return;
+			await updateNotesForTagChange(current, "");
+			return;
+		}
+		const normalized = normalizeSingleTag(next);
+		if (!normalized) {
+			toast("Invalid tag.", "error");
+			return;
+		}
+		if (normalized === current) return;
+		await updateNotesForTagChange(current, normalized);
+	}
+
 	function renderPsTags(tags) {
 		if (!psTags) return;
 		const safeTags = Array.isArray(tags) ? tags : [];
@@ -6674,6 +6797,14 @@
 				}
 				savePsTagPrefs();
 				await refreshPersonalSpace();
+			});
+			btn.addEventListener("contextmenu", async (ev) => {
+				if (!ev) return;
+				const t = btn.getAttribute("data-tag") || "";
+				if (!t) return;
+				ev.preventDefault();
+				ev.stopPropagation();
+				await handleTagContextMenu(t);
 			});
 		});
 	}
