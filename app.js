@@ -6732,7 +6732,23 @@
 		};
 		const sections = buildTagSections(visibleTags);
 		const sectionState = loadPsTagSectionState();
-		const renderButton = (it) => {
+		const sectionIcons = {
+			year:
+				"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"18\" rx=\"2\" ry=\"2\" /><line x1=\"16\" y1=\"2\" x2=\"16\" y2=\"6\" /><line x1=\"8\" y1=\"2\" x2=\"8\" y2=\"6\" /><line x1=\"3\" y1=\"10\" x2=\"21\" y2=\"10\" /></svg>",
+			month:
+				"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"18\" rx=\"2\" ry=\"2\" /><line x1=\"3\" y1=\"10\" x2=\"21\" y2=\"10\" /><path d=\"M7 14h10\" /><path d=\"M7 18h6\" /></svg>",
+			category:
+				"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z\" /></svg>",
+			subcategory:
+				"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 12v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h8z\" /><path d=\"M16 2v6h6\" /></svg>",
+			kind:
+				"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 2l7 4v6c0 5-7 10-7 10S5 17 5 12V6z\" /></svg>",
+			language:
+				"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 5h8\" /><path d=\"M8 5v14\" /><path d=\"M4 19h8\" /><path d=\"M14 9h6\" /><path d=\"M14 19h6\" /><path d=\"M14 19l4-10\" /><path d=\"M18 9l4 10\" /></svg>",
+			other:
+				"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M4 7h16\" /><path d=\"M4 12h10\" /><path d=\"M4 17h16\" /></svg>",
+		};
+		const renderButton = (it, groupKey) => {
 			const active = it.tag
 				? psActiveTags && psActiveTags.has(String(it.tag))
 				: !psActiveTags || psActiveTags.size === 0;
@@ -6741,10 +6757,15 @@
 				? "border-fuchsia-400/40 bg-fuchsia-500/15 text-fuchsia-100"
 				: "border-white/10 bg-white/5 text-slate-200 hover:bg-white/10";
 			const tagAttr = it.tag ? `data-tag=\"${it.tag}\"` : 'data-tag=""';
-			return `<button type="button" ${tagAttr} class="${base} ${cls}">${it.label}</button>`;
+			const groupClass = groupKey
+				? `ps-tag-button-group ps-tag-group-${groupKey}`
+				: "";
+			const activeClass = active ? "ps-tag-active" : "";
+			return `<button type=\"button\" ${tagAttr} class=\"${base} ${cls} ps-tag-button ${groupClass} ${activeClass}\">${it.label}</button>`;
 		};
-		const allHtml = `<div class="w-full mb-2 flex flex-wrap items-center gap-2">${renderButton(
-			allBtn
+		const allHtml = `<div class=\"w-full mb-2 flex flex-wrap items-center gap-2\">${renderButton(
+			allBtn,
+			""
 		)}</div>`;
 		const sectionHtml = sections
 			.map(
@@ -6753,8 +6774,9 @@
 					const collapsed = Boolean(sectionState[key]);
 					const chev = collapsed ? "-rotate-90" : "";
 					const bodyClass = collapsed ? "hidden" : "";
-					return `<div class="w-full mb-2" data-section-wrap="${key}"><button type="button" class="mb-1 flex w-full items-center justify-between gap-2 text-[11px] uppercase tracking-wide text-slate-400 hover:text-slate-200 transition" data-section-toggle="${key}" aria-expanded="${collapsed ? "false" : "true"}"><span class="inline-flex items-center gap-2"><span class="inline-flex h-4 w-4 items-center justify-center rounded-md border border-white/10 bg-white/5 text-slate-300 transition ${chev}" data-role="chev">▸</span><span class="whitespace-nowrap">${section.label}</span></span></button><div class="flex flex-wrap items-center gap-2 ${bodyClass}" data-section-body="${key}">${section.tags
-						.map((t) => renderButton({ tag: t, label: `#${t}` }))
+					const icon = sectionIcons[key] || sectionIcons.other;
+					return `<div class=\"w-full mb-2 ps-tag-section ps-tag-section-${key}\" data-section-wrap=\"${key}\" data-section=\"${key}\"><button type=\"button\" class=\"mb-1 flex w-full items-center justify-between gap-2 text-[11px] uppercase tracking-wide text-slate-400 hover:text-slate-200 transition\" data-section-toggle=\"${key}\" aria-expanded=\"${collapsed ? "false" : "true"}\"><span class=\"inline-flex items-center gap-2\"><span class=\"inline-flex h-4 w-4 items-center justify-center rounded-md border border-white/10 bg-white/5 text-slate-300 transition ${chev}\" data-role=\"chev\">▸</span><span class=\"ps-tag-icon\" aria-hidden=\"true\">${icon}</span><span class=\"whitespace-nowrap\">${section.label}</span></span></button><div class=\"flex flex-wrap items-center gap-2 ${bodyClass}\" data-section-body=\"${key}\">${section.tags
+						.map((t) => renderButton({ tag: t, label: `#${t}` }, key))
 						.join("")}</div></div>`;
 				}
 			)
