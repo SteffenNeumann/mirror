@@ -3322,6 +3322,7 @@
 	let psAutoSaveLastSavedText = "";
 	let psAutoSaveLastSavedNoteId = "";
 	let psAutoSaveInFlight = false;
+	let psAutoSaveQueuedText = "";
 	let previewOpen = false;
 	let fullPreview = false;
 	let mobilePsOpen = false;
@@ -13106,22 +13107,38 @@ self.onmessage = async (e) => {
 			psAutoSaveLastSavedText = psEditingNoteId ? text : "";
 		}
 		if (text === psAutoSaveLastSavedText) return;
+		if (psAutoSaveInFlight) {
+			psAutoSaveQueuedText = text;
+			return;
+		}
 		if (psAutoSaveTimer) window.clearTimeout(psAutoSaveTimer);
 		setPsAutoSaveStatus("Speichern…");
+		psAutoSaveInFlight = true;
 		psAutoSaveTimer = window.setTimeout(async () => {
-			if (psAutoSaveInFlight) return;
-			if (!canAutoSavePsNote()) return;
+			if (!canAutoSavePsNote()) {
+				psAutoSaveInFlight = false;
+				return;
+			}
 			const latest = String(textarea && textarea.value ? textarea.value : "");
-			if (latest === psAutoSaveLastSavedText) return;
-			psAutoSaveInFlight = true;
+			if (latest === psAutoSaveLastSavedText) {
+				psAutoSaveInFlight = false;
+				return;
+			}
 			try {
 				await savePersonalSpaceNote(latest, { auto: true });
 			} catch {
 				setPsAutoSaveStatus("Speichern fehlgeschlagen");
 			} finally {
 				psAutoSaveInFlight = false;
+				if (
+					psAutoSaveQueuedText &&
+					psAutoSaveQueuedText !== psAutoSaveLastSavedText
+				) {
+					psAutoSaveQueuedText = "";
+					schedulePsAutoSave();
+				}
 			}
-		}, 900);
+		}, 0);
 	}
 	function initUiEventListeners() {
 	if (psSaveMain) {
