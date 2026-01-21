@@ -7113,13 +7113,15 @@
 		psEditingNoteCategory = normalizeCategoryValue(split.category);
 		psEditingNoteSubcategory = normalizeCategoryValue(split.subcategory);
 		syncPsEditorTagsInput(true);
-		textarea.value = String(note.text || "");
-		try {
-			textarea.focus();
-		} catch {
-			// ignore
+		if (!(opts && opts.skipText)) {
+			textarea.value = String(note.text || "");
+			try {
+				textarea.focus();
+			} catch {
+				// ignore
+			}
+			if (psHint) psHint.textContent = "Editing: editor text updated.";
 		}
-		if (psHint) psHint.textContent = "Editing: editor text updated.";
 		updatePsEditingTagsHint();
 		if (psMainHint) {
 			psMainHint.classList.remove("hidden");
@@ -7128,8 +7130,10 @@
 		psAutoSaveLastSavedNoteId = psEditingNoteId;
 		psAutoSaveLastSavedText = String(textarea.value || "");
 		setPsAutoSaveStatus("");
-		updatePreview();
-		updatePasswordMaskOverlay();
+		if (!(opts && opts.skipText)) {
+			updatePreview();
+			updatePasswordMaskOverlay();
+		}
 		updateEditorMetaYaml();
 		if (notesForList && psSortMode !== "accessed") {
 			renderPsList(notesForList);
@@ -12625,11 +12629,11 @@ self.onmessage = async (e) => {
 					: "";
 			pendingRoomBootstrapText = "";
 			if (note) {
+				const hasCachedText = typeof cachedText === "string";
+				const shouldUseCachedText =
+					hasCachedText && cachedText !== String(note.text || "");
 				let noteToApply = note;
-				if (
-					typeof cachedText === "string" &&
-					cachedText !== String(note.text || "")
-				) {
+				if (shouldUseCachedText) {
 					noteToApply = { ...note, text: cachedText };
 					if (psState && Array.isArray(psState.notes)) {
 						const id = String(noteToApply.id || "");
@@ -12645,13 +12649,14 @@ self.onmessage = async (e) => {
 						}
 					}
 				}
-				applyNoteToEditor(noteToApply, null, { skipHistory: true });
-				if (
-					typeof cachedText === "string" &&
-					textarea &&
-					String(textarea.value || "") !== cachedText
-				) {
+				applyNoteToEditor(noteToApply, null, {
+					skipHistory: true,
+					skipText: shouldUseCachedText,
+				});
+				if (shouldUseCachedText && textarea) {
 					textarea.value = cachedText;
+					psAutoSaveLastSavedNoteId = psEditingNoteId;
+					psAutoSaveLastSavedText = String(cachedText || "");
 					updatePreview();
 					updatePasswordMaskOverlay();
 					schedulePsAutoSave();
