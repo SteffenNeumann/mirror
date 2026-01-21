@@ -8831,6 +8831,20 @@ self.onmessage = async (e) => {
 		saveRoomTabs(tabs);
 	}
 
+	function updateRoomTabsForNoteId(noteId, textVal) {
+		const targetId = String(noteId || "").trim();
+		if (!targetId) return;
+		const tabs = dedupeRoomTabs(loadRoomTabs());
+		let changed = false;
+		const text = String(textVal ?? "");
+		const nextTabs = tabs.map((t) => {
+			if (!t || String(t.noteId || "").trim() !== targetId) return t;
+			changed = true;
+			return { ...t, text, noteId: targetId };
+		});
+		if (changed) saveRoomTabs(nextTabs);
+	}
+
 	function upsertFavoriteInState(entry) {
 		if (!psState || !psState.authed) return;
 		const normalized = normalizeFavoriteEntry(entry);
@@ -13071,6 +13085,7 @@ self.onmessage = async (e) => {
 			}
 			psAutoSaveLastSavedNoteId = psEditingNoteId;
 			psAutoSaveLastSavedText = rawText;
+			updateRoomTabsForNoteId(psEditingNoteId, rawText);
 			if (auto) setPsAutoSaveStatus("Automatisch gespeichert");
 			else setPsAutoSaveStatus("Gespeichert");
 			if (psHint) psHint.textContent = auto ? "" : "Saved.";
@@ -13102,6 +13117,7 @@ self.onmessage = async (e) => {
 		}
 		psAutoSaveLastSavedNoteId = psEditingNoteId;
 		psAutoSaveLastSavedText = rawText;
+		updateRoomTabsForNoteId(psEditingNoteId, rawText);
 		if (auto) setPsAutoSaveStatus("Automatisch gespeichert");
 		else setPsAutoSaveStatus("Gespeichert");
 		if (psHint) psHint.textContent = auto ? "" : "Updated.";
