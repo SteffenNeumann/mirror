@@ -945,11 +945,41 @@ function sanitizeCalendarSettings(input) {
 			return { id, name, url, color, enabled };
 		})
 		.filter(Boolean);
+	const rawEvents = Array.isArray(safe.localEvents) ? safe.localEvents : [];
+	const localEvents = rawEvents
+		.slice(0, 500)
+		.map((evt) => {
+			const id = String(evt && evt.id ? evt.id : "")
+				.trim()
+				.slice(0, 64);
+			const title = String(evt && evt.title ? evt.title : "")
+				.trim()
+				.slice(0, 140);
+			const location = String(evt && evt.location ? evt.location : "")
+				.trim()
+				.slice(0, 200);
+			const startRaw = evt && evt.start ? evt.start : "";
+			const endRaw = evt && evt.end ? evt.end : "";
+			const startDate = new Date(startRaw);
+			const endDate = new Date(endRaw);
+			if (Number.isNaN(startDate.getTime())) return null;
+			if (Number.isNaN(endDate.getTime())) return null;
+			const allDay = Boolean(evt && evt.allDay);
+			return {
+				id: id || crypto.randomUUID(),
+				title: title || "(Ohne Titel)",
+				start: startDate.toISOString(),
+				end: endDate.toISOString(),
+				allDay,
+				location,
+			};
+		})
+		.filter(Boolean);
 	const rawView = String(safe.defaultView || "").trim();
 	const defaultView = ["day", "week", "month"].includes(rawView)
 		? rawView
 		: "month";
-	return { sources, defaultView };
+	return { sources, defaultView, localEvents };
 }
 
 function parseCalendarJson(raw) {
@@ -969,7 +999,7 @@ function getUserSettings(userId) {
 	if (!row) return null;
 	const calendar = parseCalendarJson(row.calendar_json);
 	return {
-		calendar: calendar || { sources: [], defaultView: "month" },
+		calendar: calendar || { sources: [], defaultView: "month", localEvents: [] },
 		updatedAt: Number(row.updated_at) || 0,
 	};
 }
@@ -978,7 +1008,9 @@ function upsertUserSettings(userId, settings) {
 	initDb();
 	const now = Date.now();
 	const calendar = sanitizeCalendarSettings(settings && settings.calendar);
-	const calendarJson = JSON.stringify(calendar || { sources: [], defaultView: "month" });
+	const calendarJson = JSON.stringify(
+		calendar || { sources: [], defaultView: "month", localEvents: [] }
+	);
 	stmtUserSettingsUpsert.run(userId, calendarJson, now);
 	return { calendar, updatedAt: now };
 }

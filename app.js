@@ -260,7 +260,26 @@
 	const calendarTodayBtn = document.getElementById("calendarToday");
 	const calendarRefreshBtn = document.getElementById("calendarRefresh");
 	const calendarOpenSettingsBtn = document.getElementById("calendarOpenSettings");
+	const calendarFreeToggle = document.getElementById("calendarFreeToggle");
+	const calendarFreeSlotsWrap = document.getElementById("calendarFreeSlotsWrap");
+	const calendarFreeSlots = document.getElementById("calendarFreeSlots");
+	const calendarAddEventBtn = document.getElementById("calendarAddEvent");
 	const calendarViewButtons = document.querySelectorAll("[data-calendar-view]");
+	const calendarLocalEventsList = document.getElementById("calendarLocalEventsList");
+	const calendarLocalEventsEmpty = document.getElementById("calendarLocalEventsEmpty");
+	const calendarEventModal = document.getElementById("calendarEventModal");
+	const calendarEventClose = document.getElementById("calendarEventClose");
+	const calendarEventCancel = document.getElementById("calendarEventCancel");
+	const calendarEventSave = document.getElementById("calendarEventSave");
+	const calendarEventName = document.getElementById("calendarEventName");
+	const calendarEventDate = document.getElementById("calendarEventDate");
+	const calendarEventAllDay = document.getElementById("calendarEventAllDay");
+	const calendarEventStart = document.getElementById("calendarEventStart");
+	const calendarEventEnd = document.getElementById("calendarEventEnd");
+	const calendarEventLocation = document.getElementById("calendarEventLocation");
+	const calendarEventBackdrop = document.querySelector(
+		"[data-role=\"calendarEventBackdrop\"]"
+	);
 	const psUserAuthed = document.getElementById("psUserAuthed");
 	const psUserUnauthed = document.getElementById("psUserUnauthed");
 	const bgBlobTop = document.getElementById("bgBlobTop");
@@ -7973,9 +7992,18 @@ self.onmessage = async (e) => {
 	const FAVORITES_KEY = "mirror_favorites_v1";
 	const ROOM_TABS_KEY = "mirror_room_tabs_v1";
 	const CALENDAR_SOURCES_KEY = "mirror_calendar_sources_v1";
+	const CALENDAR_LOCAL_EVENTS_KEY = "mirror_calendar_local_events_v1";
 	const CALENDAR_DEFAULT_VIEW_KEY = "mirror_calendar_default_view_v1";
+	const CALENDAR_FREE_SLOTS_KEY = "mirror_calendar_free_slots_v1";
 	const CALENDAR_VIEWS = ["day", "week", "month"];
 	const CALENDAR_SETTINGS_SYNC_DELAY = 1200;
+	const CALENDAR_WORK_START_HOUR = 9;
+	const CALENDAR_WORK_END_HOUR = 18;
+	const CALENDAR_LOCAL_SOURCE = {
+		id: "local",
+		name: "Eigene Termine",
+		color: "#f59e0b",
+	};
 	const MAX_ROOM_TABS = 5;
 	let pendingRoomBootstrapText = "";
 	let pendingClosedTab = null;
@@ -7988,10 +8016,12 @@ self.onmessage = async (e) => {
 	let calendarSettingsSyncPayload = null;
 	let calendarSettingsSyncInFlight = false;
 	let calendarSettingsSyncQueued = false;
+	let calendarFreeSlotsVisible = true;
 	const calendarState = {
 		view: "month",
 		cursor: new Date(),
-		events: [],
+		externalEvents: [],
+		localEvents: [],
 		loading: false,
 		lastLoadedAt: 0,
 	};
@@ -8801,6 +8831,7 @@ self.onmessage = async (e) => {
 		return {
 			sources: loadCalendarSources(),
 			defaultView: loadCalendarDefaultView(),
+			localEvents: loadLocalCalendarEventsRaw(),
 		};
 	}
 
@@ -8808,6 +8839,7 @@ self.onmessage = async (e) => {
 		if (!calendar || typeof calendar !== "object") return false;
 		const hasSources = Array.isArray(calendar.sources);
 		const hasView = CALENDAR_VIEWS.includes(calendar.defaultView);
+		const hasLocalEvents = Array.isArray(calendar.localEvents);
 		if (hasSources) saveCalendarSources(calendar.sources, { skipSync: true });
 		if (hasView) {
 			saveCalendarDefaultView(calendar.defaultView, {
@@ -8815,12 +8847,18 @@ self.onmessage = async (e) => {
 				skipRender: true,
 			});
 		}
-		if (hasSources || hasView) {
+		if (hasLocalEvents) {
+			saveLocalCalendarEvents(calendar.localEvents, {
+				skipSync: true,
+				skipRender: true,
+			});
+		}
+		if (hasSources || hasView || hasLocalEvents) {
 			renderCalendarSettings();
 			scheduleCalendarRefresh();
 			if (!(opts && opts.skipRender)) renderCalendarPanel();
 		}
-		return hasSources || hasView;
+		return hasSources || hasView || hasLocalEvents;
 	}
 
 	async function syncCalendarSettingsToServer(calendar) {
@@ -8948,6 +8986,52 @@ self.onmessage = async (e) => {
 					</div>`;
 			})
 			.join("");
+		renderCalendarLocalEvents();
+	}
+
+	function renderCalendarLocalEvents() {
+		if (!calendarLocalEventsList) return;
+		const list = Array.isArray(calendarState.localEvents)
+			? calendarState.localEvents.slice()
+			: [];
+		list.sort((a, b) => a.start.getTime() - b.start.getTime());
+		if (calendarLocalEventsEmpty && calendarLocalEventsEmpty.classList) {
+			calendarLocalEventsEmpty.classList.toggle("hidden", list.length > 0);
+		}
+		if (!list.length) {
+			calendarLocalEventsList.innerHTML = "";
+			return;
+		}
+		calendarLocalEventsList.innerHTML = list
+			.map((evt) => {
+				const dateLabel = evt.start.toLocaleDateString("de-DE", {
+					day: "2-digit",
+					month: "2-digit",
+					year: "numeric",
+				});
+				const timeLabel = evt.allDay
+					? "Ganztägig"
+					: `${formatTime(evt.start)} – ${formatTime(evt.end)}`;
+				return `
+					<div class="rounded-lg border border-white/10 bg-slate-950/30 p-2">
+						<div class="flex items-start justify-between gap-2">
+							<div class="min-w-0">
+								<div class="text-xs font-medium text-slate-100">${escapeHtml(
+									evt.title
+								)}</div>
+								<div class="text-[11px] text-slate-400">${dateLabel} · ${timeLabel}</div>
+							</div>
+							<button
+								type="button"
+								data-local-event-remove
+								data-local-event-id="${escapeAttr(evt.id)}"
+								class="rounded-md border border-white/10 bg-transparent px-2 py-1 text-[11px] text-slate-200 transition hover:bg-white/5 active:bg-white/10">
+								Entfernen
+							</button>
+						</div>
+					</div>`;
+			})
+			.join("");
 	}
 
 	function setCalendarPanelActive(active) {
@@ -8961,6 +9045,7 @@ self.onmessage = async (e) => {
 		if (calendarPanelActive) {
 			calendarState.view = loadCalendarDefaultView();
 			updateCalendarViewButtons();
+			applyCalendarFreeSlotsVisibility();
 			renderCalendarPanel();
 			refreshCalendarEvents(true);
 		}
@@ -9051,6 +9136,127 @@ self.onmessage = async (e) => {
 			year: "numeric",
 		});
 	}
+
+	function loadCalendarFreeSlotsVisible() {
+		try {
+			const raw = String(localStorage.getItem(CALENDAR_FREE_SLOTS_KEY) || "1");
+			return raw !== "0";
+		} catch {
+			return true;
+		}
+	}
+
+	function saveCalendarFreeSlotsVisible(next) {
+		calendarFreeSlotsVisible = Boolean(next);
+		try {
+			localStorage.setItem(
+				CALENDAR_FREE_SLOTS_KEY,
+				calendarFreeSlotsVisible ? "1" : "0"
+			);
+		} catch {
+			// ignore
+		}
+		applyCalendarFreeSlotsVisibility();
+	}
+
+	function applyCalendarFreeSlotsVisibility() {
+		if (calendarFreeSlotsWrap && calendarFreeSlotsWrap.classList) {
+			calendarFreeSlotsWrap.classList.toggle(
+				"hidden",
+				!calendarFreeSlotsVisible
+			);
+		}
+		if (calendarFreeToggle) {
+			calendarFreeToggle.setAttribute(
+				"aria-pressed",
+				calendarFreeSlotsVisible ? "true" : "false"
+			);
+			calendarFreeToggle.classList.toggle(
+				"bg-white/10",
+				calendarFreeSlotsVisible
+			);
+			calendarFreeToggle.classList.toggle(
+				"text-slate-100",
+				calendarFreeSlotsVisible
+			);
+			calendarFreeToggle.classList.toggle(
+				"text-slate-300",
+				!calendarFreeSlotsVisible
+			);
+		}
+	}
+
+	function parseLocalEventDate(raw) {
+		if (!raw) return null;
+		const date = raw instanceof Date ? raw : new Date(raw);
+		if (Number.isNaN(date.getTime())) return null;
+		return date;
+	}
+
+	function normalizeLocalCalendarEvent(it) {
+		if (!it) return null;
+		const id = String(it.id || "").trim() || createClientId();
+		const title = String(it.title || "").trim() || "(Ohne Titel)";
+		const start = parseLocalEventDate(it.start);
+		const end = parseLocalEventDate(it.end);
+		if (!start || !end) return null;
+		const allDay = Boolean(it.allDay);
+		const location = String(it.location || "").trim();
+		return { id, title, start, end, allDay, location };
+	}
+
+	function serializeLocalCalendarEvent(evt) {
+		return {
+			id: evt.id,
+			title: evt.title,
+			start: evt.start.toISOString(),
+			end: evt.end.toISOString(),
+			allDay: Boolean(evt.allDay),
+			location: evt.location || "",
+		};
+	}
+
+	function loadLocalCalendarEventsRaw() {
+		try {
+			const raw = localStorage.getItem(CALENDAR_LOCAL_EVENTS_KEY);
+			const parsed = JSON.parse(raw || "[]");
+			return Array.isArray(parsed) ? parsed : [];
+		} catch {
+			return [];
+		}
+	}
+
+	function loadLocalCalendarEvents() {
+		return loadLocalCalendarEventsRaw()
+			.map(normalizeLocalCalendarEvent)
+			.filter(Boolean);
+	}
+
+	function saveLocalCalendarEvents(list, opts) {
+		const normalized = Array.isArray(list)
+			? list.map(normalizeLocalCalendarEvent).filter(Boolean)
+			: [];
+		calendarState.localEvents = normalized;
+		try {
+			localStorage.setItem(
+				CALENDAR_LOCAL_EVENTS_KEY,
+				JSON.stringify(normalized.map(serializeLocalCalendarEvent))
+			);
+		} catch {
+			// ignore
+		}
+		if (!(opts && opts.skipRender)) {
+			renderCalendarSettings();
+			renderCalendarPanel();
+		}
+		if (!(opts && opts.skipSync)) {
+			scheduleCalendarSettingsSync();
+		}
+	}
+
+	calendarFreeSlotsVisible = loadCalendarFreeSlotsVisible();
+	calendarState.localEvents = loadLocalCalendarEvents();
+	applyCalendarFreeSlotsVisibility();
 
 	function parseIcsDate(value) {
 		const raw = String(value || "").trim();
@@ -9180,8 +9386,12 @@ self.onmessage = async (e) => {
 		const sources = loadCalendarSources().filter((s) => s.enabled && s.url);
 		if (!calendarStatus || !calendarGrid) return;
 		if (!sources.length) {
-			calendarState.events = [];
-			calendarStatus.textContent = "No calendar sources enabled.";
+			calendarState.externalEvents = [];
+			calendarState.lastLoadedAt = Date.now();
+			calendarStatus.textContent =
+				calendarState.localEvents.length > 0
+					? "Nur lokale Termine aktiv."
+					: "Keine Kalenderquellen aktiv.";
 			renderCalendarPanel();
 			return;
 		}
@@ -9203,7 +9413,7 @@ self.onmessage = async (e) => {
 			})
 		);
 		const errors = results.filter((r) => r.status === "rejected").length;
-		calendarState.events = mergeCalendarEvents(sources, results);
+		calendarState.externalEvents = mergeCalendarEvents(sources, results);
 		calendarState.lastLoadedAt = Date.now();
 		calendarState.loading = false;
 		const okCount = results.length - errors;
@@ -9232,15 +9442,48 @@ self.onmessage = async (e) => {
 		});
 	}
 
+	function getCalendarEvents() {
+		const external = Array.isArray(calendarState.externalEvents)
+			? calendarState.externalEvents
+			: [];
+		const local = Array.isArray(calendarState.localEvents)
+			? calendarState.localEvents
+			: [];
+		const localDecorated = local.map((evt) => ({
+			...evt,
+			calendarId: CALENDAR_LOCAL_SOURCE.id,
+			calendarName: CALENDAR_LOCAL_SOURCE.name,
+			color: CALENDAR_LOCAL_SOURCE.color,
+		}));
+		return [...external, ...localDecorated];
+	}
+
 	function renderCalendarLegend() {
 		if (!calendarLegend) return;
 		const sources = loadCalendarSources();
-		if (!sources.length) {
+		const localCount = Array.isArray(calendarState.localEvents)
+			? calendarState.localEvents.length
+			: 0;
+		if (!sources.length && !localCount) {
 			calendarLegend.innerHTML =
 				'<div class="text-xs text-slate-400">Keine Kalender verbunden.</div>';
 			return;
 		}
-		calendarLegend.innerHTML = sources
+		const localRow = localCount
+			? `
+				<div class="flex items-center justify-between gap-2 text-xs text-slate-300">
+					<div class="flex items-center gap-2">
+						<span class="inline-flex h-2.5 w-2.5 rounded-full" style="background:${escapeAttr(
+							CALENDAR_LOCAL_SOURCE.color
+						)}"></span>
+						<span class="truncate">${escapeHtml(
+							CALENDAR_LOCAL_SOURCE.name
+						)}</span>
+					</div>
+					<span class="text-[10px] text-slate-500">lokal</span>
+				</div>`
+			: "";
+		calendarLegend.innerHTML = `${localRow}${sources
 			.map((src) => {
 				const dot = `<span class="inline-flex h-2.5 w-2.5 rounded-full" style="background:${escapeAttr(
 					src.color
@@ -9255,7 +9498,7 @@ self.onmessage = async (e) => {
 						${state}
 					</div>`;
 			})
-			.join("");
+			.join("")}`;
 	}
 
 	function moveCalendarCursor(direction) {
@@ -9275,27 +9518,148 @@ self.onmessage = async (e) => {
 		renderCalendarPanel();
 	}
 
+	function buildWorkWindow(day) {
+		const start = new Date(
+			day.getFullYear(),
+			day.getMonth(),
+			day.getDate(),
+			CALENDAR_WORK_START_HOUR,
+			0,
+			0
+		);
+		const end = new Date(
+			day.getFullYear(),
+			day.getMonth(),
+			day.getDate(),
+			CALENDAR_WORK_END_HOUR,
+			0,
+			0
+		);
+		return { start, end };
+	}
+
+	function mergeIntervals(intervals) {
+		if (!intervals.length) return [];
+		const sorted = intervals
+			.slice()
+			.sort((a, b) => a[0].getTime() - b[0].getTime());
+		const merged = [sorted[0]];
+		for (let i = 1; i < sorted.length; i += 1) {
+			const [start, end] = sorted[i];
+			const last = merged[merged.length - 1];
+			if (start <= last[1]) {
+				last[1] = new Date(Math.max(last[1].getTime(), end.getTime()));
+			} else {
+				merged.push([start, end]);
+			}
+		}
+		return merged;
+	}
+
+	function computeFreeSlotsForDay(day, events) {
+		const dayStart = startOfDay(day);
+		const dayEnd = addDays(dayStart, 1);
+		const window = buildWorkWindow(dayStart);
+		const busy = events
+			.filter((evt) => evt.start < dayEnd && evt.end > dayStart)
+			.map((evt) => {
+				const start = evt.allDay ? dayStart : new Date(evt.start);
+				const end = evt.allDay ? dayEnd : new Date(evt.end);
+				return [
+					start < dayStart ? dayStart : start,
+					end > dayEnd ? dayEnd : end,
+				];
+			})
+			.filter((pair) => pair[1] > pair[0]);
+		const merged = mergeIntervals(busy);
+		const free = [];
+		let cursor = window.start;
+		const windowEnd = window.end;
+		for (const [start, end] of merged) {
+			if (end <= window.start || start >= windowEnd) continue;
+			const sliceStart = start < window.start ? window.start : start;
+			const sliceEnd = end > windowEnd ? windowEnd : end;
+			if (sliceStart > cursor) {
+				free.push([cursor, sliceStart]);
+			}
+			if (sliceEnd > cursor) cursor = sliceEnd;
+		}
+		if (cursor < windowEnd) {
+			free.push([cursor, windowEnd]);
+		}
+		return free.filter((slot) => slot[1] > slot[0]);
+	}
+
+	function renderCalendarFreeSlots(view, cursor, events) {
+		if (!calendarFreeSlots) return;
+		if (!calendarFreeSlotsVisible) {
+			calendarFreeSlots.innerHTML = "";
+			return;
+		}
+		if (view === "month") {
+			calendarFreeSlots.innerHTML =
+				'<div class="text-[11px] text-slate-400">Für freie Zeiten bitte Tag/Woche wählen.</div>';
+			return;
+		}
+		if (view === "day") {
+			const slots = computeFreeSlotsForDay(cursor, events);
+			if (!slots.length) {
+				calendarFreeSlots.innerHTML =
+					'<div class="text-[11px] text-slate-500">Keine freien Zeiten.</div>';
+				return;
+			}
+			calendarFreeSlots.innerHTML = slots
+				.map(
+					([start, end]) =>
+						`<div class="flex items-center justify-between gap-2">
+							<span>${formatTime(start)} – ${formatTime(end)}</span>
+							<span class="text-[10px] text-slate-500">frei</span>
+						</div>`
+				)
+				.join("");
+			return;
+		}
+		const weekStart = startOfWeek(cursor);
+		const rows = Array.from({ length: 7 }).map((_, idx) => {
+			const day = addDays(weekStart, idx);
+			const slots = computeFreeSlotsForDay(day, events);
+			const label = formatDayLabel(day);
+			if (!slots.length) {
+				return `<div class="flex items-center justify-between gap-2 text-[11px]">
+					<span class="text-slate-400">${label}</span>
+					<span class="text-slate-500">—</span>
+				</div>`;
+			}
+			const [start, end] = slots[0];
+			return `<div class="flex items-center justify-between gap-2 text-[11px]">
+				<span class="text-slate-400">${label}</span>
+				<span>${formatTime(start)} – ${formatTime(end)}</span>
+			</div>`;
+		});
+		calendarFreeSlots.innerHTML = rows.join("");
+	}
+
 	function renderCalendarPanel() {
 		if (!calendarGrid) return;
 		const view = calendarState.view;
 		const cursor = calendarState.cursor || new Date();
 		const sources = loadCalendarSources().filter((s) => s.enabled && s.url);
-		const events = Array.isArray(calendarState.events)
-			? calendarState.events.slice()
-			: [];
+		const events = getCalendarEvents();
 		events.sort((a, b) => a.start.getTime() - b.start.getTime());
 		if (calendarTitle) {
 			calendarTitle.textContent = formatCalendarTitle(view, cursor);
 		}
 		renderCalendarLegend();
-		if (!sources.length) {
+		if (!sources.length && calendarState.localEvents.length === 0) {
 			calendarGrid.innerHTML =
 				'<div class="text-sm text-slate-400">Keine Kalenderquellen aktiv.</div>';
+			renderCalendarFreeSlots(view, cursor, events);
 			return;
 		}
 		if (!events.length) {
 			calendarGrid.innerHTML =
 				'<div class="text-sm text-slate-400">Keine Termine in diesem Zeitraum.</div>';
+			renderCalendarFreeSlots(view, cursor, events);
 			return;
 		}
 		if (view === "day") {
@@ -9332,6 +9696,7 @@ self.onmessage = async (e) => {
 					})
 					.join("")
 				: '<div class="text-sm text-slate-400">Keine Termine heute.</div>';
+			renderCalendarFreeSlots(view, cursor, events);
 			return;
 		}
 		if (view === "week") {
@@ -9375,6 +9740,7 @@ self.onmessage = async (e) => {
 			});
 			calendarGrid.innerHTML = `<div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-7">${cols.join(
 				"")}</div>`;
+			renderCalendarFreeSlots(view, cursor, events);
 			return;
 		}
 		const monthStart = startOfMonth(cursor);
@@ -9424,13 +9790,61 @@ self.onmessage = async (e) => {
 					}</div>
 				</div>`;
 		});
-			calendarGrid.innerHTML = `
+		calendarGrid.innerHTML = `
 				<div class="grid grid-cols-7 gap-2 text-center">
 					${weekdayHeader}
 				</div>
 				<div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
 					${cells.join("")}
 				</div>`;
+		renderCalendarFreeSlots(view, cursor, events);
+	}
+
+	function formatDateInputValue(date) {
+		const offset = date.getTimezoneOffset() * 60 * 1000;
+		return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+	}
+
+	function openCalendarEventModal(baseDate) {
+		if (!calendarEventModal) return;
+		calendarEventModal.classList.remove("hidden");
+		calendarEventModal.classList.add("flex");
+		calendarEventModal.setAttribute("aria-hidden", "false");
+		const date = baseDate instanceof Date ? baseDate : new Date();
+		if (calendarEventDate) {
+			calendarEventDate.value = formatDateInputValue(date);
+		}
+		if (calendarEventName) calendarEventName.value = "";
+		if (calendarEventLocation) calendarEventLocation.value = "";
+		if (calendarEventAllDay) calendarEventAllDay.checked = false;
+		if (calendarEventStart) calendarEventStart.value = "09:00";
+		if (calendarEventEnd) calendarEventEnd.value = "10:00";
+		updateCalendarEventTimeState();
+		setTimeout(() => {
+			if (calendarEventName) calendarEventName.focus();
+		}, 0);
+	}
+
+	function closeCalendarEventModal() {
+		if (!calendarEventModal) return;
+		calendarEventModal.classList.add("hidden");
+		calendarEventModal.classList.remove("flex");
+		calendarEventModal.setAttribute("aria-hidden", "true");
+	}
+
+	function updateCalendarEventTimeState() {
+		const allDay = Boolean(calendarEventAllDay && calendarEventAllDay.checked);
+		if (calendarEventStart) calendarEventStart.disabled = allDay;
+		if (calendarEventEnd) calendarEventEnd.disabled = allDay;
+	}
+
+	function addLocalCalendarEvent(evt) {
+		const list = Array.isArray(calendarState.localEvents)
+			? calendarState.localEvents.slice()
+			: [];
+		list.push(evt);
+		saveLocalCalendarEvents(list);
+		toast("Termin gespeichert.", "success");
 	}
 
 	async function loadUploadsManage() {
@@ -12228,6 +12642,115 @@ self.onmessage = async (e) => {
 	if (calendarOpenSettingsBtn) {
 		calendarOpenSettingsBtn.addEventListener("click", () => {
 			openSettingsAt("calendar");
+		});
+	}
+	if (calendarFreeToggle) {
+		calendarFreeToggle.addEventListener("click", () => {
+			saveCalendarFreeSlotsVisible(!calendarFreeSlotsVisible);
+			renderCalendarPanel();
+		});
+	}
+	if (calendarAddEventBtn) {
+		calendarAddEventBtn.addEventListener("click", () => {
+			openCalendarEventModal(calendarState.cursor || new Date());
+		});
+	}
+	if (calendarEventAllDay) {
+		calendarEventAllDay.addEventListener("change", () => {
+			updateCalendarEventTimeState();
+		});
+	}
+	if (calendarEventSave) {
+		calendarEventSave.addEventListener("click", () => {
+			const titleRaw = String(
+				calendarEventName ? calendarEventName.value : ""
+			).trim();
+			const title = titleRaw || "Termin";
+			const dateRaw = String(
+				calendarEventDate ? calendarEventDate.value : ""
+			).trim();
+			if (!dateRaw) {
+				toast("Bitte ein Datum wählen.", "error");
+				return;
+			}
+			const [yy, mm, dd] = dateRaw.split("-").map((v) => Number(v));
+			if (!yy || !mm || !dd) {
+				toast("Ungültiges Datum.", "error");
+				return;
+			}
+			const allDay = Boolean(calendarEventAllDay && calendarEventAllDay.checked);
+			let start;
+			let end;
+			if (allDay) {
+				start = new Date(yy, mm - 1, dd);
+				end = addDays(start, 1);
+			} else {
+				const startTime = String(
+					calendarEventStart ? calendarEventStart.value : ""
+				).trim();
+				const endTime = String(
+					calendarEventEnd ? calendarEventEnd.value : ""
+				).trim();
+				if (!startTime || !endTime) {
+					toast("Bitte Start- und Endzeit angeben.", "error");
+					return;
+				}
+				const [sh, sm] = startTime.split(":").map((v) => Number(v));
+				const [eh, em] = endTime.split(":").map((v) => Number(v));
+				start = new Date(yy, mm - 1, dd, sh || 0, sm || 0, 0);
+				end = new Date(yy, mm - 1, dd, eh || 0, em || 0, 0);
+				if (!(end > start)) {
+					toast("Endzeit muss nach der Startzeit liegen.", "error");
+					return;
+				}
+			}
+			const location = String(
+				calendarEventLocation ? calendarEventLocation.value : ""
+			).trim();
+			addLocalCalendarEvent({
+				id: createClientId(),
+				title,
+				start,
+				end,
+				allDay,
+				location,
+			});
+			closeCalendarEventModal();
+		});
+	}
+	if (calendarEventClose) {
+		calendarEventClose.addEventListener("click", () => {
+			closeCalendarEventModal();
+		});
+	}
+	if (calendarEventCancel) {
+		calendarEventCancel.addEventListener("click", () => {
+			closeCalendarEventModal();
+		});
+	}
+	if (calendarEventBackdrop) {
+		calendarEventBackdrop.addEventListener("click", () => {
+			closeCalendarEventModal();
+		});
+	}
+	document.addEventListener("keydown", (ev) => {
+		if (!calendarEventModal) return;
+		if (calendarEventModal.classList.contains("hidden")) return;
+		if (ev && ev.key === "Escape") {
+			ev.preventDefault();
+			closeCalendarEventModal();
+		}
+	});
+	if (calendarLocalEventsList) {
+		calendarLocalEventsList.addEventListener("click", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLElement)) return;
+			const btn = target.closest("[data-local-event-remove]");
+			if (!btn) return;
+			const id = String(btn.getAttribute("data-local-event-id") || "");
+			if (!id) return;
+			const next = calendarState.localEvents.filter((evt) => evt.id !== id);
+			saveLocalCalendarEvents(next);
 		});
 	}
 	if (favoritesManageList) {

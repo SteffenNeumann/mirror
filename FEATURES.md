@@ -105,6 +105,8 @@ This list is intentionally broad. It’s an idea backlog for future iterations.
 - Statusseiten (Zweck: Störungen erkennen; Nutzen: weniger Support-Noise; Möglichkeiten: Statuspage.io/Atlassian, Auto-Post in Raum)
 - GitHub/GitLab Activity (Zweck: Dev-Transparenz; Nutzen: weniger Tool-Hopping; Möglichkeiten: PR/Issue-Events, Build-Status)
 - Kalender/Termine (Zweck: gemeinsame Planung; Nutzen: Termine im Blick; Möglichkeiten: ICS/Google Calendar, Tagesagenda)
+  - Freie-Zeiten-Ansicht (Tag/Woche) via Icon im Kalenderbereich
+  - Lokale Termine anlegen + Sync mit Personal Space (read-only ICS bleibt)
 - Verkehr/ÖPNV (Zweck: Reiseplanung; Nutzen: weniger Überraschungen; Möglichkeiten: GTFS-Realtime, Störungsmeldungen)
 - Monitoring/Alerts (Zweck: Betriebssicherheit; Nutzen: schnellere Reaktion; Möglichkeiten: Prometheus/Alertmanager, Severity-Filter)
 
