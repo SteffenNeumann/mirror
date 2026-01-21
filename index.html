@@ -38,17 +38,13 @@
 		<link rel="stylesheet" href="/styles/app.css" />
 	</head>
 	<body class="min-h-screen bg-slate-950 text-slate-100 antialiased">
-		<div
-			id="toastRoot"
-			class="pointer-events-none fixed right-4 top-4 z-50 flex w-[min(92vw,420px)] flex-col gap-2"></div>
-		<div class="pointer-events-none fixed inset-0 overflow-hidden">
-			<div
-				id="bgBlobTop"
-				class="absolute -top-48 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-fuchsia-500/15 blur-3xl"></div>
-			<div
-				id="bgBlobBottom"
-				class="absolute -bottom-56 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-cyan-400/10 blur-3xl"></div>
-		</div>
+										<pre
+											id="runOutput"
+											class="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words text-[12px] leading-relaxed text-slate-100"></pre>
+									</div>
+								</div>
+							</div>
+						</div>
 
 		<main
 			class="relative mx-auto my-6 flex h-[calc(100vh-48px)] w-[calc(100vw-48px)] max-w-none items-stretch px-0 py-0 sm:my-5 sm:h-[calc(100vh-40px)] sm:w-[calc(100vw-40px)]">
@@ -68,17 +64,16 @@
 							class="mobile-only inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10 active:bg-white/15"
 							title="Schließen"
 							aria-label="Schließen">
-							<svg
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								stroke-width="2"
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								class="h-4 w-4">
-								<path d="M18 6L6 18" />
-								<path d="M6 6l12 12" />
-							</svg>
+										<pre
+											id="runOutput"
+											class="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words text-[12px] leading-relaxed text-slate-100"></pre>
+									</div>
+							</div>
+						</div>
+					</div>
+					<div
+						id="calendarPanel"
+						class="hidden flex min-h-0 flex-1 flex-col gap-3">
 						</button>
 					</header>
 
@@ -240,8 +235,7 @@
 										</div>
 									</div>
 								</div>
-							</div>
-							<div
+						<div
 								id="psList"
 								class="mt-2 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1"></div>
 						</div>
@@ -971,16 +965,15 @@
 													</svg>
 												</button>
 											</div>
-
+											<div
+												class="flex flex-wrap items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-[5px] text-xs text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150">
 												<div
-													class="flex flex-wrap items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-[5px] text-xs text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150">
-													<div
-														class="flex items-center justify-between gap-2 text-[11px] text-slate-300">
-														<div class="sr-only">
-															<span id="runOutputIcon" aria-hidden="true"></span>
-															<span id="runOutputTitle">AI</span>
-														</div>
-														<div class="flex flex-wrap items-center gap-2">
+													class="flex items-center justify-between gap-2 text-[11px] text-slate-300">
+													<div class="sr-only">
+														<span id="runOutputIcon" aria-hidden="true"></span>
+														<span id="runOutputTitle">AI</span>
+													</div>
+													<div class="flex flex-wrap items-center gap-2">
 														<span id="runStatus" class="text-slate-400"></span>
 														<button
 															id="applyOutputReplace"
@@ -1010,11 +1003,9 @@
 												id="runOutput"
 												class="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words text-[12px] leading-relaxed text-slate-100"></pre>
 										</div>
-										</div>
 									</div>
 								</div>
 							</div>
-						</div>
 						<div
 							id="calendarPanel"
 								class="hidden flex min-h-0 flex-1 flex-col gap-3">
