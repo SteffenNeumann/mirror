@@ -8023,6 +8023,11 @@ self.onmessage = async (e) => {
 		name: "Eigene Termine",
 		color: "#f59e0b",
 	};
+	const CALENDAR_GOOGLE_SOURCE = {
+		id: "google",
+		name: "Google Calendar",
+		color: "#4285f4",
+	};
 	const MAX_ROOM_TABS = 5;
 	let pendingRoomBootstrapText = "";
 	let pendingClosedTab = null;
@@ -9211,6 +9216,7 @@ self.onmessage = async (e) => {
 			calendarState.view = loadCalendarDefaultView();
 			updateCalendarViewButtons();
 			applyCalendarFreeSlotsVisibility();
+			fetchGoogleCalendarStatus();
 			renderCalendarPanel();
 			refreshCalendarEvents(true);
 		}
@@ -9474,6 +9480,18 @@ self.onmessage = async (e) => {
 		return { date: new Date(y, mo, d, h, mi, s), allDay: false };
 	}
 
+	function parseGoogleDate(value, isAllDay) {
+		const raw = String(value || "").trim();
+		if (!raw) return null;
+		if (isAllDay) {
+			const parts = raw.split("-").map((v) => Number(v));
+			if (parts.length !== 3) return null;
+			return new Date(parts[0], parts[1] - 1, parts[2]);
+		}
+		const date = new Date(raw);
+		return Number.isNaN(date.getTime()) ? null : date;
+	}
+
 	function unfoldIcsLines(text) {
 		const rawLines = String(text || "")
 			.replace(/\r\n/g, "\n")
@@ -9572,27 +9590,85 @@ self.onmessage = async (e) => {
 		return merged;
 	}
 
+	function getCalendarRange(view, cursor) {
+		if (view === "day") {
+			const start = startOfDay(cursor);
+			return { start, end: addDays(start, 1) };
+		}
+		if (view === "week") {
+			const start = startOfWeek(cursor);
+			return { start, end: addDays(start, 7) };
+		}
+		const monthStart = startOfMonth(cursor);
+		const gridStart = startOfWeek(monthStart);
+		return { start: gridStart, end: addDays(gridStart, 42) };
+	}
+
+	async function fetchGoogleCalendarEvents(range) {
+		if (!googleCalendarConnected) return [];
+		const startIso = range.start.toISOString();
+		const endIso = range.end.toISOString();
+		try {
+			const res = await api(
+				`/api/calendar/google/events?start=${encodeURIComponent(
+					startIso
+				)}&end=${encodeURIComponent(endIso)}`
+			);
+			const items = Array.isArray(res && res.events) ? res.events : [];
+			return items
+				.map((evt) => {
+					const allDay = Boolean(evt.allDay);
+					const start = parseGoogleDate(evt.start, allDay);
+					const end = parseGoogleDate(evt.end, allDay);
+					if (!start || !end) return null;
+					return {
+						id: String(evt.id || ""),
+						start,
+						end,
+						allDay,
+						title: String(evt.title || "(Ohne Titel)"),
+						location: String(evt.location || ""),
+						calendarId: CALENDAR_GOOGLE_SOURCE.id,
+						calendarName: CALENDAR_GOOGLE_SOURCE.name,
+						color: CALENDAR_GOOGLE_SOURCE.color,
+					};
+				})
+				.filter(Boolean);
+		} catch {
+			return [];
+		}
+	}
+
 	async function refreshCalendarEvents(force) {
 		if (calendarState.loading) return;
 		const now = Date.now();
 		if (!force && now - calendarState.lastLoadedAt < 60 * 1000) return;
 		const sources = loadCalendarSources().filter((s) => s.enabled && s.url);
 		if (!calendarStatus || !calendarGrid) return;
-		if (!sources.length) {
-			calendarState.externalEvents = [];
-			calendarState.lastLoadedAt = Date.now();
-			calendarStatus.textContent =
-				calendarState.localEvents.length > 0
-					? "Nur lokale Termine aktiv."
-					: "Keine Kalenderquellen aktiv.";
-			renderCalendarPanel();
-			return;
-		}
 		calendarState.loading = true;
 		calendarStatus.textContent = "Loading calendars…";
 		if (calendarGrid) {
 			calendarGrid.innerHTML =
 				'<div class="text-sm text-slate-400">Loading calendars…</div>';
+		}
+		const range = getCalendarRange(
+			calendarState.view,
+			calendarState.cursor || new Date()
+		);
+		let googleEvents = [];
+		if (googleCalendarConnected) {
+			googleEvents = await fetchGoogleCalendarEvents(range);
+		}
+		if (!sources.length) {
+			calendarState.externalEvents = googleEvents;
+			calendarState.lastLoadedAt = Date.now();
+			calendarState.loading = false;
+			calendarStatus.textContent =
+				calendarState.localEvents.length > 0 || googleEvents.length > 0
+					? "Kalender aktualisiert."
+					: "Keine Kalenderquellen aktiv.";
+			renderCalendarPanel();
+			return;
 		}
 		const results = await Promise.allSettled(
 			sources.map(async (src) => {
@@ -9606,13 +9682,16 @@ self.onmessage = async (e) => {
 			})
 		);
 		const errors = results.filter((r) => r.status === "rejected").length;
-		calendarState.externalEvents = mergeCalendarEvents(sources, results);
+		calendarState.externalEvents = [
+			...mergeCalendarEvents(sources, results),
+			...googleEvents,
+		];
 		calendarState.lastLoadedAt = Date.now();
 		calendarState.loading = false;
 		const okCount = results.length - errors;
 		calendarStatus.textContent = `${okCount} calendars loaded${
 			errors ? ` · ${errors} errors` : ""
-		}`;
+		}${googleEvents.length ? " · Google sync" : ""}`;
 		renderCalendarPanel();
 	}
 
@@ -9657,7 +9736,8 @@ self.onmessage = async (e) => {
 		const localCount = Array.isArray(calendarState.localEvents)
 			? calendarState.localEvents.length
 			: 0;
-		if (!sources.length && !localCount) {
+		const hasGoogle = googleCalendarConnected;
+		if (!sources.length && !localCount && !hasGoogle) {
 			calendarLegend.innerHTML =
 				'<div class="text-xs text-slate-400">Keine Kalender verbunden.</div>';
 			return;
@@ -9676,7 +9756,21 @@ self.onmessage = async (e) => {
 					<span class="text-[10px] text-slate-500">lokal</span>
 				</div>`
 			: "";
-		calendarLegend.innerHTML = `${localRow}${sources
+		const googleRow = hasGoogle
+			? `
+				<div class="flex items-center justify-between gap-2 text-xs text-slate-300">
+					<div class="flex items-center gap-2">
+						<span class="inline-flex h-2.5 w-2.5 rounded-full" style="background:${escapeAttr(
+							CALENDAR_GOOGLE_SOURCE.color
+						)}"></span>
+						<span class="truncate">${escapeHtml(
+							CALENDAR_GOOGLE_SOURCE.name
+						)}</span>
+					</div>
+					<span class="text-[10px] text-slate-500">sync</span>
+				</div>`
+			: "";
+		calendarLegend.innerHTML = `${localRow}${googleRow}${sources
 			.map((src) => {
 				const dot = `<span class="inline-flex h-2.5 w-2.5 rounded-full" style="background:${escapeAttr(
 					src.color

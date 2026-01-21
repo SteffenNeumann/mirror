@@ -1558,6 +1558,68 @@ const server = http.createServer(async (req, res) => {
 		}
 	}
 
+	if (url.pathname === "/api/calendar/google/events" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		if (!googleConfigured()) {
+			json(res, 400, { ok: false, error: "not_configured" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const token = await getGoogleAccessToken(userId);
+		if (!token || !token.access_token) {
+			json(res, 401, { ok: false, error: "not_connected" });
+			return;
+		}
+		const start = String(url.searchParams.get("start") || "").trim();
+		const end = String(url.searchParams.get("end") || "").trim();
+		if (!start || !end) {
+			json(res, 400, { ok: false, error: "missing_range" });
+			return;
+		}
+		const calendarId = getGoogleCalendarIdForUser(userId);
+		const params = new URLSearchParams();
+		params.set("timeMin", start);
+		params.set("timeMax", end);
+		params.set("singleEvents", "true");
+		params.set("orderBy", "startTime");
+		params.set("maxResults", "2500");
+		try {
+			const apiRes = await fetch(
+				`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(
+					calendarId
+				)}/events?${params.toString()}`,
+				{
+					headers: {
+						Authorization: `Bearer ${token.access_token}`,
+					},
+				}
+			);
+			if (!apiRes.ok) {
+				json(res, 502, { ok: false, error: "google_api_error" });
+				return;
+			}
+			const data = await apiRes.json();
+			const items = Array.isArray(data && data.items) ? data.items : [];
+			const events = items.map((evt) => ({
+				id: String(evt.id || ""),
+				title: String(evt.summary || "(Ohne Titel)"),
+				location: String(evt.location || ""),
+				allDay: Boolean(evt.start && evt.start.date),
+				start: evt.start && (evt.start.dateTime || evt.start.date),
+				end: evt.end && (evt.end.dateTime || evt.end.date),
+			}));
+			json(res, 200, { ok: true, events });
+			return;
+		} catch {
+			json(res, 500, { ok: false, error: "google_api_failed" });
+			return;
+		}
+	}
+
 	if (
 		url.pathname.startsWith("/api/calendar/google/events/") &&
 		req.method === "DELETE"
