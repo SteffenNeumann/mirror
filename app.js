@@ -12150,6 +12150,7 @@ self.onmessage = async (e) => {
 		scheduleSelectionSend();
 		const noteId = getActiveRoomTabNoteId();
 		updateRoomTabTextLocal(room, key, textarea.value);
+		if (noteId) updateRoomTabsForNoteId(noteId, textarea.value);
 		scheduleRoomTabSync({
 			room,
 			key,
