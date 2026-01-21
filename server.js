@@ -2272,11 +2272,13 @@ const server = http.createServer(async (req, res) => {
 		}
 		readJson(req)
 			.then((body) => {
+				const allowEmpty = Boolean(body && body.allowEmpty);
 				const textVal = String(body && body.text ? body.text : "").trim();
-				if (!textVal) {
+				if (!textVal && !allowEmpty) {
 					json(res, 400, { ok: false, error: "empty" });
 					return;
 				}
+				const textFinal = allowEmpty ? "" : textVal;
 				const hasTags =
 					body && Object.prototype.hasOwnProperty.call(body, "tags");
 				if (hasTags && !Array.isArray(body && body.tags ? body.tags : [])) {
@@ -2284,7 +2286,7 @@ const server = http.createServer(async (req, res) => {
 					return;
 				}
 				const userId = getOrCreateUserId(email);
-				const contentHash = computeNoteContentHash(textVal);
+				const contentHash = computeNoteContentHash(textFinal);
 				let kind;
 				let tags;
 				let override = false;
@@ -2294,15 +2296,15 @@ const server = http.createServer(async (req, res) => {
 					);
 					override = split.override;
 					if (override) {
-						kind = classifyText(textVal).kind;
+						kind = classifyText(textFinal).kind;
 						tags = uniq([...split.tags, MANUAL_TAGS_MARKER]);
 					} else {
-						const merged = mergeManualTags(textVal, split.tags);
+						const merged = mergeManualTags(textFinal, split.tags);
 						kind = merged.kind;
 						tags = merged.tags;
 					}
 				} else {
-					const merged = classifyText(textVal);
+					const merged = classifyText(textFinal);
 					kind = merged.kind;
 					tags = merged.tags;
 				}
@@ -2333,7 +2335,7 @@ const server = http.createServer(async (req, res) => {
 				if (!override) tags = applyDateTags(tags, createdAt);
 				const note = {
 					id: crypto.randomBytes(12).toString("base64url"),
-					text: textVal,
+					text: textFinal,
 					createdAt,
 					updatedAt,
 					kind,

@@ -12710,7 +12710,17 @@ self.onmessage = async (e) => {
 		});
 	}
 	if (psNewNote) {
-		psNewNote.addEventListener("click", () => {
+		psNewNote.addEventListener("click", async () => {
+			const currentText = String(textarea && textarea.value ? textarea.value : "");
+			const hasContent = Boolean(currentText.trim());
+			const hasId = Boolean(psEditingNoteId);
+			if (hasContent || hasId) {
+				try {
+					await savePersonalSpaceNote(currentText, { auto: false });
+				} catch {
+					// ignore save errors before creating a new note
+				}
+			}
 			psEditingNoteId = "";
 			psEditingNoteKind = "";
 			psEditingNoteTags = [];
@@ -12726,6 +12736,11 @@ self.onmessage = async (e) => {
 			if (psAutoSaveTimer) window.clearTimeout(psAutoSaveTimer);
 			setPsAutoSaveStatus("");
 			syncPsEditorTagsInput();
+			try {
+				await savePersonalSpaceNote("", { auto: false, allowEmpty: true });
+			} catch {
+				// ignore
+			}
 			if (textarea) {
 				textarea.value = "";
 				textarea.focus();
@@ -12981,8 +12996,9 @@ self.onmessage = async (e) => {
 
 	async function savePersonalSpaceNote(text, opts) {
 		const auto = Boolean(opts && opts.auto);
-		const trimmed = String(text || "");
-		if (!trimmed.trim()) return false;
+		const allowEmpty = Boolean(opts && opts.allowEmpty);
+		const rawText = String(text || "");
+		if (!allowEmpty && !rawText.trim()) return false;
 		if (!psState || !psState.authed) {
 			if (!auto)
 				toast("Please enable Personal Space first (sign in).", "error");
@@ -13001,21 +13017,24 @@ self.onmessage = async (e) => {
 		else if (psHint)
 			psHint.textContent = psEditingNoteId ? "Updating…" : "Saving…";
 		if (!psEditingNoteId) {
-			const existing = findNoteByText(trimmed);
-			if (existing && existing.id) {
-				applyNoteToEditor(existing);
-				psAutoSaveLastSavedNoteId = psEditingNoteId;
-				psAutoSaveLastSavedText = trimmed;
-				setPsAutoSaveStatus("Bereits gespeichert");
-				if (psHint) psHint.textContent = "Bereits gespeichert.";
-				if (!auto) toast("Personal Space: bereits gespeichert.", "info");
-				return true;
+			if (!allowEmpty) {
+				const existing = findNoteByText(rawText);
+				if (existing && existing.id) {
+					applyNoteToEditor(existing);
+					psAutoSaveLastSavedNoteId = psEditingNoteId;
+					psAutoSaveLastSavedText = rawText;
+					setPsAutoSaveStatus("Bereits gespeichert");
+					if (psHint) psHint.textContent = "Bereits gespeichert.";
+					if (!auto) toast("Personal Space: bereits gespeichert.", "info");
+					return true;
+				}
 			}
 			const res = await api("/api/notes", {
 				method: "POST",
 				body: JSON.stringify({
-					text: trimmed,
+					text: allowEmpty ? "" : rawText,
 					tags: tagsPayload,
+					allowEmpty,
 				}),
 			});
 			const saved = res && res.note ? res.note : null;
@@ -13038,7 +13057,7 @@ self.onmessage = async (e) => {
 				}
 			}
 			psAutoSaveLastSavedNoteId = psEditingNoteId;
-			psAutoSaveLastSavedText = trimmed;
+			psAutoSaveLastSavedText = rawText;
 			if (auto) setPsAutoSaveStatus("Automatisch gespeichert");
 			else setPsAutoSaveStatus("Gespeichert");
 			if (psHint) psHint.textContent = auto ? "" : "Saved.";
@@ -13050,7 +13069,7 @@ self.onmessage = async (e) => {
 		const res = await api(`/api/notes/${encodeURIComponent(psEditingNoteId)}`, {
 			method: "PUT",
 			body: JSON.stringify({
-				text: trimmed,
+				text: allowEmpty ? "" : rawText,
 				tags: tagsPayload,
 			}),
 		});
@@ -13069,7 +13088,7 @@ self.onmessage = async (e) => {
 			updateEditorMetaYaml();
 		}
 		psAutoSaveLastSavedNoteId = psEditingNoteId;
-		psAutoSaveLastSavedText = trimmed;
+		psAutoSaveLastSavedText = rawText;
 		if (auto) setPsAutoSaveStatus("Automatisch gespeichert");
 		else setPsAutoSaveStatus("Gespeichert");
 		if (psHint) psHint.textContent = auto ? "" : "Updated.";
