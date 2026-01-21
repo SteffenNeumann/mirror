@@ -12526,6 +12526,7 @@ self.onmessage = async (e) => {
 			}
 		}, 900);
 	}
+	function initUiEventListeners() {
 	if (psSaveMain) {
 		psSaveMain.addEventListener("click", async () => {
 			const text = String(
@@ -13271,6 +13272,8 @@ self.onmessage = async (e) => {
 			setSettingsOpen(false);
 		}
 	});
+	}
+	initUiEventListeners();
 
 	// Show a small post-verify hint
 	try {
@@ -13286,6 +13289,7 @@ self.onmessage = async (e) => {
 		// ignore
 	}
 
+	function initStartupTasks() {
 	loadMobileAutoNoteSeconds();
 	void initAutoBackup();
 	void initAutoImport();
@@ -13296,4 +13300,6 @@ self.onmessage = async (e) => {
 	applyAiContextMode();
 	updateTableMenuVisibility();
 	syncMobileFocusState();
+	}
+	initStartupTasks();
 })();
