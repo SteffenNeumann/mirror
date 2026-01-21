@@ -4096,6 +4096,14 @@
 			a: "Set your key in Settings → AI. An optional model name overrides the server default for your requests only.",
 		},
 		{
+			q: "Google Calendar setup",
+			a: "Set GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, and GOOGLE_OAUTH_REDIRECT_URL. The redirect URL must point to /api/calendar/google/callback. Sign in to Personal Space before connecting Google Calendar.",
+		},
+		{
+			q: "Google Calendar permissions",
+			a: "Mirror writes events to your Google primary calendar after you connect via Settings → Calendar → Google verbinden. You can disconnect any time in the same section.",
+		},
+		{
 			q: "Slash commands",
 			a: "Type / in the editor to open commands (e.g., /table, /code, /link). Use /table 3x4 for quick grids or /table row+ to add rows.",
 		},
