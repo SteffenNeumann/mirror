@@ -13259,6 +13259,34 @@ self.onmessage = async (e) => {
 			}, 150);
 		});
 	}
+	if (psList) {
+		psList.addEventListener("click", async (ev) => {
+			const target = ev && ev.target ? ev.target : null;
+			if (!(target instanceof HTMLElement)) return;
+			const delBtn = target.closest('[data-action="delete"]');
+			if (!delBtn) return;
+			const row = delBtn.closest("[data-note-id]");
+			if (!row) return;
+			ev.preventDefault();
+			ev.stopPropagation();
+			const id = row.getAttribute("data-note-id") || "";
+			if (!id) return;
+			try {
+				await api(`/api/notes/${encodeURIComponent(id)}`, {
+					method: "DELETE",
+				});
+				if (psEditingNoteId === id) {
+					psEditingNoteId = "";
+					if (psMainHint) psMainHint.classList.add("hidden");
+					syncMobileFocusState();
+				}
+				toast("Notiz im Papierkorb abgelegt.", "success");
+				await refreshPersonalSpace();
+			} catch {
+				toast("Löschen fehlgeschlagen.", "error");
+			}
+		});
+	}
 	if (psContextMenu) {
 		document.addEventListener("click", (ev) => {
 			if (!psContextMenuOpen) return;
