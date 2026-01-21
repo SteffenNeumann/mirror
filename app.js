@@ -8632,7 +8632,7 @@ self.onmessage = async (e) => {
 		const lastUsed = Number(it && it.lastUsed) || 0;
 		const noteId = String(it && (it.noteId || it.note_id) ? it.noteId || it.note_id : "").trim();
 		const rawText = String(it && it.text ? it.text : "");
-		const text = noteId ? "" : rawText;
+		const text = rawText;
 		if (!roomName) return null;
 		return { room: roomName, key: keyName, lastUsed, text, noteId };
 	}
@@ -8659,7 +8659,7 @@ self.onmessage = async (e) => {
 			const idx = index.get(keyId);
 			const prev = out[idx];
 			const noteId = normalized.noteId || prev.noteId || "";
-			const text = noteId ? "" : normalized.text || prev.text || "";
+			const text = normalized.text || prev.text || "";
 			out[idx] = {
 				...prev,
 				...normalized,
@@ -8712,11 +8712,9 @@ self.onmessage = async (e) => {
 			const useNoteId = preferText
 				? normalized.noteId || existing.noteId || ""
 				: existing.noteId || normalized.noteId || "";
-			const useText = useNoteId
-				? ""
-				: preferText
-					? normalized.text || existing.text || ""
-					: existing.text || normalized.text || "";
+			const useText = preferText
+				? normalized.text || existing.text || ""
+				: existing.text || normalized.text || "";
 			map.set(keyId, {
 				...existing,
 				...normalized,
