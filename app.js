@@ -154,6 +154,12 @@
 	const psNewNote = document.getElementById("psNewNote");
 	const psEditorTagsBar = document.getElementById("psEditorTagsBar");
 	const psEditorTagsInput = document.getElementById("psEditorTagsInput");
+	const psEditorYearTag = document.getElementById("psEditorYearTag");
+	const psEditorMonthTag = document.getElementById("psEditorMonthTag");
+	const psEditorCategoryTag = document.getElementById("psEditorCategoryTag");
+	const psEditorSubcategoryTag = document.getElementById(
+		"psEditorSubcategoryTag"
+	);
 	const psEditorTagsSuggest = document.getElementById("psEditorTagsSuggest");
 	const psExportNotesBtn = document.getElementById("psExportNotes");
 	const psImportModeSelect = document.getElementById("psImportMode");
@@ -1331,11 +1337,161 @@
 				.toLowerCase()
 				.slice(0, 48);
 			if (!s) continue;
-			if (!/^[a-z0-9_+\-]{1,48}$/i.test(s)) continue;
+			if (!/^[a-z0-9_+:\-]{1,48}$/i.test(s)) continue;
 			out.push(s);
 			if (out.length >= 24) break;
 		}
 		return Array.from(new Set(out));
+	}
+
+	const PS_MONTH_TAGS = [
+		"januar",
+		"februar",
+		"maerz",
+		"april",
+		"mai",
+		"juni",
+		"juli",
+		"august",
+		"september",
+		"oktober",
+		"november",
+		"dezember",
+	];
+
+	function uniqTags(list) {
+		const out = [];
+		const seen = new Set();
+		const items = Array.isArray(list) ? list : [];
+		for (const item of items) {
+			const s = String(item || "")
+				.trim()
+				.toLowerCase()
+				.slice(0, 48);
+			if (!s) continue;
+			if (!/^[a-z0-9_+:\-]{1,48}$/i.test(s)) continue;
+			if (seen.has(s)) continue;
+			seen.add(s);
+			out.push(s);
+		}
+		return out;
+	}
+
+	function normalizeYearTag(raw) {
+		const s = String(raw || "").trim();
+		if (!/^\d{4}$/.test(s)) return "";
+		return s;
+	}
+
+	function normalizeMonthTag(raw) {
+		const s = String(raw || "").trim().toLowerCase();
+		return PS_MONTH_TAGS.includes(s) ? s : "";
+	}
+
+	function normalizeCategoryValue(raw) {
+		const s = String(raw || "")
+			.trim()
+			.toLowerCase()
+			.replace(/\s+/g, "-")
+			.slice(0, 48);
+		if (!s) return "";
+		if (!/^[a-z0-9_+\-]{1,48}$/i.test(s)) return "";
+		return s;
+	}
+
+	function isYearTag(tag) {
+		return /^\d{4}$/.test(String(tag || "").trim());
+	}
+
+	function isMonthTag(tag) {
+		return PS_MONTH_TAGS.includes(String(tag || "").trim().toLowerCase());
+	}
+
+	function getDateTagsForTs(ts) {
+		try {
+			const d = new Date(ts);
+			if (Number.isNaN(d.getTime())) return { year: "", month: "" };
+			const year = String(d.getFullYear());
+			const month = PS_MONTH_TAGS[d.getMonth()] || "";
+			return { year, month };
+		} catch {
+			return { year: "", month: "" };
+		}
+	}
+
+	function splitTagsForEditor(rawTags, createdAt) {
+		const tags = Array.isArray(rawTags) ? rawTags : [];
+		const cleaned = stripPinnedTag(stripManualTagsMarker(tags));
+		let year = "";
+		let month = "";
+		let category = "";
+		let subcategory = "";
+		const manual = [];
+		for (const t of cleaned) {
+			const s = String(t || "").trim().toLowerCase();
+			if (!s) continue;
+			if (!year && isYearTag(s)) {
+				year = s;
+				continue;
+			}
+			if (!month && isMonthTag(s)) {
+				month = s;
+				continue;
+			}
+			if (!category && s.startsWith("cat:")) {
+				category = s.slice(4);
+				continue;
+			}
+			if (!subcategory && s.startsWith("sub:")) {
+				subcategory = s.slice(4);
+				continue;
+			}
+			manual.push(s);
+		}
+		const fallback = getDateTagsForTs(createdAt || Date.now());
+		if (!year) year = fallback.year;
+		if (!month) month = fallback.month;
+		return { year, month, category, subcategory, manual };
+	}
+
+	function buildEditorSystemTags() {
+		const tags = [];
+		if (psEditingNoteYearTag) tags.push(psEditingNoteYearTag);
+		if (psEditingNoteMonthTag) tags.push(psEditingNoteMonthTag);
+		if (psEditingNoteCategory) tags.push(`cat:${psEditingNoteCategory}`);
+		if (psEditingNoteSubcategory)
+			tags.push(`sub:${psEditingNoteSubcategory}`);
+		return tags;
+	}
+
+	function syncPsEditorTagMetaInputs() {
+		if (psEditorYearTag) psEditorYearTag.value = psEditingNoteYearTag || "";
+		if (psEditorMonthTag)
+			psEditorMonthTag.value = psEditingNoteMonthTag || "";
+		if (psEditorCategoryTag)
+			psEditorCategoryTag.value = psEditingNoteCategory || "";
+		if (psEditorSubcategoryTag)
+			psEditorSubcategoryTag.value = psEditingNoteSubcategory || "";
+	}
+
+	function updatePsEditorTagMetaFromInputs() {
+		psEditingNoteYearTag = normalizeYearTag(
+			psEditorYearTag ? psEditorYearTag.value : ""
+		);
+		psEditingNoteMonthTag = normalizeMonthTag(
+			psEditorMonthTag ? psEditorMonthTag.value : ""
+		);
+		psEditingNoteCategory = normalizeCategoryValue(
+			psEditorCategoryTag ? psEditorCategoryTag.value : ""
+		);
+		psEditingNoteSubcategory = normalizeCategoryValue(
+			psEditorSubcategoryTag ? psEditorSubcategoryTag.value : ""
+		);
+		syncPsEditorTagMetaInputs();
+		updatePsEditingTagsHint();
+		updateEditingNoteTagsLocal(psEditingNoteTags);
+		schedulePsTagsAutoSave();
+		updateEditorMetaYaml();
 	}
 
 	function formatTagsForHint(tags) {
@@ -1393,6 +1549,7 @@
 		psEditorTagsSyncing = true;
 		psEditorTagsInput.value = formatTagsForEditor(psEditingNoteTags);
 		psEditorTagsSyncing = false;
+		syncPsEditorTagMetaInputs();
 	}
 
 	let psEditorTagsSuggestOpen = false;
@@ -1429,6 +1586,8 @@
 			const raw = String(t || "").trim();
 			if (!raw) continue;
 			if (raw === PS_PINNED_TAG || raw === PS_MANUAL_TAGS_MARKER) continue;
+			if (raw.startsWith("cat:") || raw.startsWith("sub:")) continue;
+			if (isYearTag(raw) || isMonthTag(raw)) continue;
 			const lower = raw.toLowerCase();
 			if (existing.has(lower)) continue;
 			if (prefix && !lower.startsWith(prefix)) continue;
@@ -1545,7 +1704,12 @@
 		psEditingNotePinned = rawTags.some(
 			(t) => String(t || "") === PS_PINNED_TAG
 		);
-		psEditingNoteTags = stripPinnedTag(stripManualTagsMarker(rawTags));
+		const split = splitTagsForEditor(rawTags, note.createdAt);
+		psEditingNoteTags = split.manual;
+		psEditingNoteYearTag = normalizeYearTag(split.year);
+		psEditingNoteMonthTag = normalizeMonthTag(split.month);
+		psEditingNoteCategory = normalizeCategoryValue(split.category);
+		psEditingNoteSubcategory = normalizeCategoryValue(split.subcategory);
 		updatePsEditingTagsHint();
 		syncPsEditorTagsInput();
 	}
@@ -3088,6 +3252,10 @@
 	let psEditingNoteId = "";
 	let psEditingNoteKind = "";
 	let psEditingNoteTags = [];
+	let psEditingNoteYearTag = "";
+	let psEditingNoteMonthTag = "";
+	let psEditingNoteCategory = "";
+	let psEditingNoteSubcategory = "";
 	let psEditingNoteTagsOverridden = false;
 	let psEditingNotePinned = false;
 	let psSortMode = "updated";
@@ -6371,7 +6539,12 @@
 					psEditingNoteTagsOverridden = updatedRaw.some(
 						(t) => String(t || "") === PS_MANUAL_TAGS_MARKER
 					);
-					psEditingNoteTags = stripPinnedTag(stripManualTagsMarker(updatedRaw));
+					const split = splitTagsForEditor(updatedRaw, saved.createdAt);
+					psEditingNoteTags = split.manual;
+					psEditingNoteYearTag = normalizeYearTag(split.year);
+					psEditingNoteMonthTag = normalizeMonthTag(split.month);
+					psEditingNoteCategory = normalizeCategoryValue(split.category);
+					psEditingNoteSubcategory = normalizeCategoryValue(split.subcategory);
 					syncPsEditorTagsInput(true);
 					updatePsEditingTagsHint();
 				}
@@ -6459,11 +6632,12 @@
 		const idx = notes.findIndex((n) => String(n && n.id ? n.id : "") === id);
 		if (idx < 0) return;
 		const baseTags = Array.isArray(nextTags) ? nextTags : [];
+		const systemTags = buildEditorSystemTags();
 		const tagsWithPinned = psEditingNotePinned
-			? [...baseTags, PS_PINNED_TAG]
-			: baseTags;
+			? [...baseTags, ...systemTags, PS_PINNED_TAG]
+			: [...baseTags, ...systemTags];
 		const tagsPayload = buildPsTagsPayload(
-			tagsWithPinned,
+			uniqTags(tagsWithPinned),
 			psEditingNoteTagsOverridden
 		);
 		const updated = { ...notes[idx], tags: tagsPayload };
@@ -6524,6 +6698,11 @@
 		psEditingNoteId = "";
 		psEditingNoteKind = "";
 		psEditingNoteTags = [];
+		const defaults = getDateTagsForTs(Date.now());
+		psEditingNoteYearTag = defaults.year;
+		psEditingNoteMonthTag = defaults.month;
+		psEditingNoteCategory = "";
+		psEditingNoteSubcategory = "";
 		psEditingNoteTagsOverridden = false;
 		psEditingNotePinned = false;
 		syncPsEditorTagsInput(true);
@@ -6555,7 +6734,12 @@
 		psEditingNotePinned = rawTags.some(
 			(t) => String(t || "") === PS_PINNED_TAG
 		);
-		psEditingNoteTags = stripPinnedTag(stripManualTagsMarker(rawTags));
+		const split = splitTagsForEditor(rawTags, note.createdAt);
+		psEditingNoteTags = split.manual;
+		psEditingNoteYearTag = normalizeYearTag(split.year);
+		psEditingNoteMonthTag = normalizeMonthTag(split.month);
+		psEditingNoteCategory = normalizeCategoryValue(split.category);
+		psEditingNoteSubcategory = normalizeCategoryValue(split.subcategory);
 		syncPsEditorTagsInput(true);
 		updatePsEditingTagsHint();
 		psAutoSaveLastSavedNoteId = psEditingNoteId;
@@ -6584,7 +6768,12 @@
 		psEditingNotePinned = rawTags.some(
 			(t) => String(t || "") === PS_PINNED_TAG
 		);
-		psEditingNoteTags = stripPinnedTag(stripManualTagsMarker(rawTags));
+		const split = splitTagsForEditor(rawTags, note.createdAt);
+		psEditingNoteTags = split.manual;
+		psEditingNoteYearTag = normalizeYearTag(split.year);
+		psEditingNoteMonthTag = normalizeMonthTag(split.month);
+		psEditingNoteCategory = normalizeCategoryValue(split.category);
+		psEditingNoteSubcategory = normalizeCategoryValue(split.subcategory);
 		syncPsEditorTagsInput(true);
 		textarea.value = String(note.text || "");
 		try {
@@ -12162,6 +12351,11 @@ self.onmessage = async (e) => {
 			psEditingNoteId = "";
 			psEditingNoteKind = "";
 			psEditingNoteTags = [];
+			const defaults = getDateTagsForTs(Date.now());
+			psEditingNoteYearTag = defaults.year;
+			psEditingNoteMonthTag = defaults.month;
+			psEditingNoteCategory = "";
+			psEditingNoteSubcategory = "";
 			psEditingNoteTagsOverridden = false;
 			psEditingNotePinned = false;
 			psAutoSaveLastSavedNoteId = "";
@@ -12227,6 +12421,26 @@ self.onmessage = async (e) => {
 			if (psEditorTagsSyncing) return;
 			syncPsEditorTagsInput();
 			closePsEditorTagsSuggest();
+		});
+	}
+	if (psEditorYearTag) {
+		psEditorYearTag.addEventListener("input", () => {
+			updatePsEditorTagMetaFromInputs();
+		});
+	}
+	if (psEditorMonthTag) {
+		psEditorMonthTag.addEventListener("change", () => {
+			updatePsEditorTagMetaFromInputs();
+		});
+	}
+	if (psEditorCategoryTag) {
+		psEditorCategoryTag.addEventListener("input", () => {
+			updatePsEditorTagMetaFromInputs();
+		});
+	}
+	if (psEditorSubcategoryTag) {
+		psEditorSubcategoryTag.addEventListener("input", () => {
+			updatePsEditorTagMetaFromInputs();
 		});
 	}
 	if (psEditorTagsSuggest) {
@@ -12412,11 +12626,12 @@ self.onmessage = async (e) => {
 			return false;
 		}
 		const baseTags = Array.isArray(psEditingNoteTags) ? psEditingNoteTags : [];
+		const systemTags = buildEditorSystemTags();
 		const tagsWithPinned = psEditingNotePinned
-			? [...baseTags, PS_PINNED_TAG]
-			: baseTags;
+			? [...baseTags, ...systemTags, PS_PINNED_TAG]
+			: [...baseTags, ...systemTags];
 		const tagsPayload = buildPsTagsPayload(
-			tagsWithPinned,
+			uniqTags(tagsWithPinned),
 			psEditingNoteTagsOverridden
 		);
 		if (auto) setPsAutoSaveStatus("Speichern…");

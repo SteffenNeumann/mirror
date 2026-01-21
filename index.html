@@ -661,16 +661,70 @@
 										class="absolute left-12 right-12 top-2 hidden z-10">
 										<label for="psEditorTagsInput" class="sr-only">Tags</label>
 										<div
-											class="flex h-9 items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-2.5 text-xs text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150">
-											<span class="text-slate-400">Tags:</span>
-											<input
-												id="psEditorTagsInput"
-												type="text"
-												autocomplete="off"
-												spellcheck="false"
-												placeholder="project, idea, lang-python"
-												class="min-w-0 flex-1 bg-transparent text-slate-100 placeholder:text-slate-500 outline-none" />
-										</div>
+												class="flex flex-col gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-2 text-xs text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150">
+												<div class="flex items-center gap-2">
+													<span class="text-slate-400">Tags:</span>
+													<input
+														id="psEditorTagsInput"
+														type="text"
+														autocomplete="off"
+														spellcheck="false"
+														placeholder="feature, idea"
+														class="min-w-0 flex-1 bg-transparent text-slate-100 placeholder:text-slate-500 outline-none" />
+												</div>
+												<div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-300">
+													<div class="flex items-center gap-1.5">
+														<span class="text-slate-400">Jahr</span>
+														<input
+															id="psEditorYearTag"
+															type="text"
+															inputmode="numeric"
+															maxlength="4"
+															placeholder="2026"
+															class="h-7 w-16 rounded-md border border-white/10 bg-slate-950/40 px-2 text-[11px] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
+													</div>
+													<div class="flex items-center gap-1.5">
+														<span class="text-slate-400">Monat</span>
+														<select
+															id="psEditorMonthTag"
+															class="h-7 rounded-md border border-white/10 bg-slate-950/40 px-2 text-[11px] text-slate-100 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30">
+															<option value="">Monat</option>
+															<option value="januar">Januar</option>
+															<option value="februar">Februar</option>
+															<option value="maerz">März</option>
+															<option value="april">April</option>
+															<option value="mai">Mai</option>
+															<option value="juni">Juni</option>
+															<option value="juli">Juli</option>
+															<option value="august">August</option>
+															<option value="september">September</option>
+															<option value="oktober">Oktober</option>
+															<option value="november">November</option>
+															<option value="dezember">Dezember</option>
+														</select>
+													</div>
+													<div class="flex items-center gap-1.5">
+														<span class="text-slate-400">Kategorie</span>
+														<input
+															id="psEditorCategoryTag"
+															type="text"
+															autocomplete="off"
+															spellcheck="false"
+															placeholder="projekt"
+															class="h-7 w-24 rounded-md border border-white/10 bg-slate-950/40 px-2 text-[11px] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
+													</div>
+													<div class="flex items-center gap-1.5">
+														<span class="text-slate-400">Unterkategorie</span>
+														<input
+															id="psEditorSubcategoryTag"
+															type="text"
+															autocomplete="off"
+															spellcheck="false"
+															placeholder="recherche"
+															class="h-7 w-28 rounded-md border border-white/10 bg-slate-950/40 px-2 text-[11px] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
+													</div>
+												</div>
+											</div>
 											<div
 												id="psEditorTagsSuggest"
 												class="mt-1 hidden max-h-40 overflow-y-auto rounded-lg border border-white/10 bg-slate-950/95 py-1 text-xs text-slate-200 shadow-soft backdrop-blur"></div>

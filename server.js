@@ -795,11 +795,57 @@ function normalizeImportTags(rawTags) {
 			.toLowerCase()
 			.slice(0, 48);
 		if (!s) continue;
-		if (!/^[a-z0-9_+\-]{1,48}$/i.test(s)) continue;
+		if (!/^[a-z0-9_+:\-]{1,48}$/i.test(s)) continue;
 		out.push(s);
 		if (out.length >= 24) break;
 	}
 	return uniq(out);
+}
+
+const NOTE_MONTH_TAGS = [
+	"januar",
+	"februar",
+	"maerz",
+	"april",
+	"mai",
+	"juni",
+	"juli",
+	"august",
+	"september",
+	"oktober",
+	"november",
+	"dezember",
+];
+
+function isYearTag(tag) {
+	return /^\d{4}$/.test(String(tag || "").trim());
+}
+
+function isMonthTag(tag) {
+	return NOTE_MONTH_TAGS.includes(String(tag || "").trim().toLowerCase());
+}
+
+function getDateTagsForTs(ts) {
+	try {
+		const d = new Date(ts);
+		if (Number.isNaN(d.getTime())) return { year: "", month: "" };
+		const year = String(d.getFullYear());
+		const month = NOTE_MONTH_TAGS[d.getMonth()] || "";
+		return { year, month };
+	} catch {
+		return { year: "", month: "" };
+	}
+}
+
+function applyDateTags(tags, createdAt) {
+	const list = Array.isArray(tags) ? tags : [];
+	const hasYear = list.some((t) => isYearTag(t));
+	const hasMonth = list.some((t) => isMonthTag(t));
+	const { year, month } = getDateTagsForTs(createdAt || Date.now());
+	const next = list.slice();
+	if (!hasYear && year) next.push(year);
+	if (!hasMonth && month) next.push(month);
+	return uniq(next);
 }
 
 const MANUAL_TAGS_MARKER = "__manual_tags__";
@@ -2217,15 +2263,17 @@ const server = http.createServer(async (req, res) => {
 				const contentHash = computeNoteContentHash(textVal);
 				let kind;
 				let tags;
+				let override = false;
 				if (hasTags) {
-					const { override, tags: incoming } = splitManualOverrideTags(
+					const split = splitManualOverrideTags(
 						body && body.tags ? body.tags : []
 					);
+					override = split.override;
 					if (override) {
 						kind = classifyText(textVal).kind;
-						tags = uniq([...incoming, MANUAL_TAGS_MARKER]);
+						tags = uniq([...split.tags, MANUAL_TAGS_MARKER]);
 					} else {
-						const merged = mergeManualTags(textVal, incoming);
+						const merged = mergeManualTags(textVal, split.tags);
 						kind = merged.kind;
 						tags = merged.tags;
 					}
@@ -2256,11 +2304,14 @@ const server = http.createServer(async (req, res) => {
 						return;
 					}
 				}
+				const createdAt = Date.now();
+				const updatedAt = Date.now();
+				if (!override) tags = applyDateTags(tags, createdAt);
 				const note = {
 					id: crypto.randomBytes(12).toString("base64url"),
 					text: textVal,
-					createdAt: Date.now(),
-					updatedAt: Date.now(),
+					createdAt,
+					updatedAt,
 					kind,
 					tags,
 				};
@@ -2343,17 +2394,22 @@ const server = http.createServer(async (req, res) => {
 					const kind = derived.kind;
 					const contentHash = computeNoteContentHash(nextText);
 					let tags;
+					let override = false;
 					if (hasTags) {
-						const { override, tags: incoming } = splitManualOverrideTags(
+						const split = splitManualOverrideTags(
 							body && body.tags ? body.tags : []
 						);
+						override = split.override;
 						tags = override
-							? uniq([...incoming, MANUAL_TAGS_MARKER])
-							: mergeManualTags(nextText, incoming).tags;
+							? uniq([...split.tags, MANUAL_TAGS_MARKER])
+							: mergeManualTags(nextText, split.tags).tags;
 					} else if (hasText) {
 						tags = derived.tags;
 					} else {
 						tags = parseTagsJson(existing.tags_json);
+					}
+					if (!override) {
+						tags = applyDateTags(tags, existing.created_at);
 					}
 					if (contentHash) {
 						const dupe = stmtNoteGetByHashUser.get(userId, contentHash);
