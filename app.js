@@ -722,6 +722,7 @@
 	}
 
 	function toast(message, kind) {
+		if (!toastRoot) return;
 		const el = document.createElement("div");
 		const base =
 			"pointer-events-auto rounded-xl border px-3 py-2 text-sm shadow-soft backdrop-blur";
@@ -6882,6 +6883,18 @@
 			}
 		} catch (e) {
 			const msg = e && e.message ? String(e.message) : "Error";
+			const notFound = msg.includes("not_found") || msg.includes("404");
+			if (notFound) {
+				if (psState && Array.isArray(psState.notes)) {
+					psState.notes = psState.notes.filter(
+						(n) => String(n && n.id ? n.id : "") !== id
+					);
+				}
+				applyPersonalSpaceFiltersAndRender();
+				await refreshPersonalSpace();
+				toast("Notiz nicht gefunden (bereits entfernt).", "info");
+				return;
+			}
 			toast(`Pin failed: ${msg}`, "error");
 		}
 	}
@@ -10792,6 +10805,8 @@ self.onmessage = async (e) => {
 			await refreshPersonalSpace();
 			await loadTrashManage();
 		} catch {
+			await loadTrashManage();
+			await refreshPersonalSpace();
 			toast("Wiederherstellen fehlgeschlagen.", "error");
 		}
 	}
@@ -13295,7 +13310,20 @@ self.onmessage = async (e) => {
 				}
 				toast("Notiz im Papierkorb abgelegt.", "success");
 				await refreshPersonalSpace();
-			} catch {
+			} catch (e) {
+				const msg = e && e.message ? String(e.message) : "";
+				const notFound = msg.includes("not_found") || msg.includes("404");
+				if (notFound) {
+					if (psState && Array.isArray(psState.notes)) {
+						psState.notes = psState.notes.filter(
+							(n) => String(n && n.id ? n.id : "") !== id
+						);
+					}
+					applyPersonalSpaceFiltersAndRender();
+					await refreshPersonalSpace();
+					toast("Notiz war bereits gelöscht.", "info");
+					return;
+				}
 				toast("Löschen fehlgeschlagen.", "error");
 			}
 		});
