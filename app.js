@@ -6742,7 +6742,7 @@
 			const tagAttr = it.tag ? `data-tag=\"${it.tag}\"` : 'data-tag=""';
 			return `<button type="button" ${tagAttr} class="${base} ${cls}">${it.label}</button>`;
 		};
-		const allHtml = `<div class="mb-2 flex flex-wrap items-center gap-2">${renderButton(
+		const allHtml = `<div class="w-full mb-2 flex flex-wrap items-center gap-2">${renderButton(
 			allBtn
 		)}</div>`;
 		const sectionHtml = sections
@@ -6752,7 +6752,7 @@
 					const collapsed = Boolean(sectionState[key]);
 					const chev = collapsed ? "-rotate-90" : "";
 					const bodyClass = collapsed ? "hidden" : "";
-					return `<div class="mb-2" data-section-wrap="${key}"><button type="button" class="mb-1 flex w-full items-center justify-between gap-2 text-[11px] uppercase tracking-wide text-slate-400 hover:text-slate-200 transition" data-section-toggle="${key}" aria-expanded="${collapsed ? "false" : "true"}"><span class="inline-flex items-center gap-2"><span class="inline-flex h-4 w-4 items-center justify-center rounded-md border border-white/10 bg-white/5 text-slate-300 transition ${chev}" data-role="chev">▸</span><span class="whitespace-nowrap">${section.label}</span></span></button><div class="flex flex-wrap items-center gap-2 ${bodyClass}" data-section-body="${key}">${section.tags
+					return `<div class="w-full mb-2" data-section-wrap="${key}"><button type="button" class="mb-1 flex w-full items-center justify-between gap-2 text-[11px] uppercase tracking-wide text-slate-400 hover:text-slate-200 transition" data-section-toggle="${key}" aria-expanded="${collapsed ? "false" : "true"}"><span class="inline-flex items-center gap-2"><span class="inline-flex h-4 w-4 items-center justify-center rounded-md border border-white/10 bg-white/5 text-slate-300 transition ${chev}" data-role="chev">▸</span><span class="whitespace-nowrap">${section.label}</span></span></button><div class="flex flex-wrap items-center gap-2 ${bodyClass}" data-section-body="${key}">${section.tags
 						.map((t) => renderButton({ tag: t, label: `#${t}` }))
 						.join("")}</div></div>`;
 				}
