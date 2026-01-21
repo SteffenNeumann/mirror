@@ -17,7 +17,6 @@
 }
 
 #psTagsPanel {
-	height: 62.5vh;
 	max-height: 62.5vh;
 	overflow-y: auto;
 	padding-right: 0.25rem;
