@@ -8814,7 +8814,7 @@ self.onmessage = async (e) => {
 			(t) => t.room === nextRoom && t.key === nextKey
 		);
 		const noteId = getActiveRoomTabNoteId();
-		const text = resolveRoomTabSnapshotText(noteId, String(textVal ?? ""));
+		const text = String(textVal ?? "");
 		if (idx >= 0) {
 			const updated = { ...tabs[idx], text, noteId };
 			tabs.splice(idx, 1, updated);
@@ -12615,6 +12615,16 @@ self.onmessage = async (e) => {
 			pendingRoomBootstrapText = "";
 			if (note) {
 				applyNoteToEditor(note, null, { skipHistory: true });
+				if (
+					cachedText &&
+					textarea &&
+					String(textarea.value || "") !== cachedText
+				) {
+					textarea.value = cachedText;
+					updatePreview();
+					updatePasswordMaskOverlay();
+					schedulePsAutoSave();
+				}
 			} else {
 				textarea.value = nextText;
 			}
