@@ -6394,8 +6394,6 @@
 			// ignore
 		}
 		updatePreview();
-		const noteId = getActiveRoomTabNoteId();
-		if (noteId) updateRoomTabsForNoteId(noteId, textarea.value);
 		schedulePsAutoSave();
 		scheduleSend();
 		return true;
@@ -8638,7 +8636,7 @@ self.onmessage = async (e) => {
 		const lastUsed = Number(it && it.lastUsed) || 0;
 		const noteId = String(it && (it.noteId || it.note_id) ? it.noteId || it.note_id : "").trim();
 		const rawText = String(it && it.text ? it.text : "");
-		const text = rawText;
+		const text = noteId ? "" : rawText;
 		if (!roomName) return null;
 		return { room: roomName, key: keyName, lastUsed, text, noteId };
 	}
@@ -8665,7 +8663,7 @@ self.onmessage = async (e) => {
 			const idx = index.get(keyId);
 			const prev = out[idx];
 			const noteId = normalized.noteId || prev.noteId || "";
-			const text = normalized.text || prev.text || "";
+			const text = noteId ? "" : normalized.text || prev.text || "";
 			out[idx] = {
 				...prev,
 				...normalized,
@@ -8718,9 +8716,11 @@ self.onmessage = async (e) => {
 			const useNoteId = preferText
 				? normalized.noteId || existing.noteId || ""
 				: existing.noteId || normalized.noteId || "";
-			const useText = preferText
-				? normalized.text || existing.text || ""
-				: existing.text || normalized.text || "";
+			const useText = useNoteId
+				? ""
+				: preferText
+					? normalized.text || existing.text || ""
+					: existing.text || normalized.text || "";
 			map.set(keyId, {
 				...existing,
 				...normalized,
@@ -8818,7 +8818,7 @@ self.onmessage = async (e) => {
 			(t) => t.room === nextRoom && t.key === nextKey
 		);
 		const noteId = getActiveRoomTabNoteId();
-		const text = String(textVal ?? "");
+		const text = resolveRoomTabSnapshotText(noteId, String(textVal ?? ""));
 		if (idx >= 0) {
 			const updated = { ...tabs[idx], text, noteId };
 			tabs.splice(idx, 1, updated);
@@ -8833,7 +8833,6 @@ self.onmessage = async (e) => {
 			});
 		}
 		saveRoomTabs(tabs);
-		if (noteId) updateRoomTabsForNoteId(noteId, text);
 	}
 
 	function updateRoomTabsForNoteId(noteId, textVal) {
@@ -12157,7 +12156,6 @@ self.onmessage = async (e) => {
 		scheduleSelectionSend();
 		const noteId = getActiveRoomTabNoteId();
 		updateRoomTabTextLocal(room, key, textarea.value);
-		if (noteId) updateRoomTabsForNoteId(noteId, textarea.value);
 		scheduleRoomTabSync({
 			room,
 			key,
@@ -12632,38 +12630,7 @@ self.onmessage = async (e) => {
 					: "";
 			pendingRoomBootstrapText = "";
 			if (note) {
-				const hasCachedText = typeof cachedText === "string";
-				const shouldUseCachedText =
-					hasCachedText && cachedText !== String(note.text || "");
-				let noteToApply = note;
-				if (shouldUseCachedText) {
-					noteToApply = { ...note, text: cachedText };
-					if (psState && Array.isArray(psState.notes)) {
-						const id = String(noteToApply.id || "");
-						const idx = psState.notes.findIndex(
-							(n) => String(n && n.id ? n.id : "") === id
-						);
-						if (idx >= 0) {
-							psState.notes = [
-								...psState.notes.slice(0, idx),
-								noteToApply,
-								...psState.notes.slice(idx + 1),
-							];
-						}
-					}
-				}
-				applyNoteToEditor(noteToApply, null, {
-					skipHistory: true,
-					skipText: shouldUseCachedText,
-				});
-				if (shouldUseCachedText && textarea) {
-					textarea.value = cachedText;
-					psAutoSaveLastSavedNoteId = psEditingNoteId;
-					psAutoSaveLastSavedText = String(cachedText || "");
-					updatePreview();
-					updatePasswordMaskOverlay();
-					schedulePsAutoSave();
-				}
+				applyNoteToEditor(note, null, { skipHistory: true });
 			} else {
 				textarea.value = nextText;
 			}
