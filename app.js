@@ -6394,6 +6394,8 @@
 			// ignore
 		}
 		updatePreview();
+		const noteId = getActiveRoomTabNoteId();
+		if (noteId) updateRoomTabsForNoteId(noteId, textarea.value);
 		schedulePsAutoSave();
 		scheduleSend();
 		return true;
@@ -8831,6 +8833,7 @@ self.onmessage = async (e) => {
 			});
 		}
 		saveRoomTabs(tabs);
+		if (noteId) updateRoomTabsForNoteId(noteId, text);
 	}
 
 	function updateRoomTabsForNoteId(noteId, textVal) {
