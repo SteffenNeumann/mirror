@@ -803,26 +803,39 @@ function normalizeImportTags(rawTags) {
 }
 
 const NOTE_MONTH_TAGS = [
-	"januar",
-	"februar",
-	"maerz",
+	"january",
+	"february",
+	"march",
 	"april",
-	"mai",
-	"juni",
-	"juli",
+	"may",
+	"june",
+	"july",
 	"august",
 	"september",
-	"oktober",
+	"october",
 	"november",
-	"dezember",
+	"december",
 ];
+const NOTE_MONTH_ALIASES = {
+	januar: "january",
+	februar: "february",
+	maerz: "march",
+	märz: "march",
+	mai: "may",
+	juni: "june",
+	juli: "july",
+	oktober: "october",
+	dezember: "december",
+};
 
 function isYearTag(tag) {
 	return /^\d{4}$/.test(String(tag || "").trim());
 }
 
 function isMonthTag(tag) {
-	return NOTE_MONTH_TAGS.includes(String(tag || "").trim().toLowerCase());
+	const raw = String(tag || "").trim().toLowerCase();
+	const mapped = NOTE_MONTH_ALIASES[raw] || raw;
+	return NOTE_MONTH_TAGS.includes(mapped);
 }
 
 function getDateTagsForTs(ts) {

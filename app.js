@@ -1345,19 +1345,30 @@
 	}
 
 	const PS_MONTH_TAGS = [
-		"januar",
-		"februar",
-		"maerz",
+		"january",
+		"february",
+		"march",
 		"april",
-		"mai",
-		"juni",
-		"juli",
+		"may",
+		"june",
+		"july",
 		"august",
 		"september",
-		"oktober",
+		"october",
 		"november",
-		"dezember",
+		"december",
 	];
+	const PS_MONTH_ALIASES = {
+		januar: "january",
+		februar: "february",
+		maerz: "march",
+		märz: "march",
+		mai: "may",
+		juni: "june",
+		juli: "july",
+		oktober: "october",
+		dezember: "december",
+	};
 
 	function uniqTags(list) {
 		const out = [];
@@ -1385,7 +1396,8 @@
 
 	function normalizeMonthTag(raw) {
 		const s = String(raw || "").trim().toLowerCase();
-		return PS_MONTH_TAGS.includes(s) ? s : "";
+		const mapped = PS_MONTH_ALIASES[s] || s;
+		return PS_MONTH_TAGS.includes(mapped) ? mapped : "";
 	}
 
 	function normalizeCategoryValue(raw) {
@@ -1404,7 +1416,7 @@
 	}
 
 	function isMonthTag(tag) {
-		return PS_MONTH_TAGS.includes(String(tag || "").trim().toLowerCase());
+		return Boolean(normalizeMonthTag(tag));
 	}
 
 	function getDateTagsForTs(ts) {
@@ -1419,6 +1431,16 @@
 		}
 	}
 
+	const PS_KIND_TAGS = new Set([
+		"note",
+		"code",
+		"link",
+		"address",
+		"email",
+		"phone",
+		"todo",
+	]);
+
 	function splitTagsForEditor(rawTags, createdAt) {
 		const tags = Array.isArray(rawTags) ? rawTags : [];
 		const cleaned = stripPinnedTag(stripManualTagsMarker(tags));
@@ -1426,6 +1448,8 @@
 		let month = "";
 		let category = "";
 		let subcategory = "";
+		let derivedCategory = "";
+		let derivedSubcategory = "";
 		const manual = [];
 		for (const t of cleaned) {
 			const s = String(t || "").trim().toLowerCase();
@@ -1435,7 +1459,7 @@
 				continue;
 			}
 			if (!month && isMonthTag(s)) {
-				month = s;
+				month = normalizeMonthTag(s);
 				continue;
 			}
 			if (!category && s.startsWith("cat:")) {
@@ -1446,11 +1470,19 @@
 				subcategory = s.slice(4);
 				continue;
 			}
+			if (!derivedCategory && PS_KIND_TAGS.has(s)) {
+				derivedCategory = s;
+			}
+			if (!derivedSubcategory && s.startsWith("lang-")) {
+				derivedSubcategory = s.slice(5);
+			}
 			manual.push(s);
 		}
 		const fallback = getDateTagsForTs(createdAt || Date.now());
 		if (!year) year = fallback.year;
 		if (!month) month = fallback.month;
+		if (!category && derivedCategory) category = derivedCategory;
+		if (!subcategory && derivedSubcategory) subcategory = derivedSubcategory;
 		return { year, month, category, subcategory, manual };
 	}
 
@@ -1462,6 +1494,15 @@
 		if (psEditingNoteSubcategory)
 			tags.push(`sub:${psEditingNoteSubcategory}`);
 		return tags;
+	}
+
+	function getEditingNoteCreatedAt() {
+		if (!psEditingNoteId || !psState || !psState.authed) return Date.now();
+		const notes = Array.isArray(psState.notes) ? psState.notes : [];
+		const id = String(psEditingNoteId || "");
+		const note = notes.find((n) => String(n && n.id ? n.id : "") === id);
+		const createdAt = note && typeof note.createdAt === "number" ? note.createdAt : 0;
+		return createdAt || Date.now();
 	}
 
 	function syncPsEditorTagMetaInputs() {
@@ -1487,6 +1528,9 @@
 		psEditingNoteSubcategory = normalizeCategoryValue(
 			psEditorSubcategoryTag ? psEditorSubcategoryTag.value : ""
 		);
+		const defaults = getDateTagsForTs(getEditingNoteCreatedAt());
+		if (!psEditingNoteYearTag) psEditingNoteYearTag = defaults.year;
+		if (!psEditingNoteMonthTag) psEditingNoteMonthTag = defaults.month;
 		syncPsEditorTagMetaInputs();
 		updatePsEditingTagsHint();
 		updateEditingNoteTagsLocal(psEditingNoteTags);
