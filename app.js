@@ -10790,7 +10790,7 @@ self.onmessage = async (e) => {
 			});
 			toast("Notiz wiederhergestellt.", "success");
 			await refreshPersonalSpace();
-			loadTrashManage();
+			await loadTrashManage();
 		} catch {
 			toast("Wiederherstellen fehlgeschlagen.", "error");
 		}
@@ -13282,6 +13282,12 @@ self.onmessage = async (e) => {
 				await api(`/api/notes/${encodeURIComponent(id)}`, {
 					method: "DELETE",
 				});
+				if (psState && Array.isArray(psState.notes)) {
+					psState.notes = psState.notes.filter(
+						(n) => String(n && n.id ? n.id : "") !== id
+					);
+				}
+				applyPersonalSpaceFiltersAndRender();
 				if (psEditingNoteId === id) {
 					psEditingNoteId = "";
 					if (psMainHint) psMainHint.classList.add("hidden");
