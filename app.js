@@ -6572,6 +6572,30 @@
 		].filter((section) => section.tags.length > 0);
 	}
 
+	const PS_TAG_SECTION_STATE_KEY = "mirror_ps_tag_sections_v1";
+
+	function loadPsTagSectionState() {
+		try {
+			const raw = localStorage.getItem(PS_TAG_SECTION_STATE_KEY);
+			if (!raw) return {};
+			const parsed = JSON.parse(raw);
+			return parsed && typeof parsed === "object" ? parsed : {};
+		} catch {
+			return {};
+		}
+	}
+
+	function savePsTagSectionState(state) {
+		try {
+			localStorage.setItem(
+				PS_TAG_SECTION_STATE_KEY,
+				JSON.stringify(state || {})
+			);
+		} catch {
+			// ignore
+		}
+	}
+
 	function renderPsTags(tags) {
 		if (!psTags) return;
 		const safeTags = Array.isArray(tags) ? tags : [];
@@ -6583,6 +6607,7 @@
 			label: "All",
 		};
 		const sections = buildTagSections(visibleTags);
+		const sectionState = loadPsTagSectionState();
 		const renderButton = (it) => {
 			const active = it.tag
 				? psActiveTags && psActiveTags.has(String(it.tag))
@@ -6594,18 +6619,47 @@
 			const tagAttr = it.tag ? `data-tag=\"${it.tag}\"` : 'data-tag=""';
 			return `<button type="button" ${tagAttr} class="${base} ${cls}">${it.label}</button>`;
 		};
-		const allHtml = `<div class="mb-2 flex flex-wrap items-center gap-2">${renderButton(
+		const allHtml = `<div class="mb-2 flex items-center justify-between gap-2"><div class="text-[11px] uppercase tracking-wide text-slate-400">Tags</div><div class="flex flex-wrap items-center gap-2">${renderButton(
 			allBtn
-		)}</div>`;
+		)}</div></div>`;
 		const sectionHtml = sections
 			.map(
-				(section) =>
-					`<div class="mb-2"><div class="mb-1 text-[11px] uppercase tracking-wide text-slate-400">${section.label}</div><div class="flex flex-wrap items-center gap-2">${section.tags
+				(section) => {
+					const key = String(section.key || section.label || "");
+					const collapsed = Boolean(sectionState[key]);
+					const chev = collapsed ? "-rotate-90" : "";
+					const bodyClass = collapsed ? "hidden" : "";
+					return `<div class="mb-2" data-section-wrap="${key}"><button type="button" class="mb-1 inline-flex items-center gap-2 text-[11px] uppercase tracking-wide text-slate-400 hover:text-slate-200 transition" data-section-toggle="${key}" aria-expanded="${collapsed ? "false" : "true"}"><span class="inline-flex h-4 w-4 items-center justify-center rounded-md border border-white/10 bg-white/5 text-slate-300 transition ${chev}">▸</span><span>${section.label}</span></button><div class="flex flex-wrap items-center gap-2 ${bodyClass}" data-section-body="${key}">${section.tags
 						.map((t) => renderButton({ tag: t, label: `#${t}` }))
-						.join("")}</div></div>`
+						.join("")}</div></div>`;
+				}
 			)
 			.join("");
 		psTags.innerHTML = `${allHtml}${sectionHtml}`;
+
+		psTags.querySelectorAll("[data-section-toggle]").forEach((btn) => {
+			btn.addEventListener("click", () => {
+				const key = btn.getAttribute("data-section-toggle") || "";
+				if (!key) return;
+				const wrap = psTags.querySelector(
+					`[data-section-wrap="${key}"]`
+				);
+				const body = psTags.querySelector(
+					`[data-section-body="${key}"]`
+				);
+				const chev = btn.querySelector("span");
+				const nextCollapsed = !(sectionState && sectionState[key]);
+				sectionState[key] = nextCollapsed;
+				savePsTagSectionState(sectionState);
+				if (body && body.classList) body.classList.toggle("hidden", nextCollapsed);
+				if (chev && chev.classList)
+					chev.classList.toggle("-rotate-90", nextCollapsed);
+				btn.setAttribute("aria-expanded", nextCollapsed ? "false" : "true");
+				if (wrap && wrap.scrollIntoView) {
+					wrap.scrollIntoView({ block: "nearest" });
+				}
+			});
+		});
 
 		psTags.querySelectorAll("button[data-tag]").forEach((btn) => {
 			btn.addEventListener("click", async () => {
