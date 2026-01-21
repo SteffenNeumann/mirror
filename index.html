@@ -335,65 +335,7 @@
 									</svg>
 								</button>
 							</div>
-							<div id="psEditorTagsBar" class="mt-2">
-								<label for="psEditorTagsInput" class="sr-only">Tags</label>
-								<div
-									class="flex flex-wrap items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150">
-									<span class="text-slate-400">Tags:</span>
-									<input
-										id="psEditorYearTag"
-										type="text"
-										inputmode="numeric"
-										maxlength="4"
-										placeholder="Year"
-										class="h-6 w-14 rounded-md border border-white/10 bg-slate-950/40 px-1.5 text-[11px] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
-									<span class="text-slate-500">,</span>
-									<select
-										id="psEditorMonthTag"
-										class="h-6 rounded-md border border-white/10 bg-slate-950/40 px-1.5 text-[11px] text-slate-100 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30">
-										<option value="">Month</option>
-										<option value="jan">Jan</option>
-										<option value="feb">Feb</option>
-										<option value="mar">Mar</option>
-										<option value="apr">Apr</option>
-										<option value="may">May</option>
-										<option value="jun">Jun</option>
-										<option value="jul">Jul</option>
-										<option value="aug">Aug</option>
-										<option value="sep">Sep</option>
-										<option value="oct">Oct</option>
-										<option value="nov">Nov</option>
-										<option value="dec">Dec</option>
-									</select>
-									<span class="text-slate-500">,</span>
-									<input
-										id="psEditorCategoryTag"
-										type="text"
-										autocomplete="off"
-										spellcheck="false"
-										placeholder="Category"
-										class="h-6 w-20 rounded-md border border-white/10 bg-slate-950/40 px-1.5 text-[11px] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
-									<span class="text-slate-500">,</span>
-									<input
-										id="psEditorSubcategoryTag"
-										type="text"
-										autocomplete="off"
-										spellcheck="false"
-										placeholder="Subcategory"
-										class="h-6 w-24 rounded-md border border-white/10 bg-slate-950/40 px-1.5 text-[11px] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
-									<span class="text-slate-500">,</span>
-									<input
-										id="psEditorTagsInput"
-										type="text"
-										autocomplete="off"
-										spellcheck="false"
-										placeholder="Tags"
-										class="min-w-[140px] flex-1 bg-transparent text-slate-100 placeholder:text-slate-500 outline-none" />
-								</div>
-								<div
-									id="psEditorTagsSuggest"
-									class="mt-1 hidden max-h-40 overflow-y-auto rounded-lg border border-white/10 bg-slate-950/95 py-1 text-xs text-slate-200 shadow-soft backdrop-blur"></div>
-							</div>
+
 							<div class="mt-4 flex flex-wrap items-center gap-2" data-header-detail="true">
 								<div class="relative">
 									<label for="roomInput" class="sr-only">Room</label>
@@ -557,6 +499,65 @@
 											class="absolute left-2 right-2 top-12 hidden rounded-lg border border-white/10 bg-slate-950/85 px-2 py-1 pr-10 text-[10px] leading-snug text-slate-300 shadow-soft backdrop-blur will-change-transform">
 											<pre class="whitespace-pre-wrap font-mono"></pre>
 										</div>
+									</div>
+									<div id="psEditorTagsBar" class="absolute left-12 right-12 top-2 z-10">
+										<label for="psEditorTagsInput" class="sr-only">Tags</label>
+										<div
+											class="flex flex-wrap items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150">
+											<span class="text-slate-400">Tags:</span>
+											<input
+												id="psEditorYearTag"
+												type="text"
+												inputmode="numeric"
+												maxlength="4"
+												placeholder="Year"
+												class="h-6 w-14 rounded-md border border-white/10 bg-slate-950/40 px-1.5 text-[11px] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
+											<span class="text-slate-500">,</span>
+											<select
+												id="psEditorMonthTag"
+												class="h-6 rounded-md border border-white/10 bg-slate-950/40 px-1.5 text-[11px] text-slate-100 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30">
+												<option value="">Month</option>
+												<option value="jan">Jan</option>
+												<option value="feb">Feb</option>
+												<option value="mar">Mar</option>
+												<option value="apr">Apr</option>
+												<option value="may">May</option>
+												<option value="jun">Jun</option>
+												<option value="jul">Jul</option>
+												<option value="aug">Aug</option>
+												<option value="sep">Sep</option>
+												<option value="oct">Oct</option>
+												<option value="nov">Nov</option>
+												<option value="dec">Dec</option>
+											</select>
+											<span class="text-slate-500">,</span>
+											<input
+												id="psEditorCategoryTag"
+												type="text"
+												autocomplete="off"
+												spellcheck="false"
+												placeholder="Category"
+												class="h-6 w-20 rounded-md border border-white/10 bg-slate-950/40 px-1.5 text-[11px] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
+											<span class="text-slate-500">,</span>
+											<input
+												id="psEditorSubcategoryTag"
+												type="text"
+												autocomplete="off"
+												spellcheck="false"
+												placeholder="Subcategory"
+												class="h-6 w-24 rounded-md border border-white/10 bg-slate-950/40 px-1.5 text-[11px] text-slate-100 placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
+											<span class="text-slate-500">,</span>
+											<input
+												id="psEditorTagsInput"
+												type="text"
+												autocomplete="off"
+												spellcheck="false"
+												placeholder="Tags"
+												class="min-w-[140px] flex-1 bg-transparent text-slate-100 placeholder:text-slate-500 outline-none" />
+										</div>
+										<div
+											id="psEditorTagsSuggest"
+											class="mt-1 hidden max-h-40 overflow-y-auto rounded-lg border border-white/10 bg-slate-950/95 py-1 text-xs text-slate-200 shadow-soft backdrop-blur"></div>
 									</div>
 									<div
 										id="selectionMenu"
