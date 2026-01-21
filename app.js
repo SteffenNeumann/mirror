@@ -6510,6 +6510,65 @@
 			} catch {
 				// ignore
 			}
+
+			function sortTagList(list) {
+				return list.slice().sort((a, b) => a.localeCompare(b));
+			}
+
+			function buildTagSections(tags) {
+				const all = Array.isArray(tags) ? tags : [];
+				const buckets = {
+					year: [],
+					month: [],
+					category: [],
+					subcategory: [],
+					kind: [],
+					language: [],
+					other: [],
+				};
+				for (const t of all) {
+					const tag = String(t || "").trim();
+					if (!tag) continue;
+					if (isYearTag(tag)) {
+						buckets.year.push(tag);
+						continue;
+					}
+					if (isMonthTag(tag)) {
+						buckets.month.push(tag);
+						continue;
+					}
+					if (tag.startsWith("cat:")) {
+						buckets.category.push(tag);
+						continue;
+					}
+					if (tag.startsWith("sub:")) {
+						buckets.subcategory.push(tag);
+						continue;
+					}
+					if (PS_KIND_TAGS.has(tag)) {
+						buckets.kind.push(tag);
+						continue;
+					}
+					if (tag.startsWith("lang-")) {
+						buckets.language.push(tag);
+						continue;
+					}
+					buckets.other.push(tag);
+				}
+				return [
+					{ key: "year", label: "Year", tags: sortTagList(buckets.year) },
+					{ key: "month", label: "Month", tags: sortTagList(buckets.month) },
+					{ key: "category", label: "Category", tags: sortTagList(buckets.category) },
+					{
+						key: "subcategory",
+						label: "Subcategory",
+						tags: sortTagList(buckets.subcategory),
+					},
+					{ key: "kind", label: "Type", tags: sortTagList(buckets.kind) },
+					{ key: "language", label: "Language", tags: sortTagList(buckets.language) },
+					{ key: "other", label: "Tags", tags: sortTagList(buckets.other) },
+				].filter((section) => section.tags.length > 0);
+			}
 		}
 	}
 
@@ -6523,23 +6582,30 @@
 			tag: "",
 			label: "All",
 		};
-		const items = [
-			allBtn,
-			...visibleTags.map((t) => ({ tag: t, label: `#${t}` })),
-		];
-		psTags.innerHTML = items
-			.map((it) => {
-				const active = it.tag
-					? psActiveTags && psActiveTags.has(String(it.tag))
-					: !psActiveTags || psActiveTags.size === 0;
-				const base = "rounded-full border px-2.5 py-1 text-xs transition";
-				const cls = active
-					? "border-fuchsia-400/40 bg-fuchsia-500/15 text-fuchsia-100"
-					: "border-white/10 bg-white/5 text-slate-200 hover:bg-white/10";
-				const tagAttr = it.tag ? `data-tag="${it.tag}"` : 'data-tag=""';
-				return `<button type="button" ${tagAttr} class="${base} ${cls}">${it.label}</button>`;
-			})
+		const sections = buildTagSections(visibleTags);
+		const renderButton = (it) => {
+			const active = it.tag
+				? psActiveTags && psActiveTags.has(String(it.tag))
+				: !psActiveTags || psActiveTags.size === 0;
+			const base = "rounded-full border px-2.5 py-1 text-xs transition";
+			const cls = active
+				? "border-fuchsia-400/40 bg-fuchsia-500/15 text-fuchsia-100"
+				: "border-white/10 bg-white/5 text-slate-200 hover:bg-white/10";
+			const tagAttr = it.tag ? `data-tag=\"${it.tag}\"` : 'data-tag=""';
+			return `<button type="button" ${tagAttr} class="${base} ${cls}">${it.label}</button>`;
+		};
+		const allHtml = `<div class="mb-2 flex flex-wrap items-center gap-2">${renderButton(
+			allBtn
+		)}</div>`;
+		const sectionHtml = sections
+			.map(
+				(section) =>
+					`<div class="mb-2"><div class="mb-1 text-[11px] uppercase tracking-wide text-slate-400">${section.label}</div><div class="flex flex-wrap items-center gap-2">${section.tags
+						.map((t) => renderButton({ tag: t, label: `#${t}` }))
+						.join("")}</div></div>`
+			)
 			.join("");
+		psTags.innerHTML = `${allHtml}${sectionHtml}`;
 
 		psTags.querySelectorAll("button[data-tag]").forEach((btn) => {
 			btn.addEventListener("click", async () => {
