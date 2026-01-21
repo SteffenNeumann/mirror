@@ -13008,6 +13008,10 @@ self.onmessage = async (e) => {
 		const allowEmpty = Boolean(opts && opts.allowEmpty);
 		const rawText = String(text || "");
 		if (!allowEmpty && !rawText.trim()) return false;
+		if (auto && typeof navigator !== "undefined" && navigator.onLine === false) {
+			setPsAutoSaveStatus("Offline");
+			return false;
+		}
 		if (!psState || !psState.authed) {
 			if (!auto)
 				toast("Please enable Personal Space first (sign in).", "error");
