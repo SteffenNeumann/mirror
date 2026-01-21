@@ -6510,66 +6510,66 @@
 			} catch {
 				// ignore
 			}
-
-			function sortTagList(list) {
-				return list.slice().sort((a, b) => a.localeCompare(b));
-			}
-
-			function buildTagSections(tags) {
-				const all = Array.isArray(tags) ? tags : [];
-				const buckets = {
-					year: [],
-					month: [],
-					category: [],
-					subcategory: [],
-					kind: [],
-					language: [],
-					other: [],
-				};
-				for (const t of all) {
-					const tag = String(t || "").trim();
-					if (!tag) continue;
-					if (isYearTag(tag)) {
-						buckets.year.push(tag);
-						continue;
-					}
-					if (isMonthTag(tag)) {
-						buckets.month.push(tag);
-						continue;
-					}
-					if (tag.startsWith("cat:")) {
-						buckets.category.push(tag);
-						continue;
-					}
-					if (tag.startsWith("sub:")) {
-						buckets.subcategory.push(tag);
-						continue;
-					}
-					if (PS_KIND_TAGS.has(tag)) {
-						buckets.kind.push(tag);
-						continue;
-					}
-					if (tag.startsWith("lang-")) {
-						buckets.language.push(tag);
-						continue;
-					}
-					buckets.other.push(tag);
-				}
-				return [
-					{ key: "year", label: "Year", tags: sortTagList(buckets.year) },
-					{ key: "month", label: "Month", tags: sortTagList(buckets.month) },
-					{ key: "category", label: "Category", tags: sortTagList(buckets.category) },
-					{
-						key: "subcategory",
-						label: "Subcategory",
-						tags: sortTagList(buckets.subcategory),
-					},
-					{ key: "kind", label: "Type", tags: sortTagList(buckets.kind) },
-					{ key: "language", label: "Language", tags: sortTagList(buckets.language) },
-					{ key: "other", label: "Tags", tags: sortTagList(buckets.other) },
-				].filter((section) => section.tags.length > 0);
-			}
 		}
+	}
+
+	function sortTagList(list) {
+		return list.slice().sort((a, b) => a.localeCompare(b));
+	}
+
+	function buildTagSections(tags) {
+		const all = Array.isArray(tags) ? tags : [];
+		const buckets = {
+			year: [],
+			month: [],
+			category: [],
+			subcategory: [],
+			kind: [],
+			language: [],
+			other: [],
+		};
+		for (const t of all) {
+			const tag = String(t || "").trim();
+			if (!tag) continue;
+			if (isYearTag(tag)) {
+				buckets.year.push(tag);
+				continue;
+			}
+			if (isMonthTag(tag)) {
+				buckets.month.push(tag);
+				continue;
+			}
+			if (tag.startsWith("cat:")) {
+				buckets.category.push(tag);
+				continue;
+			}
+			if (tag.startsWith("sub:")) {
+				buckets.subcategory.push(tag);
+				continue;
+			}
+			if (PS_KIND_TAGS.has(tag)) {
+				buckets.kind.push(tag);
+				continue;
+			}
+			if (tag.startsWith("lang-")) {
+				buckets.language.push(tag);
+				continue;
+			}
+			buckets.other.push(tag);
+		}
+		return [
+			{ key: "year", label: "Year", tags: sortTagList(buckets.year) },
+			{ key: "month", label: "Month", tags: sortTagList(buckets.month) },
+			{ key: "category", label: "Category", tags: sortTagList(buckets.category) },
+			{
+				key: "subcategory",
+				label: "Subcategory",
+				tags: sortTagList(buckets.subcategory),
+			},
+			{ key: "kind", label: "Type", tags: sortTagList(buckets.kind) },
+			{ key: "language", label: "Language", tags: sortTagList(buckets.language) },
+			{ key: "other", label: "Tags", tags: sortTagList(buckets.other) },
+		].filter((section) => section.tags.length > 0);
 	}
 
 	function renderPsTags(tags) {
