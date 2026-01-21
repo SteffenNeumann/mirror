@@ -12604,9 +12604,7 @@ self.onmessage = async (e) => {
 			const cachedNoteId = cached && cached.noteId ? String(cached.noteId || "") : "";
 			const note = cachedNoteId ? findNoteById(cachedNoteId) : null;
 			const cachedText =
-				!cachedNoteId && cached && typeof cached.text === "string"
-					? cached.text
-					: "";
+				cached && typeof cached.text === "string" ? cached.text : "";
 			const nextText = note
 				? String(note.text || "")
 				: !cachedNoteId
