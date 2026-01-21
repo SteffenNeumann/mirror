@@ -12625,9 +12625,29 @@ self.onmessage = async (e) => {
 					: "";
 			pendingRoomBootstrapText = "";
 			if (note) {
-				applyNoteToEditor(note, null, { skipHistory: true });
+				let noteToApply = note;
 				if (
-					cachedText &&
+					typeof cachedText === "string" &&
+					cachedText !== String(note.text || "")
+				) {
+					noteToApply = { ...note, text: cachedText };
+					if (psState && Array.isArray(psState.notes)) {
+						const id = String(noteToApply.id || "");
+						const idx = psState.notes.findIndex(
+							(n) => String(n && n.id ? n.id : "") === id
+						);
+						if (idx >= 0) {
+							psState.notes = [
+								...psState.notes.slice(0, idx),
+								noteToApply,
+								...psState.notes.slice(idx + 1),
+							];
+						}
+					}
+				}
+				applyNoteToEditor(noteToApply, null, { skipHistory: true });
+				if (
+					typeof cachedText === "string" &&
 					textarea &&
 					String(textarea.value || "") !== cachedText
 				) {
