@@ -254,6 +254,7 @@
 	const calendarAddEnabled = document.getElementById("calendarAddEnabled");
 	const calendarAddBtn = document.getElementById("calendarAddBtn");
 	const calendarPanel = document.getElementById("calendarPanel");
+	const calendarWeekLabel = document.getElementById("calendarWeekLabel");
 	const calendarTitle = document.getElementById("calendarTitle");
 	const calendarGrid = document.getElementById("calendarGrid");
 	const calendarLegend = document.getElementById("calendarLegend");
@@ -9809,6 +9810,14 @@ self.onmessage = async (e) => {
 		});
 	}
 
+	function getIsoWeekNumber(date) {
+		const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+		const dayNum = d.getUTCDay() || 7;
+		d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+		const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+		return Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+	}
+
 	function loadCalendarFreeSlotsVisible() {
 		try {
 			const raw = String(localStorage.getItem(CALENDAR_FREE_SLOTS_KEY) || "1");
@@ -10436,6 +10445,16 @@ self.onmessage = async (e) => {
 		events.sort((a, b) => a.start.getTime() - b.start.getTime());
 		if (calendarTitle) {
 			calendarTitle.textContent = formatCalendarTitle(view, cursor);
+		}
+		if (calendarWeekLabel) {
+			const showWeek = view === "week" || view === "day";
+			if (showWeek) {
+				calendarWeekLabel.textContent = `KW ${getIsoWeekNumber(cursor)}`;
+				calendarWeekLabel.classList.remove("hidden");
+			} else {
+				calendarWeekLabel.textContent = "";
+				calendarWeekLabel.classList.add("hidden");
+			}
 		}
 		renderCalendarLegend();
 		if (!sources.length && calendarState.localEvents.length === 0) {
