@@ -44,6 +44,15 @@ const ANTHROPIC_API_KEY = String(process.env.ANTHROPIC_API_KEY || "").trim();
 const ANTHROPIC_MODEL = String(
 	process.env.ANTHROPIC_MODEL || "claude-3-5-sonnet-20241022"
 ).trim();
+const GOOGLE_OAUTH_CLIENT_ID = String(
+	process.env.GOOGLE_OAUTH_CLIENT_ID || ""
+).trim();
+const GOOGLE_OAUTH_CLIENT_SECRET = String(
+	process.env.GOOGLE_OAUTH_CLIENT_SECRET || ""
+).trim();
+const GOOGLE_OAUTH_REDIRECT_URL = String(
+	process.env.GOOGLE_OAUTH_REDIRECT_URL || ""
+).trim();
 const AI_MAX_INPUT_CHARS = 20000;
 const AI_MAX_OUTPUT_TOKENS = Number(process.env.AI_MAX_OUTPUT_TOKENS || 900);
 const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 30000);
@@ -86,6 +95,9 @@ let stmtRoomTabDelete;
 let stmtRoomTabsByUser;
 let stmtUserSettingsGet;
 let stmtUserSettingsUpsert;
+let stmtGoogleTokenGet;
+let stmtGoogleTokenUpsert;
+let stmtGoogleTokenDelete;
 
 // In-memory rate limit: ip -> { count, resetAt }
 const aiRate = new Map();
@@ -173,6 +185,16 @@ function initDb() {
 		CREATE TABLE IF NOT EXISTS user_settings (
 			user_id INTEGER PRIMARY KEY,
 			calendar_json TEXT NOT NULL,
+			updated_at INTEGER NOT NULL,
+			FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+		);
+		CREATE TABLE IF NOT EXISTS google_calendar_tokens (
+			user_id INTEGER PRIMARY KEY,
+			access_token TEXT NOT NULL,
+			refresh_token TEXT NOT NULL,
+			expires_at INTEGER NOT NULL,
+			scope TEXT NOT NULL,
+			token_type TEXT NOT NULL,
 			updated_at INTEGER NOT NULL,
 			FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 		);
@@ -346,6 +368,15 @@ function initDb() {
 	);
 	stmtUserSettingsUpsert = db.prepare(
 		"INSERT INTO user_settings(user_id, calendar_json, updated_at) VALUES(?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET calendar_json = excluded.calendar_json, updated_at = excluded.updated_at"
+	);
+	stmtGoogleTokenGet = db.prepare(
+		"SELECT access_token, refresh_token, expires_at, scope, token_type, updated_at FROM google_calendar_tokens WHERE user_id = ?"
+	);
+	stmtGoogleTokenUpsert = db.prepare(
+		"INSERT INTO google_calendar_tokens(user_id, access_token, refresh_token, expires_at, scope, token_type, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET access_token = excluded.access_token, refresh_token = excluded.refresh_token, expires_at = excluded.expires_at, scope = excluded.scope, token_type = excluded.token_type, updated_at = excluded.updated_at"
+	);
+	stmtGoogleTokenDelete = db.prepare(
+		"DELETE FROM google_calendar_tokens WHERE user_id = ?"
 	);
 }
 
@@ -1015,6 +1046,102 @@ function upsertUserSettings(userId, settings) {
 	return { calendar, updatedAt: now };
 }
 
+function googleConfigured() {
+	return Boolean(
+		GOOGLE_OAUTH_CLIENT_ID &&
+			GOOGLE_OAUTH_CLIENT_SECRET &&
+			GOOGLE_OAUTH_REDIRECT_URL
+	);
+}
+
+function makeGoogleState(email) {
+	const exp = Date.now() + 1000 * 60 * 10;
+	const payload = Buffer.from(
+		JSON.stringify({ email, exp, nonce: crypto.randomUUID() }),
+		"utf8"
+	).toString("base64url");
+	return `${payload}.${sign(payload)}`;
+}
+
+function parseGoogleState(state) {
+	const raw = String(state || "");
+	const [payload, sig] = raw.split(".");
+	if (!payload || !sig) return "";
+	if (sign(payload) !== sig) return "";
+	try {
+		const decoded = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+		if (!decoded || typeof decoded !== "object") return "";
+		if (typeof decoded.exp !== "number" || Date.now() > decoded.exp) return "";
+		return typeof decoded.email === "string" ? decoded.email : "";
+	} catch {
+		return "";
+	}
+}
+
+function getGoogleTokens(userId) {
+	initDb();
+	return stmtGoogleTokenGet.get(userId) || null;
+}
+
+function saveGoogleTokens(userId, token) {
+	initDb();
+	const now = Date.now();
+	stmtGoogleTokenUpsert.run(
+		userId,
+		String(token.access_token || ""),
+		String(token.refresh_token || ""),
+		Number(token.expires_at || 0),
+		String(token.scope || ""),
+		String(token.token_type || ""),
+		now
+	);
+}
+
+function deleteGoogleTokens(userId) {
+	initDb();
+	stmtGoogleTokenDelete.run(userId);
+}
+
+async function refreshGoogleAccessToken(refreshToken) {
+	const params = new URLSearchParams();
+	params.set("client_id", GOOGLE_OAUTH_CLIENT_ID);
+	params.set("client_secret", GOOGLE_OAUTH_CLIENT_SECRET);
+	params.set("refresh_token", refreshToken);
+	params.set("grant_type", "refresh_token");
+	const res = await fetch("https://oauth2.googleapis.com/token", {
+		method: "POST",
+		headers: { "Content-Type": "application/x-www-form-urlencoded" },
+		body: params.toString(),
+	});
+	if (!res.ok) throw new Error("refresh_failed");
+	const data = await res.json();
+	const expiresAt = Date.now() + Number(data.expires_in || 0) * 1000;
+	return {
+		access_token: data.access_token,
+		refresh_token: refreshToken,
+		expires_at: expiresAt,
+		scope: String(data.scope || ""),
+		token_type: String(data.token_type || "Bearer"),
+	};
+}
+
+async function getGoogleAccessToken(userId) {
+	const token = getGoogleTokens(userId);
+	if (!token) return null;
+	const now = Date.now();
+	if (Number(token.expires_at || 0) - now > 60_000) {
+		return token;
+	}
+	if (!token.refresh_token) return null;
+	try {
+		const refreshed = await refreshGoogleAccessToken(token.refresh_token);
+		saveGoogleTokens(userId, refreshed);
+		return refreshed;
+	} catch {
+		return null;
+	}
+}
+
 function saveLoginToken(token, email, exp) {
 	initDb();
 	stmtTokenInsert.run(token, email, exp);
@@ -1161,7 +1288,7 @@ function broadcast(roomKeyName, data, except) {
 	}
 }
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
 	const url = new URL(req.url || "/", `http://${req.headers.host}`);
 
 	// --- API: Personal Space + Notes ---
@@ -1169,6 +1296,245 @@ const server = http.createServer((req, res) => {
 		res.writeHead(204, { "Cache-Control": "no-store" });
 		res.end();
 		return;
+	}
+
+	if (url.pathname === "/api/calendar/google/status" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		if (!googleConfigured()) {
+			json(res, 200, { ok: true, configured: false, connected: false });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const token = await getGoogleAccessToken(userId);
+		json(res, 200, {
+			ok: true,
+			configured: true,
+			connected: Boolean(token && token.access_token),
+			email,
+		});
+		return;
+	}
+
+	if (url.pathname === "/api/calendar/google/auth" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		if (!googleConfigured()) {
+			json(res, 400, { ok: false, error: "not_configured" });
+			return;
+		}
+		const state = makeGoogleState(email);
+		const params = new URLSearchParams();
+		params.set("client_id", GOOGLE_OAUTH_CLIENT_ID);
+		params.set("redirect_uri", GOOGLE_OAUTH_REDIRECT_URL);
+		params.set("response_type", "code");
+		params.set("access_type", "offline");
+		params.set("prompt", "consent");
+		params.set("include_granted_scopes", "true");
+		params.set("scope", "https://www.googleapis.com/auth/calendar");
+		params.set("state", state);
+		redirect(
+			res,
+			`https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`
+		);
+		return;
+	}
+
+	if (url.pathname === "/api/calendar/google/callback" && req.method === "GET") {
+		if (!googleConfigured()) {
+			text(res, 400, "Google OAuth not configured.");
+			return;
+		}
+		const code = String(url.searchParams.get("code") || "").trim();
+		const state = String(url.searchParams.get("state") || "").trim();
+		const email = parseGoogleState(state);
+		if (!code || !email) {
+			text(res, 400, "Invalid OAuth callback.");
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const params = new URLSearchParams();
+		params.set("code", code);
+		params.set("client_id", GOOGLE_OAUTH_CLIENT_ID);
+		params.set("client_secret", GOOGLE_OAUTH_CLIENT_SECRET);
+		params.set("redirect_uri", GOOGLE_OAUTH_REDIRECT_URL);
+		params.set("grant_type", "authorization_code");
+		try {
+			const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
+				method: "POST",
+				headers: { "Content-Type": "application/x-www-form-urlencoded" },
+				body: params.toString(),
+			});
+			if (!tokenRes.ok) {
+				text(res, 400, "OAuth token exchange failed.");
+				return;
+			}
+			const data = await tokenRes.json();
+			const existing = getGoogleTokens(userId);
+			const refreshToken =
+				String(data.refresh_token || "").trim() ||
+				(existing ? String(existing.refresh_token || "") : "");
+			if (!refreshToken) {
+				text(res, 400, "Missing refresh token.");
+				return;
+			}
+			const expiresAt = Date.now() + Number(data.expires_in || 0) * 1000;
+			saveGoogleTokens(userId, {
+				access_token: data.access_token,
+				refresh_token: refreshToken,
+				expires_at: expiresAt,
+				scope: String(data.scope || ""),
+				token_type: String(data.token_type || "Bearer"),
+			});
+			redirect(res, "/?google=connected");
+			return;
+		} catch {
+			text(res, 500, "OAuth flow failed.");
+			return;
+		}
+	}
+
+	if (
+		url.pathname === "/api/calendar/google/disconnect" &&
+		req.method === "POST"
+	) {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		deleteGoogleTokens(userId);
+		json(res, 200, { ok: true });
+		return;
+	}
+
+	if (url.pathname === "/api/calendar/google/events" && req.method === "POST") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		if (!googleConfigured()) {
+			json(res, 400, { ok: false, error: "not_configured" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const token = await getGoogleAccessToken(userId);
+		if (!token || !token.access_token) {
+			json(res, 401, { ok: false, error: "not_connected" });
+			return;
+		}
+		const body = await readJson(req);
+		const title = String(body && body.title ? body.title : "").trim();
+		if (!title) {
+			json(res, 400, { ok: false, error: "missing_title" });
+			return;
+		}
+		const allDay = Boolean(body && body.allDay);
+		const location = String(body && body.location ? body.location : "").trim();
+		const timeZone = String(body && body.timeZone ? body.timeZone : "UTC");
+		const startIso = String(body && body.start ? body.start : "").trim();
+		const endIso = String(body && body.end ? body.end : "").trim();
+		const startDate = String(body && body.startDate ? body.startDate : "").trim();
+		const endDate = String(body && body.endDate ? body.endDate : "").trim();
+		if (allDay && (!startDate || !endDate)) {
+			json(res, 400, { ok: false, error: "missing_date" });
+			return;
+		}
+		if (!allDay && (!startIso || !endIso)) {
+			json(res, 400, { ok: false, error: "missing_time" });
+			return;
+		}
+		const payload = {
+			summary: title,
+			location: location || undefined,
+			start: allDay
+				? { date: startDate, timeZone }
+				: { dateTime: startIso, timeZone },
+			end: allDay
+				? { date: endDate, timeZone }
+				: { dateTime: endIso, timeZone },
+		};
+		try {
+			const apiRes = await fetch(
+				"https://www.googleapis.com/calendar/v3/calendars/primary/events",
+				{
+					method: "POST",
+					headers: {
+						Authorization: `Bearer ${token.access_token}`,
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify(payload),
+				}
+			);
+			if (!apiRes.ok) {
+				json(res, 502, { ok: false, error: "google_api_error" });
+				return;
+			}
+			const data = await apiRes.json();
+			json(res, 200, { ok: true, eventId: data && data.id ? data.id : "" });
+			return;
+		} catch {
+			json(res, 500, { ok: false, error: "google_api_failed" });
+			return;
+		}
+	}
+
+	if (
+		url.pathname.startsWith("/api/calendar/google/events/") &&
+		req.method === "DELETE"
+	) {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		if (!googleConfigured()) {
+			json(res, 400, { ok: false, error: "not_configured" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const token = await getGoogleAccessToken(userId);
+		if (!token || !token.access_token) {
+			json(res, 401, { ok: false, error: "not_connected" });
+			return;
+		}
+		const eventId = decodeURIComponent(
+			url.pathname.replace("/api/calendar/google/events/", "")
+		);
+		if (!eventId) {
+			json(res, 400, { ok: false, error: "missing_event_id" });
+			return;
+		}
+		try {
+			const apiRes = await fetch(
+				`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(
+					eventId
+				)}`,
+				{
+					method: "DELETE",
+					headers: {
+						Authorization: `Bearer ${token.access_token}`,
+					},
+				}
+			);
+			if (!apiRes.ok && apiRes.status !== 204) {
+				json(res, 502, { ok: false, error: "google_api_error" });
+				return;
+			}
+			json(res, 200, { ok: true });
+			return;
+		} catch {
+			json(res, 500, { ok: false, error: "google_api_failed" });
+			return;
+		}
 	}
 
 	if (url.pathname === "/api/calendar/ics" && req.method === "GET") {

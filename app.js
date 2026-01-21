@@ -264,6 +264,11 @@
 	const calendarFreeSlotsWrap = document.getElementById("calendarFreeSlotsWrap");
 	const calendarFreeSlots = document.getElementById("calendarFreeSlots");
 	const calendarAddEventBtn = document.getElementById("calendarAddEvent");
+	const calendarGoogleStatus = document.getElementById("calendarGoogleStatus");
+	const calendarGoogleConnect = document.getElementById("calendarGoogleConnect");
+	const calendarGoogleDisconnect = document.getElementById(
+		"calendarGoogleDisconnect"
+	);
 	const calendarViewButtons = document.querySelectorAll("[data-calendar-view]");
 	const calendarLocalEventsList = document.getElementById("calendarLocalEventsList");
 	const calendarLocalEventsEmpty = document.getElementById("calendarLocalEventsEmpty");
@@ -277,6 +282,9 @@
 	const calendarEventStart = document.getElementById("calendarEventStart");
 	const calendarEventEnd = document.getElementById("calendarEventEnd");
 	const calendarEventLocation = document.getElementById("calendarEventLocation");
+	const calendarEventGoogleSync = document.getElementById(
+		"calendarEventGoogleSync"
+	);
 	const calendarEventBackdrop = document.querySelector(
 		"[data-role=\"calendarEventBackdrop\"]"
 	);
@@ -4023,6 +4031,7 @@
 		}
 		if (target === "calendar") {
 			renderCalendarSettings();
+			fetchGoogleCalendarStatus();
 		}
 	}
 
@@ -8017,6 +8026,7 @@ self.onmessage = async (e) => {
 	let calendarSettingsSyncInFlight = false;
 	let calendarSettingsSyncQueued = false;
 	let calendarFreeSlotsVisible = true;
+	let googleCalendarConnected = false;
 	const calendarState = {
 		view: "month",
 		cursor: new Date(),
@@ -9012,13 +9022,17 @@ self.onmessage = async (e) => {
 				const timeLabel = evt.allDay
 					? "Ganztägig"
 					: `${formatTime(evt.start)} – ${formatTime(evt.end)}`;
+				const googleBadge = evt.googleEventId
+					? '<span class="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300">Google</span>'
+					: "";
 				return `
 					<div class="rounded-lg border border-white/10 bg-slate-950/30 p-2">
 						<div class="flex items-start justify-between gap-2">
 							<div class="min-w-0">
-								<div class="text-xs font-medium text-slate-100">${escapeHtml(
-									evt.title
-								)}</div>
+								<div class="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-100">
+									<span>${escapeHtml(evt.title)}</span>
+									${googleBadge}
+								</div>
 								<div class="text-[11px] text-slate-400">${dateLabel} · ${timeLabel}</div>
 							</div>
 							<button
@@ -9032,6 +9046,81 @@ self.onmessage = async (e) => {
 					</div>`;
 			})
 			.join("");
+	}
+
+	function setGoogleCalendarUi(connected, info) {
+		googleCalendarConnected = Boolean(connected);
+		if (calendarGoogleStatus) {
+			calendarGoogleStatus.textContent = connected
+				? `Verbunden${info ? ` (${info})` : ""}.`
+				: "Nicht verbunden.";
+		}
+		if (calendarGoogleConnect) {
+			calendarGoogleConnect.classList.toggle("hidden", connected);
+		}
+		if (calendarGoogleDisconnect) {
+			calendarGoogleDisconnect.classList.toggle("hidden", !connected);
+		}
+		if (calendarEventGoogleSync) {
+			calendarEventGoogleSync.disabled = !connected;
+			if (!connected) calendarEventGoogleSync.checked = false;
+		}
+	}
+
+	async function fetchGoogleCalendarStatus() {
+		if (!psState || !psState.authed) {
+			setGoogleCalendarUi(false);
+			return;
+		}
+		try {
+			const res = await api("/api/calendar/google/status");
+			if (!res || !res.configured) {
+				setGoogleCalendarUi(false);
+				if (calendarGoogleStatus) {
+					calendarGoogleStatus.textContent =
+						"Google Kalender ist nicht konfiguriert.";
+				}
+				return;
+			}
+			setGoogleCalendarUi(Boolean(res.connected), res.email || "");
+		} catch {
+			setGoogleCalendarUi(false);
+			if (calendarGoogleStatus) {
+				calendarGoogleStatus.textContent =
+					"Google Status nicht verfügbar.";
+			}
+		}
+	}
+
+	async function createGoogleCalendarEvent(evt) {
+		const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+		const startDate = evt.allDay ? formatDateInputValue(evt.start) : "";
+		const endDate = evt.allDay ? formatDateInputValue(evt.end) : "";
+		const payload = {
+			title: evt.title,
+			location: evt.location || "",
+			start: evt.start.toISOString(),
+			end: evt.end.toISOString(),
+			allDay: Boolean(evt.allDay),
+			startDate,
+			endDate,
+			timeZone: timezone,
+		};
+		return api("/api/calendar/google/events", {
+			method: "POST",
+			body: JSON.stringify(payload),
+		});
+	}
+
+	async function deleteGoogleCalendarEvent(eventId) {
+		if (!eventId) return;
+		try {
+			await api(`/api/calendar/google/events/${encodeURIComponent(eventId)}`, {
+				method: "DELETE",
+			});
+		} catch {
+			// ignore
+		}
 	}
 
 	function setCalendarPanelActive(active) {
@@ -9202,7 +9291,8 @@ self.onmessage = async (e) => {
 		if (!start || !end) return null;
 		const allDay = Boolean(it.allDay);
 		const location = String(it.location || "").trim();
-		return { id, title, start, end, allDay, location };
+		const googleEventId = String(it.googleEventId || "").trim();
+		return { id, title, start, end, allDay, location, googleEventId };
 	}
 
 	function serializeLocalCalendarEvent(evt) {
@@ -9213,6 +9303,7 @@ self.onmessage = async (e) => {
 			end: evt.end.toISOString(),
 			allDay: Boolean(evt.allDay),
 			location: evt.location || "",
+			googleEventId: evt.googleEventId || "",
 		};
 	}
 
@@ -9819,6 +9910,10 @@ self.onmessage = async (e) => {
 		if (calendarEventAllDay) calendarEventAllDay.checked = false;
 		if (calendarEventStart) calendarEventStart.value = "09:00";
 		if (calendarEventEnd) calendarEventEnd.value = "10:00";
+		if (calendarEventGoogleSync) {
+			calendarEventGoogleSync.disabled = !googleCalendarConnected;
+			calendarEventGoogleSync.checked = googleCalendarConnected;
+		}
 		updateCalendarEventTimeState();
 		setTimeout(() => {
 			if (calendarEventName) calendarEventName.focus();
@@ -9836,6 +9931,59 @@ self.onmessage = async (e) => {
 		const allDay = Boolean(calendarEventAllDay && calendarEventAllDay.checked);
 		if (calendarEventStart) calendarEventStart.disabled = allDay;
 		if (calendarEventEnd) calendarEventEnd.disabled = allDay;
+	}
+
+	function buildLocalEventFromModal() {
+		const title = String(calendarEventName ? calendarEventName.value : "").trim();
+		if (!title) {
+			toast("Bitte einen Titel angeben.", "error");
+			return null;
+		}
+		const dateStr = String(calendarEventDate ? calendarEventDate.value : "").trim();
+		if (!dateStr) {
+			toast("Bitte ein Datum auswählen.", "error");
+			return null;
+		}
+		const allDay = Boolean(calendarEventAllDay && calendarEventAllDay.checked);
+		const location = String(
+			calendarEventLocation ? calendarEventLocation.value : ""
+		).trim();
+		let start;
+		let end;
+		if (allDay) {
+			const [y, m, d] = dateStr.split("-").map((v) => Number(v));
+			start = new Date(y, m - 1, d, 0, 0, 0);
+			end = addDays(start, 1);
+		} else {
+			const startTime = String(
+				calendarEventStart ? calendarEventStart.value : ""
+			).trim();
+			const endTime = String(
+				calendarEventEnd ? calendarEventEnd.value : ""
+			).trim();
+			if (!startTime || !endTime) {
+				toast("Bitte Start- und Endzeit angeben.", "error");
+				return null;
+			}
+			const [y, m, d] = dateStr.split("-").map((v) => Number(v));
+			const [sh, sm] = startTime.split(":").map((v) => Number(v));
+			const [eh, em] = endTime.split(":").map((v) => Number(v));
+			start = new Date(y, m - 1, d, sh, sm || 0, 0);
+			end = new Date(y, m - 1, d, eh, em || 0, 0);
+			if (!(end > start)) {
+				toast("Ende muss nach Start liegen.", "error");
+				return null;
+			}
+		}
+		return {
+			id: createClientId(),
+			title,
+			start,
+			end,
+			allDay,
+			location,
+			googleEventId: "",
+		};
 	}
 
 	function addLocalCalendarEvent(evt) {
@@ -12642,6 +12790,88 @@ self.onmessage = async (e) => {
 	if (calendarOpenSettingsBtn) {
 		calendarOpenSettingsBtn.addEventListener("click", () => {
 			openSettingsAt("calendar");
+		});
+	}
+	if (calendarAddEventBtn) {
+		calendarAddEventBtn.addEventListener("click", () => {
+			openCalendarEventModal(calendarState.cursor || new Date());
+		});
+	}
+	if (calendarEventClose) {
+		calendarEventClose.addEventListener("click", () => {
+			closeCalendarEventModal();
+		});
+	}
+	if (calendarEventCancel) {
+		calendarEventCancel.addEventListener("click", () => {
+			closeCalendarEventModal();
+		});
+	}
+	if (calendarEventBackdrop) {
+		calendarEventBackdrop.addEventListener("click", () => {
+			closeCalendarEventModal();
+		});
+	}
+	if (calendarEventAllDay) {
+		calendarEventAllDay.addEventListener("change", () => {
+			updateCalendarEventTimeState();
+		});
+	}
+	if (calendarEventSave) {
+		calendarEventSave.addEventListener("click", async () => {
+			const evt = buildLocalEventFromModal();
+			if (!evt) return;
+			closeCalendarEventModal();
+			const shouldSync = Boolean(
+				calendarEventGoogleSync && calendarEventGoogleSync.checked
+			);
+			if (shouldSync) {
+				try {
+					const res = await createGoogleCalendarEvent(evt);
+					if (res && res.eventId) {
+						evt.googleEventId = String(res.eventId || "");
+					}
+				} catch {
+					toast("Google Sync fehlgeschlagen.", "error");
+				}
+			}
+			addLocalCalendarEvent(evt);
+		});
+	}
+	if (calendarGoogleConnect) {
+		calendarGoogleConnect.addEventListener("click", () => {
+			window.location.href = "/api/calendar/google/auth";
+		});
+	}
+	if (calendarGoogleDisconnect) {
+		calendarGoogleDisconnect.addEventListener("click", async () => {
+			try {
+				await api("/api/calendar/google/disconnect", { method: "POST" });
+				setGoogleCalendarUi(false);
+				toast("Google Kalender getrennt.", "success");
+			} catch {
+				toast("Trennen fehlgeschlagen.", "error");
+			}
+		});
+	}
+	if (calendarLocalEventsList) {
+		calendarLocalEventsList.addEventListener("click", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLElement)) return;
+			const btn = target.closest("[data-local-event-remove]");
+			if (!btn) return;
+			const id = String(btn.getAttribute("data-local-event-id") || "");
+			if (!id) return;
+			const list = Array.isArray(calendarState.localEvents)
+				? calendarState.localEvents.slice()
+				: [];
+			const idx = list.findIndex((evt) => evt.id === id);
+			if (idx < 0) return;
+			const [removed] = list.splice(idx, 1);
+			saveLocalCalendarEvents(list);
+			if (removed && removed.googleEventId && googleCalendarConnected) {
+				deleteGoogleCalendarEvent(removed.googleEventId);
+			}
 		});
 	}
 	if (calendarFreeToggle) {
