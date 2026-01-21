@@ -3580,12 +3580,7 @@
 	}
 
 	function loadAiUseAnswer() {
-		try {
-			const raw = localStorage.getItem(AI_USE_ANSWER_KEY);
-			aiUseAnswer = raw === null ? true : raw !== "0";
-		} catch {
-			aiUseAnswer = true;
-		}
+		aiUseAnswer = true;
 		setAiUseAnswerUi(aiUseAnswer);
 	}
 
@@ -4068,9 +4063,9 @@
 	}
 
 	function saveAiUseAnswer(next) {
-		aiUseAnswer = Boolean(next);
+		aiUseAnswer = true;
 		try {
-			localStorage.setItem(AI_USE_ANSWER_KEY, aiUseAnswer ? "1" : "0");
+			localStorage.setItem(AI_USE_ANSWER_KEY, "1");
 		} catch {
 			// ignore
 		}
@@ -4446,7 +4441,7 @@
 	}
 
 	function getAiUseAnswer() {
-		return aiUseAnswer;
+		return true;
 	}
 
 	function setAiUsePreviewUi(active) {
