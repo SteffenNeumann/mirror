@@ -13263,14 +13263,21 @@ self.onmessage = async (e) => {
 		psList.addEventListener("click", async (ev) => {
 			const target = ev && ev.target ? ev.target : null;
 			if (!(target instanceof HTMLElement)) return;
+			const pinBtn = target.closest('[data-action="pin"]');
 			const delBtn = target.closest('[data-action="delete"]');
-			if (!delBtn) return;
-			const row = delBtn.closest("[data-note-id]");
+			if (!pinBtn && !delBtn) return;
+			const row = (pinBtn || delBtn).closest("[data-note-id]");
 			if (!row) return;
 			ev.preventDefault();
 			ev.stopPropagation();
 			const id = row.getAttribute("data-note-id") || "";
 			if (!id) return;
+			if (pinBtn) {
+				const note = findNoteById(id);
+				if (!note) return;
+				await togglePinnedForNote(note);
+				return;
+			}
 			try {
 				await api(`/api/notes/${encodeURIComponent(id)}`, {
 					method: "DELETE",
