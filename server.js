@@ -1006,11 +1006,19 @@ function sanitizeCalendarSettings(input) {
 			};
 		})
 		.filter(Boolean);
+	const googleCalendarId = String(safe.googleCalendarId || "")
+		.trim()
+		.slice(0, 256);
 	const rawView = String(safe.defaultView || "").trim();
 	const defaultView = ["day", "week", "month"].includes(rawView)
 		? rawView
 		: "month";
-	return { sources, defaultView, localEvents };
+	return {
+		sources,
+		defaultView,
+		localEvents,
+		googleCalendarId: googleCalendarId || "primary",
+	};
 }
 
 function parseCalendarJson(raw) {
@@ -1030,7 +1038,9 @@ function getUserSettings(userId) {
 	if (!row) return null;
 	const calendar = parseCalendarJson(row.calendar_json);
 	return {
-		calendar: calendar || { sources: [], defaultView: "month", localEvents: [] },
+		calendar:
+			calendar ||
+			{ sources: [], defaultView: "month", localEvents: [], googleCalendarId: "primary" },
 		updatedAt: Number(row.updated_at) || 0,
 	};
 }
@@ -1040,7 +1050,8 @@ function upsertUserSettings(userId, settings) {
 	const now = Date.now();
 	const calendar = sanitizeCalendarSettings(settings && settings.calendar);
 	const calendarJson = JSON.stringify(
-		calendar || { sources: [], defaultView: "month", localEvents: [] }
+		calendar ||
+			{ sources: [], defaultView: "month", localEvents: [], googleCalendarId: "primary" }
 	);
 	stmtUserSettingsUpsert.run(userId, calendarJson, now);
 	return { calendar, updatedAt: now };
@@ -1100,6 +1111,13 @@ function saveGoogleTokens(userId, token) {
 function deleteGoogleTokens(userId) {
 	initDb();
 	stmtGoogleTokenDelete.run(userId);
+}
+
+function getGoogleCalendarIdForUser(userId) {
+	const settings = getUserSettings(userId);
+	const id = settings && settings.calendar ? settings.calendar.googleCalendarId : "";
+	const safe = String(id || "primary").trim() || "primary";
+	return safe.slice(0, 256);
 }
 
 async function refreshGoogleAccessToken(refreshToken) {
@@ -1315,8 +1333,58 @@ const server = http.createServer(async (req, res) => {
 			configured: true,
 			connected: Boolean(token && token.access_token),
 			email,
+			calendarId: getGoogleCalendarIdForUser(userId),
 		});
 		return;
+	}
+
+	if (
+		url.pathname === "/api/calendar/google/calendars" &&
+		req.method === "GET"
+	) {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		if (!googleConfigured()) {
+			json(res, 400, { ok: false, error: "not_configured" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const token = await getGoogleAccessToken(userId);
+		if (!token || !token.access_token) {
+			json(res, 401, { ok: false, error: "not_connected" });
+			return;
+		}
+		try {
+			const apiRes = await fetch(
+				"https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=250",
+				{
+					headers: {
+						Authorization: `Bearer ${token.access_token}`,
+					},
+				}
+			);
+			if (!apiRes.ok) {
+				json(res, 502, { ok: false, error: "google_api_error" });
+				return;
+			}
+			const data = await apiRes.json();
+			const calendars = Array.isArray(data && data.items)
+				? data.items.map((item) => ({
+						id: String(item.id || "").trim(),
+						summary: String(item.summary || "").trim(),
+						primary: Boolean(item.primary),
+						accessRole: String(item.accessRole || "").trim(),
+					}))
+				: [];
+			json(res, 200, { ok: true, calendars });
+			return;
+		} catch {
+			json(res, 500, { ok: false, error: "google_api_failed" });
+			return;
+		}
 	}
 
 	if (url.pathname === "/api/calendar/google/auth" && req.method === "GET") {
@@ -1431,6 +1499,7 @@ const server = http.createServer(async (req, res) => {
 			json(res, 401, { ok: false, error: "not_connected" });
 			return;
 		}
+		const calendarId = getGoogleCalendarIdForUser(userId);
 		const body = await readJson(req);
 		const title = String(body && body.title ? body.title : "").trim();
 		if (!title) {
@@ -1464,7 +1533,9 @@ const server = http.createServer(async (req, res) => {
 		};
 		try {
 			const apiRes = await fetch(
-				"https://www.googleapis.com/calendar/v3/calendars/primary/events",
+				`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(
+					calendarId
+				)}/events`,
 				{
 					method: "POST",
 					headers: {
@@ -1506,6 +1577,7 @@ const server = http.createServer(async (req, res) => {
 			json(res, 401, { ok: false, error: "not_connected" });
 			return;
 		}
+		const calendarId = getGoogleCalendarIdForUser(userId);
 		const eventId = decodeURIComponent(
 			url.pathname.replace("/api/calendar/google/events/", "")
 		);
@@ -1515,7 +1587,9 @@ const server = http.createServer(async (req, res) => {
 		}
 		try {
 			const apiRes = await fetch(
-				`https://www.googleapis.com/calendar/v3/calendars/primary/events/${encodeURIComponent(
+				`https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(
+					calendarId
+				)}/events/${encodeURIComponent(
 					eventId
 				)}`,
 				{

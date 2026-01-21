@@ -265,6 +265,7 @@
 	const calendarFreeSlots = document.getElementById("calendarFreeSlots");
 	const calendarAddEventBtn = document.getElementById("calendarAddEvent");
 	const calendarGoogleStatus = document.getElementById("calendarGoogleStatus");
+	const calendarGoogleSelect = document.getElementById("calendarGoogleSelect");
 	const calendarGoogleConnect = document.getElementById("calendarGoogleConnect");
 	const calendarGoogleDisconnect = document.getElementById(
 		"calendarGoogleDisconnect"
@@ -8012,6 +8013,7 @@ self.onmessage = async (e) => {
 	const CALENDAR_LOCAL_EVENTS_KEY = "mirror_calendar_local_events_v1";
 	const CALENDAR_DEFAULT_VIEW_KEY = "mirror_calendar_default_view_v1";
 	const CALENDAR_FREE_SLOTS_KEY = "mirror_calendar_free_slots_v1";
+	const CALENDAR_GOOGLE_CAL_ID_KEY = "mirror_calendar_google_id_v1";
 	const CALENDAR_VIEWS = ["day", "week", "month"];
 	const CALENDAR_SETTINGS_SYNC_DELAY = 1200;
 	const CALENDAR_WORK_START_HOUR = 9;
@@ -8035,6 +8037,7 @@ self.onmessage = async (e) => {
 	let calendarSettingsSyncQueued = false;
 	let calendarFreeSlotsVisible = true;
 	let googleCalendarConnected = false;
+	let googleCalendarList = [];
 	const calendarState = {
 		view: "month",
 		cursor: new Date(),
@@ -8850,6 +8853,7 @@ self.onmessage = async (e) => {
 			sources: loadCalendarSources(),
 			defaultView: loadCalendarDefaultView(),
 			localEvents: loadLocalCalendarEventsRaw(),
+			googleCalendarId: loadCalendarGoogleId(),
 		};
 	}
 
@@ -8858,6 +8862,7 @@ self.onmessage = async (e) => {
 		const hasSources = Array.isArray(calendar.sources);
 		const hasView = CALENDAR_VIEWS.includes(calendar.defaultView);
 		const hasLocalEvents = Array.isArray(calendar.localEvents);
+		const hasGoogleCalendarId = typeof calendar.googleCalendarId === "string";
 		if (hasSources) saveCalendarSources(calendar.sources, { skipSync: true });
 		if (hasView) {
 			saveCalendarDefaultView(calendar.defaultView, {
@@ -8871,12 +8876,18 @@ self.onmessage = async (e) => {
 				skipRender: true,
 			});
 		}
-		if (hasSources || hasView || hasLocalEvents) {
+		if (hasGoogleCalendarId) {
+			saveCalendarGoogleId(calendar.googleCalendarId, {
+				skipSync: true,
+				skipRender: true,
+			});
+		}
+		if (hasSources || hasView || hasLocalEvents || hasGoogleCalendarId) {
 			renderCalendarSettings();
 			scheduleCalendarRefresh();
 			if (!(opts && opts.skipRender)) renderCalendarPanel();
 		}
-		return hasSources || hasView || hasLocalEvents;
+		return hasSources || hasView || hasLocalEvents || hasGoogleCalendarId;
 	}
 
 	async function syncCalendarSettingsToServer(calendar) {
@@ -9005,6 +9016,33 @@ self.onmessage = async (e) => {
 			})
 			.join("");
 		renderCalendarLocalEvents();
+		renderCalendarGoogleSelect();
+	}
+
+	function renderCalendarGoogleSelect() {
+		if (!calendarGoogleSelect) return;
+		const selected = loadCalendarGoogleId();
+		const list = Array.isArray(googleCalendarList)
+			? googleCalendarList.slice()
+			: [];
+		const usable = list.filter(
+			(item) => item.accessRole === "owner" || item.accessRole === "writer"
+		);
+		const entries = usable.length
+			? usable
+			: [{ id: "primary", summary: "Primary", primary: true }];
+		calendarGoogleSelect.innerHTML = entries
+			.map((item) => {
+				const label = item.primary
+					? `${item.summary || "Primary"} (primary)`
+					: item.summary || item.id;
+				const value = item.id || "primary";
+				return `<option value="${escapeAttr(value)}">${escapeHtml(
+					label
+				)}</option>`;
+			})
+			.join("");
+		calendarGoogleSelect.value = selected;
 	}
 
 	function renderCalendarLocalEvents() {
@@ -9063,6 +9101,9 @@ self.onmessage = async (e) => {
 				? `Verbunden${info ? ` (${info})` : ""}.`
 				: "Nicht verbunden.";
 		}
+		if (calendarGoogleSelect) {
+			calendarGoogleSelect.disabled = !connected;
+		}
 		if (calendarGoogleConnect) {
 			calendarGoogleConnect.classList.toggle("hidden", connected);
 		}
@@ -9072,6 +9113,24 @@ self.onmessage = async (e) => {
 		if (calendarEventGoogleSync) {
 			calendarEventGoogleSync.disabled = !connected;
 			if (!connected) calendarEventGoogleSync.checked = false;
+		}
+		if (!connected) {
+			googleCalendarList = [];
+			renderCalendarGoogleSelect();
+		}
+	}
+
+	async function fetchGoogleCalendarList() {
+		if (!psState || !psState.authed) return;
+		try {
+			const res = await api("/api/calendar/google/calendars");
+			googleCalendarList = Array.isArray(res && res.calendars)
+				? res.calendars
+				: [];
+			renderCalendarGoogleSelect();
+		} catch {
+			googleCalendarList = [];
+			renderCalendarGoogleSelect();
 		}
 	}
 
@@ -9091,6 +9150,15 @@ self.onmessage = async (e) => {
 				return;
 			}
 			setGoogleCalendarUi(Boolean(res.connected), res.email || "");
+			if (res && res.calendarId) {
+				saveCalendarGoogleId(res.calendarId, {
+					skipSync: true,
+					skipRender: true,
+				});
+			}
+			if (res.connected) {
+				await fetchGoogleCalendarList();
+			}
 		} catch {
 			setGoogleCalendarUi(false);
 			if (calendarGoogleStatus) {
@@ -9347,6 +9415,32 @@ self.onmessage = async (e) => {
 		if (!(opts && opts.skipRender)) {
 			renderCalendarSettings();
 			renderCalendarPanel();
+		}
+		if (!(opts && opts.skipSync)) {
+			scheduleCalendarSettingsSync();
+		}
+	}
+
+	function loadCalendarGoogleId() {
+		try {
+			const raw = String(
+				localStorage.getItem(CALENDAR_GOOGLE_CAL_ID_KEY) || "primary"
+			).trim();
+			return raw || "primary";
+		} catch {
+			return "primary";
+		}
+	}
+
+	function saveCalendarGoogleId(id, opts) {
+		const safe = String(id || "primary").trim() || "primary";
+		try {
+			localStorage.setItem(CALENDAR_GOOGLE_CAL_ID_KEY, safe);
+		} catch {
+			// ignore
+		}
+		if (!(opts && opts.skipRender)) {
+			renderCalendarSettings();
 		}
 		if (!(opts && opts.skipSync)) {
 			scheduleCalendarSettingsSync();
@@ -12860,6 +12954,11 @@ self.onmessage = async (e) => {
 			} catch {
 				toast("Trennen fehlgeschlagen.", "error");
 			}
+		});
+	}
+	if (calendarGoogleSelect) {
+		calendarGoogleSelect.addEventListener("change", () => {
+			saveCalendarGoogleId(calendarGoogleSelect.value || "primary");
 		});
 	}
 	if (calendarLocalEventsList) {
