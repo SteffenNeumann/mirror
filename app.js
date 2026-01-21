@@ -7130,6 +7130,9 @@
 		psAutoSaveLastSavedNoteId = psEditingNoteId;
 		psAutoSaveLastSavedText = String(textarea.value || "");
 		setPsAutoSaveStatus("");
+		if (room && key && !(opts && opts.skipText)) {
+			updateRoomTabTextLocal(room, key, textarea.value);
+		}
 		if (!(opts && opts.skipText)) {
 			updatePreview();
 			updatePasswordMaskOverlay();
