@@ -6466,6 +6466,8 @@
 			// ignore
 		}
 		updatePreview();
+		const noteId = getActiveRoomTabNoteId();
+		if (noteId) updateLocalNoteText(noteId, textarea.value);
 		schedulePsAutoSave();
 		scheduleSend();
 		return true;
@@ -8922,6 +8924,28 @@ self.onmessage = async (e) => {
 			return { ...t, text, noteId: targetId };
 		});
 		if (changed) saveRoomTabs(nextTabs);
+	}
+
+	function updateLocalNoteText(noteId, textVal) {
+		const targetId = String(noteId || "").trim();
+		if (!targetId) return;
+		if (!psState || !Array.isArray(psState.notes)) return;
+		const idx = psState.notes.findIndex(
+			(n) => String(n && n.id ? n.id : "") === targetId
+		);
+		if (idx < 0) return;
+		const text = String(textVal ?? "");
+		const base = psState.notes[idx];
+		const updated = {
+			...base,
+			text,
+			updatedAt: Date.now(),
+		};
+		psState.notes = [
+			...psState.notes.slice(0, idx),
+			updated,
+			...psState.notes.slice(idx + 1),
+		];
 	}
 
 	function upsertFavoriteInState(entry) {
@@ -12231,6 +12255,7 @@ self.onmessage = async (e) => {
 		scheduleSelectionSend();
 		const noteId = getActiveRoomTabNoteId();
 		updateRoomTabTextLocal(room, key, textarea.value);
+		if (noteId) updateLocalNoteText(noteId, textarea.value);
 		scheduleRoomTabSync({
 			room,
 			key,
