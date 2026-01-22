@@ -6802,11 +6802,11 @@
 		if (!psTagsActiveInfo) return;
 		const active = Array.from(psActiveTags || []).filter(Boolean);
 		if (!active.length) {
-			psTagsActiveInfo.textContent = "Aktiv: Alle";
-			psTagsActiveInfo.title = "Aktiv: Alle";
+			psTagsActiveInfo.textContent = "Alle";
+			psTagsActiveInfo.title = "Alle";
 			return;
 		}
-		const label = `Aktiv: ${active.map((t) => `#${t}`).join(", ")}`;
+		const label = active.map((t) => `#${t}`).join(", ");
 		psTagsActiveInfo.textContent = label;
 		psTagsActiveInfo.title = label;
 	}
