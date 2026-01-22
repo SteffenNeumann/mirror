@@ -12760,7 +12760,24 @@ self.onmessage = async (e) => {
 			if (note) {
 				applyNoteToEditor(note, null, { skipHistory: true });
 			} else {
-				textarea.value = nextText;
+				if (cachedNoteId) {
+					psEditingNoteId = cachedNoteId;
+					if (psMainHint) {
+						psMainHint.classList.remove("hidden");
+						psMainHint.textContent = "Loading…";
+					}
+					const targetRoom = room;
+					const targetKey = key;
+					void refreshPersonalSpace().then(() => {
+						if (room !== targetRoom || key !== targetKey) return;
+						const refreshed = findNoteById(cachedNoteId);
+						if (refreshed) {
+							applyNoteToEditor(refreshed, null, { skipHistory: true });
+						}
+					});
+				} else {
+					textarea.value = nextText;
+				}
 			}
 			lastLocalText = textarea.value;
 			metaLeft.textContent = note ? "Room geladen (Note)." : "Room geladen (lokal).";
