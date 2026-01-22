@@ -7204,6 +7204,9 @@
 		psAutoSaveLastSavedNoteId = psEditingNoteId;
 		psAutoSaveLastSavedText = String(textarea.value || "");
 		setPsAutoSaveStatus("");
+		if (room && key) {
+			setRoomTabNoteId(room, key, psEditingNoteId);
+		}
 		if (room && key && !(opts && opts.skipText)) {
 			updateRoomTabTextLocal(room, key, textarea.value);
 		}
@@ -8924,6 +8927,31 @@ self.onmessage = async (e) => {
 			return { ...t, text, noteId: targetId };
 		});
 		if (changed) saveRoomTabs(nextTabs);
+	}
+
+	function setRoomTabNoteId(roomName, keyName, noteId) {
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		const nextId = String(noteId || "").trim();
+		if (!nextRoom || !nextId) return;
+		const tabs = dedupeRoomTabs(loadRoomTabs());
+		const idx = tabs.findIndex(
+			(t) => t.room === nextRoom && t.key === nextKey
+		);
+		const entry = {
+			room: nextRoom,
+			key: nextKey,
+			lastUsed: Date.now(),
+			noteId: nextId,
+			text: "",
+		};
+		if (idx >= 0) {
+			tabs.splice(idx, 1, { ...tabs[idx], ...entry });
+		} else {
+			if (tabs.length >= MAX_ROOM_TABS) return;
+			tabs.push(entry);
+		}
+		saveRoomTabs(tabs);
 	}
 
 	function updateLocalNoteText(noteId, textVal) {
