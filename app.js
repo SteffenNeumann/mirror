@@ -7549,6 +7549,14 @@
 					setPsNoteSelected(id, !psSelectedNoteIds.has(id));
 					return;
 				}
+				const existingTab = findRoomTabByNoteId(id);
+				if (
+					existingTab &&
+					!(existingTab.room === room && existingTab.key === key)
+				) {
+					goToRoomWithKey(existingTab.room, existingTab.key);
+					return;
+				}
 				const note = byId.get(id);
 				if (!note) return;
 				applyNoteToEditor(note, items);
@@ -8952,6 +8960,16 @@ self.onmessage = async (e) => {
 			tabs.push(entry);
 		}
 		saveRoomTabs(tabs);
+	}
+
+	function findRoomTabByNoteId(noteId) {
+		const targetId = String(noteId || "").trim();
+		if (!targetId) return null;
+		return (
+			loadRoomTabs().find(
+				(t) => String(t && t.noteId ? t.noteId : "") === targetId
+			) || null
+		);
 	}
 
 	function updateLocalNoteText(noteId, textVal) {
