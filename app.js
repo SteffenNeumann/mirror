@@ -148,6 +148,7 @@
 	const psEmail = document.getElementById("psEmail");
 	const psToggleTags = document.getElementById("psToggleTags");
 	const psTagControls = document.getElementById("psTagControls");
+	const psTagsActiveInfo = document.getElementById("psTagsActiveInfo");
 	const psTagsPanel = document.getElementById("psTagsPanel");
 	const psTags = document.getElementById("psTags");
 	const psTagFilterModeSelect = document.getElementById("psTagFilterMode");
@@ -6797,12 +6798,26 @@
 		await updateNotesForTagChange(current, normalized);
 	}
 
+	function updatePsTagsActiveInfo() {
+		if (!psTagsActiveInfo) return;
+		const active = Array.from(psActiveTags || []).filter(Boolean);
+		if (!active.length) {
+			psTagsActiveInfo.textContent = "Aktiv: Alle";
+			psTagsActiveInfo.title = "Aktiv: Alle";
+			return;
+		}
+		const label = `Aktiv: ${active.map((t) => `#${t}`).join(", ")}`;
+		psTagsActiveInfo.textContent = label;
+		psTagsActiveInfo.title = label;
+	}
+
 	function renderPsTags(tags) {
 		if (!psTags) return;
 		const safeTags = Array.isArray(tags) ? tags : [];
 		const visibleTags = safeTags.filter(
 			(t) => String(t || "") !== PS_PINNED_TAG
 		);
+		updatePsTagsActiveInfo();
 		const allBtn = {
 			tag: "",
 			label: "All",

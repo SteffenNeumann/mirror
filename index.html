@@ -104,24 +104,27 @@
 
 						<div class="mt-4">
 							<div class="flex items-center justify-between gap-2">
-								<button
-									id="psToggleTags"
-									type="button"
-									class="inline-flex items-center gap-1 text-xs font-medium text-slate-200 transition hover:text-slate-100"
-									aria-expanded="true">
-									<span>Tags</span>
-									<svg
-										data-role="chevron"
-										viewBox="0 0 24 24"
-										fill="none"
-										stroke="currentColor"
-										stroke-width="2"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										class="h-4 w-4 text-slate-400 transition-transform">
-										<path d="M6 9l6 6 6-6" />
-									</svg>
-								</button>
+								<div class="flex items-center gap-2">
+									<button
+										id="psToggleTags"
+										type="button"
+										class="inline-flex items-center gap-1 text-xs font-medium text-slate-200 transition hover:text-slate-100"
+										aria-expanded="true">
+										<span>Tags</span>
+										<svg
+											data-role="chevron"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											class="h-4 w-4 text-slate-400 transition-transform">
+											<path d="M6 9l6 6 6-6" />
+										</svg>
+									</button>
+									<span id="psTagsActiveInfo" class="text-[11px] text-slate-400"></span>
+								</div>
 								<div id="psTagControls" class="flex items-center gap-2">
 									<select
 										id="psTagFilterMode"
