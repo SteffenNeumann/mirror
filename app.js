@@ -226,7 +226,8 @@
 	const settingsClose = document.getElementById("settingsClose");
 	const settingsNavButtons = document.querySelectorAll("[data-settings-nav]");
 	const settingsSections = document.querySelectorAll("[data-settings-section]");
-	const settingsThemeSelect = document.getElementById("settingsTheme");
+	const settingsThemeList = document.getElementById("settingsThemeList");
+	const settingsGlowToggle = document.getElementById("settingsGlowToggle");
 	const mobileAutoNoteSecondsInput = document.getElementById(
 		"mobileAutoNoteSeconds"
 	);
@@ -3391,6 +3392,7 @@
 	const AI_API_KEY_KEY = "mirror_ai_api_key";
 	const AI_API_MODEL_KEY = "mirror_ai_api_model";
 	const THEME_KEY = "mirror_theme";
+	const GLOW_ENABLED_KEY = "mirror_glow_enabled";
 	const MOBILE_AUTO_NOTE_SECONDS_KEY = "mirror_mobile_auto_note_seconds";
 	const MOBILE_LAST_ACTIVE_KEY = "mirror_mobile_last_active";
 	let aiPrompt = "";
@@ -3401,6 +3403,7 @@
 	let settingsOpen = false;
 	let settingsSection = "user";
 	let activeTheme = "fuchsia";
+	let glowEnabled = true;
 	let mobileAutoNoteSeconds = 0;
 	let mobileAutoNoteChecked = false;
 	let psAutoBackupEnabled = false;
@@ -3560,6 +3563,75 @@
 			accentRingStrong: "rgba(124, 58, 237, 0.4)",
 		},
 	};
+
+	function renderThemeList() {
+		if (!settingsThemeList) return;
+		settingsThemeList.innerHTML = "";
+		Object.entries(THEMES).forEach(([key, theme]) => {
+			const btn = document.createElement("button");
+			const top = theme.top || theme.accentBg || "rgba(148, 163, 184, 0.4)";
+			const bottom =
+				theme.bottom || theme.accentBgSoft || theme.accentBg || "rgba(148, 163, 184, 0.2)";
+			btn.type = "button";
+			btn.className =
+				"theme-option flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-xs text-slate-200 transition hover:bg-white/10";
+			btn.setAttribute("data-theme", key);
+			btn.setAttribute("aria-pressed", "false");
+			btn.innerHTML = `<span class="theme-swatch" style="--swatch-top: ${top}; --swatch-bottom: ${bottom};"></span><span>${
+				theme.label || key
+			}</span>`;
+			settingsThemeList.appendChild(btn);
+		});
+		syncThemeListActive();
+	}
+
+	function syncThemeListActive() {
+		if (!settingsThemeList) return;
+		const buttons = settingsThemeList.querySelectorAll("[data-theme]");
+		buttons.forEach((btn) => {
+			const themeName = btn.getAttribute("data-theme");
+			const active = themeName === activeTheme;
+			btn.setAttribute("aria-pressed", active ? "true" : "false");
+			btn.classList.toggle("bg-white/10", active);
+			btn.classList.toggle("ring-2", active);
+			btn.classList.toggle("ring-fuchsia-400/40", active);
+			btn.classList.toggle("border-fuchsia-300/40", active);
+		});
+	}
+
+	function loadGlowEnabled() {
+		try {
+			const raw = localStorage.getItem(GLOW_ENABLED_KEY);
+			glowEnabled = raw === null ? true : raw === "1";
+		} catch {
+			glowEnabled = true;
+		}
+		applyGlowEnabled();
+	}
+
+	function applyGlowEnabled() {
+		document.body.classList.toggle("glow-disabled", !glowEnabled);
+		if (settingsGlowToggle) {
+			settingsGlowToggle.setAttribute(
+				"aria-pressed",
+				glowEnabled ? "true" : "false"
+			);
+			settingsGlowToggle.textContent = glowEnabled ? "Glow on" : "Glow off";
+			settingsGlowToggle.classList.toggle("bg-fuchsia-500/20", glowEnabled);
+			settingsGlowToggle.classList.toggle("text-fuchsia-100", glowEnabled);
+			settingsGlowToggle.classList.toggle("bg-white/5", !glowEnabled);
+		}
+	}
+
+	function saveGlowEnabled(next) {
+		glowEnabled = Boolean(next);
+		try {
+			localStorage.setItem(GLOW_ENABLED_KEY, glowEnabled ? "1" : "0");
+		} catch {
+			// ignore
+		}
+		applyGlowEnabled();
+	}
 
 	function loadAiPrompt() {
 		try {
@@ -4125,7 +4197,7 @@
 	function applyTheme(themeName) {
 		const next = THEMES[themeName] ? themeName : "fuchsia";
 		activeTheme = next;
-		if (settingsThemeSelect) settingsThemeSelect.value = next;
+		syncThemeListActive();
 		const colors = THEMES[next];
 		if (bgBlobTop && colors) bgBlobTop.style.background = colors.top;
 		if (bgBlobBottom && colors) bgBlobBottom.style.background = colors.bottom;
@@ -4307,7 +4379,7 @@
 		},
 		{
 			q: "Themes",
-			a: "Settings → Themes changes the background glow. Your choice is stored locally in your browser, so it does not affect other devices.",
+			a: "Settings → Themes changes the background glow. You can also toggle the glow on/off. Your choice is stored locally in your browser, so it does not affect other devices.",
 		},
 		{
 			q: "AI usage",
@@ -12707,7 +12779,9 @@ self.onmessage = async (e) => {
 	loadPsMetaVisible();
 	loadPsVisible();
 	applyPsVisible();
+	renderThemeList();
 	loadTheme();
+	loadGlowEnabled();
 	loadAiApiConfig();
 	loadEditorMaskDisabled();
 	setEditorMaskToggleUi();
@@ -13543,9 +13617,20 @@ self.onmessage = async (e) => {
 			setActiveSettingsSection(target);
 		});
 	});
-	if (settingsThemeSelect) {
-		settingsThemeSelect.addEventListener("change", () => {
-			saveTheme(settingsThemeSelect.value);
+	if (settingsThemeList) {
+		settingsThemeList.addEventListener("click", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLElement)) return;
+			const btn = target.closest("[data-theme]");
+			if (!btn) return;
+			const themeName = btn.getAttribute("data-theme");
+			if (!themeName) return;
+			saveTheme(themeName);
+		});
+	}
+	if (settingsGlowToggle) {
+		settingsGlowToggle.addEventListener("click", () => {
+			saveGlowEnabled(!glowEnabled);
 		});
 	}
 	if (mobileAutoNoteSecondsInput) {

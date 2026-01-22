@@ -24,6 +24,10 @@
 	z-index: 0;
 }
 
+body.glow-disabled .bg-glow {
+	display: none;
+}
+
 .bg-blob {
 	position: absolute;
 	width: 60vmax;
@@ -41,6 +45,16 @@
 
 .bg-blob-bottom {
 	bottom: -26vmax;
+}
+
+.theme-swatch {
+	width: 1.1rem;
+	height: 1.1rem;
+	border-radius: 999px;
+	background: linear-gradient(180deg, var(--swatch-top), var(--swatch-bottom));
+	box-shadow:
+		inset 0 0 0 1px rgba(255, 255, 255, 0.18),
+		0 8px 16px rgba(0, 0, 0, 0.35);
 }
 
 #psTagsPanel {
