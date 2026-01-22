@@ -31,16 +31,16 @@
 	border-radius: 999px;
 	filter: blur(140px);
 	opacity: 0.9;
+	left: 50%;
+	transform: translateX(-50%);
 }
 
 .bg-blob-top {
 	top: -22vmax;
-	right: -18vmax;
 }
 
 .bg-blob-bottom {
 	bottom: -26vmax;
-	left: -20vmax;
 }
 
 #psTagsPanel {
