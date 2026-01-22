@@ -16,6 +16,33 @@
 	--blockquote-text: rgba(226, 232, 240, 0.9);
 }
 
+.bg-glow {
+	position: fixed;
+	inset: 0;
+	overflow: hidden;
+	pointer-events: none;
+	z-index: 0;
+}
+
+.bg-blob {
+	position: absolute;
+	width: 60vmax;
+	height: 60vmax;
+	border-radius: 999px;
+	filter: blur(140px);
+	opacity: 0.9;
+}
+
+.bg-blob-top {
+	top: -22vmax;
+	right: -18vmax;
+}
+
+.bg-blob-bottom {
+	bottom: -26vmax;
+	left: -20vmax;
+}
+
 #psTagsPanel {
 	max-height: 62.5vh;
 	overflow-y: auto;
