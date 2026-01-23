@@ -6382,8 +6382,11 @@
 		.pdf-fallback{padding:10px 12px;font-size:12px;color:${previewMetaText};background:${previewMetaBg};border-bottom:1px solid ${previewTableBorder};}
 		.toc-float{position:fixed;top:12px;right:12px;z-index:20;width:200px;max-height:calc(100vh - 24px);display:flex;flex-direction:column;border:1px solid var(--toc-border);background:var(--toc-bg);border-radius:12px;box-shadow:var(--toc-shadow);backdrop-filter:blur(12px);color:var(--toc-text);}
 		.toc-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-bottom:1px solid var(--toc-border);font-size:11px;font-weight:600;letter-spacing:.02em;}
+		.toc-title{display:inline-flex;align-items:center;justify-content:center;color:var(--toc-text);}
+		.toc-title svg{width:14px;height:14px;}
 		.toc-toggle{border:1px solid var(--toc-border);background:transparent;color:var(--toc-muted);border-radius:999px;padding:1px 7px;font-size:10px;cursor:pointer;}
 		.toc-toggle:hover{background:var(--toc-hover);color:var(--toc-text);}
+		.toc-toggle svg{width:12px;height:12px;display:block;}
 		.toc-list{margin:0;padding:6px 6px 8px 6px;list-style:none;overflow:auto;}
 		.toc-item a{display:block;padding:5px 7px;border-radius:7px;color:var(--toc-text);text-decoration:none;font-size:11px;line-height:1.3;}
 		.toc-item a:hover{background:var(--toc-hover);}
@@ -6399,8 +6402,18 @@
 <body>
 	<div id="tocFloat" class="toc-float" aria-hidden="true">
 		<div class="toc-header">
-			<span>Inhaltsverzeichnis</span>
-			<button id="tocToggle" type="button" class="toc-toggle" aria-expanded="true">Einklappen</button>
+			<span class="toc-title" title="Inhaltsverzeichnis" aria-label="Inhaltsverzeichnis" role="img">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+					<path d="M4 6h10" />
+					<path d="M4 12h16" />
+					<path d="M4 18h12" />
+				</svg>
+			</span>
+			<button id="tocToggle" type="button" class="toc-toggle" aria-expanded="true" aria-label="Inhaltsverzeichnis einklappen" title="Einklappen">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+					<path d="M6 9l6 6 6-6" />
+				</svg>
+			</button>
 		</div>
 		<ul id="tocList" class="toc-list"></ul>
 	</div>
@@ -6473,7 +6486,12 @@
 					var expanded = Boolean(on);
 					toc.classList.toggle('toc-collapsed', !expanded);
 					toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-					toggle.textContent = expanded ? 'Einklappen' : 'Ausklappen';
+					var label = expanded ? 'Inhaltsverzeichnis einklappen' : 'Inhaltsverzeichnis ausklappen';
+					toggle.setAttribute('aria-label', label);
+					toggle.setAttribute('title', expanded ? 'Einklappen' : 'Ausklappen');
+					toggle.innerHTML = expanded
+						? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>'
+						: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>';
 				}
 				setExpanded(false);
 				toggle.addEventListener('click', function(){
