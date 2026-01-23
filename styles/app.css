@@ -69,9 +69,15 @@ main.relative {
 
 @media (min-width: 1024px) {
 	main.relative {
-		width: 100vw;
-		width: 100dvw;
+		width: 100%;
+		max-width: 100%;
 	}
+}
+
+#mainGrid,
+#editorPanel,
+#psPanel {
+	min-width: 0;
 }
 
 .bg-glow {
