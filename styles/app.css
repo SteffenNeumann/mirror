@@ -51,7 +51,7 @@ body {
 	overflow: hidden;
 }
 
-main {
+main.relative {
 	width: calc(100vw - 48px);
 	width: calc(100dvw - 48px);
 	height: calc(100vh - 48px);
@@ -59,11 +59,18 @@ main {
 }
 
 @media (min-width: 640px) {
-	main {
+	main.relative {
 		width: calc(100vw - 40px);
 		width: calc(100dvw - 40px);
 		height: calc(100vh - 40px);
 		height: calc(100dvh - 40px);
+	}
+}
+
+@media (min-width: 1024px) {
+	main.relative {
+		width: 100vw;
+		width: 100dvw;
 	}
 }
 
