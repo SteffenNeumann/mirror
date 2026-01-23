@@ -87,6 +87,7 @@
 	const applyOutputAppendBtn = document.getElementById("applyOutputAppend");
 	const aiPromptInput = document.getElementById("aiPrompt");
 	const aiPromptClearBtn = document.getElementById("aiPromptClear");
+	const aiDictateBtn = document.getElementById("aiDictate");
 	const aiUsePreviewBtn = document.getElementById("aiUsePreviewBtn");
 	const aiUseAnswerBtn = document.getElementById("aiUseAnswerBtn");
 	const aiModeWrap = document.getElementById("aiModeWrap");
@@ -3410,6 +3411,12 @@
 	let aiUseAnswer = true;
 	let aiApiKey = "";
 	let aiApiModel = "";
+	let aiDictationAvailable = false;
+	let aiDictationActive = false;
+	let aiDictationRecognizer = null;
+	let aiDictationBaseText = "";
+	let aiDictationFinalText = "";
+	let aiDictationInterimText = "";
 	let settingsOpen = false;
 	let settingsSection = "user";
 	let activeTheme = "fuchsia";
@@ -4527,6 +4534,131 @@
 			} catch {
 				// ignore
 			}
+		}
+	}
+
+	function getSpeechRecognitionConstructor() {
+		return (
+			window.SpeechRecognition ||
+			window.webkitSpeechRecognition ||
+			null
+		);
+	}
+
+	function setAiDictationUi(active, supported) {
+		if (!aiDictateBtn || !aiDictateBtn.classList) return;
+		const isSupported =
+			typeof supported === "boolean" ? supported : aiDictationAvailable;
+		aiDictateBtn.disabled = !isSupported;
+		aiDictateBtn.classList.toggle("opacity-50", !isSupported);
+		aiDictateBtn.classList.toggle("cursor-not-allowed", !isSupported);
+		aiDictateBtn.classList.toggle("bg-emerald-500/30", active);
+		aiDictateBtn.classList.toggle("border-emerald-400/40", active);
+		aiDictateBtn.classList.toggle("text-emerald-100", active);
+		aiDictateBtn.classList.toggle("bg-slate-950/30", !active);
+		aiDictateBtn.classList.toggle("border-white/10", !active);
+		aiDictateBtn.classList.toggle("text-slate-200", !active);
+		try {
+			aiDictateBtn.setAttribute("aria-pressed", active ? "true" : "false");
+			aiDictateBtn.setAttribute(
+				"title",
+				!isSupported
+					? "Diktat nicht unterstützt"
+					: active
+						? "Diktat stoppen"
+						: "Diktat starten"
+			);
+		} catch {
+			// ignore
+		}
+	}
+
+	function updateAiDictationValue() {
+		if (!aiPromptInput) return;
+		const base = String(aiDictationBaseText || "");
+		const interim = String(aiDictationInterimText || "");
+		const finalText = String(aiDictationFinalText || "");
+		const combined = `${finalText} ${interim}`.trim();
+		if (!combined) {
+			aiPromptInput.value = base;
+			return;
+		}
+		const sep = base && !base.endsWith(" ") ? " " : "";
+		aiPromptInput.value = base + sep + combined;
+	}
+
+	function onAiDictationResult(event) {
+		if (!event || !event.results) return;
+		let interim = "";
+		for (let i = event.resultIndex; i < event.results.length; i += 1) {
+			const result = event.results[i];
+			if (!result || !result[0]) continue;
+			const text = String(result[0].transcript || "").trim();
+			if (!text) continue;
+			if (result.isFinal) {
+				aiDictationFinalText = aiDictationFinalText
+					? `${aiDictationFinalText} ${text}`
+					: text;
+			} else {
+				interim = interim ? `${interim} ${text}` : text;
+			}
+		}
+		aiDictationInterimText = interim;
+		updateAiDictationValue();
+	}
+
+	function stopAiDictation() {
+		if (!aiDictationRecognizer) return;
+		aiDictationActive = false;
+		try {
+			aiDictationRecognizer.stop();
+		} catch {
+			// ignore
+		}
+		setAiDictationUi(false);
+	}
+
+	function startAiDictation() {
+		if (!aiDictationRecognizer || !aiPromptInput) return;
+		aiDictationBaseText = String(aiPromptInput.value || "");
+		aiDictationFinalText = "";
+		aiDictationInterimText = "";
+		aiDictationActive = true;
+		setAiDictationUi(true);
+		try {
+			aiDictationRecognizer.start();
+		} catch {
+			aiDictationActive = false;
+			setAiDictationUi(false);
+		}
+	}
+
+	function initAiDictation() {
+		const Ctor = getSpeechRecognitionConstructor();
+		aiDictationAvailable = Boolean(Ctor);
+		setAiDictationUi(false, aiDictationAvailable);
+		if (!Ctor) return;
+		try {
+			aiDictationRecognizer = new Ctor();
+			aiDictationRecognizer.continuous = true;
+			aiDictationRecognizer.interimResults = true;
+			aiDictationRecognizer.lang = String(
+				navigator.language || "de-DE"
+			);
+			aiDictationRecognizer.onresult = onAiDictationResult;
+			aiDictationRecognizer.onerror = () => {
+				aiDictationActive = false;
+				setAiDictationUi(false);
+				toast("Diktat fehlgeschlagen.", "error");
+			};
+			aiDictationRecognizer.onend = () => {
+				aiDictationActive = false;
+				setAiDictationUi(false);
+			};
+		} catch {
+			aiDictationAvailable = false;
+			aiDictationRecognizer = null;
+			setAiDictationUi(false, false);
 		}
 	}
 
@@ -13466,6 +13598,7 @@ self.onmessage = async (e) => {
 	}
 	if (aiAssistBtn) {
 		aiAssistBtn.addEventListener("click", async () => {
+			if (aiDictationActive) stopAiDictation();
 			await aiAssistFromPreview();
 		});
 	}
@@ -13537,10 +13670,20 @@ self.onmessage = async (e) => {
 		});
 		aiPromptInput.addEventListener("keydown", (e) => {
 			if (!e) return;
-			if (e.key === "Enter") {
+			if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
 				e.preventDefault();
 				aiAssistFromPreview();
 			}
+		});
+	}
+	if (aiDictateBtn) {
+		aiDictateBtn.addEventListener("click", () => {
+			if (!aiDictationAvailable) return;
+			if (aiDictationActive) {
+				stopAiDictation();
+				return;
+			}
+			startAiDictation();
 		});
 	}
 	if (aiUsePreviewBtn) {
@@ -14305,6 +14448,7 @@ self.onmessage = async (e) => {
 	void initAutoBackup();
 	void initAutoImport();
 	refreshPersonalSpace();
+	initAiDictation();
 	loadAiPrompt();
 	loadAiUsePreview();
 	loadAiUseAnswer();
