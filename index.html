@@ -2347,6 +2347,35 @@
 			</button>
 		</div>
 
+		<div
+			id="psTagContextMenu"
+			class="hidden fixed z-[99999] min-w-[220px] rounded-xl border border-white/10 bg-slate-950/90 p-1 text-xs text-slate-200 shadow-soft backdrop-blur">
+			<div class="px-2.5 py-2">
+				<div class="text-[11px] text-slate-400">Tag</div>
+				<div
+					id="psTagContextLabel"
+					class="mt-0.5 text-xs font-semibold text-slate-100"></div>
+				<input
+					id="psTagContextInput"
+					type="text"
+					placeholder="Neuer Tagname"
+					class="mt-2 w-full rounded-lg border border-white/10 bg-slate-950/40 px-2.5 py-1.5 text-xs text-slate-100 shadow-soft backdrop-blur transition placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
+			</div>
+			<div class="my-1 h-px bg-white/10"></div>
+			<button
+				id="psTagContextApply"
+				type="button"
+				class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-white/5">
+				<span>Umbenennen</span>
+			</button>
+			<button
+				id="psTagContextDelete"
+				type="button"
+				class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-rose-100 hover:bg-rose-500/20">
+				<span>Löschen</span>
+			</button>
+		</div>
+
 		<!-- Markdown Preview libs (client-side, no build step) -->
 		<script src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/markdown-it-task-lists@2.1.1/dist/markdown-it-task-lists.min.js"></script>

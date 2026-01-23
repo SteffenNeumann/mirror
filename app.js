@@ -221,6 +221,11 @@
 	const psContextTags = document.getElementById("psContextTags");
 	const psContextShare = document.getElementById("psContextShare");
 	const psContextDelete = document.getElementById("psContextDelete");
+	const psTagContextMenu = document.getElementById("psTagContextMenu");
+	const psTagContextLabel = document.getElementById("psTagContextLabel");
+	const psTagContextInput = document.getElementById("psTagContextInput");
+	const psTagContextApply = document.getElementById("psTagContextApply");
+	const psTagContextDelete = document.getElementById("psTagContextDelete");
 	const settingsRoot = document.getElementById("settingsRoot");
 	const settingsBackdrop = document.getElementById("settingsBackdrop");
 	const settingsPanel = document.getElementById("settingsPanel");
@@ -1859,6 +1864,10 @@
 	let psRenderedNoteIds = [];
 	let psContextMenuOpen = false;
 	let psContextMenuTargetId = "";
+	let psTagContextMenuOpen = false;
+	let psTagContextMenuTag = "";
+	let psTagContextDeleteArmed = false;
+	let psTagContextDeleteTimer = null;
 	let editorMaskDisabled = false;
 	let crdtMarksEnabled = true;
 	const EDITOR_MASK_DISABLED_KEY = "mirror_mask_disabled";
@@ -6784,28 +6793,65 @@
 		}
 	}
 
-	async function handleTagContextMenu(tag) {
+	function resetPsTagContextDelete() {
+		psTagContextDeleteArmed = false;
+		if (psTagContextDeleteTimer) {
+			window.clearTimeout(psTagContextDeleteTimer);
+			psTagContextDeleteTimer = null;
+		}
+		if (psTagContextDelete) psTagContextDelete.textContent = "Löschen";
+	}
+
+	function setPsTagContextMenuOpen(open) {
+		if (!psTagContextMenu || !psTagContextMenu.classList) return;
+		psTagContextMenuOpen = Boolean(open);
+		psTagContextMenu.classList.toggle("hidden", !psTagContextMenuOpen);
+	}
+
+	function positionPsTagContextMenu(x, y) {
+		if (!psTagContextMenu) return;
+		const rect = psTagContextMenu.getBoundingClientRect();
+		const margin = 12;
+		const maxLeft = window.innerWidth - rect.width - margin;
+		const maxTop = window.innerHeight - rect.height - margin;
+		const left = Math.max(margin, Math.min(Number(x || 0), maxLeft));
+		const top = Math.max(margin, Math.min(Number(y || 0), maxTop));
+		psTagContextMenu.style.left = `${Math.round(left)}px`;
+		psTagContextMenu.style.top = `${Math.round(top)}px`;
+	}
+
+	function closePsTagContextMenu() {
+		psTagContextMenuTag = "";
+		setPsTagContextMenuOpen(false);
+		resetPsTagContextDelete();
+	}
+
+	function openPsTagContextMenu(tag, x, y) {
 		const current = String(tag || "");
+		if (!current || !psTagContextMenu) return;
+		psTagContextMenuTag = current;
+		if (psTagContextLabel) psTagContextLabel.textContent = `#${current}`;
+		if (psTagContextInput) psTagContextInput.value = current;
+		resetPsTagContextDelete();
+		if (psContextMenuOpen) closePsContextMenu();
+		positionPsTagContextMenu(x, y);
+		setPsTagContextMenuOpen(true);
+		if (psTagContextInput && psTagContextInput.focus) {
+			window.setTimeout(() => {
+				if (!psTagContextMenuOpen) return;
+				psTagContextInput.focus();
+				if (psTagContextInput.select) psTagContextInput.select();
+			}, 0);
+		}
+	}
+
+	async function applyPsTagContextValue(rawInput, allowEmpty) {
+		const current = String(psTagContextMenuTag || "");
 		if (!current) return;
-		const input = await modalPrompt("Rename tag or leave empty to delete:", {
-			title: "Edit tag",
-			okText: "Apply",
-			cancelText: "Cancel",
-			value: current,
-		});
-		if (input === null) return;
-		const next = String(input || "").trim();
+		const next = String(rawInput || "").trim();
 		if (!next) {
-			const ok = await modalConfirm(
-				`Delete tag "#${current}" from all notes?`,
-				{
-					title: "Delete tag",
-					okText: "Delete",
-					cancelText: "Cancel",
-					danger: true,
-				}
-			);
-			if (!ok) return;
+			if (!allowEmpty) return;
+			closePsTagContextMenu();
 			await updateNotesForTagChange(current, "");
 			return;
 		}
@@ -6814,8 +6860,24 @@
 			toast("Invalid tag.", "error");
 			return;
 		}
-		if (normalized === current) return;
+		if (normalized === current) {
+			closePsTagContextMenu();
+			return;
+		}
+		closePsTagContextMenu();
 		await updateNotesForTagChange(current, normalized);
+	}
+
+	async function applyPsTagContextInput() {
+		if (!psTagContextInput) return;
+		await applyPsTagContextValue(psTagContextInput.value, true);
+	}
+
+	async function confirmPsTagContextDelete() {
+		const current = String(psTagContextMenuTag || "");
+		if (!current) return;
+		closePsTagContextMenu();
+		await updateNotesForTagChange(current, "");
 	}
 
 	function updatePsTagsActiveInfo() {
@@ -6939,7 +7001,7 @@
 				if (!t) return;
 				ev.preventDefault();
 				ev.stopPropagation();
-				await handleTagContextMenu(t);
+				openPsTagContextMenu(t, ev.clientX, ev.clientY);
 			});
 		});
 	}
@@ -7346,6 +7408,7 @@
 				? "Auswahl entfernen"
 				: "Auswählen";
 		}
+		if (psTagContextMenuOpen) closePsTagContextMenu();
 		positionPsContextMenu(x, y);
 		setPsContextMenuOpen(true);
 	}
@@ -13587,22 +13650,27 @@ self.onmessage = async (e) => {
 			}
 		});
 	}
-	if (psContextMenu) {
+	if (psContextMenu || psTagContextMenu) {
 		document.addEventListener("click", (ev) => {
-			if (!psContextMenuOpen) return;
+			if (!psContextMenuOpen && !psTagContextMenuOpen) return;
 			const target = ev && ev.target ? ev.target : null;
-			if (target && psContextMenu.contains(target)) return;
-			closePsContextMenu();
+			if (target && psContextMenu && psContextMenu.contains(target)) return;
+			if (target && psTagContextMenu && psTagContextMenu.contains(target))
+				return;
+			if (psContextMenuOpen) closePsContextMenu();
+			if (psTagContextMenuOpen) closePsTagContextMenu();
 		});
 		document.addEventListener("keydown", (ev) => {
-			if (!psContextMenuOpen) return;
+			if (!psContextMenuOpen && !psTagContextMenuOpen) return;
 			if (ev && ev.key === "Escape") {
 				ev.preventDefault();
-				closePsContextMenu();
+				if (psContextMenuOpen) closePsContextMenu();
+				if (psTagContextMenuOpen) closePsTagContextMenu();
 			}
 		});
 		window.addEventListener("scroll", () => {
 			if (psContextMenuOpen) closePsContextMenu();
+			if (psTagContextMenuOpen) closePsTagContextMenu();
 		});
 	}
 	if (psContextSelect) {
@@ -13671,6 +13739,42 @@ self.onmessage = async (e) => {
 			await deleteBulkNotes(ids);
 			await refreshPersonalSpace();
 			clearPsSelection();
+		});
+	}
+	if (psTagContextApply) {
+		psTagContextApply.addEventListener("click", async () => {
+			await applyPsTagContextInput();
+		});
+	}
+	if (psTagContextDelete) {
+		psTagContextDelete.addEventListener("click", async () => {
+			if (!psTagContextMenuOpen) return;
+			if (!psTagContextDeleteArmed) {
+				psTagContextDeleteArmed = true;
+				psTagContextDelete.textContent = "Löschen bestätigen";
+				if (psTagContextDeleteTimer)
+					window.clearTimeout(psTagContextDeleteTimer);
+				psTagContextDeleteTimer = window.setTimeout(
+					resetPsTagContextDelete,
+					3000
+				);
+				return;
+			}
+			resetPsTagContextDelete();
+			await confirmPsTagContextDelete();
+		});
+	}
+	if (psTagContextInput) {
+		psTagContextInput.addEventListener("keydown", async (ev) => {
+			if (!ev) return;
+			if (ev.key === "Enter") {
+				ev.preventDefault();
+				await applyPsTagContextInput();
+			}
+			if (ev.key === "Escape") {
+				ev.preventDefault();
+				closePsTagContextMenu();
+			}
 		});
 	}
 	if (psPinnedToggle) {
