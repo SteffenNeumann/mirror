@@ -6259,6 +6259,26 @@
 		const previewMetaText = isMonoLight
 			? "rgba(71,85,105,.9)"
 			: "rgba(148,163,184,.9)";
+		const tocBg = isMonoLight
+			? "rgba(248,250,252,.92)"
+			: "rgba(2,6,23,.8)";
+		const tocBorder = isMonoLight
+			? "rgba(15,23,42,.12)"
+			: "rgba(148,163,184,.18)";
+		const tocText = isMonoLight
+			? "rgba(15,23,42,.95)"
+			: "rgba(226,232,240,.95)";
+		const tocMuted = isMonoLight
+			? "rgba(71,85,105,.85)"
+			: "rgba(148,163,184,.8)";
+		const tocHover = isMonoLight
+			? "rgba(15,23,42,.06)"
+			: "rgba(148,163,184,.14)";
+		const tocRing =
+			themeColors.accentRing || "rgba(217,70,239,.25)";
+		const tocShadow = isMonoLight
+			? "0 12px 26px rgba(15,23,42,.12)"
+			: "0 12px 26px rgba(0,0,0,.45)";
 		const previewTableBorder = isMonoLight
 			? "rgba(15,23,42,.12)"
 			: "rgba(255,255,255,.12)";
@@ -6316,7 +6336,7 @@
   <link rel="stylesheet" href="${highlightCssUrl}">
 	<!--ts:${stamp}-->
   <style>
-		:root{color-scheme:${previewColorScheme};--blockquote-border:${blockquoteBorder};--blockquote-text:${blockquoteText};--scrollbar-thumb:${scrollbarThumb};--scrollbar-thumb-hover:${scrollbarThumbHover};}
+		:root{color-scheme:${previewColorScheme};--blockquote-border:${blockquoteBorder};--blockquote-text:${blockquoteText};--scrollbar-thumb:${scrollbarThumb};--scrollbar-thumb-hover:${scrollbarThumbHover};--toc-bg:${tocBg};--toc-border:${tocBorder};--toc-text:${tocText};--toc-muted:${tocMuted};--toc-hover:${tocHover};--toc-ring:${tocRing};--toc-accent:${previewLink};--toc-shadow:${tocShadow};}
     body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:${previewBg};color:${previewText};}
     a{color:${previewLink};}
 		img{max-width:100%;height:auto;}
@@ -6360,9 +6380,30 @@
 		.pdf-actions{display:flex;justify-content:flex-end;gap:8px;}
 		.pdf-frame{width:100%;height:auto;display:block;background:${previewBg};}
 		.pdf-fallback{padding:10px 12px;font-size:12px;color:${previewMetaText};background:${previewMetaBg};border-bottom:1px solid ${previewTableBorder};}
+		.toc-float{position:fixed;top:16px;right:16px;z-index:20;width:240px;max-height:calc(100vh - 32px);display:flex;flex-direction:column;border:1px solid var(--toc-border);background:var(--toc-bg);border-radius:14px;box-shadow:var(--toc-shadow);backdrop-filter:blur(12px);color:var(--toc-text);}
+		.toc-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 12px;border-bottom:1px solid var(--toc-border);font-size:12px;font-weight:600;letter-spacing:.02em;}
+		.toc-toggle{border:1px solid var(--toc-border);background:transparent;color:var(--toc-muted);border-radius:999px;padding:2px 8px;font-size:11px;cursor:pointer;}
+		.toc-toggle:hover{background:var(--toc-hover);color:var(--toc-text);}
+		.toc-list{margin:0;padding:6px 6px 10px 6px;list-style:none;overflow:auto;}
+		.toc-item a{display:block;padding:6px 8px;border-radius:8px;color:var(--toc-text);text-decoration:none;font-size:12px;line-height:1.3;}
+		.toc-item a:hover{background:var(--toc-hover);}
+		.toc-item a:focus{outline:2px solid var(--toc-ring);outline-offset:1px;}
+		.toc-item[data-level="2"] a{padding-left:16px;}
+		.toc-item[data-level="3"] a{padding-left:24px;}
+		.toc-item[data-level="4"] a{padding-left:32px;}
+		.toc-collapsed .toc-list{display:none;}
+		.toc-collapsed .toc-header{border-bottom:0;}
+		@media (max-width: 900px){.toc-float{left:16px;right:16px;top:auto;bottom:16px;width:auto;max-height:40vh;}}
   </style>
 </head>
 <body>
+	<div id="tocFloat" class="toc-float" aria-hidden="true">
+		<div class="toc-header">
+			<span>Inhaltsverzeichnis</span>
+			<button id="tocToggle" type="button" class="toc-toggle" aria-expanded="true">Einklappen</button>
+		</div>
+		<ul id="tocList" class="toc-list"></ul>
+	</div>
 	<div id="content">${metaHtml}${bodyHtml}</div>
 	<script>
 		(function(){
@@ -6373,6 +6414,71 @@
 				} catch (e) {
 					// ignore
 				}
+			}
+			function slugify(text){
+				return String(text || '')
+					.toLowerCase()
+					.trim()
+					.replace(/[^a-z0-9\s-]/g, '')
+					.replace(/\s+/g, '-')
+					.replace(/-+/g, '-');
+			}
+			function buildToc(){
+				var toc = document.getElementById('tocFloat');
+				var list = document.getElementById('tocList');
+				var toggle = document.getElementById('tocToggle');
+				if (!toc || !list || !toggle) return;
+				list.innerHTML = '';
+				var headings = document.querySelectorAll('#content h1, #content h2, #content h3, #content h4');
+				if (!headings || !headings.length) {
+					toc.style.display = 'none';
+					toc.setAttribute('aria-hidden', 'true');
+					return;
+				}
+				var used = {};
+				for (var i = 0; i < headings.length; i++) {
+					var h = headings[i];
+					if (!h) continue;
+					var level = Number(String(h.tagName || '').slice(1)) || 1;
+					var title = String(h.textContent || '').trim();
+					if (!title) continue;
+					var base = slugify(title) || 'section';
+					var rawId = String(h.getAttribute('id') || '').trim() || base;
+					var unique = rawId;
+					var n = 1;
+					while (used[unique]) {
+						n += 1;
+						unique = rawId + '-' + n;
+					}
+					used[unique] = true;
+					if (h.id !== unique) h.id = unique;
+					var li = document.createElement('li');
+					li.className = 'toc-item';
+					li.setAttribute('data-level', String(level));
+					var a = document.createElement('a');
+					a.href = '#' + unique;
+					a.textContent = title;
+					li.appendChild(a);
+					list.appendChild(li);
+				}
+				if (!list.children.length) {
+					toc.style.display = 'none';
+					toc.setAttribute('aria-hidden', 'true');
+					return;
+				}
+				toc.style.display = 'flex';
+				toc.setAttribute('aria-hidden', 'false');
+				function setExpanded(on){
+					var expanded = Boolean(on);
+					toc.classList.toggle('toc-collapsed', !expanded);
+					toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+					toggle.textContent = expanded ? 'Einklappen' : 'Ausklappen';
+				}
+				setExpanded(true);
+				toggle.addEventListener('click', function(){
+					var collapsed = toc.classList.contains('toc-collapsed');
+					setExpanded(collapsed);
+				});
 			}
 				function getNoteHrefTarget(href){
 					if (!href || typeof href !== 'string') return '';
@@ -6589,6 +6695,7 @@
 
 					initImageTools();
 					initPdfEmbeds();
+					buildToc();
 
 			// Handshake: signalisiert dem Parent, dass Script+Messaging aktiv sind.
 			send('mirror_preview_ready', { ts: Date.now() });
