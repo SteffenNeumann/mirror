@@ -115,6 +115,8 @@
 	const attributionOverlayContent = document.getElementById(
 		"attributionOverlayContent"
 	);
+	const commentOverlay = document.getElementById("commentOverlay");
+	const commentOverlayContent = document.getElementById("commentOverlayContent");
 	const mainGrid = document.getElementById("mainGrid");
 	const psPanel = document.getElementById("psPanel");
 	const togglePersonalSpaceBtn = document.getElementById("togglePersonalSpace");
@@ -2055,6 +2057,145 @@
 		}
 	}
 
+	function getCommentStorageKey() {
+		const roomName = normalizeRoom(room);
+		const keyName = normalizeKey(key);
+		return `${COMMENT_STORAGE_KEY}:${roomName}:${keyName}`;
+	}
+
+	function loadCommentsForRoom() {
+		commentItems = [];
+		try {
+			const raw = localStorage.getItem(getCommentStorageKey());
+			if (!raw) {
+				renderCommentList();
+				updateCommentOverlay();
+				return;
+			}
+			const parsed = JSON.parse(raw);
+			if (!Array.isArray(parsed)) {
+				renderCommentList();
+				updateCommentOverlay();
+				return;
+			}
+			commentItems = parsed
+				.map((item) => {
+					if (!item || typeof item !== "object") return null;
+					const text = String(item.text || "").trim();
+					if (!text) return null;
+					const selection = item.selection || {};
+					const start = Number(selection.start || 0);
+					const end = Number(selection.end || 0);
+					const selText = String(selection.text || "").trim();
+					if (!selText || end <= start) return null;
+					const createdAt = Number(item.createdAt || 0) || Date.now();
+					const author = item.author && typeof item.author === "object"
+						? item.author
+						: identity;
+					return {
+						id: String(item.id || `c_${createdAt}`),
+						createdAt,
+						text,
+						selection: {
+							start,
+							end,
+							text: selText,
+						},
+						author,
+					};
+				})
+				.filter(Boolean)
+				.slice(0, 200);
+		} catch {
+			commentItems = [];
+		}
+		renderCommentList();
+		updateCommentOverlay();
+	}
+
+	function saveCommentsForRoom() {
+		try {
+			const payload = commentItems.slice(0, 200);
+			localStorage.setItem(getCommentStorageKey(), JSON.stringify(payload));
+		} catch {
+			// ignore
+		}
+	}
+
+	function normalizeCommentSelection(entry, value) {
+		if (!entry || !entry.selection || typeof value !== "string") return null;
+		const sel = entry.selection;
+		let start = Math.max(0, Math.min(value.length, Number(sel.start || 0)));
+		let end = Math.max(start, Math.min(value.length, Number(sel.end || 0)));
+		const text = String(sel.text || "").trim();
+		if (text && value.slice(start, end) !== text) {
+			const idx = value.indexOf(text);
+			if (idx >= 0) {
+				start = idx;
+				end = idx + text.length;
+			}
+		}
+		if (end <= start) return null;
+		return { start, end, text: text || value.slice(start, end) };
+	}
+
+	function buildCommentOverlayHtml(value) {
+		if (!value) return "";
+		const ranges = commentItems
+			.map((entry) => {
+				const normalized = normalizeCommentSelection(entry, value);
+				if (!normalized) return null;
+				return { id: entry.id, ...normalized };
+			})
+			.filter(Boolean)
+			.sort((a, b) => a.start - b.start);
+		let out = "";
+		let cursor = 0;
+		let lastEnd = 0;
+		for (const range of ranges) {
+			if (range.start < lastEnd) continue;
+			out += escapeHtml(value.slice(cursor, range.start));
+			out += `<span class="comment-span" data-comment-id="${escapeHtmlAttr(
+				range.id
+			)}">${escapeHtml(value.slice(range.start, range.end))}</span>`;
+			cursor = range.end;
+			lastEnd = range.end;
+		}
+		out += escapeHtml(value.slice(cursor));
+		return out;
+	}
+
+	function syncCommentOverlayScroll() {
+		if (!commentOverlayContent || !textarea) return;
+		const x = Number(textarea.scrollLeft || 0);
+		const y = Number(textarea.scrollTop || 0);
+		commentOverlayContent.style.transform = `translate(${-x}px, ${-y}px)`;
+	}
+
+	function updateCommentOverlay() {
+		if (!commentOverlay || !commentOverlayContent) return;
+		if (!commentPanelOpen || !commentItems.length) {
+			commentOverlay.classList.add("hidden");
+			commentOverlayContent.textContent = "";
+			return;
+		}
+		const value = String(textarea && textarea.value ? textarea.value : "");
+		if (!value) {
+			commentOverlay.classList.add("hidden");
+			commentOverlayContent.textContent = "";
+			return;
+		}
+		const html = buildCommentOverlayHtml(value);
+		if (!html) {
+			commentOverlay.classList.add("hidden");
+			commentOverlayContent.textContent = "";
+			return;
+		}
+		commentOverlayContent.innerHTML = html;
+		commentOverlay.classList.remove("hidden");
+		syncCommentOverlayScroll();
+	}
+
 	function setCommentPanelOpen(open) {
 		commentPanelOpen = Boolean(open);
 		if (commentPanel && commentPanel.classList) {
@@ -2074,6 +2215,7 @@
 				commentPanelOpen
 			);
 		}
+		updateCommentOverlay();
 	}
 
 	function setCommentDraftSelection(selection) {
@@ -2102,6 +2244,7 @@
 			item.className =
 				"rounded-lg border border-white/10 bg-slate-950/50 p-2 text-sm text-slate-100";
 			item.title = entry && entry.selection ? entry.selection.text || "" : "";
+			item.setAttribute("data-comment-id", entry.id || "");
 			const header = document.createElement("div");
 			header.className =
 				"mb-1 flex items-center justify-between text-[11px] text-slate-400";
@@ -2125,9 +2268,30 @@
 			const body = document.createElement("div");
 			body.className = "whitespace-pre-wrap text-sm text-slate-100";
 			body.textContent = entry.text || "";
+			const selection = document.createElement("div");
+			selection.className =
+				"mt-2 rounded-md border border-white/10 bg-slate-950/60 px-2 py-1 text-[11px] text-slate-300";
+			selection.textContent = entry.selection ? entry.selection.text || "" : "";
 			item.appendChild(header);
 			item.appendChild(body);
+			if (selection.textContent) {
+				item.appendChild(selection);
+			}
 			commentList.appendChild(item);
+			item.addEventListener("click", () => {
+				if (!textarea || !entry.selection) return;
+				const value = String(textarea.value || "");
+				const normalized = normalizeCommentSelection(entry, value);
+				if (!normalized) return;
+				textarea.focus();
+				try {
+					textarea.setSelectionRange(normalized.start, normalized.end);
+				} catch {
+					// ignore
+				}
+				updateSelectionMenu();
+				updateCommentOverlay();
+			});
 		});
 	}
 
@@ -2166,6 +2330,8 @@
 		commentInput.value = "";
 		setCommentDraftSelection(null);
 		renderCommentList();
+		saveCommentsForRoom();
+		updateCommentOverlay();
 	}
 
 	function openCommentFromSelection() {
@@ -5050,6 +5216,8 @@
 		if (mirrorMask) mirrorMask.style.paddingTop = `${Math.round(next)}px`;
 		if (attributionOverlay)
 			attributionOverlay.style.paddingTop = `${Math.round(next)}px`;
+		if (commentOverlay)
+			commentOverlay.style.paddingTop = `${Math.round(next)}px`;
 	}
 
 	function resetEditorMetaPadding() {
@@ -5067,6 +5235,8 @@
 			mirrorMask.style.paddingTop = `${Math.round(psMetaBasePaddingTop)}px`;
 		if (attributionOverlay)
 			attributionOverlay.style.paddingTop = `${Math.round(psMetaBasePaddingTop)}px`;
+		if (commentOverlay)
+			commentOverlay.style.paddingTop = `${Math.round(psMetaBasePaddingTop)}px`;
 	}
 
 	function cleanNoteTitleLine(line) {
@@ -9166,6 +9336,7 @@ self.onmessage = async (e) => {
 	const RECENT_KEY = "mirror_recent_rooms";
 	const FAVORITES_KEY = "mirror_favorites_v1";
 	const ROOM_TABS_KEY = "mirror_room_tabs_v1";
+	const COMMENT_STORAGE_KEY = "mirror_comments_v1";
 	const CALENDAR_SOURCES_KEY = "mirror_calendar_sources_v1";
 	const CALENDAR_LOCAL_EVENTS_KEY = "mirror_calendar_local_events_v1";
 	const CALENDAR_DEFAULT_VIEW_KEY = "mirror_calendar_default_view_v1";
@@ -12848,6 +13019,7 @@ self.onmessage = async (e) => {
 		});
 		updatePreview();
 		updatePasswordMaskOverlay();
+		updateCommentOverlay();
 		updateSlashMenu();
 		updateWikiMenu();
 		updateCodeLangOverlay();
@@ -12884,6 +13056,7 @@ self.onmessage = async (e) => {
 		updateEditorMetaScroll();
 		syncPasswordMaskScroll();
 		syncAttributionOverlayScroll();
+		syncCommentOverlayScroll();
 	});
 
 	textarea.addEventListener("keyup", () => {
@@ -13343,6 +13516,7 @@ self.onmessage = async (e) => {
 			updateCodeLangOverlay();
 			updateTableMenuVisibility();
 			updateSelectionMenu();
+			loadCommentsForRoom();
 			if (!note) {
 				syncPsEditingNoteFromEditorText(nextText, {
 					clear: true,
@@ -14780,7 +14954,7 @@ self.onmessage = async (e) => {
 	loadAiUseAnswer();
 	applyAiContextMode();
 	setCommentDraftSelection(null);
-	renderCommentList();
+	loadCommentsForRoom();
 	updateTableMenuVisibility();
 	syncMobileFocusState();
 	}

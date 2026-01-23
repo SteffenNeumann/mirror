@@ -7,11 +7,13 @@
 - Auswahlmenü um Aktion **Comment** ergänzt.
 - Kommentar-Panel im Editor ergänzt (Avatar + Zeit im Header, Eingabe darunter).
 - Kommentar-Panel per Icon links im Eingabefenster ein-/ausblendbar.
+- Kommentare werden raumbezogen lokal gespeichert.
+- Kommentar-Markierungen als Overlay im Editor sichtbar, wenn Kommentare eingeblendet sind.
 
 ## Auswirkungen
-- **UI/UX:** Zusätzliche Kommentar-UI im Editor.
+- **UI/UX:** Zusätzliche Kommentar-UI + Markierungen im Editor.
 - **Feature-Interaktionen:** Keine Änderung an bestehenden Flows.
-- **Datenebene:** Kommentare aktuell lokal im Client.
+- **Datenebene:** Kommentare lokal im Client je Room/Key gespeichert.
 
 ## Tests (Smoke)
 - Nicht ausgeführt: `node` nicht verfügbar (`node --check app.js`).

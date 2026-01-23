@@ -274,6 +274,23 @@ body.glow-disabled .bg-glow {
 	white-space: pre-wrap;
 	word-break: break-word;
 }
+#commentOverlay {
+	z-index: 4;
+}
+#commentOverlayContent {
+	white-space: pre-wrap;
+	word-break: break-word;
+	color: transparent;
+}
+.comment-span {
+	background: rgba(217, 70, 239, 0.25);
+	box-shadow: inset 0 0 0 1px rgba(217, 70, 239, 0.45);
+	border-radius: 0.35rem;
+	padding: 0 0.04em;
+	margin: 0 -0.02em;
+	box-decoration-break: clone;
+	-webkit-box-decoration-break: clone;
+}
 #mirror.attribution-active {
 	color: transparent;
 	caret-color: rgb(226 232 240);
