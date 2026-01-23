@@ -291,6 +291,11 @@ body.glow-disabled .bg-glow {
 	box-decoration-break: clone;
 	-webkit-box-decoration-break: clone;
 }
+.comment-badge {
+	background: var(--accent-strong);
+	border-color: var(--accent-border-strong);
+	color: var(--accent-text);
+}
 #mirror.attribution-active {
 	color: transparent;
 	caret-color: rgb(226 232 240);
