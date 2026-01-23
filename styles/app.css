@@ -90,6 +90,10 @@ body.glow-disabled .bg-glow {
 	padding-right: 0.25rem;
 }
 
+#psList {
+	overflow-x: hidden;
+}
+
 .ps-tag-section {
 	--ps-tag-bg: rgba(217, 70, 239, 0.08);
 	--ps-tag-bg-strong: rgba(217, 70, 239, 0.18);
