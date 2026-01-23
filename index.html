@@ -763,7 +763,7 @@
 											<button
 												id="toggleComments"
 												type="button"
-													class="absolute bottom-2 left-2 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150 transition hover:bg-white/10 active:bg-white/15"
+													class="absolute bottom-2 left-2 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150 transition hover:bg-white/10 active:bg-white/15 relative"
 												title="Kommentare ein-/ausblenden"
 												aria-label="Kommentare ein-/ausblenden"
 												aria-pressed="false">
@@ -777,6 +777,11 @@
 													class="h-4 w-4">
 													<path d="M21 15a4 4 0 0 1-4 4H7l-4 3v-3a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4h14a4 4 0 0 1 4 4z" />
 												</svg>
+													<span
+														id="commentCountBadge"
+														class="absolute -top-1 -right-1 hidden min-w-[18px] rounded-full border border-white/10 bg-fuchsia-500/80 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-soft">
+														0
+													</span>
 											</button>
 											<div
 												id="commentPanel"

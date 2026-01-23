@@ -101,6 +101,7 @@
 	const commentInput = document.getElementById("commentInput");
 	const commentAddBtn = document.getElementById("commentAdd");
 	const commentCloseBtn = document.getElementById("commentClose");
+	const commentCountBadge = document.getElementById("commentCountBadge");
 	const codeLangWrap = document.getElementById("codeLangWrap");
 	const codeLangSelect = document.getElementById("codeLang");
 	const insertCodeBlockBtn = document.getElementById("insertCodeBlock");
@@ -2238,6 +2239,11 @@
 		commentList.innerHTML = "";
 		if (commentEmpty) {
 			commentEmpty.classList.toggle("hidden", commentItems.length > 0);
+		}
+		if (commentCountBadge) {
+			const count = commentItems.length;
+			commentCountBadge.textContent = String(count);
+			commentCountBadge.classList.toggle("hidden", count === 0);
 		}
 		commentItems.forEach((entry) => {
 			const item = document.createElement("div");
