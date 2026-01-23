@@ -93,6 +93,14 @@
 	const aiModeWrap = document.getElementById("aiModeWrap");
 	const aiPromptWrap = document.getElementById("aiPromptWrap");
 	const copyMirrorBtn = document.getElementById("copyMirror");
+	const toggleCommentsBtn = document.getElementById("toggleComments");
+	const commentPanel = document.getElementById("commentPanel");
+	const commentList = document.getElementById("commentList");
+	const commentEmpty = document.getElementById("commentEmpty");
+	const commentSelectionLabel = document.getElementById("commentSelectionLabel");
+	const commentInput = document.getElementById("commentInput");
+	const commentAddBtn = document.getElementById("commentAdd");
+	const commentCloseBtn = document.getElementById("commentClose");
 	const codeLangWrap = document.getElementById("codeLangWrap");
 	const codeLangSelect = document.getElementById("codeLang");
 	const insertCodeBlockBtn = document.getElementById("insertCodeBlock");
@@ -1857,6 +1865,9 @@
 	let wikiMenuItems = [];
 	let wikiMenuIndex = 0;
 	let selectionMenuOpen = false;
+	let commentPanelOpen = false;
+	let commentDraftSelection = null;
+	let commentItems = [];
 	let psTagsAutoSaveTimer = null;
 	let psNoteHistory = [];
 	let psNoteHistoryIndex = -1;
@@ -2029,6 +2040,149 @@
 		const end = Number(textarea.selectionEnd || 0);
 		if (end <= start) return null;
 		return { start, end };
+	}
+
+	function formatCommentTime(value) {
+		const date = new Date(value);
+		if (Number.isNaN(date.getTime())) return "";
+		try {
+			return date.toLocaleString(undefined, {
+				dateStyle: "short",
+				timeStyle: "short",
+			});
+		} catch {
+			return date.toISOString().replace("T", " ").slice(0, 16);
+		}
+	}
+
+	function setCommentPanelOpen(open) {
+		commentPanelOpen = Boolean(open);
+		if (commentPanel && commentPanel.classList) {
+			commentPanel.classList.toggle("hidden", !commentPanelOpen);
+		}
+		if (toggleCommentsBtn) {
+			toggleCommentsBtn.setAttribute(
+				"aria-pressed",
+				commentPanelOpen ? "true" : "false"
+			);
+			toggleCommentsBtn.classList.toggle(
+				"bg-fuchsia-500/20",
+				commentPanelOpen
+			);
+			toggleCommentsBtn.classList.toggle(
+				"border-fuchsia-400/40",
+				commentPanelOpen
+			);
+		}
+	}
+
+	function setCommentDraftSelection(selection) {
+		commentDraftSelection = selection;
+		if (!commentSelectionLabel) return;
+		if (!selection || !selection.text) {
+			commentSelectionLabel.textContent =
+				"Text markieren und im Menü \"Comment\" auswählen.";
+			return;
+		}
+		const trimmed =
+			selection.text.length > 120
+				? `${selection.text.slice(0, 120).trim()}…`
+				: selection.text;
+			commentSelectionLabel.textContent = `Auswahl: "${trimmed}"`;
+	}
+
+	function renderCommentList() {
+		if (!commentList) return;
+		commentList.innerHTML = "";
+		if (commentEmpty) {
+			commentEmpty.classList.toggle("hidden", commentItems.length > 0);
+		}
+		commentItems.forEach((entry) => {
+			const item = document.createElement("div");
+			item.className =
+				"rounded-lg border border-white/10 bg-slate-950/50 p-2 text-sm text-slate-100";
+			item.title = entry && entry.selection ? entry.selection.text || "" : "";
+			const header = document.createElement("div");
+			header.className =
+				"mb-1 flex items-center justify-between text-[11px] text-slate-400";
+			const left = document.createElement("div");
+			left.className = "flex items-center gap-2";
+			const avatar = document.createElement("span");
+			avatar.className =
+				"inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 text-[12px]";
+			avatar.textContent =
+				entry && entry.author && entry.author.avatar
+					? entry.author.avatar
+					: "👤";
+			if (entry && entry.author && entry.author.color) {
+				avatar.style.background = entry.author.color;
+			}
+			const time = document.createElement("span");
+			time.textContent = formatCommentTime(entry.createdAt);
+			left.appendChild(avatar);
+			left.appendChild(time);
+			header.appendChild(left);
+			const body = document.createElement("div");
+			body.className = "whitespace-pre-wrap text-sm text-slate-100";
+			body.textContent = entry.text || "";
+			item.appendChild(header);
+			item.appendChild(body);
+			commentList.appendChild(item);
+		});
+	}
+
+	function addCommentFromDraft() {
+		if (!commentInput) return;
+		const text = String(commentInput.value || "").trim();
+		if (!text) return;
+		let selection = commentDraftSelection;
+		if (!selection) {
+			const range = getSelectionRange();
+			if (range && textarea) {
+				const value = String(textarea.value || "");
+				const selectedText = value.slice(range.start, range.end).trim();
+				if (selectedText) {
+					selection = {
+						start: range.start,
+						end: range.end,
+						text: selectedText,
+					};
+				}
+			}
+		}
+		if (!selection || !selection.text) {
+			toast("Bitte Text markieren und Comment wählen.", "error");
+			return;
+		}
+		commentItems.unshift({
+			id: `c_${Date.now().toString(36)}_${Math.random()
+				.toString(36)
+				.slice(2, 7)}`,
+			createdAt: Date.now(),
+			text,
+			selection,
+			author: identity,
+		});
+		commentInput.value = "";
+		setCommentDraftSelection(null);
+		renderCommentList();
+	}
+
+	function openCommentFromSelection() {
+		if (!textarea) return;
+		const range = getSelectionRange();
+		if (!range) return;
+		const value = String(textarea.value || "");
+		const selectedText = value.slice(range.start, range.end).trim();
+		if (!selectedText) return;
+		setCommentDraftSelection({
+			start: range.start,
+			end: range.end,
+			text: selectedText,
+		});
+		setCommentPanelOpen(true);
+		if (commentInput) commentInput.focus();
+		setSelectionMenuOpen(false);
 	}
 
 	function getSelectionLineRange(value, start, end) {
@@ -2289,6 +2443,9 @@
 				toggleFencedCodeBlock(textarea);
 				updateCodeLangOverlay();
 				break;
+			case "comment":
+				openCommentFromSelection();
+				return;
 			case "sort":
 				sortSelectionLines(textarea);
 				break;
@@ -13736,6 +13893,30 @@ self.onmessage = async (e) => {
 			setFullPreview(!fullPreview);
 		});
 	}
+	if (toggleCommentsBtn) {
+		toggleCommentsBtn.addEventListener("click", () => {
+			setCommentPanelOpen(!commentPanelOpen);
+		});
+	}
+	if (commentCloseBtn) {
+		commentCloseBtn.addEventListener("click", () => {
+			setCommentPanelOpen(false);
+		});
+	}
+	if (commentAddBtn) {
+		commentAddBtn.addEventListener("click", () => {
+			addCommentFromDraft();
+		});
+	}
+	if (commentInput) {
+		commentInput.addEventListener("keydown", (e) => {
+			if (!e) return;
+			if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+				e.preventDefault();
+				addCommentFromDraft();
+			}
+		});
+	}
 	if (mdPreview) {
 		mdPreview.addEventListener("load", () => {
 			attachPreviewCheckboxWriteback();
@@ -14598,6 +14779,8 @@ self.onmessage = async (e) => {
 	loadAiUsePreview();
 	loadAiUseAnswer();
 	applyAiContextMode();
+	setCommentDraftSelection(null);
+	renderCommentList();
 	updateTableMenuVisibility();
 	syncMobileFocusState();
 	}

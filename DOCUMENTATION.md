@@ -1,3 +1,21 @@
+# Dokumentation – Änderungen (2026-01-23)
+
+## Ziel
+- Kommentare für markierte Textpassagen ermöglichen.
+
+## Änderungen
+- Auswahlmenü um Aktion **Comment** ergänzt.
+- Kommentar-Panel im Editor ergänzt (Avatar + Zeit im Header, Eingabe darunter).
+- Kommentar-Panel per Icon links im Eingabefenster ein-/ausblendbar.
+
+## Auswirkungen
+- **UI/UX:** Zusätzliche Kommentar-UI im Editor.
+- **Feature-Interaktionen:** Keine Änderung an bestehenden Flows.
+- **Datenebene:** Kommentare aktuell lokal im Client.
+
+## Tests (Smoke)
+- Nicht ausgeführt: `node` nicht verfügbar (`node --check app.js`).
+
 # Dokumentation – Änderungen (2026-01-21)
 
 ## Kontext & Referenzen
