@@ -39,6 +39,10 @@
 	background-color: var(--scrollbar-thumb-hover);
 }
 
+body {
+	overflow: hidden;
+}
+
 .bg-glow {
 	position: fixed;
 	inset: 0;
