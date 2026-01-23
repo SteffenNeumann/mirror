@@ -4200,6 +4200,7 @@
 		activeTheme = next;
 		syncThemeListActive();
 		const colors = THEMES[next];
+		const isMonoLightTheme = next === "monoLight";
 		if (bgBlobTop && colors) bgBlobTop.style.background = colors.top;
 		if (bgBlobBottom && colors) bgBlobBottom.style.background = colors.bottom;
 		if (colors) {
@@ -4265,6 +4266,25 @@
 				colors.blockquoteText ||
 					colors.accentTextSoft ||
 					"rgba(203, 213, 225, 1)"
+			);
+			root.style.setProperty(
+				"--scrollbar-thumb",
+				colors.scrollbarThumb ||
+					colors.accentTextSoft ||
+					"rgba(148, 163, 184, 0.3)"
+			);
+			root.style.setProperty(
+				"--scrollbar-thumb-hover",
+				colors.scrollbarThumbHover ||
+					colors.accentText ||
+					"rgba(148, 163, 184, 0.45)"
+			);
+			root.style.setProperty(
+				"--scrollbar-border",
+				colors.scrollbarBorder ||
+					(isMonoLightTheme
+						? "rgba(241, 245, 249, 0.9)"
+						: "rgba(2, 6, 23, 0.35)")
 			);
 		}
 		try {
