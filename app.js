@@ -1870,6 +1870,8 @@
 	let selectionMenuOpen = false;
 	let commentPanelOpen = false;
 	let commentDraftSelection = null;
+	let commentEditId = "";
+	let commentReplyToId = "";
 	let commentItems = [];
 	let psTagsAutoSaveTimer = null;
 	let psNoteHistory = [];
@@ -2090,13 +2092,17 @@
 					const selText = String(selection.text || "").trim();
 					if (!selText || end <= start) return null;
 					const createdAt = Number(item.createdAt || 0) || Date.now();
+					const updatedAt = Number(item.updatedAt || 0) || 0;
+					const parentId = String(item.parentId || "").trim();
 					const author = item.author && typeof item.author === "object"
 						? item.author
 						: identity;
 					return {
 						id: String(item.id || `c_${createdAt}`),
 						createdAt,
+						updatedAt,
 						text,
+						parentId,
 						selection: {
 							start,
 							end,
@@ -2231,7 +2237,41 @@
 			selection.text.length > 120
 				? `${selection.text.slice(0, 120).trim()}…`
 				: selection.text;
-			commentSelectionLabel.textContent = `Auswahl: "${trimmed}"`;
+			let prefix = "Auswahl";
+			if (commentEditId) prefix = "Bearbeiten";
+			else if (commentReplyToId) prefix = "Antwort";
+			commentSelectionLabel.textContent = `${prefix}: "${trimmed}"`;
+	}
+
+	function updateCommentComposerUi() {
+		if (!commentAddBtn) return;
+		if (commentEditId) {
+			commentAddBtn.textContent = "Kommentar speichern";
+			return;
+		}
+		if (commentReplyToId) {
+			commentAddBtn.textContent = "Antwort senden";
+			return;
+		}
+		commentAddBtn.textContent = "Kommentar hinzufügen";
+	}
+
+	function setCommentComposerState({ editId, replyToId, selection, text }) {
+		commentEditId = editId || "";
+		commentReplyToId = replyToId || "";
+		if (commentInput && typeof text === "string") {
+			commentInput.value = text;
+		}
+		setCommentDraftSelection(selection || null);
+		updateCommentComposerUi();
+	}
+
+	function clearCommentComposerState() {
+		commentEditId = "";
+		commentReplyToId = "";
+		if (commentInput) commentInput.value = "";
+		setCommentDraftSelection(null);
+		updateCommentComposerUi();
 	}
 
 	function renderCommentList() {
@@ -2247,8 +2287,10 @@
 		}
 		commentItems.forEach((entry) => {
 			const item = document.createElement("div");
+			const isReply = Boolean(entry && entry.parentId);
 			item.className =
-				"rounded-lg border border-white/10 bg-slate-950/50 p-2 text-sm text-slate-100";
+				"rounded-lg border border-white/10 bg-slate-950/50 p-2 text-sm text-slate-100" +
+				(isReply ? " ml-4 border-l-2 border-l-white/10" : "");
 			item.title = entry && entry.selection ? entry.selection.text || "" : "";
 			item.setAttribute("data-comment-id", entry.id || "");
 			const header = document.createElement("div");
@@ -2267,10 +2309,41 @@
 				avatar.style.background = entry.author.color;
 			}
 			const time = document.createElement("span");
-			time.textContent = formatCommentTime(entry.createdAt);
+			const baseTime = formatCommentTime(entry.createdAt);
+			const wasEdited =
+				entry.updatedAt && entry.updatedAt > entry.createdAt + 1000;
+			time.textContent = wasEdited ? `${baseTime} · bearbeitet` : baseTime;
 			left.appendChild(avatar);
 			left.appendChild(time);
+			if (isReply) {
+				const replyTag = document.createElement("span");
+				replyTag.className =
+					"rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300";
+				replyTag.textContent = "Antwort";
+				left.appendChild(replyTag);
+			}
 			header.appendChild(left);
+			const actions = document.createElement("div");
+			actions.className = "flex items-center gap-1";
+			const editBtn = document.createElement("button");
+			editBtn.type = "button";
+			editBtn.className =
+				"rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300 transition hover:bg-white/10";
+			editBtn.textContent = "Bearbeiten";
+			const replyBtn = document.createElement("button");
+			replyBtn.type = "button";
+			replyBtn.className =
+				"rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300 transition hover:bg-white/10";
+			replyBtn.textContent = "Antwort";
+			const deleteBtn = document.createElement("button");
+			deleteBtn.type = "button";
+			deleteBtn.className =
+				"rounded-md border border-rose-400/30 bg-rose-500/10 px-2 py-0.5 text-[10px] text-rose-100 transition hover:bg-rose-500/20";
+			deleteBtn.textContent = "Löschen";
+			actions.appendChild(editBtn);
+			actions.appendChild(replyBtn);
+			actions.appendChild(deleteBtn);
+			header.appendChild(actions);
 			const body = document.createElement("div");
 			body.className = "whitespace-pre-wrap text-sm text-slate-100";
 			body.textContent = entry.text || "";
@@ -2298,6 +2371,42 @@
 				updateSelectionMenu();
 				updateCommentOverlay();
 			});
+			editBtn.addEventListener("click", (ev) => {
+				if (ev) ev.stopPropagation();
+				setCommentPanelOpen(true);
+				setCommentComposerState({
+					editId: entry.id,
+					replyToId: "",
+					selection: entry.selection,
+					text: entry.text || "",
+				});
+				if (commentInput) commentInput.focus();
+			});
+			replyBtn.addEventListener("click", (ev) => {
+				if (ev) ev.stopPropagation();
+				setCommentPanelOpen(true);
+				setCommentComposerState({
+					editId: "",
+					replyToId: entry.id,
+					selection: entry.selection,
+					text: "",
+				});
+				if (commentInput) commentInput.focus();
+			});
+			deleteBtn.addEventListener("click", (ev) => {
+				if (ev) ev.stopPropagation();
+				const targetId = String(entry.id || "");
+				if (!targetId) return;
+				commentItems = commentItems.filter(
+					(it) => it.id !== targetId && it.parentId !== targetId
+				);
+				saveCommentsForRoom();
+				renderCommentList();
+				updateCommentOverlay();
+				if (commentEditId === targetId || commentReplyToId === targetId) {
+					clearCommentComposerState();
+				}
+			});
 		});
 	}
 
@@ -2324,17 +2433,45 @@
 			toast("Bitte Text markieren und Comment wählen.", "error");
 			return;
 		}
-		commentItems.unshift({
+		if (commentEditId) {
+			const idx = commentItems.findIndex((it) => it.id === commentEditId);
+			if (idx >= 0) {
+				commentItems[idx] = {
+					...commentItems[idx],
+					text,
+					updatedAt: Date.now(),
+					selection,
+				};
+			}
+			clearCommentComposerState();
+			renderCommentList();
+			saveCommentsForRoom();
+			updateCommentOverlay();
+			return;
+		}
+		const nextEntry = {
 			id: `c_${Date.now().toString(36)}_${Math.random()
 				.toString(36)
 				.slice(2, 7)}`,
 			createdAt: Date.now(),
 			text,
 			selection,
+			parentId: commentReplyToId || "",
 			author: identity,
-		});
-		commentInput.value = "";
-		setCommentDraftSelection(null);
+		};
+		if (commentReplyToId) {
+			const idx = commentItems.findIndex(
+				(it) => it.id === commentReplyToId
+			);
+			if (idx >= 0) {
+				commentItems.splice(idx + 1, 0, nextEntry);
+			} else {
+				commentItems.unshift(nextEntry);
+			}
+		} else {
+			commentItems.unshift(nextEntry);
+		}
+		clearCommentComposerState();
 		renderCommentList();
 		saveCommentsForRoom();
 		updateCommentOverlay();
@@ -2352,6 +2489,9 @@
 			end: range.end,
 			text: selectedText,
 		});
+		commentEditId = "";
+		commentReplyToId = "";
+		updateCommentComposerUi();
 		setCommentPanelOpen(true);
 		if (commentInput) commentInput.focus();
 		setSelectionMenuOpen(false);
