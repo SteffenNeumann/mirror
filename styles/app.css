@@ -296,6 +296,14 @@ body.glow-disabled .bg-glow {
 	border-color: var(--accent-border-strong);
 	color: var(--accent-text);
 }
+@media (min-width: 1024px) {
+	#editorPreviewGrid.comment-panel-open #mirror,
+	#editorPreviewGrid.comment-panel-open #mirrorMask,
+	#editorPreviewGrid.comment-panel-open #attributionOverlay,
+	#editorPreviewGrid.comment-panel-open #commentOverlay {
+		padding-right: calc(2.75rem + 420px + 16px);
+	}
+}
 #mirror.attribution-active {
 	color: transparent;
 	caret-color: rgb(226 232 240);

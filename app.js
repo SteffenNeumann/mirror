@@ -2208,6 +2208,12 @@
 		if (commentPanel && commentPanel.classList) {
 			commentPanel.classList.toggle("hidden", !commentPanelOpen);
 		}
+		if (editorPreviewGrid && editorPreviewGrid.classList) {
+			editorPreviewGrid.classList.toggle(
+				"comment-panel-open",
+				commentPanelOpen
+			);
+		}
 		if (toggleCommentsBtn) {
 			toggleCommentsBtn.setAttribute(
 				"aria-pressed",
