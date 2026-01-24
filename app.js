@@ -2327,11 +2327,8 @@
 			if (isReply) {
 				const replyTag = document.createElement("span");
 				replyTag.className =
-					"inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300";
-				replyTag.setAttribute("data-i18n-title", "comments.reply_badge");
-				replyTag.setAttribute("data-i18n-aria", "comments.reply_badge");
-				replyTag.innerHTML =
-					"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"h-3 w-3\"><path d=\"M9 17l-5-5 5-5\" /><path d=\"M4 12h9a7 7 0 0 1 7 7v1\" /></svg>";
+					"rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300";
+				replyTag.textContent = "Antwort";
 				left.appendChild(replyTag);
 			}
 			header.appendChild(left);
@@ -4118,7 +4115,6 @@
 				"comments.add_action": "Kommentar hinzufügen",
 				"comments.save_action": "Kommentar speichern",
 				"comments.reply_action": "Antwort senden",
-				"comments.reply_badge": "Antwort",
 				"comments.edit_action": "Kommentar bearbeiten",
 				"comments.delete_action": "Kommentar löschen",
 				"editor.nav_back": "Zurück",
@@ -4299,6 +4295,7 @@
 				"settings.faq.desc": "Schnelle Antworten und Tipps.",
 				"settings.faq.search_label": "FAQ durchsuchen",
 				"settings.faq.search_placeholder": "Suchen…",
+				"faq.no_results": "Keine Treffer.",
 				"settings.uploads.title": "Uploads",
 				"settings.uploads.desc": "Uploads verwalten.",
 				"settings.uploads.refresh": "Aktualisieren",
@@ -4364,7 +4361,6 @@
 				"comments.add_action": "Add comment",
 				"comments.save_action": "Save comment",
 				"comments.reply_action": "Send reply",
-				"comments.reply_badge": "Reply",
 				"comments.edit_action": "Edit comment",
 				"comments.delete_action": "Delete comment",
 				"editor.nav_back": "Back",
@@ -4535,6 +4531,7 @@
 				"settings.faq.desc": "Quick answers and tips.",
 				"settings.faq.search_label": "Search FAQ",
 				"settings.faq.search_placeholder": "Search…",
+				"faq.no_results": "No results.",
 				"settings.uploads.title": "Uploads",
 				"settings.uploads.desc": "Manage uploaded files.",
 				"settings.uploads.refresh": "Refresh",
@@ -4654,6 +4651,7 @@
 			applyUiTranslations();
 			syncUiLangButtons();
 			applyGlowEnabled();
+			renderFaq();
 			if (aiDictationRecognizer) {
 				aiDictationRecognizer.lang = getUiSpeechLocale();
 			}
@@ -5481,100 +5479,196 @@
 		}
 	}
 
-	const FAQ_ITEMS = [
-		{
-			q: "What is Mirror?",
-			a: "Mirror is a real-time collaborative editor with Personal Space notes, previews, and AI assistance. Use it to share rooms, take notes, and manage your personal knowledge in one place.",
-		},
-		{
-			q: "How do I activate Personal Space?",
-			a: 'Click "Add Personal Space" in the left panel. You will receive a verification link by email; open it to sign in. Once signed in, your notes, tags, and favorites will sync to your account.',
-		},
-		{
-			q: "Signing in and out",
-			a: "Sign in via Personal Space. To sign out, open Settings → User Settings and click Sign out. This clears the session but keeps your notes safe in your account.",
-		},
-		{
-			q: "Autosave",
-			a: "Personal Space notes autosave while you edit. The status appears below the editor (e.g., Saving… / Saved). Autosave only runs when you are signed in and editing a Personal Space note.",
-		},
-		{
-			q: "Manual save",
-			a: "Use the Save button in the editor toolbar to save immediately. This is helpful before closing the tab or switching rooms.",
-		},
-		{
-			q: "Export notes",
-			a: "Open Settings → Export/Import and click Export to download a JSON backup. The file contains your notes, tags, and metadata for restoring later.",
-		},
-		{
-			q: "Import notes",
-			a: "Settings → Export/Import lets you choose Merge or Replace, then select a JSON/Markdown file. Merge adds or updates notes; Replace wipes existing notes before importing.",
-		},
-		{
-			q: "Themes",
-			a: "Settings → Themes changes the background glow. You can also toggle the glow on/off. Your choice is stored locally in your browser, so it does not affect other devices.",
-		},
-		{
-			q: "AI usage",
-			a: "Use the AI panel to explain, improve, fix, run, or summarize. The prompt box lets you provide extra instructions. AI requests require an API key (local or server).",
-		},
-		{
-			q: "AI keys and models",
-			a: "Set your key in Settings → AI. An optional model name overrides the server default for your requests only.",
-		},
-		{
-			q: "Google Calendar setup",
-			a: "Set GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, and GOOGLE_OAUTH_REDIRECT_URL. The redirect URL must point to /api/calendar/google/callback. Sign in to Personal Space before connecting Google Calendar.",
-		},
-		{
-			q: "Google Calendar permissions",
-			a: "Mirror writes events to your Google primary calendar after you connect via Settings → Calendar → Google verbinden. You can disconnect any time in the same section.",
-		},
-		{
-			q: "Slash commands",
-			a: "Type / in the editor to open commands (e.g., /table, /code, /link). Use /table 3x4 for quick grids or /table row+ to add rows.",
-		},
-		{
-			q: "Tables",
-			a: "Use /table 2x2 to insert a table. The table menu lets you add/remove rows/columns and insert calculations like sum/avg/max/min for the selected column or row.",
-		},
-		{
-			q: "Room switching",
-			a: "Change the room name or use the dropdown to switch. The URL hash updates for sharing and keeps optional keys intact.",
-		},
-		{
-			q: "Favorites",
-			a: "Star a room to add it to Favorites. Use the Favorites dropdown to jump back to a saved room quickly.",
-		},
-		{
-			q: "Tabs / Multiuser",
-			a: "Room tabs help you jump between rooms quickly. The multiuser presence list and typing indicator keep you aware of activity in shared rooms.",
-		},
-		{
-			q: "Multiuser-Anzeige & Passwort-Maske",
-			a: "The presence list shows who is online. Use the selection menu actions to hide password-like tokens or toggle masking on/off when sharing screens.",
-		},
-		{
-			q: "Preview",
-			a: "Toggle the preview panel to render Markdown and code highlights. Task lists, tables, and code blocks render in the preview.",
-		},
-		{
-			q: "Run output",
-			a: "The Run output area shows AI results or simulated execution output. You can clear output or apply AI output back into the editor.",
-		},
-		{
-			q: "Tags",
-			a: "Use tags to filter Personal Space notes. Switch AND/OR filtering in the Tags panel and combine multiple tags for precise filtering.",
-		},
-		{
-			q: "Pinned notes",
-			a: "Pin notes to keep them on top. Use the pin toggle to filter pinned-only and focus on important notes.",
-		},
-		{
-			q: "Sharing a room",
-			a: "Use Copy link to share the room + optional key with collaborators. If a room key is set, only people with the key can access the room.",
-		},
-	];
+	const FAQ_ITEMS = {
+		de: [
+			{
+				q: "Was ist Mirror?",
+				a: "Mirror ist ein kollaborativer Echtzeit-Editor mit Personal Space, Vorschau und KI. Nutze ihn, um Räume zu teilen, Notizen zu erstellen und Wissen an einem Ort zu bündeln.",
+			},
+			{
+				q: "Wie aktiviere ich Personal Space?",
+				a: "Klicke links auf „Personal Space hinzufügen“. Du erhältst einen Bestätigungslink per E‑Mail. Nach der Anmeldung werden Notizen, Tags und Favoriten mit deinem Account synchronisiert.",
+			},
+			{
+				q: "An- und Abmelden",
+				a: "Melde dich über Personal Space an. Zum Abmelden: Einstellungen → Benutzer‑Einstellungen → Abmelden. Die Session wird gelöscht, deine Notizen bleiben sicher im Account.",
+			},
+			{
+				q: "Autosave",
+				a: "Personal‑Space‑Notizen werden automatisch gespeichert. Der Status erscheint unter dem Editor (z. B. Speichern… / Gespeichert). Autosave läuft nur bei Anmeldung.",
+			},
+			{
+				q: "Manuell speichern",
+				a: "Mit dem Speichern‑Button im Editor kannst du sofort sichern – nützlich vor Raumwechseln oder dem Schließen des Tabs.",
+			},
+			{
+				q: "Notizen exportieren",
+				a: "Einstellungen → Export/Import → Export lädt ein JSON‑Backup. Es enthält Notizen, Tags und Metadaten.",
+			},
+			{
+				q: "Notizen importieren",
+				a: "Einstellungen → Export/Import erlaubt Merge oder Replace. Merge ergänzt/aktualisiert, Replace ersetzt den Bestand komplett.",
+			},
+			{
+				q: "Themes",
+				a: "Einstellungen → Themes steuert den Hintergrund‑Glow. Deine Auswahl wird lokal gespeichert und gilt nur auf diesem Gerät.",
+			},
+			{
+				q: "KI nutzen",
+				a: "Im KI‑Panel kannst du erklären, verbessern, fixen, ausführen oder zusammenfassen. Für KI‑Anfragen ist ein API‑Key nötig (lokal oder serverseitig).",
+			},
+			{
+				q: "KI‑Keys und Modelle",
+				a: "Einstellungen → KI: eigener Key, optionales Modell überschreibt den Server‑Default nur für dich.",
+			},
+			{
+				q: "Google‑Kalender Einrichtung",
+				a: "Setze GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET und GOOGLE_OAUTH_REDIRECT_URL. Der Redirect zeigt auf /api/calendar/google/callback. Vor dem Verbinden im Personal Space anmelden.",
+			},
+			{
+				q: "Google‑Kalender Berechtigungen",
+				a: "Nach dem Verbinden schreibt Mirror Termine in deinen primären Google‑Kalender. Trennen ist jederzeit möglich.",
+			},
+			{
+				q: "Slash‑Kommandos",
+				a: "Tippe / im Editor (z. B. /table, /code, /link). /table 3x4 erstellt schnell ein Grid, /table row+ fügt Zeilen hinzu.",
+			},
+			{
+				q: "Tabellen",
+				a: "Mit /table 2x2 fügst du Tabellen ein. Das Tabellen‑Menü erlaubt Zeilen/Spalten und Berechnungen (Sum/Avg/Max/Min).",
+			},
+			{
+				q: "Räume wechseln",
+				a: "Ändere den Raumnamen oder nutze das Dropdown. Der URL‑Hash aktualisiert sich für Sharing inkl. optionalem Key.",
+			},
+			{
+				q: "Favoriten",
+				a: "Markiere Räume mit dem Stern. Über das Favoriten‑Dropdown springst du schnell zurück.",
+			},
+			{
+				q: "Tabs / Multiuser",
+				a: "Room‑Tabs erleichtern das Wechseln. Präsenz‑Liste und Tipp‑Indikator zeigen Aktivität im Raum.",
+			},
+			{
+				q: "Multiuser‑Anzeige & Passwort‑Maske",
+				a: "Die Präsenzliste zeigt, wer online ist. Im Kontextmenü kannst du Passwort‑ähnliche Tokens verstecken oder Maskierung ein/aus schalten.",
+			},
+			{
+				q: "Vorschau",
+				a: "Die Vorschau rendert Markdown inkl. Tasks, Tabellen und Code‑Highlighting.",
+			},
+			{
+				q: "Run‑Output",
+				a: "Der Run‑Output zeigt KI‑Ergebnisse oder simulierte Ausgaben. Du kannst löschen oder KI‑Output in den Editor übernehmen.",
+			},
+			{
+				q: "Tags",
+				a: "Mit Tags filterst du Personal‑Space‑Notizen. AND/OR umschalten und mehrere Tags kombinieren.",
+			},
+			{
+				q: "Pinned Notizen",
+				a: "Pinne Notizen, um sie oben zu halten. Der Pin‑Filter zeigt nur angepinnte.",
+			},
+			{
+				q: "Raum teilen",
+				a: "Mit „Link kopieren“ teilst du Raum + optionalen Key. Ist ein Key gesetzt, braucht man ihn für Zugriff.",
+			},
+		],
+		en: [
+			{
+				q: "What is Mirror?",
+				a: "Mirror is a real-time collaborative editor with Personal Space notes, previews, and AI assistance. Use it to share rooms, take notes, and manage your personal knowledge in one place.",
+			},
+			{
+				q: "How do I activate Personal Space?",
+				a: 'Click "Add Personal Space" in the left panel. You will receive a verification link by email; open it to sign in. Once signed in, your notes, tags, and favorites will sync to your account.',
+			},
+			{
+				q: "Signing in and out",
+				a: "Sign in via Personal Space. To sign out, open Settings → User Settings and click Sign out. This clears the session but keeps your notes safe in your account.",
+			},
+			{
+				q: "Autosave",
+				a: "Personal Space notes autosave while you edit. The status appears below the editor (e.g., Saving… / Saved). Autosave only runs when you are signed in and editing a Personal Space note.",
+			},
+			{
+				q: "Manual save",
+				a: "Use the Save button in the editor toolbar to save immediately. This is helpful before closing the tab or switching rooms.",
+			},
+			{
+				q: "Export notes",
+				a: "Open Settings → Export/Import and click Export to download a JSON backup. The file contains your notes, tags, and metadata for restoring later.",
+			},
+			{
+				q: "Import notes",
+				a: "Settings → Export/Import lets you choose Merge or Replace, then select a JSON/Markdown file. Merge adds or updates notes; Replace wipes existing notes before importing.",
+			},
+			{
+				q: "Themes",
+				a: "Settings → Themes changes the background glow. You can also toggle the glow on/off. Your choice is stored locally in your browser, so it does not affect other devices.",
+			},
+			{
+				q: "AI usage",
+				a: "Use the AI panel to explain, improve, fix, run, or summarize. The prompt box lets you provide extra instructions. AI requests require an API key (local or server).",
+			},
+			{
+				q: "AI keys and models",
+				a: "Set your key in Settings → AI. An optional model name overrides the server default for your requests only.",
+			},
+			{
+				q: "Google Calendar setup",
+				a: "Set GOOGLE_OAUTH_CLIENT_ID, GOOGLE_OAUTH_CLIENT_SECRET, and GOOGLE_OAUTH_REDIRECT_URL. The redirect URL must point to /api/calendar/google/callback. Sign in to Personal Space before connecting Google Calendar.",
+			},
+			{
+				q: "Google Calendar permissions",
+				a: "Mirror writes events to your Google primary calendar after you connect via Settings → Calendar → Google connect. You can disconnect any time in the same section.",
+			},
+			{
+				q: "Slash commands",
+				a: "Type / in the editor to open commands (e.g., /table, /code, /link). Use /table 3x4 for quick grids or /table row+ to add rows.",
+			},
+			{
+				q: "Tables",
+				a: "Use /table 2x2 to insert a table. The table menu lets you add/remove rows/columns and insert calculations like sum/avg/max/min for the selected column or row.",
+			},
+			{
+				q: "Room switching",
+				a: "Change the room name or use the dropdown to switch. The URL hash updates for sharing and keeps optional keys intact.",
+			},
+			{
+				q: "Favorites",
+				a: "Star a room to add it to Favorites. Use the Favorites dropdown to jump back to a saved room quickly.",
+			},
+			{
+				q: "Tabs / Multiuser",
+				a: "Room tabs help you jump between rooms quickly. The multiuser presence list and typing indicator keep you aware of activity in shared rooms.",
+			},
+			{
+				q: "Multiuser display & password mask",
+				a: "The presence list shows who is online. Use the selection menu actions to hide password-like tokens or toggle masking on/off when sharing screens.",
+			},
+			{
+				q: "Preview",
+				a: "Toggle the preview panel to render Markdown and code highlights. Task lists, tables, and code blocks render in the preview.",
+			},
+			{
+				q: "Run output",
+				a: "The Run output area shows AI results or simulated execution output. You can clear output or apply AI output back into the editor.",
+			},
+			{
+				q: "Tags",
+				a: "Use tags to filter Personal Space notes. Switch AND/OR filtering in the Tags panel and combine multiple tags for precise filtering.",
+			},
+			{
+				q: "Pinned notes",
+				a: "Pin notes to keep them on top. Use the pin toggle to filter pinned-only and focus on important notes.",
+			},
+			{
+				q: "Sharing a room",
+				a: "Use Copy link to share the room + optional key with collaborators. If a room key is set, only people with the key can access the room.",
+			},
+		],
+	};
 
 	function renderFaq() {
 		if (!faqList) return;
@@ -5583,7 +5677,9 @@
 		)
 			.trim()
 			.toLowerCase();
-		const items = FAQ_ITEMS.filter((item) => {
+		const list =
+			FAQ_ITEMS[uiLang] || FAQ_ITEMS[UI_LANG_DEFAULT] || [];
+		const items = list.filter((item) => {
 			const text = `${item.q} ${item.a}`.toLowerCase();
 			return !query || text.includes(query);
 		});
@@ -5602,7 +5698,9 @@
 			.join("");
 		if (!items.length) {
 			faqList.innerHTML =
-				'<div class="rounded-xl border border-white/10 bg-slate-950/40 p-3 text-xs text-slate-400">No results.</div>';
+				`<div class="rounded-xl border border-white/10 bg-slate-950/40 p-3 text-xs text-slate-400">${t(
+					"faq.no_results"
+				)}</div>`;
 		}
 	}
 
@@ -12165,18 +12263,13 @@ self.onmessage = async (e) => {
 						const time = evt.allDay
 							? "Ganztägig"
 							: `${formatTime(evt.start)} – ${formatTime(evt.end)}`;
-						const fullTooltip = evt.location
-							? `${time} · ${evt.title} · ${evt.location}`
-							: `${time} · ${evt.title}`;
 						const loc = evt.location
 							? `<div class=\"text-[11px] text-slate-400\">${escapeHtml(
 									evt.location
 								)}\</div>`
 							: "";
 						return `
-							<div class="cursor-pointer rounded-lg border ${dayBorder} bg-slate-950/40 p-3" title="${escapeAttr(
-								fullTooltip
-							)}">
+							<div class="rounded-lg border ${dayBorder} bg-slate-950/40 p-3">
 								<div class="flex items-center justify-between gap-2">
 									<div class="text-xs font-semibold text-slate-100">${escapeHtml(
 										evt.title
@@ -12209,13 +12302,8 @@ self.onmessage = async (e) => {
 							const time = evt.allDay
 								? "Ganztägig"
 								: formatTime(evt.start);
-							const tooltip = evt.location
-								? `${time} · ${evt.title} · ${evt.location}`
-								: `${time} · ${evt.title}`;
 							return `
-								<div class="cursor-pointer rounded-md border border-white/10 bg-slate-950/50 px-2 py-1 text-[11px] text-slate-200" title="${escapeAttr(
-									tooltip
-								)}">
+								<div class="rounded-md border border-white/10 bg-slate-950/50 px-2 py-1 text-[11px] text-slate-200">
 									<div class="flex items-center gap-2">
 										<span class="inline-flex h-2 w-2 rounded-full" style="background:${escapeAttr(
 											evt.color
@@ -12258,11 +12346,9 @@ self.onmessage = async (e) => {
 			);
 			const visibleEvents = dayEvents.slice(0, 2).map((evt) => {
 				const time = evt.allDay ? "Ganztägig" : formatTime(evt.start);
-				const title = evt.location
-					? `${time} · ${evt.title} · ${evt.location}`
-					: `${time} · ${evt.title}`;
+				const title = `${time} · ${evt.title}`;
 				return `
-					<div class="truncate cursor-pointer rounded-md border border-white/10 bg-slate-950/50 px-2 py-1 text-[10px] text-slate-200" title="${escapeAttr(
+					<div class="truncate rounded-md border border-white/10 bg-slate-950/50 px-2 py-1 text-[10px] text-slate-200" title="${escapeAttr(
 						title
 					)}">
 						<div class="flex items-center gap-2">
