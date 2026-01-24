@@ -2355,13 +2355,13 @@
 			body.textContent = entry.text || "";
 			const selection = document.createElement("div");
 			selection.className =
-				"mt-2 rounded-md border border-white/10 bg-slate-950/60 px-2 py-1 text-[11px] text-slate-300";
+				"mb-2 rounded-md bg-white/5 px-2 py-1 text-[11px] text-slate-300";
 			selection.textContent = entry.selection ? entry.selection.text || "" : "";
 			item.appendChild(header);
-			item.appendChild(body);
 			if (selection.textContent) {
 				item.appendChild(selection);
 			}
+			item.appendChild(body);
 			commentList.appendChild(item);
 			item.addEventListener("click", () => {
 				if (!textarea || !entry.selection) return;
