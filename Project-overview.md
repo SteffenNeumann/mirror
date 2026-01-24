@@ -4,116 +4,724 @@ Datum: 2026-01-24
 
 Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische Analyse, keine Laufzeitauflösung).
 
-## Hauptfunktion (Client)
-- Datei: [app.js](app.js#L1) (IIFE). Zweck: Initialisiert UI, Event-Handler, Synchronisation, Preview und Personal Space.
-- Umsetzung: ruft `initUiEventListeners` und `initStartupTasks` auf und startet Hintergrundflüsse.
-  - `initUiEventListeners`: [app.js](app.js#L14836)
-  - `initStartupTasks`: [app.js](app.js#L15750)
+## Grafische Übersicht (ASCII)
 
-## Hauptfunktion (Server)
-- Datei: [server.js](server.js#L1) (Modul-Entry). Zweck: HTTP-Server, API-Routen, Uploads, SQLite, WebSocket-Sync.
-- Umsetzung: initialisiert DB-Hilfen, richtet Request-Handling ein, startet WebSocket-Server und hört auf `PORT`.
+```
+App-Start
+  |
+  +--> initUiEventListeners()  ----> UI-Events/Inputs
+  |                                 |-> updatePreview()
+  |                                 |-> connect()
+  |                                 |-> savePersonalSpaceNote()
+  +--> initStartupTasks() ----> Background/Startflüsse
+                                    |-> initUiLanguage()
+                                    |-> initAutoBackup()/initAutoImport()
+                                    |-> initAiDictation()
+                                    |-> refreshPersonalSpace()
+                                    |-> loadCommentsForRoom()
 
-## Funktionsübersicht app.js
+Server-Start
+  |-> HTTP Server (API, Uploads) -> initDb() -> SQLite
+  |-> WebSocketServer -> persistRoomState()/loadPersistedRoomState()
+````
 
-- `normalizeBaseUrl` ([app.js](app.js#L338)) — Zweck: Normalisiert base url. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `tryRenderSharedNote` ([app.js](app.js#L351)) — Zweck: Allgemeiner Helfer: try render shared note. Umsetzung: nutzt interne Aufrufe: `base64UrlDecode`, `buildNoteShareHtmlDocument`, `t`.
-- `ensurePdfJsLoaded` ([app.js](app.js#L382)) — Zweck: Stellt sicher: pdf js loaded. Umsetzung: nutzt interne Aufrufe: `t`.
-- `getPdfPreviewDoc` ([app.js](app.js#L398)) — Zweck: Liest pdf preview doc. Umsetzung: nutzt interne Aufrufe: `ensurePdfJsLoaded`, `t`.
-- `renderPdfPreviewPage` ([app.js](app.js#L414)) — Zweck: Rendert pdf preview page. Umsetzung: nutzt interne Aufrufe: `ensurePdfJsLoaded`, `getPdfPreviewDoc`, `t`.
-- `createClientId` ([app.js](app.js#L437)) — Zweck: Erzeugt client id. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `announceClientId` ([app.js](app.js#L451)) — Zweck: Allgemeiner Helfer: announce client id. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `randomIdentity` ([app.js](app.js#L476)) — Zweck: Erzeugt zufällige identity. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `loadIdentity` ([app.js](app.js#L555)) — Zweck: Lädt identity. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `saveIdentity` ([app.js](app.js#L571)) — Zweck: Speichert identity. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `normalizeRoom` ([app.js](app.js#L587)) — Zweck: Normalisiert room. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `normalizeKey` ([app.js](app.js#L596)) — Zweck: Normalisiert key. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `parseRoomAndKeyFromHash` ([app.js](app.js#L605)) — Zweck: Parst room and key from hash. Umsetzung: nutzt interne Aufrufe: `normalizeKey`, `normalizeRoom`, `t`.
-- `buildShareHash` ([app.js](app.js#L624)) — Zweck: Baut share hash. Umsetzung: nutzt interne Aufrufe: `t`.
-- `randomKey` ([app.js](app.js#L631)) — Zweck: Erzeugt zufällige key. Umsetzung: nutzt interne Aufrufe: `normalizeKey`.
-- `resetE2eeKeyCache` ([app.js](app.js#L652)) — Zweck: Allgemeiner Helfer: reset e2ee key cache. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `base64UrlEncode` ([app.js](app.js#L657)) — Zweck: Allgemeiner Helfer: base64 url encode. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `base64UrlDecode` ([app.js](app.js#L668)) — Zweck: Allgemeiner Helfer: base64 url decode. Umsetzung: nutzt interne Aufrufe: `t`.
-- `base64EncodeBytes` ([app.js](app.js#L682)) — Zweck: Allgemeiner Helfer: base64 encode bytes. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `base64DecodeBytes` ([app.js](app.js#L691)) — Zweck: Allgemeiner Helfer: base64 decode bytes. Umsetzung: nutzt interne Aufrufe: `t`.
-- `getE2eeKey` ([app.js](app.js#L701)) — Zweck: Liest e2ee key. Umsetzung: nutzt interne Aufrufe: `t`.
-- `encryptForRoom` ([app.js](app.js#L717)) — Zweck: Allgemeiner Helfer: encrypt for room. Umsetzung: nutzt interne Aufrufe: `base64UrlEncode`, `getE2eeKey`, `t`.
-- `decryptForRoom` ([app.js](app.js#L733)) — Zweck: Allgemeiner Helfer: decrypt for room. Umsetzung: nutzt interne Aufrufe: `base64UrlDecode`, `getE2eeKey`, `t`.
-- `toast` ([app.js](app.js#L746)) — Zweck: Benachrichtigungen anzeigen. Umsetzung: nutzt interne Aufrufe: `t`.
-- `loadBuildStamp` ([app.js](app.js#L767)) — Zweck: Lädt build stamp. Umsetzung: nutzt interne Aufrufe: `t`.
-- `isModalReady` ([app.js](app.js#L805)) — Zweck: Prüft is modal ready. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `setModalOpen` ([app.js](app.js#L817)) — Zweck: Setzt modal open. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `openModal` ([app.js](app.js#L829)) — Zweck: Öffnet modal. Umsetzung: nutzt interne Aufrufe: `cleanup`, `finish`, `isModalReady`, `onBackdropClick`, `onCancel`, `onInputKey`, `onKeyDown`, `onOk`, `setModalOpen`, `t`.
-- `cleanup` ([app.js](app.js#L880)) — Zweck: Allgemeiner Helfer: cleanup. Umsetzung: nutzt interne Aufrufe: `setModalOpen`.
-- `finish` ([app.js](app.js#L899)) — Zweck: Allgemeiner Helfer: finish. Umsetzung: nutzt interne Aufrufe: `cleanup`.
-- `onCancel` ([app.js](app.js#L905)) — Zweck: Allgemeiner Helfer: on cancel. Umsetzung: nutzt interne Aufrufe: `finish`.
-- `onOk` ([app.js](app.js#L908)) — Zweck: Allgemeiner Helfer: on ok. Umsetzung: nutzt interne Aufrufe: `finish`.
-- `onBackdropClick` ([app.js](app.js#L911)) — Zweck: Allgemeiner Helfer: on backdrop click. Umsetzung: nutzt interne Aufrufe: `finish`.
-- `onInputKey` ([app.js](app.js#L915)) — Zweck: Allgemeiner Helfer: on input key. Umsetzung: nutzt interne Aufrufe: `finish`, `t`.
-- `onKeyDown` ([app.js](app.js#L922)) — Zweck: Allgemeiner Helfer: on key down. Umsetzung: nutzt interne Aufrufe: `finish`, `t`.
-- `modalConfirm` ([app.js](app.js#L940)) — Zweck: Allgemeiner Helfer: modal confirm. Umsetzung: nutzt interne Aufrufe: `openModal`.
-- `modalPrompt` ([app.js](app.js#L952)) — Zweck: Allgemeiner Helfer: modal prompt. Umsetzung: nutzt interne Aufrufe: `openModal`.
-- `isShareModalReady` ([app.js](app.js#L971)) — Zweck: Prüft is share modal ready. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `setShareModalOpen` ([app.js](app.js#L983)) — Zweck: Setzt share modal open. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `buildQrUrl` ([app.js](app.js#L995)) — Zweck: Baut qr url. Umsetzung: nutzt interne Aufrufe: `t`.
-- `updateShareModalLink` ([app.js](app.js#L1000)) — Zweck: Aktualisiert share modal link. Umsetzung: nutzt interne Aufrufe: `buildQrUrl`, `buildShareHref`, `isShareModalReady`, `t`.
-- `openShareModal` ([app.js](app.js#L1017)) — Zweck: Öffnet share modal. Umsetzung: nutzt interne Aufrufe: `isShareModalReady`, `setShareModalOpen`, `t`, `updateShareModalLink`.
-- `isNoteShareModalReady` ([app.js](app.js#L1036)) — Zweck: Prüft is note share modal ready. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `revokeNoteShareShareUrl` ([app.js](app.js#L1049)) — Zweck: Allgemeiner Helfer: revoke note share share url. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `buildNoteShareHtmlDocument` ([app.js](app.js#L1053)) — Zweck: Baut note share html document. Umsetzung: nutzt interne Aufrufe: `escapeHtml`.
-- `setNoteShareModalOpen` ([app.js](app.js#L1076)) — Zweck: Setzt note share modal open. Umsetzung: nutzt interne Aufrufe: `revokeNoteShareShareUrl`.
-- `buildNoteSharePayloadFromIds` ([app.js](app.js#L1089)) — Zweck: Baut note share payload from ids. Umsetzung: nutzt interne Aufrufe: `findNoteById`, `getNoteTitle`.
-- `buildNoteShareUrl` ([app.js](app.js#L1114)) — Zweck: Baut note share url. Umsetzung: nutzt interne Aufrufe: `base64UrlEncode`, `t`.
-- `buildNoteShareQrPayload` ([app.js](app.js#L1128)) — Zweck: Baut note share qr payload. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `updateNoteShareModal` ([app.js](app.js#L1148)) — Zweck: Aktualisiert note share modal. Umsetzung: nutzt interne Aufrufe: `buildNoteShareQrPayload`, `buildNoteShareUrl`, `buildQrUrl`, `isNoteShareModalReady`, `revokeNoteShareShareUrl`, `t`.
-- `openNoteShareModal` ([app.js](app.js#L1190)) — Zweck: Öffnet note share modal. Umsetzung: nutzt interne Aufrufe: `buildNoteSharePayloadFromIds`, `isNoteShareModalReady`, `setNoteShareModalOpen`, `t`, `toast`, `updateNoteShareModal`.
-- `isUploadModalReady` ([app.js](app.js#L1212)) — Zweck: Prüft is upload modal ready. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `setUploadModalOpen` ([app.js](app.js#L1224)) — Zweck: Setzt upload modal open. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `formatBytes` ([app.js](app.js#L1236)) — Zweck: Formatiert bytes. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `buildUploadMarkdown` ([app.js](app.js#L1244)) — Zweck: Baut upload markdown. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `isAllowedUploadType` ([app.js](app.js#L1254)) — Zweck: Prüft is allowed upload type. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `updateUploadPreview` ([app.js](app.js#L1259)) — Zweck: Aktualisiert upload preview. Umsetzung: nutzt interne Aufrufe: `formatBytes`.
-- `setUploadInsertDisabled` ([app.js](app.js#L1275)) — Zweck: Setzt upload insert disabled. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `resetUploadModalState` ([app.js](app.js#L1283)) — Zweck: Allgemeiner Helfer: reset upload modal state. Umsetzung: nutzt interne Aufrufe: `setUploadInsertDisabled`, `updateUploadPreview`.
-- `openUploadModal` ([app.js](app.js#L1291)) — Zweck: Öffnet upload modal. Umsetzung: nutzt interne Aufrufe: `isUploadModalReady`, `resetUploadModalState`, `setUploadModalOpen`, `t`.
-- `readFileAsDataUrl` ([app.js](app.js#L1304)) — Zweck: Allgemeiner Helfer: read file as data url. Umsetzung: nutzt interne Aufrufe: `t`.
-- `api` ([app.js](app.js#L1313)) — Zweck: HTTP-API-Aufruf im Client. Umsetzung: nutzt interne Aufrufe: `safeJsonParse`, `t`.
-- `fmtDate` ([app.js](app.js#L1336)) — Zweck: Allgemeiner Helfer: fmt date. Umsetzung: nutzt interne Aufrufe: `getUiLocale`.
-- `normalizeManualTags` ([app.js](app.js#L1350)) — Zweck: Normalisiert manual tags. Umsetzung: nutzt interne Aufrufe: `t`.
-- `uniqTags` ([app.js](app.js#L1408)) — Zweck: Entfernt Duplikate für tags. Umsetzung: nutzt interne Aufrufe: `t`.
-- `normalizeYearTag` ([app.js](app.js#L1426)) — Zweck: Normalisiert year tag. Umsetzung: nutzt interne Aufrufe: `t`.
-- `normalizeMonthTag` ([app.js](app.js#L1432)) — Zweck: Normalisiert month tag. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `normalizeCategoryValue` ([app.js](app.js#L1438)) — Zweck: Normalisiert category value. Umsetzung: nutzt interne Aufrufe: `t`.
-- `isYearTag` ([app.js](app.js#L1449)) — Zweck: Prüft is year tag. Umsetzung: nutzt interne Aufrufe: `t`.
-- `isMonthTag` ([app.js](app.js#L1453)) — Zweck: Prüft is month tag. Umsetzung: nutzt interne Aufrufe: `normalizeMonthTag`.
-- `getDateTagsForTs` ([app.js](app.js#L1457)) — Zweck: Liest date tags for ts. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `splitTagsForEditor` ([app.js](app.js#L1479)) — Zweck: Allgemeiner Helfer: split tags for editor. Umsetzung: nutzt interne Aufrufe: `getDateTagsForTs`, `isMonthTag`, `isYearTag`, `normalizeMonthTag`, `stripManualTagsMarker`, `stripPinnedTag`.
-- `buildEditorSystemTags` ([app.js](app.js#L1524)) — Zweck: Baut editor system tags. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `getEditingNoteCreatedAt` ([app.js](app.js#L1534)) — Zweck: Liest editing note created at. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `syncPsEditorTagMetaInputs` ([app.js](app.js#L1543)) — Zweck: Synchronisiert ps editor tag meta inputs. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `updatePsEditorTagMetaFromInputs` ([app.js](app.js#L1553)) — Zweck: Aktualisiert ps editor tag meta from inputs. Umsetzung: nutzt interne Aufrufe: `getDateTagsForTs`, `getEditingNoteCreatedAt`, `normalizeCategoryValue`, `normalizeMonthTag`, `normalizeYearTag`, `schedulePsTagsAutoSave`, `syncPsEditorTagMetaInputs`, `t`, `updateEditingNoteTagsLocal`, `updateEditorMetaYaml`, `updatePsEditingTagsHint`.
-- `formatTagsForHint` ([app.js](app.js#L1576)) — Zweck: Formatiert tags for hint. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `updatePsEditingTagsHint` ([app.js](app.js#L1582)) — Zweck: Aktualisiert ps editing tags hint. Umsetzung: nutzt interne Aufrufe: `formatTagsForHint`, `t`.
-- `formatTagsForEditor` ([app.js](app.js#L1610)) — Zweck: Formatiert tags for editor. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `setPsEditorTagsVisible` ([app.js](app.js#L1615)) — Zweck: Setzt ps editor tags visible. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `syncPsEditorTagsInput` ([app.js](app.js#L1620)) — Zweck: Synchronisiert ps editor tags input. Umsetzung: nutzt interne Aufrufe: `formatTagsForEditor`, `syncPsEditorTagMetaInputs`.
-- `getPsEditorTagTokenBounds` ([app.js](app.js#L1638)) — Zweck: Liest ps editor tag token bounds. Umsetzung: nutzt interne Aufrufe: `t`.
-- `buildPsEditorTagsSuggestItems` ([app.js](app.js#L1652)) — Zweck: Baut ps editor tags suggest items. Umsetzung: nutzt interne Aufrufe: `getPsEditorTagTokenBounds`, `isMonthTag`, `isYearTag`, `normalizeManualTags`, `t`.
-- `closePsEditorTagsSuggest` ([app.js](app.js#L1679)) — Zweck: Schließt ps editor tags suggest. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `renderPsEditorTagsSuggest` ([app.js](app.js#L1688)) — Zweck: Rendert ps editor tags suggest. Umsetzung: nutzt interne Aufrufe: `closePsEditorTagsSuggest`, `escapeHtml`, `escapeHtmlAttr`, `t`.
-- `updatePsEditorTagsSuggest` ([app.js](app.js#L1713)) — Zweck: Aktualisiert ps editor tags suggest. Umsetzung: nutzt interne Aufrufe: `buildPsEditorTagsSuggestItems`, `closePsEditorTagsSuggest`, `renderPsEditorTagsSuggest`, `t`.
-- `updatePsEditorTagsFromInput` ([app.js](app.js#L1744)) — Zweck: Aktualisiert ps editor tags from input. Umsetzung: nutzt interne Aufrufe: `normalizeManualTags`, `schedulePsTagsAutoSave`, `t`, `updateEditingNoteTagsLocal`, `updateEditorMetaYaml`, `updatePsEditingTagsHint`.
-- `applyPsEditorTagSuggestion` ([app.js](app.js#L1756)) — Zweck: Wendet ps editor tag suggestion. Umsetzung: nutzt interne Aufrufe: `getPsEditorTagTokenBounds`, `t`, `updatePsEditorTagsFromInput`, `updatePsEditorTagsSuggest`.
-- `syncPsEditingNoteTagsFromState` ([app.js](app.js#L1772)) — Zweck: Synchronisiert ps editing note tags from state. Umsetzung: nutzt interne Aufrufe: `normalizeCategoryValue`, `normalizeMonthTag`, `normalizeYearTag`, `splitTagsForEditor`, `syncPsEditorTagsInput`, `t`, `updatePsEditingTagsHint`.
-- `getLineBounds` ([app.js](app.js#L1796)) — Zweck: Liest line bounds. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `replaceTextRange` ([app.js](app.js#L1805)) — Zweck: Allgemeiner Helfer: replace text range. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `insertTextAtCursor` ([app.js](app.js#L1813)) — Zweck: Allgemeiner Helfer: insert text at cursor. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `showSlashHelp` ([app.js](app.js#L1828)) — Zweck: Allgemeiner Helfer: show slash help. Umsetzung: nutzt interne Aufrufe: `openModal`.
-- `getTextareaCaretCoords` ([app.js](app.js#L1896)) — Zweck: Liest textarea caret coords. Umsetzung: nutzt interne Aufrufe: `t`.
-- `positionFloatingMenu` ([app.js](app.js#L1959)) — Zweck: Allgemeiner Helfer: position floating menu. Umsetzung: nutzt interne Aufrufe: `getTextareaCaretCoords`, `t`.
-- `setSlashMenuOpen` ([app.js](app.js#L1980)) — Zweck: Setzt slash menu open. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `getSlashContext` ([app.js](app.js#L1986)) — Zweck: Liest slash context. Umsetzung: nutzt interne Aufrufe: `getLineBounds`.
-- `setWikiMenuOpen` ([app.js](app.js#L2033)) — Zweck: Setzt wiki menu open. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `setSelectionMenuOpen` ([app.js](app.js#L2039)) — Zweck: Setzt selection menu open. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-- `getSelectionRange` ([app.js](app.js#L2045)) — Zweck: Liest selection range. Umsetzung: nutzt interne Aufrufe: keine internen Funktionsaufrufe.
-## Funktionsübersicht server.js
+## Chronologischer Ablauf (App öffnet → Nutzeraktionen)
+
+1) App lädt und initialisiert UI
+- Zweck: Initialisierung der UI, Event-Handler, Startlogik.
+- Umsetzung: `initUiEventListeners`, `initStartupTasks` ([app.js](app.js#L14836), [app.js](app.js#L15750)).
+
+2) Sprach- und UI-Initialisierung
+- Zweck: UI-Sprache erkennen/setzen und Übersetzungen anwenden.
+- Umsetzung: `detectUiLanguage`, `applyUiLanguage`, `applyUiTranslations`, `t`.
+
+3) Verbindungsaufbau (Room/Sync)
+- Zweck: Room/Key bestimmen, WebSocket verbinden, CRDT/Presence starten.
+- Umsetzung: `parseRoomAndKeyFromHash`, `connect`, `ensureYjsLoaded`, `initCrdt`, `sendCurrentState`.
+
+4) Nutzer tippt im Editor
+- Zweck: Text aktualisieren, Preview/Mask/CRDT syncen, Auto-Save triggern.
+- Umsetzung: `updatePreview`, `updatePasswordMaskOverlay`, `scheduleSend`, `schedulePsAutoSave`.
+
+5) Preview interagiert (Checkbox, Code, Tabellen)
+- Zweck: Preview-Aktionen zurück in den Editor schreiben.
+- Umsetzung: `attachPreviewCheckboxWriteback`, `toggleMarkdownTaskAtIndex`, `applyTableCommand`.
+
+6) Kommentare/Markierungen
+- Zweck: Kommentare verwalten, Overlay/Panel synchronisieren.
+- Umsetzung: `loadCommentsForRoom`, `renderCommentList`, `updateCommentOverlay`, `addCommentFromDraft`.
+
+7) Personal Space (Notizen, Tags, Auto-Save)
+- Zweck: Notizen laden/filtern, Tags, Auto-Save, Tabs/History.
+- Umsetzung: `refreshPersonalSpace`, `applyPersonalSpaceFiltersAndRender`, `savePersonalSpaceNote`, `updateRoomTabsForNoteId`.
+
+8) Settings/Tools (Uploads, Kalender, AI)
+- Zweck: Uploads/Trash/Calendar/AI-Einstellungen verwalten.
+- Umsetzung: `loadUploadsManage`, `loadTrashManage`, `renderCalendarPanel`, `aiAssistFromPreview`.
+
+## Funktionskatalog (chronologisch im Code, Zweck zuerst)
+
+### app.js
+
+- Zweck: Normalisiert base url. Umsetzung: `normalizeBaseUrl` ([app.js](app.js#L338)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: try render shared note. Umsetzung: `tryRenderSharedNote` ([app.js](app.js#L351)). Abhängigkeiten: `base64UrlDecode`, `buildNoteShareHtmlDocument`, `t`.
+- Zweck: Stellt sicher: pdf js loaded. Umsetzung: `ensurePdfJsLoaded` ([app.js](app.js#L382)). Abhängigkeiten: `t`.
+- Zweck: Liest pdf preview doc. Umsetzung: `getPdfPreviewDoc` ([app.js](app.js#L398)). Abhängigkeiten: `ensurePdfJsLoaded`, `t`.
+- Zweck: Rendert pdf preview page. Umsetzung: `renderPdfPreviewPage` ([app.js](app.js#L414)). Abhängigkeiten: `ensurePdfJsLoaded`, `getPdfPreviewDoc`, `t`.
+- Zweck: Erzeugt client id. Umsetzung: `createClientId` ([app.js](app.js#L437)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: announce client id. Umsetzung: `announceClientId` ([app.js](app.js#L451)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Erzeugt zufällige identity. Umsetzung: `randomIdentity` ([app.js](app.js#L476)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Lädt identity. Umsetzung: `loadIdentity` ([app.js](app.js#L555)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Speichert identity. Umsetzung: `saveIdentity` ([app.js](app.js#L571)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Normalisiert room. Umsetzung: `normalizeRoom` ([app.js](app.js#L587)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Normalisiert key. Umsetzung: `normalizeKey` ([app.js](app.js#L596)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Parst room and key from hash. Umsetzung: `parseRoomAndKeyFromHash` ([app.js](app.js#L605)). Abhängigkeiten: `normalizeKey`, `normalizeRoom`, `t`.
+- Zweck: Baut share hash. Umsetzung: `buildShareHash` ([app.js](app.js#L624)). Abhängigkeiten: `t`.
+- Zweck: Erzeugt zufällige key. Umsetzung: `randomKey` ([app.js](app.js#L631)). Abhängigkeiten: `normalizeKey`.
+- Zweck: Allgemeiner Helfer: reset e2ee key cache. Umsetzung: `resetE2eeKeyCache` ([app.js](app.js#L652)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: base64 url encode. Umsetzung: `base64UrlEncode` ([app.js](app.js#L657)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: base64 url decode. Umsetzung: `base64UrlDecode` ([app.js](app.js#L668)). Abhängigkeiten: `t`.
+- Zweck: Allgemeiner Helfer: base64 encode bytes. Umsetzung: `base64EncodeBytes` ([app.js](app.js#L682)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: base64 decode bytes. Umsetzung: `base64DecodeBytes` ([app.js](app.js#L691)). Abhängigkeiten: `t`.
+- Zweck: Liest e2ee key. Umsetzung: `getE2eeKey` ([app.js](app.js#L701)). Abhängigkeiten: `t`.
+- Zweck: Allgemeiner Helfer: encrypt for room. Umsetzung: `encryptForRoom` ([app.js](app.js#L717)). Abhängigkeiten: `base64UrlEncode`, `getE2eeKey`, `t`.
+- Zweck: Allgemeiner Helfer: decrypt for room. Umsetzung: `decryptForRoom` ([app.js](app.js#L733)). Abhängigkeiten: `base64UrlDecode`, `getE2eeKey`, `t`.
+- Zweck: Benachrichtigungen anzeigen. Umsetzung: `toast` ([app.js](app.js#L746)). Abhängigkeiten: `t`.
+- Zweck: Lädt build stamp. Umsetzung: `loadBuildStamp` ([app.js](app.js#L767)). Abhängigkeiten: `t`.
+- Zweck: Prüft is modal ready. Umsetzung: `isModalReady` ([app.js](app.js#L805)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Setzt modal open. Umsetzung: `setModalOpen` ([app.js](app.js#L817)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Öffnet modal. Umsetzung: `openModal` ([app.js](app.js#L829)). Abhängigkeiten: `cleanup`, `finish`, `isModalReady`, `onBackdropClick`, `onCancel`, `onInputKey`, `onKeyDown`, `onOk`, `setModalOpen`, `t`.
+- Zweck: Allgemeiner Helfer: cleanup. Umsetzung: `cleanup` ([app.js](app.js#L880)). Abhängigkeiten: `setModalOpen`.
+- Zweck: Allgemeiner Helfer: finish. Umsetzung: `finish` ([app.js](app.js#L899)). Abhängigkeiten: `cleanup`.
+- Zweck: Allgemeiner Helfer: on cancel. Umsetzung: `onCancel` ([app.js](app.js#L905)). Abhängigkeiten: `finish`.
+- Zweck: Allgemeiner Helfer: on ok. Umsetzung: `onOk` ([app.js](app.js#L908)). Abhängigkeiten: `finish`.
+- Zweck: Allgemeiner Helfer: on backdrop click. Umsetzung: `onBackdropClick` ([app.js](app.js#L911)). Abhängigkeiten: `finish`.
+- Zweck: Allgemeiner Helfer: on input key. Umsetzung: `onInputKey` ([app.js](app.js#L915)). Abhängigkeiten: `finish`, `t`.
+- Zweck: Allgemeiner Helfer: on key down. Umsetzung: `onKeyDown` ([app.js](app.js#L922)). Abhängigkeiten: `finish`, `t`.
+- Zweck: Allgemeiner Helfer: modal confirm. Umsetzung: `modalConfirm` ([app.js](app.js#L940)). Abhängigkeiten: `openModal`.
+- Zweck: Allgemeiner Helfer: modal prompt. Umsetzung: `modalPrompt` ([app.js](app.js#L952)). Abhängigkeiten: `openModal`.
+- Zweck: Prüft is share modal ready. Umsetzung: `isShareModalReady` ([app.js](app.js#L971)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Setzt share modal open. Umsetzung: `setShareModalOpen` ([app.js](app.js#L983)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Baut qr url. Umsetzung: `buildQrUrl` ([app.js](app.js#L995)). Abhängigkeiten: `t`.
+- Zweck: Aktualisiert share modal link. Umsetzung: `updateShareModalLink` ([app.js](app.js#L1000)). Abhängigkeiten: `buildQrUrl`, `buildShareHref`, `isShareModalReady`, `t`.
+- Zweck: Öffnet share modal. Umsetzung: `openShareModal` ([app.js](app.js#L1017)). Abhängigkeiten: `isShareModalReady`, `setShareModalOpen`, `t`, `updateShareModalLink`.
+- Zweck: Prüft is note share modal ready. Umsetzung: `isNoteShareModalReady` ([app.js](app.js#L1036)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: revoke note share share url. Umsetzung: `revokeNoteShareShareUrl` ([app.js](app.js#L1049)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Baut note share html document. Umsetzung: `buildNoteShareHtmlDocument` ([app.js](app.js#L1053)). Abhängigkeiten: `escapeHtml`.
+- Zweck: Setzt note share modal open. Umsetzung: `setNoteShareModalOpen` ([app.js](app.js#L1076)). Abhängigkeiten: `revokeNoteShareShareUrl`.
+- Zweck: Baut note share payload from ids. Umsetzung: `buildNoteSharePayloadFromIds` ([app.js](app.js#L1089)). Abhängigkeiten: `findNoteById`, `getNoteTitle`.
+- Zweck: Baut note share url. Umsetzung: `buildNoteShareUrl` ([app.js](app.js#L1114)). Abhängigkeiten: `base64UrlEncode`, `t`.
+- Zweck: Baut note share qr payload. Umsetzung: `buildNoteShareQrPayload` ([app.js](app.js#L1128)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Aktualisiert note share modal. Umsetzung: `updateNoteShareModal` ([app.js](app.js#L1148)). Abhängigkeiten: `buildNoteShareQrPayload`, `buildNoteShareUrl`, `buildQrUrl`, `isNoteShareModalReady`, `revokeNoteShareShareUrl`, `t`.
+- Zweck: Öffnet note share modal. Umsetzung: `openNoteShareModal` ([app.js](app.js#L1190)). Abhängigkeiten: `buildNoteSharePayloadFromIds`, `isNoteShareModalReady`, `setNoteShareModalOpen`, `t`, `toast`, `updateNoteShareModal`.
+- Zweck: Prüft is upload modal ready. Umsetzung: `isUploadModalReady` ([app.js](app.js#L1212)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Setzt upload modal open. Umsetzung: `setUploadModalOpen` ([app.js](app.js#L1224)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Formatiert bytes. Umsetzung: `formatBytes` ([app.js](app.js#L1236)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Baut upload markdown. Umsetzung: `buildUploadMarkdown` ([app.js](app.js#L1244)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Prüft is allowed upload type. Umsetzung: `isAllowedUploadType` ([app.js](app.js#L1254)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Aktualisiert upload preview. Umsetzung: `updateUploadPreview` ([app.js](app.js#L1259)). Abhängigkeiten: `formatBytes`.
+- Zweck: Setzt upload insert disabled. Umsetzung: `setUploadInsertDisabled` ([app.js](app.js#L1275)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: reset upload modal state. Umsetzung: `resetUploadModalState` ([app.js](app.js#L1283)). Abhängigkeiten: `setUploadInsertDisabled`, `updateUploadPreview`.
+- Zweck: Öffnet upload modal. Umsetzung: `openUploadModal` ([app.js](app.js#L1291)). Abhängigkeiten: `isUploadModalReady`, `resetUploadModalState`, `setUploadModalOpen`, `t`.
+- Zweck: Allgemeiner Helfer: read file as data url. Umsetzung: `readFileAsDataUrl` ([app.js](app.js#L1304)). Abhängigkeiten: `t`.
+- Zweck: HTTP-API-Aufruf im Client. Umsetzung: `api` ([app.js](app.js#L1313)). Abhängigkeiten: `safeJsonParse`, `t`.
+- Zweck: Allgemeiner Helfer: fmt date. Umsetzung: `fmtDate` ([app.js](app.js#L1336)). Abhängigkeiten: `getUiLocale`.
+- Zweck: Normalisiert manual tags. Umsetzung: `normalizeManualTags` ([app.js](app.js#L1350)). Abhängigkeiten: `t`.
+- Zweck: Entfernt Duplikate für tags. Umsetzung: `uniqTags` ([app.js](app.js#L1408)). Abhängigkeiten: `t`.
+- Zweck: Normalisiert year tag. Umsetzung: `normalizeYearTag` ([app.js](app.js#L1426)). Abhängigkeiten: `t`.
+- Zweck: Normalisiert month tag. Umsetzung: `normalizeMonthTag` ([app.js](app.js#L1432)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Normalisiert category value. Umsetzung: `normalizeCategoryValue` ([app.js](app.js#L1438)). Abhängigkeiten: `t`.
+- Zweck: Prüft is year tag. Umsetzung: `isYearTag` ([app.js](app.js#L1449)). Abhängigkeiten: `t`.
+- Zweck: Prüft is month tag. Umsetzung: `isMonthTag` ([app.js](app.js#L1453)). Abhängigkeiten: `normalizeMonthTag`.
+- Zweck: Liest date tags for ts. Umsetzung: `getDateTagsForTs` ([app.js](app.js#L1457)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: split tags for editor. Umsetzung: `splitTagsForEditor` ([app.js](app.js#L1479)). Abhängigkeiten: `getDateTagsForTs`, `isMonthTag`, `isYearTag`, `normalizeMonthTag`, `stripManualTagsMarker`, `stripPinnedTag`.
+- Zweck: Baut editor system tags. Umsetzung: `buildEditorSystemTags` ([app.js](app.js#L1524)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Liest editing note created at. Umsetzung: `getEditingNoteCreatedAt` ([app.js](app.js#L1534)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Synchronisiert ps editor tag meta inputs. Umsetzung: `syncPsEditorTagMetaInputs` ([app.js](app.js#L1543)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Aktualisiert ps editor tag meta from inputs. Umsetzung: `updatePsEditorTagMetaFromInputs` ([app.js](app.js#L1553)). Abhängigkeiten: `getDateTagsForTs`, `getEditingNoteCreatedAt`, `normalizeCategoryValue`, `normalizeMonthTag`, `normalizeYearTag`, `schedulePsTagsAutoSave`, `syncPsEditorTagMetaInputs`, `t`, `updateEditingNoteTagsLocal`, `updateEditorMetaYaml`, `updatePsEditingTagsHint`.
+- Zweck: Formatiert tags for hint. Umsetzung: `formatTagsForHint` ([app.js](app.js#L1576)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Aktualisiert ps editing tags hint. Umsetzung: `updatePsEditingTagsHint` ([app.js](app.js#L1582)). Abhängigkeiten: `formatTagsForHint`, `t`.
+- Zweck: Formatiert tags for editor. Umsetzung: `formatTagsForEditor` ([app.js](app.js#L1610)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Setzt ps editor tags visible. Umsetzung: `setPsEditorTagsVisible` ([app.js](app.js#L1615)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Synchronisiert ps editor tags input. Umsetzung: `syncPsEditorTagsInput` ([app.js](app.js#L1620)). Abhängigkeiten: `formatTagsForEditor`, `syncPsEditorTagMetaInputs`.
+- Zweck: Liest ps editor tag token bounds. Umsetzung: `getPsEditorTagTokenBounds` ([app.js](app.js#L1638)). Abhängigkeiten: `t`.
+- Zweck: Baut ps editor tags suggest items. Umsetzung: `buildPsEditorTagsSuggestItems` ([app.js](app.js#L1652)). Abhängigkeiten: `getPsEditorTagTokenBounds`, `isMonthTag`, `isYearTag`, `normalizeManualTags`, `t`.
+- Zweck: Schließt ps editor tags suggest. Umsetzung: `closePsEditorTagsSuggest` ([app.js](app.js#L1679)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Rendert ps editor tags suggest. Umsetzung: `renderPsEditorTagsSuggest` ([app.js](app.js#L1688)). Abhängigkeiten: `closePsEditorTagsSuggest`, `escapeHtml`, `escapeHtmlAttr`, `t`.
+- Zweck: Aktualisiert ps editor tags suggest. Umsetzung: `updatePsEditorTagsSuggest` ([app.js](app.js#L1713)). Abhängigkeiten: `buildPsEditorTagsSuggestItems`, `closePsEditorTagsSuggest`, `renderPsEditorTagsSuggest`, `t`.
+- Zweck: Aktualisiert ps editor tags from input. Umsetzung: `updatePsEditorTagsFromInput` ([app.js](app.js#L1744)). Abhängigkeiten: `normalizeManualTags`, `schedulePsTagsAutoSave`, `t`, `updateEditingNoteTagsLocal`, `updateEditorMetaYaml`, `updatePsEditingTagsHint`.
+- Zweck: Wendet ps editor tag suggestion. Umsetzung: `applyPsEditorTagSuggestion` ([app.js](app.js#L1756)). Abhängigkeiten: `getPsEditorTagTokenBounds`, `t`, `updatePsEditorTagsFromInput`, `updatePsEditorTagsSuggest`.
+- Zweck: Synchronisiert ps editing note tags from state. Umsetzung: `syncPsEditingNoteTagsFromState` ([app.js](app.js#L1772)). Abhängigkeiten: `normalizeCategoryValue`, `normalizeMonthTag`, `normalizeYearTag`, `splitTagsForEditor`, `syncPsEditorTagsInput`, `t`, `updatePsEditingTagsHint`.
+- Zweck: Liest line bounds. Umsetzung: `getLineBounds` ([app.js](app.js#L1796)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: replace text range. Umsetzung: `replaceTextRange` ([app.js](app.js#L1805)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: insert text at cursor. Umsetzung: `insertTextAtCursor` ([app.js](app.js#L1813)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: show slash help. Umsetzung: `showSlashHelp` ([app.js](app.js#L1828)). Abhängigkeiten: `openModal`.
+- Zweck: Liest textarea caret coords. Umsetzung: `getTextareaCaretCoords` ([app.js](app.js#L1896)). Abhängigkeiten: `t`.
+- Zweck: Allgemeiner Helfer: position floating menu. Umsetzung: `positionFloatingMenu` ([app.js](app.js#L1959)). Abhängigkeiten: `getTextareaCaretCoords`, `t`.
+- Zweck: Setzt slash menu open. Umsetzung: `setSlashMenuOpen` ([app.js](app.js#L1980)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Liest slash context. Umsetzung: `getSlashContext` ([app.js](app.js#L1986)). Abhängigkeiten: `getLineBounds`.
+- Zweck: Setzt wiki menu open. Umsetzung: `setWikiMenuOpen` ([app.js](app.js#L2033)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Setzt selection menu open. Umsetzung: `setSelectionMenuOpen` ([app.js](app.js#L2039)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Liest selection range. Umsetzung: `getSelectionRange` ([app.js](app.js#L2045)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Formatiert comment time. Umsetzung: `formatCommentTime` ([app.js](app.js#L2053)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Liest comment storage key. Umsetzung: `getCommentStorageKey` ([app.js](app.js#L2066)). Abhängigkeiten: `normalizeKey`, `normalizeRoom`.
+- Zweck: Lädt comments for room. Umsetzung: `loadCommentsForRoom` ([app.js](app.js#L2072)). Abhängigkeiten: `getCommentStorageKey`, `renderCommentList`, `t`, `updateCommentOverlay`.
+- Zweck: Speichert comments for room. Umsetzung: `saveCommentsForRoom` ([app.js](app.js#L2126)). Abhängigkeiten: `getCommentStorageKey`.
+- Zweck: Normalisiert comment selection. Umsetzung: `normalizeCommentSelection` ([app.js](app.js#L2135)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Baut comment overlay html. Umsetzung: `buildCommentOverlayHtml` ([app.js](app.js#L2152)). Abhängigkeiten: `escapeHtml`, `escapeHtmlAttr`, `normalizeCommentSelection`, `t`.
+- Zweck: Synchronisiert comment overlay scroll. Umsetzung: `syncCommentOverlayScroll` ([app.js](app.js#L2178)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Aktualisiert comment overlay. Umsetzung: `updateCommentOverlay` ([app.js](app.js#L2185)). Abhängigkeiten: `buildCommentOverlayHtml`, `syncCommentOverlayScroll`.
+- Zweck: Setzt comment panel open. Umsetzung: `setCommentPanelOpen` ([app.js](app.js#L2209)). Abhängigkeiten: `updateCommentOverlay`.
+- Zweck: Setzt comment draft selection. Umsetzung: `setCommentDraftSelection` ([app.js](app.js#L2237)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Aktualisiert comment composer ui. Umsetzung: `updateCommentComposerUi` ([app.js](app.js#L2255)). Abhängigkeiten: `applyUiTranslations`.
+- Zweck: Setzt comment composer state. Umsetzung: `setCommentComposerState` ([app.js](app.js#L2268)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: clear comment composer state. Umsetzung: `clearCommentComposerState` ([app.js](app.js#L2278)). Abhängigkeiten: `setCommentDraftSelection`, `updateCommentComposerUi`.
+- Zweck: Rendert comment list. Umsetzung: `renderCommentList` ([app.js](app.js#L2286)). Abhängigkeiten: `applyUiTranslations`, `clearCommentComposerState`, `formatCommentTime`, `normalizeCommentSelection`, `saveCommentsForRoom`, `setCommentComposerState`, `setCommentPanelOpen`, `t`, `updateCommentOverlay`, `updateSelectionMenu`.
+- Zweck: Fügt hinzu: comment from draft. Umsetzung: `addCommentFromDraft` ([app.js](app.js#L2435)). Abhängigkeiten: `clearCommentComposerState`, `getSelectionRange`, `renderCommentList`, `saveCommentsForRoom`, `t`, `toast`, `updateCommentOverlay`.
+- Zweck: Öffnet comment from selection. Umsetzung: `openCommentFromSelection` ([app.js](app.js#L2502)). Abhängigkeiten: `getSelectionRange`, `setCommentDraftSelection`, `setCommentPanelOpen`, `setSelectionMenuOpen`, `updateCommentComposerUi`.
+- Zweck: Liest selection line range. Umsetzung: `getSelectionLineRange` ([app.js](app.js#L2522)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: wrap selection. Umsetzung: `wrapSelection` ([app.js](app.js#L2529)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: wrap selection toggle. Umsetzung: `wrapSelectionToggle` ([app.js](app.js#L2541)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: prefix selection lines. Umsetzung: `prefixSelectionLines` ([app.js](app.js#L2582)). Abhängigkeiten: `getSelectionLineRange`, `t`.
+- Zweck: Schaltet prefix selection lines. Umsetzung: `togglePrefixSelectionLines` ([app.js](app.js#L2605)). Abhängigkeiten: `getSelectionLineRange`, `t`.
+- Zweck: Schaltet divider at selection. Umsetzung: `toggleDividerAtSelection` ([app.js](app.js#L2647)). Abhängigkeiten: `getSelectionLineRange`, `t`.
+- Zweck: Schaltet fenced code block. Umsetzung: `toggleFencedCodeBlock` ([app.js](app.js#L2671)). Abhängigkeiten: `getSelectedCodeLang`, `getSelectionLineRange`, `t`.
+- Zweck: Allgemeiner Helfer: sort selection lines. Umsetzung: `sortSelectionLines` ([app.js](app.js#L2715)). Abhängigkeiten: `getSelectionLineRange`, `t`.
+- Zweck: Wendet selection action. Umsetzung: `applySelectionAction` ([app.js](app.js#L2735)). Abhängigkeiten: `openCommentFromSelection`, `schedulePsAutoSave`, `scheduleSend`, `setSelectionMenuOpen`, `sortSelectionLines`, `toggleDividerAtSelection`, `toggleEditorMaskView`, `toggleFencedCodeBlock`, `togglePrefixSelectionLines`, `updateCodeLangOverlay`, `updatePasswordMaskOverlay`, `updatePreview`, `wrapSelection`, `wrapSelectionToggle`.
+- Zweck: Aktualisiert selection menu. Umsetzung: `updateSelectionMenu` ([app.js](app.js#L2801)). Abhängigkeiten: `getSelectionRange`, `positionFloatingMenu`, `setSelectionMenuOpen`.
+- Zweck: Liest wiki context. Umsetzung: `getWikiContext` ([app.js](app.js#L2820)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Rendert wiki menu. Umsetzung: `renderWikiMenu` ([app.js](app.js#L2853)). Abhängigkeiten: `escapeHtml`, `insertWikiLink`, `t`.
+- Zweck: Allgemeiner Helfer: insert wiki link. Umsetzung: `insertWikiLink` ([app.js](app.js#L2905)). Abhängigkeiten: `getWikiContext`, `replaceTextRange`, `setWikiMenuOpen`, `t`, `updatePreview`.
+- Zweck: Aktualisiert wiki menu. Umsetzung: `updateWikiMenu` ([app.js](app.js#L2925)). Abhängigkeiten: `fmtDate`, `getNoteTitle`, `getWikiContext`, `renderWikiMenu`, `setSlashMenuOpen`, `setWikiMenuOpen`, `t`.
+- Zweck: Allgemeiner Helfer: handle wiki menu key. Umsetzung: `handleWikiMenuKey` ([app.js](app.js#L2959)). Abhängigkeiten: `insertWikiLink`, `renderWikiMenu`, `setWikiMenuOpen`, `t`.
+- Zweck: Rendert slash menu. Umsetzung: `renderSlashMenu` ([app.js](app.js#L2988)). Abhängigkeiten: `insertSlashSnippet`, `t`.
+- Zweck: Allgemeiner Helfer: insert slash snippet. Umsetzung: `insertSlashSnippet` ([app.js](app.js#L3039)). Abhängigkeiten: `getSlashContext`, `replaceTextRange`, `setSlashMenuOpen`, `t`, `updatePreview`.
+- Zweck: Aktualisiert slash menu. Umsetzung: `updateSlashMenu` ([app.js](app.js#L3058)). Abhängigkeiten: `getSlashContext`, `getWikiContext`, `positionFloatingMenu`, `renderSlashMenu`, `setSlashMenuOpen`, `t`.
+- Zweck: Allgemeiner Helfer: handle slash menu key. Umsetzung: `handleSlashMenuKey` ([app.js](app.js#L3099)). Abhängigkeiten: `getSlashContext`, `insertSlashSnippet`, `renderSlashMenu`, `setSlashMenuOpen`, `t`.
+- Zweck: Rendert table row. Umsetzung: `renderTableRow` ([app.js](app.js#L3141)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Rendert table separator. Umsetzung: `renderTableSeparator` ([app.js](app.js#L3148)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Baut markdown table. Umsetzung: `buildMarkdownTable` ([app.js](app.js#L3158)). Abhängigkeiten: `renderTableRow`, `renderTableSeparator`.
+- Zweck: Liest line index at pos. Umsetzung: `getLineIndexAtPos` ([app.js](app.js#L3176)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Prüft is table separator. Umsetzung: `isTableSeparator` ([app.js](app.js#L3186)). Abhängigkeiten: `t`.
+- Zweck: Allgemeiner Helfer: split table row. Umsetzung: `splitTableRow` ([app.js](app.js#L3190)). Abhängigkeiten: `t`.
+- Zweck: Liest column index from caret. Umsetzung: `getColumnIndexFromCaret` ([app.js](app.js#L3197)). Abhängigkeiten: `t`.
+- Zweck: Liest table context. Umsetzung: `getTableContext` ([app.js](app.js#L3212)). Abhängigkeiten: `getLineIndexAtPos`, `isTableSeparator`, `t`.
+- Zweck: Wendet table command. Umsetzung: `applyTableCommand` ([app.js](app.js#L3248)). Abhängigkeiten: `getColumnIndexFromCaret`, `getTableContext`, `renderTableRow`, `renderTableSeparator`, `replaceTextRange`, `splitTableRow`, `t`.
+- Zweck: Setzt table modal open. Umsetzung: `setTableModalOpen` ([app.js](app.js#L3339)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: escape html attr. Umsetzung: `escapeHtmlAttr` ([app.js](app.js#L3351)). Abhängigkeiten: `applySlashCommand`, `applyTableCommand`, `applyTableEditorToTextarea`, `buildMarkdownTable`, `getLineBounds`, `getNumericValuesForScope`, `getSelectedCodeLang`, `getTableContext`, `insertCalcResult`, `openTableEditorFromCursor`, `parseTableFromContext`, `renderTableEditorGrid`, `renderTableRow`, `renderTableSeparator`, `replaceTextRange`, `scheduleSend`, `setTableModalOpen`, `showSlashHelp`, `splitTableRow`, `t`, `toast`, `updateCodeLangOverlay`, `updatePasswordMaskOverlay`, `updatePreview`, `updateTableActiveCellLabel`, `updateTableActiveInputHighlight`, `updateTableCalculations`, `updateTableMenuVisibility`.
+- Zweck: Parst table from context. Umsetzung: `parseTableFromContext` ([app.js](app.js#L3359)). Abhängigkeiten: `splitTableRow`.
+- Zweck: Rendert table editor grid. Umsetzung: `renderTableEditorGrid` ([app.js](app.js#L3389)). Abhängigkeiten: `escapeHtmlAttr`, `t`, `updateTableActiveCellLabel`, `updateTableActiveInputHighlight`, `updateTableCalculations`.
+- Zweck: Aktualisiert table active cell label. Umsetzung: `updateTableActiveCellLabel` ([app.js](app.js#L3467)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Aktualisiert table active input highlight. Umsetzung: `updateTableActiveInputHighlight` ([app.js](app.js#L3477)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Liest numeric values for scope. Umsetzung: `getNumericValuesForScope` ([app.js](app.js#L3491)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Aktualisiert table calculations. Umsetzung: `updateTableCalculations` ([app.js](app.js#L3514)). Abhängigkeiten: `getNumericValuesForScope`.
+- Zweck: Allgemeiner Helfer: insert calc result. Umsetzung: `insertCalcResult` ([app.js](app.js#L3535)). Abhängigkeiten: `getNumericValuesForScope`, `renderTableEditorGrid`, `updateTableCalculations`.
+- Zweck: Wendet table editor to textarea. Umsetzung: `applyTableEditorToTextarea` ([app.js](app.js#L3552)). Abhängigkeiten: `renderTableRow`, `renderTableSeparator`, `replaceTextRange`, `scheduleSend`, `updatePasswordMaskOverlay`, `updatePreview`.
+- Zweck: Öffnet table editor from cursor. Umsetzung: `openTableEditorFromCursor` ([app.js](app.js#L3577)). Abhängigkeiten: `getTableContext`, `parseTableFromContext`, `renderTableEditorGrid`, `setTableModalOpen`, `t`, `toast`, `updateTableActiveCellLabel`, `updateTableCalculations`.
+- Zweck: Aktualisiert table menu visibility. Umsetzung: `updateTableMenuVisibility` ([app.js](app.js#L3607)). Abhängigkeiten: `getTableContext`, `t`.
+- Zweck: Wendet slash command. Umsetzung: `applySlashCommand` ([app.js](app.js#L3614)). Abhängigkeiten: `applyTableCommand`, `buildMarkdownTable`, `getLineBounds`, `getSelectedCodeLang`, `replaceTextRange`, `showSlashHelp`, `t`, `toast`, `updateCodeLangOverlay`.
+- Zweck: Prüft is mobile viewport. Umsetzung: `isMobileViewport` ([app.js](app.js#L3833)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Synchronisiert mobile focus state. Umsetzung: `syncMobileFocusState` ([app.js](app.js#L3844)). Abhängigkeiten: `isMobileViewport`, `t`.
+- Zweck: Liest ui string. Umsetzung: `getUiString` ([app.js](app.js#L4564)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: UI-Übersetzungsschlüssel auflösen. Umsetzung: `t` ([app.js](app.js#L4574)). Abhängigkeiten: `getUiString`.
+- Zweck: Formatiert ui. Umsetzung: `formatUi` ([app.js](app.js#L4580)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Liest ui locale. Umsetzung: `getUiLocale` ([app.js](app.js#L4591)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Liest ui speech locale. Umsetzung: `getUiSpeechLocale` ([app.js](app.js#L4595)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: detect ui language. Umsetzung: `detectUiLanguage` ([app.js](app.js#L4599)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Wendet i18n attribute. Umsetzung: `applyI18nAttribute` ([app.js](app.js#L4610)). Abhängigkeiten: `getUiString`.
+- Zweck: Wendet ui translations. Umsetzung: `applyUiTranslations` ([app.js](app.js#L4620)). Abhängigkeiten: `applyI18nAttribute`, `getUiString`.
+- Zweck: Synchronisiert ui lang buttons. Umsetzung: `syncUiLangButtons` ([app.js](app.js#L4633)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Wendet ui language. Umsetzung: `applyUiLanguage` ([app.js](app.js#L4652)). Abhängigkeiten: `applyGlowEnabled`, `applyUiTranslations`, `getUiSpeechLocale`, `syncUiLangButtons`.
+- Zweck: Setzt ui language. Umsetzung: `setUiLanguage` ([app.js](app.js#L4662)). Abhängigkeiten: `applyUiLanguage`.
+- Zweck: Initialisiert ui language. Umsetzung: `initUiLanguage` ([app.js](app.js#L4673)). Abhängigkeiten: `applyUiLanguage`, `detectUiLanguage`.
+- Zweck: Rendert theme list. Umsetzung: `renderThemeList` ([app.js](app.js#L4678)). Abhängigkeiten: `syncThemeListActive`, `t`.
+- Zweck: Synchronisiert theme list active. Umsetzung: `syncThemeListActive` ([app.js](app.js#L4699)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Lädt glow enabled. Umsetzung: `loadGlowEnabled` ([app.js](app.js#L4713)). Abhängigkeiten: `applyGlowEnabled`.
+- Zweck: Wendet glow enabled. Umsetzung: `applyGlowEnabled` ([app.js](app.js#L4723)). Abhängigkeiten: `t`.
+- Zweck: Speichert glow enabled. Umsetzung: `saveGlowEnabled` ([app.js](app.js#L4739)). Abhängigkeiten: `applyGlowEnabled`.
+- Zweck: Lädt ai prompt. Umsetzung: `loadAiPrompt` ([app.js](app.js#L4749)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Lädt ai use preview. Umsetzung: `loadAiUsePreview` ([app.js](app.js#L4758)). Abhängigkeiten: `setAiUsePreviewUi`.
+- Zweck: Lädt ai use answer. Umsetzung: `loadAiUseAnswer` ([app.js](app.js#L4768)). Abhängigkeiten: `setAiUseAnswerUi`.
+- Zweck: Normalisiert mobile auto note seconds. Umsetzung: `normalizeMobileAutoNoteSeconds` ([app.js](app.js#L4773)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Lädt mobile auto note seconds. Umsetzung: `loadMobileAutoNoteSeconds` ([app.js](app.js#L4779)). Abhängigkeiten: `normalizeMobileAutoNoteSeconds`.
+- Zweck: Speichert mobile auto note seconds. Umsetzung: `saveMobileAutoNoteSeconds` ([app.js](app.js#L4790)). Abhängigkeiten: `normalizeMobileAutoNoteSeconds`.
+- Zweck: Allgemeiner Helfer: record mobile last active. Umsetzung: `recordMobileLastActive` ([app.js](app.js#L4804)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: should start mobile auto note. Umsetzung: `shouldStartMobileAutoNote` ([app.js](app.js#L4812)). Abhängigkeiten: `isMobileViewport`, `t`.
+- Zweck: Allgemeiner Helfer: maybe start mobile auto note session. Umsetzung: `maybeStartMobileAutoNoteSession` ([app.js](app.js#L4826)). Abhängigkeiten: `setPreviewVisible`, `shouldStartMobileAutoNote`, `syncMobileFocusState`.
+- Zweck: Allgemeiner Helfer: supports directory access. Umsetzung: `supportsDirectoryAccess` ([app.js](app.js#L4844)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Setzt auto backup status. Umsetzung: `setAutoBackupStatus` ([app.js](app.js#L4848)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Setzt auto import status. Umsetzung: `setAutoImportStatus` ([app.js](app.js#L4853)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Normalisiert auto interval. Umsetzung: `normalizeAutoInterval` ([app.js](app.js#L4858)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: auto interval to ms. Umsetzung: `autoIntervalToMs` ([app.js](app.js#L4865)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Öffnet fs handle db. Umsetzung: `openFsHandleDb` ([app.js](app.js#L4877)). Abhängigkeiten: `t`.
+- Zweck: Allgemeiner Helfer: read fs handle. Umsetzung: `readFsHandle` ([app.js](app.js#L4895)). Abhängigkeiten: `openFsHandleDb`, `supportsDirectoryAccess`, `t`.
+- Zweck: Allgemeiner Helfer: write fs handle. Umsetzung: `writeFsHandle` ([app.js](app.js#L4911)). Abhängigkeiten: `openFsHandleDb`, `supportsDirectoryAccess`, `t`.
+- Zweck: Stellt sicher: dir permission. Umsetzung: `ensureDirPermission` ([app.js](app.js#L4927)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Aktualisiert auto backup folder label. Umsetzung: `updateAutoBackupFolderLabel` ([app.js](app.js#L4944)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Aktualisiert auto import folder label. Umsetzung: `updateAutoImportFolderLabel` ([app.js](app.js#L4951)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Wendet auto access support ui. Umsetzung: `applyAutoAccessSupportUi` ([app.js](app.js#L4958)). Abhängigkeiten: `supportsDirectoryAccess`.
+- Zweck: Lädt auto backup settings. Umsetzung: `loadAutoBackupSettings` ([app.js](app.js#L4972)). Abhängigkeiten: `normalizeAutoInterval`.
+- Zweck: Speichert auto backup settings. Umsetzung: `saveAutoBackupSettings` ([app.js](app.js#L4991)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Lädt auto import settings. Umsetzung: `loadAutoImportSettings` ([app.js](app.js#L5006)). Abhängigkeiten: `normalizeAutoInterval`.
+- Zweck: Speichert auto import settings. Umsetzung: `saveAutoImportSettings` ([app.js](app.js#L5025)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Lädt auto import seen. Umsetzung: `loadAutoImportSeen` ([app.js](app.js#L5040)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Speichert auto import seen. Umsetzung: `saveAutoImportSeen` ([app.js](app.js#L5054)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Baut auto import key. Umsetzung: `buildAutoImportKey` ([app.js](app.js#L5064)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Plant oder entprellt auto backup. Umsetzung: `scheduleAutoBackup` ([app.js](app.js#L5072)). Abhängigkeiten: `autoIntervalToMs`, `runAutoBackup`, `supportsDirectoryAccess`, `t`.
+- Zweck: Plant oder entprellt auto import. Umsetzung: `scheduleAutoImport` ([app.js](app.js#L5083)). Abhängigkeiten: `autoIntervalToMs`, `runAutoImport`, `supportsDirectoryAccess`, `t`.
+- Zweck: Führt aus: auto backup. Umsetzung: `runAutoBackup` ([app.js](app.js#L5094)). Abhängigkeiten: `ensureDirPermission`, `fetchPersonalSpaceExport`, `setAutoBackupStatus`, `t`.
+- Zweck: Führt aus: auto import. Umsetzung: `runAutoImport` ([app.js](app.js#L5140)). Abhängigkeiten: `buildAutoImportKey`, `ensureDirPermission`, `importPersonalSpaceNotesFromText`, `saveAutoImportSeen`, `setAutoImportStatus`, `t`.
+- Zweck: Allgemeiner Helfer: pick auto backup folder. Umsetzung: `pickAutoBackupFolder` ([app.js](app.js#L5197)). Abhängigkeiten: `runAutoBackup`, `setAutoBackupStatus`, `supportsDirectoryAccess`, `updateAutoBackupFolderLabel`, `writeFsHandle`.
+- Zweck: Allgemeiner Helfer: pick auto import folder. Umsetzung: `pickAutoImportFolder` ([app.js](app.js#L5211)). Abhängigkeiten: `runAutoImport`, `setAutoImportStatus`, `supportsDirectoryAccess`, `t`, `updateAutoImportFolderLabel`, `writeFsHandle`.
+- Zweck: Initialisiert auto backup. Umsetzung: `initAutoBackup` ([app.js](app.js#L5225)). Abhängigkeiten: `applyAutoAccessSupportUi`, `loadAutoBackupSettings`, `readFsHandle`, `scheduleAutoBackup`, `updateAutoBackupFolderLabel`.
+- Zweck: Initialisiert auto import. Umsetzung: `initAutoImport` ([app.js](app.js#L5233)). Abhängigkeiten: `applyAutoAccessSupportUi`, `loadAutoImportSeen`, `loadAutoImportSettings`, `readFsHandle`, `scheduleAutoImport`, `t`, `updateAutoImportFolderLabel`.
+- Zweck: Speichert ai prompt. Umsetzung: `saveAiPrompt` ([app.js](app.js#L5242)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Speichert ai use answer. Umsetzung: `saveAiUseAnswer` ([app.js](app.js#L5251)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Speichert ai use preview. Umsetzung: `saveAiUsePreview` ([app.js](app.js#L5260)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Lädt ai api config. Umsetzung: `loadAiApiConfig` ([app.js](app.js#L5269)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Speichert ai api config. Umsetzung: `saveAiApiConfig` ([app.js](app.js#L5281)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Liest ai api config. Umsetzung: `getAiApiConfig` ([app.js](app.js#L5294)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Lädt theme. Umsetzung: `loadTheme` ([app.js](app.js#L5301)). Abhängigkeiten: `applyTheme`.
+- Zweck: Wendet theme. Umsetzung: `applyTheme` ([app.js](app.js#L5310)). Abhängigkeiten: `syncThemeListActive`, `updatePreview`.
+- Zweck: Speichert theme. Umsetzung: `saveTheme` ([app.js](app.js#L5410)). Abhängigkeiten: `applyTheme`.
+- Zweck: Setzt settings open. Umsetzung: `setSettingsOpen` ([app.js](app.js#L5420)). Abhängigkeiten: `loadAiStatus`, `renderFaq`, `renderFavoritesManager`, `setActiveSettingsSection`.
+- Zweck: Öffnet settings at. Umsetzung: `openSettingsAt` ([app.js](app.js#L5434)). Abhängigkeiten: `setActiveSettingsSection`, `setSettingsOpen`.
+- Zweck: Setzt active settings section. Umsetzung: `setActiveSettingsSection` ([app.js](app.js#L5439)). Abhängigkeiten: `fetchGoogleCalendarStatus`, `loadTrashManage`, `loadUploadsManage`, `renderCalendarSettings`.
+- Zweck: Lädt ai status. Umsetzung: `loadAiStatus` ([app.js](app.js#L5465)). Abhängigkeiten: `api`.
+- Zweck: Rendert faq. Umsetzung: `renderFaq` ([app.js](app.js#L5579)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: read ai api key input. Umsetzung: `readAiApiKeyInput` ([app.js](app.js#L5609)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Normalisiert ai model input. Umsetzung: `normalizeAiModelInput` ([app.js](app.js#L5616)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Wendet ai context mode. Umsetzung: `applyAiContextMode` ([app.js](app.js#L5625)). Abhängigkeiten: `getAiUsePreview`.
+- Zweck: Liest speech recognition constructor. Umsetzung: `getSpeechRecognitionConstructor` ([app.js](app.js#L5636)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Setzt ai dictation ui. Umsetzung: `setAiDictationUi` ([app.js](app.js#L5644)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Aktualisiert ai dictation value. Umsetzung: `updateAiDictationValue` ([app.js](app.js#L5672)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: on ai dictation result. Umsetzung: `onAiDictationResult` ([app.js](app.js#L5686)). Abhängigkeiten: `updateAiDictationValue`.
+- Zweck: Allgemeiner Helfer: stop ai dictation. Umsetzung: `stopAiDictation` ([app.js](app.js#L5706)). Abhängigkeiten: `setAiDictationUi`.
+- Zweck: Allgemeiner Helfer: start ai dictation. Umsetzung: `startAiDictation` ([app.js](app.js#L5717)). Abhängigkeiten: `setAiDictationUi`, `t`.
+- Zweck: Initialisiert ai dictation. Umsetzung: `initAiDictation` ([app.js](app.js#L5732)). Abhängigkeiten: `getSpeechRecognitionConstructor`, `getUiSpeechLocale`, `setAiDictationUi`, `t`, `toast`.
+- Zweck: Liest ai prompt. Umsetzung: `getAiPrompt` ([app.js](app.js#L5759)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Liest ai use preview. Umsetzung: `getAiUsePreview` ([app.js](app.js#L5768)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Liest ai use answer. Umsetzung: `getAiUseAnswer` ([app.js](app.js#L5772)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Setzt ai use preview ui. Umsetzung: `setAiUsePreviewUi` ([app.js](app.js#L5776)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Setzt ai use answer ui. Umsetzung: `setAiUseAnswerUi` ([app.js](app.js#L5792)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: strip manual tags marker. Umsetzung: `stripManualTagsMarker` ([app.js](app.js#L5808)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: strip pinned tag. Umsetzung: `stripPinnedTag` ([app.js](app.js#L5813)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: note is pinned. Umsetzung: `noteIsPinned` ([app.js](app.js#L5818)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Baut ps tags payload. Umsetzung: `buildPsTagsPayload` ([app.js](app.js#L5823)). Abhängigkeiten: `stripManualTagsMarker`.
+- Zweck: Setzt ps auto save status. Umsetzung: `setPsAutoSaveStatus` ([app.js](app.js#L5828)). Abhängigkeiten: `updatePsSaveVisibility`.
+- Zweck: Aktualisiert ps save visibility. Umsetzung: `updatePsSaveVisibility` ([app.js](app.js#L5836)). Abhängigkeiten: `canAutoSavePsNote`.
+- Zweck: Stellt sicher: note updated at. Umsetzung: `ensureNoteUpdatedAt` ([app.js](app.js#L5841)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Formatiert meta date. Umsetzung: `formatMetaDate` ([app.js](app.js#L5853)). Abhängigkeiten: `t`.
+- Zweck: Baut note meta yaml. Umsetzung: `buildNoteMetaYaml` ([app.js](app.js#L5869)). Abhängigkeiten: `ensureNoteUpdatedAt`, `formatMetaDate`, `stripManualTagsMarker`, `stripPinnedTag`, `t`.
+- Zweck: Setzt ps meta visible. Umsetzung: `setPsMetaVisible` ([app.js](app.js#L5892)). Abhängigkeiten: `updateEditorMetaYaml`, `updatePreview`.
+- Zweck: Lädt ps meta visible. Umsetzung: `loadPsMetaVisible` ([app.js](app.js#L5911)). Abhängigkeiten: `setPsMetaVisible`.
+- Zweck: Speichert ps meta visible. Umsetzung: `savePsMetaVisible` ([app.js](app.js#L5921)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Aktualisiert editor meta yaml. Umsetzung: `updateEditorMetaYaml` ([app.js](app.js#L5929)). Abhängigkeiten: `buildNoteMetaYaml`, `findNoteById`, `resetEditorMetaPadding`, `updateEditorMetaPadding`, `updateEditorMetaScroll`.
+- Zweck: Aktualisiert editor meta scroll. Umsetzung: `updateEditorMetaScroll` ([app.js](app.js#L5962)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Aktualisiert editor meta padding. Umsetzung: `updateEditorMetaPadding` ([app.js](app.js#L5968)). Abhängigkeiten: `t`.
+- Zweck: Allgemeiner Helfer: reset editor meta padding. Umsetzung: `resetEditorMetaPadding` ([app.js](app.js#L5994)). Abhängigkeiten: `t`.
+- Zweck: Allgemeiner Helfer: clean note title line. Umsetzung: `cleanNoteTitleLine` ([app.js](app.js#L6013)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Liest note title and excerpt. Umsetzung: `getNoteTitleAndExcerpt` ([app.js](app.js#L6022)). Abhängigkeiten: `cleanNoteTitleLine`, `t`.
+- Zweck: Liest note title. Umsetzung: `getNoteTitle` ([app.js](app.js#L6046)). Abhängigkeiten: `getNoteTitleAndExcerpt`, `t`.
+- Zweck: Lädt ps visible. Umsetzung: `loadPsVisible` ([app.js](app.js#L6054)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Speichert ps visible. Umsetzung: `savePsVisible` ([app.js](app.js#L6063)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Wendet ps visible. Umsetzung: `applyPsVisible` ([app.js](app.js#L6071)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Normalisiert search query. Umsetzung: `normalizeSearchQuery` ([app.js](app.js#L6101)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Lädt ps search query. Umsetzung: `loadPsSearchQuery` ([app.js](app.js#L6107)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Normalisiert ps sort mode. Umsetzung: `normalizePsSortMode` ([app.js](app.js#L6116)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Setzt ps sort menu open. Umsetzung: `setPsSortMenuOpen` ([app.js](app.js#L6131)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Synchronisiert ps sort menu. Umsetzung: `syncPsSortMenu` ([app.js](app.js#L6143)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Lädt ps note accessed. Umsetzung: `loadPsNoteAccessed` ([app.js](app.js#L6164)). Abhängigkeiten: `t`.
+- Zweck: Speichert ps note accessed. Umsetzung: `savePsNoteAccessed` ([app.js](app.js#L6187)). Abhängigkeiten: `t`.
+- Zweck: Allgemeiner Helfer: mark ps note accessed. Umsetzung: `markPsNoteAccessed` ([app.js](app.js#L6200)). Abhängigkeiten: `savePsNoteAccessed`, `t`.
+- Zweck: Lädt ps sort mode. Umsetzung: `loadPsSortMode` ([app.js](app.js#L6207)). Abhängigkeiten: `normalizePsSortMode`, `syncPsSortMenu`.
+- Zweck: Speichert ps sort mode. Umsetzung: `savePsSortMode` ([app.js](app.js#L6219)). Abhängigkeiten: `normalizePsSortMode`.
+- Zweck: Speichert ps search query. Umsetzung: `savePsSearchQuery` ([app.js](app.js#L6228)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Lädt ps pinned only. Umsetzung: `loadPsPinnedOnly` ([app.js](app.js#L6236)). Abhängigkeiten: `updatePsPinnedToggle`.
+- Zweck: Speichert ps pinned only. Umsetzung: `savePsPinnedOnly` ([app.js](app.js#L6245)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Aktualisiert ps pinned toggle. Umsetzung: `updatePsPinnedToggle` ([app.js](app.js#L6253)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: note matches search. Umsetzung: `noteMatchesSearch` ([app.js](app.js#L6272)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Wendet personal space filters and render. Umsetzung: `applyPersonalSpaceFiltersAndRender` ([app.js](app.js#L6294)). Abhängigkeiten: `ensureNoteUpdatedAt`, `getNoteTitle`, `normalizeSearchQuery`, `noteIsPinned`, `noteMatchesSearch`, `renderPsList`, `renderPsTags`, `t`, `updateEditorMetaYaml`.
+- Zweck: Lädt ps tags collapsed. Umsetzung: `loadPsTagsCollapsed` ([app.js](app.js#L6362)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Speichert ps tags collapsed. Umsetzung: `savePsTagsCollapsed` ([app.js](app.js#L6370)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Wendet ps tags collapsed. Umsetzung: `applyPsTagsCollapsed` ([app.js](app.js#L6378)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Lädt ps tag prefs. Umsetzung: `loadPsTagPrefs` ([app.js](app.js#L6400)). Abhängigkeiten: `t`.
+- Zweck: Speichert ps tag prefs. Umsetzung: `savePsTagPrefs` ([app.js](app.js#L6430)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: escape html. Umsetzung: `escapeHtml` ([app.js](app.js#L6446)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Rendert password token. Umsetzung: `renderPasswordToken` ([app.js](app.js#L6453)). Abhängigkeiten: `escapeHtml`.
+- Zweck: Allgemeiner Helfer: copy text to clipboard. Umsetzung: `copyTextToClipboard` ([app.js](app.js#L6458)). Abhängigkeiten: `t`.
+- Zweck: Schaltet password field. Umsetzung: `togglePasswordField` ([app.js](app.js#L6483)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Lädt editor mask disabled. Umsetzung: `loadEditorMaskDisabled` ([app.js](app.js#L6504)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Speichert editor mask disabled. Umsetzung: `saveEditorMaskDisabled` ([app.js](app.js#L6513)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Schaltet editor mask view. Umsetzung: `toggleEditorMaskView` ([app.js](app.js#L6524)). Abhängigkeiten: `saveEditorMaskDisabled`, `setEditorMaskToggleUi`, `updatePasswordMaskOverlay`.
+- Zweck: Setzt editor mask toggle ui. Umsetzung: `setEditorMaskToggleUi` ([app.js](app.js#L6531)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Lädt crdt marks preference. Umsetzung: `loadCrdtMarksPreference` ([app.js](app.js#L6549)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Speichert crdt marks preference. Umsetzung: `saveCrdtMarksPreference` ([app.js](app.js#L6558)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Setzt crdt marks toggle ui. Umsetzung: `setCrdtMarksToggleUi` ([app.js](app.js#L6569)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Schaltet crdt marks. Umsetzung: `toggleCrdtMarks` ([app.js](app.js#L6588)). Abhängigkeiten: `saveCrdtMarksPreference`, `setCrdtMarksToggleUi`, `updateAttributionOverlay`.
+- Zweck: Prüft has password tokens. Umsetzung: `hasPasswordTokens` ([app.js](app.js#L6595)). Abhängigkeiten: `t`.
+- Zweck: Allgemeiner Helfer: mask password tokens. Umsetzung: `maskPasswordTokens` ([app.js](app.js#L6599)). Abhängigkeiten: `t`.
+- Zweck: Baut editor mask html. Umsetzung: `buildEditorMaskHtml` ([app.js](app.js#L6606)). Abhängigkeiten: `escapeHtml`.
+- Zweck: Synchronisiert password mask scroll. Umsetzung: `syncPasswordMaskScroll` ([app.js](app.js#L6630)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Aktualisiert password mask overlay. Umsetzung: `updatePasswordMaskOverlay` ([app.js](app.js#L6637)). Abhängigkeiten: `buildEditorMaskHtml`, `hasPasswordTokens`, `syncPasswordMaskScroll`, `updateAttributionOverlay`.
+- Zweck: Liest preview run combined text. Umsetzung: `getPreviewRunCombinedText` ([app.js](app.js#L6653)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Aktualisiert run output ui. Umsetzung: `updateRunOutputUi` ([app.js](app.js#L6661)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Aktualisiert run output sizing. Umsetzung: `updateRunOutputSizing` ([app.js](app.js#L6703)). Abhängigkeiten: `t`.
+- Zweck: Setzt preview run output. Umsetzung: `setPreviewRunOutput` ([app.js](app.js#L6754)). Abhängigkeiten: `escapeHtml`, `getPreviewRunCombinedText`, `t`, `updateRunOutputSizing`, `updateRunOutputUi`.
+- Zweck: Parst runnable from editor. Umsetzung: `parseRunnableFromEditor` ([app.js](app.js#L6781)). Abhängigkeiten: `t`.
+- Zweck: Liest selected code lang. Umsetzung: `getSelectedCodeLang` ([app.js](app.js#L6812)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Liest fenced code open at pos. Umsetzung: `getFencedCodeOpenAtPos` ([app.js](app.js#L6821)). Abhängigkeiten: `applyHljsToHtml`, `applyWikiLinksToMarkdown`, `buildNoteTitleIndex`, `embedPdfLinks`, `ensureMarkdown`, `escapeHtml`, `getNoteTitle`, `getSelectedCodeLang`, `insertCodeBlock`, `nowIso`, `renderNoteHtml`, `renderPasswordToken`, `resetEditorMetaPadding`, `scheduleSend`, `setFencedCodeLanguage`, `t`, `toast`, `updateCodeLangOverlay`, `updateEditorMetaPadding`, `updateEditorMetaScroll`, `updatePasswordMaskOverlay`, `updatePreview`.
+- Zweck: Setzt fenced code language. Umsetzung: `setFencedCodeLanguage` ([app.js](app.js#L6854)). Abhängigkeiten: `allTaskCheckboxes`, `applyHljsToHtml`, `applyWikiLinksToMarkdown`, `buildNoteMetaYaml`, `buildNoteTitleIndex`, `buildToc`, `embedPdfLinks`, `ensureMarkdown`, `ensurePdfJsLoaded`, `escapeHtml`, `findCheckbox`, `findNoteById`, `getFencedCodeOpenAtPos`, `getNoteHrefTarget`, `getNoteTitle`, `getPdfRenderId`, `getSelectedCodeLang`, `indexOfCheckbox`, `initImageTools`, `initPdfEmbeds`, `insertCodeBlock`, `nowIso`, `renderNoteHtml`, `renderPasswordToken`, `renderPdfPage`, `resetEditorMetaPadding`, `scheduleSend`, `send`, `setExpanded`, `setFullPreview`, `setPasswordRevealed`, `setPreviewDocument`, `setPreviewVisible`, `slugify`, `syncMobileFocusState`, `t`, `toElement`, `toast`, `updateCodeLangOverlay`, `updateEditorMetaPadding`, `updateEditorMetaScroll`, `updatePasswordMaskOverlay`, `updatePdfNav`, `updatePreview`, `updateRunOutputSizing`, `updateRunOutputUi`, `wrapImage`.
+- Zweck: Aktualisiert code lang overlay. Umsetzung: `updateCodeLangOverlay` ([app.js](app.js#L6887)). Abhängigkeiten: `getFencedCodeOpenAtPos`, `resetEditorMetaPadding`, `updateEditorMetaPadding`, `updateEditorMetaScroll`.
+- Zweck: Allgemeiner Helfer: insert code block. Umsetzung: `insertCodeBlock` ([app.js](app.js#L6916)). Abhängigkeiten: `getSelectedCodeLang`, `nowIso`, `scheduleSend`, `updateCodeLangOverlay`, `updatePasswordMaskOverlay`, `updatePreview`.
+- Zweck: Stellt sicher: markdown. Umsetzung: `ensureMarkdown` ([app.js](app.js#L6943)). Abhängigkeiten: `escapeHtml`, `renderPasswordToken`, `t`.
+- Zweck: Wendet hljs to html. Umsetzung: `applyHljsToHtml` ([app.js](app.js#L7070)). Abhängigkeiten: `t`.
+- Zweck: Allgemeiner Helfer: embed pdf links. Umsetzung: `embedPdfLinks` ([app.js](app.js#L7090)). Abhängigkeiten: `t`.
+- Zweck: Baut note title index. Umsetzung: `buildNoteTitleIndex` ([app.js](app.js#L7156)). Abhängigkeiten: `getNoteTitle`, `t`.
+- Zweck: Wendet wiki links to markdown. Umsetzung: `applyWikiLinksToMarkdown` ([app.js](app.js#L7174)). Abhängigkeiten: `buildNoteTitleIndex`, `t`.
+- Zweck: Rendert note html. Umsetzung: `renderNoteHtml` ([app.js](app.js#L7188)). Abhängigkeiten: `ensureMarkdown`, `t`, `toast`.
+- Zweck: Setzt full preview. Umsetzung: `setFullPreview` ([app.js](app.js#L7226)). Abhängigkeiten: `t`, `updateRunOutputSizing`.
+- Zweck: Setzt preview visible. Umsetzung: `setPreviewVisible` ([app.js](app.js#L7244)). Abhängigkeiten: `ensureMarkdown`, `setFullPreview`, `syncMobileFocusState`, `t`, `toast`, `updatePreview`, `updateRunOutputSizing`, `updateRunOutputUi`.
+- Zweck: Aktualisiert preview. Umsetzung: `updatePreview` ([app.js](app.js#L7274)). Abhängigkeiten: `allTaskCheckboxes`, `applyHljsToHtml`, `applyWikiLinksToMarkdown`, `buildNoteMetaYaml`, `buildToc`, `embedPdfLinks`, `ensureMarkdown`, `ensurePdfJsLoaded`, `escapeHtml`, `findCheckbox`, `findNoteById`, `getNoteHrefTarget`, `getPdfRenderId`, `indexOfCheckbox`, `initImageTools`, `initPdfEmbeds`, `renderPdfPage`, `send`, `setExpanded`, `setPasswordRevealed`, `setPreviewDocument`, `slugify`, `t`, `toElement`, `updatePdfNav`, `wrapImage`.
+- Zweck: Sendet send. Umsetzung: `send` ([app.js](app.js#L7522)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: slugify. Umsetzung: `slugify` ([app.js](app.js#L7529)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Baut toc. Umsetzung: `buildToc` ([app.js](app.js#L7537)). Abhängigkeiten: `setExpanded`, `slugify`, `t`.
+- Zweck: Setzt expanded. Umsetzung: `setExpanded` ([app.js](app.js#L7583)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Liest note href target. Umsetzung: `getNoteHrefTarget` ([app.js](app.js#L7619)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: to element. Umsetzung: `toElement` ([app.js](app.js#L7625)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Findet checkbox. Umsetzung: `findCheckbox` ([app.js](app.js#L7631)). Abhängigkeiten: `t`, `toElement`.
+- Zweck: Allgemeiner Helfer: all task checkboxes. Umsetzung: `allTaskCheckboxes` ([app.js](app.js#L7648)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: index of checkbox. Umsetzung: `indexOfCheckbox` ([app.js](app.js#L7658)). Abhängigkeiten: `allTaskCheckboxes`.
+- Zweck: Setzt password revealed. Umsetzung: `setPasswordRevealed` ([app.js](app.js#L7687)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: wrap image. Umsetzung: `wrapImage` ([app.js](app.js#L7719)). Abhängigkeiten: `t`.
+- Zweck: Initialisiert image tools. Umsetzung: `initImageTools` ([app.js](app.js#L7746)). Abhängigkeiten: `wrapImage`.
+- Zweck: Liest pdf render id. Umsetzung: `getPdfRenderId` ([app.js](app.js#L7754)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Aktualisiert pdf nav. Umsetzung: `updatePdfNav` ([app.js](app.js#L7763)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Rendert pdf page. Umsetzung: `renderPdfPage` ([app.js](app.js#L7773)). Abhängigkeiten: `getPdfRenderId`, `send`.
+- Zweck: Initialisiert pdf embeds. Umsetzung: `initPdfEmbeds` ([app.js](app.js#L7783)). Abhängigkeiten: `renderPdfPage`, `t`.
+- Zweck: Schaltet markdown task at index. Umsetzung: `toggleMarkdownTaskAtIndex` ([app.js](app.js#L7845)). Abhängigkeiten: `getActiveRoomTabNoteId`, `schedulePsAutoSave`, `scheduleSend`, `t`, `updateLocalNoteText`, `updatePreview`.
+- Zweck: Allgemeiner Helfer: attach preview checkbox writeback. Umsetzung: `attachPreviewCheckboxWriteback` ([app.js](app.js#L7888)). Abhängigkeiten: `findCheckbox`, `indexOfCheckbox`, `nowIso`, `t`, `toElement`, `toggleMarkdownTaskAtIndex`.
+- Zweck: Setzt preview document. Umsetzung: `setPreviewDocument` ([app.js](app.js#L7961)). Abhängigkeiten: `attachPreviewCheckboxWriteback`, `t`.
+- Zweck: Allgemeiner Helfer: sort tag list. Umsetzung: `sortTagList` ([app.js](app.js#L7999)). Abhängigkeiten: `t`.
+- Zweck: Baut tag sections. Umsetzung: `buildTagSections` ([app.js](app.js#L8003)). Abhängigkeiten: `isMonthTag`, `isYearTag`, `sortTagList`, `t`.
+- Zweck: Lädt ps tag section state. Umsetzung: `loadPsTagSectionState` ([app.js](app.js#L8060)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Speichert ps tag section state. Umsetzung: `savePsTagSectionState` ([app.js](app.js#L8071)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Normalisiert single tag. Umsetzung: `normalizeSingleTag` ([app.js](app.js#L8082)). Abhängigkeiten: `normalizeManualTags`.
+- Zweck: Entfernt Duplikate für raw tags. Umsetzung: `dedupeRawTags` ([app.js](app.js#L8087)). Abhängigkeiten: `t`.
+- Zweck: Aktualisiert notes for tag change. Umsetzung: `updateNotesForTagChange` ([app.js](app.js#L8101)). Abhängigkeiten: `api`, `applyPersonalSpaceFiltersAndRender`, `dedupeRawTags`, `rebuildPsTagsFromNotes`, `t`, `toast`.
+- Zweck: Allgemeiner Helfer: reset ps tag context delete. Umsetzung: `resetPsTagContextDelete` ([app.js](app.js#L8171)). Abhängigkeiten: `t`.
+- Zweck: Setzt ps tag context menu open. Umsetzung: `setPsTagContextMenuOpen` ([app.js](app.js#L8180)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: position ps tag context menu. Umsetzung: `positionPsTagContextMenu` ([app.js](app.js#L8186)). Abhängigkeiten: `t`.
+- Zweck: Schließt ps tag context menu. Umsetzung: `closePsTagContextMenu` ([app.js](app.js#L8198)). Abhängigkeiten: `resetPsTagContextDelete`, `setPsTagContextMenuOpen`.
+- Zweck: Öffnet ps tag context menu. Umsetzung: `openPsTagContextMenu` ([app.js](app.js#L8204)). Abhängigkeiten: `closePsContextMenu`, `positionPsTagContextMenu`, `resetPsTagContextDelete`, `setPsTagContextMenuOpen`, `t`.
+- Zweck: Wendet ps tag context value. Umsetzung: `applyPsTagContextValue` ([app.js](app.js#L8223)). Abhängigkeiten: `closePsTagContextMenu`, `normalizeSingleTag`, `t`, `toast`, `updateNotesForTagChange`.
+- Zweck: Wendet ps tag context input. Umsetzung: `applyPsTagContextInput` ([app.js](app.js#L8246)). Abhängigkeiten: `applyPsTagContextValue`.
+- Zweck: Allgemeiner Helfer: confirm ps tag context delete. Umsetzung: `confirmPsTagContextDelete` ([app.js](app.js#L8251)). Abhängigkeiten: `closePsTagContextMenu`, `updateNotesForTagChange`.
+- Zweck: Aktualisiert ps tags active info. Umsetzung: `updatePsTagsActiveInfo` ([app.js](app.js#L8258)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Rendert ps tags. Umsetzung: `renderPsTags` ([app.js](app.js#L8271)). Abhängigkeiten: `buildTagSections`, `loadPsTagSectionState`, `openPsTagContextMenu`, `refreshPersonalSpace`, `savePsTagPrefs`, `savePsTagSectionState`, `t`, `updatePsTagsActiveInfo`.
+- Zweck: Schaltet pinned for note. Umsetzung: `togglePinnedForNote` ([app.js](app.js#L8384)). Abhängigkeiten: `api`, `applyPersonalSpaceFiltersAndRender`, `buildPsTagsPayload`, `normalizeCategoryValue`, `normalizeMonthTag`, `normalizeYearTag`, `refreshPersonalSpace`, `splitTagsForEditor`, `stripManualTagsMarker`, `stripPinnedTag`, `syncPsEditorTagsInput`, `t`, `toast`, `updatePsEditingTagsHint`.
+- Zweck: Findet note by id. Umsetzung: `findNoteById` ([app.js](app.js#L8450)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Aktualisiert ps note nav buttons. Umsetzung: `updatePsNoteNavButtons` ([app.js](app.js#L8457)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: push ps note history. Umsetzung: `pushPsNoteHistory` ([app.js](app.js#L8466)). Abhängigkeiten: `updatePsNoteNavButtons`.
+- Zweck: Allgemeiner Helfer: navigate ps note history. Umsetzung: `navigatePsNoteHistory` ([app.js](app.js#L8481)). Abhängigkeiten: `applyNoteToEditor`, `findNoteById`, `updatePsNoteNavButtons`.
+- Zweck: Allgemeiner Helfer: rebuild ps tags from notes. Umsetzung: `rebuildPsTagsFromNotes` ([app.js](app.js#L8494)). Abhängigkeiten: `t`, `updatePsEditorTagsSuggest`.
+- Zweck: Aktualisiert editing note tags local. Umsetzung: `updateEditingNoteTagsLocal` ([app.js](app.js#L8517)). Abhängigkeiten: `applyPersonalSpaceFiltersAndRender`, `buildEditorSystemTags`, `buildPsTagsPayload`, `rebuildPsTagsFromNotes`, `uniqTags`.
+- Zweck: Plant oder entprellt ps tags auto save. Umsetzung: `schedulePsTagsAutoSave` ([app.js](app.js#L8539)). Abhängigkeiten: `savePersonalSpaceNote`, `t`.
+- Zweck: Findet note by title. Umsetzung: `findNoteByTitle` ([app.js](app.js#L8549)). Abhängigkeiten: `getNoteTitle`, `t`.
+- Zweck: Normalisiert note text for compare. Umsetzung: `normalizeNoteTextForCompare` ([app.js](app.js#L8565)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Findet note by text. Umsetzung: `findNoteByText` ([app.js](app.js#L8571)). Abhängigkeiten: `normalizeNoteTextForCompare`, `t`.
+- Zweck: Allgemeiner Helfer: clear ps editing note state. Umsetzung: `clearPsEditingNoteState` ([app.js](app.js#L8587)). Abhängigkeiten: `getDateTagsForTs`, `syncPsEditorTagsInput`, `t`, `updateEditorMetaYaml`, `updatePsEditingTagsHint`.
+- Zweck: Synchronisiert ps editing note from editor text. Umsetzung: `syncPsEditingNoteFromEditorText` ([app.js](app.js#L8606)). Abhängigkeiten: `applyPersonalSpaceFiltersAndRender`, `clearPsEditingNoteState`, `findNoteByText`, `normalizeCategoryValue`, `normalizeMonthTag`, `normalizeNoteTextForCompare`, `normalizeYearTag`, `splitTagsForEditor`, `syncPsEditorTagsInput`, `t`, `updateEditorMetaYaml`, `updatePsEditingTagsHint`.
+- Zweck: Wendet note to editor. Umsetzung: `applyNoteToEditor` ([app.js](app.js#L8646)). Abhängigkeiten: `applyPersonalSpaceFiltersAndRender`, `isMobileViewport`, `markPsNoteAccessed`, `normalizeCategoryValue`, `normalizeMonthTag`, `normalizeYearTag`, `pushPsNoteHistory`, `renderPsList`, `setPreviewVisible`, `setPsAutoSaveStatus`, `setRoomTabNoteId`, `splitTagsForEditor`, `syncMobileFocusState`, `syncPsEditorTagsInput`, `t`, `updateEditorMetaYaml`, `updatePasswordMaskOverlay`, `updatePreview`, `updatePsEditingTagsHint`, `updateRoomTabTextLocal`.
+- Zweck: Öffnet note from wiki target. Umsetzung: `openNoteFromWikiTarget` ([app.js](app.js#L8714)). Abhängigkeiten: `applyNoteToEditor`, `findNoteById`, `findNoteByTitle`, `t`, `toast`.
+- Zweck: Synchronisiert ps list height. Umsetzung: `syncPsListHeight` ([app.js](app.js#L8732)). Abhängigkeiten: `t`.
+- Zweck: Setzt ps context menu open. Umsetzung: `setPsContextMenuOpen` ([app.js](app.js#L8759)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: position ps context menu. Umsetzung: `positionPsContextMenu` ([app.js](app.js#L8765)). Abhängigkeiten: `t`.
+- Zweck: Öffnet ps context menu. Umsetzung: `openPsContextMenu` ([app.js](app.js#L8776)). Abhängigkeiten: `closePsTagContextMenu`, `positionPsContextMenu`, `setPsContextMenuOpen`.
+- Zweck: Schließt ps context menu. Umsetzung: `closePsContextMenu` ([app.js](app.js#L8791)). Abhängigkeiten: `setPsContextMenuOpen`.
+- Zweck: Aktualisiert ps bulk bar. Umsetzung: `updatePsBulkBar` ([app.js](app.js#L8796)). Abhängigkeiten: `syncPsBulkSelectionToDom`.
+- Zweck: Synchronisiert ps bulk selection to dom. Umsetzung: `syncPsBulkSelectionToDom` ([app.js](app.js#L8800)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: prune ps selected notes. Umsetzung: `prunePsSelectedNotes` ([app.js](app.js#L8810)). Abhängigkeiten: `t`, `updatePsBulkBar`.
+- Zweck: Setzt ps note selected. Umsetzung: `setPsNoteSelected` ([app.js](app.js#L8822)). Abhängigkeiten: `updatePsBulkBar`.
+- Zweck: Schaltet ps select all. Umsetzung: `togglePsSelectAll` ([app.js](app.js#L8830)). Abhängigkeiten: `updatePsBulkBar`.
+- Zweck: Allgemeiner Helfer: clear ps selection. Umsetzung: `clearPsSelection` ([app.js](app.js#L8841)). Abhängigkeiten: `t`, `updatePsBulkBar`.
+- Zweck: Liest selected note ids. Umsetzung: `getSelectedNoteIds` ([app.js](app.js#L8846)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Wendet bulk tags to notes. Umsetzung: `applyBulkTagsToNotes` ([app.js](app.js#L8850)). Abhängigkeiten: `api`, `buildPsTagsPayload`, `findNoteById`, `t`, `toast`.
+- Zweck: Entfernt bulk notes. Umsetzung: `deleteBulkNotes` ([app.js](app.js#L8880)). Abhängigkeiten: `api`, `syncMobileFocusState`, `t`, `toast`.
+- Zweck: Rendert ps list. Umsetzung: `renderPsList` ([app.js](app.js#L8906)). Abhängigkeiten: `addDays`, `addLocalCalendarEvent`, `aiAssistFromPreview`, `api`, `applyCalendarFreeSlotsVisibility`, `applyCalendarSettings`, `applyNoteToEditor`, `applyPersonalSpaceFiltersAndRender`, `buildLocalEventFromModal`, `buildShareHash`, `buildWorkWindow`, `chunkBigText`, `chunkTextIntoNotes`, `clearPsSelection`, `closeCalendarEventModal`, `closeRoomTab`, `computeFreeSlotsForDay`, `copyTextToClipboard`, `createClientId`, `createGoogleCalendarEvent`, `dedupeFavorites`, `dedupeRoomTabs`, `deleteGoogleCalendarEvent`, `deleteUpload`, `downloadJson`, `ensureJsRunnerFrame`, `ensureNoteUpdatedAt`, `ensurePyRunnerWorker`, `ensurePyodide`, `escapeAttr`, `escapeHtml`, `exportPersonalSpaceNotes`, `fetchGoogleCalendarEvents`, `fetchGoogleCalendarList`, `fetchGoogleCalendarStatus`, `fetchPersonalSpaceExport`, `findFavoriteIndex`, `findRoomTabByNoteId`, `flushRoomTabSync`, `fmtDate`, `formatBytes`, `formatCalendarTitle`, `formatDateInputValue`, `formatDayLabel`, `formatTime`, `formatTrashDeletedAt`, `formatUploadUpdatedAt`, `getActiveRoomTabNoteId`, `getAiApiConfig`, `getAiMode`, `getAiPrompt`, `getAiUseAnswer`, `getAiUsePreview`, `getCalendarEvents`, `getCalendarRange`, `getIsoWeekNumber`, `getLocalCalendarSettings`, `getNoteTitleAndExcerpt`, `getUiLocale`, `goToRoomWithKey`, `importPersonalSpaceFile`, `importPersonalSpaceNotes`, `importPersonalSpaceNotesFromText`, `loadCalendarDefaultView`, `loadCalendarFreeSlotsVisible`, `loadCalendarGoogleId`, `loadCalendarSources`, `loadFavorites`, `loadLocalCalendarEvents`, `loadLocalCalendarEventsRaw`, `loadLocalFavorites`, `loadLocalRoomTabs`, `loadRoomTabs`, `loadTrashManage`, `loadUploadsManage`, `maybeStartMobileAutoNoteSession`, `mergeCalendarEvents`, `mergeIntervals`, `mergeRoomTabs`, `modalPrompt`, `moveCalendarCursor`, `normalizeBase`, `normalizeCalendarSource`, `normalizeFavoriteEntry`, `normalizeKey`, `normalizeLocalCalendarEvent`, `normalizeRoom`, `normalizeRoomTabEntry`, `normalizeSearchQuery`, `nowIso`, `openCalendarEventModal`, `openModal`, `openNoteFromWikiTarget`, `openNoteShareModal`, `openPsContextMenu`, `parseGoogleDate`, `parseIcsDate`, `parseIcsEvents`, `parseLocalEventDate`, `parseRoomAndKeyFromHash`, `parseRunnableFromEditor`, `prunePsSelectedNotes`, `randomKey`, `randomRoom`, `refreshCalendarEvents`, `refreshPersonalSpace`, `removeFavorite`, `removeRoomTabFromState`, `renderCalendarFreeSlots`, `renderCalendarGoogleSelect`, `renderCalendarLegend`, `renderCalendarLocalEvents`, `renderCalendarPanel`, `renderCalendarSettings`, `renderFavorites`, `renderFavoritesManager`, `renderPdfPreviewPage`, `renderRoomTabs`, `renderTrashManageList`, `renderUploadsManageList`, `requestPersonalSpaceLink`, `resolveRoomTabSnapshotText`, `restoreTrashNote`, `runJsSnippet`, `runPySnippet`, `runSnippetForNote`, `saveAiPrompt`, `saveCalendarDefaultView`, `saveCalendarFreeSlotsVisible`, `saveCalendarGoogleId`, `saveCalendarSources`, `saveFavorites`, `saveLocalCalendarEvents`, `saveRoomTabs`, `scheduleCalendarRefresh`, `scheduleCalendarSettingsSync`, `scheduleRoomTabSync`, `send`, `serializeLocalCalendarEvent`, `setCalendarPanelActive`, `setCalendarSidebarCollapsed`, `setGoogleCalendarUi`, `setPreviewRunOutput`, `setPsAutoSaveStatus`, `setPsEditorTagsVisible`, `setPsNoteSelected`, `setRoomTabNoteId`, `showRoomTabLimitModal`, `splitByHeadings`, `splitByHr`, `splitOffFrontMatter`, `startNotesImport`, `startOfDay`, `startOfMonth`, `startOfWeek`, `stripManualTagsMarker`, `stripPinnedTag`, `syncCalendarSettingsFromServer`, `syncCalendarSettingsToServer`, `syncLocalRoomTabsToServer`, `syncMobileFocusState`, `syncPsEditingNoteTagsFromState`, `syncPsEditorTagsInput`, `syncPsListHeight`, `syncRoomTabToServer`, `t`, `toast`, `toggleMarkdownTaskAtIndex`, `togglePinnedForNote`, `touchRoomTab`, `unfoldIcsLines`, `updateCalendarEventTimeState`, `updateCalendarViewButtons`, `updateEditorMetaYaml`, `updateFavoriteButton`, `updateFavoriteText`, `updateFavoritesUI`, `updateLocalNoteText`, `updatePsNoteNavButtons`, `updatePsPinnedToggle`, `updateRoomTabTextLocal`, `updateRoomTabsForNoteId`, `upsertFavoriteInState`, `upsertRoomTabInState`, `ymd`.
+- Zweck: Stellt sicher: js runner frame. Umsetzung: `ensureJsRunnerFrame` ([app.js](app.js#L9103)). Abhängigkeiten: `t`.
+- Zweck: Führt aus: js snippet. Umsetzung: `runJsSnippet` ([app.js](app.js#L9213)). Abhängigkeiten: `ensureJsRunnerFrame`, `send`, `t`.
+- Zweck: Stellt sicher: py runner worker. Umsetzung: `ensurePyRunnerWorker` ([app.js](app.js#L9396)). Abhängigkeiten: `ensurePyodide`, `normalizeBase`, `t`.
+- Zweck: Normalisiert base. Umsetzung: `normalizeBase` ([app.js](app.js#L9405)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Stellt sicher: pyodide. Umsetzung: `ensurePyodide` ([app.js](app.js#L9411)). Abhängigkeiten: `normalizeBase`.
+- Zweck: Führt aus: py snippet. Umsetzung: `runPySnippet` ([app.js](app.js#L9481)). Abhängigkeiten: `ensurePyRunnerWorker`, `t`.
+- Zweck: Führt aus: snippet for note. Umsetzung: `runSnippetForNote` ([app.js](app.js#L9537)). Abhängigkeiten: `renderPsList`, `runJsSnippet`, `runPySnippet`, `t`, `toast`.
+- Zweck: Liest ai mode. Umsetzung: `getAiMode` ([app.js](app.js#L9574)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: ai assist from preview. Umsetzung: `aiAssistFromPreview` ([app.js](app.js#L9585)). Abhängigkeiten: `api`, `getAiApiConfig`, `getAiMode`, `getAiPrompt`, `getAiUseAnswer`, `getAiUsePreview`, `parseRunnableFromEditor`, `saveAiPrompt`, `setPreviewRunOutput`, `t`, `toast`.
+- Zweck: Allgemeiner Helfer: refresh personal space. Umsetzung: `refreshPersonalSpace` ([app.js](app.js#L9684)). Abhängigkeiten: `api`, `applyPersonalSpaceFiltersAndRender`, `clearPsSelection`, `dedupeFavorites`, `ensureNoteUpdatedAt`, `maybeStartMobileAutoNoteSession`, `renderRoomTabs`, `setPsAutoSaveStatus`, `setPsEditorTagsVisible`, `syncCalendarSettingsFromServer`, `syncLocalRoomTabsToServer`, `syncPsEditingNoteTagsFromState`, `syncPsEditorTagsInput`, `t`, `updateEditorMetaYaml`, `updateFavoritesUI`, `updatePsNoteNavButtons`, `updatePsPinnedToggle`.
+- Zweck: Allgemeiner Helfer: download json. Umsetzung: `downloadJson` ([app.js](app.js#L9750)). Abhängigkeiten: `t`, `toast`.
+- Zweck: Allgemeiner Helfer: ymd. Umsetzung: `ymd` ([app.js](app.js#L9767)). Abhängigkeiten: `t`.
+- Zweck: Allgemeiner Helfer: fetch personal space export. Umsetzung: `fetchPersonalSpaceExport` ([app.js](app.js#L9779)). Abhängigkeiten: `api`.
+- Zweck: Allgemeiner Helfer: export personal space notes. Umsetzung: `exportPersonalSpaceNotes` ([app.js](app.js#L9787)). Abhängigkeiten: `downloadJson`, `fetchPersonalSpaceExport`, `t`, `toast`, `ymd`.
+- Zweck: Allgemeiner Helfer: import personal space notes. Umsetzung: `importPersonalSpaceNotes` ([app.js](app.js#L9806)). Abhängigkeiten: `api`, `refreshPersonalSpace`, `t`, `toast`.
+- Zweck: Allgemeiner Helfer: chunk text into notes. Umsetzung: `chunkTextIntoNotes` ([app.js](app.js#L9833)). Abhängigkeiten: `chunkBigText`, `splitByHeadings`, `splitByHr`, `splitOffFrontMatter`, `t`.
+- Zweck: Allgemeiner Helfer: split off front matter. Umsetzung: `splitOffFrontMatter` ([app.js](app.js#L9845)). Abhängigkeiten: `t`.
+- Zweck: Allgemeiner Helfer: split by hr. Umsetzung: `splitByHr` ([app.js](app.js#L9864)). Abhängigkeiten: `t`.
+- Zweck: Allgemeiner Helfer: split by headings. Umsetzung: `splitByHeadings` ([app.js](app.js#L9890)). Abhängigkeiten: `t`.
+- Zweck: Allgemeiner Helfer: chunk big text. Umsetzung: `chunkBigText` ([app.js](app.js#L9910)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: import personal space notes from text. Umsetzung: `importPersonalSpaceNotesFromText` ([app.js](app.js#L9957)). Abhängigkeiten: `importPersonalSpaceNotes`, `t`, `toast`.
+- Zweck: Allgemeiner Helfer: import personal space file. Umsetzung: `importPersonalSpaceFile` ([app.js](app.js#L9979)). Abhängigkeiten: `chunkTextIntoNotes`, `importPersonalSpaceNotes`, `importPersonalSpaceNotesFromText`, `t`, `toast`.
+- Zweck: Allgemeiner Helfer: start notes import. Umsetzung: `startNotesImport` ([app.js](app.js#L10006)). Abhängigkeiten: `t`, `toast`.
+- Zweck: Allgemeiner Helfer: request personal space link. Umsetzung: `requestPersonalSpaceLink` ([app.js](app.js#L10023)). Abhängigkeiten: `api`, `modalPrompt`, `t`, `toast`.
+- Zweck: Erzeugt zufällige room. Umsetzung: `randomRoom` ([app.js](app.js#L10069)). Abhängigkeiten: `normalizeRoom`, `t`.
+- Zweck: Normalisiert favorite entry. Umsetzung: `normalizeFavoriteEntry` ([app.js](app.js#L10154)). Abhängigkeiten: `normalizeKey`, `normalizeRoom`.
+- Zweck: Entfernt Duplikate für favorites. Umsetzung: `dedupeFavorites` ([app.js](app.js#L10163)). Abhängigkeiten: `normalizeFavoriteEntry`, `t`.
+- Zweck: Normalisiert room tab entry. Umsetzung: `normalizeRoomTabEntry` ([app.js](app.js#L10201)). Abhängigkeiten: `normalizeKey`, `normalizeRoom`.
+- Zweck: Entfernt Duplikate für room tabs. Umsetzung: `dedupeRoomTabs` ([app.js](app.js#L10212)). Abhängigkeiten: `normalizeKey`, `normalizeRoom`, `normalizeRoomTabEntry`, `t`.
+- Zweck: Allgemeiner Helfer: show room tab limit modal. Umsetzung: `showRoomTabLimitModal` ([app.js](app.js#L10260)). Abhängigkeiten: `openModal`.
+- Zweck: Führt zusammen: room tabs. Umsetzung: `mergeRoomTabs` ([app.js](app.js#L10273)). Abhängigkeiten: `normalizeRoomTabEntry`, `t`.
+- Zweck: Lädt local room tabs. Umsetzung: `loadLocalRoomTabs` ([app.js](app.js#L10305)). Abhängigkeiten: `dedupeRoomTabs`, `saveRoomTabs`.
+- Zweck: Lädt room tabs. Umsetzung: `loadRoomTabs` ([app.js](app.js#L10320)). Abhängigkeiten: `dedupeRoomTabs`, `loadLocalRoomTabs`, `mergeRoomTabs`.
+- Zweck: Speichert room tabs. Umsetzung: `saveRoomTabs` ([app.js](app.js#L10329)). Abhängigkeiten: `dedupeRoomTabs`.
+- Zweck: Liest active room tab note id. Umsetzung: `getActiveRoomTabNoteId` ([app.js](app.js#L10341)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: resolve room tab snapshot text. Umsetzung: `resolveRoomTabSnapshotText` ([app.js](app.js#L10345)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: upsert room tab in state. Umsetzung: `upsertRoomTabInState` ([app.js](app.js#L10351)). Abhängigkeiten: `normalizeRoomTabEntry`.
+- Zweck: Entfernt room tab from state. Umsetzung: `removeRoomTabFromState` ([app.js](app.js#L10367)). Abhängigkeiten: `normalizeKey`, `normalizeRoom`.
+- Zweck: Aktualisiert room tab text local. Umsetzung: `updateRoomTabTextLocal` ([app.js](app.js#L10380)). Abhängigkeiten: `dedupeRoomTabs`, `getActiveRoomTabNoteId`, `loadRoomTabs`, `normalizeKey`, `normalizeRoom`, `resolveRoomTabSnapshotText`, `saveRoomTabs`, `t`.
+- Zweck: Aktualisiert room tabs for note id. Umsetzung: `updateRoomTabsForNoteId` ([app.js](app.js#L10406)). Abhängigkeiten: `dedupeRoomTabs`, `loadRoomTabs`, `saveRoomTabs`.
+- Zweck: Setzt room tab note id. Umsetzung: `setRoomTabNoteId` ([app.js](app.js#L10420)). Abhängigkeiten: `dedupeRoomTabs`, `loadRoomTabs`, `normalizeKey`, `normalizeRoom`, `saveRoomTabs`.
+- Zweck: Findet room tab by note id. Umsetzung: `findRoomTabByNoteId` ([app.js](app.js#L10445)). Abhängigkeiten: `loadRoomTabs`.
+- Zweck: Aktualisiert local note text. Umsetzung: `updateLocalNoteText` ([app.js](app.js#L10455)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: upsert favorite in state. Umsetzung: `upsertFavoriteInState` ([app.js](app.js#L10477)). Abhängigkeiten: `normalizeFavoriteEntry`.
+- Zweck: Synchronisiert room tab to server. Umsetzung: `syncRoomTabToServer` ([app.js](app.js#L10499)). Abhängigkeiten: `api`, `normalizeKey`, `normalizeRoom`, `renderRoomTabs`, `upsertRoomTabInState`.
+- Zweck: Plant oder entprellt room tab sync. Umsetzung: `scheduleRoomTabSync` ([app.js](app.js#L10526)). Abhängigkeiten: `syncRoomTabToServer`, `t`.
+- Zweck: Allgemeiner Helfer: flush room tab sync. Umsetzung: `flushRoomTabSync` ([app.js](app.js#L10548)). Abhängigkeiten: `getActiveRoomTabNoteId`, `resolveRoomTabSnapshotText`, `scheduleRoomTabSync`, `t`.
+- Zweck: Synchronisiert local room tabs to server. Umsetzung: `syncLocalRoomTabsToServer` ([app.js](app.js#L10560)). Abhängigkeiten: `loadLocalRoomTabs`, `normalizeKey`, `normalizeRoom`, `syncRoomTabToServer`, `t`.
+- Zweck: Allgemeiner Helfer: touch room tab. Umsetzung: `touchRoomTab` ([app.js](app.js#L10584)). Abhängigkeiten: `dedupeRoomTabs`, `getActiveRoomTabNoteId`, `loadRoomTabs`, `normalizeKey`, `normalizeRoom`, `resolveRoomTabSnapshotText`, `saveRoomTabs`, `scheduleRoomTabSync`, `showRoomTabLimitModal`, `t`.
+- Zweck: Allgemeiner Helfer: escape html. Umsetzung: `escapeHtml` ([app.js](app.js#L10615)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: escape attr. Umsetzung: `escapeAttr` ([app.js](app.js#L10622)). Abhängigkeiten: `api`, `buildShareHash`, `closeRoomTab`, `dedupeFavorites`, `escapeHtml`, `findFavoriteIndex`, `loadFavorites`, `loadLocalFavorites`, `loadRoomTabs`, `normalizeKey`, `normalizeRoom`, `randomKey`, `randomRoom`, `removeRoomTabFromState`, `renderFavorites`, `renderRoomTabs`, `saveFavorites`, `saveRoomTabs`, `t`.
+- Zweck: Rendert room tabs. Umsetzung: `renderRoomTabs` ([app.js](app.js#L10630)). Abhängigkeiten: `escapeAttr`, `escapeHtml`, `loadRoomTabs`.
+- Zweck: Schließt room tab. Umsetzung: `closeRoomTab` ([app.js](app.js#L10697)). Abhängigkeiten: `api`, `buildShareHash`, `loadRoomTabs`, `normalizeKey`, `normalizeRoom`, `randomKey`, `randomRoom`, `removeRoomTabFromState`, `renderRoomTabs`, `saveRoomTabs`.
+- Zweck: Lädt local favorites. Umsetzung: `loadLocalFavorites` ([app.js](app.js#L10733)). Abhängigkeiten: `dedupeFavorites`.
+- Zweck: Lädt favorites. Umsetzung: `loadFavorites` ([app.js](app.js#L10744)). Abhängigkeiten: `dedupeFavorites`, `loadLocalFavorites`.
+- Zweck: Speichert favorites. Umsetzung: `saveFavorites` ([app.js](app.js#L10752)). Abhängigkeiten: `dedupeFavorites`.
+- Zweck: Findet favorite index. Umsetzung: `findFavoriteIndex` ([app.js](app.js#L10764)). Abhängigkeiten: `loadFavorites`.
+- Zweck: Rendert favorites. Umsetzung: `renderFavorites` ([app.js](app.js#L10769)). Abhängigkeiten: `api`, `applyCalendarFreeSlotsVisibility`, `applyCalendarSettings`, `buildShareHash`, `createClientId`, `createGoogleCalendarEvent`, `dedupeFavorites`, `deleteGoogleCalendarEvent`, `escapeAttr`, `escapeHtml`, `fetchGoogleCalendarList`, `fetchGoogleCalendarStatus`, `fmtDate`, `formatBytes`, `formatDateInputValue`, `formatTime`, `formatTrashDeletedAt`, `formatUploadUpdatedAt`, `getLocalCalendarSettings`, `getNoteTitleAndExcerpt`, `getUiLocale`, `loadCalendarDefaultView`, `loadCalendarGoogleId`, `loadCalendarSources`, `loadFavorites`, `loadLocalCalendarEventsRaw`, `normalizeCalendarSource`, `refreshCalendarEvents`, `renderCalendarGoogleSelect`, `renderCalendarLocalEvents`, `renderCalendarPanel`, `renderCalendarSettings`, `renderFavoritesManager`, `renderRoomTabs`, `renderTrashManageList`, `renderUploadsManageList`, `saveCalendarDefaultView`, `saveCalendarGoogleId`, `saveCalendarSources`, `saveLocalCalendarEvents`, `scheduleCalendarRefresh`, `scheduleCalendarSettingsSync`, `setCalendarPanelActive`, `setCalendarSidebarCollapsed`, `setGoogleCalendarUi`, `syncCalendarSettingsFromServer`, `syncCalendarSettingsToServer`, `t`, `updateCalendarViewButtons`.
+- Zweck: Rendert favorites manager. Umsetzung: `renderFavoritesManager` ([app.js](app.js#L10794)). Abhängigkeiten: `dedupeFavorites`, `escapeAttr`, `escapeHtml`, `loadFavorites`, `t`.
+- Zweck: Formatiert upload updated at. Umsetzung: `formatUploadUpdatedAt` ([app.js](app.js#L10846)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Rendert uploads manage list. Umsetzung: `renderUploadsManageList` ([app.js](app.js#L10854)). Abhängigkeiten: `escapeAttr`, `escapeHtml`, `formatBytes`, `formatUploadUpdatedAt`, `t`.
+- Zweck: Formatiert trash deleted at. Umsetzung: `formatTrashDeletedAt` ([app.js](app.js#L10903)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Rendert trash manage list. Umsetzung: `renderTrashManageList` ([app.js](app.js#L10911)). Abhängigkeiten: `escapeAttr`, `escapeHtml`, `fmtDate`, `formatTrashDeletedAt`, `getNoteTitleAndExcerpt`, `t`.
+- Zweck: Normalisiert calendar source. Umsetzung: `normalizeCalendarSource` ([app.js](app.js#L10969)). Abhängigkeiten: `createClientId`.
+- Zweck: Lädt calendar sources. Umsetzung: `loadCalendarSources` ([app.js](app.js#L10979)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Speichert calendar sources. Umsetzung: `saveCalendarSources` ([app.js](app.js#L10990)). Abhängigkeiten: `scheduleCalendarSettingsSync`.
+- Zweck: Lädt calendar default view. Umsetzung: `loadCalendarDefaultView` ([app.js](app.js#L11004)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Speichert calendar default view. Umsetzung: `saveCalendarDefaultView` ([app.js](app.js#L11013)). Abhängigkeiten: `renderCalendarPanel`, `scheduleCalendarSettingsSync`, `updateCalendarViewButtons`.
+- Zweck: Liest local calendar settings. Umsetzung: `getLocalCalendarSettings` ([app.js](app.js#L11030)). Abhängigkeiten: `loadCalendarDefaultView`, `loadCalendarGoogleId`, `loadCalendarSources`, `loadLocalCalendarEventsRaw`.
+- Zweck: Wendet calendar settings. Umsetzung: `applyCalendarSettings` ([app.js](app.js#L11039)). Abhängigkeiten: `renderCalendarPanel`, `renderCalendarSettings`, `saveCalendarDefaultView`, `saveCalendarGoogleId`, `saveCalendarSources`, `saveLocalCalendarEvents`, `scheduleCalendarRefresh`.
+- Zweck: Synchronisiert calendar settings to server. Umsetzung: `syncCalendarSettingsToServer` ([app.js](app.js#L11072)). Abhängigkeiten: `api`.
+- Zweck: Plant oder entprellt calendar settings sync. Umsetzung: `scheduleCalendarSettingsSync` ([app.js](app.js#L11087)). Abhängigkeiten: `getLocalCalendarSettings`, `syncCalendarSettingsToServer`, `t`.
+- Zweck: Synchronisiert calendar settings from server. Umsetzung: `syncCalendarSettingsFromServer` ([app.js](app.js#L11115)). Abhängigkeiten: `applyCalendarSettings`, `getLocalCalendarSettings`, `scheduleCalendarSettingsSync`.
+- Zweck: Rendert calendar settings. Umsetzung: `renderCalendarSettings` ([app.js](app.js#L11139)). Abhängigkeiten: `escapeAttr`, `loadCalendarDefaultView`, `loadCalendarSources`, `renderCalendarGoogleSelect`, `renderCalendarLocalEvents`, `t`.
+- Zweck: Rendert calendar google select. Umsetzung: `renderCalendarGoogleSelect` ([app.js](app.js#L11201)). Abhängigkeiten: `escapeAttr`, `escapeHtml`, `loadCalendarGoogleId`.
+- Zweck: Rendert calendar local events. Umsetzung: `renderCalendarLocalEvents` ([app.js](app.js#L11227)). Abhängigkeiten: `escapeAttr`, `escapeHtml`, `formatTime`, `getUiLocale`, `t`.
+- Zweck: Setzt google calendar ui. Umsetzung: `setGoogleCalendarUi` ([app.js](app.js#L11276)). Abhängigkeiten: `renderCalendarGoogleSelect`, `t`.
+- Zweck: Allgemeiner Helfer: fetch google calendar list. Umsetzung: `fetchGoogleCalendarList` ([app.js](app.js#L11303)). Abhängigkeiten: `api`, `renderCalendarGoogleSelect`, `t`.
+- Zweck: Allgemeiner Helfer: fetch google calendar status. Umsetzung: `fetchGoogleCalendarStatus` ([app.js](app.js#L11317)). Abhängigkeiten: `api`, `fetchGoogleCalendarList`, `saveCalendarGoogleId`, `setGoogleCalendarUi`, `t`.
+- Zweck: Erzeugt google calendar event. Umsetzung: `createGoogleCalendarEvent` ([app.js](app.js#L11353)). Abhängigkeiten: `api`, `formatDateInputValue`, `t`.
+- Zweck: Entfernt google calendar event. Umsetzung: `deleteGoogleCalendarEvent` ([app.js](app.js#L11373)). Abhängigkeiten: `api`, `t`.
+- Zweck: Setzt calendar panel active. Umsetzung: `setCalendarPanelActive` ([app.js](app.js#L11384)). Abhängigkeiten: `applyCalendarFreeSlotsVisibility`, `fetchGoogleCalendarStatus`, `loadCalendarDefaultView`, `refreshCalendarEvents`, `renderCalendarPanel`, `renderRoomTabs`, `updateCalendarViewButtons`.
+- Zweck: Setzt calendar sidebar collapsed. Umsetzung: `setCalendarSidebarCollapsed` ([app.js](app.js#L11403)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: start of day. Umsetzung: `startOfDay` ([app.js](app.js#L11430)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Fügt hinzu: days. Umsetzung: `addDays` ([app.js](app.js#L11434)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: start of week. Umsetzung: `startOfWeek` ([app.js](app.js#L11440)). Abhängigkeiten: `startOfDay`.
+- Zweck: Allgemeiner Helfer: start of month. Umsetzung: `startOfMonth` ([app.js](app.js#L11447)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Formatiert time. Umsetzung: `formatTime` ([app.js](app.js#L11451)). Abhängigkeiten: `getUiLocale`.
+- Zweck: Formatiert day label. Umsetzung: `formatDayLabel` ([app.js](app.js#L11458)). Abhängigkeiten: `getUiLocale`.
+- Zweck: Formatiert calendar title. Umsetzung: `formatCalendarTitle` ([app.js](app.js#L11466)). Abhängigkeiten: `addDays`, `getUiLocale`, `startOfWeek`.
+- Zweck: Liest iso week number. Umsetzung: `getIsoWeekNumber` ([app.js](app.js#L11494)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Lädt calendar free slots visible. Umsetzung: `loadCalendarFreeSlotsVisible` ([app.js](app.js#L11502)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Speichert calendar free slots visible. Umsetzung: `saveCalendarFreeSlotsVisible` ([app.js](app.js#L11511)). Abhängigkeiten: `applyCalendarFreeSlotsVisibility`.
+- Zweck: Wendet calendar free slots visibility. Umsetzung: `applyCalendarFreeSlotsVisibility` ([app.js](app.js#L11524)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Parst local event date. Umsetzung: `parseLocalEventDate` ([app.js](app.js#L11551)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Normalisiert local calendar event. Umsetzung: `normalizeLocalCalendarEvent` ([app.js](app.js#L11558)). Abhängigkeiten: `createClientId`, `parseLocalEventDate`.
+- Zweck: Allgemeiner Helfer: serialize local calendar event. Umsetzung: `serializeLocalCalendarEvent` ([app.js](app.js#L11571)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Lädt local calendar events raw. Umsetzung: `loadLocalCalendarEventsRaw` ([app.js](app.js#L11583)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Lädt local calendar events. Umsetzung: `loadLocalCalendarEvents` ([app.js](app.js#L11593)). Abhängigkeiten: `loadLocalCalendarEventsRaw`.
+- Zweck: Speichert local calendar events. Umsetzung: `saveLocalCalendarEvents` ([app.js](app.js#L11599)). Abhängigkeiten: `renderCalendarPanel`, `renderCalendarSettings`, `scheduleCalendarSettingsSync`.
+- Zweck: Lädt calendar google id. Umsetzung: `loadCalendarGoogleId` ([app.js](app.js#L11621)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Speichert calendar google id. Umsetzung: `saveCalendarGoogleId` ([app.js](app.js#L11632)). Abhängigkeiten: `renderCalendarSettings`, `scheduleCalendarSettingsSync`.
+- Zweck: Parst ics date. Umsetzung: `parseIcsDate` ([app.js](app.js#L11651)). Abhängigkeiten: `t`.
+- Zweck: Parst google date. Umsetzung: `parseGoogleDate` ([app.js](app.js#L11674)). Abhängigkeiten: `t`.
+- Zweck: Allgemeiner Helfer: unfold ics lines. Umsetzung: `unfoldIcsLines` ([app.js](app.js#L11686)). Abhängigkeiten: `t`.
+- Zweck: Parst ics events. Umsetzung: `parseIcsEvents` ([app.js](app.js#L11703)). Abhängigkeiten: `addDays`, `createClientId`, `parseIcsDate`, `t`, `unfoldIcsLines`.
+- Zweck: Führt zusammen: calendar events. Umsetzung: `mergeCalendarEvents` ([app.js](app.js#L11766)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Liest calendar range. Umsetzung: `getCalendarRange` ([app.js](app.js#L11784)). Abhängigkeiten: `addDays`, `startOfDay`, `startOfMonth`, `startOfWeek`.
+- Zweck: Allgemeiner Helfer: fetch google calendar events. Umsetzung: `fetchGoogleCalendarEvents` ([app.js](app.js#L11798)). Abhängigkeiten: `api`, `parseGoogleDate`, `t`.
+- Zweck: Allgemeiner Helfer: refresh calendar events. Umsetzung: `refreshCalendarEvents` ([app.js](app.js#L11833)). Abhängigkeiten: `fetchGoogleCalendarEvents`, `getCalendarRange`, `loadCalendarSources`, `mergeCalendarEvents`, `parseIcsEvents`, `renderCalendarPanel`, `t`.
+- Zweck: Plant oder entprellt calendar refresh. Umsetzung: `scheduleCalendarRefresh` ([app.js](app.js#L11889)). Abhängigkeiten: `refreshCalendarEvents`, `t`.
+- Zweck: Aktualisiert calendar view buttons. Umsetzung: `updateCalendarViewButtons` ([app.js](app.js#L11897)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Liest calendar events. Umsetzung: `getCalendarEvents` ([app.js](app.js#L11908)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Rendert calendar legend. Umsetzung: `renderCalendarLegend` ([app.js](app.js#L11924)). Abhängigkeiten: `escapeAttr`, `escapeHtml`, `loadCalendarSources`.
+- Zweck: Allgemeiner Helfer: move calendar cursor. Umsetzung: `moveCalendarCursor` ([app.js](app.js#L11982)). Abhängigkeiten: `renderCalendarPanel`.
+- Zweck: Baut work window. Umsetzung: `buildWorkWindow` ([app.js](app.js#L11999)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Führt zusammen: intervals. Umsetzung: `mergeIntervals` ([app.js](app.js#L12019)). Abhängigkeiten: `t`.
+- Zweck: Allgemeiner Helfer: compute free slots for day. Umsetzung: `computeFreeSlotsForDay` ([app.js](app.js#L12037)). Abhängigkeiten: `addDays`, `buildWorkWindow`, `mergeIntervals`, `startOfDay`.
+- Zweck: Rendert calendar free slots. Umsetzung: `renderCalendarFreeSlots` ([app.js](app.js#L12071)). Abhängigkeiten: `addDays`, `computeFreeSlotsForDay`, `formatDayLabel`, `formatTime`, `startOfWeek`.
+- Zweck: Rendert calendar panel. Umsetzung: `renderCalendarPanel` ([app.js](app.js#L12120)). Abhängigkeiten: `addDays`, `escapeAttr`, `escapeHtml`, `formatCalendarTitle`, `formatDayLabel`, `formatTime`, `getCalendarEvents`, `getIsoWeekNumber`, `loadCalendarSources`, `renderCalendarFreeSlots`, `renderCalendarLegend`, `startOfDay`, `startOfMonth`, `startOfWeek`, `t`.
+- Zweck: Formatiert date input value. Umsetzung: `formatDateInputValue` ([app.js](app.js#L12303)). Abhängigkeiten: `t`.
+- Zweck: Öffnet calendar event modal. Umsetzung: `openCalendarEventModal` ([app.js](app.js#L12308)). Abhängigkeiten: `formatDateInputValue`, `t`, `updateCalendarEventTimeState`.
+- Zweck: Schließt calendar event modal. Umsetzung: `closeCalendarEventModal` ([app.js](app.js#L12332)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Aktualisiert calendar event time state. Umsetzung: `updateCalendarEventTimeState` ([app.js](app.js#L12339)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Baut local event from modal. Umsetzung: `buildLocalEventFromModal` ([app.js](app.js#L12345)). Abhängigkeiten: `addDays`, `createClientId`, `t`, `toast`.
+- Zweck: Fügt hinzu: local calendar event. Umsetzung: `addLocalCalendarEvent` ([app.js](app.js#L12398)). Abhängigkeiten: `saveLocalCalendarEvents`, `t`, `toast`.
+- Zweck: Lädt uploads manage. Umsetzung: `loadUploadsManage` ([app.js](app.js#L12407)). Abhängigkeiten: `api`, `renderUploadsManageList`, `t`.
+- Zweck: Lädt trash manage. Umsetzung: `loadTrashManage` ([app.js](app.js#L12427)). Abhängigkeiten: `api`, `renderTrashManageList`, `t`.
+- Zweck: Allgemeiner Helfer: restore trash note. Umsetzung: `restoreTrashNote` ([app.js](app.js#L12455)). Abhängigkeiten: `api`, `loadTrashManage`, `refreshPersonalSpace`, `t`, `toast`.
+- Zweck: Entfernt upload. Umsetzung: `deleteUpload` ([app.js](app.js#L12472)). Abhängigkeiten: `api`, `loadUploadsManage`, `t`, `toast`.
+- Zweck: Aktualisiert favorite text. Umsetzung: `updateFavoriteText` ([app.js](app.js#L12488)). Abhängigkeiten: `api`, `dedupeFavorites`, `loadFavorites`, `normalizeKey`, `normalizeRoom`, `saveFavorites`, `updateFavoritesUI`.
+- Zweck: Entfernt favorite. Umsetzung: `removeFavorite` ([app.js](app.js#L12518)). Abhängigkeiten: `api`, `dedupeFavorites`, `loadFavorites`, `normalizeKey`, `normalizeRoom`, `saveFavorites`, `updateFavoritesUI`.
+- Zweck: Aktualisiert favorite button. Umsetzung: `updateFavoriteButton` ([app.js](app.js#L12537)). Abhängigkeiten: `findFavoriteIndex`.
+- Zweck: Aktualisiert favorites ui. Umsetzung: `updateFavoritesUI` ([app.js](app.js#L12545)). Abhängigkeiten: `addCommentFromDraft`, `addDays`, `addLocalCalendarEvent`, `aiAssistFromPreview`, `announceClientId`, `api`, `applyAiContextMode`, `applyBulkTagsToNotes`, `applyCrdtUpdate`, `applyNoteToEditor`, `applyPendingCrdtBootstrap`, `applyPersonalSpaceFiltersAndRender`, `applyPresenceUpdate`, `applyPsEditorTagSuggestion`, `applyPsTagContextInput`, `applyPsTagsCollapsed`, `applyPsVisible`, `applyRemoteText`, `applySelectionAction`, `applySlashCommand`, `applySyncedText`, `applyTableEditorToTextarea`, `attachPreviewCheckboxWriteback`, `base64DecodeBytes`, `base64EncodeBytes`, `buildAttributionHtml`, `buildEditorSystemTags`, `buildLocalEventFromModal`, `buildPsTagsPayload`, `buildSetMessage`, `buildShareHash`, `buildShareHref`, `buildUploadMarkdown`, `canAutoSavePsNote`, `clearPsEditingNoteState`, `clearPsSelection`, `closeCalendarEventModal`, `closePsContextMenu`, `closePsEditorTagsSuggest`, `closePsTagContextMenu`, `closeRoomTab`, `colorToRgba`, `confirmPsTagContextDelete`, `connect`, `copyTextToClipboard`, `createClientId`, `createGoogleCalendarEvent`, `decryptForRoom`, `deleteBulkNotes`, `deleteGoogleCalendarEvent`, `deleteUpload`, `destroyCrdt`, `encryptForRoom`, `ensureYjsLoaded`, `escapeHtml`, `exportPersonalSpaceNotes`, `findNoteById`, `findNoteByText`, `flushRoomTabSync`, `formatUi`, `getActiveRoomTabNoteId`, `getAuthorMeta`, `getDateTagsForTs`, `getPreviewRunCombinedText`, `getSelectedNoteIds`, `getUiLocale`, `goToRoom`, `goToRoomWithKey`, `handleSlashMenuKey`, `handleWikiMenuKey`, `hashKeyForWs`, `importPersonalSpaceFile`, `initAiDictation`, `initAutoBackup`, `initAutoImport`, `initCrdt`, `initStartupTasks`, `initUiEventListeners`, `initUiLanguage`, `insertCalcResult`, `insertCodeBlock`, `insertTextAtCursor`, `isAllowedUploadType`, `isCrdtAvailable`, `isCrdtEnabled`, `isE2eeActive`, `isMobileViewport`, `loadAiApiConfig`, `loadAiPrompt`, `loadAiStatus`, `loadAiUseAnswer`, `loadAiUsePreview`, `loadBuildStamp`, `loadCalendarSources`, `loadCommentsForRoom`, `loadCrdtMarksPreference`, `loadEditorMaskDisabled`, `loadFavorites`, `loadGlowEnabled`, `loadMobileAutoNoteSeconds`, `loadPsMetaVisible`, `loadPsNoteAccessed`, `loadPsPinnedOnly`, `loadPsSearchQuery`, `loadPsSortMode`, `loadPsTagPrefs`, `loadPsTagsCollapsed`, `loadPsVisible`, `loadRecentRooms`, `loadRoomTabs`, `loadTheme`, `loadTrashManage`, `loadUploadsManage`, `modalConfirm`, `modalPrompt`, `moveCalendarCursor`, `navigatePsNoteHistory`, `normalizeAiModelInput`, `normalizeAutoInterval`, `normalizeCalendarSource`, `normalizeFavoriteEntry`, `normalizeKey`, `normalizeManualTags`, `normalizePsSortMode`, `normalizeRoom`, `nowIso`, `openCalendarEventModal`, `openNoteShareModal`, `openSettingsAt`, `openShareModal`, `openTableEditorFromCursor`, `openUploadModal`, `parseHexColor`, `parseRoomAndKeyFromHash`, `pickAutoBackupFolder`, `pickAutoImportFolder`, `randomKey`, `randomRoom`, `readAiApiKeyInput`, `readFileAsDataUrl`, `recordMobileLastActive`, `refreshCalendarEvents`, `refreshPersonalSpace`, `refreshSyncOnFocus`, `removeFavorite`, `renderCalendarPanel`, `renderCalendarSettings`, `renderFaq`, `renderFavorites`, `renderFavoritesManager`, `renderPsEditorTagsSuggest`, `renderRecentRooms`, `renderRoomTabs`, `renderTableEditorGrid`, `renderThemeList`, `resetE2eeKeyCache`, `resetPsTagContextDelete`, `resolveRoomTabSnapshotText`, `restoreTrashNote`, `runAutoBackup`, `runAutoImport`, `safeJsonParse`, `sanitizeLegacySnapshotText`, `saveAiApiConfig`, `saveAiPrompt`, `saveAiUseAnswer`, `saveAiUsePreview`, `saveAutoBackupSettings`, `saveAutoImportSettings`, `saveCalendarDefaultView`, `saveCalendarFreeSlotsVisible`, `saveCalendarGoogleId`, `saveCalendarSources`, `saveFavorites`, `saveGlowEnabled`, `saveLocalCalendarEvents`, `saveMobileAutoNoteSeconds`, `savePersonalSpaceNote`, `savePsMetaVisible`, `savePsPinnedOnly`, `savePsSearchQuery`, `savePsSortMode`, `savePsTagPrefs`, `savePsTagsCollapsed`, `savePsVisible`, `saveRecentRoom`, `saveTheme`, `scheduleAutoBackup`, `scheduleAutoImport`, `scheduleCalendarRefresh`, `scheduleCrdtSnapshot`, `schedulePsAutoSave`, `scheduleRoomTabSync`, `scheduleSelectionSend`, `scheduleSend`, `scheduleTypingStop`, `send`, `sendCrdtSnapshot`, `sendCrdtUpdate`, `sendCurrentState`, `sendMessage`, `setActiveSettingsSection`, `setAiUseAnswerUi`, `setAiUsePreviewUi`, `setAutoBackupStatus`, `setAutoImportStatus`, `setCalendarPanelActive`, `setCalendarSidebarCollapsed`, `setCommentDraftSelection`, `setCommentPanelOpen`, `setCrdtMarksToggleUi`, `setCrdtText`, `setEditorMaskToggleUi`, `setFencedCodeLanguage`, `setFullPreview`, `setGoogleCalendarUi`, `setHeaderCollapsed`, `setNoteShareModalOpen`, `setPreviewRunOutput`, `setPreviewVisible`, `setPsAutoSaveStatus`, `setPsMetaVisible`, `setPsNoteSelected`, `setPsSortMenuOpen`, `setSettingsOpen`, `setShareModalOpen`, `setStatus`, `setTableModalOpen`, `setTyping`, `setUiLanguage`, `setUploadInsertDisabled`, `setUploadModalOpen`, `showRoomTabLimitModal`, `startAiDictation`, `startNotesImport`, `stopAiDictation`, `syncAttributionOverlayScroll`, `syncCommentOverlayScroll`, `syncMobileFocusState`, `syncPasswordMaskScroll`, `syncPsEditingNoteFromEditorText`, `syncPsEditingNoteTagsFromState`, `syncPsEditorTagsInput`, `syncPsListHeight`, `syncPsSortMenu`, `t`, `toast`, `toggleCrdtMarks`, `togglePasswordField`, `togglePinnedForNote`, `togglePsSelectAll`, `touchRoomTab`, `uniqTags`, `updateAttributionOverlay`, `updateCalendarEventTimeState`, `updateCalendarViewButtons`, `updateCodeLangOverlay`, `updateCommentOverlay`, `updateCrdtFromTextarea`, `updateEditorMetaScroll`, `updateEditorMetaYaml`, `updateFavoriteButton`, `updateFavoriteText`, `updateLocalNoteText`, `updatePasswordMaskOverlay`, `updatePresenceUI`, `updatePreview`, `updatePsEditorTagMetaFromInputs`, `updatePsEditorTagsFromInput`, `updatePsEditorTagsSuggest`, `updatePsPinnedToggle`, `updateRoomTabTextLocal`, `updateRoomTabsForNoteId`, `updateRunOutputSizing`, `updateSelectionMenu`, `updateShareLink`, `updateShareModalLink`, `updateSlashMenu`, `updateTableCalculations`, `updateTableMenuVisibility`, `updateUploadPreview`, `updateWikiMenu`, `upsertPresence`, `wsDisplay`, `wsUrlForRoom`.
+- Zweck: Lädt recent rooms. Umsetzung: `loadRecentRooms` ([app.js](app.js#L12559)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Speichert recent room. Umsetzung: `saveRecentRoom` ([app.js](app.js#L12568)). Abhängigkeiten: `loadRecentRooms`.
+- Zweck: Rendert recent rooms. Umsetzung: `renderRecentRooms` ([app.js](app.js#L12577)). Abhängigkeiten: `loadRecentRooms`.
+- Zweck: Baut share href. Umsetzung: `buildShareHref` ([app.js](app.js#L12586)). Abhängigkeiten: `buildShareHash`.
+- Zweck: Aktualisiert share link. Umsetzung: `updateShareLink` ([app.js](app.js#L12594)). Abhängigkeiten: `buildShareHref`, `updateShareModalLink`.
+- Zweck: Setzt status. Umsetzung: `setStatus` ([app.js](app.js#L12612)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Setzt header collapsed. Umsetzung: `setHeaderCollapsed` ([app.js](app.js#L12620)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: ws display. Umsetzung: `wsDisplay` ([app.js](app.js#L12630)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Prüft hash key for ws. Umsetzung: `hashKeyForWs` ([app.js](app.js#L12639)). Abhängigkeiten: `t`.
+- Zweck: Allgemeiner Helfer: ws url for room. Umsetzung: `wsUrlForRoom` ([app.js](app.js#L12656)). Abhängigkeiten: `hashKeyForWs`, `t`.
+- Zweck: Prüft is crdt available. Umsetzung: `isCrdtAvailable` ([app.js](app.js#L12692)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Prüft is crdt enabled. Umsetzung: `isCrdtEnabled` ([app.js](app.js#L12696)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Prüft is e2ee active. Umsetzung: `isE2eeActive` ([app.js](app.js#L12700)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Stellt sicher: yjs loaded. Umsetzung: `ensureYjsLoaded` ([app.js](app.js#L12704)). Abhängigkeiten: `isCrdtAvailable`, `t`.
+- Zweck: Allgemeiner Helfer: now iso. Umsetzung: `nowIso` ([app.js](app.js#L12718)). Abhängigkeiten: `getUiLocale`.
+- Zweck: Allgemeiner Helfer: safe json parse. Umsetzung: `safeJsonParse` ([app.js](app.js#L12729)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: sanitize legacy snapshot text. Umsetzung: `sanitizeLegacySnapshotText` ([app.js](app.js#L12737)). Abhängigkeiten: `safeJsonParse`.
+- Zweck: Sendet message. Umsetzung: `sendMessage` ([app.js](app.js#L12759)). Abhängigkeiten: `send`.
+- Zweck: Sendet crdt update. Umsetzung: `sendCrdtUpdate` ([app.js](app.js#L12764)). Abhängigkeiten: `encryptForRoom`, `isE2eeActive`, `sendMessage`.
+- Zweck: Sendet crdt snapshot. Umsetzung: `sendCrdtSnapshot` ([app.js](app.js#L12787)). Abhängigkeiten: `encryptForRoom`, `isE2eeActive`, `sendMessage`.
+- Zweck: Aktualisiert presence ui. Umsetzung: `updatePresenceUI` ([app.js](app.js#L12823)). Abhängigkeiten: `formatUi`, `t`, `updateAttributionOverlay`.
+- Zweck: Allgemeiner Helfer: upsert presence. Umsetzung: `upsertPresence` ([app.js](app.js#L12885)). Abhängigkeiten: `t`, `updatePresenceUI`.
+- Zweck: Wendet presence update. Umsetzung: `applyPresenceUpdate` ([app.js](app.js#L12891)). Abhängigkeiten: `t`, `updatePresenceUI`.
+- Zweck: Liest author meta. Umsetzung: `getAuthorMeta` ([app.js](app.js#L12899)). Abhängigkeiten: `t`.
+- Zweck: Parst hex color. Umsetzung: `parseHexColor` ([app.js](app.js#L12906)). Abhängigkeiten: `t`.
+- Zweck: Allgemeiner Helfer: color to rgba. Umsetzung: `colorToRgba` ([app.js](app.js#L12927)). Abhängigkeiten: `parseHexColor`.
+- Zweck: Synchronisiert attribution overlay scroll. Umsetzung: `syncAttributionOverlayScroll` ([app.js](app.js#L12933)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Baut attribution html. Umsetzung: `buildAttributionHtml` ([app.js](app.js#L12940)). Abhängigkeiten: `colorToRgba`, `escapeHtml`, `getAuthorMeta`.
+- Zweck: Aktualisiert attribution overlay. Umsetzung: `updateAttributionOverlay` ([app.js](app.js#L12962)). Abhängigkeiten: `buildAttributionHtml`, `syncAttributionOverlayScroll`.
+- Zweck: Wendet pending crdt bootstrap. Umsetzung: `applyPendingCrdtBootstrap` ([app.js](app.js#L13006)). Abhängigkeiten: `applyCrdtUpdate`, `setCrdtText`, `t`.
+- Zweck: Setzt typing. Umsetzung: `setTyping` ([app.js](app.js#L13019)). Abhängigkeiten: `applyPresenceUpdate`, `sendMessage`.
+- Zweck: Plant oder entprellt typing stop. Umsetzung: `scheduleTypingStop` ([app.js](app.js#L13027)). Abhängigkeiten: `setTyping`, `t`.
+- Zweck: Plant oder entprellt selection send. Umsetzung: `scheduleSelectionSend` ([app.js](app.js#L13032)). Abhängigkeiten: `applyPresenceUpdate`, `sendMessage`, `t`.
+- Zweck: Wendet synced text. Umsetzung: `applySyncedText` ([app.js](app.js#L13045)). Abhängigkeiten: `getActiveRoomTabNoteId`, `nowIso`, `resolveRoomTabSnapshotText`, `sanitizeLegacySnapshotText`, `scheduleRoomTabSync`, `t`, `updatePasswordMaskOverlay`, `updatePreview`, `updateRoomTabTextLocal`.
+- Zweck: Initialisiert crdt. Umsetzung: `initCrdt` ([app.js](app.js#L13067)). Abhängigkeiten: `applyPendingCrdtBootstrap`, `applySyncedText`, `base64EncodeBytes`, `isCrdtAvailable`, `scheduleCrdtSnapshot`, `sendCrdtUpdate`, `t`, `updateAttributionOverlay`.
+- Zweck: Allgemeiner Helfer: destroy crdt. Umsetzung: `destroyCrdt` ([app.js](app.js#L13098)). Abhängigkeiten: `t`, `updateAttributionOverlay`.
+- Zweck: Wendet crdt update. Umsetzung: `applyCrdtUpdate` ([app.js](app.js#L13119)). Abhängigkeiten: `base64DecodeBytes`, `updateAttributionOverlay`.
+- Zweck: Setzt crdt text. Umsetzung: `setCrdtText` ([app.js](app.js#L13134)). Abhängigkeiten: `applySyncedText`, `sanitizeLegacySnapshotText`, `scheduleCrdtSnapshot`, `t`, `updateAttributionOverlay`.
+- Zweck: Aktualisiert crdt from textarea. Umsetzung: `updateCrdtFromTextarea` ([app.js](app.js#L13156)). Abhängigkeiten: `t`, `updateAttributionOverlay`.
+- Zweck: Plant oder entprellt crdt snapshot. Umsetzung: `scheduleCrdtSnapshot` ([app.js](app.js#L13194)). Abhängigkeiten: `base64EncodeBytes`, `sendCrdtSnapshot`, `t`.
+- Zweck: Baut set message. Umsetzung: `buildSetMessage` ([app.js](app.js#L13208)). Abhängigkeiten: `encryptForRoom`.
+- Zweck: Sendet current state. Umsetzung: `sendCurrentState` ([app.js](app.js#L13224)). Abhängigkeiten: `buildSetMessage`, `sendMessage`.
+- Zweck: Plant oder entprellt send. Umsetzung: `scheduleSend` ([app.js](app.js#L13236)). Abhängigkeiten: `buildSetMessage`, `isCrdtEnabled`, `nowIso`, `sendMessage`, `t`.
+- Zweck: Wendet remote text. Umsetzung: `applyRemoteText` ([app.js](app.js#L13257)). Abhängigkeiten: `applySyncedText`, `t`.
+- Zweck: Allgemeiner Helfer: connect. Umsetzung: `connect` ([app.js](app.js#L13263)). Abhängigkeiten: `announceClientId`, `applyCrdtUpdate`, `applyPresenceUpdate`, `applyRemoteText`, `createClientId`, `decryptForRoom`, `destroyCrdt`, `ensureYjsLoaded`, `initCrdt`, `isCrdtAvailable`, `isCrdtEnabled`, `safeJsonParse`, `scheduleCrdtSnapshot`, `sendCurrentState`, `sendMessage`, `setCrdtText`, `setStatus`, `t`, `toast`, `updatePresenceUI`, `upsertPresence`, `wsDisplay`, `wsUrlForRoom`.
+- Zweck: Allgemeiner Helfer: go to room. Umsetzung: `goToRoom` ([app.js](app.js#L13522)). Abhängigkeiten: `buildShareHash`, `flushRoomTabSync`, `normalizeRoom`, `setCalendarPanelActive`.
+- Zweck: Allgemeiner Helfer: go to room with key. Umsetzung: `goToRoomWithKey` ([app.js](app.js#L13530)). Abhängigkeiten: `buildShareHash`, `flushRoomTabSync`, `normalizeKey`, `normalizeRoom`, `setCalendarPanelActive`.
+- Zweck: Allgemeiner Helfer: refresh sync on focus. Umsetzung: `refreshSyncOnFocus` ([app.js](app.js#L14328)). Abhängigkeiten: `connect`, `isCrdtEnabled`, `sendMessage`, `t`.
+- Zweck: Allgemeiner Helfer: can auto save ps note. Umsetzung: `canAutoSavePsNote` ([app.js](app.js#L14681)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Speichert personal space note. Umsetzung: `savePersonalSpaceNote` ([app.js](app.js#L14685)). Abhängigkeiten: `api`, `applyNoteToEditor`, `applyPersonalSpaceFiltersAndRender`, `buildEditorSystemTags`, `buildPsTagsPayload`, `findNoteByText`, `refreshPersonalSpace`, `setPsAutoSaveStatus`, `syncPsEditingNoteTagsFromState`, `t`, `toast`, `uniqTags`, `updateEditorMetaYaml`, `updateRoomTabsForNoteId`.
+- Zweck: Plant oder entprellt ps auto save. Umsetzung: `schedulePsAutoSave` ([app.js](app.js#L14794)). Abhängigkeiten: `canAutoSavePsNote`, `savePersonalSpaceNote`, `setPsAutoSaveStatus`, `t`.
+- Zweck: Initialisiert ui event listeners. Umsetzung: `initUiEventListeners` ([app.js](app.js#L14836)). Abhängigkeiten: `addCommentFromDraft`, `addDays`, `addLocalCalendarEvent`, `aiAssistFromPreview`, `api`, `applyAiContextMode`, `applyBulkTagsToNotes`, `applyPersonalSpaceFiltersAndRender`, `applyPsTagContextInput`, `applyPsTagsCollapsed`, `applyPsVisible`, `attachPreviewCheckboxWriteback`, `buildLocalEventFromModal`, `clearPsEditingNoteState`, `clearPsSelection`, `closeCalendarEventModal`, `closePsContextMenu`, `closePsTagContextMenu`, `confirmPsTagContextDelete`, `createClientId`, `createGoogleCalendarEvent`, `deleteBulkNotes`, `deleteGoogleCalendarEvent`, `deleteUpload`, `findNoteById`, `getPreviewRunCombinedText`, `getSelectedNoteIds`, `isMobileViewport`, `loadAiStatus`, `loadCalendarSources`, `loadTrashManage`, `loadUploadsManage`, `modalConfirm`, `modalPrompt`, `moveCalendarCursor`, `normalizeAiModelInput`, `normalizeCalendarSource`, `normalizeManualTags`, `nowIso`, `openCalendarEventModal`, `openNoteShareModal`, `openSettingsAt`, `readAiApiKeyInput`, `recordMobileLastActive`, `refreshCalendarEvents`, `refreshPersonalSpace`, `removeFavorite`, `renderCalendarPanel`, `renderCalendarSettings`, `renderFaq`, `resetPsTagContextDelete`, `restoreTrashNote`, `saveAiApiConfig`, `saveAiPrompt`, `saveAiUseAnswer`, `saveAiUsePreview`, `saveCalendarDefaultView`, `saveCalendarFreeSlotsVisible`, `saveCalendarGoogleId`, `saveCalendarSources`, `saveGlowEnabled`, `saveLocalCalendarEvents`, `saveMobileAutoNoteSeconds`, `savePersonalSpaceNote`, `savePsPinnedOnly`, `savePsSearchQuery`, `savePsTagPrefs`, `savePsTagsCollapsed`, `savePsVisible`, `saveTheme`, `scheduleCalendarRefresh`, `scheduleSend`, `setActiveSettingsSection`, `setAiUseAnswerUi`, `setAiUsePreviewUi`, `setCalendarSidebarCollapsed`, `setCommentPanelOpen`, `setFullPreview`, `setGoogleCalendarUi`, `setPreviewRunOutput`, `setPreviewVisible`, `setPsAutoSaveStatus`, `setPsNoteSelected`, `setSettingsOpen`, `setUiLanguage`, `startAiDictation`, `stopAiDictation`, `syncMobileFocusState`, `syncPsListHeight`, `t`, `toast`, `togglePinnedForNote`, `togglePsSelectAll`, `updateCalendarEventTimeState`, `updateCalendarViewButtons`, `updateFavoriteText`, `updatePasswordMaskOverlay`, `updatePreview`, `updatePsPinnedToggle`, `updateRunOutputSizing`.
+- Zweck: Initialisiert startup tasks. Umsetzung: `initStartupTasks` ([app.js](app.js#L15750)). Abhängigkeiten: `applyAiContextMode`, `initAiDictation`, `initAutoBackup`, `initAutoImport`, `initUiLanguage`, `loadAiPrompt`, `loadAiUseAnswer`, `loadAiUsePreview`, `loadCommentsForRoom`, `loadMobileAutoNoteSeconds`, `refreshPersonalSpace`, `setCommentDraftSelection`, `syncMobileFocusState`, `t`, `updateTableMenuVisibility`.
+
+### server.js
+
+- Zweck: Liest client ip. Umsetzung: `getClientIp` ([server.js](server.js#L105)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: check ai rate limit. Umsetzung: `checkAiRateLimit` ([server.js](server.js#L113)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Stellt sicher: db dir. Umsetzung: `ensureDbDir` ([server.js](server.js#L128)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Initialisiert db. Umsetzung: `initDb` ([server.js](server.js#L136)). Abhängigkeiten: `ensureDbDir`.
+- Zweck: Lädt persisted room state. Umsetzung: `loadPersistedRoomState` ([server.js](server.js#L383)). Abhängigkeiten: `initDb`.
+- Zweck: Allgemeiner Helfer: persist room state. Umsetzung: `persistRoomState` ([server.js](server.js#L397)). Abhängigkeiten: `initDb`.
+- Zweck: Liest signing secret. Umsetzung: `getSigningSecret` ([server.js](server.js#L416)). Abhängigkeiten: `initDb`.
+- Zweck: Allgemeiner Helfer: mime type for path. Umsetzung: `mimeTypeForPath` ([server.js](server.js#L429)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: safe json parse. Umsetzung: `safeJsonParse` ([server.js](server.js#L443)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: json. Umsetzung: `json` ([server.js](server.js#L451)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: text. Umsetzung: `text` ([server.js](server.js#L460)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: redirect. Umsetzung: `redirect` ([server.js](server.js#L468)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Parst cookies. Umsetzung: `parseCookies` ([server.js](server.js#L478)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: cookie options. Umsetzung: `cookieOptions` ([server.js](server.js#L492)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: sign. Umsetzung: `sign` ([server.js](server.js#L498)). Abhängigkeiten: `getSigningSecret`.
+- Zweck: Allgemeiner Helfer: make session cookie. Umsetzung: `makeSessionCookie` ([server.js](server.js#L505)). Abhängigkeiten: `cookieOptions`, `sign`.
+- Zweck: Allgemeiner Helfer: clear session cookie. Umsetzung: `clearSessionCookie` ([server.js](server.js#L514)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Liest authed email. Umsetzung: `getAuthedEmail` ([server.js](server.js#L520)). Abhängigkeiten: `parseCookies`, `sign`.
+- Zweck: Normalisiert email. Umsetzung: `normalizeEmail` ([server.js](server.js#L538)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: read body. Umsetzung: `readBody` ([server.js](server.js#L547)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: read body with limit. Umsetzung: `readBodyWithLimit` ([server.js](server.js#L566)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: read json. Umsetzung: `readJson` ([server.js](server.js#L586)). Abhängigkeiten: `readBody`, `safeJsonParse`.
+- Zweck: Allgemeiner Helfer: read json with limit. Umsetzung: `readJsonWithLimit` ([server.js](server.js#L592)). Abhängigkeiten: `readBodyWithLimit`, `safeJsonParse`.
+- Zweck: Stellt sicher: uploads dir. Umsetzung: `ensureUploadsDir` ([server.js](server.js#L598)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: cleanup uploads. Umsetzung: `cleanupUploads` ([server.js](server.js#L606)). Abhängigkeiten: `ensureUploadsDir`.
+- Zweck: Allgemeiner Helfer: sanitize filename. Umsetzung: `sanitizeFilename` ([server.js](server.js#L635)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: decode data url. Umsetzung: `decodeDataUrl` ([server.js](server.js#L646)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Prüft is allowed upload mime. Umsetzung: `isAllowedUploadMime` ([server.js](server.js#L662)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: ext for mime. Umsetzung: `extForMime` ([server.js](server.js#L667)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Entfernt Duplikate für uniq. Umsetzung: `uniq` ([server.js](server.js#L678)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: extract hashtags. Umsetzung: `extractHashtags` ([server.js](server.js#L682)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: classify text. Umsetzung: `classifyText` ([server.js](server.js#L690)). Abhängigkeiten: `applyDateTags`, `computeNoteContentHash`, `extractHashtags`, `getDateTagsForTs`, `getOrCreateUserId`, `initDb`, `isMonthTag`, `isValidNoteId`, `isYearTag`, `listNotes`, `mergeManualTags`, `normalizeImportTags`, `normalizeNoteTextForHash`, `parseTagsJson`, `splitManualOverrideTags`, `uniq`.
+- Zweck: Parst tags json. Umsetzung: `parseTagsJson` ([server.js](server.js#L780)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Normalisiert import tags. Umsetzung: `normalizeImportTags` ([server.js](server.js#L789)). Abhängigkeiten: `uniq`.
+- Zweck: Prüft is year tag. Umsetzung: `isYearTag` ([server.js](server.js#L842)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Prüft is month tag. Umsetzung: `isMonthTag` ([server.js](server.js#L846)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Liest date tags for ts. Umsetzung: `getDateTagsForTs` ([server.js](server.js#L852)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Wendet date tags. Umsetzung: `applyDateTags` ([server.js](server.js#L864)). Abhängigkeiten: `getDateTagsForTs`, `isMonthTag`, `isYearTag`, `uniq`.
+- Zweck: Allgemeiner Helfer: split manual override tags. Umsetzung: `splitManualOverrideTags` ([server.js](server.js#L877)). Abhängigkeiten: `normalizeImportTags`.
+- Zweck: Führt zusammen: manual tags. Umsetzung: `mergeManualTags` ([server.js](server.js#L886)). Abhängigkeiten: `classifyText`, `extractHashtags`, `normalizeImportTags`, `uniq`.
+- Zweck: Prüft is valid note id. Umsetzung: `isValidNoteId` ([server.js](server.js#L915)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Normalisiert note text for hash. Umsetzung: `normalizeNoteTextForHash` ([server.js](server.js#L919)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: compute note content hash. Umsetzung: `computeNoteContentHash` ([server.js](server.js#L925)). Abhängigkeiten: `normalizeNoteTextForHash`.
+- Zweck: Liest or create user id. Umsetzung: `getOrCreateUserId` ([server.js](server.js#L931)). Abhängigkeiten: `initDb`.
+- Zweck: Allgemeiner Helfer: list notes. Umsetzung: `listNotes` ([server.js](server.js#L940)). Abhängigkeiten: `initDb`, `parseTagsJson`.
+- Zweck: Allgemeiner Helfer: purge expired trash. Umsetzung: `purgeExpiredTrash` ([server.js](server.js#L969)). Abhängigkeiten: `initDb`.
+- Zweck: Allgemeiner Helfer: list trash notes. Umsetzung: `listTrashNotes` ([server.js](server.js#L976)). Abhängigkeiten: `initDb`, `parseTagsJson`.
+- Zweck: Allgemeiner Helfer: list tags. Umsetzung: `listTags` ([server.js](server.js#L992)). Abhängigkeiten: `initDb`, `parseTagsJson`, `uniq`.
+- Zweck: Allgemeiner Helfer: list favorites. Umsetzung: `listFavorites` ([server.js](server.js#L1005)). Abhängigkeiten: `initDb`.
+- Zweck: Allgemeiner Helfer: list room tabs. Umsetzung: `listRoomTabs` ([server.js](server.js#L1015)). Abhängigkeiten: `initDb`.
+- Zweck: Allgemeiner Helfer: sanitize calendar settings. Umsetzung: `sanitizeCalendarSettings` ([server.js](server.js#L1026)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Parst calendar json. Umsetzung: `parseCalendarJson` ([server.js](server.js#L1094)). Abhängigkeiten: `sanitizeCalendarSettings`.
+- Zweck: Liest user settings. Umsetzung: `getUserSettings` ([server.js](server.js#L1105)). Abhängigkeiten: `initDb`, `parseCalendarJson`.
+- Zweck: Allgemeiner Helfer: upsert user settings. Umsetzung: `upsertUserSettings` ([server.js](server.js#L1118)). Abhängigkeiten: `initDb`, `sanitizeCalendarSettings`.
+- Zweck: Allgemeiner Helfer: google configured. Umsetzung: `googleConfigured` ([server.js](server.js#L1130)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: make google state. Umsetzung: `makeGoogleState` ([server.js](server.js#L1138)). Abhängigkeiten: `sign`.
+- Zweck: Parst google state. Umsetzung: `parseGoogleState` ([server.js](server.js#L1147)). Abhängigkeiten: `sign`.
+- Zweck: Liest google tokens. Umsetzung: `getGoogleTokens` ([server.js](server.js#L1162)). Abhängigkeiten: `initDb`.
+- Zweck: Speichert google tokens. Umsetzung: `saveGoogleTokens` ([server.js](server.js#L1167)). Abhängigkeiten: `initDb`.
+- Zweck: Entfernt google tokens. Umsetzung: `deleteGoogleTokens` ([server.js](server.js#L1181)). Abhängigkeiten: `initDb`.
+- Zweck: Liest google calendar id for user. Umsetzung: `getGoogleCalendarIdForUser` ([server.js](server.js#L1186)). Abhängigkeiten: `getUserSettings`.
+- Zweck: Allgemeiner Helfer: refresh google access token. Umsetzung: `refreshGoogleAccessToken` ([server.js](server.js#L1193)). Abhängigkeiten: `json`.
+- Zweck: Liest google access token. Umsetzung: `getGoogleAccessToken` ([server.js](server.js#L1216)). Abhängigkeiten: `getGoogleTokens`, `refreshGoogleAccessToken`, `saveGoogleTokens`.
+- Zweck: Speichert login token. Umsetzung: `saveLoginToken` ([server.js](server.js#L1233)). Abhängigkeiten: `initDb`.
+- Zweck: Liest login token. Umsetzung: `getLoginToken` ([server.js](server.js#L1238)). Abhängigkeiten: `initDb`.
+- Zweck: Entfernt login token. Umsetzung: `deleteLoginToken` ([server.js](server.js#L1243)). Abhängigkeiten: `initDb`.
+- Zweck: Liest origin. Umsetzung: `getOrigin` ([server.js](server.js#L1248)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Sendet magic link email. Umsetzung: `sendMagicLinkEmail` ([server.js](server.js#L1261)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: clamp room. Umsetzung: `clampRoom` ([server.js](server.js#L1301)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: clamp key. Umsetzung: `clampKey` ([server.js](server.js#L1308)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: room key. Umsetzung: `roomKey` ([server.js](server.js#L1315)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Liest room sockets. Umsetzung: `getRoomSockets` ([server.js](server.js#L1334)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Liest room presence. Umsetzung: `getRoomPresence` ([server.js](server.js#L1343)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Baut presence list. Umsetzung: `buildPresenceList` ([server.js](server.js#L1352)). Abhängigkeiten: `getRoomPresence`.
+- Zweck: Sendet presence state. Umsetzung: `sendPresenceState` ([server.js](server.js#L1356)). Abhängigkeiten: `buildPresenceList`.
+- Zweck: Allgemeiner Helfer: broadcast presence state. Umsetzung: `broadcastPresenceState` ([server.js](server.js#L1365)). Abhängigkeiten: `broadcast`, `buildPresenceList`.
+- Zweck: Allgemeiner Helfer: broadcast. Umsetzung: `broadcast` ([server.js](server.js#L1370)). Abhängigkeiten: `getRoomSockets`.
+- Zweck: Formatiert input for user prompt. Umsetzung: `formatInputForUserPrompt` ([server.js](server.js#L2935)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Baut user prompt. Umsetzung: `buildUserPrompt` ([server.js](server.js#L2949)). Abhängigkeiten: `formatInputForUserPrompt`.
+- Zweck: Allgemeiner Helfer: call anthropic. Umsetzung: `callAnthropic` ([server.js](server.js#L2971)). Abhängigkeiten: `safeJsonParse`, `text`.
+- Zweck: Führt aus: with model fallback. Umsetzung: `runWithModelFallback` ([server.js](server.js#L3001)). Abhängigkeiten: `callAnthropic`.
+- Zweck: Allgemeiner Helfer: extract text. Umsetzung: `extractText` ([server.js](server.js#L3030)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: should retry run output. Umsetzung: `shouldRetryRunOutput` ([server.js](server.js#L3039)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: extract fenced code blocks. Umsetzung: `extractFencedCodeBlocks` ([server.js](server.js#L3055)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Allgemeiner Helfer: coerce run mode text. Umsetzung: `coerceRunModeText` ([server.js](server.js#L3067)). Abhängigkeiten: `extractFencedCodeBlocks`.
+- Zweck: Allgemeiner Helfer: chunk text. Umsetzung: `chunkText` ([server.js](server.js#L3102)). Abhängigkeiten: keine internen Funktionsaufrufe.
