@@ -1,3 +1,22 @@
+# Dokumentation – Änderungen (2026-01-24)
+
+## Ziel
+- App-Sprache in den Einstellungen auswählbar machen (DE/EN) und Labels umstellen.
+
+## Änderungen
+- Sprachwahl in den Einstellungen ergänzt und lokal gespeichert.
+- UI-Labels in Personal Space und Settings über i18n-Keys/Übersetzungen umgestellt.
+- Datums-/Zeitformatierung an die UI-Sprache gekoppelt.
+
+## Auswirkungen
+- **UI/UX:** Sprache wechselt sofort; Settings/Personal-Space-Beschriftungen aktualisiert.
+- **Feature-Interaktionen:** Keine Änderung an bestehenden Flows.
+- **Datenebene:** Sprache lokal gespeichert.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
 # Dokumentation – Änderungen (2026-01-23)
 
 ## Ziel

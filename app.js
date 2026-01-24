@@ -261,6 +261,8 @@
 	const uploadsRefreshBtn = document.getElementById("uploadsRefresh");
 	const uploadsManageList = document.getElementById("uploadsManageList");
 	const uploadsManageEmpty = document.getElementById("uploadsManageEmpty");
+	const uiLangDeBtn = document.getElementById("uiLangDe");
+	const uiLangEnBtn = document.getElementById("uiLangEn");
 	const trashRefreshBtn = document.getElementById("trashRefresh");
 	const trashManageList = document.getElementById("trashManageList");
 	const trashManageEmpty = document.getElementById("trashManageEmpty");
@@ -1332,7 +1334,7 @@
 
 	function fmtDate(ts) {
 		try {
-			return new Date(ts).toLocaleString("de-DE", {
+			return new Date(ts).toLocaleString(getUiLocale(), {
 				year: "numeric",
 				month: "2-digit",
 				day: "2-digit",
@@ -3879,6 +3881,9 @@
 	const AI_API_MODEL_KEY = "mirror_ai_api_model";
 	const THEME_KEY = "mirror_theme";
 	const GLOW_ENABLED_KEY = "mirror_glow_enabled";
+	const UI_LANG_KEY = "mirror_ui_lang";
+	const UI_LANG_DEFAULT = "de";
+	const UI_LANGS = ["de", "en"];
 	const MOBILE_AUTO_NOTE_SECONDS_KEY = "mirror_mobile_auto_note_seconds";
 	const MOBILE_LAST_ACTIVE_KEY = "mirror_mobile_last_active";
 	let aiPrompt = "";
@@ -3894,6 +3899,7 @@
 	let aiDictationInterimText = "";
 	let settingsOpen = false;
 	let settingsSection = "user";
+	let uiLang = UI_LANG_DEFAULT;
 	let activeTheme = "fuchsia";
 	let glowEnabled = true;
 	let mobileAutoNoteSeconds = 0;
@@ -4056,6 +4062,434 @@
 		},
 	};
 
+		const UI_STRINGS = {
+			de: {
+				"ps.title": "Personal Space",
+				"ps.close": "Schließen",
+				"ps.add": "Personal Space hinzufügen",
+				"ps.add_hint": "Du erhältst einen Bestätigungslink per E-Mail.",
+				"ps.new_note": "Neue Notiz",
+				"ps.tags": "Tags",
+				"ps.notes": "Notizen",
+				"ps.pinned_only": "Nur angepinnte",
+				"ps.search": "Suche...",
+				"ps.sort": "Sortierung",
+				"ps.sort_by": "Sortieren nach",
+				"ps.sort.modified": "Geändert",
+				"ps.sort.created": "Erstellt",
+				"ps.sort.accessed": "Zuletzt geöffnet",
+				"ps.sort.text": "Text",
+				"ps.tags.and": "UND",
+				"ps.tags.or": "ODER",
+				"settings.open": "Einstellungen öffnen",
+				"settings.title": "Einstellungen",
+				"settings.desc": "Konto, Export/Import, Themes, KI und Hilfe verwalten.",
+				"settings.build": "Build-Info",
+				"settings.close": "Einstellungen schließen",
+				"settings.nav.user": "Benutzer-Einstellungen",
+				"settings.nav.export": "Export/Import",
+				"settings.nav.themes": "Themes",
+				"settings.nav.calendar": "Kalender",
+				"settings.nav.ai": "KI",
+				"settings.nav.uploads": "Uploads",
+				"settings.nav.faq": "FAQ",
+				"settings.nav.trash": "Papierkorb",
+				"settings.user.title": "Benutzer-Einstellungen",
+				"settings.user.desc": "Personal Space Identität und Abmeldung.",
+				"settings.user.signed_in": "Angemeldet als",
+				"settings.user.sign_out": "Abmelden",
+				"settings.user.signed_out":
+					"Nicht angemeldet. Nutze „Personal Space hinzufügen“, um zu starten.",
+				"settings.user.favorites.title": "Favoriten",
+				"settings.user.favorites.desc":
+					"Favoriten bearbeiten, Notizen hinzufügen oder entfernen.",
+				"settings.user.favorites.empty": "Keine Favoriten vorhanden.",
+				"settings.user.favorites.remove": "Entfernen",
+				"settings.user.favorites.note_label": "Notiz",
+				"settings.user.favorites.note_placeholder":
+					"Kurze Notiz (optional)",
+				"settings.user.mobile_auto.title":
+					"Mobil: Neue Notiz nach Inaktivität",
+				"settings.user.mobile_auto.desc":
+					"Nach wie vielen Sekunden Inaktivität beim nächsten App-Start eine neue Notiz erstellt wird.",
+				"settings.user.mobile_auto.unit": "Sekunden (0 = aus)",
+				"settings.language.title": "App-Sprache",
+				"settings.language.desc": "Sprache der Oberfläche auswählen.",
+				"settings.language.de": "Deutsch",
+				"settings.language.en": "Englisch",
+				"settings.export.title": "Export/Import",
+				"settings.export.desc":
+					"Personal Space Notizen sichern oder importieren.",
+				"settings.export.export": "Exportieren",
+				"settings.export.import": "Importieren",
+				"settings.export.merge": "Zusammenführen",
+				"settings.export.replace": "Ersetzen",
+				"settings.export.autobackup.title": "Auto-Backup",
+				"settings.export.autobackup.desc":
+					"Sichert deine Personal Space Notizen regelmäßig in einen lokalen Ordner.",
+				"settings.export.autobackup.active": "Aktiv",
+				"settings.export.autobackup.daily": "Täglich",
+				"settings.export.autobackup.weekly": "Wöchentlich",
+				"settings.export.autobackup.monthly": "Monatlich",
+				"settings.export.autobackup.choose_folder": "Ordner wählen",
+				"settings.export.autobackup.no_folder": "Kein Ordner gewählt",
+				"settings.export.autobackup.unsupported":
+					"Nicht verfügbar (Browser unterstützt keinen Ordnerzugriff).",
+				"settings.export.autoimport.title": "Auto-Import",
+				"settings.export.autoimport.desc":
+					"Importiert neue JSON/Markdown-Dateien aus einem Ordner (Merge).",
+				"settings.export.autoimport.active": "Aktiv",
+				"settings.export.autoimport.daily": "Täglich",
+				"settings.export.autoimport.weekly": "Wöchentlich",
+				"settings.export.autoimport.monthly": "Monatlich",
+				"settings.export.autoimport.choose_folder": "Ordner wählen",
+				"settings.export.autoimport.no_folder": "Kein Ordner gewählt",
+				"settings.export.autoimport.unsupported":
+					"Nicht verfügbar (Browser unterstützt keinen Ordnerzugriff).",
+				"settings.calendar.title": "Kalender",
+				"settings.calendar.desc":
+					"Kalender verbinden und Standardansicht festlegen.",
+				"settings.calendar.default_view": "Standardansicht",
+				"settings.calendar.view.day": "Tag",
+				"settings.calendar.view.week": "Woche",
+				"settings.calendar.view.month": "Monat",
+				"settings.calendar.sources.title": "Kalenderquellen",
+				"settings.calendar.sources.desc":
+					"Füge öffentliche ICS-Links hinzu (CORS muss erlaubt sein).",
+				"settings.calendar.sources.empty": "Keine Kalender verbunden.",
+				"settings.calendar.local.title": "Lokale Termine",
+				"settings.calendar.local.desc":
+					"Manuell angelegte Termine werden lokal gespeichert und mit Personal Space synchronisiert (falls aktiv).",
+				"settings.calendar.local.empty": "Keine lokalen Termine.",
+				"settings.calendar.google.title": "Google Calendar",
+				"settings.calendar.google.desc":
+					"Verbinde deinen Google Kalender, um Termine zu schreiben.",
+				"settings.calendar.google.status_disconnected": "Nicht verbunden.",
+				"settings.calendar.google.connected": "Verbunden",
+				"settings.calendar.google.not_configured":
+					"Google Kalender ist nicht konfiguriert.",
+				"settings.calendar.google.unavailable": "Google Status nicht verfügbar.",
+				"settings.calendar.google.select": "Kalender auswählen",
+				"settings.calendar.google.primary": "Primär",
+				"settings.calendar.google.connect": "Google verbinden",
+				"settings.calendar.google.disconnect": "Trennen",
+				"settings.calendar.add.title": "Neuen Kalender hinzufügen",
+				"settings.calendar.add.name": "Name",
+				"settings.calendar.add.name_placeholder": "Team, Privat, Urlaub",
+				"settings.calendar.add.color": "Farbe",
+				"settings.calendar.add.url": "ICS-URL",
+				"settings.calendar.add.url_placeholder":
+					"https://example.com/calendar.ics",
+				"settings.calendar.add.active": "Aktiv",
+				"settings.calendar.add.submit": "Hinzufügen",
+				"settings.trash.title": "Papierkorb",
+				"settings.trash.desc":
+					"Gelöschte Notizen bleiben 30 Tage erhalten und können wiederhergestellt werden.",
+				"settings.trash.refresh": "Aktualisieren",
+				"settings.trash.empty": "Keine gelöschten Notizen.",
+				"settings.themes.title": "Themes",
+				"settings.themes.desc":
+					"Hintergrundstil wählen. Lokal gespeichert.",
+				"settings.themes.glow.title": "Hintergrund-Glow",
+				"settings.themes.glow.desc": "Theme-Glow aktivieren oder deaktivieren.",
+				"settings.themes.glow_on": "Glow an",
+				"settings.themes.glow_off": "Glow aus",
+				"settings.ai.title": "KI",
+				"settings.ai.desc":
+					"API-Key wird lokal gespeichert und pro Anfrage verwendet.",
+				"settings.ai.key_label": "Anthropic API-Key",
+				"settings.ai.model_label": "Modell (optional)",
+				"settings.ai.save": "Speichern",
+				"settings.ai.clear": "Löschen",
+				"settings.faq.title": "FAQ",
+				"settings.faq.desc": "Schnelle Antworten und Tipps.",
+				"settings.faq.search_label": "FAQ durchsuchen",
+				"settings.faq.search_placeholder": "Suchen…",
+				"settings.uploads.title": "Uploads",
+				"settings.uploads.desc": "Uploads verwalten.",
+				"settings.uploads.refresh": "Aktualisieren",
+				"settings.uploads.empty": "Keine Uploads vorhanden.",
+				"calendar.local.remove": "Entfernen",
+				"modal.title": "Dialog",
+				"modal.close": "Schließen",
+				"modal.input": "Eingabe",
+				"modal.cancel": "Abbrechen",
+				"modal.ok": "OK",
+				"calendar.modal.title": "Neuen Termin",
+				"calendar.modal.desc": "Einfacher Termin im lokalen Kalender.",
+				"calendar.modal.close": "Kalender-Dialog schließen",
+				"calendar.modal.title_label": "Titel",
+				"calendar.modal.title_placeholder": "Termin",
+				"calendar.modal.date": "Datum",
+				"calendar.modal.all_day": "Ganztägig",
+				"calendar.modal.start": "Start",
+				"calendar.modal.end": "Ende",
+				"toast.dictation_failed": "Diktat fehlgeschlagen.",
+				"toast.ai_saved": "KI-Einstellungen gespeichert.",
+				"toast.ai_cleared": "KI-Einstellungen gelöscht.",
+				"toast.ps_activated": "Personal Space aktiviert.",
+			},
+			en: {
+				"ps.title": "Personal Space",
+				"ps.close": "Close",
+				"ps.add": "Add Personal Space",
+				"ps.add_hint": "You’ll receive a verification link by email.",
+				"ps.new_note": "New note",
+				"ps.tags": "Tags",
+				"ps.notes": "Notes",
+				"ps.pinned_only": "Pinned only",
+				"ps.search": "Search...",
+				"ps.sort": "Sort",
+				"ps.sort_by": "Sort by",
+				"ps.sort.modified": "Modified",
+				"ps.sort.created": "Created",
+				"ps.sort.accessed": "Accessed",
+				"ps.sort.text": "Text",
+				"ps.tags.and": "AND",
+				"ps.tags.or": "OR",
+				"settings.open": "Open settings",
+				"settings.title": "Settings",
+				"settings.desc": "Manage account, export/import, themes, AI, and help.",
+				"settings.build": "Build info",
+				"settings.close": "Close settings",
+				"settings.nav.user": "User Settings",
+				"settings.nav.export": "Export/Import",
+				"settings.nav.themes": "Themes",
+				"settings.nav.calendar": "Calendar",
+				"settings.nav.ai": "AI",
+				"settings.nav.uploads": "Uploads",
+				"settings.nav.faq": "FAQ",
+				"settings.nav.trash": "Trash",
+				"settings.user.title": "User Settings",
+				"settings.user.desc": "Personal Space identity and sign-out.",
+				"settings.user.signed_in": "Signed in as",
+				"settings.user.sign_out": "Sign out",
+				"settings.user.signed_out":
+					"Not signed in. Use \"Add Personal Space\" to get started.",
+				"settings.user.favorites.title": "Favorites",
+				"settings.user.favorites.desc": "Edit favorites, add or remove notes.",
+				"settings.user.favorites.empty": "No favorites yet.",
+				"settings.user.favorites.remove": "Remove",
+				"settings.user.favorites.note_label": "Note",
+				"settings.user.favorites.note_placeholder": "Short note (optional)",
+				"settings.user.mobile_auto.title": "Mobile: new note after inactivity",
+				"settings.user.mobile_auto.desc":
+					"How many seconds of inactivity before creating a new note on next start.",
+				"settings.user.mobile_auto.unit": "Seconds (0 = off)",
+				"settings.language.title": "App language",
+				"settings.language.desc": "Choose the interface language.",
+				"settings.language.de": "German",
+				"settings.language.en": "English",
+				"settings.export.title": "Export/Import",
+				"settings.export.desc": "Back up or import your Personal Space notes.",
+				"settings.export.export": "Export",
+				"settings.export.import": "Import",
+				"settings.export.merge": "Merge",
+				"settings.export.replace": "Replace",
+				"settings.export.autobackup.title": "Auto-backup",
+				"settings.export.autobackup.desc":
+					"Regularly backs up your Personal Space notes to a local folder.",
+				"settings.export.autobackup.active": "Active",
+				"settings.export.autobackup.daily": "Daily",
+				"settings.export.autobackup.weekly": "Weekly",
+				"settings.export.autobackup.monthly": "Monthly",
+				"settings.export.autobackup.choose_folder": "Choose folder",
+				"settings.export.autobackup.no_folder": "No folder selected",
+				"settings.export.autobackup.unsupported":
+					"Unavailable (browser does not support folder access).",
+				"settings.export.autoimport.title": "Auto-import",
+				"settings.export.autoimport.desc":
+					"Imports new JSON/Markdown files from a folder (merge).",
+				"settings.export.autoimport.active": "Active",
+				"settings.export.autoimport.daily": "Daily",
+				"settings.export.autoimport.weekly": "Weekly",
+				"settings.export.autoimport.monthly": "Monthly",
+				"settings.export.autoimport.choose_folder": "Choose folder",
+				"settings.export.autoimport.no_folder": "No folder selected",
+				"settings.export.autoimport.unsupported":
+					"Unavailable (browser does not support folder access).",
+				"settings.calendar.title": "Calendar",
+				"settings.calendar.desc": "Connect calendars and choose a default view.",
+				"settings.calendar.default_view": "Default view",
+				"settings.calendar.view.day": "Day",
+				"settings.calendar.view.week": "Week",
+				"settings.calendar.view.month": "Month",
+				"settings.calendar.sources.title": "Calendar sources",
+				"settings.calendar.sources.desc": "Add public ICS links (CORS must be allowed).",
+				"settings.calendar.sources.empty": "No calendars connected.",
+				"settings.calendar.local.title": "Local events",
+				"settings.calendar.local.desc":
+					"Manually created events are stored locally and synced to Personal Space (if active).",
+				"settings.calendar.local.empty": "No local events.",
+				"settings.calendar.google.title": "Google Calendar",
+				"settings.calendar.google.desc": "Connect your Google Calendar to write events.",
+				"settings.calendar.google.status_disconnected": "Not connected.",
+				"settings.calendar.google.connected": "Connected",
+				"settings.calendar.google.not_configured":
+					"Google Calendar is not configured.",
+				"settings.calendar.google.unavailable": "Google status unavailable.",
+				"settings.calendar.google.select": "Select calendar",
+				"settings.calendar.google.primary": "Primary",
+				"settings.calendar.google.connect": "Connect Google",
+				"settings.calendar.google.disconnect": "Disconnect",
+				"settings.calendar.add.title": "Add new calendar",
+				"settings.calendar.add.name": "Name",
+				"settings.calendar.add.name_placeholder": "Team, Personal, Vacation",
+				"settings.calendar.add.color": "Color",
+				"settings.calendar.add.url": "ICS URL",
+				"settings.calendar.add.url_placeholder":
+					"https://example.com/calendar.ics",
+				"settings.calendar.add.active": "Active",
+				"settings.calendar.add.submit": "Add",
+				"settings.trash.title": "Trash",
+				"settings.trash.desc": "Deleted notes are kept for 30 days and can be restored.",
+				"settings.trash.refresh": "Refresh",
+				"settings.trash.empty": "No deleted notes.",
+				"settings.themes.title": "Themes",
+				"settings.themes.desc": "Choose a background style. Stored locally.",
+				"settings.themes.glow.title": "Background Glow",
+				"settings.themes.glow.desc": "Enable or disable the theme glow.",
+				"settings.themes.glow_on": "Glow on",
+				"settings.themes.glow_off": "Glow off",
+				"settings.ai.title": "AI",
+				"settings.ai.desc": "API key is stored locally and used per request.",
+				"settings.ai.key_label": "Anthropic API key",
+				"settings.ai.model_label": "Model (optional)",
+				"settings.ai.save": "Save",
+				"settings.ai.clear": "Clear",
+				"settings.faq.title": "FAQ",
+				"settings.faq.desc": "Quick answers and tips.",
+				"settings.faq.search_label": "Search FAQ",
+				"settings.faq.search_placeholder": "Search…",
+				"settings.uploads.title": "Uploads",
+				"settings.uploads.desc": "Manage uploaded files.",
+				"settings.uploads.refresh": "Refresh",
+				"settings.uploads.empty": "No uploads.",
+				"calendar.local.remove": "Remove",
+				"modal.title": "Modal",
+				"modal.close": "Close",
+				"modal.input": "Input",
+				"modal.cancel": "Cancel",
+				"modal.ok": "OK",
+				"calendar.modal.title": "New event",
+				"calendar.modal.desc": "Simple event in the local calendar.",
+				"calendar.modal.close": "Close calendar event modal",
+				"calendar.modal.title_label": "Title",
+				"calendar.modal.title_placeholder": "Event",
+				"calendar.modal.date": "Date",
+				"calendar.modal.all_day": "All day",
+				"calendar.modal.start": "Start",
+				"calendar.modal.end": "End",
+				"toast.dictation_failed": "Dictation failed.",
+				"toast.ai_saved": "AI settings saved.",
+				"toast.ai_cleared": "AI settings cleared.",
+				"toast.ps_activated": "Personal Space activated.",
+			},
+		};
+
+		function getUiString(key) {
+			const table = UI_STRINGS[uiLang] || {};
+			if (Object.prototype.hasOwnProperty.call(table, key)) return table[key];
+			const fallbackTable = UI_STRINGS[UI_LANG_DEFAULT] || {};
+			if (Object.prototype.hasOwnProperty.call(fallbackTable, key)) {
+				return fallbackTable[key];
+			}
+			return null;
+		}
+
+		function t(key, fallback) {
+			const v = getUiString(key);
+			if (v !== null && v !== undefined) return v;
+			return fallback !== undefined ? fallback : key;
+		}
+
+		function getUiLocale() {
+			return uiLang === "en" ? "en-US" : "de-DE";
+		}
+
+		function getUiSpeechLocale() {
+			return uiLang === "en" ? "en-US" : "de-DE";
+		}
+
+		function detectUiLanguage() {
+			try {
+				const stored = localStorage.getItem(UI_LANG_KEY);
+				if (stored && UI_LANGS.includes(stored)) return stored;
+			} catch {
+				// ignore
+			}
+			const nav = String(navigator.language || "").toLowerCase();
+			return nav.startsWith("en") ? "en" : "de";
+		}
+
+		function applyI18nAttribute(dataAttr, targetAttr) {
+			document.querySelectorAll(`[${dataAttr}]`).forEach((el) => {
+				const key = el.getAttribute(dataAttr);
+				if (!key) return;
+				const next = getUiString(key);
+				if (next === null || next === undefined) return;
+				el.setAttribute(targetAttr, next);
+			});
+		}
+
+		function applyUiTranslations() {
+			document.querySelectorAll("[data-i18n]").forEach((el) => {
+				const key = el.getAttribute("data-i18n");
+				if (!key) return;
+				const next = getUiString(key);
+				if (next === null || next === undefined) return;
+				el.textContent = next;
+			});
+			applyI18nAttribute("data-i18n-placeholder", "placeholder");
+			applyI18nAttribute("data-i18n-title", "title");
+			applyI18nAttribute("data-i18n-aria", "aria-label");
+		}
+
+		function syncUiLangButtons() {
+			if (uiLangDeBtn) {
+				const active = uiLang === "de";
+				uiLangDeBtn.setAttribute("aria-pressed", active ? "true" : "false");
+				uiLangDeBtn.classList.toggle("bg-fuchsia-500/20", active);
+				uiLangDeBtn.classList.toggle("text-fuchsia-100", active);
+				uiLangDeBtn.classList.toggle("border-fuchsia-300/40", active);
+				uiLangDeBtn.classList.toggle("bg-white/5", !active);
+			}
+			if (uiLangEnBtn) {
+				const active = uiLang === "en";
+				uiLangEnBtn.setAttribute("aria-pressed", active ? "true" : "false");
+				uiLangEnBtn.classList.toggle("bg-fuchsia-500/20", active);
+				uiLangEnBtn.classList.toggle("text-fuchsia-100", active);
+				uiLangEnBtn.classList.toggle("border-fuchsia-300/40", active);
+				uiLangEnBtn.classList.toggle("bg-white/5", !active);
+			}
+		}
+
+		function applyUiLanguage() {
+			document.documentElement.setAttribute("lang", uiLang === "en" ? "en" : "de");
+			applyUiTranslations();
+			syncUiLangButtons();
+			applyGlowEnabled();
+			if (aiDictationRecognizer) {
+				aiDictationRecognizer.lang = getUiSpeechLocale();
+			}
+		}
+
+		function setUiLanguage(next) {
+			const lang = UI_LANGS.includes(next) ? next : UI_LANG_DEFAULT;
+			uiLang = lang;
+			try {
+				localStorage.setItem(UI_LANG_KEY, uiLang);
+			} catch {
+				// ignore
+			}
+			applyUiLanguage();
+		}
+
+		function initUiLanguage() {
+			uiLang = detectUiLanguage();
+			applyUiLanguage();
+		}
+
 	function renderThemeList() {
 		if (!settingsThemeList) return;
 		settingsThemeList.innerHTML = "";
@@ -4108,7 +4542,9 @@
 				"aria-pressed",
 				glowEnabled ? "true" : "false"
 			);
-			settingsGlowToggle.textContent = glowEnabled ? "Glow on" : "Glow off";
+			settingsGlowToggle.textContent = glowEnabled
+				? t("settings.themes.glow_on")
+				: t("settings.themes.glow_off");
 			settingsGlowToggle.classList.toggle("bg-fuchsia-500/20", glowEnabled);
 			settingsGlowToggle.classList.toggle("text-fuchsia-100", glowEnabled);
 			settingsGlowToggle.classList.toggle("bg-white/5", !glowEnabled);
@@ -5117,14 +5553,12 @@
 			aiDictationRecognizer = new Ctor();
 			aiDictationRecognizer.continuous = true;
 			aiDictationRecognizer.interimResults = true;
-			aiDictationRecognizer.lang = String(
-				navigator.language || "de-DE"
-			);
+			aiDictationRecognizer.lang = getUiSpeechLocale();
 			aiDictationRecognizer.onresult = onAiDictationResult;
 			aiDictationRecognizer.onerror = () => {
 				aiDictationActive = false;
 				setAiDictationUi(false);
-				toast("Diktat fehlgeschlagen.", "error");
+				toast(t("toast.dictation_failed"), "error");
 			};
 			aiDictationRecognizer.onend = () => {
 				aiDictationActive = false;
@@ -10203,10 +10637,12 @@ self.onmessage = async (e) => {
 								data-fav-room="${escapeAttr(f.room)}"
 								data-fav-key="${escapeAttr(f.key)}"
 								class="rounded-md border border-white/10 bg-transparent px-2 py-1 text-[11px] text-slate-200 transition hover:bg-white/5 active:bg-white/10">
-								Entfernen
+								${t("settings.user.favorites.remove")}
 							</button>
 						</div>
-						<label class="mt-2 block text-[11px] text-slate-400">Notiz</label>
+						<label class="mt-2 block text-[11px] text-slate-400">${t(
+							"settings.user.favorites.note_label"
+						)}</label>
 						<input
 							type="text"
 							value="${escapeAttr(textVal)}"
@@ -10214,7 +10650,9 @@ self.onmessage = async (e) => {
 							data-fav-room="${escapeAttr(f.room)}"
 							data-fav-key="${escapeAttr(f.key)}"
 							class="mt-1 w-full rounded-md border border-white/10 bg-slate-950/40 px-2.5 py-1.5 text-[12px] text-slate-100 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/25"
-							placeholder="Kurze Notiz (optional)" />
+							placeholder="${t(
+								"settings.user.favorites.note_placeholder"
+							)}" />
 					</div>`;
 			})
 			.join("");
@@ -10616,13 +11054,13 @@ self.onmessage = async (e) => {
 		}
 		calendarLocalEventsList.innerHTML = list
 			.map((evt) => {
-				const dateLabel = evt.start.toLocaleDateString("de-DE", {
+				const dateLabel = evt.start.toLocaleDateString(getUiLocale(), {
 					day: "2-digit",
 					month: "2-digit",
 					year: "numeric",
 				});
 				const timeLabel = evt.allDay
-					? "Ganztägig"
+					? t("calendar.modal.all_day")
 					: `${formatTime(evt.start)} – ${formatTime(evt.end)}`;
 				const googleBadge = evt.googleEventId
 					? '<span class="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300">Google</span>'
@@ -10642,7 +11080,7 @@ self.onmessage = async (e) => {
 								data-local-event-remove
 								data-local-event-id="${escapeAttr(evt.id)}"
 								class="rounded-md border border-white/10 bg-transparent px-2 py-1 text-[11px] text-slate-200 transition hover:bg-white/5 active:bg-white/10">
-								Entfernen
+								${t("calendar.local.remove")}
 							</button>
 						</div>
 					</div>`;
@@ -10653,9 +11091,10 @@ self.onmessage = async (e) => {
 	function setGoogleCalendarUi(connected, info) {
 		googleCalendarConnected = Boolean(connected);
 		if (calendarGoogleStatus) {
+			const base = t("settings.calendar.google.connected");
 			calendarGoogleStatus.textContent = connected
-				? `Verbunden${info ? ` (${info})` : ""}.`
-				: "Nicht verbunden.";
+				? `${base}${info ? ` (${info})` : ""}.`
+				: t("settings.calendar.google.status_disconnected");
 		}
 		if (calendarGoogleSelect) {
 			calendarGoogleSelect.disabled = !connected;
@@ -10700,8 +11139,9 @@ self.onmessage = async (e) => {
 			if (!res || !res.configured) {
 				setGoogleCalendarUi(false);
 				if (calendarGoogleStatus) {
-					calendarGoogleStatus.textContent =
-						"Google Kalender ist nicht konfiguriert.";
+					calendarGoogleStatus.textContent = t(
+						"settings.calendar.google.not_configured"
+					);
 				}
 				return;
 			}
@@ -10718,8 +11158,9 @@ self.onmessage = async (e) => {
 		} catch {
 			setGoogleCalendarUi(false);
 			if (calendarGoogleStatus) {
-				calendarGoogleStatus.textContent =
-					"Google Status nicht verfügbar.";
+				calendarGoogleStatus.textContent = t(
+					"settings.calendar.google.unavailable"
+				);
 			}
 		}
 	}
@@ -10823,14 +11264,14 @@ self.onmessage = async (e) => {
 	}
 
 	function formatTime(date) {
-		return date.toLocaleTimeString("de-DE", {
+		return date.toLocaleTimeString(getUiLocale(), {
 			hour: "2-digit",
 			minute: "2-digit",
 		});
 	}
 
 	function formatDayLabel(date) {
-		return date.toLocaleDateString("de-DE", {
+		return date.toLocaleDateString(getUiLocale(), {
 			weekday: "short",
 			day: "2-digit",
 			month: "2-digit",
@@ -10839,7 +11280,7 @@ self.onmessage = async (e) => {
 
 	function formatCalendarTitle(view, date) {
 		if (view === "day") {
-			return date.toLocaleDateString("de-DE", {
+			return date.toLocaleDateString(getUiLocale(), {
 				weekday: "long",
 				day: "2-digit",
 				month: "long",
@@ -10849,17 +11290,17 @@ self.onmessage = async (e) => {
 		if (view === "week") {
 			const start = startOfWeek(date);
 			const end = addDays(start, 6);
-			return `${start.toLocaleDateString("de-DE", {
+			return `${start.toLocaleDateString(getUiLocale(), {
 				day: "2-digit",
 				month: "2-digit",
 				year: "numeric",
-			})} – ${end.toLocaleDateString("de-DE", {
+			})} – ${end.toLocaleDateString(getUiLocale(), {
 				day: "2-digit",
 				month: "2-digit",
 				year: "numeric",
 			})}`;
 		}
-		return date.toLocaleDateString("de-DE", {
+		return date.toLocaleDateString(getUiLocale(), {
 			month: "long",
 			year: "numeric",
 		});
@@ -12078,7 +12519,7 @@ self.onmessage = async (e) => {
 	}
 
 	function nowIso() {
-		return new Date().toLocaleString("de-DE", {
+		return new Date().toLocaleString(getUiLocale(), {
 			year: "numeric",
 			month: "2-digit",
 			day: "2-digit",
@@ -14661,6 +15102,16 @@ self.onmessage = async (e) => {
 			saveGlowEnabled(!glowEnabled);
 		});
 	}
+	if (uiLangDeBtn) {
+		uiLangDeBtn.addEventListener("click", () => {
+			setUiLanguage("de");
+		});
+	}
+	if (uiLangEnBtn) {
+		uiLangEnBtn.addEventListener("click", () => {
+			setUiLanguage("en");
+		});
+	}
 	if (mobileAutoNoteSecondsInput) {
 		mobileAutoNoteSecondsInput.addEventListener("change", () => {
 			saveMobileAutoNoteSeconds(mobileAutoNoteSecondsInput.value);
@@ -15054,7 +15505,7 @@ self.onmessage = async (e) => {
 			);
 			saveAiApiConfig(nextKey, nextModel);
 			loadAiStatus();
-			toast("AI settings gespeichert.", "success");
+			toast(t("toast.ai_saved"), "success");
 		});
 	}
 	if (aiApiClearBtn) {
@@ -15063,7 +15514,7 @@ self.onmessage = async (e) => {
 			if (aiApiKeyInput) aiApiKeyInput.value = "";
 			if (aiApiModelInput) aiApiModelInput.value = "";
 			loadAiStatus();
-			toast("AI settings gelöscht.", "success");
+			toast(t("toast.ai_cleared"), "success");
 		});
 	}
 	if (faqSearchInput) {
@@ -15085,7 +15536,7 @@ self.onmessage = async (e) => {
 	try {
 		const sp = new URLSearchParams(location.search);
 		if (sp.get("ps") === "1") {
-			toast("Personal Space aktiviert.", "success");
+			toast(t("toast.ps_activated"), "success");
 			sp.delete("ps");
 			const next =
 				location.pathname + (sp.toString() ? `?${sp}` : "") + location.hash;
@@ -15096,6 +15547,7 @@ self.onmessage = async (e) => {
 	}
 
 	function initStartupTasks() {
+	initUiLanguage();
 	loadMobileAutoNoteSeconds();
 	void initAutoBackup();
 	void initAutoImport();
