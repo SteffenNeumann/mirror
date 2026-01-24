@@ -12160,13 +12160,18 @@ self.onmessage = async (e) => {
 						const time = evt.allDay
 							? "Ganztägig"
 							: `${formatTime(evt.start)} – ${formatTime(evt.end)}`;
+						const fullTooltip = evt.location
+							? `${time} · ${evt.title} · ${evt.location}`
+							: `${time} · ${evt.title}`;
 						const loc = evt.location
 							? `<div class=\"text-[11px] text-slate-400\">${escapeHtml(
 									evt.location
 								)}\</div>`
 							: "";
 						return `
-							<div class="rounded-lg border ${dayBorder} bg-slate-950/40 p-3">
+							<div class="cursor-pointer rounded-lg border ${dayBorder} bg-slate-950/40 p-3" title="${escapeAttr(
+								fullTooltip
+							)}">
 								<div class="flex items-center justify-between gap-2">
 									<div class="text-xs font-semibold text-slate-100">${escapeHtml(
 										evt.title
@@ -12199,8 +12204,13 @@ self.onmessage = async (e) => {
 							const time = evt.allDay
 								? "Ganztägig"
 								: formatTime(evt.start);
+							const tooltip = evt.location
+								? `${time} · ${evt.title} · ${evt.location}`
+								: `${time} · ${evt.title}`;
 							return `
-								<div class="rounded-md border border-white/10 bg-slate-950/50 px-2 py-1 text-[11px] text-slate-200">
+								<div class="cursor-pointer rounded-md border border-white/10 bg-slate-950/50 px-2 py-1 text-[11px] text-slate-200" title="${escapeAttr(
+									tooltip
+								)}">
 									<div class="flex items-center gap-2">
 										<span class="inline-flex h-2 w-2 rounded-full" style="background:${escapeAttr(
 											evt.color
@@ -12243,9 +12253,11 @@ self.onmessage = async (e) => {
 			);
 			const visibleEvents = dayEvents.slice(0, 2).map((evt) => {
 				const time = evt.allDay ? "Ganztägig" : formatTime(evt.start);
-				const title = `${time} · ${evt.title}`;
+				const title = evt.location
+					? `${time} · ${evt.title} · ${evt.location}`
+					: `${time} · ${evt.title}`;
 				return `
-					<div class="truncate rounded-md border border-white/10 bg-slate-950/50 px-2 py-1 text-[10px] text-slate-200" title="${escapeAttr(
+					<div class="truncate cursor-pointer rounded-md border border-white/10 bg-slate-950/50 px-2 py-1 text-[10px] text-slate-200" title="${escapeAttr(
 						title
 					)}">
 						<div class="flex items-center gap-2">
