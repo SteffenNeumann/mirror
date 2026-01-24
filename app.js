@@ -100,6 +100,7 @@
 	const commentSelectionLabel = document.getElementById("commentSelectionLabel");
 	const commentInput = document.getElementById("commentInput");
 	const commentAddBtn = document.getElementById("commentAdd");
+	const commentAddLabel = document.getElementById("commentAddLabel");
 	const commentCloseBtn = document.getElementById("commentClose");
 	const commentCountBadge = document.getElementById("commentCountBadge");
 	const codeLangWrap = document.getElementById("codeLangWrap");
@@ -2253,15 +2254,15 @@
 
 	function updateCommentComposerUi() {
 		if (!commentAddBtn) return;
-		if (commentEditId) {
-			commentAddBtn.textContent = "Kommentar speichern";
-			return;
+		let actionKey = "comments.add_action";
+		if (commentEditId) actionKey = "comments.save_action";
+		else if (commentReplyToId) actionKey = "comments.reply_action";
+		commentAddBtn.setAttribute("data-i18n-title", actionKey);
+		commentAddBtn.setAttribute("data-i18n-aria", actionKey);
+		if (commentAddLabel) {
+			commentAddLabel.setAttribute("data-i18n", actionKey);
 		}
-		if (commentReplyToId) {
-			commentAddBtn.textContent = "Antwort senden";
-			return;
-		}
-		commentAddBtn.textContent = "Kommentar hinzufügen";
+		applyUiTranslations();
 	}
 
 	function setCommentComposerState({ editId, replyToId, selection, text }) {
@@ -2336,18 +2337,27 @@
 			const editBtn = document.createElement("button");
 			editBtn.type = "button";
 			editBtn.className =
-				"rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300 transition hover:bg-white/10";
-			editBtn.textContent = "Bearbeiten";
+				"inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10";
+			editBtn.setAttribute("data-i18n-title", "comments.edit_action");
+			editBtn.setAttribute("data-i18n-aria", "comments.edit_action");
+			editBtn.innerHTML =
+				"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"h-3.5 w-3.5\"><path d=\"M12 20h9\" /><path d=\"M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z\" /></svg>";
 			const replyBtn = document.createElement("button");
 			replyBtn.type = "button";
 			replyBtn.className =
-				"rounded-md border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300 transition hover:bg-white/10";
-			replyBtn.textContent = "Antwort";
+				"inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10";
+			replyBtn.setAttribute("data-i18n-title", "comments.reply_action");
+			replyBtn.setAttribute("data-i18n-aria", "comments.reply_action");
+			replyBtn.innerHTML =
+				"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"h-3.5 w-3.5\"><path d=\"M9 17l-5-5 5-5\" /><path d=\"M4 12h10a6 6 0 0 1 6 6v2\" /></svg>";
 			const deleteBtn = document.createElement("button");
 			deleteBtn.type = "button";
 			deleteBtn.className =
-				"rounded-md border border-rose-400/30 bg-rose-500/10 px-2 py-0.5 text-[10px] text-rose-100 transition hover:bg-rose-500/20";
-			deleteBtn.textContent = "Löschen";
+				"inline-flex h-6 w-6 items-center justify-center rounded-md border border-rose-400/30 bg-rose-500/10 text-rose-100 transition hover:bg-rose-500/20";
+			deleteBtn.setAttribute("data-i18n-title", "comments.delete_action");
+			deleteBtn.setAttribute("data-i18n-aria", "comments.delete_action");
+			deleteBtn.innerHTML =
+				"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"h-3.5 w-3.5\"><path d=\"M3 6h18\" /><path d=\"M8 6V4h8v2\" /><path d=\"M6 6l1 16h10l1-16\" /><path d=\"M10 11v6\" /><path d=\"M14 11v6\" /></svg>";
 			actions.appendChild(editBtn);
 			actions.appendChild(replyBtn);
 			actions.appendChild(deleteBtn);
@@ -2416,6 +2426,7 @@
 				}
 			});
 		});
+		applyUiTranslations();
 	}
 
 	function addCommentFromDraft() {
@@ -4101,6 +4112,11 @@
 				"comments.input_label": "Kommentar",
 				"comments.input_placeholder": "Kommentar (Markdown)",
 				"comments.add": "Kommentar hinzufügen",
+				"comments.add_action": "Kommentar hinzufügen",
+				"comments.save_action": "Kommentar speichern",
+				"comments.reply_action": "Antwort senden",
+				"comments.edit_action": "Kommentar bearbeiten",
+				"comments.delete_action": "Kommentar löschen",
 				"editor.nav_back": "Zurück",
 				"editor.nav_forward": "Vorwärts",
 				"editor.preview": "Vorschau",
@@ -4341,6 +4357,11 @@
 				"comments.input_label": "Comment",
 				"comments.input_placeholder": "Comment (Markdown)",
 				"comments.add": "Add comment",
+				"comments.add_action": "Add comment",
+				"comments.save_action": "Save comment",
+				"comments.reply_action": "Send reply",
+				"comments.edit_action": "Edit comment",
+				"comments.delete_action": "Delete comment",
 				"editor.nav_back": "Back",
 				"editor.nav_forward": "Forward",
 				"editor.preview": "Preview",

@@ -867,9 +867,23 @@
 														<button
 															id="commentAdd"
 															type="button"
-															class="rounded-lg border border-fuchsia-400/30 bg-fuchsia-500/15 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:bg-fuchsia-500/20"
-															data-i18n="comments.add">
-															Kommentar hinzufügen
+															class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-fuchsia-400/30 bg-fuchsia-500/15 text-slate-100 transition hover:bg-fuchsia-500/20"
+															data-i18n-title="comments.add_action"
+															data-i18n-aria="comments.add_action">
+															<svg
+																viewBox="0 0 24 24"
+																fill="none"
+																stroke="currentColor"
+																stroke-width="2"
+																stroke-linecap="round"
+																stroke-linejoin="round"
+																class="h-4 w-4">
+																<path d="M12 5v14" />
+																<path d="M5 12h14" />
+															</svg>
+															<span id="commentAddLabel" class="sr-only" data-i18n="comments.add_action">
+																Kommentar hinzufügen
+															</span>
 														</button>
 													</div>
 												</div>
