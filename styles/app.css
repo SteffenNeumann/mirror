@@ -304,6 +304,9 @@ body.glow-disabled .bg-glow {
 		padding-right: calc(2.75rem + 420px + 16px);
 	}
 }
+#editorPreviewGrid.comment-panel-open #copyMirror {
+	display: none;
+}
 #mirror.attribution-active {
 	color: transparent;
 	caret-color: rgb(226 232 240);
