@@ -329,7 +329,9 @@
 									type="button"
 									class="mobile-only inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xs text-slate-200 transition hover:bg-white/10 active:bg-white/15"
 									title="Notiz schließen"
-									aria-label="Notiz schließen">
+									aria-label="Notiz schließen"
+									data-i18n-title="editor.note_close"
+									data-i18n-aria="editor.note_close">
 									<svg
 										viewBox="0 0 24 24"
 										fill="none"
@@ -346,45 +348,48 @@
 
 							<div class="mt-4 flex flex-wrap items-center gap-2" data-header-detail="true">
 								<div class="relative">
-									<label for="roomInput" class="sr-only">Room</label>
+									<label for="roomInput" class="sr-only" data-i18n="header.room_label">Room</label>
 									<input
 										id="roomInput"
 										list="roomOptions"
 										class="w-44 sm:w-48 rounded-lg border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25"
-										placeholder="Room (e.g. KubernetesRoom123)" />
+										placeholder="Room (e.g. KubernetesRoom123)"
+										data-i18n-placeholder="header.room_placeholder" />
 									<datalist id="roomOptions"></datalist>
 								</div>
 								<button
 									id="joinRoom"
 									type="button"
 									class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-100 transition hover:bg-white/5 active:bg-white/10">
-									Join
+									<span data-i18n="header.join">Join</span>
 								</button>
 								<button
 									id="newRoom"
 									type="button"
 									class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10">
-									New
+									<span data-i18n="header.new">New</span>
 								</button>
 								<button
 									id="copyLink"
 									type="button"
 									class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-100 transition hover:bg-white/5 active:bg-white/10">
-									Share room
+									<span data-i18n="header.share_room">Share room</span>
 								</button>
 								<div class="flex items-center gap-2">
-									<label for="favoritesSelect" class="sr-only">Favorites</label>
+									<label for="favoritesSelect" class="sr-only" data-i18n="header.favorites_label">Favorites</label>
 									<select
 										id="favoritesSelect"
 										class="w-44 sm:w-56 rounded-lg border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25">
-										<option value="">Favorites…</option>
+										<option value="" data-i18n="header.favorites_placeholder">Favorites…</option>
 									</select>
 									<button
 										id="toggleFavorite"
 										type="button"
 										class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-100 transition hover:bg-white/5 active:bg-white/10"
 										title="Add/remove favorite"
-										aria-label="Add/remove favorite">
+										aria-label="Add/remove favorite"
+										data-i18n-title="header.favorite_toggle"
+										data-i18n-aria="header.favorite_toggle">
 										<svg
 											viewBox="0 0 24 24"
 											fill="none"
@@ -408,10 +413,10 @@
 						</div>
 						<div class="shrink-0 text-left text-xs text-slate-300 sm:text-right">
 							<div class="flex items-center justify-start gap-2 sm:justify-end">
-								<div>
-									Room:
-									<span id="roomLabel" class="font-medium text-slate-100"></span>
-								</div>
+									<div>
+										<span data-i18n="header.room_prefix">Room:</span>
+										<span id="roomLabel" class="font-medium text-slate-100"></span>
+									</div>
 							</div>
 							<div
 								class="mt-1 flex flex-col items-start gap-1 text-[11px] text-slate-400 sm:items-end"
@@ -423,8 +428,10 @@
 										id="toggleCrdtMarks"
 										type="button"
 										class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-400 transition hover:bg-white/5 active:bg-white/10"
-										title="CRDT-Markierung ausblenden"
-										aria-label="CRDT-Markierung ausblenden"
+											title="CRDT-Markierung ausblenden"
+											aria-label="CRDT-Markierung ausblenden"
+											data-i18n-title="header.crdt_toggle"
+											data-i18n-aria="header.crdt_toggle"
 										aria-pressed="true">
 										<svg
 											viewBox="0 0 24 24"
@@ -737,8 +744,10 @@
 										id="clearMirror"
 										type="button"
 										class="absolute right-2 top-2 z-10 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150 transition hover:bg-white/10 active:bg-white/15"
-										title="Clear input"
-										aria-label="Clear input">
+											title="Clear input"
+											aria-label="Clear input"
+											data-i18n-title="editor.clear_input"
+											data-i18n-aria="editor.clear_input">
 										<svg
 											viewBox="0 0 24 24"
 											fill="none"
@@ -757,9 +766,11 @@
 									<button
 										id="copyMirror"
 										type="button"
-												class="absolute bottom-2 right-2 z-10 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150 transition hover:bg-white/10 active:bg-white/15"
-										title="Copy to clipboard"
-										aria-label="Copy to clipboard">
+											class="absolute bottom-2 right-2 z-10 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150 transition hover:bg-white/10 active:bg-white/15"
+											title="Copy to clipboard"
+											aria-label="Copy to clipboard"
+											data-i18n-title="editor.copy"
+											data-i18n-aria="editor.copy">
 										<svg
 											viewBox="0 0 24 24"
 											fill="none"
@@ -776,9 +787,11 @@
 											<button
 												id="toggleComments"
 												type="button"
-													class="absolute bottom-2 left-2 z-10 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150 transition hover:bg-white/10 active:bg-white/15"
-												title="Kommentare ein-/ausblenden"
-												aria-label="Kommentare ein-/ausblenden"
+												class="absolute bottom-2 left-2 z-10 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150 transition hover:bg-white/10 active:bg-white/15"
+											title="Kommentare ein-/ausblenden"
+											aria-label="Kommentare ein-/ausblenden"
+											data-i18n-title="comments.toggle"
+											data-i18n-aria="comments.toggle"
 												aria-pressed="false">
 												<svg
 													viewBox="0 0 24 24"
@@ -800,13 +813,15 @@
 												id="commentPanel"
 												class="absolute right-2 top-20 bottom-2 hidden flex w-[min(92vw,420px)] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/90 shadow-soft backdrop-blur">
 												<div class="flex items-center justify-between border-b border-white/10 px-3 py-2">
-													<div class="text-xs font-semibold text-slate-200">Kommentare</div>
+													<div class="text-xs font-semibold text-slate-200" data-i18n="comments.title">Kommentare</div>
 													<button
 														id="commentClose"
 														type="button"
 														class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10"
 														title="Schließen"
-														aria-label="Schließen">
+														aria-label="Schließen"
+														data-i18n-title="comments.close"
+														data-i18n-aria="comments.close">
 														<svg
 															viewBox="0 0 24 24"
 															fill="none"
@@ -821,21 +836,23 @@
 													</button>
 												</div>
 												<div id="commentList" class="flex-1 overflow-y-auto p-3"></div>
-												<div id="commentEmpty" class="px-3 pb-2 text-[11px] text-slate-400">
+												<div id="commentEmpty" class="px-3 pb-2 text-[11px] text-slate-400" data-i18n="comments.empty">
 													Noch keine Kommentare.
 												</div>
 												<div class="border-t border-white/10 p-3">
 													<div id="commentSelectionLabel" class="mb-2 text-[11px] text-slate-400"></div>
-													<label for="commentInput" class="sr-only">Comment</label>
+													<label for="commentInput" class="sr-only" data-i18n="comments.input_label">Comment</label>
 													<textarea
 														id="commentInput"
 														class="min-h-[72px] w-full resize-none rounded-lg border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-100 shadow-inner outline-none focus:ring-2 focus:ring-fuchsia-400/30"
-														placeholder="Comment (Markdown)"></textarea>
+														placeholder="Comment (Markdown)"
+														data-i18n-placeholder="comments.input_placeholder"></textarea>
 													<div class="mt-2 flex justify-end">
 														<button
 															id="commentAdd"
 															type="button"
-															class="rounded-lg border border-fuchsia-400/30 bg-fuchsia-500/15 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:bg-fuchsia-500/20">
+															class="rounded-lg border border-fuchsia-400/30 bg-fuchsia-500/15 px-3 py-2 text-xs font-semibold text-slate-100 transition hover:bg-fuchsia-500/20"
+															data-i18n="comments.add">
 															Kommentar hinzufügen
 														</button>
 													</div>
@@ -851,6 +868,8 @@
 											class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10 disabled:pointer-events-none disabled:opacity-40"
 											title="Back"
 											aria-label="Back"
+											data-i18n-title="editor.nav_back"
+											data-i18n-aria="editor.nav_back"
 											disabled>
 											<svg
 												viewBox="0 0 24 24"
@@ -869,6 +888,8 @@
 											class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10 disabled:pointer-events-none disabled:opacity-40"
 											title="Forward"
 											aria-label="Forward"
+											data-i18n-title="editor.nav_forward"
+											data-i18n-aria="editor.nav_forward"
 											disabled>
 											<svg
 												viewBox="0 0 24 24"
@@ -885,28 +906,30 @@
 											id="togglePreview"
 											type="button"
 											class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10">
-											Preview
+											<span data-i18n="editor.preview">Preview</span>
 										</button>
 										<button
 											id="openUploadModal"
 											type="button"
 											class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10"
 											title="Datei hochladen"
-											aria-label="Datei hochladen">
-											Upload
+											aria-label="Datei hochladen"
+											data-i18n-title="editor.upload"
+											data-i18n-aria="editor.upload">
+											<span data-i18n="editor.upload">Upload</span>
 										</button>
 										<button
 											id="psSaveMain"
 											type="button"
 											class="rounded-xl border border-fuchsia-400/30 bg-fuchsia-500/15 px-3 py-2 text-sm font-semibold text-slate-100 shadow-soft transition hover:bg-fuchsia-500/20 active:opacity-90">
-											Save
+											<span data-i18n="editor.save">Save</span>
 										</button>
 										<span
 											id="psAutoSaveStatus"
 											class="hidden text-xs text-slate-400"></span>
 									</div>
 									<div class="flex items-center gap-3 text-xs text-slate-400">
-										<span id="metaLeft">Ready.</span>
+										<span id="metaLeft" data-i18n="editor.ready">Ready.</span>
 										<span id="metaRight"></span>
 										<span id="psMainHint" class="hidden"></span>
 									</div>
@@ -918,7 +941,7 @@
 								<div class="flex h-full min-h-0 flex-col">
 									<div
 										class="flex items-center justify-between gap-2 border-b border-white/10 bg-slate-950/30 px-3 py-2">
-										<div class="text-xs font-medium text-slate-200">
+										<div class="text-xs font-medium text-slate-200" data-i18n="preview.title">
 											Preview
 										</div>
 										<div class="flex items-center gap-2">
@@ -928,15 +951,19 @@
 												class="hidden lg:inline-flex h-8 items-center justify-center rounded-lg border border-white/10 bg-transparent px-2.5 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10"
 												title="Full preview"
 												aria-label="Full preview"
+												data-i18n-title="preview.full"
+												data-i18n-aria="preview.full"
 												aria-pressed="false">
-												Full preview
+												<span data-i18n="preview.full">Full preview</span>
 											</button>
 											<button
 												id="previewCloseMobile"
 												type="button"
 												class="mobile-only inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xs text-slate-200 transition hover:bg-white/10 active:bg-white/15"
 												title="Preview schließen"
-												aria-label="Preview schließen">
+												aria-label="Preview schließen"
+												data-i18n-title="preview.close"
+												data-i18n-aria="preview.close">
 												<svg
 													viewBox="0 0 24 24"
 													fill="none"
@@ -954,6 +981,7 @@
 									<iframe
 										id="mdPreview"
 										title="Markdown Preview"
+										data-i18n-title="preview.iframe"
 										class="min-h-0 flex-1"
 										sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-downloads allow-top-navigation-by-user-activation allow-same-origin"
 										referrerpolicy="no-referrer"></iframe>
@@ -976,7 +1004,7 @@
 															d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" />
 													</svg>
 												</span>
-												<span class="font-medium text-slate-200"
+												<span class="font-medium text-slate-200" data-i18n="preview.ask_claude"
 													>Ask Claude</span
 												>
 											</div>
@@ -988,24 +1016,26 @@
 													type="button"
 													class="inline-flex items-center gap-2 rounded-full border border-fuchsia-500/30 bg-fuchsia-600/60 px-3 py-1 text-[11px] font-medium text-slate-50 shadow-soft transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/40"
 													title="Preview als Kontext verwenden"
+													data-i18n-title="preview.use_context"
 													aria-pressed="true">
 													<span
 														class="inline-block h-2 w-2 rounded-full bg-white/80"></span>
-													<span>Preview als Kontext verwenden</span>
+														<span data-i18n="preview.use_context">Preview als Kontext verwenden</span>
 												</button>
 												<div id="aiModeWrap" class="min-w-[220px] flex-1">
 													<select
 														id="aiMode"
 														class="h-9 w-full rounded-md border border-white/10 bg-slate-950/30 px-2.5 text-xs text-slate-200 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30"
-														title="AI-Modus">
-														<option value="" selected>Ohne Vorgabe</option>
-														<option value="explain">
+														title="AI-Modus"
+														data-i18n-title="preview.ai_mode">
+														<option value="" selected data-i18n="preview.ai_mode.none">Ohne Vorgabe</option>
+														<option value="explain" data-i18n="preview.ai_mode.explain">
 															Erklären / Antworten
 														</option>
-														<option value="fix">Fixen / Korrigieren</option>
-														<option value="improve">Verbessern</option>
-														<option value="run">Code ausführen</option>
-														<option value="summarize">Zusammenfassen</option>
+														<option value="fix" data-i18n="preview.ai_mode.fix">Fixen / Korrigieren</option>
+														<option value="improve" data-i18n="preview.ai_mode.improve">Verbessern</option>
+														<option value="run" data-i18n="preview.ai_mode.run">Code ausführen</option>
+														<option value="summarize" data-i18n="preview.ai_mode.summarize">Zusammenfassen</option>
 													</select>
 												</div>
 											</div>
@@ -1013,7 +1043,7 @@
 												<div
 													id="aiPromptWrap"
 														class="relative min-w-0 flex-1 group">
-													<label for="aiPrompt" class="sr-only">Ask</label>
+													<label for="aiPrompt" class="sr-only" data-i18n="preview.ask">Ask</label>
 														<textarea
 															id="aiPrompt"
 															rows="3"
@@ -1021,9 +1051,11 @@
 													<button
 														id="aiPromptClear"
 														type="button"
-															class="absolute right-2 top-2 h-7 w-7 rounded-md border border-white/10 bg-slate-950/10 text-sm text-slate-200 opacity-0 transition group-hover:opacity-100 focus:opacity-100 hover:bg-white/5 active:bg-white/10"
+														class="absolute right-2 top-2 h-7 w-7 rounded-md border border-white/10 bg-slate-950/10 text-sm text-slate-200 opacity-0 transition group-hover:opacity-100 focus:opacity-100 hover:bg-white/5 active:bg-white/10"
 														title="Prompt leeren"
-														aria-label="Prompt leeren">
+														aria-label="Prompt leeren"
+														data-i18n-title="preview.prompt_clear"
+														data-i18n-aria="preview.prompt_clear">
 														×
 													</button>
 												</div>
@@ -1034,8 +1066,10 @@
 															class="h-10 w-10 rounded-md border border-white/10 bg-slate-950/30 text-slate-200 shadow-soft transition hover:bg-white/5 active:bg-white/10 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/40"
 															title="Diktat starten"
 															aria-label="Diktat starten"
+															data-i18n-title="preview.dictate"
+															data-i18n-aria="preview.dictate"
 															aria-pressed="false">
-															<span class="sr-only">Diktat</span>
+															<span class="sr-only" data-i18n="preview.dictate_sr">Diktat</span>
 															<svg
 																viewBox="0 0 24 24"
 																fill="none"
@@ -1054,8 +1088,9 @@
 															id="aiAssist"
 															type="button"
 															class="h-10 w-10 rounded-md border border-fuchsia-500/30 bg-fuchsia-600/60 text-slate-50 shadow-soft transition hover:bg-fuchsia-600/70 active:bg-fuchsia-600/80 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/40"
-															title="Ask">
-															<span class="sr-only">Ask</span>
+															title="Ask"
+															data-i18n-title="preview.ask">
+															<span class="sr-only" data-i18n="preview.ask">Ask</span>
 															<svg
 																viewBox="0 0 24 24"
 																fill="none"
@@ -1084,22 +1119,25 @@
 															id="applyOutputReplace"
 															type="button"
 															class="hidden rounded-md border border-white/10 bg-transparent px-2 py-1 text-[11px] text-slate-200 transition hover:bg-white/5 active:bg-white/10"
-															title="Replace editor with AI output">
-															Replace
+															title="Replace editor with AI output"
+															data-i18n-title="preview.replace_title">
+															<span data-i18n="preview.replace">Replace</span>
 														</button>
 														<button
 															id="applyOutputAppend"
 															type="button"
 															class="hidden rounded-md border border-white/10 bg-white/10 px-2 py-1 text-[11px] text-slate-100 transition hover:bg-white/15 active:bg-white/20"
-															title="Append AI output to editor">
-															Append
+															title="Append AI output to editor"
+															data-i18n-title="preview.append_title">
+															<span data-i18n="preview.append">Append</span>
 														</button>
 														<button
 															id="clearRunOutput"
 															type="button"
 															class="hidden rounded-md border border-white/10 bg-transparent px-2 py-1 text-[11px] text-slate-200 transition hover:bg-white/5 active:bg-white/10"
-															title="Clear output">
-															Clear
+															title="Clear output"
+															data-i18n-title="preview.clear_title">
+															<span data-i18n="preview.clear">Clear</span>
 														</button>
 													</div>
 												</div>

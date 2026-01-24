@@ -5,7 +5,7 @@
 
 ## Änderungen
 - Sprachwahl in den Einstellungen ergänzt und lokal gespeichert.
-- UI-Labels in Personal Space und Settings über i18n-Keys/Übersetzungen umgestellt.
+- UI-Labels in Personal Space, Header/Editor-Footer, Kommentarfenster und Preview über i18n-Keys/Übersetzungen umgestellt.
 - Datums-/Zeitformatierung an die UI-Sprache gekoppelt.
 
 ## Auswirkungen

@@ -4081,6 +4081,59 @@
 				"ps.sort.text": "Text",
 				"ps.tags.and": "UND",
 				"ps.tags.or": "ODER",
+				"header.room_label": "Raum",
+				"header.room_placeholder": "Raum (z. B. KubernetesRoom123)",
+				"header.join": "Beitreten",
+				"header.new": "Neu",
+				"header.share_room": "Raum teilen",
+				"header.favorites_label": "Favoriten",
+				"header.favorites_placeholder": "Favoriten…",
+				"header.favorite_toggle": "Favorit hinzufügen/entfernen",
+				"header.room_prefix": "Raum:",
+				"header.crdt_toggle": "CRDT-Markierung ausblenden",
+				"editor.note_close": "Notiz schließen",
+				"editor.copy": "In Zwischenablage kopieren",
+				"editor.clear_input": "Eingabe leeren",
+				"comments.toggle": "Kommentare ein-/ausblenden",
+				"comments.title": "Kommentare",
+				"comments.close": "Schließen",
+				"comments.empty": "Noch keine Kommentare.",
+				"comments.input_label": "Kommentar",
+				"comments.input_placeholder": "Kommentar (Markdown)",
+				"comments.add": "Kommentar hinzufügen",
+				"editor.nav_back": "Zurück",
+				"editor.nav_forward": "Vorwärts",
+				"editor.preview": "Vorschau",
+				"editor.upload": "Datei hochladen",
+				"editor.save": "Speichern",
+				"editor.ready": "Bereit.",
+				"preview.title": "Vorschau",
+				"preview.full": "Vollbild-Vorschau",
+				"preview.close": "Vorschau schließen",
+				"preview.iframe": "Markdown-Vorschau",
+				"preview.ask_claude": "Claude fragen",
+				"preview.use_context": "Vorschau als Kontext verwenden",
+				"preview.ai_mode": "KI-Modus",
+				"preview.ai_mode.none": "Ohne Vorgabe",
+				"preview.ai_mode.explain": "Erklären / Antworten",
+				"preview.ai_mode.fix": "Fixen / Korrigieren",
+				"preview.ai_mode.improve": "Verbessern",
+				"preview.ai_mode.run": "Code ausführen",
+				"preview.ai_mode.summarize": "Zusammenfassen",
+				"preview.ask": "Fragen",
+				"preview.prompt_clear": "Prompt leeren",
+				"preview.dictate": "Diktat starten",
+				"preview.dictate_sr": "Diktat",
+				"preview.replace_title": "Editor durch KI-Ausgabe ersetzen",
+				"preview.replace": "Ersetzen",
+				"preview.append_title": "KI-Ausgabe ans Ende anfügen",
+				"preview.append": "Anhängen",
+				"preview.clear_title": "Ausgabe löschen",
+				"preview.clear": "Löschen",
+				"presence.one": "{count} Nutzer online",
+				"presence.many": "{count} Nutzer online",
+				"typing.one": "{name} tippt…",
+				"typing.many": "{count} Personen tippen…",
 				"settings.open": "Einstellungen öffnen",
 				"settings.title": "Einstellungen",
 				"settings.desc": "Konto, Export/Import, Themes, KI und Hilfe verwalten.",
@@ -4247,6 +4300,59 @@
 				"ps.sort.text": "Text",
 				"ps.tags.and": "AND",
 				"ps.tags.or": "OR",
+				"header.room_label": "Room",
+				"header.room_placeholder": "Room (e.g. KubernetesRoom123)",
+				"header.join": "Join",
+				"header.new": "New",
+				"header.share_room": "Share room",
+				"header.favorites_label": "Favorites",
+				"header.favorites_placeholder": "Favorites…",
+				"header.favorite_toggle": "Add/remove favorite",
+				"header.room_prefix": "Room:",
+				"header.crdt_toggle": "Hide CRDT markers",
+				"editor.note_close": "Close note",
+				"editor.copy": "Copy to clipboard",
+				"editor.clear_input": "Clear input",
+				"comments.toggle": "Toggle comments",
+				"comments.title": "Comments",
+				"comments.close": "Close",
+				"comments.empty": "No comments yet.",
+				"comments.input_label": "Comment",
+				"comments.input_placeholder": "Comment (Markdown)",
+				"comments.add": "Add comment",
+				"editor.nav_back": "Back",
+				"editor.nav_forward": "Forward",
+				"editor.preview": "Preview",
+				"editor.upload": "Upload file",
+				"editor.save": "Save",
+				"editor.ready": "Ready.",
+				"preview.title": "Preview",
+				"preview.full": "Full preview",
+				"preview.close": "Close preview",
+				"preview.iframe": "Markdown Preview",
+				"preview.ask_claude": "Ask Claude",
+				"preview.use_context": "Use preview as context",
+				"preview.ai_mode": "AI mode",
+				"preview.ai_mode.none": "No preset",
+				"preview.ai_mode.explain": "Explain / Answer",
+				"preview.ai_mode.fix": "Fix / Correct",
+				"preview.ai_mode.improve": "Improve",
+				"preview.ai_mode.run": "Run code",
+				"preview.ai_mode.summarize": "Summarize",
+				"preview.ask": "Ask",
+				"preview.prompt_clear": "Clear prompt",
+				"preview.dictate": "Start dictation",
+				"preview.dictate_sr": "Dictation",
+				"preview.replace_title": "Replace editor with AI output",
+				"preview.replace": "Replace",
+				"preview.append_title": "Append AI output to editor",
+				"preview.append": "Append",
+				"preview.clear_title": "Clear output",
+				"preview.clear": "Clear",
+				"presence.one": "{count} user online",
+				"presence.many": "{count} users online",
+				"typing.one": "{name} is typing…",
+				"typing.many": "{count} people are typing…",
 				"settings.open": "Open settings",
 				"settings.title": "Settings",
 				"settings.desc": "Manage account, export/import, themes, AI, and help.",
@@ -4401,6 +4507,17 @@
 			const v = getUiString(key);
 			if (v !== null && v !== undefined) return v;
 			return fallback !== undefined ? fallback : key;
+		}
+
+		function formatUi(template, vars) {
+			const source = String(template || "");
+			const values = vars && typeof vars === "object" ? vars : {};
+			return source.replace(/\{(\w+)\}/g, (match, key) => {
+				if (Object.prototype.hasOwnProperty.call(values, key)) {
+					return String(values[key]);
+				}
+				return match;
+			});
 		}
 
 		function getUiLocale() {
@@ -12627,8 +12744,8 @@ self.onmessage = async (e) => {
 		if (!presenceSummary || !presenceList) return;
 		const users = Array.from(presenceState.values());
 		const count = users.length;
-		presenceSummary.textContent =
-			count === 1 ? "1 Nutzer online" : `${count} Nutzer online`;
+		const presenceKey = count === 1 ? "presence.one" : "presence.many";
+		presenceSummary.textContent = formatUi(t(presenceKey), { count });
 
 		if (typingIndicator) {
 			const typingUsers = users.filter(
@@ -12638,10 +12755,14 @@ self.onmessage = async (e) => {
 				typingIndicator.textContent = "";
 				typingIndicator.classList.add("hidden");
 			} else if (typingUsers.length === 1) {
-				typingIndicator.textContent = `${typingUsers[0].name} tippt…`;
+				typingIndicator.textContent = formatUi(t("typing.one"), {
+					name: typingUsers[0].name,
+				});
 				typingIndicator.classList.remove("hidden");
 			} else {
-				typingIndicator.textContent = `${typingUsers.length} Personen tippen…`;
+				typingIndicator.textContent = formatUi(t("typing.many"), {
+					count: typingUsers.length,
+				});
 				typingIndicator.classList.remove("hidden");
 			}
 		}
