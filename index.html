@@ -583,21 +583,24 @@
 												type="button"
 												data-selection-action="bold"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Bold">
+												title="Bold"
+												data-i18n-title="menu.bold">
 												<strong>B</strong>
 											</button>
 											<button
 												type="button"
 												data-selection-action="italic"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Italic">
+												title="Italic"
+												data-i18n-title="menu.italic">
 												<em>I</em>
 											</button>
 											<button
 												type="button"
 												data-selection-action="strike"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Strikethrough">
+												title="Strikethrough"
+												data-i18n-title="menu.strike">
 												<span class="line-through">S</span>
 											</button>
 											<button
@@ -605,8 +608,10 @@
 												data-selection-action="password"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
 												title="Passwort verstecken"
-												aria-label="Passwort verstecken">
-												PW
+												aria-label="Passwort verstecken"
+												data-i18n-title="menu.password_hide"
+												data-i18n-aria="menu.password_hide">
+												<span data-i18n="menu.password">PW</span>
 											</button>
 											<button
 												type="button"
@@ -614,76 +619,87 @@
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
 												title="Maskierung an/aus"
 												aria-label="Maskierung an/aus"
+												data-i18n-title="menu.mask_toggle"
+												data-i18n-aria="menu.mask_toggle"
 												aria-pressed="true">
-												Mask
+												<span data-i18n="menu.mask">Mask</span>
 											</button>
 											<button
 												type="button"
 												data-selection-action="quote"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Blockquote">
+												title="Blockquote"
+												data-i18n-title="menu.blockquote">
 												“
 											</button>
 											<button
 												type="button"
 												data-selection-action="ul"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Bullet list">
-												• List
+												title="Bullet list"
+												data-i18n-title="menu.bullet">
+												<span data-i18n="menu.bullet_label">• List</span>
 											</button>
 											<button
 												type="button"
 												data-selection-action="ol"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Numbered list">
-												1. List
+												title="Numbered list"
+												data-i18n-title="menu.numbered">
+												<span data-i18n="menu.numbered_label">1. List</span>
 											</button>
 											<button
 												type="button"
 												data-selection-action="todo"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Task list">
-												☐ Task
+												title="Task list"
+												data-i18n-title="menu.task">
+												<span data-i18n="menu.task_label">☐ Task</span>
 											</button>
 											<button
 												type="button"
 												data-selection-action="divider"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Divider">
+												title="Divider"
+												data-i18n-title="menu.divider">
 												---
 											</button>
 											<button
 												type="button"
 												data-selection-action="code"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Code block">
+												title="Code block"
+												data-i18n-title="menu.code">
 												&lt;/&gt;
 											</button>
 											<button
 												type="button"
 												data-selection-action="comment"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Comment">
-												Comment
+												title="Comment"
+												data-i18n-title="menu.comment">
+												<span data-i18n="menu.comment">Comment</span>
 											</button>
 											<div class="mx-1 h-6 w-px bg-white/10"></div>
 											<button
 												type="button"
 												data-selection-action="sort"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Sort A–Z">
-												Sort A–Z
+												title="Sort A–Z"
+												data-i18n-title="menu.sort_az">
+												<span data-i18n="menu.sort_az">Sort A–Z</span>
 											</button>
 										</div>
 									</div>
 									<div
 										id="codeLangWrap"
 										class="absolute left-2 top-2 hidden flex items-center gap-2">
-										<label for="codeLang" class="sr-only">Language</label>
+										<label for="codeLang" class="sr-only" data-i18n="menu.code_lang_label">Language</label>
 										<select
 											id="codeLang"
 											class="h-9 w-36 rounded-lg border border-white/10 bg-slate-950/60 px-2.5 text-sm text-slate-100 shadow-soft backdrop-blur outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25"
-											title="Language for code block">
+											title="Language for code block"
+											data-i18n-title="menu.code_lang_title">
 											<option value="python">Python</option>
 											<option value="javascript">JavaScript</option>
 											<option value="bash">Shell</option>
