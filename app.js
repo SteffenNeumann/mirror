@@ -2327,8 +2327,11 @@
 			if (isReply) {
 				const replyTag = document.createElement("span");
 				replyTag.className =
-					"rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300";
-				replyTag.textContent = "Antwort";
+					"inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/10 bg-white/5 text-slate-300";
+				replyTag.setAttribute("data-i18n-title", "comments.reply_badge");
+				replyTag.setAttribute("data-i18n-aria", "comments.reply_badge");
+				replyTag.innerHTML =
+					"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"h-3 w-3\"><path d=\"M9 17l-5-5 5-5\" /><path d=\"M4 12h9a7 7 0 0 1 7 7v1\" /></svg>";
 				left.appendChild(replyTag);
 			}
 			header.appendChild(left);
@@ -4115,6 +4118,7 @@
 				"comments.add_action": "Kommentar hinzufügen",
 				"comments.save_action": "Kommentar speichern",
 				"comments.reply_action": "Antwort senden",
+				"comments.reply_badge": "Antwort",
 				"comments.edit_action": "Kommentar bearbeiten",
 				"comments.delete_action": "Kommentar löschen",
 				"editor.nav_back": "Zurück",
@@ -4360,6 +4364,7 @@
 				"comments.add_action": "Add comment",
 				"comments.save_action": "Save comment",
 				"comments.reply_action": "Send reply",
+				"comments.reply_badge": "Reply",
 				"comments.edit_action": "Edit comment",
 				"comments.delete_action": "Delete comment",
 				"editor.nav_back": "Back",
