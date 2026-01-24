@@ -4109,6 +4109,7 @@
 				"editor.ready": "Bereit.",
 				"preview.title": "Vorschau",
 				"preview.full": "Vollbild-Vorschau",
+				"preview.show_input": "Eingabe anzeigen",
 				"preview.close": "Vorschau schließen",
 				"preview.iframe": "Markdown-Vorschau",
 				"preview.ask_claude": "Claude fragen",
@@ -4348,6 +4349,7 @@
 				"editor.ready": "Ready.",
 				"preview.title": "Preview",
 				"preview.full": "Full preview",
+				"preview.show_input": "Show input",
 				"preview.close": "Close preview",
 				"preview.iframe": "Markdown Preview",
 				"preview.ask_claude": "Ask Claude",
@@ -7203,8 +7205,8 @@
 		}
 		if (toggleFullPreview) {
 			toggleFullPreview.textContent = fullPreview
-				? "Show input"
-				: "Full preview";
+				? t("preview.show_input")
+				: t("preview.full");
 			toggleFullPreview.setAttribute(
 				"aria-pressed",
 				fullPreview ? "true" : "false"
