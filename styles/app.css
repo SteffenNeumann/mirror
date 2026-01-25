@@ -52,18 +52,20 @@ body {
 }
 
 main.relative {
-	width: calc(100vw - 48px);
-	width: calc(100dvw - 48px);
-	height: calc(100vh - 48px);
-	height: calc(100dvh - 48px);
+	margin: 40px auto;
+	width: calc(100vw - 80px);
+	width: calc(100dvw - 80px);
+	height: calc(100vh - 80px);
+	height: calc(100dvh - 80px);
 }
 
 @media (min-width: 640px) {
 	main.relative {
-		width: calc(100vw - 40px);
-		width: calc(100dvw - 40px);
-		height: calc(100vh - 40px);
-		height: calc(100dvh - 40px);
+		margin: 40px auto;
+		width: calc(100vw - 80px);
+		width: calc(100dvw - 80px);
+		height: calc(100vh - 80px);
+		height: calc(100dvh - 80px);
 	}
 }
 

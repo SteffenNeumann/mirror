@@ -1,3 +1,20 @@
+# Dokumentation – Änderungen (2026-01-25)
+
+## Ziel
+- Gleichmäßigen 40px-Gap zum Fenster herstellen.
+
+## Änderungen
+- `main`-Container auf 40px Außenabstand gesetzt und Viewport-Größe entsprechend reduziert.
+
+## Auswirkungen
+- **UI/UX:** Gleichmäßiger Rand oben/unten/links/rechts.
+- **Feature-Interaktionen:** Keine Änderung.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
 # Dokumentation – Änderungen (2026-01-24)
 
 ## Ziel
