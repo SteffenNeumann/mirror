@@ -614,3 +614,57 @@ body.preview-only #editorPreviewGrid > div:first-child {
 .ring-fuchsia-400\/40 {
 	--tw-ring-color: var(--accent-ring-strong) !important;
 }
+
+.calendar-event {
+	position: relative;
+	cursor: pointer;
+}
+
+.calendar-event[data-tooltip]::after,
+.calendar-event[data-tooltip]::before {
+	opacity: 0;
+	transform: translate(-50%, -6px);
+	pointer-events: none;
+	transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.calendar-event[data-tooltip]::after {
+	content: attr(data-tooltip);
+	position: absolute;
+	left: 50%;
+	bottom: calc(100% + 10px);
+	max-width: 260px;
+	padding: 6px 10px;
+	border-radius: 10px;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	background: rgba(2, 6, 23, 0.92);
+	color: rgba(226, 232, 240, 0.95);
+	font-size: 11px;
+	line-height: 1.4;
+	white-space: normal;
+	text-align: left;
+	box-shadow:
+		0 8px 24px rgba(15, 23, 42, 0.45),
+		inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+	z-index: 30;
+}
+
+.calendar-event[data-tooltip]::before {
+	content: "";
+	position: absolute;
+	left: 50%;
+	bottom: calc(100% + 4px);
+	width: 8px;
+	height: 8px;
+	background: rgba(2, 6, 23, 0.92);
+	border-left: 1px solid rgba(255, 255, 255, 0.12);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+	transform: translate(-50%, -6px) rotate(45deg);
+	z-index: 29;
+}
+
+.calendar-event[data-tooltip]:hover::after,
+.calendar-event[data-tooltip]:hover::before {
+	opacity: 1;
+	transform: translate(-50%, 0);
+}
