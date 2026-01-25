@@ -1,10 +1,10 @@
 # Dokumentation – Änderungen (2026-01-25)
 
 ## Ziel
-- Gleichmäßigen 40px-Gap zum Fenster herstellen.
+- Gleichmäßigen 16px-Gap zum Fenster herstellen.
 
 ## Änderungen
-- Gleichmäßigen Gap über `body`-Padding gesetzt, `main` auf 100% Breite/Höhe.
+- Gleichmäßigen Gap über `body`-Padding auf 16px gesetzt.
 
 ## Auswirkungen
 - **UI/UX:** Gleichmäßiger Rand oben/unten/links/rechts.
