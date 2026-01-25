@@ -618,6 +618,7 @@ body.preview-only #editorPreviewGrid > div:first-child {
 .calendar-event {
 	position: relative;
 	cursor: pointer;
+	overflow: visible;
 }
 
 #calendarGrid.calendar-grid-month {

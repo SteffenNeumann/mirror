@@ -12363,7 +12363,7 @@ self.onmessage = async (e) => {
 					? `${time} · ${evt.title} · ${evt.location}`
 					: `${time} · ${evt.title}`;
 				return `
-					<div class="calendar-event truncate rounded-md border border-white/10 bg-slate-950/50 px-2 py-1 text-[10px] text-slate-200" data-tooltip="${escapeAttr(
+					<div class="calendar-event rounded-md border border-white/10 bg-slate-950/50 px-2 py-1 text-[10px] text-slate-200" data-tooltip="${escapeAttr(
 						title
 					)}">
 						<div class="flex items-center gap-2">
