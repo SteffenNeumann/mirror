@@ -633,7 +633,9 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	position: absolute;
 	left: 50%;
 	bottom: calc(100% + 10px);
+	width: 520px;
 	max-width: 520px;
+	min-width: 320px;
 	padding: 6px 10px;
 	border-radius: 10px;
 	border: 1px solid rgba(255, 255, 255, 0.12);
