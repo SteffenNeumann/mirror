@@ -620,6 +620,10 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	cursor: pointer;
 }
 
+#calendarGrid.calendar-grid-month {
+	overflow: visible;
+}
+
 .calendar-event[data-tooltip]::after,
 .calendar-event[data-tooltip]::before {
 	opacity: 0;

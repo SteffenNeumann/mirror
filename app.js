@@ -12222,6 +12222,9 @@ self.onmessage = async (e) => {
 		const sources = loadCalendarSources().filter((s) => s.enabled && s.url);
 		const events = getCalendarEvents();
 		events.sort((a, b) => a.start.getTime() - b.start.getTime());
+		if (calendarGrid && calendarGrid.classList) {
+			calendarGrid.classList.toggle("calendar-grid-month", view === "month");
+		}
 		if (calendarTitle) {
 			calendarTitle.textContent = formatCalendarTitle(view, cursor);
 		}
