@@ -4,7 +4,7 @@
 - Gleichmäßigen 40px-Gap zum Fenster herstellen.
 
 ## Änderungen
-- `main`-Container auf 40px Außenabstand gesetzt und Viewport-Größe entsprechend reduziert.
+- Gleichmäßigen Gap über `body`-Padding gesetzt, `main` auf 100% Breite/Höhe.
 
 ## Auswirkungen
 - **UI/UX:** Gleichmäßiger Rand oben/unten/links/rechts.
