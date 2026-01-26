@@ -15326,7 +15326,10 @@ self.onmessage = async (e) => {
 	}
 	if (aiDictateBtn) {
 		aiDictateBtn.addEventListener("click", () => {
-			if (!aiDictationAvailable) return;
+			if (!aiDictationAvailable) {
+				toast(t("toast.dictation_failed"), "error");
+				return;
+			}
 			if (aiDictationActive) {
 				stopAiDictation();
 				return;
