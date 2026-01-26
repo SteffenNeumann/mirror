@@ -1069,7 +1069,23 @@
 													</select>
 												</div>
 											</div>
-												<div class="flex flex-wrap items-start gap-2">
+											<div
+												id="aiChatHistory"
+												class="hidden rounded-md border border-white/10 bg-slate-950/30 p-3 text-xs text-slate-200 shadow-soft">
+												<div class="mb-2 flex items-center justify-between gap-2">
+													<div class="text-[11px] uppercase tracking-wide text-slate-400" data-i18n="preview.chat_history">Chatverlauf</div>
+													<button
+														id="aiChatClear"
+														type="button"
+														class="rounded-md border border-white/10 bg-transparent px-2 py-1 text-[11px] text-slate-300 transition hover:bg-white/5 active:bg-white/10"
+														data-i18n="preview.chat_clear"
+														title="Chatverlauf leeren">
+														Leeren
+													</button>
+												</div>
+												<div id="aiChatList" class="space-y-2"></div>
+											</div>
+											<div class="flex flex-wrap items-start gap-2">
 													<div
 														id="aiPromptWrap"
 														class="relative min-w-0 flex-1 group">
@@ -1134,22 +1150,6 @@
 															</svg>
 														</button>
 													</div>
-											</div>
-											<div
-												id="aiChatHistory"
-												class="hidden rounded-md border border-white/10 bg-slate-950/30 p-3 text-xs text-slate-200 shadow-soft">
-												<div class="mb-2 flex items-center justify-between gap-2">
-													<div class="text-[11px] uppercase tracking-wide text-slate-400" data-i18n="preview.chat_history">Chatverlauf</div>
-													<button
-														id="aiChatClear"
-														type="button"
-														class="rounded-md border border-white/10 bg-transparent px-2 py-1 text-[11px] text-slate-300 transition hover:bg-white/5 active:bg-white/10"
-														data-i18n="preview.chat_clear"
-														title="Chatverlauf leeren">
-														Leeren
-													</button>
-												</div>
-												<div id="aiChatList" class="space-y-2"></div>
 											</div>
 											<div
 												id="runOutputBar"
