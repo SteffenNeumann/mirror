@@ -779,6 +779,11 @@ body[data-theme="monoLight"] #psEditorTagsSuggest {
 	border-color: #d0d7de !important;
 }
 
+body[data-theme="monoLight"] #psEditorTagsInput {
+	background-color: #f0f3f6 !important;
+	color: #24292f !important;
+}
+
 body[data-theme="monoLight"] #previewPanel .bg-fuchsia-600\/20 {
 	background-color: rgba(9, 105, 218, 0.12) !important;
 }
