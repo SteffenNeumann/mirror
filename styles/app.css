@@ -886,9 +886,9 @@ body[data-theme="monoDark"] .bg-slate-950\/80 {
 }
 
 body[data-theme="monoDark"] .ps-note-item.ps-note-active {
-	background-color: rgba(88, 166, 255, 0.14) !important;
-	border-color: rgba(88, 166, 255, 0.55) !important;
-	box-shadow: 0 8px 18px rgba(88, 166, 255, 0.16);
+	background-color: rgba(88, 166, 255, 0.08) !important;
+	border-color: rgba(88, 166, 255, 0.45) !important;
+	box-shadow: 0 6px 14px rgba(88, 166, 255, 0.12);
 }
 
 body[data-theme="monoDark"] .ps-note-item .ps-note-actions button {
