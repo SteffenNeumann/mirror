@@ -5361,6 +5361,25 @@
 		applyTheme(activeTheme);
 	}
 
+	function toAlphaColor(inputColor, alphaValue) {
+		if (!inputColor) return null;
+		const rgbaMatch = inputColor.match(/rgba\(([^)]+)\)/i);
+		if (rgbaMatch) {
+			const parts = rgbaMatch[1].split(",").map((part) => part.trim());
+			if (parts.length >= 3) {
+				return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alphaValue})`;
+			}
+		}
+		const rgbMatch = inputColor.match(/rgb\(([^)]+)\)/i);
+		if (rgbMatch) {
+			const parts = rgbMatch[1].split(",").map((part) => part.trim());
+			if (parts.length >= 3) {
+				return `rgba(${parts[0]}, ${parts[1]}, ${parts[2]}, ${alphaValue})`;
+			}
+		}
+		return null;
+	}
+
 	function applyTheme(themeName) {
 		const next = THEMES[themeName] ? themeName : "fuchsia";
 		activeTheme = next;
@@ -5369,7 +5388,10 @@
 		const isMonoLightTheme = next === "monoLight";
 		const isMonoDarkTheme = next === "monoDark";
 		const isMonoTheme = isMonoLightTheme || isMonoDarkTheme;
-		const nonMonoScrollbarThumb = "rgba(103, 232, 249, 0.1)";
+		const nonMonoScrollbarThumb =
+			toAlphaColor(colors && colors.accentTextSoft, 0.1) ||
+			toAlphaColor(colors && colors.accentText, 0.1) ||
+			"rgba(103, 232, 249, 0.1)";
 		if (bgBlobTop && colors) bgBlobTop.style.background = colors.top;
 		if (bgBlobBottom && colors) bgBlobBottom.style.background = colors.bottom;
 		if (colors) {
@@ -7652,7 +7674,11 @@
 		const isMonoLight = activeTheme === "monoLight";
 		const isMonoDark = activeTheme === "monoDark";
 		const isMonoTheme = isMonoLight || isMonoDark;
-		const nonMonoScrollbarThumb = "rgba(103, 232, 249, 0.1)";
+		const themeColors = THEMES[activeTheme] || THEMES.fuchsia || {};
+		const nonMonoScrollbarThumb =
+			toAlphaColor(themeColors.accentTextSoft, 0.1) ||
+			toAlphaColor(themeColors.accentText, 0.1) ||
+			"rgba(103, 232, 249, 0.1)";
 		const renderer = ensureMarkdown();
 		const stamp = Date.now();
 		if (!renderer) {
@@ -7694,7 +7720,6 @@
 		} catch {
 			bodyHtml = "";
 		}
-		const themeColors = THEMES[activeTheme] || THEMES.fuchsia || {};
 		const blockquoteBorder =
 			themeColors.blockquoteBorder ||
 			themeColors.accentBorderStrong ||

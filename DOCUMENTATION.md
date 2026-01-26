@@ -114,6 +114,21 @@
 # Dokumentation – Änderungen (2026-01-25)
 
 ## Ziel
+- Scrollbar-Farbe in Non-Mono-Themes aus dem Theme ableiten bei 0.1 Opacity.
+
+## Änderungen
+- `app.js` nutzt `accentTextSoft`/`accentText` mit 0.1 Alpha für Scrollbars in Non-Mono.
+- Preview und Fallback übernehmen die themebasierte Scrollbar-Farbe.
+
+## Auswirkungen
+- **UI/UX:** Scrollbar-Farbe passt zum Theme und bleibt dezent.
+- **Feature-Interaktionen:** Keine Änderung.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Nicht ausgeführt (UI-Änderung).
+
+## Ziel
 - Runtime-Overrides setzen Scrollbar-Opacity auf 0.1 für nicht-monochrome Themes.
 
 ## Änderungen
