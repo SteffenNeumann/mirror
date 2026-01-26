@@ -1055,7 +1055,7 @@
 												<div id="aiModeWrap" class="min-w-[220px]">
 													<select
 														id="aiMode"
-														class="h-9 w-full rounded-md border border-white/10 bg-slate-950/30 px-2.5 text-xs text-slate-200 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30"
+														class="h-9 w-full rounded-lg border border-white/10 bg-slate-950/30 px-2.5 text-xs text-slate-200 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30"
 														title="AI-Modus"
 														data-i18n-title="preview.ai_mode">
 														<option value="" selected data-i18n="preview.ai_mode.none">Ohne Vorgabe</option>
@@ -1113,11 +1113,11 @@
 														×
 													</button>
 												</div>
-													<div class="flex shrink-0 flex-col justify-end gap-2 self-stretch">
+													<div class="flex shrink-0 flex-col justify-end gap-2 self-stretch pb-2">
 														<button
 															id="aiAssist"
 															type="button"
-															class="h-10 w-10 rounded-md border border-fuchsia-500/30 bg-fuchsia-600/60 text-slate-50 shadow-soft transition hover:bg-fuchsia-600/70 active:bg-fuchsia-600/80 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/40"
+															class="h-10 w-10 self-end rounded-md border border-fuchsia-500/30 bg-fuchsia-600/60 text-slate-50 shadow-soft transition hover:bg-fuchsia-600/70 active:bg-fuchsia-600/80 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/40"
 															title="Ask"
 															data-i18n-title="preview.ask">
 															<span class="sr-only" data-i18n="preview.ask">Ask</span>
@@ -1137,22 +1137,9 @@
 											</div>
 											<div
 												id="aiChatHistory"
-												class="rounded-md border border-white/10 bg-slate-950/30 p-3 text-xs text-slate-200 shadow-soft">
-												<div class="mb-2 text-[11px] uppercase tracking-wide text-slate-400">Chatverlauf</div>
-												<div class="space-y-2">
-													<div class="flex items-start gap-2">
-														<span class="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-md bg-white/10 text-[10px]">Du</span>
-														<div class="flex-1 rounded-md bg-white/5 px-2 py-1.5 text-slate-100">
-															Wie strukturiere ich den Prompt?
-														</div>
-													</div>
-													<div class="flex items-start gap-2">
-														<span class="mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-md bg-fuchsia-500/20 text-[10px] text-fuchsia-200">AI</span>
-														<div class="flex-1 rounded-md bg-white/5 px-2 py-1.5 text-slate-100">
-															Kurz, konkret, Ziel + Kontext + Format.
-														</div>
-													</div>
-												</div>
+												class="hidden rounded-md border border-white/10 bg-slate-950/30 p-3 text-xs text-slate-200 shadow-soft">
+												<div class="mb-2 text-[11px] uppercase tracking-wide text-slate-400" data-i18n="preview.chat_history">Chatverlauf</div>
+												<div id="aiChatList" class="space-y-2"></div>
 											</div>
 											<div
 												id="runOutputBar"

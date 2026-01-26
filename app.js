@@ -93,6 +93,8 @@
 	const aiUseAnswerBtn = document.getElementById("aiUseAnswerBtn");
 	const aiModeWrap = document.getElementById("aiModeWrap");
 	const aiPromptWrap = document.getElementById("aiPromptWrap");
+	const aiChatHistory = document.getElementById("aiChatHistory");
+	const aiChatList = document.getElementById("aiChatList");
 	const copyMirrorBtn = document.getElementById("copyMirror");
 	const toggleCommentsBtn = document.getElementById("toggleComments");
 	const commentPanel = document.getElementById("commentPanel");
@@ -4153,6 +4155,9 @@
 				"preview.prompt_clear": "Prompt leeren",
 				"preview.dictate": "Diktat starten",
 				"preview.dictate_sr": "Diktat",
+				"preview.chat_history": "Chatverlauf",
+				"preview.chat_you": "Du",
+				"preview.chat_ai": "KI",
 				"preview.replace_title": "Editor durch KI-Ausgabe ersetzen",
 				"preview.replace": "Ersetzen",
 				"preview.append_title": "KI-Ausgabe ans Ende anfügen",
@@ -4399,6 +4404,9 @@
 				"preview.prompt_clear": "Clear prompt",
 				"preview.dictate": "Start dictation",
 				"preview.dictate_sr": "Dictation",
+				"preview.chat_history": "Chat history",
+				"preview.chat_you": "You",
+				"preview.chat_ai": "AI",
 				"preview.replace_title": "Replace editor with AI output",
 				"preview.replace": "Replace",
 				"preview.append_title": "Append AI output to editor",
@@ -5951,6 +5959,44 @@
 		} catch {
 			// ignore
 		}
+	}
+
+	function setAiChatHistoryVisible(hasChat) {
+		if (!aiChatHistory || !aiChatHistory.classList) return;
+		aiChatHistory.classList.toggle("hidden", !hasChat);
+	}
+
+	function syncAiChatHistoryVisibility() {
+		if (!aiChatList) {
+			setAiChatHistoryVisible(false);
+			return;
+		}
+		const hasItems = aiChatList.children && aiChatList.children.length > 0;
+		setAiChatHistoryVisible(Boolean(hasItems));
+	}
+
+	function addAiChatEntry(role, text) {
+		if (!aiChatList) return;
+		const content = String(text || "").trim();
+		if (!content) return;
+		const item = document.createElement("div");
+		item.className = "flex items-start gap-2";
+		item.setAttribute("data-chat-item", "true");
+		const badge = document.createElement("span");
+		const isAi = String(role || "").toLowerCase() === "ai";
+		const badgeKey = isAi ? "preview.chat_ai" : "preview.chat_you";
+		badge.className = isAi
+			? "mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-md bg-fuchsia-500/20 text-[10px] text-fuchsia-200"
+			: "mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-md bg-white/10 text-[10px]";
+		badge.setAttribute("data-i18n", badgeKey);
+		badge.textContent = t(badgeKey);
+		const body = document.createElement("div");
+		body.className = "flex-1 rounded-md bg-white/5 px-2 py-1.5 text-slate-100";
+		body.textContent = content;
+		item.appendChild(badge);
+		item.appendChild(body);
+		aiChatList.appendChild(item);
+		syncAiChatHistoryVisibility();
 	}
 
 	function stripManualTagsMarker(tags) {
@@ -9761,6 +9807,7 @@ self.onmessage = async (e) => {
 
 		const prompt = getAiPrompt();
 		if (prompt) saveAiPrompt(prompt);
+		const promptForChat = String(prompt || "").trim();
 		const usePreview = getAiUsePreview();
 		const followUpEnabled = getAiUseAnswer();
 		const lastAiOutput =
@@ -9832,12 +9879,15 @@ self.onmessage = async (e) => {
 				method: "POST",
 				body: JSON.stringify(body),
 			});
+			const aiText = String(res && res.text ? res.text : "");
 			setPreviewRunOutput({
 				status: "AI",
-				output: String(res && res.text ? res.text : ""),
+				output: aiText,
 				error: "",
 				source: "ai",
 			});
+			if (promptForChat) addAiChatEntry("user", promptForChat);
+			if (aiText) addAiChatEntry("ai", aiText);
 		} catch (e) {
 			const msg = e && e.message ? String(e.message) : "Error";
 			setPreviewRunOutput({
@@ -15930,6 +15980,7 @@ self.onmessage = async (e) => {
 	loadAiUsePreview();
 	loadAiUseAnswer();
 	applyAiContextMode();
+	syncAiChatHistoryVisibility();
 	setCommentDraftSelection(null);
 	loadCommentsForRoom();
 	updateTableMenuVisibility();
