@@ -7413,11 +7413,16 @@
 	function updatePreview() {
 		if (!previewOpen || !mdPreview) return;
 		const isMonoLight = activeTheme === "monoLight";
+		const isMonoDark = activeTheme === "monoDark";
 		const renderer = ensureMarkdown();
 		const stamp = Date.now();
 		if (!renderer) {
 			const fallbackColorScheme = isMonoLight ? "light" : "dark";
-			const fallbackBg = isMonoLight ? "#f8fafc" : "#0d1117";
+			const fallbackBg = isMonoLight
+				? "#f8fafc"
+				: isMonoDark
+					? "#0d1117"
+					: "#111827";
 			const fallbackText = isMonoLight ? "#0f172a" : "#e2e8f0";
 			const fallbackLink = isMonoLight ? "#2563eb" : "#60a5fa";
 			const fallbackScrollThumb = isMonoLight
@@ -7463,7 +7468,11 @@
 			themeColors.accentText ||
 			"rgba(148,163,184,.45)";
 		const previewColorScheme = isMonoLight ? "light" : "dark";
-		const previewBg = isMonoLight ? "#f8fafc" : "#0d1117";
+		const previewBg = isMonoLight
+			? "#f8fafc"
+			: isMonoDark
+				? "#0d1117"
+				: themeColors.previewBg || themeColors.accentBgSoft || "#111827";
 		const previewText = isMonoLight ? "#0f172a" : "#e2e8f0";
 		const previewLink = isMonoLight ? "#2563eb" : "#60a5fa";
 		const previewPreBg = isMonoLight
