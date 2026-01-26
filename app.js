@@ -7733,11 +7733,7 @@
 		const previewMetaText = isMonoLight
 			? "rgba(71,85,105,.9)"
 			: "rgba(148,163,184,.9)";
-		const tocBg = isMonoLight
-			? "rgba(248,250,252,.92)"
-			: isMonoDark
-				? "rgba(13,17,23,.9)"
-				: themeColors.accentBg || "rgba(2,6,23,.8)";
+		const tocBg = previewBg;
 		const tocBorder = isMonoLight
 			? "rgba(15,23,42,.12)"
 			: "rgba(148,163,184,.18)";

@@ -921,9 +921,13 @@ body[data-theme="monoLight"] .shadow-soft {
 	box-shadow: 0 6px 14px rgba(27, 31, 36, 0.08);
 }
 
-body[data-theme="monoLight"] #previewPanel,
-body[data-theme="monoLight"] #commentPanel {
+body[data-theme="monoLight"] #previewPanel {
 	background-color: #ffffff !important;
+	border-color: #d0d7de !important;
+}
+
+body[data-theme="monoLight"] #commentPanel {
+	background-color: #f6f8fa !important;
 	border-color: #d0d7de !important;
 }
 

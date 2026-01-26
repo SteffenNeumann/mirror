@@ -1,6 +1,23 @@
 # Dokumentation – Änderungen (2026-01-26)
 
 ## Ziel
+- TOC-Float-Hintergrund an Markdown-Preview angleichen.
+- Kommentar-Panel-Hintergrund an Editor-Theme angleichen.
+
+## Änderungen
+- TOC-Hintergrund nutzt die Preview-Hintergrundfarbe.
+- MonoLight-Override für Kommentar-Panel an Editor-Hintergrund angepasst.
+
+## Auswirkungen
+- **UI/UX:** TOC und Kommentar-Panel folgen dem aktiven Theme.
+- **Feature-Interaktionen:** Keine Änderung.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Nicht ausgeführt: `node` nicht verfügbar (`node --check app.js`).
+- Nicht ausgeführt: `node` nicht verfügbar (`node --check server.js`).
+
+## Ziel
 - Kommentar-Chat-Hintergrund an aktives Theme anpassen.
 
 ## Änderungen
