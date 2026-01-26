@@ -1,6 +1,21 @@
 # Dokumentation – Änderungen (2026-01-26)
 
 ## Ziel
+- Scrollbar-Hintergrund in nicht-monochromen Themes subtiler machen.
+
+## Änderungen
+- Scrollbar-Variablen im Standard-Theme reduziert.
+- MonoLight/MonoDark behalten die bisherigen Scrollbar-Werte.
+
+## Auswirkungen
+- **UI/UX:** Scrollbars wirken in farbigen Themes ruhiger.
+- **Feature-Interaktionen:** Keine Änderung.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Nicht ausgeführt (UI-Änderung).
+
+## Ziel
 - TOC-Float-Hintergrund an Markdown-Preview angleichen.
 - Kommentar-Panel-Hintergrund an Editor-Theme angleichen.
 

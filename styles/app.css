@@ -54,9 +54,9 @@ body {
 	height: 100%;
 }
 
-body {
-	min-height: 100vh;
-	min-height: 100dvh;
+		--scrollbar-thumb: rgba(148, 163, 184, 0.2);
+		--scrollbar-thumb-hover: rgba(148, 163, 184, 0.3);
+		--scrollbar-border: rgba(2, 6, 23, 0.2);
 	padding: 16px;
 	box-sizing: border-box;
 	overflow: hidden;
@@ -72,6 +72,9 @@ body {
 	width: 12px;
 	height: 12px;
 	border-radius: 999px;
+		--scrollbar-thumb: rgba(148, 163, 184, 0.3);
+		--scrollbar-thumb-hover: rgba(148, 163, 184, 0.45);
+		--scrollbar-border: rgba(2, 6, 23, 0.35);
 	border: 2px solid rgba(148, 163, 184, 0.55);
 	border-top-color: rgba(251, 191, 36, 0.9);
 	box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.6) inset;
@@ -81,6 +84,9 @@ body {
 .run-output-icon.is-processing {
 	animation: run-output-spin 0.9s linear infinite;
 	border-top-color: rgba(244, 114, 182, 0.95);
+		--scrollbar-thumb: rgba(148, 163, 184, 0.3);
+		--scrollbar-thumb-hover: rgba(148, 163, 184, 0.45);
+		--scrollbar-border: rgba(2, 6, 23, 0.35);
 }
 
 @keyframes run-output-spin {
