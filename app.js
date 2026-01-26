@@ -5367,6 +5367,9 @@
 		syncThemeListActive();
 		const colors = THEMES[next];
 		const isMonoLightTheme = next === "monoLight";
+		const isMonoDarkTheme = next === "monoDark";
+		const isMonoTheme = isMonoLightTheme || isMonoDarkTheme;
+		const nonMonoScrollbarThumb = "rgba(103, 232, 249, 0.1)";
 		if (bgBlobTop && colors) bgBlobTop.style.background = colors.top;
 		if (bgBlobBottom && colors) bgBlobBottom.style.background = colors.bottom;
 		if (colors) {
@@ -5435,22 +5438,28 @@
 			);
 			root.style.setProperty(
 				"--scrollbar-thumb",
-				colors.scrollbarThumb ||
-					colors.accentTextSoft ||
-					"rgba(148, 163, 184, 0.3)"
+				isMonoTheme
+					? colors.scrollbarThumb ||
+						colors.accentTextSoft ||
+						"rgba(148, 163, 184, 0.3)"
+					: nonMonoScrollbarThumb
 			);
 			root.style.setProperty(
 				"--scrollbar-thumb-hover",
-				colors.scrollbarThumbHover ||
-					colors.accentText ||
-					"rgba(148, 163, 184, 0.45)"
+				isMonoTheme
+					? colors.scrollbarThumbHover ||
+						colors.accentText ||
+						"rgba(148, 163, 184, 0.45)"
+					: nonMonoScrollbarThumb
 			);
 			root.style.setProperty(
 				"--scrollbar-border",
-				colors.scrollbarBorder ||
-					(isMonoLightTheme
-						? "rgba(241, 245, 249, 0.9)"
-						: "rgba(2, 6, 23, 0.35)")
+				isMonoTheme
+					? colors.scrollbarBorder ||
+						(isMonoLightTheme
+							? "rgba(241, 245, 249, 0.9)"
+							: "rgba(2, 6, 23, 0.35)")
+					: "rgba(2, 6, 23, 0.1)"
 			);
 			root.style.setProperty(
 				"--calendar-event-bg",
@@ -7642,6 +7651,8 @@
 		if (!previewOpen || !mdPreview) return;
 		const isMonoLight = activeTheme === "monoLight";
 		const isMonoDark = activeTheme === "monoDark";
+		const isMonoTheme = isMonoLight || isMonoDark;
+		const nonMonoScrollbarThumb = "rgba(103, 232, 249, 0.1)";
 		const renderer = ensureMarkdown();
 		const stamp = Date.now();
 		if (!renderer) {
@@ -7653,15 +7664,21 @@
 					: "#111827";
 			const fallbackText = isMonoLight ? "#0f172a" : "#e2e8f0";
 			const fallbackLink = isMonoLight ? "#2563eb" : "#60a5fa";
-			const fallbackScrollThumb = isMonoLight
-				? "rgba(100,116,139,.35)"
-				: "rgba(148,163,184,.3)";
-			const fallbackScrollThumbHover = isMonoLight
-				? "rgba(100,116,139,.5)"
-				: "rgba(148,163,184,.45)";
-			const fallbackScrollBorder = isMonoLight
-				? "rgba(241,245,249,.9)"
-				: "rgba(2,6,23,.35)";
+			const fallbackScrollThumb = isMonoTheme
+				? isMonoLight
+					? "rgba(100,116,139,.35)"
+					: "rgba(148,163,184,.3)"
+				: nonMonoScrollbarThumb;
+			const fallbackScrollThumbHover = isMonoTheme
+				? isMonoLight
+					? "rgba(100,116,139,.5)"
+					: "rgba(148,163,184,.45)"
+				: nonMonoScrollbarThumb;
+			const fallbackScrollBorder = isMonoTheme
+				? isMonoLight
+					? "rgba(241,245,249,.9)"
+					: "rgba(2,6,23,.35)"
+				: "rgba(2,6,23,.1)";
 			const fallbackDoc = `<!doctype html><html lang="en"><head><meta charset="utf-8" />
 			<meta name="viewport" content="width=device-width, initial-scale=1" />
 			<style>:root{color-scheme:${fallbackColorScheme};--scrollbar-thumb:${fallbackScrollThumb};--scrollbar-thumb-hover:${fallbackScrollThumbHover};}body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:${fallbackBg};color:${fallbackText};}a{color:${fallbackLink};}*{scrollbar-width:thin;scrollbar-color:var(--scrollbar-thumb) transparent;}*::-webkit-scrollbar{width:10px;height:10px;}*::-webkit-scrollbar-track{background:transparent;}*::-webkit-scrollbar-thumb{background-color:var(--scrollbar-thumb);border-radius:999px;border:2px solid ${fallbackScrollBorder};}*::-webkit-scrollbar-thumb:hover{background-color:var(--scrollbar-thumb-hover);}</style>
@@ -7687,14 +7704,16 @@
 			themeColors.blockquoteText ||
 			themeColors.accentTextSoft ||
 			"rgba(203,213,225,1)";
-		const scrollbarThumb =
-			themeColors.scrollbarThumb ||
-			themeColors.accentTextSoft ||
-			"rgba(148,163,184,.3)";
-		const scrollbarThumbHover =
-			themeColors.scrollbarThumbHover ||
-			themeColors.accentText ||
-			"rgba(148,163,184,.45)";
+		const scrollbarThumb = isMonoTheme
+			? themeColors.scrollbarThumb ||
+				themeColors.accentTextSoft ||
+				"rgba(148,163,184,.3)"
+			: nonMonoScrollbarThumb;
+		const scrollbarThumbHover = isMonoTheme
+			? themeColors.scrollbarThumbHover ||
+				themeColors.accentText ||
+				"rgba(148,163,184,.45)"
+			: nonMonoScrollbarThumb;
 		const previewColorScheme = isMonoLight ? "light" : "dark";
 		const previewBg = isMonoLight
 			? "#f8fafc"
@@ -7754,9 +7773,11 @@
 		const previewTableBorder = isMonoLight
 			? "rgba(15,23,42,.12)"
 			: "rgba(255,255,255,.12)";
-		const previewScrollBorder = isMonoLight
-			? "rgba(241,245,249,.9)"
-			: "rgba(2,6,23,.35)";
+		const previewScrollBorder = isMonoTheme
+			? isMonoLight
+				? "rgba(241,245,249,.9)"
+				: "rgba(2,6,23,.35)"
+			: "rgba(2,6,23,.1)";
 		const highlightCssUrl = isMonoLight
 			? "https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css"
 			: "https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css";

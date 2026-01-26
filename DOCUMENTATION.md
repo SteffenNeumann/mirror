@@ -114,6 +114,21 @@
 # Dokumentation – Änderungen (2026-01-25)
 
 ## Ziel
+- Runtime-Overrides setzen Scrollbar-Opacity auf 0.1 für nicht-monochrome Themes.
+
+## Änderungen
+- Theme-Apply und Preview-Fallback erzwingen `--scrollbar-thumb`/`--scrollbar-thumb-hover` mit 0.1 in Non-Mono.
+- Preview-Scrollbar-Border für Non-Mono auf 0.1 reduziert.
+
+## Auswirkungen
+- **UI/UX:** Scrollbars bleiben auch zur Laufzeit subtil.
+- **Feature-Interaktionen:** Keine Änderung.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Nicht ausgeführt (UI-Änderung).
+
+## Ziel
 - Scrollbar-Opacity in nicht-monochromen Themes auf 0.1 reduzieren.
 
 ## Änderungen
