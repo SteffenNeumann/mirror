@@ -787,6 +787,10 @@ body[data-theme="monoLight"] #previewPanel .text-fuchsia-300 {
 	color: #0969da !important;
 }
 
+body[data-theme="monoLight"] .theme-swatch {
+	box-shadow: none;
+}
+
 body[data-theme="monoLight"] .ps-note-item.ps-note-active .ps-note-actions button {
 	box-shadow: none !important;
 	background-color: rgba(9, 105, 218, 0.08) !important;
@@ -801,6 +805,12 @@ body[data-theme="monoLight"] .ps-note-item.ps-note-active span.rounded-full.bord
 	background-color: rgba(9, 105, 218, 0.08) !important;
 	border-color: rgba(9, 105, 218, 0.25) !important;
 	color: #24292f !important;
+}
+
+body[data-theme="monoLight"] .ps-note-pin.bg-fuchsia-500\/20 {
+	background-color: rgba(9, 105, 218, 0.12) !important;
+	border-color: rgba(9, 105, 218, 0.35) !important;
+	color: #0969da !important;
 }
 
 body[data-theme="monoLight"] .shadow-soft {
