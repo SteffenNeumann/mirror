@@ -645,17 +645,16 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	background-color: var(--accent-bg-hover) !important;
 }
 #aiUsePreviewBtn[aria-pressed="true"] {
-	background-color: var(--accent-strong) !important;
-	border-color: var(--accent-border-strong) !important;
-}
-#aiUsePreviewBtn[aria-pressed="true"] span:first-child {
-	background-color: var(--accent-text) !important;
-}
-#aiUsePreviewBtn[aria-pressed="false"] {
 	background-color: var(--accent-bg-soft) !important;
 }
-#aiUsePreviewBtn[aria-pressed="false"] span:first-child {
+#aiUsePreviewBtn[aria-pressed="true"] span:first-child {
 	background-color: rgba(255, 255, 255, 0.5) !important;
+}
+#aiUsePreviewBtn[aria-pressed="false"] {
+	background-color: transparent !important;
+}
+#aiUsePreviewBtn[aria-pressed="false"] span:first-child {
+	background-color: rgba(255, 255, 255, 0.35) !important;
 }
 .border-fuchsia-400\/30 {
 	border-color: var(--accent-border) !important;
