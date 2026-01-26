@@ -7514,7 +7514,7 @@
 		const tocRing =
 			themeColors.accentRing || "rgba(217,70,239,.25)";
 		const tocShadow = isMonoLight
-			? "0 12px 26px rgba(15,23,42,.12)"
+			? "0 6px 14px rgba(27,31,36,.08)"
 			: "0 12px 26px rgba(0,0,0,.45)";
 		const previewTableBorder = isMonoLight
 			? "rgba(15,23,42,.12)"
