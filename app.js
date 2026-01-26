@@ -3916,6 +3916,7 @@
 	let aiDictationBaseText = "";
 	let aiDictationFinalText = "";
 	let aiDictationInterimText = "";
+	let aiDictationRestarting = false;
 	let settingsOpen = false;
 	let settingsSection = "user";
 	let uiLang = UI_LANG_DEFAULT;
@@ -5817,9 +5818,9 @@
 		aiDictateBtn.disabled = false;
 		aiDictateBtn.classList.toggle("opacity-50", !isSupported);
 		aiDictateBtn.classList.toggle("cursor-not-allowed", !isSupported);
-		aiDictateBtn.classList.toggle("bg-emerald-500/20", active);
-		aiDictateBtn.classList.toggle("border-emerald-400/40", active);
-		aiDictateBtn.classList.toggle("text-emerald-100", active);
+		aiDictateBtn.classList.toggle("bg-fuchsia-500/20", active);
+		aiDictateBtn.classList.toggle("border-fuchsia-400/40", active);
+		aiDictateBtn.classList.toggle("text-fuchsia-100", active);
 		aiDictateBtn.classList.toggle("bg-transparent", !active);
 		aiDictateBtn.classList.toggle("border-transparent", !active);
 		aiDictateBtn.classList.toggle("text-slate-300", !active);
@@ -5875,6 +5876,7 @@
 
 	function stopAiDictation() {
 		if (!aiDictationRecognizer) return;
+		aiDictationRestarting = false;
 		aiDictationActive = false;
 		try {
 			aiDictationRecognizer.stop();
@@ -5911,6 +5913,7 @@
 				console.log("[Diktat] Recognition gestartet!");
 			} catch (e) {
 				console.error("[Diktat] Fehler beim Start:", e);
+				aiDictationRestarting = false;
 				aiDictationActive = false;
 				setAiDictationUi(false);
 				toast(t("toast.dictation_failed"), "error");
@@ -5918,9 +5921,11 @@
 		};
 		console.log("[Diktat] startAiDictation aufgerufen");
 		try {
+			aiDictationRestarting = true;
 			aiDictationRecognizer.stop();
 			console.log("[Diktat] Vorheriger Recognizer gestoppt");
 		} catch (e) {
+			aiDictationRestarting = false;
 			console.log("[Diktat] Kein vorheriger Recognizer zu stoppen:", e.message);
 		}
 		if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
@@ -5953,13 +5958,18 @@
 			aiDictationRecognizer.continuous = true;
 			aiDictationRecognizer.interimResults = true;
 			aiDictationRecognizer.lang = getUiSpeechLocale();
+			aiDictationRecognizer.onstart = () => {
+				aiDictationRestarting = false;
+			};
 			aiDictationRecognizer.onresult = onAiDictationResult;
 			aiDictationRecognizer.onerror = () => {
 				aiDictationActive = false;
+				aiDictationRestarting = false;
 				setAiDictationUi(false);
 				toast(t("toast.dictation_failed"), "error");
 			};
 			aiDictationRecognizer.onend = () => {
+				if (aiDictationRestarting) return;
 				aiDictationActive = false;
 				setAiDictationUi(false);
 			};

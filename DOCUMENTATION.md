@@ -20,6 +20,23 @@
 # Dokumentation – Änderungen (2026-01-25)
 
 ## Ziel
+- Diktat-Toast und Status-Icon sichtbar machen sowie Diktat-Start stabilisieren.
+
+## Änderungen
+- Toast-Container in [index.html](index.html) ergänzt.
+- Diktat-Button-Status nutzt vorhandene Theme-Styles in [app.js](app.js).
+- Restart-Guard für SpeechRecognition-`onend` ergänzt, damit Start nicht sofort zurückgesetzt wird.
+
+## Auswirkungen
+- **UI/UX:** Toasts erscheinen wieder, Diktat-Button zeigt aktiven Zustand.
+- **Feature-Interaktionen:** Diktat-Start bleibt stabil; kein Einfluss auf andere Flows.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Auszuführen: `node --check app.js`
+- Auszuführen: `node --check server.js`
+
+## Ziel
 - Gleichmäßigen 16px-Gap zum Fenster herstellen.
 
 ## Änderungen
