@@ -5814,7 +5814,7 @@
 		if (!aiDictateBtn || !aiDictateBtn.classList) return;
 		const isSupported =
 			typeof supported === "boolean" ? supported : aiDictationAvailable;
-		aiDictateBtn.disabled = !isSupported;
+		aiDictateBtn.disabled = false;
 		aiDictateBtn.classList.toggle("opacity-50", !isSupported);
 		aiDictateBtn.classList.toggle("cursor-not-allowed", !isSupported);
 		aiDictateBtn.classList.toggle("bg-emerald-500/20", active);
@@ -5825,6 +5825,7 @@
 		aiDictateBtn.classList.toggle("text-slate-300", !active);
 		try {
 			aiDictateBtn.setAttribute("aria-pressed", active ? "true" : "false");
+			aiDictateBtn.setAttribute("aria-disabled", isSupported ? "false" : "true");
 			aiDictateBtn.setAttribute(
 				"title",
 				!isSupported
