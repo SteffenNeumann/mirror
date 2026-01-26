@@ -901,7 +901,7 @@ body[data-theme="monoDark"] .ps-note-item .ps-note-actions button:hover {
 	background-color: rgba(88, 166, 255, 0.14) !important;
 }
 
-body[data-theme="monoDark"] .ps-note-item span.rounded-full.border {
+body[data-theme="monoDark"] .ps-note-item.ps-note-active span.rounded-full.border {
 	background-color: rgba(88, 166, 255, 0.08) !important;
 	border-color: rgba(88, 166, 255, 0.28) !important;
 	color: #c9d1d9 !important;
