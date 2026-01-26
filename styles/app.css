@@ -818,6 +818,16 @@ body[data-theme="monoLight"] .ps-note-pin.bg-fuchsia-500\/20 {
 	color: #0969da !important;
 }
 
+body[data-theme="monoLight"] #aiUsePreviewBtn {
+	border-color: rgba(9, 105, 218, 0.35) !important;
+	background-color: rgba(9, 105, 218, 0.12) !important;
+	color: #0b1f33 !important;
+}
+
+body[data-theme="monoLight"] #aiUsePreviewBtn span:first-child {
+	background-color: #0969da !important;
+}
+
 body[data-theme="monoLight"] .shadow-soft {
 	box-shadow: 0 6px 14px rgba(27, 31, 36, 0.08);
 }
