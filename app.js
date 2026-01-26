@@ -5885,43 +5885,61 @@
 	}
 
 	function startAiDictation() {
-		if (!aiDictationRecognizer || !aiPromptInput) return;
+		if (!aiDictationRecognizer || !aiPromptInput) {
+			console.log("[Diktat] Recognizer oder Input fehlt");
+			return;
+		}
 		const start = () => {
+			console.log("[Diktat] Start-Funktion aufgerufen");
 			aiDictationBaseText = String(aiPromptInput.value || "");
 			aiDictationFinalText = "";
 			aiDictationInterimText = "";
 			aiDictationActive = true;
 			setAiDictationUi(true);
+			console.log("[Diktat] UI auf aktiv gesetzt");
 			toast(t("toast.dictation_started"), "info");
+			console.log("[Diktat] Toast angezeigt");
 			try {
 				aiDictationRecognizer.lang = getUiSpeechLocale();
-			} catch {
-				// ignore
+				console.log("[Diktat] Sprache gesetzt:", aiDictationRecognizer.lang);
+			} catch (e) {
+				console.error("[Diktat] Fehler beim Setzen der Sprache:", e);
 			}
 			try {
+				console.log("[Diktat] Starte Recognition...");
 				aiDictationRecognizer.start();
-			} catch {
+				console.log("[Diktat] Recognition gestartet!");
+			} catch (e) {
+				console.error("[Diktat] Fehler beim Start:", e);
 				aiDictationActive = false;
 				setAiDictationUi(false);
 				toast(t("toast.dictation_failed"), "error");
 			}
 		};
+		console.log("[Diktat] startAiDictation aufgerufen");
 		try {
 			aiDictationRecognizer.stop();
-		} catch {
-			// ignore
+			console.log("[Diktat] Vorheriger Recognizer gestoppt");
+		} catch (e) {
+			console.log("[Diktat] Kein vorheriger Recognizer zu stoppen:", e.message);
 		}
 		if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+			console.log("[Diktat] Fordere Mikrofon-Berechtigung an...");
 			navigator.mediaDevices
 				.getUserMedia({ audio: true })
-				.then(() => start())
-				.catch(() => {
+				.then(() => {
+					console.log("[Diktat] Mikrofon-Berechtigung erteilt!");
+					start();
+				})
+				.catch((err) => {
+					console.error("[Diktat] Mikrofon-Berechtigung verweigert:", err);
 					aiDictationActive = false;
 					setAiDictationUi(false);
 					toast(t("toast.dictation_failed"), "error");
 				});
 			return;
 		}
+		console.log("[Diktat] Kein getUserMedia, starte direkt");
 		start();
 	}
 
