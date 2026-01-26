@@ -770,12 +770,12 @@ body[data-theme="monoLight"] #settingsNav {
 }
 
 body[data-theme="monoLight"] #psEditorTagsBar > div {
-	background-color: #f6f8fa !important;
+	background-color: #f0f3f6 !important;
 	border-color: #d0d7de !important;
 }
 
 body[data-theme="monoLight"] #psEditorTagsSuggest {
-	background-color: #ffffff !important;
+	background-color: #f0f3f6 !important;
 	border-color: #d0d7de !important;
 }
 
