@@ -838,6 +838,12 @@ body[data-theme="monoLight"] #commentPanel {
 	border-color: #d0d7de !important;
 }
 
+body[data-theme]:not([data-theme="monoLight"]):not([data-theme="monoDark"]) #previewPanel,
+body[data-theme]:not([data-theme="monoLight"]):not([data-theme="monoDark"]) #commentPanel {
+	background-color: var(--accent-bg-soft) !important;
+	border-color: var(--accent-border) !important;
+}
+
 body[data-theme="monoLight"] #roomTabs .text-fuchsia-100 {
 	background-color: #f0f3f6 !important;
 	border-color: #d0d7de !important;
