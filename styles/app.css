@@ -23,9 +23,9 @@
 		inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 	--selection-menu-bg: rgba(2, 6, 23, 0.85);
 	--selection-menu-border: rgba(255, 255, 255, 0.1);
-	--scrollbar-thumb: rgba(148, 163, 184, 0.3);
-	--scrollbar-thumb-hover: rgba(148, 163, 184, 0.45);
-	--scrollbar-border: rgba(2, 6, 23, 0.35);
+	--scrollbar-thumb: rgba(148, 163, 184, 0.14);
+	--scrollbar-thumb-hover: rgba(148, 163, 184, 0.2);
+	--scrollbar-border: rgba(2, 6, 23, 0.14);
 }
 
 * {
@@ -54,9 +54,9 @@ body {
 	height: 100%;
 }
 
-		--scrollbar-thumb: rgba(148, 163, 184, 0.2);
-		--scrollbar-thumb-hover: rgba(148, 163, 184, 0.3);
-		--scrollbar-border: rgba(2, 6, 23, 0.2);
+body {
+	min-height: 100vh;
+	min-height: 100dvh;
 	padding: 16px;
 	box-sizing: border-box;
 	overflow: hidden;
@@ -72,9 +72,6 @@ body {
 	width: 12px;
 	height: 12px;
 	border-radius: 999px;
-		--scrollbar-thumb: rgba(148, 163, 184, 0.3);
-		--scrollbar-thumb-hover: rgba(148, 163, 184, 0.45);
-		--scrollbar-border: rgba(2, 6, 23, 0.35);
 	border: 2px solid rgba(148, 163, 184, 0.55);
 	border-top-color: rgba(251, 191, 36, 0.9);
 	box-shadow: 0 0 0 1px rgba(15, 23, 42, 0.6) inset;
@@ -84,9 +81,6 @@ body {
 .run-output-icon.is-processing {
 	animation: run-output-spin 0.9s linear infinite;
 	border-top-color: rgba(244, 114, 182, 0.95);
-		--scrollbar-thumb: rgba(148, 163, 184, 0.3);
-		--scrollbar-thumb-hover: rgba(148, 163, 184, 0.45);
-		--scrollbar-border: rgba(2, 6, 23, 0.35);
 }
 
 @keyframes run-output-spin {
@@ -137,9 +131,9 @@ body.glow-disabled .bg-glow {
 	display: none;
 }
 
-.bg-blob {
-	position: absolute;
-	width: 60vmax;
+	--scrollbar-thumb: rgba(148, 163, 184, 0.16);
+	--scrollbar-thumb-hover: rgba(148, 163, 184, 0.24);
+	--scrollbar-border: rgba(2, 6, 23, 0.16);
 	height: 60vmax;
 	border-radius: 999px;
 	filter: blur(140px);
@@ -171,9 +165,9 @@ body.glow-disabled .bg-glow {
 	overflow-y: auto;
 	padding-right: 0.25rem;
 }
-
-#psEditorTagsBar > div {
-	flex-wrap: nowrap;
+		--scrollbar-thumb: rgba(148, 163, 184, 0.16);
+		--scrollbar-thumb-hover: rgba(148, 163, 184, 0.24);
+		--scrollbar-border: rgba(2, 6, 23, 0.16);
 	overflow-x: auto;
 	white-space: nowrap;
 }
@@ -182,9 +176,9 @@ body.glow-disabled .bg-glow {
 	overflow-x: hidden;
 }
 
-.ps-tag-section {
-	--ps-tag-bg: rgba(217, 70, 239, 0.08);
-	--ps-tag-bg-strong: rgba(217, 70, 239, 0.18);
+		--scrollbar-thumb: rgba(148, 163, 184, 0.16);
+		--scrollbar-thumb-hover: rgba(148, 163, 184, 0.24);
+		--scrollbar-border: rgba(2, 6, 23, 0.16);
 	--ps-tag-border: rgba(217, 70, 239, 0.25);
 	--ps-tag-border-strong: rgba(217, 70, 239, 0.45);
 	--ps-tag-text: rgba(226, 232, 240, 0.95);

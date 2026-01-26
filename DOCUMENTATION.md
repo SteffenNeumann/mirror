@@ -1,6 +1,20 @@
 # Dokumentation – Änderungen (2026-01-26)
 
 ## Ziel
+- Scrollbars in nicht-monochromen Themes deutlich zurücknehmen.
+
+## Änderungen
+- Standard-Scrollbar-Variablen weiter reduziert.
+
+## Auswirkungen
+- **UI/UX:** Scrollbars sind weniger präsent in farbigen Themes.
+- **Feature-Interaktionen:** Keine Änderung.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Nicht ausgeführt (UI-Änderung).
+
+## Ziel
 - Scrollbar-Hintergrund in nicht-monochromen Themes subtiler machen.
 
 ## Änderungen
