@@ -114,6 +114,20 @@
 # Dokumentation – Änderungen (2026-01-25)
 
 ## Ziel
+- Horizontale Scrollbar in der Markdown-Preview entfernen.
+
+## Änderungen
+- Preview-HTML setzt `overflow-x: hidden` im Body (inkl. Fallback).
+
+## Auswirkungen
+- **UI/UX:** Keine horizontale Scrollbar in `#mdPreview`.
+- **Feature-Interaktionen:** Keine Änderung.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Nicht ausgeführt (UI-Änderung).
+
+## Ziel
 - Scrollbar-Farbe in Non-Mono-Themes aus dem Theme ableiten bei 0.1 Opacity.
 
 ## Änderungen
