@@ -6069,10 +6069,11 @@
 		renderAiChatHistory();
 	}
 
-	function addAiChatEntry(role, text) {
+	function addAiChatEntry(role, text, contextKey) {
 		const content = String(text || "").trim();
 		if (!content) return;
-		const key = getAiChatContextKey();
+		const key = String(contextKey || getAiChatContextKey() || "");
+		if (!key) return;
 		const list = getAiChatEntriesForContext(key).slice();
 		const roleLower = String(role || "").toLowerCase();
 		const isAi = roleLower === "ai";
@@ -6098,8 +6099,6 @@
 		aiChatHistoryByContext.set(key, list);
 		if (key !== aiChatContextKey) {
 			aiChatContextKey = key;
-			renderAiChatHistory();
-			return;
 		}
 		renderAiChatHistory();
 	}
@@ -8960,6 +8959,7 @@
 		}
 		updateEditorMetaYaml();
 		if (opts && opts.updateList) applyPersonalSpaceFiltersAndRender();
+		syncAiChatContext();
 		return true;
 	}
 
@@ -9915,6 +9915,7 @@ self.onmessage = async (e) => {
 		const prompt = getAiPrompt();
 		if (prompt) saveAiPrompt(prompt);
 		const promptForChat = String(prompt || "").trim();
+		const chatContextKey = getAiChatContextKey();
 		const usePreview = getAiUsePreview();
 		const followUpEnabled = getAiUseAnswer();
 		const lastAiOutput =
@@ -9993,8 +9994,8 @@ self.onmessage = async (e) => {
 				error: "",
 				source: "ai",
 			});
-			if (promptForChat) addAiChatEntry("user", promptForChat);
-			if (aiText) addAiChatEntry("ai", aiText);
+			if (promptForChat) addAiChatEntry("user", promptForChat, chatContextKey);
+			if (aiText) addAiChatEntry("ai", aiText, chatContextKey);
 		} catch (e) {
 			const msg = e && e.message ? String(e.message) : "Error";
 			setPreviewRunOutput({
