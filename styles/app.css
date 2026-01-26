@@ -20,6 +20,8 @@
 	--calendar-tooltip-text: rgba(226, 232, 240, 0.95);
 	--calendar-tooltip-shadow: 0 8px 24px rgba(15, 23, 42, 0.45),
 		inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+	--selection-menu-bg: rgba(2, 6, 23, 0.85);
+	--selection-menu-border: rgba(255, 255, 255, 0.1);
 	--scrollbar-thumb: rgba(148, 163, 184, 0.3);
 	--scrollbar-thumb-hover: rgba(148, 163, 184, 0.45);
 	--scrollbar-border: rgba(2, 6, 23, 0.35);
@@ -57,6 +59,11 @@ body {
 	padding: 16px;
 	box-sizing: border-box;
 	overflow: hidden;
+}
+
+#selectionMenu {
+	background-color: var(--selection-menu-bg);
+	border-color: var(--selection-menu-border);
 }
 
 .run-output-icon {
@@ -722,6 +729,8 @@ body[data-theme="monoLight"] {
 	--calendar-tooltip-text: #24292f;
 	--calendar-tooltip-shadow: 0 12px 28px rgba(15, 23, 42, 0.15),
 		inset 0 0 0 1px rgba(27, 31, 36, 0.06);
+	--selection-menu-bg: #ffffff;
+	--selection-menu-border: #d0d7de;
 }
 
 body[data-theme="monoLight"] .bg-glow {
@@ -961,6 +970,8 @@ body[data-theme="monoDark"] {
 	color-scheme: dark;
 	background-color: #0d1117;
 	color: #c9d1d9;
+	--selection-menu-bg: #0d1117;
+	--selection-menu-border: #30363d;
 }
 
 body[data-theme="monoDark"] .bg-glow {
