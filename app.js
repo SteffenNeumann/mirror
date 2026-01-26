@@ -5815,12 +5815,8 @@
 		aiDictateBtn.disabled = !isSupported;
 		aiDictateBtn.classList.toggle("opacity-50", !isSupported);
 		aiDictateBtn.classList.toggle("cursor-not-allowed", !isSupported);
-		aiDictateBtn.classList.toggle("bg-emerald-500/30", active);
-		aiDictateBtn.classList.toggle("border-emerald-400/40", active);
-		aiDictateBtn.classList.toggle("text-emerald-100", active);
-		aiDictateBtn.classList.toggle("bg-slate-950/30", !active);
-		aiDictateBtn.classList.toggle("border-white/10", !active);
-		aiDictateBtn.classList.toggle("text-slate-200", !active);
+		aiDictateBtn.classList.toggle("text-emerald-200", active);
+		aiDictateBtn.classList.toggle("text-slate-300", !active);
 		try {
 			aiDictateBtn.setAttribute("aria-pressed", active ? "true" : "false");
 			aiDictateBtn.setAttribute(
@@ -5976,6 +5972,9 @@
 		if (!getAiUsePreview()) return "global";
 		const noteId = String(psEditingNoteId || "").trim();
 		if (noteId) return `note:${noteId}`;
+		if (aiChatContextKey && aiChatContextKey.startsWith("note:")) {
+			return aiChatContextKey;
+		}
 		const roomName = normalizeRoom(room);
 		const keyName = normalizeKey(key);
 		return `room:${roomName}:${keyName}`;
@@ -6023,7 +6022,7 @@
 		}
 		const del = document.createElement("button");
 		del.type = "button";
-		del.className = "ai-chat-delete absolute right-2 top-2 h-6 w-6 rounded-md border border-white/10 text-xs text-slate-300 transition hover:bg-white/5 active:bg-white/10";
+		del.className = "ai-chat-delete absolute right-2 top-2 h-6 w-6 rounded-md text-xs text-slate-300 transition hover:bg-white/5 active:bg-white/10";
 		del.setAttribute("data-chat-delete", "true");
 		del.setAttribute("data-chat-id", entry.id);
 		del.setAttribute("data-i18n", "preview.chat_delete");
@@ -6044,6 +6043,11 @@
 	}
 
 	function syncAiChatContext() {
+		if (!getAiUsePreview()) {
+			if (!aiChatContextKey) aiChatContextKey = "global";
+			syncAiChatHistoryVisibility();
+			return;
+		}
 		const nextKey = getAiChatContextKey();
 		if (nextKey === aiChatContextKey) {
 			syncAiChatHistoryVisibility();
