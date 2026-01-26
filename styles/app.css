@@ -638,6 +638,12 @@ body.preview-only #editorPreviewGrid > div:first-child {
 .hover\:bg-fuchsia-500\/20:hover {
 	background-color: var(--accent-bg-hover) !important;
 }
+#aiUsePreviewBtn {
+	background-color: var(--accent-bg) !important;
+}
+#aiUsePreviewBtn:hover {
+	background-color: var(--accent-bg-hover) !important;
+}
 .border-fuchsia-400\/30 {
 	border-color: var(--accent-border) !important;
 }
