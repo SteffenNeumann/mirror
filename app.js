@@ -79,6 +79,7 @@
 	const aiModeSelect = document.getElementById("aiMode");
 	const aiAssistBtn = document.getElementById("aiAssist");
 	const clearRunOutputBtn = document.getElementById("clearRunOutput");
+	const runOutputBar = document.getElementById("runOutputBar");
 	const runOutputEl = document.getElementById("runOutput");
 	const runStatusEl = document.getElementById("runStatus");
 	const runOutputTitleEl = document.getElementById("runOutputTitle");
@@ -6785,6 +6786,9 @@
 			).trim()
 		);
 		const canClear = hasAnyOutput || hasAnyError || hasAnyStatus;
+		if (runOutputBar && runOutputBar.classList) {
+			runOutputBar.classList.toggle("hidden", !canClear);
+		}
 		if (runOutputTitleEl)
 			runOutputTitleEl.textContent = hasAiOutput ? "AI Output" : "AI";
 		if (applyOutputReplaceBtn && applyOutputReplaceBtn.classList) {
@@ -6796,6 +6800,11 @@
 		if (clearRunOutputBtn && clearRunOutputBtn.classList) {
 			clearRunOutputBtn.classList.toggle("hidden", !canClear);
 		}
+	}
+
+	function setRunOutputProcessing(active) {
+		if (!runOutputIconEl || !runOutputIconEl.classList) return;
+		runOutputIconEl.classList.toggle("is-processing", Boolean(active));
 	}
 
 	function updateRunOutputSizing() {
@@ -9741,6 +9750,7 @@ self.onmessage = async (e) => {
 			toast("Nothing to send.", "info");
 			return;
 		}
+		setRunOutputProcessing(true);
 		setPreviewRunOutput({
 			status: `AI (${mode})…`,
 			output: "",
@@ -9776,6 +9786,8 @@ self.onmessage = async (e) => {
 				source: "ai",
 			});
 			toast(`AI failed: ${msg}`, "error");
+		} finally {
+			setRunOutputProcessing(false);
 		}
 	}
 

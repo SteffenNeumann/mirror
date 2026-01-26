@@ -1136,15 +1136,19 @@
 													</div>
 											</div>
 											<div
-												class="flex flex-wrap items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-[5px] text-xs text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150">
+												id="runOutputBar"
+												class="hidden flex flex-wrap items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2 py-[5px] text-xs text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150">
 												<div
 													class="flex items-center justify-between gap-2 text-[11px] text-slate-300">
-													<div class="sr-only">
-														<span id="runOutputIcon" aria-hidden="true"></span>
-														<span id="runOutputTitle">AI</span>
-													</div>
-													<div class="flex flex-wrap items-center gap-2">
-														<span id="runStatus" class="text-slate-400"></span>
+														<div class="sr-only">
+															<span id="runOutputTitle">AI</span>
+														</div>
+														<div class="flex flex-wrap items-center gap-2">
+															<span
+																id="runOutputIcon"
+																class="run-output-icon"
+																aria-hidden="true"></span>
+															<span id="runStatus" class="text-slate-400"></span>
 														<button
 															id="applyOutputReplace"
 															type="button"
