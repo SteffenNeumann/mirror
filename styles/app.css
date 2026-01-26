@@ -907,6 +907,23 @@ body[data-theme="monoDark"] .ps-note-item.ps-note-active span.rounded-full.borde
 	color: #c9d1d9 !important;
 }
 
+body[data-theme="monoDark"] #psEditorTagsBar > div {
+	background-color: #161b22 !important;
+	border-color: #30363d !important;
+}
+
+body[data-theme="monoDark"] #psEditorTagsBar input,
+body[data-theme="monoDark"] #psEditorTagsBar select {
+	background-color: #0d1117 !important;
+	border-color: #30363d !important;
+	color: #c9d1d9 !important;
+}
+
+body[data-theme="monoDark"] #psEditorTagsSuggest {
+	background-color: #0d1117 !important;
+	border-color: #30363d !important;
+}
+
 body[data-theme="monoDark"] .shadow-soft {
 	box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
 }
