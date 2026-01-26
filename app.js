@@ -7852,7 +7852,7 @@
 		.pdf-actions{display:flex;justify-content:flex-end;gap:8px;}
 		.pdf-frame{width:100%;height:auto;display:block;background:${previewBg};}
 		.pdf-fallback{padding:10px 12px;font-size:12px;color:${previewMetaText};background:${previewMetaBg};border-bottom:1px solid ${previewTableBorder};}
-		.toc-float{position:fixed;top:12px;right:12px;z-index:20;width:200px;max-height:calc(100vh - 24px);display:flex;flex-direction:column;border:1px solid var(--toc-border);background:color-mix(in srgb, var(--toc-bg) 78%, transparent);border-radius:12px;box-shadow:var(--toc-shadow);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);color:var(--toc-text);}
+		.toc-float{position:fixed;top:12px;right:12px;z-index:20;width:200px;max-height:calc(100vh - 24px);display:flex;flex-direction:column;border:1px solid var(--toc-border);background:var(--toc-bg);border-radius:12px;box-shadow:var(--toc-shadow);backdrop-filter:blur(12px);color:var(--toc-text);}
 		.toc-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-bottom:1px solid var(--toc-border);font-size:11px;font-weight:600;letter-spacing:.02em;}
 		.toc-title{display:inline-flex;align-items:center;justify-content:center;color:var(--toc-text);}
 		.toc-title svg{width:14px;height:14px;}
