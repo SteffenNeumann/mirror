@@ -5986,8 +5986,8 @@
 		const isAi = String(role || "").toLowerCase() === "ai";
 		const badgeKey = isAi ? "preview.chat_ai" : "preview.chat_you";
 		badge.className = isAi
-			? "mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-md bg-fuchsia-500/20 text-[10px] text-fuchsia-200"
-			: "mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-md bg-white/10 text-[10px]";
+			? "ai-chat-badge ai-chat-badge-ai mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-md bg-fuchsia-500/20 text-[10px] text-fuchsia-200"
+			: "ai-chat-badge mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-md bg-white/10 text-[10px]";
 		badge.setAttribute("data-i18n", badgeKey);
 		badge.textContent = t(badgeKey);
 		const body = document.createElement("div");
