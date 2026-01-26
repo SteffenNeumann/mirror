@@ -165,6 +165,12 @@ body.glow-disabled .bg-glow {
 	padding-right: 0.25rem;
 }
 
+#psEditorTagsBar > div {
+	flex-wrap: nowrap;
+	overflow-x: auto;
+	white-space: nowrap;
+}
+
 #psList {
 	overflow-x: hidden;
 }
