@@ -885,6 +885,22 @@ body[data-theme="monoDark"] .bg-slate-950\/80 {
 	background-color: rgba(1, 4, 9, 0.8) !important;
 }
 
+body[data-theme="monoDark"] .ps-note-item {
+	background-color: rgba(88, 166, 255, 0.06) !important;
+	border-color: rgba(88, 166, 255, 0.35) !important;
+	box-shadow: 0 8px 18px rgba(88, 166, 255, 0.12);
+}
+
+body[data-theme="monoDark"] .ps-note-item:hover {
+	background-color: rgba(88, 166, 255, 0.1) !important;
+}
+
+body[data-theme="monoDark"] .ps-note-item.ps-note-active {
+	background-color: rgba(88, 166, 255, 0.14) !important;
+	border-color: rgba(88, 166, 255, 0.55) !important;
+	box-shadow: 0 10px 22px rgba(88, 166, 255, 0.2);
+}
+
 body[data-theme="monoDark"] .shadow-soft {
 	box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
 }
