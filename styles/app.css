@@ -909,6 +909,12 @@ body[data-theme="monoLight"] #commentPanel {
 	border-color: #d0d7de !important;
 }
 
+body[data-theme="monoLight"] #commentPanel .bg-rose-500\/10 {
+	background-color: rgba(207, 34, 46, 0.08) !important;
+	border-color: rgba(207, 34, 46, 0.3) !important;
+	color: #cf222e !important;
+}
+
 
 body[data-theme="monoLight"] #roomTabs .text-fuchsia-100 {
 	background-color: #f0f3f6 !important;

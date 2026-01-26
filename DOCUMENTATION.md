@@ -17,6 +17,21 @@
 - Nicht ausgeführt: `node` nicht verfügbar (`node --check server.js`).
 
 ## Ziel
+- Trash-Icon im Kommentar-Panel im Light-Theme sichtbar machen.
+
+## Änderungen
+- MonoLight-Override für den Delete-Button im Kommentar-Panel ergänzt.
+
+## Auswirkungen
+- **UI/UX:** Löschen-Icon im Light-Theme klar sichtbar.
+- **Feature-Interaktionen:** Keine Änderung.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Nicht ausgeführt: `node` nicht verfügbar (`node --check app.js`).
+- Nicht ausgeführt: `node` nicht verfügbar (`node --check server.js`).
+
+## Ziel
 - Kalendertermine themenabhängig gestalten (Hintergrund + Tooltip) und Borders bei Terminen entfernen.
 
 ## Änderungen
