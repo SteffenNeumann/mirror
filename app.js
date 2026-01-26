@@ -5928,23 +5928,6 @@
 			aiDictationRestarting = false;
 			console.log("[Diktat] Kein vorheriger Recognizer zu stoppen:", e.message);
 		}
-		if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
-			console.log("[Diktat] Fordere Mikrofon-Berechtigung an...");
-			navigator.mediaDevices
-				.getUserMedia({ audio: true })
-				.then(() => {
-					console.log("[Diktat] Mikrofon-Berechtigung erteilt!");
-					start();
-				})
-				.catch((err) => {
-					console.error("[Diktat] Mikrofon-Berechtigung verweigert:", err);
-					aiDictationActive = false;
-					setAiDictationUi(false);
-					toast(t("toast.dictation_failed"), "error");
-				});
-			return;
-		}
-		console.log("[Diktat] Kein getUserMedia, starte direkt");
 		start();
 	}
 
@@ -5962,7 +5945,10 @@
 				aiDictationRestarting = false;
 			};
 			aiDictationRecognizer.onresult = onAiDictationResult;
-			aiDictationRecognizer.onerror = () => {
+			aiDictationRecognizer.onerror = (event) => {
+				const code = event && event.error ? String(event.error) : "";
+				console.error("[Diktat] Fehler:", code || event || "unknown");
+				if (aiDictationRestarting) return;
 				aiDictationActive = false;
 				aiDictationRestarting = false;
 				setAiDictationUi(false);

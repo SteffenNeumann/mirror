@@ -20,6 +20,22 @@
 # Dokumentation – Änderungen (2026-01-25)
 
 ## Ziel
+- Diktat-Fehler-Toast vermeiden durch Start im User-Gesture-Pfad.
+
+## Änderungen
+- Diktat-Start wird nicht mehr von `getUserMedia()` abhängig gemacht.
+- Fehler-Handler loggt Fehlercode und ignoriert Restart-Zustand.
+
+## Auswirkungen
+- **UI/UX:** Diktat startet stabiler, weniger Fehl-Toast direkt nach Klick.
+- **Feature-Interaktionen:** Keine Änderung außerhalb Diktat.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Auszuführen: `node --check app.js`
+- Auszuführen: `node --check server.js`
+
+## Ziel
 - Diktat-Toast und Status-Icon sichtbar machen sowie Diktat-Start stabilisieren.
 
 ## Änderungen
