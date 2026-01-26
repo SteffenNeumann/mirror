@@ -7030,6 +7030,9 @@
 			Number(textarea.selectionEnd || 0)
 		);
 		const show = Boolean(open);
+		if (document.body && document.body.classList) {
+			document.body.classList.toggle("code-lang-active", show);
+		}
 		if (codeLangWrap.classList) codeLangWrap.classList.toggle("hidden", !show);
 		if (psMetaToggle && psMetaToggle.classList) {
 			psMetaToggle.classList.toggle("hidden", show);

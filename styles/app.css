@@ -250,6 +250,11 @@ body.glow-disabled .bg-glow {
 	height: 0.95rem;
 }
 
+body.code-lang-active #psEditorTagsBar,
+body.code-lang-active #clearMirror {
+	display: none !important;
+}
+
 .ps-note-item.ps-note-active .ps-note-actions,
 .ps-note-item:hover .ps-note-actions {
 	opacity: 1 !important;
