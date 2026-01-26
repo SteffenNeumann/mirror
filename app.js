@@ -6000,29 +6000,35 @@
 
 	function createAiChatEntryEl(entry) {
 		const item = document.createElement("div");
-		item.className = "ai-chat-item flex items-start gap-2";
+		item.className = "ai-chat-item group relative space-y-2 rounded-md bg-white/5 p-2";
 		item.setAttribute("data-chat-id", entry.id);
-		const badge = document.createElement("span");
-		const isAi = String(entry.role || "").toLowerCase() === "ai";
-		const badgeKey = isAi ? "preview.chat_ai" : "preview.chat_you";
-		badge.className = isAi
-			? "ai-chat-badge ai-chat-badge-ai mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-md bg-fuchsia-500/20 text-[10px] text-fuchsia-200"
-			: "ai-chat-badge mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-md bg-white/10 text-[10px]";
-		badge.setAttribute("data-i18n", badgeKey);
-		badge.textContent = t(badgeKey);
-		const body = document.createElement("div");
-		body.className = "ai-chat-message flex-1 rounded-md bg-white/5 px-2 py-1.5 text-slate-100";
-		body.textContent = String(entry.text || "");
+		const items = Array.isArray(entry.items) ? entry.items : [];
+		for (const row of items) {
+			const rowEl = document.createElement("div");
+			rowEl.className = "flex items-start gap-2";
+			const badge = document.createElement("span");
+			const isAi = String(row.role || "").toLowerCase() === "ai";
+			const badgeKey = isAi ? "preview.chat_ai" : "preview.chat_you";
+			badge.className = isAi
+				? "ai-chat-badge ai-chat-badge-ai mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-md bg-fuchsia-500/20 text-[10px] text-fuchsia-200"
+				: "ai-chat-badge mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-md bg-white/10 text-[10px]";
+			badge.setAttribute("data-i18n", badgeKey);
+			badge.textContent = t(badgeKey);
+			const body = document.createElement("div");
+			body.className = "ai-chat-message flex-1 rounded-md bg-white/5 px-2 py-1.5 text-slate-100";
+			body.textContent = String(row.text || "");
+			rowEl.appendChild(badge);
+			rowEl.appendChild(body);
+			item.appendChild(rowEl);
+		}
 		const del = document.createElement("button");
 		del.type = "button";
-		del.className = "ai-chat-delete mt-0.5 h-6 w-6 rounded-md border border-white/10 text-xs text-slate-300 transition hover:bg-white/5 active:bg-white/10";
+		del.className = "ai-chat-delete absolute right-2 top-2 h-6 w-6 rounded-md border border-white/10 text-xs text-slate-300 transition hover:bg-white/5 active:bg-white/10";
 		del.setAttribute("data-chat-delete", "true");
 		del.setAttribute("data-chat-id", entry.id);
 		del.setAttribute("data-i18n", "preview.chat_delete");
 		del.setAttribute("title", t("preview.chat_delete"));
 		del.textContent = "×";
-		item.appendChild(badge);
-		item.appendChild(body);
 		item.appendChild(del);
 		return item;
 	}
@@ -6068,22 +6074,34 @@
 		if (!content) return;
 		const key = getAiChatContextKey();
 		const list = getAiChatEntriesForContext(key).slice();
-		const entry = {
-			id: `${Date.now()}-${(aiChatSeq += 1)}`,
-			role: String(role || ""),
-			text: content,
-		};
-		list.push(entry);
+		const roleLower = String(role || "").toLowerCase();
+		const isAi = roleLower === "ai";
+		if (isAi && list.length) {
+			const last = list[list.length - 1];
+			const lastItems = Array.isArray(last.items) ? last.items : [];
+			const lastHasAi = lastItems.some((item) => String(item.role || "").toLowerCase() === "ai");
+			if (!lastHasAi) {
+				last.items = [...lastItems, { role: "ai", text: content }];
+				list[list.length - 1] = last;
+			} else {
+				list.push({
+					id: `${Date.now()}-${(aiChatSeq += 1)}`,
+					items: [{ role: "ai", text: content }],
+				});
+			}
+		} else {
+			list.push({
+				id: `${Date.now()}-${(aiChatSeq += 1)}`,
+				items: [{ role: roleLower || "user", text: content }],
+			});
+		}
 		aiChatHistoryByContext.set(key, list);
 		if (key !== aiChatContextKey) {
 			aiChatContextKey = key;
 			renderAiChatHistory();
 			return;
 		}
-		if (aiChatList) {
-			aiChatList.appendChild(createAiChatEntryEl(entry));
-		}
-		syncAiChatHistoryVisibility();
+		renderAiChatHistory();
 	}
 
 	function stripManualTagsMarker(tags) {
@@ -15337,9 +15355,15 @@ self.onmessage = async (e) => {
 			const entries = getAiChatEntriesForContext(aiChatContextKey);
 			const entry = entries.find((e) => String(e.id || "") === String(id || ""));
 			if (!entry) return;
+			const parts = (Array.isArray(entry.items) ? entry.items : []).map((row) => {
+				const isAi = String(row.role || "").toLowerCase() === "ai";
+				const label = isAi ? t("preview.chat_ai") : t("preview.chat_you");
+				return `${label}: ${String(row.text || "")}`.trim();
+			});
+			const output = parts.join("\n\n");
 			setPreviewRunOutput({
 				status: t("preview.chat_output"),
-				output: String(entry.text || ""),
+				output,
 				error: "",
 				source: "chat",
 			});

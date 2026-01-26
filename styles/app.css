@@ -869,6 +869,16 @@ body[data-theme="monoLight"] .ai-chat-badge-ai {
 	cursor: pointer;
 }
 
+.ai-chat-delete {
+	opacity: 0;
+	pointer-events: none;
+}
+
+.ai-chat-item:hover .ai-chat-delete {
+	opacity: 1;
+	pointer-events: auto;
+}
+
 body[data-theme="monoLight"] .shadow-soft {
 	box-shadow: 0 6px 14px rgba(27, 31, 36, 0.08);
 }

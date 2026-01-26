@@ -1077,10 +1077,22 @@
 													<button
 														id="aiChatClear"
 														type="button"
-														class="rounded-md border border-white/10 bg-transparent px-2 py-1 text-[11px] text-slate-300 transition hover:bg-white/5 active:bg-white/10"
+														class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
 														data-i18n="preview.chat_clear"
 														title="Chatverlauf leeren">
-														Leeren
+														<span class="sr-only" data-i18n="preview.chat_clear">Chat leeren</span>
+														<svg
+															viewBox="0 0 24 24"
+															fill="none"
+															stroke="currentColor"
+															stroke-width="2"
+															stroke-linecap="round"
+															stroke-linejoin="round"
+															class="h-4 w-4">
+															<path d="M3 6h18" />
+															<path d="M8 6V4h8v2" />
+															<path d="M6 6l1 14h10l1-14" />
+														</svg>
 													</button>
 												</div>
 												<div id="aiChatList" class="space-y-2"></div>
