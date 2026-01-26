@@ -1,3 +1,22 @@
+# Dokumentation – Änderungen (2026-01-26)
+
+## Ziel
+- Kalendertermine themenabhängig gestalten (Hintergrund + Tooltip) und Borders bei Terminen entfernen.
+
+## Änderungen
+- Theme-abhängige CSS-Variablen für Kalendertermine/Tooltip ergänzt.
+- Border-Klassen von Kalender-Terminen in Tag/Woche/Monat entfernt.
+- Lokale Kalender-Event-Erstellung korrigiert (korrekte Rückgabe).
+
+## Auswirkungen
+- **UI/UX:** Termine und Tooltip passen zum aktiven Theme, keine Termins-Border.
+- **Feature-Interaktionen:** Kalender-Anzeige unverändert, nur Styling.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
 # Dokumentation – Änderungen (2026-01-25)
 
 ## Ziel

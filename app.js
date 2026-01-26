@@ -426,8 +426,9 @@
 		canvas.height = viewport.height;
 		const ctx = canvas.getContext("2d");
 		await page.render({ canvasContext: ctx, viewport }).promise;
+		const dataUrl = canvas.toDataURL("image/png");
 		return {
-			dataUrl: canvas.toDataURL("image/png"),
+			dataUrl,
 			page: pageIndex,
 			pages: total,
 			width: canvas.width,
@@ -1057,19 +1058,19 @@
 		return `<!doctype html>
 <html lang="de">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>${safeTitle}</title>
-  <style>
-    :root { color-scheme: light dark; }
-    body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; margin: 24px; }
-    h1 { font-size: 20px; margin: 0 0 12px; }
-    pre { white-space: pre-wrap; word-break: break-word; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; background: rgba(0,0,0,.04); padding: 12px; border-radius: 8px; }
-  </style>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<title>${safeTitle}</title>
+	<style>
+		:root { color-scheme: light dark; }
+		body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; margin: 24px; }
+		h1 { font-size: 20px; margin: 0 0 12px; }
+		pre { white-space: pre-wrap; word-break: break-word; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; background: rgba(0,0,0,.04); padding: 12px; border-radius: 8px; }
+	</style>
 </head>
 <body>
-  <h1>${safeTitle}</h1>
-  <pre>${safeBody}</pre>
+	<h1>${safeTitle}</h1>
+	<pre>${safeBody}</pre>
 </body>
 </html>`;
 	}
@@ -5427,6 +5428,22 @@
 					(isMonoLightTheme
 						? "rgba(241, 245, 249, 0.9)"
 						: "rgba(2, 6, 23, 0.35)")
+			);
+			root.style.setProperty(
+				"--calendar-event-bg",
+				colors.accentBgSoft || "rgba(15, 23, 42, 0.55)"
+			);
+			root.style.setProperty(
+				"--calendar-tooltip-bg",
+				colors.accentBg || "rgba(2, 6, 23, 0.92)"
+			);
+			root.style.setProperty(
+				"--calendar-tooltip-border",
+				colors.accentBorder || "rgba(255, 255, 255, 0.12)"
+			);
+			root.style.setProperty(
+				"--calendar-tooltip-text",
+				colors.accentText || "rgba(226, 232, 240, 0.95)"
 			);
 		}
 		try {
@@ -12313,9 +12330,6 @@ self.onmessage = async (e) => {
 			const dayEvents = events.filter(
 				(evt) => evt.start < end && evt.end > start
 			);
-			const isToday =
-				startOfDay(start).getTime() === startOfDay(new Date()).getTime();
-			const dayBorder = isToday ? "border-fuchsia-400/40" : "border-white/10";
 			calendarGrid.innerHTML = dayEvents.length
 				? dayEvents
 					.map((evt) => {
@@ -12331,7 +12345,7 @@ self.onmessage = async (e) => {
 								)}\</div>`
 							: "";
 						return `
-							<div class="calendar-event rounded-lg border ${dayBorder} bg-slate-950/40 p-3" data-tooltip="${escapeAttr(
+							<div class="calendar-event rounded-lg bg-slate-950/40 p-3" data-tooltip="${escapeAttr(
 								tooltip
 							)}">
 								<div class="flex items-center justify-between gap-2">
@@ -12370,7 +12384,7 @@ self.onmessage = async (e) => {
 								? `${time} · ${evt.title} · ${evt.location}`
 								: `${time} · ${evt.title}`;
 							return `
-								<div class="calendar-event rounded-md border border-white/10 bg-slate-950/50 px-2 py-1 text-[11px] text-slate-200" data-tooltip="${escapeAttr(
+								<div class="calendar-event rounded-md bg-slate-950/50 px-2 py-1 text-[11px] text-slate-200" data-tooltip="${escapeAttr(
 									tooltip
 								)}">
 									<div class="flex items-center gap-2">
@@ -12419,9 +12433,9 @@ self.onmessage = async (e) => {
 					? `${time} · ${evt.title} · ${evt.location}`
 					: `${time} · ${evt.title}`;
 				return `
-					<div class="calendar-event rounded-md border border-white/10 bg-slate-950/50 px-2 py-1 text-[10px] text-slate-200" data-tooltip="${escapeAttr(
-						title
-					)}">
+							<div class="calendar-event rounded-md bg-slate-950/50 px-2 py-1 text-[10px] text-slate-200" data-tooltip="${escapeAttr(
+							title
+						)}">
 						<div class="flex items-center gap-2">
 							<span class="inline-flex h-2 w-2 rounded-full" style="background:${escapeAttr(
 								evt.color

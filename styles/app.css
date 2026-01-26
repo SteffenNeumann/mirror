@@ -14,6 +14,12 @@
 	--accent-ring-strong: rgba(217, 70, 239, 0.4);
 	--blockquote-border: rgba(217, 70, 239, 0.45);
 	--blockquote-text: rgba(226, 232, 240, 0.9);
+	--calendar-event-bg: rgba(15, 23, 42, 0.55);
+	--calendar-tooltip-bg: rgba(2, 6, 23, 0.92);
+	--calendar-tooltip-border: rgba(255, 255, 255, 0.12);
+	--calendar-tooltip-text: rgba(226, 232, 240, 0.95);
+	--calendar-tooltip-shadow: 0 8px 24px rgba(15, 23, 42, 0.45),
+		inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 	--scrollbar-thumb: rgba(148, 163, 184, 0.3);
 	--scrollbar-thumb-hover: rgba(148, 163, 184, 0.45);
 	--scrollbar-border: rgba(2, 6, 23, 0.35);
@@ -649,6 +655,8 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	position: relative;
 	cursor: pointer;
 	overflow: visible;
+	border: none;
+	background-color: var(--calendar-event-bg) !important;
 }
 
 #calendarGrid.calendar-grid-month {
@@ -673,16 +681,14 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	min-width: 120px;
 	padding: 6px 10px;
 	border-radius: 10px;
-	border: 1px solid rgba(255, 255, 255, 0.12);
-	background: rgba(2, 6, 23, 0.92);
-	color: rgba(226, 232, 240, 0.95);
+	border: 1px solid var(--calendar-tooltip-border);
+	background: var(--calendar-tooltip-bg);
+	color: var(--calendar-tooltip-text);
 	font-size: 11px;
 	line-height: 1.4;
 	white-space: normal;
 	text-align: left;
-	box-shadow:
-		0 8px 24px rgba(15, 23, 42, 0.45),
-		inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+	box-shadow: var(--calendar-tooltip-shadow);
 	z-index: 30;
 }
 
@@ -693,9 +699,9 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	bottom: calc(100% + 4px);
 	width: 8px;
 	height: 8px;
-	background: rgba(2, 6, 23, 0.92);
-	border-left: 1px solid rgba(255, 255, 255, 0.12);
-	border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+	background: var(--calendar-tooltip-bg);
+	border-left: 1px solid var(--calendar-tooltip-border);
+	border-bottom: 1px solid var(--calendar-tooltip-border);
 	transform: translate(-50%, -6px) rotate(45deg);
 	z-index: 29;
 }
@@ -710,6 +716,12 @@ body[data-theme="monoLight"] {
 	color-scheme: light;
 	background-color: #f6f8fa;
 	color: #24292f;
+	--calendar-event-bg: rgba(255, 255, 255, 0.95);
+	--calendar-tooltip-bg: #ffffff;
+	--calendar-tooltip-border: rgba(27, 31, 36, 0.18);
+	--calendar-tooltip-text: #24292f;
+	--calendar-tooltip-shadow: 0 12px 28px rgba(15, 23, 42, 0.15),
+		inset 0 0 0 1px rgba(27, 31, 36, 0.06);
 }
 
 body[data-theme="monoLight"] .bg-glow {
