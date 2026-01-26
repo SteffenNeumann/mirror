@@ -824,6 +824,9 @@ body[data-theme="monoLight"] #commentPanel {
 }
 
 body[data-theme="monoLight"] #roomTabs .text-fuchsia-100 {
+	background-color: #f0f3f6 !important;
+	border-color: #d0d7de !important;
+	color: #24292f !important;
 	color: #0b1f33 !important;
 }
 
