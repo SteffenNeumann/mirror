@@ -927,8 +927,10 @@ body[data-theme="monoLight"] #previewPanel {
 }
 
 body[data-theme="monoLight"] #commentPanel {
-	background-color: #f6f8fa !important;
+	background-color: rgba(246, 248, 250, 0.78) !important;
 	border-color: #d0d7de !important;
+	backdrop-filter: blur(20px) saturate(140%) !important;
+	-webkit-backdrop-filter: blur(20px) saturate(140%) !important;
 }
 
 body[data-theme="monoLight"] #commentPanel .bg-rose-500\/10 {
@@ -1114,6 +1116,12 @@ body[data-theme="monoDark"] #previewPanel,
 body[data-theme="monoDark"] #commentPanel {
 	background-color: #0d1117 !important;
 	border-color: #30363d !important;
+}
+
+body[data-theme="monoDark"] #commentPanel {
+	background-color: rgba(13, 17, 23, 0.72) !important;
+	backdrop-filter: blur(20px) saturate(140%) !important;
+	-webkit-backdrop-filter: blur(20px) saturate(140%) !important;
 }
 
 body[data-theme="monoDark"] .hover\:bg-white\/5:hover {

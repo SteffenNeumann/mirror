@@ -1,6 +1,22 @@
 # Dokumentation – Änderungen (2026-01-26)
 
 ## Ziel
+- Kommentar-Panel und TOC stärker glasartig darstellen.
+
+## Änderungen
+- TOC-Float nutzt transparentere Hintergrundmischung und stärkeren Blur.
+- Kommentar-Panel Hintergrund aufgehellt und Blur/Saturation erhöht (Light/Dark).
+
+## Auswirkungen
+- **UI/UX:** Kommentar-Panel wirkt weniger dunkel und näher am Hintergrund.
+- **Feature-Interaktionen:** Keine Änderung.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Nicht ausgeführt: `node` nicht verfügbar (`node --check app.js`).
+- Nicht ausgeführt: `node` nicht verfügbar (`node --check server.js`).
+
+## Ziel
 - TOC-Float-Hintergrund an Markdown-Preview angleichen.
 - Kommentar-Panel-Hintergrund an Editor-Theme angleichen.
 
