@@ -4165,6 +4165,7 @@
 				"preview.chat_clear": "Chat leeren",
 				"preview.chat_delete": "Chat löschen",
 				"preview.chat_output": "Chat",
+				"toast.dictation_started": "Diktat gestartet.",
 				"preview.replace_title": "Editor durch KI-Ausgabe ersetzen",
 				"preview.replace": "Ersetzen",
 				"preview.append_title": "KI-Ausgabe ans Ende anfügen",
@@ -4417,6 +4418,7 @@
 				"preview.chat_clear": "Clear chat",
 				"preview.chat_delete": "Delete chat",
 				"preview.chat_output": "Chat",
+				"toast.dictation_started": "Dictation started.",
 				"preview.replace_title": "Replace editor with AI output",
 				"preview.replace": "Replace",
 				"preview.append_title": "Append AI output to editor",
@@ -5815,7 +5817,11 @@
 		aiDictateBtn.disabled = !isSupported;
 		aiDictateBtn.classList.toggle("opacity-50", !isSupported);
 		aiDictateBtn.classList.toggle("cursor-not-allowed", !isSupported);
-		aiDictateBtn.classList.toggle("text-emerald-200", active);
+		aiDictateBtn.classList.toggle("bg-emerald-500/20", active);
+		aiDictateBtn.classList.toggle("border-emerald-400/40", active);
+		aiDictateBtn.classList.toggle("text-emerald-100", active);
+		aiDictateBtn.classList.toggle("bg-transparent", !active);
+		aiDictateBtn.classList.toggle("border-transparent", !active);
 		aiDictateBtn.classList.toggle("text-slate-300", !active);
 		try {
 			aiDictateBtn.setAttribute("aria-pressed", active ? "true" : "false");
@@ -5885,6 +5891,7 @@
 			aiDictationInterimText = "";
 			aiDictationActive = true;
 			setAiDictationUi(true);
+			toast(t("toast.dictation_started"), "info");
 			try {
 				aiDictationRecognizer.lang = getUiSpeechLocale();
 			} catch {
