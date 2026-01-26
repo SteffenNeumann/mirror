@@ -5879,17 +5879,42 @@
 
 	function startAiDictation() {
 		if (!aiDictationRecognizer || !aiPromptInput) return;
-		aiDictationBaseText = String(aiPromptInput.value || "");
-		aiDictationFinalText = "";
-		aiDictationInterimText = "";
-		aiDictationActive = true;
-		setAiDictationUi(true);
+		const start = () => {
+			aiDictationBaseText = String(aiPromptInput.value || "");
+			aiDictationFinalText = "";
+			aiDictationInterimText = "";
+			aiDictationActive = true;
+			setAiDictationUi(true);
+			try {
+				aiDictationRecognizer.lang = getUiSpeechLocale();
+			} catch {
+				// ignore
+			}
+			try {
+				aiDictationRecognizer.start();
+			} catch {
+				aiDictationActive = false;
+				setAiDictationUi(false);
+				toast(t("toast.dictation_failed"), "error");
+			}
+		};
 		try {
-			aiDictationRecognizer.start();
+			aiDictationRecognizer.stop();
 		} catch {
-			aiDictationActive = false;
-			setAiDictationUi(false);
+			// ignore
 		}
+		if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+			navigator.mediaDevices
+				.getUserMedia({ audio: true })
+				.then(() => start())
+				.catch(() => {
+					aiDictationActive = false;
+					setAiDictationUi(false);
+					toast(t("toast.dictation_failed"), "error");
+				});
+			return;
+		}
+		start();
 	}
 
 	function initAiDictation() {
@@ -5972,12 +5997,7 @@
 		if (!getAiUsePreview()) return "global";
 		const noteId = String(psEditingNoteId || "").trim();
 		if (noteId) return `note:${noteId}`;
-		if (aiChatContextKey && aiChatContextKey.startsWith("note:")) {
-			return aiChatContextKey;
-		}
-		const roomName = normalizeRoom(room);
-		const keyName = normalizeKey(key);
-		return `room:${roomName}:${keyName}`;
+		return "";
 	}
 
 	function getAiChatEntriesForContext(key) {
