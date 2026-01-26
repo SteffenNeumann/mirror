@@ -1,6 +1,22 @@
 # Dokumentation – Änderungen (2026-01-26)
 
 ## Ziel
+- Kommentar-Chat-Hintergrund an aktives Theme anpassen.
+
+## Änderungen
+- Theme-Variable für Kommentar-Items ergänzt und in der Kommentar-Liste angewendet.
+- MonoLight/MonoDark setzen spezifische Kommentar-Hintergründe.
+
+## Auswirkungen
+- **UI/UX:** Kommentar-Items passen zum aktiven Theme.
+- **Feature-Interaktionen:** Keine Änderung.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Nicht ausgeführt: `node` nicht verfügbar (`node --check app.js`).
+- Nicht ausgeführt: `node` nicht verfügbar (`node --check server.js`).
+
+## Ziel
 - Kalendertermine themenabhängig gestalten (Hintergrund + Tooltip) und Borders bei Terminen entfernen.
 
 ## Änderungen

@@ -15,6 +15,7 @@
 	--blockquote-border: rgba(217, 70, 239, 0.45);
 	--blockquote-text: rgba(226, 232, 240, 0.9);
 	--calendar-event-bg: rgba(15, 23, 42, 0.55);
+	--comment-item-bg: rgba(15, 23, 42, 0.5);
 	--calendar-tooltip-bg: rgba(2, 6, 23, 0.92);
 	--calendar-tooltip-border: rgba(255, 255, 255, 0.12);
 	--calendar-tooltip-text: rgba(226, 232, 240, 0.95);
@@ -344,6 +345,9 @@ body.code-lang-active #clearMirror {
 	background: var(--accent-strong);
 	border-color: var(--accent-border-strong);
 	color: var(--accent-text);
+}
+#commentList > div {
+	background-color: var(--comment-item-bg) !important;
 }
 @media (min-width: 1024px) {
 	#editorPreviewGrid.comment-panel-open #mirror,
@@ -730,6 +734,7 @@ body[data-theme="monoLight"] {
 	background-color: #f6f8fa;
 	color: #24292f;
 	--calendar-event-bg: rgba(255, 255, 255, 0.95);
+	--comment-item-bg: #f6f8fa;
 	--calendar-tooltip-bg: #ffffff;
 	--calendar-tooltip-border: rgba(27, 31, 36, 0.18);
 	--calendar-tooltip-text: #24292f;
@@ -978,6 +983,7 @@ body[data-theme="monoDark"] {
 	color: #c9d1d9;
 	--selection-menu-bg: #0d1117;
 	--selection-menu-border: #30363d;
+	--comment-item-bg: #161b22;
 }
 
 body[data-theme="monoDark"] .bg-glow {
