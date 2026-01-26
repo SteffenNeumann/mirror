@@ -114,6 +114,20 @@
 # Dokumentation – Änderungen (2026-01-25)
 
 ## Ziel
+- Scrollbar-Opacity in nicht-monochromen Themes auf 0.1 reduzieren.
+
+## Änderungen
+- Standard-Scrollbar-Variablen auf 0.1 gesetzt (Thumb/Hover/Border).
+
+## Auswirkungen
+- **UI/UX:** Scrollbars wirken noch dezenter in farbigen Themes.
+- **Feature-Interaktionen:** Keine Änderung.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Nicht ausgeführt (UI-Änderung).
+
+## Ziel
 - Audio-Capture-Fehler verständlich melden und Toast-Spam vermeiden.
 
 ## Änderungen
