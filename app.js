@@ -4020,39 +4020,49 @@
 		},
 		monoLight: {
 			label: "Mono Light",
-			top: "rgba(241, 245, 249, 0.55)",
-			bottom: "rgba(226, 232, 240, 0.45)",
-			accentBgSoft: "rgba(226, 232, 240, 0.16)",
-			accentBg: "rgba(226, 232, 240, 0.22)",
-			accentBgHover: "rgba(226, 232, 240, 0.28)",
-			accentBadgeBg: "rgba(226, 232, 240, 0.28)",
-			accentStrong: "rgba(203, 213, 225, 0.65)",
-			accentStrongHover: "rgba(203, 213, 225, 0.75)",
-			accentStrongActive: "rgba(203, 213, 225, 0.85)",
-			accentBorder: "rgba(148, 163, 184, 0.22)",
-			accentBorderStrong: "rgba(148, 163, 184, 0.32)",
-			accentText: "rgba(30, 41, 59, 0.98)",
-			accentTextSoft: "rgba(71, 85, 105, 0.9)",
-			accentRing: "rgba(148, 163, 184, 0.22)",
-			accentRingStrong: "rgba(148, 163, 184, 0.32)",
+			top: "#f6f8fa",
+			bottom: "#f6f8fa",
+			accentBgSoft: "rgba(9, 105, 218, 0.08)",
+			accentBg: "rgba(9, 105, 218, 0.12)",
+			accentBgHover: "rgba(9, 105, 218, 0.16)",
+			accentBadgeBg: "rgba(9, 105, 218, 0.14)",
+			accentStrong: "#0969da",
+			accentStrongHover: "#0550ae",
+			accentStrongActive: "#033d8b",
+			accentBorder: "rgba(9, 105, 218, 0.28)",
+			accentBorderStrong: "rgba(9, 105, 218, 0.4)",
+			accentText: "rgba(255, 255, 255, 0.98)",
+			accentTextSoft: "rgba(219, 234, 254, 0.95)",
+			accentRing: "rgba(9, 105, 218, 0.25)",
+			accentRingStrong: "rgba(9, 105, 218, 0.4)",
+			blockquoteBorder: "rgba(208, 215, 222, 0.9)",
+			blockquoteText: "rgba(87, 96, 106, 0.95)",
+			scrollbarThumb: "rgba(87, 96, 106, 0.35)",
+			scrollbarThumbHover: "rgba(87, 96, 106, 0.5)",
+			scrollbarBorder: "rgba(240, 246, 252, 0.9)",
 		},
 		monoDark: {
 			label: "Mono Dark",
-			top: "rgba(2, 6, 23, 0.55)",
-			bottom: "rgba(0, 0, 0, 0.65)",
-			accentBgSoft: "rgba(30, 41, 59, 0.14)",
-			accentBg: "rgba(30, 41, 59, 0.2)",
-			accentBgHover: "rgba(30, 41, 59, 0.28)",
-			accentBadgeBg: "rgba(30, 41, 59, 0.28)",
-			accentStrong: "rgba(51, 65, 85, 0.7)",
-			accentStrongHover: "rgba(51, 65, 85, 0.8)",
-			accentStrongActive: "rgba(51, 65, 85, 0.9)",
-			accentBorder: "rgba(51, 65, 85, 0.4)",
-			accentBorderStrong: "rgba(51, 65, 85, 0.55)",
-			accentText: "rgba(226, 232, 240, 0.98)",
-			accentTextSoft: "rgba(148, 163, 184, 0.9)",
-			accentRing: "rgba(51, 65, 85, 0.35)",
-			accentRingStrong: "rgba(51, 65, 85, 0.5)",
+			top: "#0d1117",
+			bottom: "#0d1117",
+			accentBgSoft: "rgba(88, 166, 255, 0.12)",
+			accentBg: "rgba(88, 166, 255, 0.18)",
+			accentBgHover: "rgba(88, 166, 255, 0.24)",
+			accentBadgeBg: "rgba(88, 166, 255, 0.24)",
+			accentStrong: "#1f6feb",
+			accentStrongHover: "#388bfd",
+			accentStrongActive: "#1b4b91",
+			accentBorder: "rgba(88, 166, 255, 0.4)",
+			accentBorderStrong: "rgba(88, 166, 255, 0.55)",
+			accentText: "rgba(240, 246, 252, 0.98)",
+			accentTextSoft: "rgba(201, 209, 217, 0.9)",
+			accentRing: "rgba(88, 166, 255, 0.35)",
+			accentRingStrong: "rgba(88, 166, 255, 0.5)",
+			blockquoteBorder: "rgba(48, 54, 61, 0.9)",
+			blockquoteText: "rgba(139, 148, 158, 0.95)",
+			scrollbarThumb: "rgba(139, 148, 158, 0.35)",
+			scrollbarThumbHover: "rgba(139, 148, 158, 0.5)",
+			scrollbarBorder: "rgba(13, 17, 23, 0.9)",
 		},
 		violet: {
 			label: "Violet",
@@ -4720,18 +4730,39 @@
 	}
 
 	function applyGlowEnabled() {
-		document.body.classList.toggle("glow-disabled", !glowEnabled);
+		const isMonoTheme = activeTheme === "monoLight" || activeTheme === "monoDark";
+		const effectiveGlowEnabled = glowEnabled && !isMonoTheme;
+		document.body.classList.toggle("glow-disabled", !effectiveGlowEnabled);
 		if (settingsGlowToggle) {
 			settingsGlowToggle.setAttribute(
 				"aria-pressed",
-				glowEnabled ? "true" : "false"
+				effectiveGlowEnabled ? "true" : "false"
 			);
-			settingsGlowToggle.textContent = glowEnabled
+			settingsGlowToggle.textContent = effectiveGlowEnabled
 				? t("settings.themes.glow_on")
 				: t("settings.themes.glow_off");
-			settingsGlowToggle.classList.toggle("bg-fuchsia-500/20", glowEnabled);
-			settingsGlowToggle.classList.toggle("text-fuchsia-100", glowEnabled);
-			settingsGlowToggle.classList.toggle("bg-white/5", !glowEnabled);
+			settingsGlowToggle.classList.toggle(
+				"bg-fuchsia-500/20",
+				effectiveGlowEnabled
+			);
+			settingsGlowToggle.classList.toggle(
+				"text-fuchsia-100",
+				effectiveGlowEnabled
+			);
+			settingsGlowToggle.classList.toggle(
+				"bg-white/5",
+				!effectiveGlowEnabled
+			);
+			settingsGlowToggle.classList.toggle("opacity-60", isMonoTheme);
+			settingsGlowToggle.classList.toggle("cursor-not-allowed", isMonoTheme);
+			settingsGlowToggle.classList.toggle("pointer-events-none", isMonoTheme);
+			if (isMonoTheme) {
+				settingsGlowToggle.setAttribute("disabled", "disabled");
+				settingsGlowToggle.setAttribute("aria-disabled", "true");
+			} else {
+				settingsGlowToggle.removeAttribute("disabled");
+				settingsGlowToggle.setAttribute("aria-disabled", "false");
+			}
 		}
 	}
 
@@ -5403,6 +5434,7 @@
 		} catch {
 			// ignore
 		}
+		applyGlowEnabled();
 		if (previewOpen) updatePreview();
 	}
 
@@ -15413,6 +15445,7 @@ self.onmessage = async (e) => {
 	}
 	if (settingsGlowToggle) {
 		settingsGlowToggle.addEventListener("click", () => {
+			if (activeTheme === "monoLight" || activeTheme === "monoDark") return;
 			saveGlowEnabled(!glowEnabled);
 		});
 	}
