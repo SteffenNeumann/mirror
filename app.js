@@ -3917,6 +3917,7 @@
 	let aiDictationFinalText = "";
 	let aiDictationInterimText = "";
 	let aiDictationRestarting = false;
+	let aiDictationLastErrorAt = 0;
 	let settingsOpen = false;
 	let settingsSection = "user";
 	let uiLang = UI_LANG_DEFAULT;
@@ -5949,9 +5950,20 @@
 				const code = event && event.error ? String(event.error) : "";
 				console.error("[Diktat] Fehler:", code || event || "unknown");
 				if (aiDictationRestarting) return;
+				const now = Date.now();
+				if (now - aiDictationLastErrorAt < 800) return;
+				aiDictationLastErrorAt = now;
 				aiDictationActive = false;
 				aiDictationRestarting = false;
 				setAiDictationUi(false);
+				if (code === "audio-capture") {
+					const message =
+						uiLang === "en"
+							? "Microphone not available. Close other apps or check permissions."
+							: "Mikrofon nicht verfügbar. Andere Apps schließen oder Berechtigung prüfen.";
+					toast(message, "error");
+					return;
+				}
 				toast(t("toast.dictation_failed"), "error");
 			};
 			aiDictationRecognizer.onend = () => {

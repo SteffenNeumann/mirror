@@ -20,6 +20,22 @@
 # Dokumentation – Änderungen (2026-01-25)
 
 ## Ziel
+- Audio-Capture-Fehler verständlich melden und Toast-Spam vermeiden.
+
+## Änderungen
+- Fehler-Toast für `audio-capture` mit Hinweistext ergänzt.
+- Fehler-Toast gedrosselt, um Mehrfachmeldungen zu vermeiden.
+
+## Auswirkungen
+- **UI/UX:** Klarer Hinweis bei Mikrofon-Problemen, weniger Spam.
+- **Feature-Interaktionen:** Keine Änderung außerhalb Diktat.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Auszuführen: `node --check app.js`
+- Auszuführen: `node --check server.js`
+
+## Ziel
 - Diktat-Fehler-Toast vermeiden durch Start im User-Gesture-Pfad.
 
 ## Änderungen
