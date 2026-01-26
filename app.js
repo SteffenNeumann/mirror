@@ -95,6 +95,7 @@
 	const aiPromptWrap = document.getElementById("aiPromptWrap");
 	const aiChatHistory = document.getElementById("aiChatHistory");
 	const aiChatList = document.getElementById("aiChatList");
+	const aiChatClearBtn = document.getElementById("aiChatClear");
 	const copyMirrorBtn = document.getElementById("copyMirror");
 	const toggleCommentsBtn = document.getElementById("toggleComments");
 	const commentPanel = document.getElementById("commentPanel");
@@ -1896,6 +1897,9 @@
 	let crdtMarksEnabled = true;
 	const EDITOR_MASK_DISABLED_KEY = "mirror_mask_disabled";
 	const CRDT_MARKS_DISABLED_KEY = "mirror_crdt_marks_disabled";
+	const aiChatHistoryByContext = new Map();
+	let aiChatContextKey = "";
+	let aiChatSeq = 0;
 
 	function getTextareaCaretCoords(el, pos) {
 		if (!el) return { left: 0, top: 0, height: 0 };
@@ -4158,6 +4162,9 @@
 				"preview.chat_history": "Chatverlauf",
 				"preview.chat_you": "Du",
 				"preview.chat_ai": "KI",
+				"preview.chat_clear": "Chat leeren",
+				"preview.chat_delete": "Chat löschen",
+				"preview.chat_output": "Chat",
 				"preview.replace_title": "Editor durch KI-Ausgabe ersetzen",
 				"preview.replace": "Ersetzen",
 				"preview.append_title": "KI-Ausgabe ans Ende anfügen",
@@ -4407,6 +4414,9 @@
 				"preview.chat_history": "Chat history",
 				"preview.chat_you": "You",
 				"preview.chat_ai": "AI",
+				"preview.chat_clear": "Clear chat",
+				"preview.chat_delete": "Delete chat",
+				"preview.chat_output": "Chat",
 				"preview.replace_title": "Replace editor with AI output",
 				"preview.replace": "Replace",
 				"preview.append_title": "Append AI output to editor",
@@ -5303,6 +5313,7 @@
 		} catch {
 			// ignore
 		}
+		syncAiChatContext();
 	}
 
 	function loadAiApiConfig() {
@@ -5961,29 +5972,38 @@
 		}
 	}
 
+	function getAiChatContextKey() {
+		if (!getAiUsePreview()) return "global";
+		const noteId = String(psEditingNoteId || "").trim();
+		if (noteId) return `note:${noteId}`;
+		const roomName = normalizeRoom(room);
+		const keyName = normalizeKey(key);
+		return `room:${roomName}:${keyName}`;
+	}
+
+	function getAiChatEntriesForContext(key) {
+		const ctx = String(key || "");
+		if (!ctx) return [];
+		const list = aiChatHistoryByContext.get(ctx);
+		return Array.isArray(list) ? list : [];
+	}
+
 	function setAiChatHistoryVisible(hasChat) {
 		if (!aiChatHistory || !aiChatHistory.classList) return;
 		aiChatHistory.classList.toggle("hidden", !hasChat);
 	}
 
 	function syncAiChatHistoryVisibility() {
-		if (!aiChatList) {
-			setAiChatHistoryVisible(false);
-			return;
-		}
-		const hasItems = aiChatList.children && aiChatList.children.length > 0;
-		setAiChatHistoryVisible(Boolean(hasItems));
+		const items = getAiChatEntriesForContext(aiChatContextKey);
+		setAiChatHistoryVisible(items.length > 0);
 	}
 
-	function addAiChatEntry(role, text) {
-		if (!aiChatList) return;
-		const content = String(text || "").trim();
-		if (!content) return;
+	function createAiChatEntryEl(entry) {
 		const item = document.createElement("div");
-		item.className = "flex items-start gap-2";
-		item.setAttribute("data-chat-item", "true");
+		item.className = "ai-chat-item flex items-start gap-2";
+		item.setAttribute("data-chat-id", entry.id);
 		const badge = document.createElement("span");
-		const isAi = String(role || "").toLowerCase() === "ai";
+		const isAi = String(entry.role || "").toLowerCase() === "ai";
 		const badgeKey = isAi ? "preview.chat_ai" : "preview.chat_you";
 		badge.className = isAi
 			? "ai-chat-badge ai-chat-badge-ai mt-0.5 inline-flex h-5 w-5 items-center justify-center rounded-md bg-fuchsia-500/20 text-[10px] text-fuchsia-200"
@@ -5991,11 +6011,78 @@
 		badge.setAttribute("data-i18n", badgeKey);
 		badge.textContent = t(badgeKey);
 		const body = document.createElement("div");
-		body.className = "flex-1 rounded-md bg-white/5 px-2 py-1.5 text-slate-100";
-		body.textContent = content;
+		body.className = "ai-chat-message flex-1 rounded-md bg-white/5 px-2 py-1.5 text-slate-100";
+		body.textContent = String(entry.text || "");
+		const del = document.createElement("button");
+		del.type = "button";
+		del.className = "ai-chat-delete mt-0.5 h-6 w-6 rounded-md border border-white/10 text-xs text-slate-300 transition hover:bg-white/5 active:bg-white/10";
+		del.setAttribute("data-chat-delete", "true");
+		del.setAttribute("data-chat-id", entry.id);
+		del.setAttribute("data-i18n", "preview.chat_delete");
+		del.setAttribute("title", t("preview.chat_delete"));
+		del.textContent = "×";
 		item.appendChild(badge);
 		item.appendChild(body);
-		aiChatList.appendChild(item);
+		item.appendChild(del);
+		return item;
+	}
+
+	function renderAiChatHistory() {
+		if (!aiChatList) return;
+		aiChatList.innerHTML = "";
+		const items = getAiChatEntriesForContext(aiChatContextKey);
+		for (const entry of items) {
+			aiChatList.appendChild(createAiChatEntryEl(entry));
+		}
+		syncAiChatHistoryVisibility();
+	}
+
+	function syncAiChatContext() {
+		const nextKey = getAiChatContextKey();
+		if (nextKey === aiChatContextKey) {
+			syncAiChatHistoryVisibility();
+			return;
+		}
+		aiChatContextKey = nextKey;
+		renderAiChatHistory();
+	}
+
+	function clearAiChatHistoryForContext() {
+		if (!aiChatContextKey) return;
+		aiChatHistoryByContext.set(aiChatContextKey, []);
+		renderAiChatHistory();
+	}
+
+	function deleteAiChatEntryById(entryId) {
+		const id = String(entryId || "");
+		if (!id) return;
+		const list = getAiChatEntriesForContext(aiChatContextKey);
+		if (!list.length) return;
+		const next = list.filter((item) => String(item.id || "") !== id);
+		aiChatHistoryByContext.set(aiChatContextKey, next);
+		renderAiChatHistory();
+	}
+
+	function addAiChatEntry(role, text) {
+		const content = String(text || "").trim();
+		if (!content) return;
+		const key = getAiChatContextKey();
+		const list = getAiChatEntriesForContext(key).slice();
+		const entry = {
+			id: `${Date.now()}-${(aiChatSeq += 1)}`,
+			role: String(role || ""),
+			text: content,
+		};
+		list.push(entry);
+		aiChatHistoryByContext.set(key, list);
+		if (key !== aiChatContextKey) {
+			aiChatContextKey = key;
+			renderAiChatHistory();
+			return;
+		}
+		if (aiChatList) {
+			aiChatList.appendChild(createAiChatEntryEl(entry));
+		}
 		syncAiChatHistoryVisibility();
 	}
 
@@ -8815,6 +8902,7 @@
 			psMainHint.classList.add("hidden");
 		}
 		updateEditorMetaYaml();
+		syncAiChatContext();
 	}
 
 	function syncPsEditingNoteFromEditorText(text, opts) {
@@ -8923,6 +9011,7 @@
 		} else {
 			syncMobileFocusState();
 		}
+		syncAiChatContext();
 	}
 
 	function openNoteFromWikiTarget(target) {
@@ -14543,6 +14632,7 @@ self.onmessage = async (e) => {
 		setTyping(false);
 		presenceState.clear();
 		updatePresenceUI();
+		syncAiChatContext();
 		connect();
 	});
 
@@ -15206,6 +15296,7 @@ self.onmessage = async (e) => {
 			saveAiUsePreview(!aiUsePreview);
 			setAiUsePreviewUi(aiUsePreview);
 			applyAiContextMode();
+			syncAiChatContext();
 		});
 	}
 	if (aiUseAnswerBtn) {
@@ -15219,6 +15310,39 @@ self.onmessage = async (e) => {
 			if (aiPromptInput) aiPromptInput.value = "";
 			saveAiPrompt("");
 			toast("AI prompt cleared.", "success");
+		});
+	}
+	if (aiChatClearBtn) {
+		aiChatClearBtn.addEventListener("click", () => {
+			clearAiChatHistoryForContext();
+		});
+	}
+	if (aiChatList) {
+		aiChatList.addEventListener("click", (ev) => {
+			const target = ev && ev.target ? ev.target : null;
+			if (!target) return;
+			const deleteBtn = target.closest
+				? target.closest("[data-chat-delete=\"true\"]")
+				: null;
+			if (deleteBtn) {
+				const id = deleteBtn.getAttribute("data-chat-id");
+				deleteAiChatEntryById(id);
+				return;
+			}
+			const item = target.closest
+				? target.closest("[data-chat-id]")
+				: null;
+			if (!item) return;
+			const id = item.getAttribute("data-chat-id");
+			const entries = getAiChatEntriesForContext(aiChatContextKey);
+			const entry = entries.find((e) => String(e.id || "") === String(id || ""));
+			if (!entry) return;
+			setPreviewRunOutput({
+				status: t("preview.chat_output"),
+				output: String(entry.text || ""),
+				error: "",
+				source: "chat",
+			});
 		});
 	}
 	if (psLogout) {
@@ -15980,7 +16104,7 @@ self.onmessage = async (e) => {
 	loadAiUsePreview();
 	loadAiUseAnswer();
 	applyAiContextMode();
-	syncAiChatHistoryVisibility();
+	syncAiChatContext();
 	setCommentDraftSelection(null);
 	loadCommentsForRoom();
 	updateTableMenuVisibility();

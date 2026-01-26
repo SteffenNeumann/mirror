@@ -855,6 +855,20 @@ body[data-theme="monoLight"] .ai-chat-badge-ai {
 	background-color: rgba(9, 105, 218, 0.14) !important;
 }
 
+.ai-chat-message {
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 3;
+	overflow: hidden;
+	white-space: pre-wrap;
+	word-break: break-word;
+	cursor: pointer;
+}
+
+.ai-chat-item {
+	cursor: pointer;
+}
+
 body[data-theme="monoLight"] .shadow-soft {
 	box-shadow: 0 6px 14px rgba(27, 31, 36, 0.08);
 }
