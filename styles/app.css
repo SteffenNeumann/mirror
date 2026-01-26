@@ -23,7 +23,7 @@
 		inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 	--selection-menu-bg: rgba(2, 6, 23, 0.85);
 	--selection-menu-border: rgba(255, 255, 255, 0.1);
-	--scrollbar-thumb: rgba(148, 163, 184, 0.14);
+	--scrollbar-thumb: rgba(103, 232, 249, 0.1);
 	--scrollbar-thumb-hover: rgba(148, 163, 184, 0.2);
 	--scrollbar-border: rgba(2, 6, 23, 0.14);
 }
@@ -131,9 +131,9 @@ body.glow-disabled .bg-glow {
 	display: none;
 }
 
-	--scrollbar-thumb: rgba(148, 163, 184, 0.16);
-	--scrollbar-thumb-hover: rgba(148, 163, 184, 0.24);
-	--scrollbar-border: rgba(2, 6, 23, 0.16);
+.bg-blob {
+	position: absolute;
+	width: 60vmax;
 	height: 60vmax;
 	border-radius: 999px;
 	filter: blur(140px);
@@ -165,9 +165,9 @@ body.glow-disabled .bg-glow {
 	overflow-y: auto;
 	padding-right: 0.25rem;
 }
-		--scrollbar-thumb: rgba(148, 163, 184, 0.16);
-		--scrollbar-thumb-hover: rgba(148, 163, 184, 0.24);
-		--scrollbar-border: rgba(2, 6, 23, 0.16);
+
+#psEditorTagsBar > div {
+	flex-wrap: nowrap;
 	overflow-x: auto;
 	white-space: nowrap;
 }
@@ -176,9 +176,7 @@ body.glow-disabled .bg-glow {
 	overflow-x: hidden;
 }
 
-		--scrollbar-thumb: rgba(148, 163, 184, 0.16);
-		--scrollbar-thumb-hover: rgba(148, 163, 184, 0.24);
-		--scrollbar-border: rgba(2, 6, 23, 0.16);
+.ps-tag-section {
 	--ps-tag-border: rgba(217, 70, 239, 0.25);
 	--ps-tag-border-strong: rgba(217, 70, 239, 0.45);
 	--ps-tag-text: rgba(226, 232, 240, 0.95);
@@ -559,6 +557,7 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	}
 	body.mobile-ps-open #psList {
 		overflow-y: auto;
+		overflow-x: hidden;
 		-webkit-overflow-scrolling: touch;
 		max-height: none;
 	}
@@ -751,6 +750,9 @@ body[data-theme="monoLight"] {
 	color-scheme: light;
 	background-color: #f6f8fa;
 	color: #24292f;
+	--scrollbar-thumb: rgba(148, 163, 184, 0.3);
+	--scrollbar-thumb-hover: rgba(148, 163, 184, 0.45);
+	--scrollbar-border: rgba(2, 6, 23, 0.35);
 	--calendar-event-bg: rgba(255, 255, 255, 0.95);
 	--comment-item-bg: #f6f8fa;
 	--calendar-tooltip-bg: #ffffff;
@@ -1012,6 +1014,9 @@ body[data-theme="monoDark"] {
 	--selection-menu-bg: #0d1117;
 	--selection-menu-border: #30363d;
 	--comment-item-bg: #161b22;
+	--scrollbar-thumb: rgba(148, 163, 184, 0.3);
+	--scrollbar-thumb-hover: rgba(148, 163, 184, 0.45);
+	--scrollbar-border: rgba(2, 6, 23, 0.35);
 }
 
 body[data-theme="monoDark"] .bg-glow {

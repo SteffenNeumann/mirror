@@ -1,6 +1,23 @@
 # Dokumentation – Änderungen (2026-01-26)
 
 ## Ziel
+- Nicht-monochrome Scrollbar-Farbe auf dezentes Cyan setzen.
+- Horizontale Scrollbar in `#psList` entfernen.
+
+## Änderungen
+- Standard-`--scrollbar-thumb` auf `rgba(103, 232, 249, 0.1)` gesetzt.
+- `#psList` erhält `overflow-x: hidden` auch im Mobile-Layout.
+- MonoLight/MonoDark behalten eigene Scrollbar-Werte.
+
+## Auswirkungen
+- **UI/UX:** Scrollbars sind deutlich subtiler in farbigen Themes.
+- **Feature-Interaktionen:** Keine Änderung.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Nicht ausgeführt (UI-Änderung).
+
+## Ziel
 - Scrollbars in nicht-monochromen Themes deutlich zurücknehmen.
 
 ## Änderungen
