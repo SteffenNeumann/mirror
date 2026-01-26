@@ -7472,7 +7472,7 @@
 			? "#f8fafc"
 			: isMonoDark
 				? "#0d1117"
-				: themeColors.previewBg || themeColors.accentBgSoft || "#111827";
+				: themeColors.previewBg || "rgba(2, 6, 23, 0.4)";
 		const previewText = isMonoLight ? "#0f172a" : "#e2e8f0";
 		const previewLink = isMonoLight ? "#2563eb" : "#60a5fa";
 		const previewPreBg = isMonoLight
