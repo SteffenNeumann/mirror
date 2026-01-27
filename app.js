@@ -3918,6 +3918,7 @@
 	let aiDictationInterimText = "";
 	let aiDictationRestarting = false;
 	let aiDictationLastErrorAt = 0;
+	let aiDictationMicCheckInFlight = false;
 	let settingsOpen = false;
 	let settingsSection = "user";
 	let uiLang = UI_LANG_DEFAULT;
@@ -5886,6 +5887,79 @@
 		aiPromptInput.value = base + sep + combined;
 	}
 
+	function getDictationMicErrorMessage(kind) {
+		const code = String(kind || "").toLowerCase();
+		if (uiLang === "en") {
+			if (code === "permission")
+				return "Microphone access is blocked. Allow it in browser settings.";
+			if (code === "not_found") return "No microphone found.";
+			if (code === "busy")
+				return "Microphone is busy. Close other apps using it.";
+			return "Microphone not available. Check permissions or device.";
+		}
+		if (code === "permission")
+			return "Mikrofonzugriff blockiert. Bitte im Browser erlauben.";
+		if (code === "not_found") return "Kein Mikrofon gefunden.";
+		if (code === "busy")
+			return "Mikrofon belegt. Andere Apps schließen.";
+		return "Mikrofon nicht verfügbar. Berechtigung oder Gerät prüfen.";
+	}
+
+	function toastDictationError(message) {
+		const now = Date.now();
+		if (now - aiDictationLastErrorAt < 800) return;
+		aiDictationLastErrorAt = now;
+		toast(message, "error");
+	}
+
+	async function ensureDictationMicAccess() {
+		if (
+			!navigator ||
+			!navigator.mediaDevices ||
+			!navigator.mediaDevices.getUserMedia
+		)
+			return true;
+		if (aiDictationMicCheckInFlight) return false;
+		aiDictationMicCheckInFlight = true;
+		try {
+			if (navigator.permissions && navigator.permissions.query) {
+				try {
+					const status = await navigator.permissions.query({
+						name: "microphone",
+					});
+					if (status && status.state === "denied") {
+						toastDictationError(getDictationMicErrorMessage("permission"));
+						return false;
+					}
+					if (status && status.state === "granted") return true;
+				} catch {
+					// ignore
+				}
+			}
+			const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+			try {
+				stream.getTracks().forEach((track) => track.stop());
+			} catch {
+				// ignore
+			}
+			return true;
+		} catch (err) {
+			const name = err && err.name ? String(err.name) : "";
+			let kind = "unknown";
+			if (name === "NotAllowedError" || name === "SecurityError") {
+				kind = "permission";
+			} else if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+				kind = "not_found";
+			} else if (name === "NotReadableError" || name === "AbortError") {
+				kind = "busy";
+			}
+			toastDictationError(getDictationMicErrorMessage(kind));
+			return false;
+		} finally {
+			aiDictationMicCheckInFlight = false;
+		}
+	}
+
 	function onAiDictationResult(event) {
 		if (!event || !event.results) return;
 		let interim = "";
@@ -5918,11 +5992,13 @@
 		setAiDictationUi(false);
 	}
 
-	function startAiDictation() {
+	async function startAiDictation() {
 		if (!aiDictationRecognizer || !aiPromptInput) {
 			console.log("[Diktat] Recognizer oder Input fehlt");
 			return;
 		}
+		const accessOk = await ensureDictationMicAccess();
+		if (!accessOk) return;
 		const start = () => {
 			console.log("[Diktat] Start-Funktion aufgerufen");
 			aiDictationBaseText = String(aiPromptInput.value || "");
@@ -5981,21 +6057,15 @@
 				const code = event && event.error ? String(event.error) : "";
 				console.error("[Diktat] Fehler:", code || event || "unknown");
 				if (aiDictationRestarting) return;
-				const now = Date.now();
-				if (now - aiDictationLastErrorAt < 800) return;
-				aiDictationLastErrorAt = now;
 				aiDictationActive = false;
 				aiDictationRestarting = false;
 				setAiDictationUi(false);
 				if (code === "audio-capture") {
-					const message =
-						uiLang === "en"
-							? "Microphone not available. Close other apps or check permissions."
-							: "Mikrofon nicht verfügbar. Andere Apps schließen oder Berechtigung prüfen.";
-					toast(message, "error");
+					const message = getDictationMicErrorMessage("busy");
+					toastDictationError(message);
 					return;
 				}
-				toast(t("toast.dictation_failed"), "error");
+				toastDictationError(t("toast.dictation_failed"));
 			};
 			aiDictationRecognizer.onend = () => {
 				if (aiDictationRestarting) return;
@@ -15403,7 +15473,7 @@ self.onmessage = async (e) => {
 		});
 	}
 	if (aiDictateBtn) {
-		aiDictateBtn.addEventListener("click", () => {
+		aiDictateBtn.addEventListener("click", async () => {
 			if (!aiDictationAvailable) {
 				toast(t("toast.dictation_failed"), "error");
 				return;
@@ -15412,7 +15482,7 @@ self.onmessage = async (e) => {
 				stopAiDictation();
 				return;
 			}
-			startAiDictation();
+			await startAiDictation();
 		});
 	}
 	if (aiUsePreviewBtn) {

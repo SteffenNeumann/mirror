@@ -1,3 +1,21 @@
+# Dokumentation – Änderungen (2026-01-27)
+
+## Ziel
+- Diktat-Start robuster machen, wenn Mikrofon blockiert oder belegt ist.
+
+## Änderungen
+- Mikrofon-Zugriff vor dem Start geprüft (Permission/Device/Busy).
+- Diktat-Fehlermeldungen gedrosselt und präzisiert.
+
+## Auswirkungen
+- **UI/UX:** Klarere Hinweise bei Mikrofon-Problemen.
+- **Feature-Interaktionen:** Diktat startet nur bei verfügbarer Audio-Quelle.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
 # Dokumentation – Änderungen (2026-01-26)
 
 ## Ziel
