@@ -16,7 +16,19 @@
 - Ausgeführt: `node --check app.js`
 - Ausgeführt: `node --check server.js`
 
-# Dokumentation – Änderungen (2026-01-26)
+## Ziel
+- Cache-Busting für app.js aktualisieren, damit Diktat-Fix geladen wird.
+
+## Änderungen
+- Versions-Query für app.js im HTML angepasst.
+
+## Auswirkungen
+- **UI/UX:** Neueste Diktat-Änderungen werden geladen.
+- **Feature-Interaktionen:** Keine Änderung.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Nicht ausgeführt (HTML-Änderung).
 
 ## Ziel
 - Nicht-monochrome Scrollbar-Farbe auf dezentes Cyan setzen.
