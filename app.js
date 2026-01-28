@@ -2739,6 +2739,7 @@
 
 	function applySelectionAction(action) {
 		if (!textarea) return;
+		const before = String(textarea.value || "");
 		switch (action) {
 			case "bold":
 				wrapSelectionToggle(textarea, "**", "**");
@@ -2791,14 +2792,44 @@
 			default:
 				return;
 		}
+		const after = String(textarea.value || "");
+		const changed = before !== after;
 		try {
 			textarea.focus();
 		} catch {
 			// ignore
 		}
+		if (changed) {
+			metaLeft.textContent = "Formatting";
+			metaRight.textContent = nowIso();
+			if (isCrdtEnabled()) {
+				updateCrdtFromTextarea();
+			} else {
+				scheduleSend();
+			}
+			setTyping(true);
+			scheduleTypingStop();
+			scheduleSelectionSend();
+			const noteId = getActiveRoomTabNoteId();
+			updateRoomTabTextLocal(room, key, textarea.value);
+			if (noteId) updateLocalNoteText(noteId, textarea.value);
+			scheduleRoomTabSync({
+				room,
+				key,
+				text: resolveRoomTabSnapshotText(noteId, String(textarea.value || "")),
+				lastUsed: Date.now(),
+			});
+		}
 		updatePreview();
 		updatePasswordMaskOverlay();
-		scheduleSend();
+		updateCommentOverlay();
+		updateSlashMenu();
+		updateWikiMenu();
+		updateCodeLangOverlay();
+		updateTableMenuVisibility();
+		updateSelectionMenu();
+		updateEditorMetaScroll();
+		if (!changed) scheduleSend();
 		schedulePsAutoSave();
 		setSelectionMenuOpen(false);
 	}
