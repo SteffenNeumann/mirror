@@ -9479,6 +9479,11 @@
 		}
 		if (room && key && !(opts && opts.skipText)) {
 			updateRoomTabTextLocal(room, key, textarea.value);
+			if (isCrdtEnabled()) {
+				updateCrdtFromTextarea();
+			} else {
+				scheduleSend();
+			}
 		}
 		if (!(opts && opts.skipText)) {
 			updatePreview();
