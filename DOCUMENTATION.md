@@ -1,6 +1,21 @@
 # Dokumentation – Änderungen (2026-01-28)
 
 ## Ziel
+- Notizinhalt beim ersten Klick korrekt laden.
+
+## Änderungen
+- In der Notizliste wird beim Öffnen die aktuelle Note aus dem State bevorzugt.
+
+## Auswirkungen
+- **UI/UX:** Inhalt lädt sofort beim ersten Klick.
+- **Feature-Interaktionen:** Keine Änderung an API/Sync; nur Auswahl-Logik.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
+## Ziel
 - Preview-Checkboxen wieder zuverlässig umschalten.
 
 ## Änderungen

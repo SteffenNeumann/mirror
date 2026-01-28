@@ -9792,7 +9792,7 @@
 					goToRoomWithKey(existingTab.room, existingTab.key);
 					return;
 				}
-				const note = byId.get(id);
+				const note = findNoteById(id) || byId.get(id);
 				if (!note) return;
 				applyNoteToEditor(note, items);
 			});
