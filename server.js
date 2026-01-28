@@ -838,15 +838,27 @@ function sanitizeCommentItems(raw) {
 		if (!id) continue;
 		const text = String(item.text || "").trim();
 		if (!text) continue;
-		const selection =
-			item.selection && typeof item.selection === "object" ? item.selection : {};
-		const startRaw = Number(selection.start || 0);
-		const endRaw = Number(selection.end || 0);
-		if (!Number.isFinite(startRaw) || !Number.isFinite(endRaw)) continue;
-		const start = Math.max(0, Math.floor(startRaw));
-		const end = Math.max(start, Math.floor(endRaw));
-		const selText = String(selection.text || "").trim();
-		if (!selText || end <= start) continue;
+		const selectionRaw =
+			item.selection && typeof item.selection === "object"
+				? item.selection
+				: null;
+		let normalizedSelection = null;
+		if (selectionRaw) {
+			const startRaw = Number(selectionRaw.start || 0);
+			const endRaw = Number(selectionRaw.end || 0);
+			if (Number.isFinite(startRaw) && Number.isFinite(endRaw)) {
+				const start = Math.max(0, Math.floor(startRaw));
+				const end = Math.max(start, Math.floor(endRaw));
+				const selText = String(selectionRaw.text || "").trim();
+				if (selText && end > start) {
+					normalizedSelection = {
+						start,
+						end,
+						text: selText.slice(0, 800),
+					};
+				}
+			}
+		}
 		const createdAtRaw = Number(item.createdAt || 0);
 		const createdAt =
 			Number.isFinite(createdAtRaw) && createdAtRaw > 0
@@ -863,11 +875,7 @@ function sanitizeCommentItems(raw) {
 			updatedAt,
 			text: text.slice(0, 4000),
 			parentId,
-			selection: {
-				start,
-				end,
-				text: selText.slice(0, 800),
-			},
+			selection: normalizedSelection || undefined,
 			author: author || undefined,
 		});
 		if (out.length >= 200) break;
