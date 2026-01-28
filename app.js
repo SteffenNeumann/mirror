@@ -1881,6 +1881,10 @@
 	let commentEditId = "";
 	let commentReplyToId = "";
 	let commentItems = [];
+	let commentSaveTimer = null;
+	let commentSaveNoteId = "";
+	let commentLoadToken = 0;
+	let commentActiveNoteId = "";
 	let psTagsAutoSaveTimer = null;
 	let psNoteHistory = [];
 	let psNoteHistoryIndex = -1;
@@ -2071,73 +2075,103 @@
 		}
 	}
 
-	function getCommentStorageKey() {
-		const roomName = normalizeRoom(room);
-		const keyName = normalizeKey(key);
-		return `${COMMENT_STORAGE_KEY}:${roomName}:${keyName}`;
+	function getCommentNoteId() {
+		return psEditingNoteId ? String(psEditingNoteId || "") : "";
 	}
 
-	function loadCommentsForRoom() {
-		commentItems = [];
-		try {
-			const raw = localStorage.getItem(getCommentStorageKey());
-			if (!raw) {
-				renderCommentList();
-				updateCommentOverlay();
-				return;
-			}
-			const parsed = JSON.parse(raw);
-			if (!Array.isArray(parsed)) {
-				renderCommentList();
-				updateCommentOverlay();
-				return;
-			}
-			commentItems = parsed
-				.map((item) => {
-					if (!item || typeof item !== "object") return null;
-					const text = String(item.text || "").trim();
-					if (!text) return null;
-					const selection = item.selection || {};
-					const start = Number(selection.start || 0);
-					const end = Number(selection.end || 0);
-					const selText = String(selection.text || "").trim();
-					if (!selText || end <= start) return null;
-					const createdAt = Number(item.createdAt || 0) || Date.now();
-					const updatedAt = Number(item.updatedAt || 0) || 0;
-					const parentId = String(item.parentId || "").trim();
-					const author = item.author && typeof item.author === "object"
-						? item.author
-						: identity;
-					return {
-						id: String(item.id || `c_${createdAt}`),
-						createdAt,
-						updatedAt,
-						text,
-						parentId,
-						selection: {
-							start,
-							end,
-							text: selText,
+	function canSyncCommentsForNote(noteId) {
+		return Boolean(noteId) && psState && psState.authed;
+	}
+
+	function normalizeCommentItems(raw) {
+		if (!Array.isArray(raw)) return [];
+		return raw
+			.map((item) => {
+				if (!item || typeof item !== "object") return null;
+				const text = String(item.text || "").trim();
+				if (!text) return null;
+				const selection = item.selection || {};
+				const start = Number(selection.start || 0);
+				const end = Number(selection.end || 0);
+				const selText = String(selection.text || "").trim();
+				if (!selText || end <= start) return null;
+				const createdAt = Number(item.createdAt || 0) || Date.now();
+				const updatedAt = Number(item.updatedAt || 0) || 0;
+				const parentId = String(item.parentId || "").trim();
+				const author = item.author && typeof item.author === "object"
+					? item.author
+					: identity;
+				return {
+					id: String(item.id || `c_${createdAt}`),
+					createdAt,
+					updatedAt,
+					text,
+					parentId,
+					selection: {
+						start,
+						end,
+						text: selText,
 						},
-						author,
-					};
-				})
-				.filter(Boolean)
-				.slice(0, 200);
+					author,
+				};
+			})
+			.filter(Boolean)
+			.slice(0, 200);
+	}
+
+	async function loadCommentsForRoom() {
+		const noteId = getCommentNoteId();
+		commentActiveNoteId = noteId;
+		commentItems = [];
+		renderCommentList();
+		updateCommentOverlay();
+		if (!canSyncCommentsForNote(noteId)) return;
+		const token = ++commentLoadToken;
+		try {
+			const res = await api(
+				`/api/notes/${encodeURIComponent(noteId)}/comments`
+			);
+			if (commentLoadToken !== token) return;
+			if (getCommentNoteId() !== noteId) return;
+			commentItems = normalizeCommentItems(res && res.comments ? res.comments : []);
+			commentActiveNoteId = noteId;
 		} catch {
+			if (commentLoadToken !== token) return;
+			if (getCommentNoteId() !== noteId) return;
 			commentItems = [];
 		}
 		renderCommentList();
 		updateCommentOverlay();
 	}
 
-	function saveCommentsForRoom() {
+	function scheduleCommentSave(noteId) {
+		if (!canSyncCommentsForNote(noteId)) return;
+		commentSaveNoteId = noteId;
+		if (commentSaveTimer) window.clearTimeout(commentSaveTimer);
+		commentSaveTimer = window.setTimeout(() => {
+			const currentNoteId = getCommentNoteId();
+			if (currentNoteId !== noteId) return;
+			void persistCommentsForNote(noteId);
+		}, 400);
+	}
+
+	async function persistCommentsForNote(noteId) {
+		if (!canSyncCommentsForNote(noteId)) return;
+		const payload = commentItems.slice(0, 200);
 		try {
-			const payload = commentItems.slice(0, 200);
-			localStorage.setItem(getCommentStorageKey(), JSON.stringify(payload));
+			await api(`/api/notes/${encodeURIComponent(noteId)}/comments`, {
+				method: "PUT",
+				body: JSON.stringify({ comments: payload }),
+			});
 		} catch {
 			// ignore
 		}
+	}
+
+	function saveCommentsForRoom() {
+		const noteId = getCommentNoteId();
+		if (!noteId) return;
+		scheduleCommentSave(noteId);
 	}
 
 	function normalizeCommentSelection(entry, value) {
@@ -2441,6 +2475,11 @@
 		if (!commentInput) return;
 		const text = String(commentInput.value || "").trim();
 		if (!text) return;
+		const noteId = getCommentNoteId();
+		if (!noteId) {
+			toast("Kommentare sind nur für Notizen verfügbar.", "error");
+			return;
+		}
 		let selection = commentDraftSelection;
 		if (!selection) {
 			const range = getSelectionRange();
@@ -2506,6 +2545,11 @@
 
 	function openCommentFromSelection() {
 		if (!textarea) return;
+		const noteId = getCommentNoteId();
+		if (!noteId) {
+			toast("Kommentare sind nur für Notizen verfügbar.", "error");
+			return;
+		}
 		const range = getSelectionRange();
 		if (!range) return;
 		const value = String(textarea.value || "");
@@ -9257,11 +9301,20 @@
 			psMainHint.classList.add("hidden");
 		}
 		updateEditorMetaYaml();
+		commentActiveNoteId = "";
+		commentItems = [];
+		if (commentSaveTimer) {
+			window.clearTimeout(commentSaveTimer);
+			commentSaveTimer = null;
+		}
+		renderCommentList();
+		updateCommentOverlay();
 		syncAiChatContext();
 	}
 
 	function syncPsEditingNoteFromEditorText(text, opts) {
 		if (!psState || !psState.authed) return false;
+		const prevNoteId = psEditingNoteId;
 		const target = normalizeNoteTextForCompare(text);
 		if (!target) {
 			if (opts && opts.clear) clearPsEditingNoteState();
@@ -9296,6 +9349,9 @@
 			psMainHint.textContent = "Editing active";
 		}
 		updateEditorMetaYaml();
+		if (prevNoteId !== psEditingNoteId) {
+			void loadCommentsForRoom();
+		}
 		if (opts && opts.updateList) applyPersonalSpaceFiltersAndRender();
 		syncAiChatContext();
 		return true;
@@ -9351,6 +9407,7 @@
 			updatePasswordMaskOverlay();
 		}
 		updateEditorMetaYaml();
+		void loadCommentsForRoom();
 		if (notesForList && psSortMode !== "accessed") {
 			renderPsList(notesForList);
 		} else {
@@ -14977,7 +15034,7 @@ self.onmessage = async (e) => {
 			updateCodeLangOverlay();
 			updateTableMenuVisibility();
 			updateSelectionMenu();
-			loadCommentsForRoom();
+			void loadCommentsForRoom();
 			if (!note) {
 				syncPsEditingNoteFromEditorText(nextText, {
 					clear: true,
@@ -16540,7 +16597,7 @@ self.onmessage = async (e) => {
 	applyAiContextMode();
 	syncAiChatContext();
 	setCommentDraftSelection(null);
-	loadCommentsForRoom();
+	void loadCommentsForRoom();
 	updateTableMenuVisibility();
 	syncMobileFocusState();
 	}

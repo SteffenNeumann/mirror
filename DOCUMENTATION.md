@@ -1,6 +1,23 @@
 # Dokumentation – Änderungen (2026-01-28)
 
 ## Ziel
+- Kommentare an Notiz-ID binden und serverseitig speichern.
+
+## Änderungen
+- Kommentar-Speicherung auf `/api/notes/:id/comments` umgestellt.
+- Kommentare werden beim Notizwechsel geladen und pro Note gespeichert.
+- Validierung/Sanitizing der Kommentar-Payload im Server ergänzt.
+
+## Auswirkungen
+- **UI/UX:** Kommentare sind jetzt eindeutig der aktiven Notiz zugeordnet.
+- **Feature-Interaktionen:** Kommentar-Panel lädt/speichert pro Notiz.
+- **Datenebene:** Neue Tabelle `notes_comments` mit Server-Persistenz.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
+## Ziel
 - Autosave für Preview-Task-Toggles zuverlässig sichern, auch beim Notizwechsel.
 
 ## Änderungen

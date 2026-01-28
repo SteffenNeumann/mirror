@@ -75,6 +75,9 @@ let stmtNotesDeleteAll;
 let stmtNotesByUser;
 let stmtNotesByUserAndTag;
 let stmtTagsByUser;
+let stmtNoteCommentsGetByNoteUser;
+let stmtNoteCommentsUpsert;
+let stmtNoteCommentsDeleteByNoteUser;
 let stmtTrashInsert;
 let stmtTrashGetByIdUser;
 let stmtTrashDeleteByIdUser;
@@ -224,6 +227,16 @@ function initDb() {
 			PRIMARY KEY(user_id, id)
 		);
 		CREATE INDEX IF NOT EXISTS idx_notes_trash_user_deleted ON notes_trash(user_id, deleted_at DESC);
+		CREATE TABLE IF NOT EXISTS notes_comments (
+			user_id INTEGER NOT NULL,
+			note_id TEXT NOT NULL,
+			comments_json TEXT NOT NULL,
+			updated_at INTEGER NOT NULL,
+			FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+			FOREIGN KEY(note_id) REFERENCES notes(id) ON DELETE CASCADE,
+			PRIMARY KEY(user_id, note_id)
+		);
+		CREATE INDEX IF NOT EXISTS idx_notes_comments_user_updated ON notes_comments(user_id, updated_at DESC);
 		CREATE TABLE IF NOT EXISTS login_tokens (
 			token TEXT PRIMARY KEY,
 			email TEXT NOT NULL,
@@ -312,6 +325,15 @@ function initDb() {
 	);
 	stmtTagsByUser = db.prepare(
 		"SELECT tags_json FROM notes WHERE user_id = ? ORDER BY created_at DESC LIMIT 500"
+	);
+	stmtNoteCommentsGetByNoteUser = db.prepare(
+		"SELECT comments_json, updated_at FROM notes_comments WHERE note_id = ? AND user_id = ?"
+	);
+	stmtNoteCommentsUpsert = db.prepare(
+		"INSERT INTO notes_comments(user_id, note_id, comments_json, updated_at) VALUES(?, ?, ?, ?) ON CONFLICT(user_id, note_id) DO UPDATE SET comments_json = excluded.comments_json, updated_at = excluded.updated_at"
+	);
+	stmtNoteCommentsDeleteByNoteUser = db.prepare(
+		"DELETE FROM notes_comments WHERE note_id = ? AND user_id = ?"
 	);
 	stmtTrashInsert = db.prepare(
 		"INSERT INTO notes_trash(id, user_id, text, kind, content_hash, tags_json, created_at, updated_at, deleted_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, id) DO UPDATE SET text = excluded.text, kind = excluded.kind, content_hash = excluded.content_hash, tags_json = excluded.tags_json, created_at = excluded.created_at, updated_at = excluded.updated_at, deleted_at = excluded.deleted_at"
@@ -784,6 +806,73 @@ function parseTagsJson(raw) {
 	} catch {
 		return [];
 	}
+}
+
+function parseCommentsJson(raw) {
+	try {
+		const parsed = JSON.parse(String(raw || "[]"));
+		return Array.isArray(parsed) ? parsed : [];
+	} catch {
+		return [];
+	}
+}
+
+function sanitizeCommentAuthor(raw) {
+	if (!raw || typeof raw !== "object") return null;
+	const avatar = String(raw.avatar || "").trim().slice(0, 8);
+	const color = String(raw.color || "").trim().slice(0, 32);
+	const name = String(raw.name || "").trim().slice(0, 64);
+	const out = {};
+	if (avatar) out.avatar = avatar;
+	if (color) out.color = color;
+	if (name) out.name = name;
+	return Object.keys(out).length ? out : null;
+}
+
+function sanitizeCommentItems(raw) {
+	const items = Array.isArray(raw) ? raw : [];
+	const out = [];
+	for (const item of items) {
+		if (!item || typeof item !== "object") continue;
+		const id = String(item.id || "").trim();
+		if (!id) continue;
+		const text = String(item.text || "").trim();
+		if (!text) continue;
+		const selection =
+			item.selection && typeof item.selection === "object" ? item.selection : {};
+		const startRaw = Number(selection.start || 0);
+		const endRaw = Number(selection.end || 0);
+		if (!Number.isFinite(startRaw) || !Number.isFinite(endRaw)) continue;
+		const start = Math.max(0, Math.floor(startRaw));
+		const end = Math.max(start, Math.floor(endRaw));
+		const selText = String(selection.text || "").trim();
+		if (!selText || end <= start) continue;
+		const createdAtRaw = Number(item.createdAt || 0);
+		const createdAt =
+			Number.isFinite(createdAtRaw) && createdAtRaw > 0
+				? createdAtRaw
+				: Date.now();
+		const updatedAtRaw = Number(item.updatedAt || 0);
+		const updatedAt =
+			Number.isFinite(updatedAtRaw) && updatedAtRaw > 0 ? updatedAtRaw : 0;
+		const parentId = String(item.parentId || "").trim();
+		const author = sanitizeCommentAuthor(item.author);
+		out.push({
+			id,
+			createdAt,
+			updatedAt,
+			text: text.slice(0, 4000),
+			parentId,
+			selection: {
+				start,
+				end,
+				text: selText.slice(0, 800),
+			},
+			author: author || undefined,
+		});
+		if (out.length >= 200) break;
+	}
+	return out;
 }
 
 function normalizeImportTags(rawTags) {
@@ -2380,6 +2469,83 @@ const server = http.createServer(async (req, res) => {
 			})
 			.catch(() => json(res, 400, { ok: false, error: "invalid_json" }));
 		return;
+	}
+
+	{
+		const m = url.pathname.match(
+			/^\/api\/notes\/([a-zA-Z0-9_-]{8,80})\/comments$/
+		);
+		const noteId = m ? String(m[1] || "") : "";
+		if (noteId && req.method === "GET") {
+			const email = getAuthedEmail(req);
+			if (!email) {
+				json(res, 401, { ok: false, error: "unauthorized" });
+				return;
+			}
+			const userId = getOrCreateUserId(email);
+			initDb();
+			const existing = stmtNoteGetByIdUser.get(noteId, userId);
+			if (!existing) {
+				json(res, 404, { ok: false, error: "not_found" });
+				return;
+			}
+			const row = stmtNoteCommentsGetByNoteUser.get(noteId, userId);
+			const comments = row ? parseCommentsJson(row.comments_json) : [];
+			json(res, 200, {
+				ok: true,
+				noteId,
+				comments,
+				updatedAt: row && row.updated_at ? row.updated_at : 0,
+			});
+			return;
+		}
+		if (noteId && req.method === "PUT") {
+			const email = getAuthedEmail(req);
+			if (!email) {
+				json(res, 401, { ok: false, error: "unauthorized" });
+				return;
+			}
+			readJson(req)
+				.then((body) => {
+					const userId = getOrCreateUserId(email);
+					initDb();
+					const existing = stmtNoteGetByIdUser.get(noteId, userId);
+					if (!existing) {
+						json(res, 404, { ok: false, error: "not_found" });
+						return;
+					}
+					if (!Array.isArray(body && body.comments ? body.comments : null)) {
+						json(res, 400, { ok: false, error: "invalid_comments" });
+						return;
+					}
+					const comments = sanitizeCommentItems(body.comments);
+					const updatedAt = Date.now();
+					if (comments.length > 0) {
+						stmtNoteCommentsUpsert.run(
+							userId,
+							noteId,
+							JSON.stringify(comments),
+							updatedAt
+						);
+					} else {
+						stmtNoteCommentsDeleteByNoteUser.run(noteId, userId);
+					}
+					json(res, 200, {
+						ok: true,
+						noteId,
+						count: comments.length,
+						updatedAt,
+					});
+				})
+				.catch((e) => {
+					if (String(e && e.message) === "body_too_large") {
+						json(res, 413, { ok: false, error: "body_too_large" });
+						return;
+					}
+					json(res, 400, { ok: false, error: "invalid_json" });
+				});
+			return;
+		}
 	}
 
 	{
