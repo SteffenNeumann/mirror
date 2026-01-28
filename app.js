@@ -15670,7 +15670,7 @@ self.onmessage = async (e) => {
 				applyPersonalSpaceFiltersAndRender();
 				syncPsEditingNoteTagsFromState();
 				updateEditorMetaYaml();
-				if (room && key) {
+				if (!auto && room && key) {
 					setRoomTabNoteId(room, key, psEditingNoteId);
 				}
 				if (psMainHint) {
@@ -15773,6 +15773,7 @@ self.onmessage = async (e) => {
 		const text = String(textarea && textarea.value ? textarea.value : "");
 		if (!text.trim()) return;
 		const noteId = String(psEditingNoteId || "").trim();
+		if (!noteId) return;
 		const tagsPayload = buildCurrentPsTagsPayload();
 		if (psAutoSaveLastSavedNoteId !== psEditingNoteId) {
 			psAutoSaveLastSavedNoteId = psEditingNoteId;
