@@ -8608,6 +8608,27 @@
 		return true;
 	}
 
+	let lastPreviewTaskToggle = null;
+	function markPreviewTaskToggle(index, checked) {
+		lastPreviewTaskToggle = {
+			index,
+			checked,
+			ts: Date.now(),
+		};
+	}
+	function shouldIgnorePreviewTaskToggle(index, checked) {
+		if (!lastPreviewTaskToggle) return false;
+		if (lastPreviewTaskToggle.index !== index) return false;
+		if (lastPreviewTaskToggle.checked !== checked) return false;
+		return Date.now() - lastPreviewTaskToggle.ts < 400;
+	}
+	function applyPreviewTaskToggle(index, checked) {
+		const ok = toggleMarkdownTaskAtIndex(index, checked);
+		if (metaLeft) metaLeft.textContent = ok ? "Todo updated." : "Todo not found.";
+		if (metaRight) metaRight.textContent = nowIso();
+		return ok;
+	}
+
 	let previewCheckboxDoc = null;
 	function attachPreviewCheckboxWriteback() {
 		if (!mdPreview) return;
@@ -8642,12 +8663,36 @@
 			}
 			return null;
 		};
+		const allTaskCheckboxes = () => {
+			const byLi = doc.querySelectorAll(
+				'li.task-list-item input[type="checkbox"]'
+			);
+			if (byLi && byLi.length) return byLi;
+			const byClass = doc.querySelectorAll('input.task-list-item-checkbox');
+			if (byClass && byClass.length) return byClass;
+			return doc.querySelectorAll('ul.task-list input[type="checkbox"]');
+		};
 		const indexOfCheckbox = (box) => {
 			if (!box) return null;
-			const all = doc.querySelectorAll('ul.task-list input[type="checkbox"]');
+			const all = allTaskCheckboxes();
 			for (let i = 0; i < all.length; i++) if (all[i] === box) return i;
 			return null;
 		};
+
+		doc.addEventListener(
+			"change",
+			(ev) => {
+				const box = findCheckbox(ev && ev.target ? ev.target : null);
+				if (!box) return;
+				const idx = indexOfCheckbox(box);
+				if (idx === null) return;
+				const checked = Boolean(box.checked);
+				if (shouldIgnorePreviewTaskToggle(idx, checked)) return;
+				markPreviewTaskToggle(idx, checked);
+				applyPreviewTaskToggle(idx, checked);
+			},
+			true
+		);
 
 		// Capture click early to compute the intended next state deterministically.
 		doc.addEventListener(
@@ -8669,14 +8714,9 @@
 				} catch {
 					// ignore
 				}
-				const ok = toggleMarkdownTaskAtIndex(idx, next);
-				if (ok) {
-					if (metaLeft) metaLeft.textContent = "Todo updated.";
-					if (metaRight) metaRight.textContent = nowIso();
-				} else {
-					if (metaLeft) metaLeft.textContent = "Todo not found.";
-					if (metaRight) metaRight.textContent = nowIso();
-				}
+				if (shouldIgnorePreviewTaskToggle(idx, next)) return;
+				markPreviewTaskToggle(idx, next);
+				applyPreviewTaskToggle(idx, next);
 			},
 			true
 		);
@@ -9880,10 +9920,9 @@
 			const idx = Number(data.index);
 			if (!Number.isFinite(idx) || idx < 0) return;
 			const checked = Boolean(data.checked);
-			const ok = toggleMarkdownTaskAtIndex(idx, checked);
-			if (metaLeft)
-				metaLeft.textContent = ok ? "Todo updated." : "Todo not found.";
-			if (metaRight) metaRight.textContent = nowIso();
+			if (shouldIgnorePreviewTaskToggle(idx, checked)) return;
+			markPreviewTaskToggle(idx, checked);
+			applyPreviewTaskToggle(idx, checked);
 			return;
 		}
 		if (data.type === "mirror_note_open") {

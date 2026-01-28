@@ -1,6 +1,23 @@
 # Dokumentation – Änderungen (2026-01-28)
 
 ## Ziel
+- Task-Checkbox-Änderungen in der Preview zuverlässig speichern.
+
+## Änderungen
+- Preview-Checkbox-Writeback nutzt robustere Checkbox-Erkennung (LI/Class/UL).
+- Doppeltes Toggle-Handling über Klick/Message entprellt.
+- Fallback auf `change`-Event im Preview-Dokument ergänzt.
+
+## Auswirkungen
+- **UI/UX:** Task-Checkboxen bleiben konsistent beim Umschalten.
+- **Feature-Interaktionen:** Preview-Tasks schreiben sicher in den Editor zurück.
+- **Datenebene:** Keine Änderung am API-Vertrag.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
+## Ziel
 - Kommentare an Notiz-ID binden und serverseitig speichern.
 
 ## Änderungen
