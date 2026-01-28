@@ -15864,10 +15864,15 @@ self.onmessage = async (e) => {
 			}
 			const queuedText = String(psAutoSaveQueuedText || "");
 			const queuedNoteId = String(psAutoSaveQueuedNoteId || "").trim();
+			const currentNoteId = String(psEditingNoteId || "").trim();
 			const queuedTags = psAutoSaveQueuedTags;
 			psAutoSaveQueuedText = "";
 			psAutoSaveQueuedNoteId = "";
 			psAutoSaveQueuedTags = null;
+			if (queuedNoteId && queuedNoteId !== currentNoteId) {
+				psAutoSaveInFlight = false;
+				return;
+			}
 			if (!queuedText.trim()) {
 				psAutoSaveInFlight = false;
 				return;
