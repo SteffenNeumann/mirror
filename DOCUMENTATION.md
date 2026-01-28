@@ -1,6 +1,21 @@
 # Dokumentation – Änderungen (2026-01-28)
 
 ## Ziel
+- Preview-Checkboxen wieder zuverlässig umschalten.
+
+## Änderungen
+- Click-Interception im Preview-Writeback entfernt; nur `change`-Event.
+
+## Auswirkungen
+- **UI/UX:** Checkboxen lassen sich in der Preview wieder toggeln.
+- **Feature-Interaktionen:** Writeback bleibt stabil, ohne Doppel-Events.
+- **Datenebene:** Keine Änderung am API-Vertrag.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
+## Ziel
 - Task-Checkbox-Änderungen in der Preview zuverlässig speichern.
 
 ## Änderungen

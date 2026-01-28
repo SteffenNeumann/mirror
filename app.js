@@ -8694,32 +8694,7 @@
 			true
 		);
 
-		// Capture click early to compute the intended next state deterministically.
-		doc.addEventListener(
-			"click",
-			(ev) => {
-				const box = findCheckbox(ev && ev.target ? ev.target : null);
-				if (!box) return;
-				const idx = indexOfCheckbox(box);
-				if (idx === null) return;
-				const next = !Boolean(box.checked);
-				try {
-					box.checked = next;
-				} catch {
-					// ignore
-				}
-				try {
-					ev.preventDefault();
-					ev.stopPropagation();
-				} catch {
-					// ignore
-				}
-				if (shouldIgnorePreviewTaskToggle(idx, next)) return;
-				markPreviewTaskToggle(idx, next);
-				applyPreviewTaskToggle(idx, next);
-			},
-			true
-		);
+		// Change event is sufficient for checkbox toggles.
 	}
 
 	function setPreviewDocument(html) {
