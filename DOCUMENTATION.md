@@ -1,6 +1,21 @@
 # Dokumentation – Änderungen (2026-01-28)
 
 ## Ziel
+- Autosave für Preview-Task-Toggles zuverlässig sichern, auch beim Notizwechsel.
+
+## Änderungen
+- Autosave nutzt Snapshot (Note-ID/Text/Tags), damit Task-Checkbox-Änderungen nicht verloren gehen.
+
+## Auswirkungen
+- **UI/UX:** Autosave bleibt konsistent beim Notizwechsel.
+- **Feature-Interaktionen:** Personal Space Autosave stabiler bei Preview-Interaktionen.
+- **Datenebene:** Keine Änderung am API-Vertrag; nur zuverlässigeres Speichern.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
+## Ziel
 - Diktat-Debug-Ausgabe im Browser konsistent sichtbar machen.
 
 ## Änderungen

@@ -3862,6 +3862,8 @@
 	let psAutoSaveLastSavedNoteId = "";
 	let psAutoSaveInFlight = false;
 	let psAutoSaveQueuedText = "";
+	let psAutoSaveQueuedNoteId = "";
+	let psAutoSaveQueuedTags = null;
 	let previewOpen = false;
 	let fullPreview = false;
 	let mobilePsOpen = false;
@@ -15348,6 +15350,18 @@ self.onmessage = async (e) => {
 		return Boolean(psState && psState.authed && textarea);
 	}
 
+	function buildCurrentPsTagsPayload() {
+		const baseTags = Array.isArray(psEditingNoteTags) ? psEditingNoteTags : [];
+		const systemTags = buildEditorSystemTags();
+		const tagsWithPinned = psEditingNotePinned
+			? [...baseTags, ...systemTags, PS_PINNED_TAG]
+			: [...baseTags, ...systemTags];
+		return buildPsTagsPayload(
+			uniqTags(tagsWithPinned),
+			psEditingNoteTagsOverridden
+		);
+	}
+
 	async function savePersonalSpaceNote(text, opts) {
 		const auto = Boolean(opts && opts.auto);
 		const allowEmpty = Boolean(opts && opts.allowEmpty);
@@ -15362,15 +15376,7 @@ self.onmessage = async (e) => {
 				toast("Please enable Personal Space first (sign in).", "error");
 			return false;
 		}
-		const baseTags = Array.isArray(psEditingNoteTags) ? psEditingNoteTags : [];
-		const systemTags = buildEditorSystemTags();
-		const tagsWithPinned = psEditingNotePinned
-			? [...baseTags, ...systemTags, PS_PINNED_TAG]
-			: [...baseTags, ...systemTags];
-		const tagsPayload = buildPsTagsPayload(
-			uniqTags(tagsWithPinned),
-			psEditingNoteTagsOverridden
-		);
+		const tagsPayload = buildCurrentPsTagsPayload();
 		if (auto) setPsAutoSaveStatus("Speichern…");
 		else if (psHint)
 			psHint.textContent = psEditingNoteId ? "Updating…" : "Saving…";
@@ -15457,17 +15463,68 @@ self.onmessage = async (e) => {
 		return true;
 	}
 
+	async function savePersonalSpaceNoteSnapshot(noteId, text, tagsPayload) {
+		const targetId = String(noteId || "").trim();
+		const rawText = String(text || "");
+		if (!targetId) return false;
+		if (!rawText.trim()) return false;
+		if (typeof navigator !== "undefined" && navigator.onLine === false) {
+			if (String(psEditingNoteId || "").trim() === targetId) {
+				setPsAutoSaveStatus("Offline");
+			}
+			return false;
+		}
+		if (!psState || !psState.authed) return false;
+		try {
+			const res = await api(`/api/notes/${encodeURIComponent(targetId)}`, {
+				method: "PUT",
+				body: JSON.stringify({
+					text: rawText,
+					tags: Array.isArray(tagsPayload) ? tagsPayload : [],
+				}),
+			});
+			const saved = res && res.note ? res.note : null;
+			if (saved && saved.id && psState && psState.authed) {
+				saved.updatedAt = Date.now();
+				const notes = Array.isArray(psState.notes) ? psState.notes : [];
+				const idx = notes.findIndex(
+					(n) => String(n && n.id ? n.id : "") === targetId
+				);
+				psState.notes =
+					idx >= 0
+						? [...notes.slice(0, idx), saved, ...notes.slice(idx + 1)]
+						: [saved, ...notes];
+			}
+			if (String(psEditingNoteId || "").trim() === targetId) {
+				psAutoSaveLastSavedNoteId = targetId;
+				psAutoSaveLastSavedText = rawText;
+				setPsAutoSaveStatus("Automatisch gespeichert");
+			}
+			updateRoomTabsForNoteId(targetId, rawText);
+			return true;
+		} catch {
+			if (String(psEditingNoteId || "").trim() === targetId) {
+				setPsAutoSaveStatus("Speichern fehlgeschlagen");
+			}
+			return false;
+		}
+	}
+
 	function schedulePsAutoSave() {
 		if (!canAutoSavePsNote()) return;
 		const text = String(textarea && textarea.value ? textarea.value : "");
 		if (!text.trim()) return;
+		const noteId = String(psEditingNoteId || "").trim();
+		const tagsPayload = buildCurrentPsTagsPayload();
 		if (psAutoSaveLastSavedNoteId !== psEditingNoteId) {
 			psAutoSaveLastSavedNoteId = psEditingNoteId;
 			psAutoSaveLastSavedText = psEditingNoteId ? text : "";
 		}
 		if (text === psAutoSaveLastSavedText) return;
+		psAutoSaveQueuedText = text;
+		psAutoSaveQueuedNoteId = noteId;
+		psAutoSaveQueuedTags = tagsPayload;
 		if (psAutoSaveInFlight) {
-			psAutoSaveQueuedText = text;
 			return;
 		}
 		if (psAutoSaveTimer) window.clearTimeout(psAutoSaveTimer);
@@ -15478,13 +15535,26 @@ self.onmessage = async (e) => {
 				psAutoSaveInFlight = false;
 				return;
 			}
-			const latest = String(textarea && textarea.value ? textarea.value : "");
-			if (latest === psAutoSaveLastSavedText) {
+			const queuedText = String(psAutoSaveQueuedText || "");
+			const queuedNoteId = String(psAutoSaveQueuedNoteId || "").trim();
+			const queuedTags = psAutoSaveQueuedTags;
+			psAutoSaveQueuedText = "";
+			psAutoSaveQueuedNoteId = "";
+			psAutoSaveQueuedTags = null;
+			if (!queuedText.trim()) {
 				psAutoSaveInFlight = false;
 				return;
 			}
 			try {
-				await savePersonalSpaceNote(latest, { auto: true });
+				if (!queuedNoteId) {
+					await savePersonalSpaceNote(queuedText, { auto: true });
+				} else {
+					await savePersonalSpaceNoteSnapshot(
+						queuedNoteId,
+						queuedText,
+						queuedTags
+					);
+				}
 			} catch {
 				setPsAutoSaveStatus("Speichern fehlgeschlagen");
 			} finally {
