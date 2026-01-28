@@ -1,6 +1,23 @@
 # Dokumentation – Änderungen (2026-01-28)
 
 ## Ziel
+- Audio-Capture-Fehler genauer differenzieren (Mikrofon vs. SpeechRecognition).
+
+## Änderungen
+- Zusätzliche Diagnose bei `audio-capture` (Permission, Gerät, getUserMedia).
+- Hinweistext, wenn Mikrofon funktioniert, aber Spracherkennung fehlschlägt.
+- Cache-Busting für app.js aktualisiert.
+
+## Auswirkungen
+- **UI/UX:** Präzisere Fehlermeldungen für Diktat.
+- **Feature-Interaktionen:** Keine Änderung.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
+## Ziel
 - Diktat auf Desktop nicht blockieren, wenn Mikrofon als „busy“ gemeldet wird.
 
 ## Änderungen

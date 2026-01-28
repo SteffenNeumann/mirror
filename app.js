@@ -5912,6 +5912,72 @@
 		toast(message, "error");
 	}
 
+	function getSpeechEngineErrorMessage() {
+		return uiLang === "en"
+			? "Microphone works, but speech recognition failed. Restart the browser or disable extensions."
+			: "Mikrofon funktioniert, aber die Spracherkennung ist fehlgeschlagen. Browser neu starten oder Erweiterungen prüfen.";
+	}
+
+	async function resolveAudioCaptureMessage() {
+		if (
+			!navigator ||
+			!navigator.mediaDevices ||
+			!navigator.mediaDevices.getUserMedia
+		)
+			return getDictationMicErrorMessage("unknown");
+		if (navigator.permissions && navigator.permissions.query) {
+			try {
+				const status = await navigator.permissions.query({ name: "microphone" });
+				if (status && status.state === "denied") {
+					return getDictationMicErrorMessage("permission");
+				}
+			} catch {
+				// ignore
+			}
+		}
+		try {
+			if (navigator.mediaDevices.enumerateDevices) {
+				const devices = await navigator.mediaDevices.enumerateDevices();
+				const hasInput = (devices || []).some(
+					(d) => d && d.kind === "audioinput"
+				);
+				if (!hasInput) return getDictationMicErrorMessage("not_found");
+			}
+		} catch {
+			// ignore
+		}
+		try {
+			const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+			try {
+				stream.getTracks().forEach((track) => track.stop());
+			} catch {
+				// ignore
+			}
+			return getSpeechEngineErrorMessage();
+		} catch (err) {
+			const name = err && err.name ? String(err.name) : "";
+			let kind = "unknown";
+			if (name === "NotAllowedError" || name === "SecurityError") {
+				kind = "permission";
+			} else if (name === "NotFoundError" || name === "DevicesNotFoundError") {
+				kind = "not_found";
+			} else if (name === "NotReadableError" || name === "AbortError") {
+				kind = "busy";
+			}
+			return getDictationMicErrorMessage(kind);
+		}
+	}
+
+	function handleAudioCaptureError() {
+		resolveAudioCaptureMessage()
+			.then((message) => {
+				toastDictationError(message);
+			})
+			.catch(() => {
+				toastDictationError(getDictationMicErrorMessage("unknown"));
+			});
+	}
+
 	async function ensureDictationMicAccess() {
 		if (
 			!navigator ||
@@ -6063,8 +6129,7 @@
 				aiDictationRestarting = false;
 				setAiDictationUi(false);
 				if (code === "audio-capture") {
-					const message = getDictationMicErrorMessage("busy");
-					toastDictationError(message);
+					handleAudioCaptureError();
 					return;
 				}
 				toastDictationError(t("toast.dictation_failed"));
