@@ -10470,7 +10470,7 @@ self.onmessage = async (e) => {
 			});
 			if (promptForChat) addAiChatEntry("user", promptForChat, chatContextKey);
 			if (aiText) addAiChatEntry("ai", aiText, chatContextKey);
-			clearAiPromptAfterResponse(promptForChat);
+			if (aiText) clearAiPromptAfterResponse(promptForChat);
 		} catch (e) {
 			const msg = e && e.message ? String(e.message) : "Error";
 			setPreviewRunOutput({

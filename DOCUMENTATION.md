@@ -4,7 +4,7 @@
 - AI-Promptfeld nach Anfrage leeren, sobald Antwort und Chat sichtbar sind.
 
 ## Änderungen
-- Nach AI-Antwort wird `aiPrompt` zurückgesetzt, wenn eine Eingabe gesendet wurde.
+- Nach erfolgreicher AI-Antwort mit Inhalt wird `aiPrompt` zurückgesetzt, wenn eine Eingabe gesendet wurde.
 
 ## Auswirkungen
 - **UI/UX:** Promptfeld leert sich nach Antwort; Chatverlauf bleibt sichtbar.
