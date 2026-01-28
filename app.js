@@ -5969,6 +5969,11 @@
 	}
 
 	function handleAudioCaptureError() {
+		collectDictationDebugSnapshot({ code: "audio-capture" })
+			.then((snapshot) => logDictationDebugSnapshot("audio-capture", snapshot))
+			.catch(() => {
+				// ignore
+			});
 		resolveAudioCaptureMessage()
 			.then((message) => {
 				toastDictationError(message);
@@ -5976,6 +5981,67 @@
 			.catch(() => {
 				toastDictationError(getDictationMicErrorMessage("unknown"));
 			});
+	}
+
+	async function collectDictationDebugSnapshot(context) {
+		const snapshot = {
+			at: new Date().toISOString(),
+			context: context || {},
+			uiLang,
+			userAgent: typeof navigator !== "undefined" ? navigator.userAgent : "",
+			speechRecognitionSupported: Boolean(getSpeechRecognitionConstructor()),
+			dictationAvailable: aiDictationAvailable,
+			dictationActive: aiDictationActive,
+			permissions: { microphone: "unknown" },
+			audioInputs: { count: null, labeled: null },
+		};
+		if (
+			navigator &&
+			navigator.permissions &&
+			navigator.permissions.query
+		) {
+			try {
+				const status = await navigator.permissions.query({
+					name: "microphone",
+				});
+				if (status && status.state) {
+					snapshot.permissions.microphone = status.state;
+				}
+			} catch {
+				// ignore
+			}
+		}
+		if (navigator && navigator.mediaDevices && navigator.mediaDevices.enumerateDevices) {
+			try {
+				const devices = await navigator.mediaDevices.enumerateDevices();
+				const inputs = (devices || []).filter(
+					(d) => d && d.kind === "audioinput"
+				);
+				snapshot.audioInputs.count = inputs.length;
+				snapshot.audioInputs.labeled = inputs.some(
+					(d) => d && d.label
+				);
+			} catch {
+				// ignore
+			}
+		}
+		return snapshot;
+	}
+
+	function logDictationDebugSnapshot(reason, snapshot) {
+		try {
+			window.__mirrorDictationDebug = snapshot;
+		} catch {
+			// ignore
+		}
+		try {
+			const label = reason ? `[Diktat][Debug] ${reason}` : "[Diktat][Debug]";
+			console.groupCollapsed(label);
+			console.log(snapshot);
+			console.groupEnd();
+		} catch {
+			// ignore
+		}
 	}
 
 	async function ensureDictationMicAccess() {

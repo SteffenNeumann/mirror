@@ -1,6 +1,22 @@
 # Dokumentation – Änderungen (2026-01-28)
 
 ## Ziel
+- Diktat-Debug-Ausgabe im Browser konsistent sichtbar machen.
+
+## Änderungen
+- Debug-Snapshot bei `audio-capture` in die Konsole geschrieben.
+- Cache-Busting für app.js aktualisiert.
+
+## Auswirkungen
+- **UI/UX:** Keine Änderung.
+- **Feature-Interaktionen:** Bessere Diagnosemöglichkeit.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
+## Ziel
 - Audio-Capture-Fehler genauer differenzieren (Mikrofon vs. SpeechRecognition).
 
 ## Änderungen
