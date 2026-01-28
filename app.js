@@ -8694,6 +8694,23 @@
 			true
 		);
 
+		doc.addEventListener(
+			"click",
+			(ev) => {
+				const box = findCheckbox(ev && ev.target ? ev.target : null);
+				if (!box) return;
+				const idx = indexOfCheckbox(box);
+				if (idx === null) return;
+				window.setTimeout(() => {
+					const checked = Boolean(box.checked);
+					if (shouldIgnorePreviewTaskToggle(idx, checked)) return;
+					markPreviewTaskToggle(idx, checked);
+					applyPreviewTaskToggle(idx, checked);
+				}, 0);
+			},
+			true
+		);
+
 		// Change event is sufficient for checkbox toggles.
 	}
 

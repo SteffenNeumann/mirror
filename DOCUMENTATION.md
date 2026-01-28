@@ -16,6 +16,21 @@
 - Ausgeführt: `node --check server.js`
 
 ## Ziel
+- Preview-Checkbox-Änderungen zuverlässig speichern.
+
+## Änderungen
+- Zusätzlicher Click-Fallback im Preview-Writeback (ohne Default-Block).
+
+## Auswirkungen
+- **UI/UX:** Checkboxen toggeln und speichern stabil.
+- **Feature-Interaktionen:** Writeback robuster, kein doppeltes Blocking.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
+## Ziel
 - Preview-Checkboxen wieder zuverlässig umschalten.
 
 ## Änderungen
