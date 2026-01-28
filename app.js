@@ -14231,6 +14231,12 @@ self.onmessage = async (e) => {
 
 	function applyRemoteText(text, ts) {
 		if (typeof ts !== "number" || ts < lastAppliedRemoteTs) return;
+		const boundNoteId = getRoomTabNoteIdForRoom(room, key);
+		if (boundNoteId) {
+			const boundNote = findNoteById(boundNoteId);
+			const noteUpdatedAt = Number(boundNote && boundNote.updatedAt);
+			if (Number.isFinite(noteUpdatedAt) && ts <= noteUpdatedAt) return;
+		}
 		lastAppliedRemoteTs = ts;
 		applySyncedText(text, "Synced.", ts);
 	}
