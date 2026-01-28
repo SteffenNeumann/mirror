@@ -6322,6 +6322,14 @@
 		return v;
 	}
 
+	function clearAiPromptAfterResponse(promptText) {
+		if (!aiPromptInput) return;
+		const trimmed = String(promptText || "").trim();
+		if (!trimmed) return;
+		aiPromptInput.value = "";
+		saveAiPrompt("");
+	}
+
 	function getAiUsePreview() {
 		return aiUsePreview;
 	}
@@ -10462,6 +10470,7 @@ self.onmessage = async (e) => {
 			});
 			if (promptForChat) addAiChatEntry("user", promptForChat, chatContextKey);
 			if (aiText) addAiChatEntry("ai", aiText, chatContextKey);
+			clearAiPromptAfterResponse(promptForChat);
 		} catch (e) {
 			const msg = e && e.message ? String(e.message) : "Error";
 			setPreviewRunOutput({

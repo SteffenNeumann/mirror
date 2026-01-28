@@ -1,6 +1,20 @@
 # Dokumentation – Änderungen (2026-01-28)
 
 ## Ziel
+- AI-Promptfeld nach Anfrage leeren, sobald Antwort und Chat sichtbar sind.
+
+## Änderungen
+- Nach AI-Antwort wird `aiPrompt` zurückgesetzt, wenn eine Eingabe gesendet wurde.
+
+## Auswirkungen
+- **UI/UX:** Promptfeld leert sich nach Antwort; Chatverlauf bleibt sichtbar.
+- **Feature-Interaktionen:** Keine Änderung an API/Sync; nur UI-State.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+
+## Ziel
 - Notizinhalt beim ersten Klick korrekt laden.
 
 ## Änderungen
