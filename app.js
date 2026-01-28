@@ -11311,6 +11311,12 @@ self.onmessage = async (e) => {
 			removeNoteRoomBindingByRoom(nextRoom, nextKey);
 			return;
 		}
+		const clearedTabs = tabs.map((t) => {
+			if (!t) return t;
+			if (t.room === nextRoom && t.key === nextKey) return t;
+			if (String(t.noteId || "").trim() !== nextId) return t;
+			return { ...t, noteId: "", text: t.text || "" };
+		});
 		const entry = {
 			room: nextRoom,
 			key: nextKey,
@@ -11319,12 +11325,12 @@ self.onmessage = async (e) => {
 			text: "",
 		};
 		if (idx >= 0) {
-			tabs.splice(idx, 1, { ...tabs[idx], ...entry });
+			clearedTabs.splice(idx, 1, { ...clearedTabs[idx], ...entry });
 		} else {
-			if (tabs.length >= MAX_ROOM_TABS) return;
-			tabs.push(entry);
+			if (clearedTabs.length >= MAX_ROOM_TABS) return;
+			clearedTabs.push(entry);
 		}
-		saveRoomTabs(tabs);
+		saveRoomTabs(clearedTabs);
 		upsertNoteRoomBinding(nextId, nextRoom, nextKey);
 	}
 
