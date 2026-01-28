@@ -2870,7 +2870,7 @@
 			setTyping(true);
 			scheduleTypingStop();
 			scheduleSelectionSend();
-			const noteId = getActiveRoomTabNoteId();
+			const noteId = getRoomTabNoteIdForRoom(room, key);
 			updateRoomTabTextLocal(room, key, textarea.value);
 			if (noteId) updateLocalNoteText(noteId, textarea.value);
 			scheduleRoomTabSync({
@@ -9626,6 +9626,7 @@
 		const okIds = results
 			.filter((r) => r.status === "fulfilled" && r.value && r.value.ok)
 			.map((r) => r.value.id);
+		okIds.forEach((id) => removeNoteRoomBindingByNoteId(id));
 		if (okIds.includes(psEditingNoteId)) {
 			psEditingNoteId = "";
 			if (psMainHint) psMainHint.classList.add("hidden");
@@ -9800,6 +9801,7 @@
 							if (psMainHint) psMainHint.classList.add("hidden");
 							syncMobileFocusState();
 						}
+						removeNoteRoomBindingByNoteId(id);
 						toast("Notiz im Papierkorb abgelegt.", "success");
 						await refreshPersonalSpace();
 					} catch {
@@ -10847,6 +10849,7 @@ self.onmessage = async (e) => {
 	const RECENT_KEY = "mirror_recent_rooms";
 	const FAVORITES_KEY = "mirror_favorites_v1";
 	const ROOM_TABS_KEY = "mirror_room_tabs_v1";
+	const NOTE_ROOM_BINDINGS_KEY = "mirror_note_room_bindings_v1";
 	const COMMENT_STORAGE_KEY = "mirror_comments_v1";
 	const CALENDAR_SOURCES_KEY = "mirror_calendar_sources_v1";
 	const CALENDAR_LOCAL_EVENTS_KEY = "mirror_calendar_local_events_v1";
@@ -11042,6 +11045,134 @@ self.onmessage = async (e) => {
 		return Array.from(map.values());
 	}
 
+	function normalizeNoteRoomBinding(it) {
+		const noteId = String(it && it.noteId ? it.noteId : "").trim();
+		const roomName = normalizeRoom(it && it.room);
+		const keyName = normalizeKey(it && it.key);
+		const updatedAt = Number(it && it.updatedAt) || 0;
+		if (!noteId || !roomName) return null;
+		return { noteId, room: roomName, key: keyName, updatedAt };
+	}
+
+	function mergeNoteRoomBindings(list) {
+		const byNote = new Map();
+		const byRoom = new Map();
+		for (const entry of list || []) {
+			const normalized = normalizeNoteRoomBinding(entry);
+			if (!normalized) continue;
+			const roomKey = `${normalized.room}:${normalized.key}`;
+			const prevByNote = byNote.get(normalized.noteId);
+			const prevByRoom = byRoom.get(roomKey);
+			if (prevByNote && prevByNote.updatedAt >= normalized.updatedAt) continue;
+			if (prevByRoom && prevByRoom.updatedAt > normalized.updatedAt) continue;
+			if (prevByRoom && prevByRoom.noteId !== normalized.noteId) {
+				byNote.delete(prevByRoom.noteId);
+			}
+			if (prevByNote) {
+				const prevRoomKey = `${prevByNote.room}:${prevByNote.key}`;
+				byRoom.delete(prevRoomKey);
+			}
+			byNote.set(normalized.noteId, normalized);
+			byRoom.set(roomKey, normalized);
+		}
+		return Array.from(byNote.values());
+	}
+
+	function loadNoteRoomBindings() {
+		try {
+			const raw = localStorage.getItem(NOTE_ROOM_BINDINGS_KEY);
+			const parsed = JSON.parse(raw || "[]");
+			if (!Array.isArray(parsed)) return [];
+			const cleaned = mergeNoteRoomBindings(parsed);
+			if (cleaned.length !== parsed.length) saveNoteRoomBindings(cleaned);
+			return cleaned;
+		} catch {
+			return [];
+		}
+	}
+
+	function saveNoteRoomBindings(list) {
+		try {
+			const cleaned = mergeNoteRoomBindings(Array.isArray(list) ? list : []);
+			localStorage.setItem(NOTE_ROOM_BINDINGS_KEY, JSON.stringify(cleaned));
+		} catch {
+			// ignore
+		}
+	}
+
+	function findNoteRoomBindingByNoteId(noteId) {
+		const target = String(noteId || "").trim();
+		if (!target) return null;
+		return loadNoteRoomBindings().find((b) => b.noteId === target) || null;
+	}
+
+	function findNoteRoomBindingByRoom(roomName, keyName) {
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!nextRoom) return null;
+		return (
+			loadNoteRoomBindings().find(
+				(b) => b.room === nextRoom && b.key === nextKey
+			) || null
+		);
+	}
+
+	function removeNoteRoomBindingByNoteId(noteId) {
+		const target = String(noteId || "").trim();
+		if (!target) return;
+		const list = loadNoteRoomBindings().filter((b) => b.noteId !== target);
+		saveNoteRoomBindings(list);
+		const tabs = dedupeRoomTabs(loadRoomTabs());
+		let changed = false;
+		const nextTabs = tabs.map((t) => {
+			if (!t || String(t.noteId || "") !== target) return t;
+			changed = true;
+			return { ...t, noteId: "", text: t.text || "" };
+		});
+		if (changed) saveRoomTabs(nextTabs);
+	}
+
+	function removeNoteRoomBindingByRoom(roomName, keyName) {
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!nextRoom) return;
+		const list = loadNoteRoomBindings().filter(
+			(b) => !(b.room === nextRoom && b.key === nextKey)
+		);
+		saveNoteRoomBindings(list);
+	}
+
+	function upsertNoteRoomBinding(noteId, roomName, keyName) {
+		const targetId = String(noteId || "").trim();
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!targetId || !nextRoom) return;
+		const roomKey = `${nextRoom}:${nextKey}`;
+		const next = loadNoteRoomBindings().filter(
+			(b) => b.noteId !== targetId && `${b.room}:${b.key}` !== roomKey
+		);
+		next.push({
+			noteId: targetId,
+			room: nextRoom,
+			key: nextKey,
+			updatedAt: Date.now(),
+		});
+		saveNoteRoomBindings(next);
+	}
+
+	function getRoomTabNoteIdForRoom(roomName, keyName) {
+		const activeNoteId = getActiveRoomTabNoteId();
+		if (activeNoteId) return activeNoteId;
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!nextRoom) return "";
+		const tabs = loadRoomTabs();
+		const cached = tabs.find((t) => t.room === nextRoom && t.key === nextKey);
+		if (cached && cached.noteId) return String(cached.noteId || "").trim();
+		const bound = findNoteRoomBindingByRoom(nextRoom, nextKey);
+		return bound && bound.noteId ? String(bound.noteId || "").trim() : "";
+	}
+
 	function loadLocalRoomTabs() {
 		try {
 			const raw = localStorage.getItem(ROOM_TABS_KEY);
@@ -11125,7 +11256,12 @@ self.onmessage = async (e) => {
 		const idx = tabs.findIndex(
 			(t) => t.room === nextRoom && t.key === nextKey
 		);
-		const noteId = getActiveRoomTabNoteId();
+		const activeNoteId = getActiveRoomTabNoteId();
+		const existingNoteId =
+			idx >= 0 ? String(tabs[idx].noteId || "").trim() : "";
+		const bound = findNoteRoomBindingByRoom(nextRoom, nextKey);
+		const boundNoteId = bound && bound.noteId ? String(bound.noteId || "").trim() : "";
+		const noteId = activeNoteId || existingNoteId || boundNoteId;
 		const text = resolveRoomTabSnapshotText(noteId, String(textVal ?? ""));
 		if (idx >= 0) {
 			const updated = { ...tabs[idx], text, noteId };
@@ -11161,11 +11297,20 @@ self.onmessage = async (e) => {
 		const nextRoom = normalizeRoom(roomName);
 		const nextKey = normalizeKey(keyName);
 		const nextId = String(noteId || "").trim();
-		if (!nextRoom || !nextId) return;
+		if (!nextRoom) return;
 		const tabs = dedupeRoomTabs(loadRoomTabs());
 		const idx = tabs.findIndex(
 			(t) => t.room === nextRoom && t.key === nextKey
 		);
+		if (!nextId) {
+			if (idx >= 0) {
+				const updated = { ...tabs[idx], noteId: "", text: tabs[idx].text || "" };
+				tabs.splice(idx, 1, updated);
+				saveRoomTabs(tabs);
+			}
+			removeNoteRoomBindingByRoom(nextRoom, nextKey);
+			return;
+		}
 		const entry = {
 			room: nextRoom,
 			key: nextKey,
@@ -11180,16 +11325,18 @@ self.onmessage = async (e) => {
 			tabs.push(entry);
 		}
 		saveRoomTabs(tabs);
+		upsertNoteRoomBinding(nextId, nextRoom, nextKey);
 	}
 
 	function findRoomTabByNoteId(noteId) {
 		const targetId = String(noteId || "").trim();
 		if (!targetId) return null;
-		return (
-			loadRoomTabs().find(
-				(t) => String(t && t.noteId ? t.noteId : "") === targetId
-			) || null
+		const direct = loadRoomTabs().find(
+			(t) => String(t && t.noteId ? t.noteId : "") === targetId
 		);
+		if (direct) return direct;
+		const bound = findNoteRoomBindingByNoteId(targetId);
+		return bound ? { room: bound.room, key: bound.key, noteId: bound.noteId } : null;
 	}
 
 	function updateLocalNoteText(noteId, textVal) {
@@ -11287,7 +11434,7 @@ self.onmessage = async (e) => {
 
 	function flushRoomTabSync() {
 		if (!psState || !psState.authed) return;
-		const noteId = getActiveRoomTabNoteId();
+		const noteId = getRoomTabNoteIdForRoom(room, key);
 		const snapshot = resolveRoomTabSnapshotText(noteId);
 		scheduleRoomTabSync({
 			room,
@@ -11330,18 +11477,29 @@ self.onmessage = async (e) => {
 		const idx = tabs.findIndex(
 			(t) => t.room === nextRoom && t.key === nextKey
 		);
+		const bound = findNoteRoomBindingByRoom(nextRoom, nextKey);
+		const boundNoteId = bound && bound.noteId ? String(bound.noteId || "").trim() : "";
 		if (idx >= 0) {
 			tabs[idx].lastUsed = now;
+			if (boundNoteId && !String(tabs[idx].noteId || "").trim()) {
+				tabs[idx].noteId = boundNoteId;
+			}
 		} else {
 			if (tabs.length >= MAX_ROOM_TABS) {
 				showRoomTabLimitModal();
 				return;
 			}
-			tabs.push({ room: nextRoom, key: nextKey, lastUsed: now });
+			tabs.push({
+				room: nextRoom,
+				key: nextKey,
+				lastUsed: now,
+				noteId: boundNoteId,
+				text: "",
+			});
 		}
 		saveRoomTabs(tabs);
 		if (!(opts && opts.skipSync)) {
-			const noteId = getActiveRoomTabNoteId();
+			const noteId = getRoomTabNoteIdForRoom(nextRoom, nextKey);
 			const snapshot = resolveRoomTabSnapshotText(noteId);
 			scheduleRoomTabSync({
 				room: nextRoom,
@@ -13791,10 +13949,11 @@ self.onmessage = async (e) => {
 
 		metaLeft.textContent = label || "Synced.";
 		metaRight.textContent = nowIso();
+		const noteId = getRoomTabNoteIdForRoom(room, key);
 		updateRoomTabTextLocal(room, key, cleaned);
+		if (noteId) updateLocalNoteText(noteId, cleaned);
 		updatePreview();
 		updatePasswordMaskOverlay();
-		const noteId = getActiveRoomTabNoteId();
 		scheduleRoomTabSync({
 			room,
 			key,
@@ -13802,6 +13961,9 @@ self.onmessage = async (e) => {
 			lastUsed:
 				typeof lastUsedTs === "number" ? lastUsedTs : Date.now(),
 		});
+		if (noteId && psEditingNoteId && noteId === String(psEditingNoteId || "").trim()) {
+			schedulePsAutoSave();
+		}
 	}
 
 	function initCrdt() {
@@ -14542,7 +14704,7 @@ self.onmessage = async (e) => {
 		setTyping(true);
 		scheduleTypingStop();
 		scheduleSelectionSend();
-		const noteId = getActiveRoomTabNoteId();
+		const noteId = getRoomTabNoteIdForRoom(room, key);
 		updateRoomTabTextLocal(room, key, textarea.value);
 		if (noteId) updateLocalNoteText(noteId, textarea.value);
 		scheduleRoomTabSync({
@@ -15011,20 +15173,26 @@ self.onmessage = async (e) => {
 				(t) => t.room === room && t.key === key
 			);
 			const cachedNoteId = cached && cached.noteId ? String(cached.noteId || "") : "";
-			const note = cachedNoteId ? findNoteById(cachedNoteId) : null;
+			const bound = findNoteRoomBindingByRoom(room, key);
+			const boundNoteId = bound && bound.noteId ? String(bound.noteId || "") : "";
+			const resolvedNoteId = cachedNoteId || boundNoteId;
+			if (!cachedNoteId && boundNoteId) {
+				setRoomTabNoteId(room, key, boundNoteId);
+			}
+			const note = resolvedNoteId ? findNoteById(resolvedNoteId) : null;
 			const cachedText =
 				cached && typeof cached.text === "string" ? cached.text : "";
 			const nextText = note
 				? String(note.text || "")
-				: !cachedNoteId
+				: !resolvedNoteId
 					? cachedText || pendingRoomBootstrapText || ""
 					: "";
 			pendingRoomBootstrapText = "";
 			if (note) {
 				applyNoteToEditor(note, null, { skipHistory: true });
 			} else {
-				if (cachedNoteId) {
-					psEditingNoteId = cachedNoteId;
+				if (resolvedNoteId) {
+					psEditingNoteId = resolvedNoteId;
 					if (psMainHint) {
 						psMainHint.classList.remove("hidden");
 						psMainHint.textContent = "Loading…";
@@ -15033,7 +15201,7 @@ self.onmessage = async (e) => {
 					const targetKey = key;
 					void refreshPersonalSpace().then(() => {
 						if (room !== targetRoom || key !== targetKey) return;
-						const refreshed = findNoteById(cachedNoteId);
+						const refreshed = findNoteById(resolvedNoteId);
 						if (refreshed) {
 							applyNoteToEditor(refreshed, null, { skipHistory: true });
 						}
@@ -15052,10 +15220,13 @@ self.onmessage = async (e) => {
 			updateSelectionMenu();
 			void loadCommentsForRoom();
 			if (!note) {
-				syncPsEditingNoteFromEditorText(nextText, {
+				const linked = syncPsEditingNoteFromEditorText(nextText, {
 					clear: true,
 					updateList: true,
 				});
+				if (linked && psEditingNoteId) {
+					setRoomTabNoteId(room, key, psEditingNoteId);
+				}
 			}
 		}
 		if (!key) toast("Public room (no key).", "info");
@@ -15140,6 +15311,9 @@ self.onmessage = async (e) => {
 	}
 	if (psNewNote) {
 		psNewNote.addEventListener("click", async () => {
+			const prevRoom = room;
+			const prevKey = key;
+			const prevNoteId = String(psEditingNoteId || "");
 			const currentText = String(textarea && textarea.value ? textarea.value : "");
 			const hasContent = Boolean(currentText.trim());
 			const hasId = Boolean(psEditingNoteId);
@@ -15166,7 +15340,15 @@ self.onmessage = async (e) => {
 			setPsAutoSaveStatus("");
 			syncPsEditorTagsInput();
 			try {
-				await savePersonalSpaceNote("", { auto: false, allowEmpty: true });
+				const created = await savePersonalSpaceNote("", {
+					auto: false,
+					allowEmpty: true,
+				});
+				if (created && prevRoom && String(psEditingNoteId || "").trim()) {
+					setRoomTabNoteId(prevRoom, prevKey, psEditingNoteId);
+				} else if (prevRoom && prevNoteId) {
+					setRoomTabNoteId(prevRoom, prevKey, "");
+				}
 			} catch {
 				// ignore
 			}
@@ -15488,6 +15670,9 @@ self.onmessage = async (e) => {
 				applyPersonalSpaceFiltersAndRender();
 				syncPsEditingNoteTagsFromState();
 				updateEditorMetaYaml();
+				if (room && key) {
+					setRoomTabNoteId(room, key, psEditingNoteId);
+				}
 				if (psMainHint) {
 					psMainHint.classList.remove("hidden");
 					psMainHint.textContent = "Editing active";
@@ -15913,6 +16098,7 @@ self.onmessage = async (e) => {
 						(n) => String(n && n.id ? n.id : "") !== id
 					);
 				}
+				removeNoteRoomBindingByNoteId(id);
 				applyPersonalSpaceFiltersAndRender();
 				if (psEditingNoteId === id) {
 					psEditingNoteId = "";
@@ -15930,6 +16116,7 @@ self.onmessage = async (e) => {
 							(n) => String(n && n.id ? n.id : "") !== id
 						);
 					}
+					removeNoteRoomBindingByNoteId(id);
 					applyPersonalSpaceFiltersAndRender();
 					await refreshPersonalSpace();
 					toast("Notiz war bereits gelöscht.", "info");
