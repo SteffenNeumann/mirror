@@ -12,7 +12,7 @@
 - **Datenebene:** Keine Änderung.
 
 ## Tests (Smoke)
-- Ausgeführt: `node --check app.js`
+- Nicht ausgeführt: `node --check app.js` (node nicht gefunden)
 
 ## Ziel
 - Notizinhalt beim ersten Klick korrekt laden.
