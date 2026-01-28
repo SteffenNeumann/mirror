@@ -7,6 +7,7 @@
 - Kommentar-Speicherung auf `/api/notes/:id/comments` umgestellt.
 - Kommentare werden beim Notizwechsel geladen und pro Note gespeichert.
 - Validierung/Sanitizing der Kommentar-Payload im Server ergänzt.
+- Kommentar-Aktion legt bei Bedarf automatisch eine Notiz an, damit Markierungen kommentiert werden können.
 
 ## Auswirkungen
 - **UI/UX:** Kommentare sind jetzt eindeutig der aktiven Notiz zugeordnet.

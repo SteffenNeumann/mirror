@@ -2083,6 +2083,20 @@
 		return Boolean(noteId) && psState && psState.authed;
 	}
 
+	async function ensureCommentNoteId() {
+		const current = getCommentNoteId();
+		if (current) return current;
+		if (!psState || !psState.authed || !textarea) return "";
+		const text = String(textarea.value || "");
+		if (!text.trim()) return "";
+		try {
+			await savePersonalSpaceNote(text, { auto: true });
+		} catch {
+			return "";
+		}
+		return getCommentNoteId();
+	}
+
 	function normalizeCommentItems(raw) {
 		if (!Array.isArray(raw)) return [];
 		return raw
@@ -2471,11 +2485,11 @@
 		applyUiTranslations();
 	}
 
-	function addCommentFromDraft() {
+	async function addCommentFromDraft() {
 		if (!commentInput) return;
 		const text = String(commentInput.value || "").trim();
 		if (!text) return;
-		const noteId = getCommentNoteId();
+		const noteId = await ensureCommentNoteId();
 		if (!noteId) {
 			toast("Kommentare sind nur für Notizen verfügbar.", "error");
 			return;
@@ -2543,9 +2557,9 @@
 		updateCommentOverlay();
 	}
 
-	function openCommentFromSelection() {
+	async function openCommentFromSelection() {
 		if (!textarea) return;
-		const noteId = getCommentNoteId();
+		const noteId = await ensureCommentNoteId();
 		if (!noteId) {
 			toast("Kommentare sind nur für Notizen verfügbar.", "error");
 			return;
@@ -2828,7 +2842,7 @@
 				updateCodeLangOverlay();
 				break;
 			case "comment":
-				openCommentFromSelection();
+				void openCommentFromSelection();
 				return;
 			case "sort":
 				sortSelectionLines(textarea);
@@ -15666,7 +15680,7 @@ self.onmessage = async (e) => {
 	}
 	if (commentAddBtn) {
 		commentAddBtn.addEventListener("click", () => {
-			addCommentFromDraft();
+			void addCommentFromDraft();
 		});
 	}
 	if (commentInput) {
@@ -15674,7 +15688,7 @@ self.onmessage = async (e) => {
 			if (!e) return;
 			if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
 				e.preventDefault();
-				addCommentFromDraft();
+				void addCommentFromDraft();
 			}
 		});
 	}
