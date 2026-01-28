@@ -5945,13 +5945,15 @@
 			return true;
 		} catch (err) {
 			const name = err && err.name ? String(err.name) : "";
+			if (name === "NotReadableError" || name === "AbortError") {
+				// Busy mic: allow SpeechRecognition to try anyway.
+				return true;
+			}
 			let kind = "unknown";
 			if (name === "NotAllowedError" || name === "SecurityError") {
 				kind = "permission";
 			} else if (name === "NotFoundError" || name === "DevicesNotFoundError") {
 				kind = "not_found";
-			} else if (name === "NotReadableError" || name === "AbortError") {
-				kind = "busy";
 			}
 			toastDictationError(getDictationMicErrorMessage(kind));
 			return false;

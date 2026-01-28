@@ -1,3 +1,21 @@
+# Dokumentation – Änderungen (2026-01-28)
+
+## Ziel
+- Diktat auf Desktop nicht blockieren, wenn Mikrofon als „busy“ gemeldet wird.
+
+## Änderungen
+- Busy-Mikrofon führt nicht mehr zum Abbruch des Diktat-Starts.
+- Cache-Busting für app.js aktualisiert.
+
+## Auswirkungen
+- **UI/UX:** Diktat startet auf Desktop trotz Busy-Fehlermeldung.
+- **Feature-Interaktionen:** Keine Änderung.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
 # Dokumentation – Änderungen (2026-01-27)
 
 ## Ziel
