@@ -16,6 +16,21 @@
 - Ausgeführt: `node --check server.js`
 
 ## Ziel
+- Preview-Checkbox-Änderungen auch bei Maus-Exit sichern.
+
+## Änderungen
+- Beim Verlassen der Preview wird Autosave getriggert.
+
+## Auswirkungen
+- **UI/UX:** Checkbox-Änderungen bleiben erhalten auch bei schnellem Wechsel.
+- **Feature-Interaktionen:** Kein API-Change, nur zusätzlicher Save-Trigger.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
+## Ziel
 - Preview-Checkbox-Änderungen zuverlässig speichern.
 
 ## Änderungen

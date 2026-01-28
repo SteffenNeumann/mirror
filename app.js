@@ -8711,6 +8711,13 @@
 			true
 		);
 
+		const schedulePreviewExitSave = () => {
+			if (!psEditingNoteId) return;
+			if (!textarea) return;
+			schedulePsAutoSave();
+		};
+		doc.addEventListener("mouseleave", schedulePreviewExitSave, true);
+
 		// Change event is sufficient for checkbox toggles.
 	}
 
