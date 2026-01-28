@@ -2104,28 +2104,32 @@
 				if (!item || typeof item !== "object") return null;
 				const text = String(item.text || "").trim();
 				if (!text) return null;
-				const selection = item.selection || {};
-				const start = Number(selection.start || 0);
-				const end = Number(selection.end || 0);
-				const selText = String(selection.text || "").trim();
-				if (!selText || end <= start) return null;
 				const createdAt = Number(item.createdAt || 0) || Date.now();
 				const updatedAt = Number(item.updatedAt || 0) || 0;
 				const parentId = String(item.parentId || "").trim();
 				const author = item.author && typeof item.author === "object"
 					? item.author
 					: identity;
+				const selectionSource =
+					item.selection && typeof item.selection === "object"
+						? item.selection
+						: null;
+				let normalizedSelection = null;
+				if (selectionSource) {
+					const start = Number(selectionSource.start || 0);
+					const end = Number(selectionSource.end || 0);
+					const selText = String(selectionSource.text || "").trim();
+					if (selText && end > start) {
+						normalizedSelection = { start, end, text: selText };
+					}
+				}
 				return {
 					id: String(item.id || `c_${createdAt}`),
 					createdAt,
 					updatedAt,
 					text,
 					parentId,
-					selection: {
-						start,
-						end,
-						text: selText,
-						},
+					selection: normalizedSelection,
 					author,
 				};
 			})
@@ -2215,6 +2219,7 @@
 			})
 			.filter(Boolean)
 			.sort((a, b) => a.start - b.start);
+		if (!ranges.length) return "";
 		let out = "";
 		let cursor = 0;
 		let lastEnd = 0;
@@ -2294,8 +2299,10 @@
 		commentDraftSelection = selection;
 		if (!commentSelectionLabel) return;
 		if (!selection || !selection.text) {
-			commentSelectionLabel.textContent =
-				"Text markieren und im Menü \"Comment\" auswählen.";
+			let prefix = "Ohne Textmarkierung";
+			if (commentEditId) prefix = "Bearbeiten ohne Textmarkierung";
+			else if (commentReplyToId) prefix = "Antwort ohne Textmarkierung";
+			commentSelectionLabel.textContent = `${prefix}.`;
 			return;
 		}
 		const trimmed =
@@ -2339,76 +2346,72 @@
 		updateCommentComposerUi();
 	}
 
-	function renderCommentList() {
-		if (!commentList) return;
-		commentList.innerHTML = "";
-		if (commentEmpty) {
-			commentEmpty.classList.toggle("hidden", commentItems.length > 0);
+	async function addCommentFromDraft() {
+		if (!commentInput) return;
+		const text = String(commentInput.value || "").trim();
+		if (!text) return;
+		const noteId = await ensureCommentNoteId();
+		if (!noteId) {
+			toast("Kommentare sind nur für Notizen verfügbar.", "error");
+			return;
 		}
-		if (commentCountBadge) {
-			const count = commentItems.length;
-			commentCountBadge.textContent = String(count);
-			commentCountBadge.classList.toggle("hidden", count === 0);
+		let selection = commentDraftSelection;
+		if (!selection) {
+			const range = getSelectionRange();
+			if (range && textarea) {
+				const value = String(textarea.value || "");
+				const selectedText = value.slice(range.start, range.end).trim();
+				if (selectedText) {
+					selection = {
+						start: range.start,
+						end: range.end,
+						text: selectedText,
+					};
+				}
+			}
+		if (commentEditId) {
+			const idx = commentItems.findIndex((it) => it.id === commentEditId);
+			if (idx >= 0) {
+				commentItems[idx] = {
+					...commentItems[idx],
+					text,
+					updatedAt: Date.now(),
+					selection: selection || null,
+				};
+			}
+			clearCommentComposerState();
+			renderCommentList();
+			saveCommentsForRoom();
+			updateCommentOverlay();
+			return;
 		}
-		commentItems.forEach((entry) => {
-			const item = document.createElement("div");
-			const isReply = Boolean(entry && entry.parentId);
-			item.className =
-				"rounded-lg border border-white/10 bg-slate-950/50 p-2 text-sm text-slate-100" +
-				(isReply ? " ml-4 border-l-2 border-l-white/10" : "");
-			item.title = entry && entry.selection ? entry.selection.text || "" : "";
-			item.setAttribute("data-comment-id", entry.id || "");
-			const header = document.createElement("div");
-			header.className =
-				"mb-1 flex items-center justify-between text-[11px] text-slate-400";
-			const left = document.createElement("div");
-			left.className = "flex items-center gap-2";
-			const avatar = document.createElement("span");
-			avatar.className =
-				"inline-flex h-6 w-6 items-center justify-center rounded-full border border-white/10 text-[12px]";
-			avatar.textContent =
-				entry && entry.author && entry.author.avatar
-					? entry.author.avatar
-					: "👤";
-			if (entry && entry.author && entry.author.color) {
-				avatar.style.background = entry.author.color;
+		const nextEntry = {
+			id: `c_${Date.now().toString(36)}_${Math.random()
+				.toString(36)
+				.slice(2, 7)}`,
+			createdAt: Date.now(),
+			text,
+			selection: selection || null,
+			parentId: commentReplyToId || "",
+			author: identity,
+		};
+		if (commentReplyToId) {
+			const idx = commentItems.findIndex(
+				(it) => it.id === commentReplyToId
+			);
+			if (idx >= 0) {
+				commentItems.splice(idx + 1, 0, nextEntry);
+			} else {
+				commentItems.unshift(nextEntry);
 			}
-			const time = document.createElement("span");
-			const baseTime = formatCommentTime(entry.createdAt);
-			const wasEdited =
-				entry.updatedAt && entry.updatedAt > entry.createdAt + 1000;
-			time.textContent = wasEdited ? `${baseTime} · bearbeitet` : baseTime;
-			left.appendChild(avatar);
-			left.appendChild(time);
-			if (isReply) {
-				const replyTag = document.createElement("span");
-				replyTag.className =
-					"rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300";
-				replyTag.textContent = "Antwort";
-				left.appendChild(replyTag);
-			}
-			header.appendChild(left);
-			const actions = document.createElement("div");
-			actions.className = "flex items-center gap-1";
-			const editBtn = document.createElement("button");
-			editBtn.type = "button";
-			editBtn.className =
-				"inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10";
-			editBtn.title = t("comments.edit_action");
-			editBtn.setAttribute("data-i18n-title", "comments.edit_action");
-			editBtn.setAttribute("data-i18n-aria", "comments.edit_action");
-			editBtn.innerHTML =
-				"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"h-3.5 w-3.5\"><path d=\"M12 20h9\" /><path d=\"M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z\" /></svg>";
-			const replyBtn = document.createElement("button");
-			replyBtn.type = "button";
-			replyBtn.className =
-				"inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10";
-			replyBtn.title = t("comments.reply_action");
-			replyBtn.setAttribute("data-i18n-title", "comments.reply_action");
-			replyBtn.setAttribute("data-i18n-aria", "comments.reply_action");
-			replyBtn.innerHTML =
-				"<svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"h-3.5 w-3.5\"><path d=\"M9 17l-5-5 5-5\" /><path d=\"M4 12h10a6 6 0 0 1 6 6v2\" /></svg>";
-			const deleteBtn = document.createElement("button");
+		} else {
+			commentItems.unshift(nextEntry);
+		}
+		clearCommentComposerState();
+		renderCommentList();
+		saveCommentsForRoom();
+		updateCommentOverlay();
+	}
 			deleteBtn.type = "button";
 			deleteBtn.className =
 				"inline-flex h-6 w-6 items-center justify-center rounded-md border border-rose-400/30 bg-rose-500/10 text-rose-100 transition hover:bg-rose-500/20";
