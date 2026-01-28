@@ -16,6 +16,21 @@
 - Ausgeführt: `node --check server.js`
 
 ## Ziel
+- Checkbox-Änderungen lösen zuverlässig Autosave aus.
+
+## Änderungen
+- Nach Preview-Checkbox-Toggle wird ein Input-Event am Editor dispatcht.
+
+## Auswirkungen
+- **UI/UX:** Task-Änderungen werden zuverlässig gespeichert.
+- **Feature-Interaktionen:** Autosave-Pipeline wird genutzt.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
+## Ziel
 - Preview-Checkbox-Änderungen auch bei Maus-Exit sichern.
 
 ## Änderungen

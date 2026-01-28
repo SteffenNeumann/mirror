@@ -8626,6 +8626,13 @@
 		const ok = toggleMarkdownTaskAtIndex(index, checked);
 		if (metaLeft) metaLeft.textContent = ok ? "Todo updated." : "Todo not found.";
 		if (metaRight) metaRight.textContent = nowIso();
+		if (ok && textarea) {
+			try {
+				textarea.dispatchEvent(new Event("input", { bubbles: true }));
+			} catch {
+				// ignore
+			}
+		}
 		return ok;
 	}
 
