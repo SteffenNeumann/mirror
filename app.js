@@ -2369,6 +2369,7 @@
 					};
 				}
 			}
+		}
 		if (commentEditId) {
 			const idx = commentItems.findIndex((it) => it.id === commentEditId);
 			if (idx >= 0) {
