@@ -2394,6 +2394,7 @@
 			editBtn.type = "button";
 			editBtn.className =
 				"inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10";
+			editBtn.title = t("comments.edit_action");
 			editBtn.setAttribute("data-i18n-title", "comments.edit_action");
 			editBtn.setAttribute("data-i18n-aria", "comments.edit_action");
 			editBtn.innerHTML =
@@ -2402,6 +2403,7 @@
 			replyBtn.type = "button";
 			replyBtn.className =
 				"inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10";
+			replyBtn.title = t("comments.reply_action");
 			replyBtn.setAttribute("data-i18n-title", "comments.reply_action");
 			replyBtn.setAttribute("data-i18n-aria", "comments.reply_action");
 			replyBtn.innerHTML =

@@ -8,6 +8,8 @@
 - Kommentare werden beim Notizwechsel geladen und pro Note gespeichert.
 - Validierung/Sanitizing der Kommentar-Payload im Server ergänzt.
 - Kommentar-Aktion legt bei Bedarf automatisch eine Notiz an, damit Markierungen kommentiert werden können.
+- Kommentar-Liste mit 8px Abstand zwischen Einträgen.
+- Tooltips für Bearbeiten/Antworten in der Kommentar-Liste (sprachabhängig).
 
 ## Auswirkungen
 - **UI/UX:** Kommentare sind jetzt eindeutig der aktiven Notiz zugeordnet.
