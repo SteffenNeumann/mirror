@@ -10917,6 +10917,7 @@ self.onmessage = async (e) => {
 	const FAVORITES_KEY = "mirror_favorites_v1";
 	const ROOM_TABS_KEY = "mirror_room_tabs_v1";
 	const NOTE_ROOM_BINDINGS_KEY = "mirror_note_room_bindings_v1";
+	const SHARED_ROOMS_KEY = "mirror_shared_rooms_v1";
 	const COMMENT_STORAGE_KEY = "mirror_comments_v1";
 	const CALENDAR_SOURCES_KEY = "mirror_calendar_sources_v1";
 	const CALENDAR_LOCAL_EVENTS_KEY = "mirror_calendar_local_events_v1";
@@ -11110,6 +11111,57 @@ self.onmessage = async (e) => {
 		for (const s of serverTabs || []) add(s, false);
 		for (const l of localTabs || []) add(l, true);
 		return Array.from(map.values());
+	}
+
+	function normalizeSharedRoomEntry(it) {
+		const roomName = normalizeRoom(it && it.room);
+		const keyName = normalizeKey(it && it.key);
+		const updatedAt = Number(it && it.updatedAt) || 0;
+		if (!roomName) return null;
+		return { room: roomName, key: keyName, updatedAt };
+	}
+
+	function loadSharedRooms() {
+		try {
+			const raw = localStorage.getItem(SHARED_ROOMS_KEY);
+			const parsed = JSON.parse(raw || "[]");
+			if (!Array.isArray(parsed)) return [];
+			return parsed.map(normalizeSharedRoomEntry).filter(Boolean);
+		} catch {
+			return [];
+		}
+	}
+
+	function saveSharedRooms(list) {
+		try {
+			const cleaned = Array.isArray(list)
+				? list.map(normalizeSharedRoomEntry).filter(Boolean)
+				: [];
+			localStorage.setItem(SHARED_ROOMS_KEY, JSON.stringify(cleaned));
+		} catch {
+			// ignore
+		}
+	}
+
+	function isRoomMarkedShared(roomName, keyName) {
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!nextRoom) return false;
+		return loadSharedRooms().some(
+			(r) => r.room === nextRoom && r.key === nextKey
+		);
+	}
+
+	function markRoomShared(roomName, keyName) {
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!nextRoom) return false;
+		const list = loadSharedRooms();
+		const keyId = `${nextRoom}:${nextKey}`;
+		const filtered = list.filter((r) => `${r.room}:${r.key}` !== keyId);
+		filtered.push({ room: nextRoom, key: nextKey, updatedAt: Date.now() });
+		saveSharedRooms(filtered);
+		return filtered.length !== list.length;
 	}
 
 	function normalizeNoteRoomBinding(it) {
@@ -11606,6 +11658,7 @@ self.onmessage = async (e) => {
 			.map((t) => {
 				const isActive = t.room === room && t.key === key;
 				const isCollab = isActive && presenceState && presenceState.size > 1;
+				const isShared = isRoomMarkedShared(t.room, t.key);
 				const base =
 					"inline-flex items-center gap-1 rounded-lg border text-xs transition";
 				const active =
@@ -11617,6 +11670,8 @@ self.onmessage = async (e) => {
 					: "";
 				const collab = isCollab
 					? '<span class="ml-1 inline-flex h-2 w-2 rounded-full bg-emerald-400/80 shadow-[0_0_6px_rgba(16,185,129,0.6)]" title="Collaboration aktiv" aria-label="Collaboration aktiv"></span>'
+					: isShared
+					? '<span class="ml-1 inline-flex h-2 w-2 rounded-full bg-cyan-400/80 shadow-[0_0_6px_rgba(34,211,238,0.6)]" title="Geteilter Raum" aria-label="Geteilter Raum"></span>'
 					: "";
 				const closeBtn = canClose
 					? `
@@ -13795,6 +13850,10 @@ self.onmessage = async (e) => {
 		if (!presenceSummary || !presenceList) return;
 		const users = Array.from(presenceState.values());
 		const count = users.length;
+		if (count > 1 && room) {
+			const marked = markRoomShared(room, key);
+			if (marked) renderRoomTabs();
+		}
 		const presenceKey = count === 1 ? "presence.one" : "presence.many";
 		presenceSummary.textContent = formatUi(t(presenceKey), { count });
 
