@@ -808,6 +808,22 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	transform: translate(-50%, 0);
 }
 
+.tab-tooltip::after {
+	top: calc(100% + 8px);
+	bottom: auto;
+	z-index: 200;
+}
+
+.tab-tooltip::before {
+	top: calc(100% + 2px);
+	bottom: auto;
+	border-left: 1px solid var(--calendar-tooltip-border);
+	border-top: 1px solid var(--calendar-tooltip-border);
+	border-bottom: none;
+	transform: translate(-50%, -6px) rotate(45deg);
+	z-index: 199;
+}
+
 body[data-theme="monoLight"] {
 	color-scheme: light;
 	background-color: #f6f8fa;
