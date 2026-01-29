@@ -747,7 +747,7 @@ body.preview-only #editorPreviewGrid > div:first-child {
 }
 
 #roomTabs {
-	overflow-y: visible;
+	overflow: visible;
 }
 
 .room-tabs-scroll {
@@ -809,19 +809,24 @@ body.preview-only #editorPreviewGrid > div:first-child {
 }
 
 .tab-tooltip::after {
-	top: calc(100% + 8px);
-	bottom: auto;
-	z-index: 200;
+	bottom: calc(100% + 8px);
+	top: auto;
+	z-index: 220;
 }
 
 .tab-tooltip::before {
-	top: calc(100% + 2px);
-	bottom: auto;
+	bottom: calc(100% + 2px);
+	top: auto;
 	border-left: 1px solid var(--calendar-tooltip-border);
-	border-top: 1px solid var(--calendar-tooltip-border);
-	border-bottom: none;
+	border-bottom: 1px solid var(--calendar-tooltip-border);
+	border-top: none;
 	transform: translate(-50%, -6px) rotate(45deg);
-	z-index: 199;
+	z-index: 219;
+}
+
+#editorPanel > header {
+	position: relative;
+	z-index: 5;
 }
 
 body[data-theme="monoLight"] {
