@@ -2566,8 +2566,18 @@
 			actions.appendChild(deleteBtn);
 			header.appendChild(actions);
 			const body = document.createElement("div");
-			body.className = "whitespace-pre-wrap text-sm text-slate-100";
-			body.textContent = entry.text || "";
+			body.className = "comment-body text-sm text-slate-100";
+			const rawText = entry.text || "";
+			const renderer = ensureMarkdown();
+			if (renderer) {
+				try {
+					body.innerHTML = applyHljsToHtml(renderer.render(String(rawText)));
+				} catch {
+					body.textContent = rawText;
+				}
+			} else {
+				body.textContent = rawText;
+			}
 			const selection = document.createElement("div");
 			selection.className =
 				"mb-2 rounded-md bg-white/5 px-2 py-1 text-[11px] text-slate-300";
