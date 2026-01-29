@@ -1,3 +1,19 @@
+# Dokumentation – Änderungen (2026-01-29)
+
+## Ziel
+- Import großer Dateien nicht mehr stückeln; jeder Import erzeugt genau eine Notiz.
+
+## Änderungen
+- Text-Import erstellt genau eine Notiz und verzichtet auf Split/Chunking.
+
+## Auswirkungen
+- **UI/UX:** Importierte Dateien landen als einzelne Notiz.
+- **Feature-Interaktionen:** Importlogik unverändert, nur das Split-Verhalten entfällt.
+- **Datenebene:** Keine Änderung am API-Vertrag.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+
 # Dokumentation – Änderungen (2026-01-28)
 
 ## Ziel

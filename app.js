@@ -10664,123 +10664,12 @@ self.onmessage = async (e) => {
 		const trimmed = raw.trim();
 		if (!trimmed) return [];
 		const name = String(filename || "import").trim();
-
-		// Conservative limit: keep JSON request under 1MB.
-		const MAX_CHARS = 220000;
-
 		const now = Date.now();
 		const normalized = trimmed.replace(/\r\n?/g, "\n");
-
-		function splitOffFrontMatter(src) {
-			const lines = src.split("\n");
-			if (lines[0] !== "---") return { front: "", body: src };
-			let end = -1;
-			for (let i = 1; i < Math.min(lines.length, 2000); i += 1) {
-				if (lines[i] === "---") {
-					end = i;
-					break;
-				}
-			}
-			if (end === -1) return { front: "", body: src };
-			const front = lines.slice(0, end + 1).join("\n");
-			const body = lines
-				.slice(end + 1)
-				.join("\n")
-				.trimStart();
-			return { front, body };
-		}
-
-		function splitByHr(src) {
-			// Split at markdown separator lines consisting of '---' only,
-			// but only when surrounded by blank lines (or file boundaries).
-			const lines = src.split("\n");
-			const parts = [];
-			let buf = [];
-			for (let i = 0; i < lines.length; i += 1) {
-				const line = lines[i];
-				if (line.trim() === "---") {
-					const prevBlank = i === 0 ? true : lines[i - 1].trim() === "";
-					const nextBlank =
-						i === lines.length - 1 ? true : lines[i + 1].trim() === "";
-					if (prevBlank && nextBlank) {
-						const chunk = buf.join("\n").trim();
-						if (chunk) parts.push(chunk);
-						buf = [];
-						continue;
-					}
-				}
-				buf.push(line);
-			}
-			const last = buf.join("\n").trim();
-			if (last) parts.push(last);
-			return parts.length ? parts : [src.trim()];
-		}
-
-		function splitByHeadings(src) {
-			const lines = src.split("\n");
-			const hasH1 = lines.some((l) => /^#\s+\S/.test(l));
-			const re = hasH1 ? /^#\s+\S/ : /^##\s+\S/;
-			const blocks = [];
-			let cur = [];
-			for (const line of lines) {
-				if (re.test(line) && cur.length) {
-					const chunk = cur.join("\n").trim();
-					if (chunk) blocks.push(chunk);
-					cur = [line];
-					continue;
-				}
-				cur.push(line);
-			}
-			const last = cur.join("\n").trim();
-			if (last) blocks.push(last);
-			return blocks.length ? blocks : [src.trim()];
-		}
-
-		function chunkBigText(src, labelPrefix) {
-			const out = [];
-			if (src.length <= MAX_CHARS) {
-				out.push({ text: src.trim(), createdAt: now });
-				return out;
-			}
-			let part = 0;
-			for (let start = 0; start < src.length; start += MAX_CHARS) {
-				part += 1;
-				const chunk = src.slice(start, start + MAX_CHARS).trim();
-				if (!chunk) continue;
-				out.push({
-					text: `${labelPrefix} (Teil ${part})\n\n${chunk}`,
-					createdAt: now,
-				});
-				if (out.length >= 25) break;
-			}
-			return out;
-		}
-
-		// 1) YAML front matter (optional) stays with the first note.
-		const fm = splitOffFrontMatter(normalized);
-		let blocks = splitByHr(fm.body);
-		blocks = blocks.flatMap((b) => splitByHeadings(b));
-		blocks = blocks.map((b) => b.trim()).filter(Boolean);
-		if (!blocks.length) return [];
-
-		// Prepend front matter to first block if present.
-		if (fm.front) {
-			blocks[0] = `${fm.front}\n\n${blocks[0]}`.trim();
-		}
-
-		const notes = [];
-		for (let idx = 0; idx < blocks.length; idx += 1) {
-			const b = blocks[idx];
-			const hasHeading = /^(#|##)\s+\S/m.test(b);
-			const label = hasHeading ? `Import: ${name}` : `# Import: ${name}`;
-			const prefixed = hasHeading ? b : `${label}\n\n${b}`;
-			for (const n of chunkBigText(prefixed, `# Import: ${name}`)) {
-				notes.push(n);
-				if (notes.length >= 25) break;
-			}
-			if (notes.length >= 25) break;
-		}
-		return notes;
+		const hasHeading = /^(#|##)\s+\S/m.test(normalized);
+		const label = hasHeading ? `Import: ${name}` : `# Import: ${name}`;
+		const prefixed = hasHeading ? normalized : `${label}\n\n${normalized}`;
+		return [{ text: prefixed.trim(), createdAt: now }];
 	}
 
 	async function importPersonalSpaceNotesFromText(text, mode) {
