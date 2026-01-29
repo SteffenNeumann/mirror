@@ -10686,6 +10686,7 @@ self.onmessage = async (e) => {
 		maybeStartMobileAutoNoteSession();
 		await syncLocalRoomTabsToServer();
 		await syncLocalSharedRoomsToServer();
+		void loadCommentsForRoom();
 	}
 
 	function downloadJson(filename, obj) {

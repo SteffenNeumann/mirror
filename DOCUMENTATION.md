@@ -1,6 +1,20 @@
 # Dokumentation – Änderungen (2026-01-29)
 
 ## Ziel
+- Kommentar-Anzeige (Toggle/Badge) beim App-Start aktualisieren.
+
+## Änderungen
+- Nach `refreshPersonalSpace()` werden Kommentare geladen.
+
+## Auswirkungen
+- **UI/UX:** Kommentar-Badge zeigt nach App-Start den korrekten Stand.
+- **Feature-Interaktionen:** Kommentar-Sync folgt bestehendem Scope.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+
+## Ziel
 - Kommentare in Shared Rooms konsistent und realtime zwischen Geräten.
 
 ## Änderungen
