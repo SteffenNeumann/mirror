@@ -123,6 +123,8 @@
 	);
 	const commentOverlay = document.getElementById("commentOverlay");
 	const commentOverlayContent = document.getElementById("commentOverlayContent");
+	let cursorOverlay = null;
+	let cursorOverlayContent = null;
 	const mainGrid = document.getElementById("mainGrid");
 	const psPanel = document.getElementById("psPanel");
 	const togglePersonalSpaceBtn = document.getElementById("togglePersonalSpace");
@@ -1906,8 +1908,10 @@
 	let psTagContextDeleteTimer = null;
 	let editorMaskDisabled = false;
 	let crdtMarksEnabled = true;
+	let crdtMarksStyle = "underline";
 	const EDITOR_MASK_DISABLED_KEY = "mirror_mask_disabled";
 	const CRDT_MARKS_DISABLED_KEY = "mirror_crdt_marks_disabled";
+	const CRDT_MARKS_STYLE_KEY = "mirror_crdt_marks_style";
 	const aiChatHistoryByContext = new Map();
 	let aiChatContextKey = "";
 	let aiChatSeq = 0;
@@ -7268,6 +7272,19 @@
 		}
 	}
 
+	function loadCrdtMarksStyle() {
+		try {
+			const raw = String(localStorage.getItem(CRDT_MARKS_STYLE_KEY) || "").trim();
+			if (raw === "overlay" || raw === "underline") {
+				crdtMarksStyle = raw;
+			} else {
+				crdtMarksStyle = "underline";
+			}
+		} catch {
+			crdtMarksStyle = "underline";
+		}
+	}
+
 	function saveCrdtMarksPreference() {
 		try {
 			localStorage.setItem(
@@ -7356,11 +7373,13 @@
 		if (!enabled) {
 			mirrorMaskContent.textContent = "";
 			updateAttributionOverlay();
+			updateCursorOverlay();
 			return;
 		}
 		mirrorMaskContent.innerHTML = buildEditorMaskHtml(value);
 		syncPasswordMaskScroll();
 		updateAttributionOverlay();
+		updateCursorOverlay();
 	}
 
 	function getPreviewRunCombinedText(state) {
@@ -13980,6 +13999,7 @@ self.onmessage = async (e) => {
 			presenceList.appendChild(chip);
 		}
 		updateAttributionOverlay();
+		updateCursorOverlay();
 	}
 
 	let tabTooltipLayer = null;
@@ -14074,6 +14094,22 @@ self.onmessage = async (e) => {
 		return `rgba(${parsed.r}, ${parsed.g}, ${parsed.b}, ${alpha})`;
 	}
 
+	function ensureCursorOverlayLayer() {
+		if (cursorOverlay || !textarea) return;
+		const parent = textarea.parentElement;
+		if (!parent) return;
+		const layer = document.createElement("div");
+		layer.id = "cursorOverlay";
+		layer.className =
+			"pointer-events-none absolute inset-0 hidden overflow-hidden rounded-xl px-4 pt-20 pb-12 pr-11 font-sans text-base leading-relaxed text-slate-100";
+		const content = document.createElement("div");
+		content.id = "cursorOverlayContent";
+		layer.appendChild(content);
+		parent.appendChild(layer);
+		cursorOverlay = layer;
+		cursorOverlayContent = content;
+	}
+
 	function syncAttributionOverlayScroll() {
 		if (!attributionOverlayContent || !textarea) return;
 		const x = Number(textarea.scrollLeft || 0);
@@ -14081,9 +14117,17 @@ self.onmessage = async (e) => {
 		attributionOverlayContent.style.transform = `translate(${-x}px, ${-y}px)`;
 	}
 
+	function syncCursorOverlayScroll() {
+		if (!cursorOverlayContent || !textarea) return;
+		const x = Number(textarea.scrollLeft || 0);
+		const y = Number(textarea.scrollTop || 0);
+		cursorOverlayContent.style.transform = `translate(${-x}px, ${-y}px)`;
+	}
+
 	function buildAttributionHtml() {
 		if (!ytext) return "";
 		const delta = ytext.toDelta();
+		const underlineMode = crdtMarksStyle === "underline";
 		let out = "";
 		for (const op of delta) {
 			if (typeof op.insert !== "string") continue;
@@ -14096,7 +14140,11 @@ self.onmessage = async (e) => {
 			const meta = getAuthorMeta(String(authorId));
 			const bg = colorToRgba(meta.color, 0.34);
 			const border = colorToRgba(meta.color, 0.7);
-			out += `<span class="author-span" style="background-color:${bg};box-shadow:inset 0 0 0 1px ${border};">${escapeHtml(
+			const style = underlineMode
+				? `text-decoration:underline;text-decoration-color:${border};text-decoration-thickness:2px;text-underline-offset:0.18em;`
+				: `background-color:${bg};box-shadow:inset 0 0 0 1px ${border};`;
+			const cls = underlineMode ? "author-span author-underline" : "author-span";
+			out += `<span class="${cls}" style="${style}">${escapeHtml(
 				text
 			)}</span>`;
 		}
@@ -14105,19 +14153,24 @@ self.onmessage = async (e) => {
 
 	function updateAttributionOverlay() {
 		if (!attributionOverlay || !attributionOverlayContent) return;
+		const underlineMode = crdtMarksStyle === "underline";
 		if (!crdtMarksEnabled) {
 			attributionOverlay.classList.add("hidden");
+			attributionOverlay.classList.remove("is-underline");
 			attributionOverlayContent.textContent = "";
 			if (textarea && textarea.classList) {
 				textarea.classList.remove("attribution-active");
+				textarea.classList.remove("attribution-underline");
 			}
 			return;
 		}
 		if (!crdtReady || !ytext || presenceState.size <= 1) {
 			attributionOverlay.classList.add("hidden");
+			attributionOverlay.classList.remove("is-underline");
 			attributionOverlayContent.textContent = "";
 			if (textarea && textarea.classList) {
 				textarea.classList.remove("attribution-active");
+				textarea.classList.remove("attribution-underline");
 			}
 			return;
 		}
@@ -14125,26 +14178,81 @@ self.onmessage = async (e) => {
 			mirrorMask && !mirrorMask.classList.contains("hidden");
 		if (maskVisible) {
 			attributionOverlay.classList.add("hidden");
+			attributionOverlay.classList.remove("is-underline");
 			if (textarea && textarea.classList) {
 				textarea.classList.remove("attribution-active");
+				textarea.classList.remove("attribution-underline");
 			}
 			return;
 		}
 		const html = buildAttributionHtml();
 		if (!html) {
 			attributionOverlay.classList.add("hidden");
+			attributionOverlay.classList.remove("is-underline");
 			attributionOverlayContent.textContent = "";
 			if (textarea && textarea.classList) {
 				textarea.classList.remove("attribution-active");
+				textarea.classList.remove("attribution-underline");
 			}
 			return;
 		}
 		attributionOverlayContent.innerHTML = html;
 		attributionOverlay.classList.remove("hidden");
+		attributionOverlay.classList.toggle("is-underline", underlineMode);
 		syncAttributionOverlayScroll();
 		if (textarea && textarea.classList) {
-			textarea.classList.add("attribution-active");
+			textarea.classList.toggle("attribution-active", !underlineMode);
+			textarea.classList.toggle("attribution-underline", underlineMode);
 		}
+		updateCursorOverlay();
+	}
+
+	function updateCursorOverlay() {
+		ensureCursorOverlayLayer();
+		if (!cursorOverlay || !cursorOverlayContent || !textarea) return;
+		const maskVisible =
+			mirrorMask && !mirrorMask.classList.contains("hidden");
+		if (maskVisible) {
+			cursorOverlay.classList.add("hidden");
+			cursorOverlayContent.textContent = "";
+			return;
+		}
+		const users = Array.from(presenceState.values()).filter((user) => {
+			if (!user || user.clientId === clientId) return false;
+			return (
+				user.selection && Number.isFinite(user.selection.start)
+			);
+		});
+		if (users.length === 0) {
+			cursorOverlay.classList.add("hidden");
+			cursorOverlayContent.textContent = "";
+			return;
+		}
+		cursorOverlayContent.innerHTML = "";
+		cursorOverlay.classList.remove("hidden");
+		for (const user of users) {
+			const selection = user.selection || {};
+			const caretPos = Number.isFinite(selection.end)
+				? selection.end
+				: selection.start;
+			const coords = getTextareaCaretCoords(textarea, caretPos);
+			const caret = document.createElement("div");
+			caret.className = "remote-caret";
+			caret.style.left = `${coords.left}px`;
+			caret.style.top = `${coords.top}px`;
+			caret.style.height = `${Math.max(12, coords.height || 16)}px`;
+			const color = user.color || "#94a3b8";
+			caret.style.borderColor = color;
+			caret.style.backgroundColor = colorToRgba(color, 0.35);
+			const label = document.createElement("div");
+			label.className = "remote-caret-label";
+			label.textContent = user.name || "User";
+			label.style.backgroundColor = colorToRgba(color, 0.92);
+			label.style.borderColor = colorToRgba(color, 1);
+			caret.appendChild(label);
+			cursorOverlayContent.appendChild(caret);
+		}
+		syncCursorOverlayScroll();
 	}
 
 	function applyPendingCrdtBootstrap() {
@@ -15044,6 +15152,7 @@ self.onmessage = async (e) => {
 		syncPasswordMaskScroll();
 		syncAttributionOverlayScroll();
 		syncCommentOverlayScroll();
+		syncCursorOverlayScroll();
 	});
 
 	textarea.addEventListener("keyup", () => {
@@ -15589,6 +15698,7 @@ self.onmessage = async (e) => {
 	loadAiApiConfig();
 	loadEditorMaskDisabled();
 	setEditorMaskToggleUi();
+	loadCrdtMarksStyle();
 	loadCrdtMarksPreference();
 	setCrdtMarksToggleUi();
 	updatePasswordMaskOverlay();

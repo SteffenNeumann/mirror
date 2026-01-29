@@ -322,6 +322,22 @@ body.code-lang-active #clearMirror {
 	white-space: pre-wrap;
 	word-break: break-word;
 }
+#attributionOverlay.is-underline #attributionOverlayContent {
+	color: transparent;
+}
+#attributionOverlay.is-underline .author-span {
+	background: transparent;
+	box-shadow: none;
+	padding: 0;
+	margin: 0;
+	border-radius: 0;
+}
+#attributionOverlay.is-underline .author-underline {
+	text-decoration-line: underline;
+	text-decoration-style: solid;
+	text-decoration-thickness: 2px;
+	text-underline-offset: 0.18em;
+}
 #commentOverlay {
 	z-index: 4;
 }
@@ -329,6 +345,35 @@ body.code-lang-active #clearMirror {
 	white-space: pre-wrap;
 	word-break: break-word;
 	color: transparent;
+}
+#cursorOverlay {
+	z-index: 6;
+}
+#cursorOverlayContent {
+	position: relative;
+	white-space: pre-wrap;
+	word-break: break-word;
+}
+.remote-caret {
+	position: absolute;
+	width: 2px;
+	border-left: 2px solid;
+	border-radius: 999px;
+	transform: translateX(-1px);
+}
+.remote-caret-label {
+	position: absolute;
+	left: 6px;
+	top: -6px;
+	transform: translateY(-100%);
+	padding: 2px 6px;
+	border-radius: 999px;
+	border: 1px solid transparent;
+	font-size: 10px;
+	line-height: 1.1;
+	color: rgba(15, 23, 42, 0.95);
+	white-space: nowrap;
+	box-shadow: 0 4px 10px rgba(15, 23, 42, 0.2);
 }
 .comment-span {
 	background: rgba(217, 70, 239, 0.25);
@@ -368,6 +413,9 @@ body.code-lang-active #clearMirror {
 }
 #mirror.attribution-active::-moz-selection {
 	background: rgba(217, 70, 239, 0.25);
+}
+#mirror.attribution-underline {
+	background-color: transparent !important;
 }
 .author-span {
 	border-radius: 0.35rem;

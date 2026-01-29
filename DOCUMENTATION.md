@@ -1,6 +1,23 @@
 # Dokumentation – Änderungen (2026-01-29)
 
 ## Ziel
+- CRDT-Markierungen als Unterstreichung pro User darstellen.
+- Remote-Cursor der anderen Nutzer sichtbar machen.
+
+## Änderungen
+- Attribution-Overlay unterstützt Unterstreichungsmodus ohne Text-Overlay.
+- Cursor-Layer rendert Carets und Labels für Presence-Selection.
+
+## Auswirkungen
+- **UI/UX:** Text bleibt lesbar, Unterstreichungen zeigen Autorschaft; Remote-Cursor sichtbar.
+- **Feature-Interaktionen:** Presence/Selection weiterhin Basis; keine API-Änderung.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
+## Ziel
 - Import großer Dateien nicht mehr stückeln; jeder Import erzeugt genau eine Notiz.
 
 ## Änderungen
