@@ -808,6 +808,54 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	transform: translate(-50%, 0);
 }
 
+.tab-tooltip::after,
+.tab-tooltip::before {
+	display: none;
+}
+
+.tab-tooltip-layer {
+	position: fixed;
+	left: 0;
+	top: 0;
+	transform: translate(-50%, -6px);
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.15s ease, transform 0.15s ease;
+	z-index: 9999;
+}
+
+.tab-tooltip-layer.is-visible {
+	opacity: 1;
+	transform: translate(-50%, 0);
+}
+
+.tab-tooltip-layer__box {
+	max-width: 240px;
+	min-width: 160px;
+	padding: 6px 10px;
+	border-radius: 10px;
+	border: 1px solid var(--calendar-tooltip-border);
+	background: var(--calendar-tooltip-bg);
+	color: var(--calendar-tooltip-text);
+	font-size: 11px;
+	line-height: 1.4;
+	white-space: normal;
+	text-align: left;
+	box-shadow: var(--calendar-tooltip-shadow);
+}
+
+.tab-tooltip-layer__arrow {
+	position: absolute;
+	left: 50%;
+	bottom: -5px;
+	width: 8px;
+	height: 8px;
+	background: var(--calendar-tooltip-bg);
+	border-left: 1px solid var(--calendar-tooltip-border);
+	border-bottom: 1px solid var(--calendar-tooltip-border);
+	transform: translateX(-50%) rotate(45deg);
+}
+
 .tab-tooltip::after {
 	bottom: calc(100% + 8px);
 	top: auto;

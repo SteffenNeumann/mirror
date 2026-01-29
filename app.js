@@ -14046,6 +14046,50 @@ self.onmessage = async (e) => {
 		updateAttributionOverlay();
 	}
 
+	let tabTooltipLayer = null;
+	let tabTooltipBox = null;
+	let tabTooltipArrow = null;
+
+	function ensureTabTooltipLayer() {
+		if (tabTooltipLayer) return;
+		const layer = document.createElement("div");
+		layer.className = "tab-tooltip-layer";
+		const box = document.createElement("div");
+		box.className = "tab-tooltip-layer__box";
+		const arrow = document.createElement("div");
+		arrow.className = "tab-tooltip-layer__arrow";
+		layer.appendChild(box);
+		layer.appendChild(arrow);
+		document.body.appendChild(layer);
+		tabTooltipLayer = layer;
+		tabTooltipBox = box;
+		tabTooltipArrow = arrow;
+	}
+
+	function hideTabTooltip() {
+		if (!tabTooltipLayer) return;
+		tabTooltipLayer.classList.remove("is-visible");
+	}
+
+	function showTabTooltip(target) {
+		const text = String(target && target.getAttribute("data-tooltip") || "");
+		if (!text) return;
+		ensureTabTooltipLayer();
+		if (!tabTooltipLayer || !tabTooltipBox) return;
+		tabTooltipBox.textContent = text;
+		const rect = target.getBoundingClientRect();
+		const left = rect.left + rect.width / 2;
+		tabTooltipLayer.style.left = `${left}px`;
+		tabTooltipLayer.style.top = "0px";
+		requestAnimationFrame(() => {
+			if (!tabTooltipLayer || !tabTooltipBox) return;
+			const height = tabTooltipBox.offsetHeight || 0;
+			const top = rect.top - height - 10;
+			tabTooltipLayer.style.top = `${top}px`;
+			tabTooltipLayer.classList.add("is-visible");
+		});
+	}
+
 	function upsertPresence(user) {
 		if (!user || !user.clientId) return;
 		presenceState.set(user.clientId, user);
@@ -14965,6 +15009,45 @@ self.onmessage = async (e) => {
 			});
 		}
 	});
+
+	document.addEventListener(
+		"pointerenter",
+		(ev) => {
+			const target = ev && ev.target ? ev.target : null;
+			const el = target && target.closest ? target.closest(".tab-tooltip") : null;
+			if (!el) return;
+			showTabTooltip(el);
+		},
+		true
+	);
+
+	document.addEventListener(
+		"pointerleave",
+		(ev) => {
+			const target = ev && ev.target ? ev.target : null;
+			const el = target && target.closest ? target.closest(".tab-tooltip") : null;
+			if (!el) return;
+			hideTabTooltip();
+		},
+		true
+	);
+
+	document.addEventListener("focusin", (ev) => {
+		const target = ev && ev.target ? ev.target : null;
+		const el = target && target.closest ? target.closest(".tab-tooltip") : null;
+		if (!el) return;
+		showTabTooltip(el);
+	});
+
+	document.addEventListener("focusout", (ev) => {
+		const target = ev && ev.target ? ev.target : null;
+		const el = target && target.closest ? target.closest(".tab-tooltip") : null;
+		if (!el) return;
+		hideTabTooltip();
+	});
+
+	window.addEventListener("scroll", hideTabTooltip, true);
+	window.addEventListener("resize", hideTabTooltip);
 
 	textarea.addEventListener("input", () => {
 		metaLeft.textContent = "Typing…";
