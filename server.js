@@ -99,6 +99,7 @@ let stmtRoomTabsByUser;
 let stmtSharedRoomUpsert;
 let stmtSharedRoomDelete;
 let stmtSharedRoomsByUser;
+let stmtSharedRoomsDeleteAll;
 let stmtUserSettingsGet;
 let stmtUserSettingsUpsert;
 let stmtGoogleTokenGet;
@@ -407,6 +408,9 @@ function initDb() {
 	);
 	stmtSharedRoomsByUser = db.prepare(
 		"SELECT room, room_key, added_at, updated_at FROM shared_rooms WHERE user_id = ? ORDER BY updated_at DESC LIMIT 200"
+	);
+	stmtSharedRoomsDeleteAll = db.prepare(
+		"DELETE FROM shared_rooms WHERE user_id = ?"
 	);
 	stmtUserSettingsGet = db.prepare(
 		"SELECT calendar_json, updated_at FROM user_settings WHERE user_id = ?"
@@ -2378,14 +2382,20 @@ const server = http.createServer(async (req, res) => {
 		}
 		readJson(req)
 			.then((body) => {
+				const removeAll = Boolean(body && body.all);
 				const room = clampRoom(body && body.room);
 				const key = clampKey(body && body.key);
-				if (!room) {
+				if (!removeAll && !room) {
 					json(res, 400, { ok: false, error: "invalid_room" });
 					return;
 				}
 				const userId = getOrCreateUserId(email);
 				initDb();
+				if (removeAll) {
+					stmtSharedRoomsDeleteAll.run(userId);
+					json(res, 200, { ok: true, cleared: true });
+					return;
+				}
 				stmtSharedRoomDelete.run(userId, room, key);
 				json(res, 200, { ok: true });
 			})

@@ -10567,6 +10567,7 @@ self.onmessage = async (e) => {
 		syncPsEditorTagsInput();
 		updatePsPinnedToggle();
 		updateFavoritesUI();
+		await resetSharedRoomsIfNeeded();
 		renderRoomTabs();
 		updateEditorMetaYaml();
 		updatePsNoteNavButtons();
@@ -10826,6 +10827,7 @@ self.onmessage = async (e) => {
 	const ROOM_TABS_KEY = "mirror_room_tabs_v1";
 	const NOTE_ROOM_BINDINGS_KEY = "mirror_note_room_bindings_v1";
 	const SHARED_ROOMS_KEY = "mirror_shared_rooms_v1";
+	const SHARED_ROOMS_RESET_KEY = "mirror_shared_rooms_reset_v1";
 	const COMMENT_STORAGE_KEY = "mirror_comments_v1";
 	const CALENDAR_SOURCES_KEY = "mirror_calendar_sources_v1";
 	const CALENDAR_LOCAL_EVENTS_KEY = "mirror_calendar_local_events_v1";
@@ -11533,6 +11535,32 @@ self.onmessage = async (e) => {
 		} catch {
 			// ignore
 		}
+	}
+
+	async function resetSharedRoomsIfNeeded() {
+		try {
+			if (localStorage.getItem(SHARED_ROOMS_RESET_KEY) === "1") return;
+		} catch {
+			// ignore
+		}
+		try {
+			localStorage.setItem(SHARED_ROOMS_KEY, JSON.stringify([]));
+			localStorage.setItem(SHARED_ROOMS_RESET_KEY, "1");
+		} catch {
+			// ignore
+		}
+		if (psState && psState.authed) {
+			try {
+				await api("/api/shared-rooms", {
+					method: "DELETE",
+					body: JSON.stringify({ all: true }),
+				});
+			} catch {
+				// ignore
+			}
+			psState.sharedRooms = [];
+		}
+		renderRoomTabs();
 	}
 
 	function scheduleRoomTabSync(payload) {
