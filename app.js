@@ -11666,12 +11666,12 @@ self.onmessage = async (e) => {
 				const idle =
 					"border-white/10 bg-slate-950/40 text-slate-200 hover:bg-white/10";
 				const badge = t.key
-					? '<span class="text-[10px] text-slate-400">privat</span>'
+					? '<span class="inline-flex h-4 w-4 items-center justify-center text-slate-300" title="Privater Raum" aria-label="Privater Raum"><svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11V7a5 5 0 0 1 10 0v4" /><rect x="5" y="11" width="14" height="10" rx="2" /></svg></span>'
 					: "";
 				const collab = isCollab
-					? '<span class="ml-1 inline-flex h-2 w-2 rounded-full bg-emerald-400/80 shadow-[0_0_6px_rgba(16,185,129,0.6)]" title="Collaboration aktiv" aria-label="Collaboration aktiv"></span>'
+					? '<span class="ml-1 inline-flex h-4 w-4 items-center justify-center text-emerald-300 shadow-[0_0_6px_rgba(16,185,129,0.6)]" title="Geteilter Raum" aria-label="Geteilter Raum"><svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1" /><path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1" /></svg></span>'
 					: isShared
-					? '<span class="ml-1 inline-flex h-2 w-2 rounded-full bg-cyan-400/80 shadow-[0_0_6px_rgba(34,211,238,0.6)]" title="Geteilter Raum" aria-label="Geteilter Raum"></span>'
+					? '<span class="ml-1 inline-flex h-4 w-4 items-center justify-center text-cyan-300 shadow-[0_0_6px_rgba(34,211,238,0.6)]" title="Geteilter Raum" aria-label="Geteilter Raum"><svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1" /><path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1" /></svg></span>'
 					: "";
 				const closeBtn = canClose
 					? `
