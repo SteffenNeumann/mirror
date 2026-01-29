@@ -1031,7 +1031,6 @@
 		shareModalMode = key ? "private" : "public";
 		shareModeSelect.value = shareModalMode;
 		updateShareModalLink();
-		markCurrentRoomShared();
 		setShareModalOpen(true);
 		window.setTimeout(() => {
 			try {
@@ -13897,10 +13896,6 @@ self.onmessage = async (e) => {
 		if (!presenceSummary || !presenceList) return;
 		const users = Array.from(presenceState.values());
 		const count = users.length;
-		if (count > 1 && room) {
-			const marked = markRoomShared(room, key);
-			if (marked) renderRoomTabs();
-		}
 		const presenceKey = count === 1 ? "presence.one" : "presence.many";
 		presenceSummary.textContent = formatUi(t(presenceKey), { count });
 
