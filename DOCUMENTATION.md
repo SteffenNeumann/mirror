@@ -1,6 +1,20 @@
 # Dokumentation – Änderungen (2026-01-29)
 
 ## Ziel
+- Kommentar-Badge in Shared Rooms sofort korrekt anzeigen.
+
+## Änderungen
+- Kommentar-Scope nutzt Room, sobald eine Room-ID vorhanden ist (Key oder Shared-Markierung).
+
+## Auswirkungen
+- **UI/UX:** Kommentar-Badge zeigt nach App-Start korrekte Zahl ohne Icon-Klick.
+- **Feature-Interaktionen:** Kommentar-Sync bleibt room-basiert für Shared Rooms.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+
+## Ziel
 - Kommentar-Anzeige (Toggle/Badge) beim App-Start aktualisieren.
 
 ## Änderungen

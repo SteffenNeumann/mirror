@@ -2093,11 +2093,10 @@
 
 	function getCommentScopeId() {
 		const noteId = getCommentNoteId();
+		const nextRoom = normalizeRoom(room);
+		const nextKey = normalizeKey(key);
 		const shared = isRoomMarkedShared(room, key);
-		if (shared) {
-			const nextRoom = normalizeRoom(room);
-			const nextKey = normalizeKey(key);
-			if (!nextRoom) return noteId ? `note:${noteId}` : "";
+		if (nextRoom && (nextKey || shared)) {
 			return `room:${nextRoom}${nextKey ? `:${nextKey}` : ""}`;
 		}
 		return noteId ? `note:${noteId}` : "";
