@@ -1110,6 +1110,10 @@ body[data-theme="monoLight"] .ai-chat-badge-ai {
 	background-color: rgba(9, 105, 218, 0.14) !important;
 }
 
+body[data-theme="monoLight"] .comment-reply-badge {
+	color: #0b1f33;
+}
+
 .ai-chat-message {
 	display: -webkit-box;
 	-webkit-box-orient: vertical;
