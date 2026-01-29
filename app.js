@@ -2091,13 +2091,53 @@
 		return psEditingNoteId ? String(psEditingNoteId || "") : "";
 	}
 
-	function canSyncCommentsForNote(noteId) {
-		return Boolean(noteId) && psState && psState.authed;
+	function getCommentScopeId() {
+		const noteId = getCommentNoteId();
+		const shared = isRoomMarkedShared(room, key);
+		if (shared) {
+			const nextRoom = normalizeRoom(room);
+			const nextKey = normalizeKey(key);
+			if (!nextRoom) return noteId ? `note:${noteId}` : "";
+			return `room:${nextRoom}${nextKey ? `:${nextKey}` : ""}`;
+		}
+		return noteId ? `note:${noteId}` : "";
 	}
 
-	async function ensureCommentNoteId() {
-		const current = getCommentNoteId();
-		if (current) return current;
+	function getCommentScopeRequestInfo() {
+		const scopeId = getCommentScopeId();
+		if (!scopeId) return { scopeId: "", apiUrl: "" };
+		if (scopeId.startsWith("room:")) {
+			const raw = scopeId.slice(5);
+			const parts = raw.split(":");
+			const scopeRoom = parts[0] || "";
+			const scopeKey = parts.slice(1).join(":");
+			if (!scopeRoom) return { scopeId: "", apiUrl: "" };
+			const base = `/api/rooms/${encodeURIComponent(scopeRoom)}`;
+			const apiUrl = scopeKey
+				? `${base}/${encodeURIComponent(scopeKey)}/comments`
+				: `${base}/comments`;
+			return { scopeId, apiUrl };
+		}
+		if (scopeId.startsWith("note:")) {
+			const noteId = scopeId.slice(5);
+			if (!noteId) return { scopeId: "", apiUrl: "" };
+			return {
+				scopeId,
+				apiUrl: `/api/notes/${encodeURIComponent(noteId)}/comments`,
+			};
+		}
+		return { scopeId: "", apiUrl: "" };
+	}
+
+	function canSyncCommentsForScope(scopeId) {
+		return Boolean(scopeId) && psState && psState.authed;
+	}
+
+	async function ensureCommentScopeId() {
+		const currentScope = getCommentScopeId();
+		if (currentScope) return currentScope;
+		const shared = isRoomMarkedShared(room, key);
+		if (shared) return getCommentScopeId();
 		if (!psState || !psState.authed || !textarea) return "";
 		const text = String(textarea.value || "");
 		if (!text.trim()) return "";
@@ -2106,7 +2146,7 @@
 		} catch {
 			return "";
 		}
-		return getCommentNoteId();
+		return getCommentScopeId();
 	}
 
 	function normalizeCommentItems(raw) {
@@ -2150,56 +2190,56 @@
 	}
 
 	async function loadCommentsForRoom() {
-		const noteId = getCommentNoteId();
-		commentActiveNoteId = noteId;
+		const { scopeId, apiUrl } = getCommentScopeRequestInfo();
+		commentActiveNoteId = scopeId;
 		commentItems = [];
 		renderCommentList();
 		updateCommentOverlay();
-		if (!canSyncCommentsForNote(noteId)) return;
+		if (!canSyncCommentsForScope(scopeId) || !apiUrl) return;
 		const token = ++commentLoadToken;
 		try {
-			const res = await api(
-				`/api/notes/${encodeURIComponent(noteId)}/comments`
-			);
+			const res = await api(apiUrl);
 			if (commentLoadToken !== token) return;
-			if (getCommentNoteId() !== noteId) return;
+			if (getCommentScopeId() !== scopeId) return;
 			commentItems = normalizeCommentItems(res && res.comments ? res.comments : []);
-			commentActiveNoteId = noteId;
+			commentActiveNoteId = scopeId;
 		} catch {
 			if (commentLoadToken !== token) return;
-			if (getCommentNoteId() !== noteId) return;
+			if (getCommentScopeId() !== scopeId) return;
 			commentItems = [];
 		}
 		renderCommentList();
 		updateCommentOverlay();
 	}
 
-	function scheduleCommentSave(noteId) {
-		if (!canSyncCommentsForNote(noteId)) return;
-		commentSaveNoteId = noteId;
+	function scheduleCommentSave(scopeId) {
+		if (!canSyncCommentsForScope(scopeId)) return;
+		commentSaveNoteId = scopeId;
 		if (commentSaveTimer) window.clearTimeout(commentSaveTimer);
 		commentSaveTimer = window.setTimeout(() => {
-			const currentNoteId = getCommentNoteId();
-			if (currentNoteId !== noteId) return;
-			void persistCommentsForNote(noteId);
+			const currentScopeId = getCommentScopeId();
+			if (currentScopeId !== scopeId) return;
+			void persistCommentsForScope(scopeId);
 		}, 400);
 	}
 
-	async function persistCommentsForNote(noteId) {
-		if (!canSyncCommentsForNote(noteId)) return;
+	async function persistCommentsForScope(scopeId) {
+		const { scopeId: resolvedScopeId, apiUrl } = getCommentScopeRequestInfo();
+		if (!canSyncCommentsForScope(scopeId)) return;
+		if (!apiUrl || resolvedScopeId !== scopeId) return;
 		const payload = commentItems.slice(0, 200);
 		try {
-			const res = await api(`/api/notes/${encodeURIComponent(noteId)}/comments`, {
+			const res = await api(apiUrl, {
 				method: "PUT",
 				body: JSON.stringify({ comments: payload }),
 			});
-			if (getCommentNoteId() !== noteId) return;
+			if (getCommentScopeId() !== scopeId) return;
 			const updatedAt = Number(res && res.updatedAt ? res.updatedAt : 0) || 0;
 			sendMessage({
 				type: "comment_update",
 				room,
 				clientId,
-				noteId,
+				scopeId,
 				comments: payload,
 				updatedAt,
 			});
@@ -2209,9 +2249,9 @@
 	}
 
 	function saveCommentsForRoom() {
-		const noteId = getCommentNoteId();
-		if (!noteId) return;
-		scheduleCommentSave(noteId);
+		const scopeId = getCommentScopeId();
+		if (!scopeId) return;
+		scheduleCommentSave(scopeId);
 	}
 
 	function normalizeCommentSelection(entry, value) {
@@ -2315,7 +2355,13 @@
 			);
 		}
 		if (commentPanelOpen) {
-			if (!getCommentNoteId() && psState && psState.authed && textarea) {
+			if (
+				!isRoomMarkedShared(room, key) &&
+				!getCommentNoteId() &&
+				psState &&
+				psState.authed &&
+				textarea
+			) {
 				syncPsEditingNoteFromEditorText(String(textarea.value || ""), {
 					clear: false,
 					updateList: true,
@@ -2529,8 +2575,8 @@
 		if (!commentInput) return;
 		const text = String(commentInput.value || "").trim();
 		if (!text) return;
-		const noteId = await ensureCommentNoteId();
-		if (!noteId) {
+		const scopeId = await ensureCommentScopeId();
+		if (!scopeId) {
 			toast("Kommentare sind nur für Notizen verfügbar.", "error");
 			return;
 		}
@@ -2600,8 +2646,8 @@
 
 	async function openCommentFromSelection() {
 		if (!textarea) return;
-		const noteId = await ensureCommentNoteId();
-		if (!noteId) {
+		const scopeId = await ensureCommentScopeId();
+		if (!scopeId) {
 			toast("Kommentare sind nur für Notizen verfügbar.", "error");
 			return;
 		}
@@ -14693,12 +14739,12 @@ self.onmessage = async (e) => {
 			}
 
 			if (msg.type === "comment_update") {
-				const noteId = String(msg.noteId || "").trim();
-				if (!noteId || noteId !== getCommentNoteId()) return;
+				const scopeId = String(msg.scopeId || "").trim();
+				if (!scopeId || scopeId !== getCommentScopeId()) return;
 				commentItems = normalizeCommentItems(
 					Array.isArray(msg.comments) ? msg.comments : []
 				);
-				commentActiveNoteId = noteId;
+				commentActiveNoteId = scopeId;
 				renderCommentList();
 				updateCommentOverlay();
 				return;

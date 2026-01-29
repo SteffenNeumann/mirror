@@ -1,6 +1,23 @@
 # Dokumentation – Änderungen (2026-01-29)
 
 ## Ziel
+- Kommentare in Shared Rooms konsistent und realtime zwischen Geräten.
+
+## Änderungen
+- Kommentar-Scope nutzt in Shared Rooms einen Raum-Key (`room:<room>:<key>`), sonst Notiz-Scope (`note:<id>`).
+- Neue Room-Kommentar-API (`/api/rooms/:room/:key/comments`) und Scope-Migration in `notes_comments`.
+- WebSocket-Comment-Updates nutzen `scopeId`.
+
+## Auswirkungen
+- **UI/UX:** Gleiche Kommentare in Shared Rooms auf allen Geräten, realtime Updates.
+- **Feature-Interaktionen:** Kommentar-Sync abhängig vom Room-Scope.
+- **Datenebene:** Schemawechsel `notes_comments` (scope_id statt note_id).
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
+## Ziel
 - Kommentare pro Notiz teamweit speichern und realtime synchronisieren.
 
 ## Änderungen

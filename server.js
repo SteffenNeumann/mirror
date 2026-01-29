@@ -76,9 +76,9 @@ let stmtNotesDeleteAll;
 let stmtNotesByUser;
 let stmtNotesByUserAndTag;
 let stmtTagsByUser;
-let stmtNoteCommentsGetByNote;
+let stmtNoteCommentsGetByScope;
 let stmtNoteCommentsUpsert;
-let stmtNoteCommentsDeleteByNote;
+let stmtNoteCommentsDeleteByScope;
 let stmtTrashInsert;
 let stmtTrashGetByIdUser;
 let stmtTrashDeleteByIdUser;
@@ -244,11 +244,10 @@ function initDb() {
 		);
 		CREATE INDEX IF NOT EXISTS idx_notes_trash_user_deleted ON notes_trash(user_id, deleted_at DESC);
 		CREATE TABLE IF NOT EXISTS notes_comments (
-			note_id TEXT NOT NULL,
+			scope_id TEXT NOT NULL,
 			comments_json TEXT NOT NULL,
 			updated_at INTEGER NOT NULL,
-			FOREIGN KEY(note_id) REFERENCES notes(id) ON DELETE CASCADE,
-			PRIMARY KEY(note_id)
+			PRIMARY KEY(scope_id)
 		);
 		CREATE INDEX IF NOT EXISTS idx_notes_comments_updated ON notes_comments(updated_at DESC);
 		CREATE TABLE IF NOT EXISTS login_tokens (
@@ -283,19 +282,22 @@ function initDb() {
 	}
 
 	const commentCols = db.prepare("PRAGMA table_info(notes_comments)").all();
-	const hasCommentUserId = commentCols.some(
-		(c) => String(c && c.name) === "user_id"
+	const hasCommentScopeId = commentCols.some(
+		(c) => String(c && c.name) === "scope_id"
 	);
-	if (hasCommentUserId) {
+	const hasCommentNoteId = commentCols.some(
+		(c) => String(c && c.name) === "note_id"
+	);
+	if (!hasCommentScopeId && hasCommentNoteId) {
 		try {
 			db.exec(
-				"CREATE TABLE IF NOT EXISTS notes_comments_v2 (note_id TEXT NOT NULL PRIMARY KEY, comments_json TEXT NOT NULL, updated_at INTEGER NOT NULL, FOREIGN KEY(note_id) REFERENCES notes(id) ON DELETE CASCADE)"
+				"CREATE TABLE IF NOT EXISTS notes_comments_v3 (scope_id TEXT NOT NULL PRIMARY KEY, comments_json TEXT NOT NULL, updated_at INTEGER NOT NULL)"
 			);
 			db.exec(
-				"INSERT INTO notes_comments_v2(note_id, comments_json, updated_at) SELECT note_id, comments_json, MAX(updated_at) FROM notes_comments GROUP BY note_id"
+				"INSERT INTO notes_comments_v3(scope_id, comments_json, updated_at) SELECT 'note:' || nc.note_id, nc.comments_json, nc.updated_at FROM notes_comments nc JOIN (SELECT note_id, MAX(updated_at) AS max_updated FROM notes_comments GROUP BY note_id) t ON nc.note_id = t.note_id AND nc.updated_at = t.max_updated"
 			);
 			db.exec("DROP TABLE notes_comments");
-			db.exec("ALTER TABLE notes_comments_v2 RENAME TO notes_comments");
+			db.exec("ALTER TABLE notes_comments_v3 RENAME TO notes_comments");
 			db.exec(
 				"CREATE INDEX IF NOT EXISTS idx_notes_comments_updated ON notes_comments(updated_at DESC)"
 			);
@@ -373,14 +375,14 @@ function initDb() {
 	stmtTagsByUser = db.prepare(
 		"SELECT tags_json FROM notes WHERE user_id = ? ORDER BY created_at DESC LIMIT 500"
 	);
-	stmtNoteCommentsGetByNote = db.prepare(
-		"SELECT comments_json, updated_at FROM notes_comments WHERE note_id = ?"
+	stmtNoteCommentsGetByScope = db.prepare(
+		"SELECT comments_json, updated_at FROM notes_comments WHERE scope_id = ?"
 	);
 	stmtNoteCommentsUpsert = db.prepare(
-		"INSERT INTO notes_comments(note_id, comments_json, updated_at) VALUES(?, ?, ?) ON CONFLICT(note_id) DO UPDATE SET comments_json = excluded.comments_json, updated_at = excluded.updated_at"
+		"INSERT INTO notes_comments(scope_id, comments_json, updated_at) VALUES(?, ?, ?) ON CONFLICT(scope_id) DO UPDATE SET comments_json = excluded.comments_json, updated_at = excluded.updated_at"
 	);
-	stmtNoteCommentsDeleteByNote = db.prepare(
-		"DELETE FROM notes_comments WHERE note_id = ?"
+	stmtNoteCommentsDeleteByScope = db.prepare(
+		"DELETE FROM notes_comments WHERE scope_id = ?"
 	);
 	stmtTrashInsert = db.prepare(
 		"INSERT INTO notes_trash(id, user_id, text, kind, content_hash, tags_json, created_at, updated_at, deleted_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, id) DO UPDATE SET text = excluded.text, kind = excluded.kind, content_hash = excluded.content_hash, tags_json = excluded.tags_json, created_at = excluded.created_at, updated_at = excluded.updated_at, deleted_at = excluded.deleted_at"
@@ -2653,7 +2655,8 @@ const server = http.createServer(async (req, res) => {
 				json(res, 404, { ok: false, error: "not_found" });
 				return;
 			}
-			const row = stmtNoteCommentsGetByNote.get(noteId);
+			const scopeId = `note:${noteId}`;
+			const row = stmtNoteCommentsGetByScope.get(scopeId);
 			const comments = row ? parseCommentsJson(row.comments_json) : [];
 			json(res, 200, {
 				ok: true,
@@ -2684,18 +2687,94 @@ const server = http.createServer(async (req, res) => {
 					}
 					const comments = sanitizeCommentItems(body.comments);
 					const updatedAt = Date.now();
+					const scopeId = `note:${noteId}`;
 					if (comments.length > 0) {
 						stmtNoteCommentsUpsert.run(
-							noteId,
+							scopeId,
 							JSON.stringify(comments),
 							updatedAt
 						);
 					} else {
-						stmtNoteCommentsDeleteByNote.run(noteId);
+						stmtNoteCommentsDeleteByScope.run(scopeId);
 					}
 					json(res, 200, {
 						ok: true,
 						noteId,
+						count: comments.length,
+						updatedAt,
+					});
+				})
+				.catch((e) => {
+					if (String(e && e.message) === "body_too_large") {
+						json(res, 413, { ok: false, error: "body_too_large" });
+						return;
+					}
+					json(res, 400, { ok: false, error: "invalid_json" });
+				});
+			return;
+		}
+	}
+
+	{
+		let room = "";
+		let key = "";
+		let match = url.pathname.match(
+			/^\/api\/rooms\/([a-zA-Z0-9_-]{1,40})\/([a-zA-Z0-9_-]{1,64})\/comments$/
+		);
+		if (match) {
+			room = String(match[1] || "");
+			key = String(match[2] || "");
+		} else {
+			match = url.pathname.match(
+				/^\/api\/rooms\/([a-zA-Z0-9_-]{1,40})\/comments$/
+			);
+			if (match) {
+				room = String(match[1] || "");
+				key = "";
+			}
+		}
+		if (room && (req.method === "GET" || req.method === "PUT")) {
+			const email = getAuthedEmail(req);
+			if (!email) {
+				json(res, 401, { ok: false, error: "unauthorized" });
+				return;
+			}
+			initDb();
+			const scopeId = `room:${room}${key ? `:${key}` : ""}`;
+			if (req.method === "GET") {
+				const row = stmtNoteCommentsGetByScope.get(scopeId);
+				const comments = row ? parseCommentsJson(row.comments_json) : [];
+				json(res, 200, {
+					ok: true,
+					room,
+					key,
+					comments,
+					updatedAt: row && row.updated_at ? row.updated_at : 0,
+				});
+				return;
+			}
+			readJson(req)
+				.then((body) => {
+					getOrCreateUserId(email);
+					if (!Array.isArray(body && body.comments ? body.comments : null)) {
+						json(res, 400, { ok: false, error: "invalid_comments" });
+						return;
+					}
+					const comments = sanitizeCommentItems(body.comments);
+					const updatedAt = Date.now();
+					if (comments.length > 0) {
+						stmtNoteCommentsUpsert.run(
+							scopeId,
+							JSON.stringify(comments),
+							updatedAt
+						);
+					} else {
+						stmtNoteCommentsDeleteByScope.run(scopeId);
+					}
+					json(res, 200, {
+						ok: true,
+						room,
+						key,
 						count: comments.length,
 						updatedAt,
 					});
@@ -3769,8 +3848,8 @@ wss.on("connection", (ws, req) => {
 		if (msg.type === "comment_update") {
 			const clientId = String(msg.clientId || "").trim();
 			if (!clientId) return;
-			const noteId = String(msg.noteId || "").trim();
-			if (!noteId) return;
+			const scopeId = String(msg.scopeId || "").trim();
+			if (!scopeId) return;
 			const comments = Array.isArray(msg.comments)
 				? sanitizeCommentItems(msg.comments)
 				: [];
@@ -3780,7 +3859,7 @@ wss.on("connection", (ws, req) => {
 					: Date.now();
 			broadcast(
 				rk,
-				{ type: "comment_update", room, clientId, noteId, comments, updatedAt },
+				{ type: "comment_update", room, clientId, scopeId, comments, updatedAt },
 				ws
 			);
 			return;
