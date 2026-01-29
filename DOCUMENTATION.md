@@ -1,6 +1,22 @@
 # Dokumentation – Änderungen (2026-01-29)
 
 ## Ziel
+- Kommentare nach Reload zuverlässig anzeigen.
+- Kommentarhintergrund heller gestalten.
+
+## Änderungen
+- Kommentar-Panel lädt Kommentare beim Öffnen und synchronisiert bei Bedarf die aktive Notiz aus dem Editor-Text.
+- Kommentar-Item-Hintergrund in Standard- und Mono-Themes aufgehellt.
+
+## Auswirkungen
+- **UI/UX:** Kommentare sind nach Reload sichtbar; Kommentar-Items heben sich besser vom Panel ab.
+- **Feature-Interaktionen:** Kommentar-Panel lädt stabil nach Panel-Öffnung.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+
+## Ziel
 - Tags lassen sich zuverlässig löschen.
 - Tag "shell" nicht mehr automatisch vorschlagen.
 

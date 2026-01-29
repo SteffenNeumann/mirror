@@ -2304,6 +2304,15 @@
 				commentPanelOpen
 			);
 		}
+		if (commentPanelOpen) {
+			if (!getCommentNoteId() && psState && psState.authed && textarea) {
+				syncPsEditingNoteFromEditorText(String(textarea.value || ""), {
+					clear: false,
+					updateList: true,
+				});
+			}
+			void loadCommentsForRoom();
+		}
 		updateCommentOverlay();
 	}
 

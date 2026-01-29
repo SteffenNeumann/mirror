@@ -15,7 +15,7 @@
 	--blockquote-border: rgba(217, 70, 239, 0.45);
 	--blockquote-text: rgba(226, 232, 240, 0.9);
 	--calendar-event-bg: rgba(15, 23, 42, 0.55);
-	--comment-item-bg: rgba(15, 23, 42, 0.5);
+	--comment-item-bg: rgba(30, 41, 59, 0.6);
 	--calendar-tooltip-bg: rgba(2, 6, 23, 0.92);
 	--calendar-tooltip-border: rgba(255, 255, 255, 0.12);
 	--calendar-tooltip-text: rgba(226, 232, 240, 0.95);
@@ -943,7 +943,7 @@ body[data-theme="monoLight"] {
 	--scrollbar-thumb-hover: rgba(148, 163, 184, 0.45);
 	--scrollbar-border: rgba(2, 6, 23, 0.35);
 	--calendar-event-bg: rgba(255, 255, 255, 0.95);
-	--comment-item-bg: #f6f8fa;
+	--comment-item-bg: #ffffff;
 	--calendar-tooltip-bg: #ffffff;
 	--calendar-tooltip-border: rgba(27, 31, 36, 0.18);
 	--calendar-tooltip-text: #24292f;
@@ -1202,7 +1202,7 @@ body[data-theme="monoDark"] {
 	color: #c9d1d9;
 	--selection-menu-bg: #0d1117;
 	--selection-menu-border: #30363d;
-	--comment-item-bg: #161b22;
+	--comment-item-bg: #1f2937;
 	--scrollbar-thumb: rgba(148, 163, 184, 0.3);
 	--scrollbar-thumb-hover: rgba(148, 163, 184, 0.45);
 	--scrollbar-border: rgba(2, 6, 23, 0.35);
