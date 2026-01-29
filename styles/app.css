@@ -398,6 +398,44 @@ body.code-lang-active #clearMirror {
 	border-color: var(--accent-border-strong);
 	color: var(--accent-text);
 }
+#commentInput {
+	padding-right: 3rem;
+	padding-bottom: 2.5rem;
+}
+.comment-input-wrap {
+	position: relative;
+}
+.comment-input-toolbar {
+	position: absolute;
+	left: 8px;
+	bottom: 8px;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	padding: 0;
+	border: none;
+}
+.comment-md-btn {
+	border: none;
+	background: transparent;
+	color: rgba(148, 163, 184, 0.9);
+	padding: 4px;
+	border-radius: 6px;
+	line-height: 1;
+	transition: color 0.15s ease, background-color 0.15s ease;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+}
+.comment-md-btn:hover {
+	color: rgba(226, 232, 240, 0.95);
+	background: rgba(255, 255, 255, 0.06);
+}
+.comment-add-btn {
+	position: absolute;
+	right: 8px;
+	bottom: 8px;
+}
 .comment-item .comment-actions {
 	opacity: 0;
 	pointer-events: none;
@@ -1108,6 +1146,15 @@ body[data-theme="monoLight"] .ai-chat-badge {
 body[data-theme="monoLight"] .ai-chat-badge-ai {
 	color: #0969da !important;
 	background-color: rgba(9, 105, 218, 0.14) !important;
+}
+
+body[data-theme="monoLight"] .comment-md-btn {
+	color: #57606a;
+}
+
+body[data-theme="monoLight"] .comment-md-btn:hover {
+	color: #24292f;
+	background: rgba(9, 105, 218, 0.08);
 }
 
 body[data-theme="monoLight"] .comment-reply-badge {

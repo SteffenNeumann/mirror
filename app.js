@@ -105,6 +105,9 @@
 	const commentInput = document.getElementById("commentInput");
 	const commentAddBtn = document.getElementById("commentAdd");
 	const commentAddLabel = document.getElementById("commentAddLabel");
+	const commentMdBoldBtn = document.getElementById("commentMdBold");
+	const commentMdItalicBtn = document.getElementById("commentMdItalic");
+	const commentMdCodeBtn = document.getElementById("commentMdCode");
 	const commentCloseBtn = document.getElementById("commentClose");
 	const commentCountBadge = document.getElementById("commentCountBadge");
 	const codeLangWrap = document.getElementById("codeLangWrap");
@@ -2431,6 +2434,37 @@
 		if (commentInput) commentInput.value = "";
 		setCommentDraftSelection(null);
 		updateCommentComposerUi();
+	}
+
+	function applyCommentMarkdown(action) {
+		if (!commentInput) return;
+		commentInput.focus();
+		const start = Number(commentInput.selectionStart || 0);
+		const end = Number(commentInput.selectionEnd || 0);
+		if (action === "bold") {
+			if (!wrapSelectionToggle(commentInput, "**", "**")) {
+				wrapSelection(commentInput, "**", "**");
+			}
+			return;
+		}
+		if (action === "italic") {
+			if (!wrapSelectionToggle(commentInput, "*", "*")) {
+				wrapSelection(commentInput, "*", "*");
+			}
+			return;
+		}
+		if (action === "code") {
+			if (end > start) {
+				toggleFencedCodeBlock(commentInput);
+				return;
+			}
+			const value = String(commentInput.value || "");
+			const insert = "```\n\n```";
+			commentInput.value = value.slice(0, start) + insert + value.slice(end);
+			const pos = start + 4;
+			commentInput.selectionStart = pos;
+			commentInput.selectionEnd = pos;
+		}
 	}
 
 	function renderCommentList() {
@@ -16494,6 +16528,21 @@ self.onmessage = async (e) => {
 	if (commentAddBtn) {
 		commentAddBtn.addEventListener("click", () => {
 			void addCommentFromDraft();
+		});
+	}
+	if (commentMdBoldBtn) {
+		commentMdBoldBtn.addEventListener("click", () => {
+			applyCommentMarkdown("bold");
+		});
+	}
+	if (commentMdItalicBtn) {
+		commentMdItalicBtn.addEventListener("click", () => {
+			applyCommentMarkdown("italic");
+		});
+	}
+	if (commentMdCodeBtn) {
+		commentMdCodeBtn.addEventListener("click", () => {
+			applyCommentMarkdown("code");
 		});
 	}
 	if (commentInput) {

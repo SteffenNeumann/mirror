@@ -880,16 +880,42 @@
 												<div class="border-t border-white/10 p-3">
 													<div id="commentSelectionLabel" class="mb-2 text-[11px] text-slate-400"></div>
 													<label for="commentInput" class="sr-only" data-i18n="comments.input_label">Comment</label>
-													<textarea
-														id="commentInput"
-														class="min-h-[72px] w-full resize-none rounded-lg border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-100 shadow-inner outline-none focus:ring-2 focus:ring-fuchsia-400/30"
-														placeholder="Comment (Markdown)"
-														data-i18n-placeholder="comments.input_placeholder"></textarea>
-													<div class="mt-2 flex justify-end">
+													<div class="comment-input-wrap relative">
+														<textarea
+															id="commentInput"
+															class="comment-input min-h-[72px] w-full resize-none rounded-lg border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-100 shadow-inner outline-none focus:ring-2 focus:ring-fuchsia-400/30"
+															placeholder="Comment (Markdown)"
+															data-i18n-placeholder="comments.input_placeholder"></textarea>
+														<div class="comment-input-toolbar" role="toolbar" aria-label="Markdown">
+															<button
+																id="commentMdBold"
+																type="button"
+																class="comment-md-btn"
+																title="Fett"
+																aria-label="Fett">
+																<span class="text-[11px] font-semibold">B</span>
+															</button>
+															<button
+																id="commentMdItalic"
+																type="button"
+																class="comment-md-btn"
+																title="Kursiv"
+																aria-label="Kursiv">
+																<span class="text-[11px] font-semibold italic">I</span>
+															</button>
+															<button
+																id="commentMdCode"
+																type="button"
+																class="comment-md-btn"
+																title="Codeblock"
+																aria-label="Codeblock">
+																<span class="text-[11px] font-semibold">&lt;/&gt;</span>
+															</button>
+														</div>
 														<button
 															id="commentAdd"
 															type="button"
-															class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-fuchsia-400/30 bg-fuchsia-500/15 text-slate-100 transition hover:bg-fuchsia-500/20"
+															class="comment-add-btn inline-flex h-9 w-9 items-center justify-center rounded-lg border border-fuchsia-400/30 bg-fuchsia-500/15 text-slate-100 transition hover:bg-fuchsia-500/20"
 															data-i18n-title="comments.add_action"
 															data-i18n-aria="comments.add_action">
 															<svg
