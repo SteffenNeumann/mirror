@@ -754,7 +754,6 @@ function classifyText(text) {
 	const hasIndentedCode = /(^|\n)(?:\t| {4,})\S/.test(t);
 	const hasStacktrace =
 		/(^|\n)\s*at\s+\S+\s*\(/.test(t) || /(^|\n)\w+Exception\b/.test(t);
-	const hasShell = /(^|\n)\s*(\$|#)\s+\S+/.test(t);
 	const maybeJson = /^[\[{]/.test(t) && /[\]}]$/.test(t) && t.length <= 200000;
 	let isJson = false;
 	if (maybeJson) {
@@ -805,7 +804,6 @@ function classifyText(text) {
 	if (fenceLang && kind === "code") tags.push(`lang-${fenceLang}`);
 	if (isJson) tags.push("json");
 	if (hasStacktrace) tags.push("stacktrace");
-	if (hasShell) tags.push("shell");
 	// Grobe Sprach-Erkennung (Regex, heuristisch)
 	if (kind === "code") {
 		if (/\b(def\s+\w+\(|import\s+\w+|print\()\b/.test(t)) tags.push("python");
@@ -1020,15 +1018,14 @@ function mergeManualTags(textVal, manualTags) {
 		if (
 			t === "markdown" ||
 			t === "json" ||
-			t === "stacktrace" ||
-			t === "shell"
+			t === "stacktrace"
 		) {
 			keep.add(t);
 		}
 		if (t.startsWith("lang-")) keep.add(t);
 		if (
 			derived.kind === "code" &&
-			/^(python|javascript|java|sql|yaml|json|shell|stacktrace)$/i.test(t)
+			/^(python|javascript|java|sql|yaml|json|stacktrace)$/i.test(t)
 		)
 			keep.add(t);
 	}

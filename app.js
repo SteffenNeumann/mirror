@@ -1682,6 +1682,7 @@
 			if (raw.startsWith("cat:") || raw.startsWith("sub:")) continue;
 			if (isYearTag(raw) || isMonthTag(raw)) continue;
 			const lower = raw.toLowerCase();
+			if (lower === "shell") continue;
 			if (existing.has(lower)) continue;
 			if (prefix && !lower.startsWith(prefix)) continue;
 			items.push(raw);

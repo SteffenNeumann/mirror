@@ -1,6 +1,23 @@
 # Dokumentation – Änderungen (2026-01-29)
 
 ## Ziel
+- Tags lassen sich zuverlässig löschen.
+- Tag "shell" nicht mehr automatisch vorschlagen.
+
+## Änderungen
+- Auto-Tagging entfernt "shell" aus der Klassifizierung.
+- Tag-Vorschläge filtern "shell" im Editor aus.
+
+## Auswirkungen
+- **UI/UX:** Tag-Vorschläge zeigen "shell" nicht mehr an.
+- **Feature-Interaktionen:** Tag-Löschen bleibt konsistent, Auto-Tags greifen ohne "shell".
+- **Datenebene:** Keine Änderung am API-Vertrag.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
+## Ziel
 - psList-Höhe nach Filter-Reset zuverlässig auf verfügbare Sidebar-Höhe setzen.
 
 ## Änderungen
