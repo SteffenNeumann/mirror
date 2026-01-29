@@ -14669,6 +14669,7 @@ self.onmessage = async (e) => {
 				avatar: identity.avatar,
 				ts: Date.now(),
 			});
+			void loadCommentsForRoom();
 			ensureYjsLoaded().then((ok) => {
 				if (mySeq !== connectionSeq) return;
 				if (!ok) {
