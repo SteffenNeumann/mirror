@@ -11666,17 +11666,19 @@ self.onmessage = async (e) => {
 					"border-fuchsia-400/40 bg-fuchsia-500/15 text-fuchsia-100";
 				const idle =
 					"border-white/10 bg-slate-950/40 text-slate-200 hover:bg-white/10";
-				const badge = t.key
-					? '<span class="inline-flex h-3 w-3 items-center justify-center text-slate-300" title="Privater Raum" aria-label="Privater Raum"><svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11V7a5 5 0 0 1 10 0v4" /><rect x="5" y="11" width="14" height="10" rx="2" /></svg></span>'
+				const privacyIcon = t.key
+					? '<span class="inline-flex h-3 w-3 items-center justify-center text-slate-300" data-tooltip="Privater Raum · Zugriff nur mit Schlüssel" aria-label="Privater Raum"><svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11V7a5 5 0 0 1 10 0v4" /><rect x="5" y="11" width="14" height="10" rx="2" /></svg></span>'
+					: '<span class="inline-flex h-3 w-3 items-center justify-center text-slate-300" data-tooltip="Öffentlicher Raum · Kein Schlüssel erforderlich" aria-label="Öffentlicher Raum"><svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15 15 0 0 1 0 20" /><path d="M12 2a15 15 0 0 0 0 20" /></svg></span>';
+				const sharedIcon = isShared || isCollab
+					? `<span class="inline-flex h-3 w-3 items-center justify-center ${
+						isCollab
+							? "text-emerald-300 shadow-[0_0_6px_rgba(16,185,129,0.6)]"
+							: "text-cyan-300 shadow-[0_0_6px_rgba(34,211,238,0.6)]"
+					}" data-tooltip="Geteilter Raum · Link wurde geteilt" aria-label="Geteilter Raum"><svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1" /><path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1" /></svg></span>`
 					: "";
-				const collab = isCollab
-					? '<span class="inline-flex h-3 w-3 items-center justify-center text-emerald-300 shadow-[0_0_6px_rgba(16,185,129,0.6)]" title="Geteilter Raum" aria-label="Geteilter Raum"><svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1" /><path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1" /></svg></span>'
-					: isShared
-					? '<span class="inline-flex h-3 w-3 items-center justify-center text-cyan-300 shadow-[0_0_6px_rgba(34,211,238,0.6)]" title="Geteilter Raum" aria-label="Geteilter Raum"><svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1" /><path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1" /></svg></span>'
-					: "";
-				const iconGroup = badge || collab
-					? `<span class="inline-flex items-center gap-1">${collab}${badge}</span>`
-					: "";
+				const iconGroup = `<span class="inline-flex items-center gap-1">${
+					sharedIcon
+				}${privacyIcon}</span>`;
 				const closeBtn = canClose
 					? `
 							<button
