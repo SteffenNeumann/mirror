@@ -746,6 +746,10 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	transform: translate(-50%, 0);
 }
 
+#roomTabs {
+	overflow-y: visible;
+}
+
 [data-tooltip]:not(.calendar-event) {
 	position: relative;
 }
@@ -776,7 +780,7 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	white-space: normal;
 	text-align: left;
 	box-shadow: var(--calendar-tooltip-shadow);
-	z-index: 40;
+	z-index: 80;
 }
 
 [data-tooltip]:not(.calendar-event)::before {
@@ -790,7 +794,7 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	border-left: 1px solid var(--calendar-tooltip-border);
 	border-bottom: 1px solid var(--calendar-tooltip-border);
 	transform: translate(-50%, -6px) rotate(45deg);
-	z-index: 39;
+	z-index: 79;
 }
 
 [data-tooltip]:not(.calendar-event):hover::after,
