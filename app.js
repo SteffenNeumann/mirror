@@ -11792,10 +11792,10 @@ self.onmessage = async (e) => {
 		const tabs = loadRoomTabs();
 		const canClose = tabs.length > 1;
 		const html = tabs
-			.map((t) => {
-				const isActive = t.room === room && t.key === key;
+			.map((tab) => {
+				const isActive = tab.room === room && tab.key === key;
 				const isCollab = isActive && presenceState && presenceState.size > 1;
-				const isShared = isRoomMarkedShared(t.room, t.key);
+				const isShared = isRoomMarkedShared(tab.room, tab.key);
 				const privateTooltip = t(
 					"tabs.tooltip.private",
 					"Privater Raum · Zugriff nur mit Schlüssel"
@@ -11814,7 +11814,7 @@ self.onmessage = async (e) => {
 					"border-fuchsia-400/40 bg-fuchsia-500/15 text-fuchsia-100";
 				const idle =
 					"border-white/10 bg-slate-950/40 text-slate-200 hover:bg-white/10";
-				const privacyIcon = t.key
+				const privacyIcon = tab.key
 					? `<span class="tab-tooltip inline-flex h-3 w-3 items-center justify-center text-slate-300" data-tooltip="${escapeAttr(
 						privateTooltip
 					)}" aria-label="${escapeAttr(privateTooltip)}"><svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11V7a5 5 0 0 1 10 0v4" /><rect x="5" y="11" width="14" height="10" rx="2" /></svg></span>`
@@ -11837,8 +11837,8 @@ self.onmessage = async (e) => {
 							<button
 								type="button"
 								data-tab-close
-								data-room="${escapeAttr(t.room)}"
-								data-key="${escapeAttr(t.key)}"
+								data-room="${escapeAttr(tab.room)}"
+								data-key="${escapeAttr(tab.key)}"
 								class="mr-1 inline-flex h-6 w-6 items-center justify-center rounded-md text-[11px] text-slate-400 transition hover:bg-white/10 hover:text-slate-100"
 								title="Tab schließen"
 								aria-label="Tab schließen">
@@ -11850,11 +11850,11 @@ self.onmessage = async (e) => {
 						<button
 							type="button"
 							data-tab-select
-							data-room="${escapeAttr(t.room)}"
-							data-key="${escapeAttr(t.key)}"
+							data-room="${escapeAttr(tab.room)}"
+							data-key="${escapeAttr(tab.key)}"
 							class="inline-flex items-center gap-2 px-3 py-1.5">
 							${iconGroup}
-							<span class="max-w-[140px] truncate">${escapeHtml(t.room)}</span>
+							<span class="max-w-[140px] truncate">${escapeHtml(tab.room)}</span>
 						</button>
 						${closeBtn}
 					</div>`;
