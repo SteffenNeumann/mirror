@@ -216,6 +216,7 @@
 	const psCount = document.getElementById("psCount");
 	const psSearchInput = document.getElementById("psSearch");
 	const psPinnedToggle = document.getElementById("psPinnedToggle");
+	const psCommentsToggle = document.getElementById("psCommentsToggle");
 	const psSortMenuBtn = document.getElementById("psSortMenuBtn");
 	const psSortMenu = document.getElementById("psSortMenu");
 	const psList = document.getElementById("psList");
@@ -1890,11 +1891,13 @@
 	let commentDraftSelection = null;
 	let commentEditId = "";
 	let commentReplyToId = "";
+	let commentSelectedId = "";
 	let commentItems = [];
 	let commentSaveTimer = null;
 	let commentSaveNoteId = "";
 	let commentLoadToken = 0;
 	let commentActiveNoteId = "";
+	let psCommentedNoteIds = new Set();
 	let psTagsAutoSaveTimer = null;
 	let psNoteHistory = [];
 	let psNoteHistoryIndex = -1;
@@ -2234,6 +2237,14 @@
 			});
 			if (getCommentScopeId() !== scopeId) return;
 			const updatedAt = Number(res && res.updatedAt ? res.updatedAt : 0) || 0;
+			if (scopeId.startsWith("note:")) {
+				const noteId = scopeId.slice(5);
+				if (noteId) {
+					if (payload.length > 0) psCommentedNoteIds.add(noteId);
+					else psCommentedNoteIds.delete(noteId);
+					if (psCommentsOnly) applyPersonalSpaceFiltersAndRender();
+				}
+			}
 			sendMessage({
 				type: "comment_update",
 				room,
@@ -2425,6 +2436,12 @@
 	function renderCommentList() {
 		if (!commentList) return;
 		commentList.innerHTML = "";
+		if (
+			commentSelectedId &&
+			!commentItems.some((it) => String(it && it.id ? it.id : "") === commentSelectedId)
+		) {
+			commentSelectedId = "";
+		}
 		if (commentEmpty) {
 			commentEmpty.classList.toggle("hidden", commentItems.length > 0);
 		}
@@ -2437,13 +2454,13 @@
 			const item = document.createElement("div");
 			const isReply = Boolean(entry && entry.parentId);
 			item.className =
-				"rounded-lg border border-white/10 bg-slate-950/50 p-2 text-sm text-slate-100" +
+				"comment-item rounded-lg border border-white/10 bg-slate-950/50 p-2 text-sm text-slate-100" +
 				(isReply ? " ml-4 border-l-2 border-l-white/10" : "");
 			item.title = entry && entry.selection ? entry.selection.text || "" : "";
 			item.setAttribute("data-comment-id", entry.id || "");
+			item.classList.toggle("is-selected", commentSelectedId === entry.id);
 			const header = document.createElement("div");
-			header.className =
-				"mb-1 flex items-center justify-between text-[11px] text-slate-400";
+			header.className = "mb-1 flex items-center justify-between";
 			const left = document.createElement("div");
 			left.className = "flex items-center gap-2";
 			const avatar = document.createElement("span");
@@ -2456,27 +2473,38 @@
 			if (entry && entry.author && entry.author.color) {
 				avatar.style.background = entry.author.color;
 			}
+			const meta = document.createElement("div");
+			meta.className = "flex flex-col";
+			const name = document.createElement("span");
+			name.className = "text-[11px] font-medium text-slate-200";
+			name.textContent =
+				entry && entry.author && entry.author.name
+					? entry.author.name
+					: "User";
 			const time = document.createElement("span");
+			time.className = "text-[10px] text-slate-400";
 			const baseTime = formatCommentTime(entry.createdAt);
 			const wasEdited =
 				entry.updatedAt && entry.updatedAt > entry.createdAt + 1000;
 			time.textContent = wasEdited ? `${baseTime} · bearbeitet` : baseTime;
 			left.appendChild(avatar);
-			left.appendChild(time);
+			meta.appendChild(name);
+			meta.appendChild(time);
+			left.appendChild(meta);
 			if (isReply) {
 				const replyTag = document.createElement("span");
 				replyTag.className =
-					"rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-[10px] text-slate-300";
+					"comment-reply-badge rounded-full px-2 py-0.5 text-[10px] font-semibold";
 				replyTag.textContent = "Antwort";
 				left.appendChild(replyTag);
 			}
 			header.appendChild(left);
 			const actions = document.createElement("div");
-			actions.className = "flex items-center gap-1";
+			actions.className = "comment-actions flex items-center gap-1";
 			const editBtn = document.createElement("button");
 			editBtn.type = "button";
 			editBtn.className =
-				"inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10";
+				"comment-action-btn inline-flex h-6 w-6 items-center justify-center rounded-md";
 			editBtn.title = t("comments.edit_action");
 			editBtn.setAttribute("data-i18n-title", "comments.edit_action");
 			editBtn.setAttribute("data-i18n-aria", "comments.edit_action");
@@ -2485,7 +2513,7 @@
 			const replyBtn = document.createElement("button");
 			replyBtn.type = "button";
 			replyBtn.className =
-				"inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-white/5 text-slate-300 transition hover:bg-white/10";
+				"comment-action-btn inline-flex h-6 w-6 items-center justify-center rounded-md";
 			replyBtn.title = t("comments.reply_action");
 			replyBtn.setAttribute("data-i18n-title", "comments.reply_action");
 			replyBtn.setAttribute("data-i18n-aria", "comments.reply_action");
@@ -2494,7 +2522,7 @@
 			const deleteBtn = document.createElement("button");
 			deleteBtn.type = "button";
 			deleteBtn.className =
-				"inline-flex h-6 w-6 items-center justify-center rounded-md border border-rose-400/30 bg-rose-500/10 text-rose-100 transition hover:bg-rose-500/20";
+				"comment-action-btn inline-flex h-6 w-6 items-center justify-center rounded-md";
 			deleteBtn.setAttribute("data-i18n-title", "comments.delete_action");
 			deleteBtn.setAttribute("data-i18n-aria", "comments.delete_action");
 			deleteBtn.innerHTML =
@@ -2517,6 +2545,11 @@
 			item.appendChild(body);
 			commentList.appendChild(item);
 			item.addEventListener("click", () => {
+				commentSelectedId = entry.id || "";
+				commentList
+					.querySelectorAll(".comment-item.is-selected")
+					.forEach((el) => el.classList.remove("is-selected"));
+				item.classList.add("is-selected");
 				if (!textarea || !entry.selection) return;
 				const value = String(textarea.value || "");
 				const normalized = normalizeCommentSelection(entry, value);
@@ -4054,6 +4087,7 @@
 	let psSearchQuery = "";
 	let psSearchDebounceTimer = 0;
 	let psPinnedOnly = false;
+	let psCommentsOnly = false;
 	let psNoteAccessedById = new Map();
 	const PS_ACTIVE_TAGS_KEY = "mirror_ps_active_tags";
 	const PS_TAG_FILTER_MODE_KEY = "mirror_ps_tag_filter_mode";
@@ -4061,6 +4095,7 @@
 	const PS_SEARCH_QUERY_KEY = "mirror_ps_search_query";
 	const PS_VISIBLE_KEY = "mirror_ps_visible";
 	const PS_PINNED_ONLY_KEY = "mirror_ps_pinned_only";
+	const PS_COMMENTS_ONLY_KEY = "mirror_ps_comments_only";
 	const PS_SORT_MODE_KEY = "mirror_ps_sort_mode";
 	const PS_NOTE_ACCESSED_KEY = "mirror_ps_note_accessed_v1";
 	const PS_META_VISIBLE_KEY = "mirror_ps_meta_visible";
@@ -4282,6 +4317,7 @@
 				"ps.tags": "Tags",
 				"ps.notes": "Notizen",
 				"ps.pinned_only": "Nur angepinnte",
+				"ps.comments_only": "Nur mit Kommentaren",
 				"ps.search": "Suche...",
 				"ps.sort": "Sortierung",
 				"ps.sort_by": "Sortieren nach",
@@ -4538,6 +4574,7 @@
 				"ps.tags": "Tags",
 				"ps.notes": "Notes",
 				"ps.pinned_only": "Pinned only",
+				"ps.comments_only": "With comments",
 				"ps.search": "Search...",
 				"ps.sort": "Sort",
 				"ps.sort_by": "Sort by",
@@ -7044,9 +7081,26 @@
 		updatePsPinnedToggle();
 	}
 
+	function loadPsCommentsOnly() {
+		try {
+			psCommentsOnly = localStorage.getItem(PS_COMMENTS_ONLY_KEY) === "1";
+		} catch {
+			psCommentsOnly = false;
+		}
+		updatePsCommentsToggle();
+	}
+
 	function savePsPinnedOnly() {
 		try {
 			localStorage.setItem(PS_PINNED_ONLY_KEY, psPinnedOnly ? "1" : "0");
+		} catch {
+			// ignore
+		}
+	}
+
+	function savePsCommentsOnly() {
+		try {
+			localStorage.setItem(PS_COMMENTS_ONLY_KEY, psCommentsOnly ? "1" : "0");
 		} catch {
 			// ignore
 		}
@@ -7068,6 +7122,39 @@
 			);
 		} catch {
 			// ignore
+		}
+	}
+
+	function updatePsCommentsToggle() {
+		if (!psCommentsToggle || !psCommentsToggle.classList) return;
+		psCommentsToggle.classList.toggle("bg-fuchsia-500/20", psCommentsOnly);
+		psCommentsToggle.classList.toggle("border-fuchsia-400/40", psCommentsOnly);
+		psCommentsToggle.classList.toggle("text-fuchsia-100", psCommentsOnly);
+		psCommentsToggle.classList.toggle("shadow-soft", psCommentsOnly);
+		psCommentsToggle.classList.toggle("bg-transparent", !psCommentsOnly);
+		psCommentsToggle.classList.toggle("border-white/10", !psCommentsOnly);
+		psCommentsToggle.classList.toggle("text-slate-300", !psCommentsOnly);
+		try {
+			psCommentsToggle.setAttribute(
+				"aria-pressed",
+				psCommentsOnly ? "true" : "false"
+			);
+		} catch {
+			// ignore
+		}
+	}
+
+	async function loadPsCommentIndex() {
+		psCommentedNoteIds = new Set();
+		if (!psState || !psState.authed) return;
+		try {
+			const res = await api("/api/notes/comments-index");
+			const ids = Array.isArray(res && res.noteIds) ? res.noteIds : [];
+			psCommentedNoteIds = new Set(
+				ids.map((id) => String(id || "").trim()).filter(Boolean)
+			);
+		} catch {
+			psCommentedNoteIds = new Set();
 		}
 	}
 
@@ -7131,6 +7218,11 @@
 		if (psPinnedOnly) {
 			notes = notes.filter((n) => noteIsPinned(n));
 		}
+		if (psCommentsOnly) {
+			notes = notes.filter((n) =>
+				psCommentedNoteIds.has(String(n && n.id ? n.id : "").trim())
+			);
+		}
 		const active = Array.from(psActiveTags || []).filter(Boolean);
 		if (active.length) {
 			if (psTagFilterMode === "or") {
@@ -7153,7 +7245,8 @@
 		if (psCount) {
 			const total = allNotes.length;
 			const shown = notes.length;
-			const hasFilter = active.length > 0 || !!q || psPinnedOnly;
+			const hasFilter =
+				active.length > 0 || !!q || psPinnedOnly || psCommentsOnly;
 			psCount.textContent = hasFilter ? `${shown}/${total}` : String(total);
 		}
 		renderPsTags(psState.tags || []);
@@ -10673,6 +10766,7 @@ self.onmessage = async (e) => {
 		setPsEditorTagsVisible(true);
 		syncCalendarSettingsFromServer();
 
+		await loadPsCommentIndex();
 		applyPersonalSpaceFiltersAndRender();
 		syncPsEditingNoteTagsFromState();
 		syncPsEditorTagsInput();
@@ -14745,6 +14839,14 @@ self.onmessage = async (e) => {
 				commentItems = normalizeCommentItems(
 					Array.isArray(msg.comments) ? msg.comments : []
 				);
+				if (scopeId.startsWith("note:")) {
+					const noteId = scopeId.slice(5);
+					if (noteId) {
+						if (commentItems.length > 0) psCommentedNoteIds.add(noteId);
+						else psCommentedNoteIds.delete(noteId);
+						if (psCommentsOnly) applyPersonalSpaceFiltersAndRender();
+					}
+				}
 				commentActiveNoteId = scopeId;
 				renderCommentList();
 				updateCommentOverlay();
@@ -15796,6 +15898,7 @@ self.onmessage = async (e) => {
 	applyPsTagsCollapsed();
 	loadPsSearchQuery();
 	loadPsPinnedOnly();
+	loadPsCommentsOnly();
 	loadPsNoteAccessed();
 	loadPsSortMode();
 	loadPsMetaVisible();
@@ -16781,6 +16884,17 @@ self.onmessage = async (e) => {
 			psPinnedOnly = !psPinnedOnly;
 			savePsPinnedOnly();
 			updatePsPinnedToggle();
+			applyPersonalSpaceFiltersAndRender();
+		});
+	}
+	if (psCommentsToggle) {
+		psCommentsToggle.addEventListener("click", async () => {
+			psCommentsOnly = !psCommentsOnly;
+			savePsCommentsOnly();
+			updatePsCommentsToggle();
+			if (psCommentsOnly && psCommentedNoteIds.size === 0) {
+				await loadPsCommentIndex();
+			}
 			applyPersonalSpaceFiltersAndRender();
 		});
 	}

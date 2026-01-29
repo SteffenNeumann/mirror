@@ -1,6 +1,25 @@
 # Dokumentation – Änderungen (2026-01-29)
 
 ## Ziel
+- Kommentar-Icons nur bei Fokus/Hover anzeigen und Layout anpassen.
+- Kommentar-Filter im Notiz-Header hinzufügen.
+
+## Änderungen
+- Kommentar-Items: Avatar + Name, Zeit darunter; Reply-Badge in Theme-Farbe.
+- Action-Icons ohne Border/Color, sichtbar bei Hover/Fokus/Selektion.
+- Notiz-Header: Kommentar-Filter-Icon mit Filterlogik (Notizen mit Kommentaren).
+- Kommentar-Index-API für Filter (`/api/notes/comments-index`).
+
+## Auswirkungen
+- **UI/UX:** Klarere Kommentar-Optik, Fokus-Icons, Filter im Notes-Header.
+- **Feature-Interaktionen:** Filter nutzt serverseitigen Kommentar-Index.
+- **Datenebene:** Neue Abfrage für Kommentar-Index.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
+## Ziel
 - Kommentar-Badge in Shared Rooms sofort korrekt anzeigen.
 
 ## Änderungen

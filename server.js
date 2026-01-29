@@ -79,6 +79,7 @@ let stmtTagsByUser;
 let stmtNoteCommentsGetByScope;
 let stmtNoteCommentsUpsert;
 let stmtNoteCommentsDeleteByScope;
+let stmtNoteCommentsByUser;
 let stmtTrashInsert;
 let stmtTrashGetByIdUser;
 let stmtTrashDeleteByIdUser;
@@ -383,6 +384,9 @@ function initDb() {
 	);
 	stmtNoteCommentsDeleteByScope = db.prepare(
 		"DELETE FROM notes_comments WHERE scope_id = ?"
+	);
+	stmtNoteCommentsByUser = db.prepare(
+		"SELECT n.id as note_id FROM notes n JOIN notes_comments nc ON nc.scope_id = 'note:' || n.id WHERE n.user_id = ?"
 	);
 	stmtTrashInsert = db.prepare(
 		"INSERT INTO notes_trash(id, user_id, text, kind, content_hash, tags_json, created_at, updated_at, deleted_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, id) DO UPDATE SET text = excluded.text, kind = excluded.kind, content_hash = excluded.content_hash, tags_json = excluded.tags_json, created_at = excluded.created_at, updated_at = excluded.updated_at, deleted_at = excluded.deleted_at"
@@ -3025,6 +3029,22 @@ const server = http.createServer(async (req, res) => {
 		const userId = getOrCreateUserId(email);
 		const notes = listNotes(userId, tag);
 		json(res, 200, { ok: true, notes });
+		return;
+	}
+
+	if (url.pathname === "/api/notes/comments-index" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		initDb();
+		const noteIds = stmtNoteCommentsByUser
+			.all(userId)
+			.map((row) => String(row && row.note_id ? row.note_id : "").trim())
+			.filter(Boolean);
+		json(res, 200, { ok: true, noteIds });
 		return;
 	}
 

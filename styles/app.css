@@ -398,6 +398,32 @@ body.code-lang-active #clearMirror {
 	border-color: var(--accent-border-strong);
 	color: var(--accent-text);
 }
+.comment-item .comment-actions {
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.15s ease;
+}
+.comment-item:hover .comment-actions,
+.comment-item.is-selected .comment-actions,
+.comment-item:focus-within .comment-actions {
+	opacity: 1;
+	pointer-events: auto;
+}
+.comment-action-btn {
+	border: none;
+	background: transparent;
+	color: rgba(148, 163, 184, 0.9);
+	transition: color 0.15s ease, background-color 0.15s ease;
+}
+.comment-action-btn:hover {
+	color: rgba(226, 232, 240, 0.95);
+	background: rgba(255, 255, 255, 0.06);
+}
+.comment-reply-badge {
+	background: var(--accent-bg);
+	border: 1px solid var(--accent-border);
+	color: var(--accent-text);
+}
 #commentList > div {
 	background-color: var(--comment-item-bg) !important;
 }
