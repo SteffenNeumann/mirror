@@ -279,6 +279,15 @@ body.code-lang-active #clearMirror {
 	pointer-events: auto !important;
 	transform: none !important;
 }
+.ps-note-excerpt {
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	word-break: break-word;
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
 .ps-note-actions {
 	opacity: 0;
 	pointer-events: none;

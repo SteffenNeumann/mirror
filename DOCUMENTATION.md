@@ -1,6 +1,21 @@
 # Dokumentation – Änderungen (2026-01-29)
 
 ## Ziel
+- Notizvorschau in der Liste stabil begrenzen und besser lesbar machen.
+
+## Änderungen
+- Vorschau nutzt Zeilenumbrüche (inkl. Listen) und wird auf 3 Zeilen gekappt.
+- Lange Wörter/Zeilen umbrechen in der Vorschau, damit nichts überläuft.
+
+## Auswirkungen
+- **UI/UX:** Notizkarten zeigen maximal drei Vorschauzeilen ohne Überlauf.
+- **Feature-Interaktionen:** Keine Änderung.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+
+## Ziel
 - CRDT-Markierungen als Unterstreichung pro User darstellen.
 - Remote-Cursor der anderen Nutzer sichtbar machen.
 

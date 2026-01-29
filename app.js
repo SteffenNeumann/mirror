@@ -6760,6 +6760,26 @@
 		return { title, excerpt: rest };
 	}
 
+	function getNotePreviewLines(text, maxLines = 3) {
+		const lines = String(text || "").split("\n");
+		let titleLineIndex = 0;
+		for (let i = 0; i < lines.length; i++) {
+			const line = String(lines[i] || "").trim();
+			if (!line) continue;
+			titleLineIndex = i;
+			break;
+		}
+		const previewLines = [];
+		for (let i = titleLineIndex + 1; i < lines.length; i++) {
+			const raw = String(lines[i] || "");
+			const trimmedEnd = raw.trimEnd();
+			if (!trimmedEnd.trim()) continue;
+			previewLines.push(trimmedEnd);
+			if (previewLines.length >= maxLines) break;
+		}
+		return previewLines;
+	}
+
 	function getNoteTitle(text) {
 		return getNoteTitleAndExcerpt(text).title;
 	}
@@ -9776,7 +9796,8 @@
 					.join("");
 				const info = getNoteTitleAndExcerpt(n && n.text ? n.text : "");
 				const titleHtml = escapeHtml(info.title);
-				const excerptHtml = escapeHtml(info.excerpt);
+				const previewLines = getNotePreviewLines(n && n.text ? n.text : "", 3);
+				const excerptHtml = escapeHtml(previewLines.join("\n"));
 				return `
 					<div data-note-id="${id}" class="group ps-note-item relative cursor-pointer rounded-xl border ${
 					active
