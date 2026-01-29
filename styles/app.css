@@ -746,6 +746,59 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	transform: translate(-50%, 0);
 }
 
+[data-tooltip]:not(.calendar-event) {
+	position: relative;
+}
+
+[data-tooltip]:not(.calendar-event)::after,
+[data-tooltip]:not(.calendar-event)::before {
+	opacity: 0;
+	transform: translate(-50%, -6px);
+	pointer-events: none;
+	transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+[data-tooltip]:not(.calendar-event)::after {
+	content: attr(data-tooltip);
+	position: absolute;
+	left: 50%;
+	bottom: calc(100% + 8px);
+	width: max-content;
+	max-width: 240px;
+	min-width: 160px;
+	padding: 6px 10px;
+	border-radius: 10px;
+	border: 1px solid var(--calendar-tooltip-border);
+	background: var(--calendar-tooltip-bg);
+	color: var(--calendar-tooltip-text);
+	font-size: 11px;
+	line-height: 1.4;
+	white-space: normal;
+	text-align: left;
+	box-shadow: var(--calendar-tooltip-shadow);
+	z-index: 40;
+}
+
+[data-tooltip]:not(.calendar-event)::before {
+	content: "";
+	position: absolute;
+	left: 50%;
+	bottom: calc(100% + 2px);
+	width: 8px;
+	height: 8px;
+	background: var(--calendar-tooltip-bg);
+	border-left: 1px solid var(--calendar-tooltip-border);
+	border-bottom: 1px solid var(--calendar-tooltip-border);
+	transform: translate(-50%, -6px) rotate(45deg);
+	z-index: 39;
+}
+
+[data-tooltip]:not(.calendar-event):hover::after,
+[data-tooltip]:not(.calendar-event):hover::before {
+	opacity: 1;
+	transform: translate(-50%, 0);
+}
+
 body[data-theme="monoLight"] {
 	color-scheme: light;
 	background-color: #f6f8fa;
