@@ -2484,7 +2484,17 @@
 			commentCountBadge.textContent = String(count);
 			commentCountBadge.classList.toggle("hidden", count === 0);
 		}
-		commentItems.forEach((entry) => {
+		const orderedComments = commentItems
+			.slice()
+			.sort(
+				(a, b) =>
+					(Number(a && a.createdAt ? a.createdAt : 0) || 0) -
+						(Number(b && b.createdAt ? b.createdAt : 0) || 0) ||
+					String(a && a.id ? a.id : "").localeCompare(
+						String(b && b.id ? b.id : "")
+					)
+			);
+		orderedComments.forEach((entry) => {
 			const item = document.createElement("div");
 			const isReply = Boolean(entry && entry.parentId);
 			item.className =
