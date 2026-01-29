@@ -1,6 +1,20 @@
 # Dokumentation – Änderungen (2026-01-29)
 
 ## Ziel
+- psList-Höhe nach Filter-Reset zuverlässig auf verfügbare Sidebar-Höhe setzen.
+
+## Änderungen
+- Zusätzlicher Height-Sync nach Rendern der Filter/Tags und nach Tag-Panel-Toggle.
+
+## Auswirkungen
+- **UI/UX:** Sidebar nutzt nach Tag-Reset sofort die volle Höhe.
+- **Feature-Interaktionen:** Keine Änderung.
+- **Datenebene:** Keine Änderung.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+
+## Ziel
 - Notizvorschau in der Liste stabil begrenzen und besser lesbar machen.
 
 ## Änderungen

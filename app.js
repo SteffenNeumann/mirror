@@ -7093,6 +7093,9 @@
 		}
 		renderPsTags(psState.tags || []);
 		renderPsList(notes);
+		requestAnimationFrame(() => {
+			syncPsListHeight();
+		});
 		updateEditorMetaYaml();
 	}
 
@@ -7132,6 +7135,9 @@
 		if (psTagsPanel && psTagsPanel.classList) {
 			psTagsPanel.classList.toggle("hidden", psTagsCollapsed);
 		}
+		requestAnimationFrame(() => {
+			syncPsListHeight();
+		});
 	}
 
 	function loadPsTagPrefs() {
