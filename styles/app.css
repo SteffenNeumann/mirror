@@ -750,6 +750,11 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	overflow-y: visible;
 }
 
+.room-tabs-scroll {
+	overflow-x: auto;
+	overflow-y: visible;
+}
+
 [data-tooltip]:not(.calendar-event) {
 	position: relative;
 }

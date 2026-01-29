@@ -1019,12 +1019,19 @@
 		}
 	}
 
+	function markCurrentRoomShared() {
+		if (!room) return false;
+		const marked = markRoomShared(room, key);
+		if (marked) renderRoomTabs();
+		return marked;
+	}
+
 	function openShareModal() {
 		if (!isShareModalReady()) return;
 		shareModalMode = key ? "private" : "public";
 		shareModeSelect.value = shareModalMode;
 		updateShareModalLink();
-		if (markRoomShared(room, key)) renderRoomTabs();
+		markCurrentRoomShared();
 		setShareModalOpen(true);
 		window.setTimeout(() => {
 			try {
@@ -14951,6 +14958,7 @@ self.onmessage = async (e) => {
 	}
 	if (shareModalCopy) {
 		shareModalCopy.addEventListener("click", async () => {
+			markCurrentRoomShared();
 			const href = String(
 				shareModalLink && shareModalLink.value ? shareModalLink.value : ""
 			);
@@ -14960,6 +14968,7 @@ self.onmessage = async (e) => {
 	}
 	if (shareModalShare) {
 		shareModalShare.addEventListener("click", async () => {
+			markCurrentRoomShared();
 			const href = String(
 				shareModalLink && shareModalLink.value ? shareModalLink.value : ""
 			);
@@ -14974,6 +14983,11 @@ self.onmessage = async (e) => {
 			} catch {
 				// ignore
 			}
+		});
+	}
+	if (shareModalOpen) {
+		shareModalOpen.addEventListener("click", () => {
+			markCurrentRoomShared();
 		});
 	}
 	if (shareModalClose) {
