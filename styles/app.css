@@ -842,6 +842,7 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	white-space: normal;
 	text-align: left;
 	box-shadow: var(--calendar-tooltip-shadow);
+	opacity: 0.85;
 }
 
 .tab-tooltip-layer__arrow {
