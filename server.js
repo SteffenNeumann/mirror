@@ -68,6 +68,7 @@ let stmtUserGet;
 let stmtUserInsert;
 let stmtNoteInsert;
 let stmtNoteGetByIdUser;
+let stmtNoteGetById;
 let stmtNoteGetByHashUser;
 let stmtNoteUpdate;
 let stmtNoteDelete;
@@ -75,9 +76,9 @@ let stmtNotesDeleteAll;
 let stmtNotesByUser;
 let stmtNotesByUserAndTag;
 let stmtTagsByUser;
-let stmtNoteCommentsGetByNoteUser;
+let stmtNoteCommentsGetByNote;
 let stmtNoteCommentsUpsert;
-let stmtNoteCommentsDeleteByNoteUser;
+let stmtNoteCommentsDeleteByNote;
 let stmtTrashInsert;
 let stmtTrashGetByIdUser;
 let stmtTrashDeleteByIdUser;
@@ -243,15 +244,13 @@ function initDb() {
 		);
 		CREATE INDEX IF NOT EXISTS idx_notes_trash_user_deleted ON notes_trash(user_id, deleted_at DESC);
 		CREATE TABLE IF NOT EXISTS notes_comments (
-			user_id INTEGER NOT NULL,
 			note_id TEXT NOT NULL,
 			comments_json TEXT NOT NULL,
 			updated_at INTEGER NOT NULL,
-			FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
 			FOREIGN KEY(note_id) REFERENCES notes(id) ON DELETE CASCADE,
-			PRIMARY KEY(user_id, note_id)
+			PRIMARY KEY(note_id)
 		);
-		CREATE INDEX IF NOT EXISTS idx_notes_comments_user_updated ON notes_comments(user_id, updated_at DESC);
+		CREATE INDEX IF NOT EXISTS idx_notes_comments_updated ON notes_comments(updated_at DESC);
 		CREATE TABLE IF NOT EXISTS login_tokens (
 			token TEXT PRIMARY KEY,
 			email TEXT NOT NULL,
@@ -277,6 +276,36 @@ function initDb() {
 			db.exec("ALTER TABLE notes ADD COLUMN updated_at INTEGER");
 			db.exec(
 				"UPDATE notes SET updated_at = created_at WHERE updated_at IS NULL"
+			);
+		} catch {
+			// ignore
+		}
+	}
+
+	const commentCols = db.prepare("PRAGMA table_info(notes_comments)").all();
+	const hasCommentUserId = commentCols.some(
+		(c) => String(c && c.name) === "user_id"
+	);
+	if (hasCommentUserId) {
+		try {
+			db.exec(
+				"CREATE TABLE IF NOT EXISTS notes_comments_v2 (note_id TEXT NOT NULL PRIMARY KEY, comments_json TEXT NOT NULL, updated_at INTEGER NOT NULL, FOREIGN KEY(note_id) REFERENCES notes(id) ON DELETE CASCADE)"
+			);
+			db.exec(
+				"INSERT INTO notes_comments_v2(note_id, comments_json, updated_at) SELECT note_id, comments_json, MAX(updated_at) FROM notes_comments GROUP BY note_id"
+			);
+			db.exec("DROP TABLE notes_comments");
+			db.exec("ALTER TABLE notes_comments_v2 RENAME TO notes_comments");
+			db.exec(
+				"CREATE INDEX IF NOT EXISTS idx_notes_comments_updated ON notes_comments(updated_at DESC)"
+			);
+		} catch {
+			// ignore
+		}
+	} else {
+		try {
+			db.exec(
+				"CREATE INDEX IF NOT EXISTS idx_notes_comments_updated ON notes_comments(updated_at DESC)"
 			);
 		} catch {
 			// ignore
@@ -324,6 +353,9 @@ function initDb() {
 	stmtNoteGetByIdUser = db.prepare(
 		"SELECT id, text, kind, content_hash, tags_json, created_at, updated_at FROM notes WHERE id = ? AND user_id = ?"
 	);
+	stmtNoteGetById = db.prepare(
+		"SELECT id, user_id FROM notes WHERE id = ?"
+	);
 	stmtNoteGetByHashUser = db.prepare(
 		"SELECT id, text, kind, tags_json, created_at, updated_at FROM notes WHERE user_id = ? AND content_hash = ? LIMIT 1"
 	);
@@ -341,14 +373,14 @@ function initDb() {
 	stmtTagsByUser = db.prepare(
 		"SELECT tags_json FROM notes WHERE user_id = ? ORDER BY created_at DESC LIMIT 500"
 	);
-	stmtNoteCommentsGetByNoteUser = db.prepare(
-		"SELECT comments_json, updated_at FROM notes_comments WHERE note_id = ? AND user_id = ?"
+	stmtNoteCommentsGetByNote = db.prepare(
+		"SELECT comments_json, updated_at FROM notes_comments WHERE note_id = ?"
 	);
 	stmtNoteCommentsUpsert = db.prepare(
-		"INSERT INTO notes_comments(user_id, note_id, comments_json, updated_at) VALUES(?, ?, ?, ?) ON CONFLICT(user_id, note_id) DO UPDATE SET comments_json = excluded.comments_json, updated_at = excluded.updated_at"
+		"INSERT INTO notes_comments(note_id, comments_json, updated_at) VALUES(?, ?, ?) ON CONFLICT(note_id) DO UPDATE SET comments_json = excluded.comments_json, updated_at = excluded.updated_at"
 	);
-	stmtNoteCommentsDeleteByNoteUser = db.prepare(
-		"DELETE FROM notes_comments WHERE note_id = ? AND user_id = ?"
+	stmtNoteCommentsDeleteByNote = db.prepare(
+		"DELETE FROM notes_comments WHERE note_id = ?"
 	);
 	stmtTrashInsert = db.prepare(
 		"INSERT INTO notes_trash(id, user_id, text, kind, content_hash, tags_json, created_at, updated_at, deleted_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, id) DO UPDATE SET text = excluded.text, kind = excluded.kind, content_hash = excluded.content_hash, tags_json = excluded.tags_json, created_at = excluded.created_at, updated_at = excluded.updated_at, deleted_at = excluded.deleted_at"
@@ -2615,14 +2647,13 @@ const server = http.createServer(async (req, res) => {
 				json(res, 401, { ok: false, error: "unauthorized" });
 				return;
 			}
-			const userId = getOrCreateUserId(email);
 			initDb();
-			const existing = stmtNoteGetByIdUser.get(noteId, userId);
+			const existing = stmtNoteGetById.get(noteId);
 			if (!existing) {
 				json(res, 404, { ok: false, error: "not_found" });
 				return;
 			}
-			const row = stmtNoteCommentsGetByNoteUser.get(noteId, userId);
+			const row = stmtNoteCommentsGetByNote.get(noteId);
 			const comments = row ? parseCommentsJson(row.comments_json) : [];
 			json(res, 200, {
 				ok: true,
@@ -2640,9 +2671,9 @@ const server = http.createServer(async (req, res) => {
 			}
 			readJson(req)
 				.then((body) => {
-					const userId = getOrCreateUserId(email);
+					getOrCreateUserId(email);
 					initDb();
-					const existing = stmtNoteGetByIdUser.get(noteId, userId);
+					const existing = stmtNoteGetById.get(noteId);
 					if (!existing) {
 						json(res, 404, { ok: false, error: "not_found" });
 						return;
@@ -2655,13 +2686,12 @@ const server = http.createServer(async (req, res) => {
 					const updatedAt = Date.now();
 					if (comments.length > 0) {
 						stmtNoteCommentsUpsert.run(
-							userId,
 							noteId,
 							JSON.stringify(comments),
 							updatedAt
 						);
 					} else {
-						stmtNoteCommentsDeleteByNoteUser.run(noteId, userId);
+						stmtNoteCommentsDeleteByNote.run(noteId);
 					}
 					json(res, 200, {
 						ok: true,
@@ -3733,6 +3763,26 @@ wss.on("connection", (ws, req) => {
 				updatedAt: Date.now(),
 			});
 			broadcast(rk, { type: "presence_update", room, clientId, selection });
+			return;
+		}
+
+		if (msg.type === "comment_update") {
+			const clientId = String(msg.clientId || "").trim();
+			if (!clientId) return;
+			const noteId = String(msg.noteId || "").trim();
+			if (!noteId) return;
+			const comments = Array.isArray(msg.comments)
+				? sanitizeCommentItems(msg.comments)
+				: [];
+			const updatedAt =
+				typeof msg.updatedAt === "number" && Number.isFinite(msg.updatedAt)
+					? msg.updatedAt
+					: Date.now();
+			broadcast(
+				rk,
+				{ type: "comment_update", room, clientId, noteId, comments, updatedAt },
+				ws
+			);
 			return;
 		}
 

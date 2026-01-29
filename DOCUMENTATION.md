@@ -1,6 +1,22 @@
 # Dokumentation – Änderungen (2026-01-29)
 
 ## Ziel
+- Kommentare pro Notiz teamweit speichern und realtime synchronisieren.
+
+## Änderungen
+- `notes_comments` auf notizweite Speicherung umgestellt (Migration von per-User).
+- Kommentar-Updates per WebSocket im aktiven Room gebroadcastet.
+
+## Auswirkungen
+- **UI/UX:** Kommentare sind für alle Nutzer der gleichen Notiz sichtbar und aktualisieren sich live.
+- **Feature-Interaktionen:** Kommentar-Push nutzt die bestehende Room-WebSocket-Verbindung.
+- **Datenebene:** Schema-Änderung an `notes_comments` (kein `user_id`).
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
+## Ziel
 - Kommentare nach Reload zuverlässig anzeigen.
 - Kommentarhintergrund heller gestalten.
 

@@ -2189,9 +2189,19 @@
 		if (!canSyncCommentsForNote(noteId)) return;
 		const payload = commentItems.slice(0, 200);
 		try {
-			await api(`/api/notes/${encodeURIComponent(noteId)}/comments`, {
+			const res = await api(`/api/notes/${encodeURIComponent(noteId)}/comments`, {
 				method: "PUT",
 				body: JSON.stringify({ comments: payload }),
+			});
+			if (getCommentNoteId() !== noteId) return;
+			const updatedAt = Number(res && res.updatedAt ? res.updatedAt : 0) || 0;
+			sendMessage({
+				type: "comment_update",
+				room,
+				clientId,
+				noteId,
+				comments: payload,
+				updatedAt,
 			});
 		} catch {
 			// ignore
@@ -14679,6 +14689,18 @@ self.onmessage = async (e) => {
 
 			if (msg.type === "presence_update") {
 				applyPresenceUpdate(msg);
+				return;
+			}
+
+			if (msg.type === "comment_update") {
+				const noteId = String(msg.noteId || "").trim();
+				if (!noteId || noteId !== getCommentNoteId()) return;
+				commentItems = normalizeCommentItems(
+					Array.isArray(msg.comments) ? msg.comments : []
+				);
+				commentActiveNoteId = noteId;
+				renderCommentList();
+				updateCommentOverlay();
 				return;
 			}
 
