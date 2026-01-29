@@ -3918,6 +3918,7 @@
 		notes: [],
 		favorites: [],
 		roomTabs: [],
+		sharedRooms: [],
 	};
 	let psActiveTags = new Set();
 	let psTagFilterMode = "and";
@@ -10512,6 +10513,7 @@ self.onmessage = async (e) => {
 				notes: [],
 				favorites: [],
 				roomTabs: [],
+				sharedRooms: [],
 			};
 			if (psHint) psHint.textContent = "";
 		}
@@ -10520,6 +10522,9 @@ self.onmessage = async (e) => {
 			: [];
 		psState.roomTabs = Array.isArray(psState.roomTabs)
 			? psState.roomTabs
+			: [];
+		psState.sharedRooms = Array.isArray(psState.sharedRooms)
+			? psState.sharedRooms
 			: [];
 		psState.notes = Array.isArray(psState.notes)
 			? psState.notes.map((n) => ensureNoteUpdatedAt(n))
@@ -10562,6 +10567,7 @@ self.onmessage = async (e) => {
 		updatePsNoteNavButtons();
 		maybeStartMobileAutoNoteSession();
 		await syncLocalRoomTabsToServer();
+		await syncLocalSharedRoomsToServer();
 	}
 
 	function downloadJson(filename, obj) {
@@ -11129,15 +11135,46 @@ self.onmessage = async (e) => {
 		return { room: roomName, key: keyName, updatedAt };
 	}
 
-	function loadSharedRooms() {
+	function mergeSharedRooms(localList, serverList) {
+		const map = new Map();
+		const add = (entry) => {
+			const normalized = normalizeSharedRoomEntry(entry);
+			if (!normalized) return;
+			const keyId = `${normalized.room}:${normalized.key}`;
+			const existing = map.get(keyId);
+			if (!existing || normalized.updatedAt > existing.updatedAt) {
+				map.set(keyId, normalized);
+			}
+		};
+		for (const s of serverList || []) add(s);
+		for (const l of localList || []) add(l);
+		return Array.from(map.values());
+	}
+
+	function loadLocalSharedRooms() {
 		try {
 			const raw = localStorage.getItem(SHARED_ROOMS_KEY);
 			const parsed = JSON.parse(raw || "[]");
 			if (!Array.isArray(parsed)) return [];
-			return parsed.map(normalizeSharedRoomEntry).filter(Boolean);
+			const cleaned = parsed.map(normalizeSharedRoomEntry).filter(Boolean);
+			if (cleaned.length !== parsed.length) {
+				localStorage.setItem(SHARED_ROOMS_KEY, JSON.stringify(cleaned));
+			}
+			return cleaned;
 		} catch {
 			return [];
 		}
+	}
+
+	function loadSharedRooms() {
+		const local = loadLocalSharedRooms();
+		if (psState && psState.authed) {
+			const server = Array.isArray(psState.sharedRooms)
+				? psState.sharedRooms
+				: [];
+			return mergeSharedRooms(local, server);
+		}
+		return local;
 	}
 
 	function saveSharedRooms(list) {
@@ -11146,6 +11183,12 @@ self.onmessage = async (e) => {
 				? list.map(normalizeSharedRoomEntry).filter(Boolean)
 				: [];
 			localStorage.setItem(SHARED_ROOMS_KEY, JSON.stringify(cleaned));
+			if (psState && psState.authed) {
+				const server = Array.isArray(psState.sharedRooms)
+					? psState.sharedRooms
+					: [];
+				psState.sharedRooms = mergeSharedRooms(server, cleaned);
+			}
 		} catch {
 			// ignore
 		}
@@ -11169,6 +11212,13 @@ self.onmessage = async (e) => {
 		const filtered = list.filter((r) => `${r.room}:${r.key}` !== keyId);
 		filtered.push({ room: nextRoom, key: nextKey, updatedAt: Date.now() });
 		saveSharedRooms(filtered);
+		if (psState && psState.authed) {
+			syncSharedRoomToServer({
+				room: nextRoom,
+				key: nextKey,
+				updatedAt: Date.now(),
+			});
+		}
 		return filtered.length !== list.length;
 	}
 
@@ -11510,11 +11560,59 @@ self.onmessage = async (e) => {
 		psState.favorites = [normalized, ...favs];
 	}
 
+	function upsertSharedRoomInState(entry) {
+		if (!psState || !psState.authed) return;
+		const normalized = normalizeSharedRoomEntry(entry);
+		if (!normalized) return;
+		const shared = Array.isArray(psState.sharedRooms)
+			? psState.sharedRooms
+			: [];
+		const idx = shared.findIndex(
+			(s) => s.room === normalized.room && s.key === normalized.key
+		);
+		if (idx >= 0) {
+			const updated = { ...shared[idx], ...normalized };
+			psState.sharedRooms = [
+				...shared.slice(0, idx),
+				updated,
+				...shared.slice(idx + 1),
+			];
+			return;
+		}
+		psState.sharedRooms = [normalized, ...shared];
+	}
+
 	let roomTabSyncTimer = 0;
 	let roomTabSyncPayload = null;
 	let roomTabSyncInFlight = false;
 	let roomTabSyncQueued = false;
 	let roomTabsSyncedFromLocal = false;
+	let sharedRoomsSyncedFromLocal = false;
+
+	async function syncSharedRoomToServer(payload) {
+		if (!psState || !psState.authed) return;
+		if (!payload || !payload.room) return;
+		const roomName = normalizeRoom(payload.room);
+		const keyName = normalizeKey(payload.key);
+		if (!roomName) return;
+		const updatedAt = Number(payload.updatedAt) || Date.now();
+		try {
+			const res = await api("/api/shared-rooms", {
+				method: "POST",
+				body: JSON.stringify({
+					room: roomName,
+					key: keyName,
+					updatedAt,
+				}),
+			});
+			if (res && res.sharedRoom) {
+				upsertSharedRoomInState(res.sharedRoom);
+				renderRoomTabs();
+			}
+		} catch {
+			// ignore
+		}
+	}
 
 	async function syncRoomTabToServer(payload) {
 		if (!psState || !psState.authed) return;
@@ -11597,6 +11695,31 @@ self.onmessage = async (e) => {
 				key: keyName,
 				text: "",
 				lastUsed: t.lastUsed || Date.now(),
+			});
+		}
+	}
+
+	async function syncLocalSharedRoomsToServer() {
+		if (!psState || !psState.authed) return;
+		if (sharedRoomsSyncedFromLocal) return;
+		sharedRoomsSyncedFromLocal = true;
+		const localShared = loadLocalSharedRooms();
+		if (!localShared.length) return;
+		const serverShared = Array.isArray(psState.sharedRooms)
+			? psState.sharedRooms
+			: [];
+		const has = new Set(
+			serverShared.map((s) => `${normalizeRoom(s.room)}:${normalizeKey(s.key)}`)
+		);
+		for (const s of localShared) {
+			const roomName = normalizeRoom(s.room);
+			const keyName = normalizeKey(s.key);
+			const k = `${roomName}:${keyName}`;
+			if (!roomName || has.has(k)) continue;
+			await syncSharedRoomToServer({
+				room: roomName,
+				key: keyName,
+				updatedAt: s.updatedAt || Date.now(),
 			});
 		}
 	}

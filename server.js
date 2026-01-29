@@ -96,6 +96,9 @@ let stmtFavoritesByUser;
 let stmtRoomTabUpsert;
 let stmtRoomTabDelete;
 let stmtRoomTabsByUser;
+let stmtSharedRoomUpsert;
+let stmtSharedRoomDelete;
+let stmtSharedRoomsByUser;
 let stmtUserSettingsGet;
 let stmtUserSettingsUpsert;
 let stmtGoogleTokenGet;
@@ -180,6 +183,17 @@ function initDb() {
 				UNIQUE(user_id, room, room_key)
 			);
 			CREATE INDEX IF NOT EXISTS idx_room_tabs_user_used ON room_tabs(user_id, last_used DESC);
+		CREATE TABLE IF NOT EXISTS shared_rooms (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER NOT NULL,
+			room TEXT NOT NULL,
+			room_key TEXT NOT NULL,
+			added_at INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL,
+			FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+			UNIQUE(user_id, room, room_key)
+		);
+		CREATE INDEX IF NOT EXISTS idx_shared_rooms_user_updated ON shared_rooms(user_id, updated_at DESC);
 		CREATE TABLE IF NOT EXISTS users (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			email TEXT NOT NULL UNIQUE,
@@ -384,6 +398,15 @@ function initDb() {
 	);
 	stmtRoomTabsByUser = db.prepare(
 		"SELECT room, room_key, text, last_used, added_at FROM room_tabs WHERE user_id = ? ORDER BY last_used DESC LIMIT 50"
+	);
+	stmtSharedRoomUpsert = db.prepare(
+		"INSERT INTO shared_rooms(user_id, room, room_key, added_at, updated_at) VALUES(?, ?, ?, ?, ?) ON CONFLICT(user_id, room, room_key) DO UPDATE SET updated_at = excluded.updated_at"
+	);
+	stmtSharedRoomDelete = db.prepare(
+		"DELETE FROM shared_rooms WHERE user_id = ? AND room = ? AND room_key = ?"
+	);
+	stmtSharedRoomsByUser = db.prepare(
+		"SELECT room, room_key, added_at, updated_at FROM shared_rooms WHERE user_id = ? ORDER BY updated_at DESC LIMIT 200"
 	);
 	stmtUserSettingsGet = db.prepare(
 		"SELECT calendar_json, updated_at FROM user_settings WHERE user_id = ?"
@@ -1117,6 +1140,16 @@ function listRoomTabs(userId) {
 		text: r.text,
 		lastUsed: r.last_used,
 		addedAt: r.added_at,
+	}));
+}
+
+function listSharedRooms(userId) {
+	initDb();
+	return stmtSharedRoomsByUser.all(userId).map((r) => ({
+		room: r.room,
+		key: r.room_key,
+		addedAt: r.added_at,
+		updatedAt: r.updated_at,
 	}));
 }
 
@@ -2147,6 +2180,7 @@ const server = http.createServer(async (req, res) => {
 		const tags = listTags(userId);
 		const favorites = listFavorites(userId);
 		const roomTabs = listRoomTabs(userId);
+		const sharedRooms = listSharedRooms(userId);
 		const settings = getUserSettings(userId);
 		json(res, 200, {
 			ok: true,
@@ -2156,6 +2190,7 @@ const server = http.createServer(async (req, res) => {
 			notes,
 			favorites,
 			roomTabs,
+			sharedRooms,
 			settings,
 		});
 		return;
@@ -2269,6 +2304,89 @@ const server = http.createServer(async (req, res) => {
 				const userId = getOrCreateUserId(email);
 				initDb();
 				stmtRoomTabDelete.run(userId, room, key);
+				json(res, 200, { ok: true });
+			})
+			.catch((e) => {
+				if (String(e && e.message) === "body_too_large") {
+					json(res, 413, { ok: false, error: "body_too_large" });
+					return;
+				}
+				json(res, 400, { ok: false, error: "invalid_json" });
+			});
+		return;
+	}
+
+	if (url.pathname === "/api/shared-rooms" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const sharedRooms = listSharedRooms(userId);
+		json(res, 200, { ok: true, sharedRooms });
+		return;
+	}
+
+	if (url.pathname === "/api/shared-rooms" && req.method === "POST") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		readJson(req)
+			.then((body) => {
+				const room = clampRoom(body && body.room);
+				const key = clampKey(body && body.key);
+				const updatedAtRaw = Number(body && body.updatedAt);
+				const updatedAt = Number.isFinite(updatedAtRaw)
+					? updatedAtRaw
+					: Date.now();
+				if (!room) {
+					json(res, 400, { ok: false, error: "invalid_room" });
+					return;
+				}
+				const userId = getOrCreateUserId(email);
+				const now = Date.now();
+				initDb();
+				stmtSharedRoomUpsert.run(userId, room, key, now, updatedAt);
+				json(res, 200, {
+					ok: true,
+					sharedRoom: {
+						room,
+						key,
+						addedAt: now,
+						updatedAt,
+					},
+				});
+			})
+			.catch((e) => {
+				if (String(e && e.message) === "body_too_large") {
+					json(res, 413, { ok: false, error: "body_too_large" });
+					return;
+				}
+				json(res, 400, { ok: false, error: "invalid_json" });
+			});
+		return;
+	}
+
+	if (url.pathname === "/api/shared-rooms" && req.method === "DELETE") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		readJson(req)
+			.then((body) => {
+				const room = clampRoom(body && body.room);
+				const key = clampKey(body && body.key);
+				if (!room) {
+					json(res, 400, { ok: false, error: "invalid_room" });
+					return;
+				}
+				const userId = getOrCreateUserId(email);
+				initDb();
+				stmtSharedRoomDelete.run(userId, room, key);
 				json(res, 200, { ok: true });
 			})
 			.catch((e) => {
