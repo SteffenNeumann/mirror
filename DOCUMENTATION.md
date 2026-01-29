@@ -7,6 +7,7 @@
 ## Änderungen
 - Attribution-Overlay unterstützt Unterstreichungsmodus ohne Text-Overlay.
 - Cursor-Layer rendert Carets und Labels für Presence-Selection.
+- Cursor-Positionierung kompensiert Editor-Padding für exakte Ausrichtung.
 
 ## Auswirkungen
 - **UI/UX:** Text bleibt lesbar, Unterstreichungen zeigen Autorschaft; Remote-Cursor sichtbar.

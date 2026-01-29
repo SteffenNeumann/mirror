@@ -14228,6 +14228,9 @@ self.onmessage = async (e) => {
 			cursorOverlayContent.textContent = "";
 			return;
 		}
+		const style = window.getComputedStyle(textarea);
+		const padLeft = parseFloat(style.paddingLeft) || 0;
+		const padTop = parseFloat(style.paddingTop) || 0;
 		cursorOverlayContent.innerHTML = "";
 		cursorOverlay.classList.remove("hidden");
 		for (const user of users) {
@@ -14238,8 +14241,8 @@ self.onmessage = async (e) => {
 			const coords = getTextareaCaretCoords(textarea, caretPos);
 			const caret = document.createElement("div");
 			caret.className = "remote-caret";
-			caret.style.left = `${coords.left}px`;
-			caret.style.top = `${coords.top}px`;
+			caret.style.left = `${coords.left - padLeft}px`;
+			caret.style.top = `${coords.top - padTop}px`;
 			caret.style.height = `${Math.max(12, coords.height || 16)}px`;
 			const color = user.color || "#94a3b8";
 			caret.style.borderColor = color;
