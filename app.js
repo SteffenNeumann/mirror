@@ -353,15 +353,13 @@
 
 	function maybeApplyStartupFavoriteFromPs() {
 		if (startupApplied) return;
-		if (!autoSelectedRoom) return;
 		const favs = dedupeFavorites(loadFavorites());
 		const startupFav = favs.find((f) => f.isStartup);
 		if (!startupFav) return;
 		const current = parseRoomAndKeyFromHash();
-		if (
-			current.room !== autoSelectedRoomName ||
-			current.key !== autoSelectedKey
-		) {
+		if (current.room === startupFav.room && current.key === startupFav.key) {
+			startupApplied = true;
+			autoSelectedRoom = false;
 			return;
 		}
 		startupApplied = true;
