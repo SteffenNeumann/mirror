@@ -10792,7 +10792,9 @@ self.onmessage = async (e) => {
 			? psState.sharedRooms
 			: [];
 		psState.notes = Array.isArray(psState.notes)
-			? psState.notes.map((n) => ensureNoteUpdatedAt(n))
+			? psState.notes
+					.map((n) => ensureNoteUpdatedAt(n))
+					.filter((n) => !n || !n.deletedAt)
 			: [];
 
 		if (!psState.authed) {
