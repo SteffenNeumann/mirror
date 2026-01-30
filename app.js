@@ -355,11 +355,48 @@
 		if (startupApplied) return;
 		const favs = dedupeFavorites(loadFavorites());
 		const startupFav = favs.find((f) => f.isStartup);
-		if (!startupFav) return;
+		if (!startupFav) {
+			if (autoSelectedRoom) {
+				const tabs = dedupeRoomTabs(loadRoomTabs());
+				const exists = tabs.some(
+					(t) =>
+						t.room === autoSelectedRoomName && t.key === autoSelectedKey
+				);
+				if (!exists) {
+					touchRoomTab(autoSelectedRoomName, autoSelectedKey, {
+						skipSync: true,
+					});
+					renderRoomTabs();
+				}
+				autoSelectedRoom = false;
+				try {
+					localStorage.removeItem(AUTO_ROOM_KEY);
+				} catch {
+					// ignore
+				}
+			}
+			return;
+		}
+		let storedAutoRoom = "";
+		let storedAutoKey = "";
+		try {
+			const raw = localStorage.getItem(AUTO_ROOM_KEY);
+			const parsed = raw ? JSON.parse(raw) : null;
+			storedAutoRoom = normalizeRoom(parsed && parsed.room);
+			storedAutoKey = normalizeKey(parsed && parsed.key);
+		} catch {
+			storedAutoRoom = "";
+			storedAutoKey = "";
+		}
 		const current = parseRoomAndKeyFromHash();
 		if (current.room === startupFav.room && current.key === startupFav.key) {
 			startupApplied = true;
 			autoSelectedRoom = false;
+			try {
+				localStorage.removeItem(AUTO_ROOM_KEY);
+			} catch {
+				// ignore
+			}
 			return;
 		}
 		const currentRoom = current.room;
@@ -389,8 +426,70 @@
 				}
 			}
 		}
+		const storedAutoIsFavorite =
+			findFavoriteIndex(storedAutoRoom, storedAutoKey) >= 0;
+		if (storedAutoRoom && !storedAutoIsFavorite) {
+			const tabs = dedupeRoomTabs(loadRoomTabs());
+			const nextTabs = tabs.filter(
+				(t) => !(t.room === storedAutoRoom && t.key === storedAutoKey)
+			);
+			if (nextTabs.length !== tabs.length) {
+				saveRoomTabs(nextTabs);
+				removeRoomTabFromState(storedAutoRoom, storedAutoKey);
+				removeNoteRoomBindingByRoom(storedAutoRoom, storedAutoKey);
+				renderRoomTabs();
+				if (psState && psState.authed) {
+					api("/api/room-tabs", {
+						method: "DELETE",
+						body: JSON.stringify({
+							room: storedAutoRoom,
+							key: storedAutoKey,
+						}),
+					}).catch(() => {
+						// ignore
+					});
+				}
+			}
+		}
+		const autoRoomRegex =
+			/^(Dark|Kubernetes|Kubernetics|Byte|Hack|Code|Pixel|Nerd|Retro|Quantum|Dungeon|Terminal|Matrix|Syntax|Kernel|Cache|Compile|Docker|Git|Linux|Neon|Vector)Room\d{3}$/;
+		const tabs = dedupeRoomTabs(loadRoomTabs());
+		const removedTabs = tabs.filter((t) => {
+			if (!autoRoomRegex.test(String(t.room || ""))) return false;
+			if (findFavoriteIndex(t.room, t.key) >= 0) return false;
+			const noteId = String(t.noteId || "").trim();
+			const text = String(t.text || "").trim();
+			return !noteId && !text;
+		});
+		if (removedTabs.length) {
+			const keepTabs = tabs.filter(
+				(t) =>
+					!removedTabs.some(
+						(r) => r.room === t.room && r.key === t.key
+					)
+			);
+			saveRoomTabs(keepTabs);
+			for (const t of removedTabs) {
+				removeRoomTabFromState(t.room, t.key);
+				removeNoteRoomBindingByRoom(t.room, t.key);
+				if (psState && psState.authed) {
+					api("/api/room-tabs", {
+						method: "DELETE",
+						body: JSON.stringify({ room: t.room, key: t.key }),
+					}).catch(() => {
+						// ignore
+					});
+				}
+			}
+			renderRoomTabs();
+		}
 		startupApplied = true;
 		autoSelectedRoom = false;
+		try {
+			localStorage.removeItem(AUTO_ROOM_KEY);
+		} catch {
+			// ignore
+		}
 		location.hash = buildShareHash(startupFav.room, startupFav.key);
 	}
 
@@ -11131,28 +11230,37 @@ self.onmessage = async (e) => {
 		return normalizeRoom(`${prefix}Room${number}`);
 	}
 
-		let startupApplied = false;
-		let autoSelectedRoom = false;
-		let autoSelectedRoomName = "";
-		let autoSelectedKey = "";
+	const AUTO_ROOM_KEY = "mirror_auto_room_v1";
+	let startupApplied = false;
+	let autoSelectedRoom = false;
+	let autoSelectedRoomName = "";
+	let autoSelectedKey = "";
 
-		let { room, key } = parseRoomAndKeyFromHash();
-		if (!room) {
-			const favs = dedupeFavorites(loadFavorites());
-			const startupFav = favs.find((f) => f.isStartup);
-			if (startupFav) {
-				room = startupFav.room;
-				key = startupFav.key;
-				startupApplied = true;
-			} else {
-				room = randomRoom();
-				key = randomKey();
-				autoSelectedRoom = true;
-				autoSelectedRoomName = room;
-				autoSelectedKey = key;
+	let { room, key } = parseRoomAndKeyFromHash();
+	if (!room) {
+		const favs = dedupeFavorites(loadFavorites());
+		const startupFav = favs.find((f) => f.isStartup);
+		if (startupFav) {
+			room = startupFav.room;
+			key = startupFav.key;
+			startupApplied = true;
+		} else {
+			room = randomRoom();
+			key = randomKey();
+			autoSelectedRoom = true;
+			autoSelectedRoomName = room;
+			autoSelectedKey = key;
+			try {
+				localStorage.setItem(
+					AUTO_ROOM_KEY,
+					JSON.stringify({ room, key })
+				);
+			} catch {
+				// ignore
 			}
-			location.hash = buildShareHash(room, key);
 		}
+		location.hash = buildShareHash(room, key);
+	}
 
 	const RECENT_KEY = "mirror_recent_rooms";
 	const FAVORITES_KEY = "mirror_favorites_v1";
@@ -14092,7 +14200,9 @@ self.onmessage = async (e) => {
 	updateFavoritesUI();
 	const initialTabs = loadRoomTabs();
 	if (!initialTabs.length) {
-		touchRoomTab(room, key, { skipSync: true });
+		if (!autoSelectedRoom) {
+			touchRoomTab(room, key, { skipSync: true });
+		}
 	}
 	renderRoomTabs();
 
