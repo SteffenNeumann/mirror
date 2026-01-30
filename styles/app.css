@@ -1247,11 +1247,13 @@ body[data-theme="monoLight"] #psEditorTagsBar,
 body[data-theme="monoLight"] #psEditorTagsBar > div {
 	background: rgba(255, 255, 255, 0.7) !important;
 	border-color: rgba(208, 215, 222, 0.6) !important;
+	box-shadow: 0 3px 8px rgba(15, 23, 42, 0.12) !important;
 }
 
 body[data-theme="monoLight"] #commentPanel {
 	background: rgba(255, 255, 255, 0.7) !important;
 	border-color: rgba(208, 215, 222, 0.6) !important;
+	box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12) !important;
 }
 
 body[data-theme="monoLight"] #commentPanel .bg-rose-500\/10 {
