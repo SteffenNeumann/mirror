@@ -493,7 +493,7 @@ body.code-lang-active #clearMirror {
 	#editorPreviewGrid.comment-panel-open #mirrorMask,
 	#editorPreviewGrid.comment-panel-open #attributionOverlay,
 	#editorPreviewGrid.comment-panel-open #commentOverlay {
-		padding-right: calc(2.75rem + 420px + 16px);
+		padding-right: 0;
 	}
 }
 #editorPreviewGrid.comment-panel-open #copyMirror {
@@ -1227,8 +1227,8 @@ body[data-theme="monoLight"] #previewPanel {
 }
 
 body[data-theme="monoLight"] #commentPanel {
-	background-color: #f6f8fa !important;
-	border-color: #d0d7de !important;
+	background: rgba(255, 255, 255, 0.7) !important;
+	border-color: rgba(208, 215, 222, 0.6) !important;
 }
 
 body[data-theme="monoLight"] #commentPanel .bg-rose-500\/10 {
@@ -1415,8 +1415,15 @@ body[data-theme="monoDark"] .shadow-soft {
 
 body[data-theme="monoDark"] #previewPanel,
 body[data-theme="monoDark"] #commentPanel {
-	background-color: #0d1117 !important;
-	border-color: #30363d !important;
+	background: rgba(13, 17, 23, 0.65) !important;
+	border-color: rgba(48, 54, 61, 0.65) !important;
+}
+
+#commentPanel {
+	backdrop-filter: blur(18px) saturate(160%);
+	-webkit-backdrop-filter: blur(18px) saturate(160%);
+	box-shadow: 0 12px 40px rgba(2, 6, 23, 0.25);
+	z-index: 40;
 }
 
 body[data-theme="monoDark"] .hover\:bg-white\/5:hover {
