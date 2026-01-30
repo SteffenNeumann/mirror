@@ -351,6 +351,24 @@
 		return v.endsWith("/") ? v : v + "/";
 	}
 
+	function maybeApplyStartupFavoriteFromPs() {
+		if (startupApplied) return;
+		if (!autoSelectedRoom) return;
+		const favs = dedupeFavorites(loadFavorites());
+		const startupFav = favs.find((f) => f.isStartup);
+		if (!startupFav) return;
+		const current = parseRoomAndKeyFromHash();
+		if (
+			current.room !== autoSelectedRoomName ||
+			current.key !== autoSelectedKey
+		) {
+			return;
+		}
+		startupApplied = true;
+		autoSelectedRoom = false;
+		location.hash = buildShareHash(startupFav.room, startupFav.key);
+	}
+
 	const pyodideBaseOverride = normalizeBaseUrl(pyodideBaseOverrideRaw);
 	const PYODIDE_BASE_URLS = [
 		pyodideBaseOverride,
@@ -10846,6 +10864,7 @@ self.onmessage = async (e) => {
 		await syncLocalRoomTabsToServer();
 		await syncLocalSharedRoomsToServer();
 		void loadCommentsForRoom();
+		maybeApplyStartupFavoriteFromPs();
 	}
 
 	function downloadJson(filename, obj) {
@@ -11087,19 +11106,28 @@ self.onmessage = async (e) => {
 		return normalizeRoom(`${prefix}Room${number}`);
 	}
 
-	let { room, key } = parseRoomAndKeyFromHash();
-	if (!room) {
-		const favs = dedupeFavorites(loadLocalFavorites());
-		const startupFav = favs.find((f) => f.isStartup);
-		if (startupFav) {
-			room = startupFav.room;
-			key = startupFav.key;
-		} else {
-			room = randomRoom();
-			key = randomKey();
+		let startupApplied = false;
+		let autoSelectedRoom = false;
+		let autoSelectedRoomName = "";
+		let autoSelectedKey = "";
+
+		let { room, key } = parseRoomAndKeyFromHash();
+		if (!room) {
+			const favs = dedupeFavorites(loadFavorites());
+			const startupFav = favs.find((f) => f.isStartup);
+			if (startupFav) {
+				room = startupFav.room;
+				key = startupFav.key;
+				startupApplied = true;
+			} else {
+				room = randomRoom();
+				key = randomKey();
+				autoSelectedRoom = true;
+				autoSelectedRoomName = room;
+				autoSelectedKey = key;
+			}
+			location.hash = buildShareHash(room, key);
 		}
-		location.hash = buildShareHash(room, key);
-	}
 
 	const RECENT_KEY = "mirror_recent_rooms";
 	const FAVORITES_KEY = "mirror_favorites_v1";
