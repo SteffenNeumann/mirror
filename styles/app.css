@@ -665,6 +665,18 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	.mobile-only {
 		display: inline-flex !important;
 	}
+	#calendarPanel {
+		overflow: hidden;
+	}
+	#calendarLayout {
+		min-height: 0;
+		max-height: 100%;
+	}
+	#calendarGrid {
+		max-height: 100%;
+		overflow: auto;
+		overscroll-behavior: contain;
+	}
 	body.mobile-preview-open main,
 	body.mobile-editor-open main,
 	body.mobile-ps-open main,
