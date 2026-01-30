@@ -854,6 +854,12 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	overflow: visible;
 }
 
+@media (max-width: 640px) {
+	#calendarGrid.calendar-grid-month {
+		overflow: auto;
+	}
+}
+
 .calendar-event[data-tooltip]::after,
 .calendar-event[data-tooltip]::before {
 	opacity: 0;
