@@ -12068,9 +12068,11 @@ self.onmessage = async (e) => {
 			(t) => t.room === nextRoom && t.key === nextKey
 		);
 		if (idx < 0) return;
+		const isFavorite = findFavoriteIndex(nextRoom, nextKey) >= 0;
 		tabs.splice(idx, 1);
 		saveRoomTabs(tabs);
 		removeRoomTabFromState(nextRoom, nextKey);
+		if (!isFavorite) removeNoteRoomBindingByRoom(nextRoom, nextKey);
 		renderRoomTabs();
 		if (psState && psState.authed) {
 			api("/api/room-tabs", {
