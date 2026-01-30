@@ -17466,7 +17466,8 @@ self.onmessage = async (e) => {
 	if (favoritesManageList) {
 		favoritesManageList.addEventListener("click", (ev) => {
 			const target = ev.target;
-			if (!(target instanceof HTMLElement)) return;
+			// Allow SVG clicks as well (SVG elements are not HTMLElements)
+			if (!(target instanceof Element)) return;
 			const startupBtn = target.closest("[data-fav-startup]");
 			if (startupBtn) {
 				const roomName = startupBtn.getAttribute("data-fav-room") || "";
