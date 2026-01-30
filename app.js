@@ -2099,13 +2099,14 @@
 
 	function getCommentScopeId() {
 		const noteId = getCommentNoteId();
+		if (noteId) return `note:${noteId}`;
 		const nextRoom = normalizeRoom(room);
 		const nextKey = normalizeKey(key);
 		const shared = isRoomMarkedShared(room, key);
 		if (nextRoom && (nextKey || shared)) {
 			return `room:${nextRoom}${nextKey ? `:${nextKey}` : ""}`;
 		}
-		return noteId ? `note:${noteId}` : "";
+		return "";
 	}
 
 	function getCommentScopeRequestInfo() {
