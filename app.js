@@ -351,6 +351,8 @@
 		return v.endsWith("/") ? v : v + "/";
 	}
 
+	let skipStartupTabRestore = null;
+
 	function maybeApplyStartupFavoriteFromPs() {
 		if (startupApplied) return;
 		const favs = dedupeFavorites(loadFavorites());
@@ -481,6 +483,9 @@
 				}
 			}
 			renderRoomTabs();
+		}
+		if (currentRoom) {
+			skipStartupTabRestore = { room: currentRoom, key: currentKey };
 		}
 		startupApplied = true;
 		autoSelectedRoom = false;
@@ -16053,10 +16058,14 @@ self.onmessage = async (e) => {
 			}
 		}
 		const suppressRestore =
-			pendingClosedTab &&
-			pendingClosedTab.room === room &&
-			pendingClosedTab.key === key;
+			(pendingClosedTab &&
+				pendingClosedTab.room === room &&
+				pendingClosedTab.key === key) ||
+			(skipStartupTabRestore &&
+				skipStartupTabRestore.room === room &&
+				skipStartupTabRestore.key === key);
 		pendingClosedTab = null;
+		skipStartupTabRestore = null;
 		if (textarea && !suppressRestore) {
 			updateRoomTabTextLocal(room, key, textarea.value);
 		}
