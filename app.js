@@ -2320,7 +2320,8 @@
 
 	function updateCommentOverlay() {
 		if (!commentOverlay || !commentOverlayContent) return;
-		if (!commentPanelOpen || !commentItems.length) {
+		const scopeId = getCommentScopeId();
+		if (!scopeId || commentActiveNoteId !== scopeId || !commentItems.length) {
 			commentOverlay.classList.add("hidden");
 			commentOverlayContent.textContent = "";
 			return;
