@@ -95,6 +95,7 @@ let stmtRoomStateUpsert;
 let stmtFavoriteUpsert;
 let stmtFavoriteDelete;
 let stmtFavoritesByUser;
+let stmtFavoriteClearStartup;
 let stmtRoomTabUpsert;
 let stmtRoomTabDelete;
 let stmtRoomTabsByUser;
@@ -342,6 +343,19 @@ function initDb() {
 			// ignore
 		}
 	}
+
+	const favoriteCols = db.prepare("PRAGMA table_info(room_favorites)").all();
+	const hasIsStartup = favoriteCols.some(
+		(c) => String(c && c.name) === "is_startup"
+	);
+	if (!hasIsStartup) {
+		try {
+			db.exec("ALTER TABLE room_favorites ADD COLUMN is_startup INTEGER DEFAULT 0");
+		} catch {
+			// ignore
+		}
+	}
+
 	db.exec(
 		"CREATE UNIQUE INDEX IF NOT EXISTS idx_notes_user_hash ON notes(user_id, content_hash) WHERE content_hash IS NOT NULL AND content_hash <> ''"
 	);
@@ -421,13 +435,16 @@ function initDb() {
 		"INSERT INTO room_state(rk, text, ts, ciphertext, iv, v, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?) ON CONFLICT(rk) DO UPDATE SET text = excluded.text, ts = excluded.ts, ciphertext = excluded.ciphertext, iv = excluded.iv, v = excluded.v, updated_at = excluded.updated_at"
 	);
 	stmtFavoriteUpsert = db.prepare(
-		"INSERT INTO room_favorites(user_id, room, room_key, text, added_at, updated_at) VALUES(?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, room, room_key) DO UPDATE SET text = excluded.text, updated_at = excluded.updated_at"
+		"INSERT INTO room_favorites(user_id, room, room_key, text, is_startup, added_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, room, room_key) DO UPDATE SET text = excluded.text, is_startup = excluded.is_startup, updated_at = excluded.updated_at"
 	);
 	stmtFavoriteDelete = db.prepare(
 		"DELETE FROM room_favorites WHERE user_id = ? AND room = ? AND room_key = ?"
 	);
 	stmtFavoritesByUser = db.prepare(
-		"SELECT room, room_key, text, added_at FROM room_favorites WHERE user_id = ? ORDER BY added_at DESC LIMIT 200"
+		"SELECT room, room_key, text, is_startup, added_at FROM room_favorites WHERE user_id = ? ORDER BY added_at DESC LIMIT 200"
+	);
+	stmtFavoriteClearStartup = db.prepare(
+		"UPDATE room_favorites SET is_startup = 0 WHERE user_id = ?"
 	);
 	stmtRoomTabUpsert = db.prepare(
 		"INSERT INTO room_tabs(user_id, room, room_key, text, last_used, added_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, room, room_key) DO UPDATE SET text = excluded.text, last_used = excluded.last_used, updated_at = excluded.updated_at"
@@ -1167,6 +1184,7 @@ function listFavorites(userId) {
 		room: r.room,
 		key: r.room_key,
 		text: r.text,
+		isStartup: Boolean(r.is_startup),
 		addedAt: r.added_at,
 	}));
 }
@@ -2467,6 +2485,7 @@ const server = http.createServer(async (req, res) => {
 				const room = clampRoom(body && body.room);
 				const key = clampKey(body && body.key);
 				const textVal = String(body && body.text ? body.text : "");
+				const isStartup = Boolean(body && body.isStartup);
 				if (!room) {
 					json(res, 400, { ok: false, error: "invalid_room" });
 					return;
@@ -2474,13 +2493,17 @@ const server = http.createServer(async (req, res) => {
 				const userId = getOrCreateUserId(email);
 				const now = Date.now();
 				initDb();
-				stmtFavoriteUpsert.run(userId, room, key, textVal, now, now);
+				if (isStartup) {
+					stmtFavoriteClearStartup.run(userId);
+				}
+				stmtFavoriteUpsert.run(userId, room, key, textVal, isStartup ? 1 : 0, now, now);
 				json(res, 200, {
 					ok: true,
 					favorite: {
 						room,
 						key,
 						text: textVal,
+						isStartup,
 						addedAt: now,
 					},
 				});

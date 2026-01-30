@@ -4499,6 +4499,10 @@
 				"settings.user.favorites.note_label": "Notiz",
 				"settings.user.favorites.note_placeholder":
 					"Kurze Notiz (optional)",
+				"settings.user.favorites.startup_active":
+					"Als Standard-Raum beim App-Start markiert (Klicken zum Deaktivieren)",
+				"settings.user.favorites.startup_inactive":
+					"Als Standard-Raum beim App-Start markieren",
 				"settings.user.mobile_auto.title":
 					"Mobil: Neue Notiz nach Inaktivität",
 				"settings.user.mobile_auto.desc":
@@ -4754,6 +4758,10 @@
 				"settings.user.favorites.remove": "Remove",
 				"settings.user.favorites.note_label": "Note",
 				"settings.user.favorites.note_placeholder": "Short note (optional)",
+				"settings.user.favorites.startup_active":
+					"Marked as default room on app start (Click to deactivate)",
+				"settings.user.favorites.startup_inactive":
+					"Mark as default room on app start",
 				"settings.user.mobile_auto.title": "Mobile: new note after inactivity",
 				"settings.user.mobile_auto.desc":
 					"How many seconds of inactivity before creating a new note on next start.",
@@ -11081,8 +11089,15 @@ self.onmessage = async (e) => {
 
 	let { room, key } = parseRoomAndKeyFromHash();
 	if (!room) {
-		room = randomRoom();
-		key = randomKey();
+		const favs = dedupeFavorites(loadLocalFavorites());
+		const startupFav = favs.find((f) => f.isStartup);
+		if (startupFav) {
+			room = startupFav.room;
+			key = startupFav.key;
+		} else {
+			room = randomRoom();
+			key = randomKey();
+		}
 		location.hash = buildShareHash(room, key);
 	}
 
@@ -11141,8 +11156,9 @@ self.onmessage = async (e) => {
 		const keyName = normalizeKey(it && it.key);
 		const addedAt = Number(it && (it.addedAt || it.added_at)) || 0;
 		const text = String(it && it.text ? it.text : "");
+		const isStartup = Boolean(it && it.isStartup);
 		if (!roomName) return null;
-		return { room: roomName, key: keyName, addedAt, text };
+		return { room: roomName, key: keyName, addedAt, text, isStartup };
 	}
 
 	function dedupeFavorites(list) {
@@ -12175,10 +12191,32 @@ self.onmessage = async (e) => {
 					? '<span class="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300">privat</span>'
 					: "";
 				const textVal = String(f.text || "");
+				const isStartup = Boolean(f.isStartup);
+				const startupIconClass = isStartup
+					? "text-yellow-400"
+					: "text-slate-400 hover:text-yellow-400";
+				const startupIconFill = isStartup ? "currentColor" : "none";
+				const startupTitle = t(
+					isStartup
+						? "settings.user.favorites.startup_active"
+						: "settings.user.favorites.startup_inactive"
+				);
 				return `
 					<div class="rounded-lg border border-white/10 bg-slate-950/30 p-2">
 						<div class="flex items-center justify-between gap-2">
 							<div class="flex items-center gap-2 text-xs text-slate-200">
+								<button
+									type="button"
+									data-fav-startup
+									data-fav-room="${escapeAttr(f.room)}"
+									data-fav-key="${escapeAttr(f.key)}"
+									class="rounded-md p-1 transition ${startupIconClass}"
+									title="${escapeAttr(startupTitle)}"
+									aria-label="${escapeAttr(startupTitle)}">
+									<svg viewBox="0 0 24 24" fill="${startupIconFill}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+										<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+									</svg>
+								</button>
 								<span class="font-medium">${escapeHtml(f.room)}</span>
 								${badge}
 							</div>
@@ -13894,6 +13932,36 @@ self.onmessage = async (e) => {
 			api("/api/favorites", {
 				method: "DELETE",
 				body: JSON.stringify({ room: nextRoom, key: nextKey }),
+			}).catch(() => {
+				// ignore
+			});
+		}
+	}
+
+	function setStartupFavorite(roomName, keyName) {
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!nextRoom) return;
+		const favs = dedupeFavorites(loadFavorites());
+		const idx = favs.findIndex(
+			(f) => f.room === nextRoom && f.key === nextKey
+		);
+		if (idx < 0) return;
+		const currentIsStartup = favs[idx].isStartup;
+		for (let i = 0; i < favs.length; i += 1) {
+			favs[i].isStartup = i === idx ? !currentIsStartup : false;
+		}
+		saveFavorites(favs);
+		updateFavoritesUI();
+		if (psState && psState.authed) {
+			api("/api/favorites", {
+				method: "POST",
+				body: JSON.stringify({
+					room: nextRoom,
+					key: nextKey,
+					text: favs[idx].text,
+					isStartup: favs[idx].isStartup,
+				}),
 			}).catch(() => {
 				// ignore
 			});
@@ -17399,6 +17467,13 @@ self.onmessage = async (e) => {
 		favoritesManageList.addEventListener("click", (ev) => {
 			const target = ev.target;
 			if (!(target instanceof HTMLElement)) return;
+			const startupBtn = target.closest("[data-fav-startup]");
+			if (startupBtn) {
+				const roomName = startupBtn.getAttribute("data-fav-room") || "";
+				const keyName = startupBtn.getAttribute("data-fav-key") || "";
+				setStartupFavorite(roomName, keyName);
+				return;
+			}
 			const btn = target.closest("[data-fav-remove]");
 			if (!btn) return;
 			const roomName = btn.getAttribute("data-fav-room") || "";
