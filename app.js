@@ -362,6 +362,28 @@
 			autoSelectedRoom = false;
 			return;
 		}
+		if (autoSelectedRoom) {
+			const prevRoom = autoSelectedRoomName;
+			const prevKey = autoSelectedKey;
+			const tabs = dedupeRoomTabs(loadRoomTabs());
+			const nextTabs = tabs.filter(
+				(t) => !(t.room === prevRoom && t.key === prevKey)
+			);
+			if (nextTabs.length !== tabs.length) {
+				saveRoomTabs(nextTabs);
+				removeRoomTabFromState(prevRoom, prevKey);
+				removeNoteRoomBindingByRoom(prevRoom, prevKey);
+				renderRoomTabs();
+				if (psState && psState.authed) {
+					api("/api/room-tabs", {
+						method: "DELETE",
+						body: JSON.stringify({ room: prevRoom, key: prevKey }),
+					}).catch(() => {
+						// ignore
+					});
+				}
+			}
+		}
 		startupApplied = true;
 		autoSelectedRoom = false;
 		location.hash = buildShareHash(startupFav.room, startupFav.key);
