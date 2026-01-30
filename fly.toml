@@ -8,6 +8,7 @@ primary_region = 'fra'
 
 [env]
   MIRROR_DB_PATH = '/data/mirror.sqlite'
+  MIRROR_UPLOADS_DIR = '/data/uploads'
 
 [build]
 
