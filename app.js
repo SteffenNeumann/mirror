@@ -456,10 +456,9 @@
 		const tabs = dedupeRoomTabs(loadRoomTabs());
 		const removedTabs = tabs.filter((t) => {
 			if (!autoRoomRegex.test(String(t.room || ""))) return false;
+			if (t.room === startupFav.room && t.key === startupFav.key) return false;
 			if (findFavoriteIndex(t.room, t.key) >= 0) return false;
-			const noteId = String(t.noteId || "").trim();
-			const text = String(t.text || "").trim();
-			return !noteId && !text;
+			return true;
 		});
 		if (removedTabs.length) {
 			const keepTabs = tabs.filter(
