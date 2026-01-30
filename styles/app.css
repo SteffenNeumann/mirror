@@ -166,6 +166,19 @@ body.glow-disabled .bg-glow {
 	padding-right: 0.25rem;
 }
 
+#toggleComments,
+#psMetaToggle,
+#clearMirror,
+#copyMirror,
+#psEditorTagsBar,
+#psEditorTagsBar > div {
+	background: rgba(2, 6, 23, 0.75) !important;
+	border-color: rgba(255, 255, 255, 0.12) !important;
+	backdrop-filter: blur(18px) saturate(160%);
+	-webkit-backdrop-filter: blur(18px) saturate(160%);
+	box-shadow: 0 10px 28px rgba(2, 6, 23, 0.22);
+}
+
 #psEditorTagsBar > div {
 	flex-wrap: nowrap;
 	overflow-x: auto;
@@ -1226,6 +1239,16 @@ body[data-theme="monoLight"] #previewPanel {
 	border-color: #d0d7de !important;
 }
 
+body[data-theme="monoLight"] #toggleComments,
+body[data-theme="monoLight"] #psMetaToggle,
+body[data-theme="monoLight"] #clearMirror,
+body[data-theme="monoLight"] #copyMirror,
+body[data-theme="monoLight"] #psEditorTagsBar,
+body[data-theme="monoLight"] #psEditorTagsBar > div {
+	background: rgba(255, 255, 255, 0.7) !important;
+	border-color: rgba(208, 215, 222, 0.6) !important;
+}
+
 body[data-theme="monoLight"] #commentPanel {
 	background: rgba(255, 255, 255, 0.7) !important;
 	border-color: rgba(208, 215, 222, 0.6) !important;
@@ -1415,6 +1438,16 @@ body[data-theme="monoDark"] .shadow-soft {
 
 body[data-theme="monoDark"] #previewPanel,
 body[data-theme="monoDark"] #commentPanel {
+	background: rgba(13, 17, 23, 0.65) !important;
+	border-color: rgba(48, 54, 61, 0.65) !important;
+}
+
+body[data-theme="monoDark"] #toggleComments,
+body[data-theme="monoDark"] #psMetaToggle,
+body[data-theme="monoDark"] #clearMirror,
+body[data-theme="monoDark"] #copyMirror,
+body[data-theme="monoDark"] #psEditorTagsBar,
+body[data-theme="monoDark"] #psEditorTagsBar > div {
 	background: rgba(13, 17, 23, 0.65) !important;
 	border-color: rgba(48, 54, 61, 0.65) !important;
 }
