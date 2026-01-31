@@ -6937,6 +6937,21 @@
 		return note;
 	}
 
+	function dedupeNotesById(notes) {
+		const map = new Map();
+		for (const note of Array.isArray(notes) ? notes : []) {
+			if (!note) continue;
+			const id = String(note.id || "").trim();
+			if (!id) continue;
+			const prev = map.get(id);
+			const next = ensureNoteUpdatedAt({ ...note });
+			if (!prev || Number(next.updatedAt || 0) >= Number(prev.updatedAt || 0)) {
+				map.set(id, next);
+			}
+		}
+		return Array.from(map.values());
+	}
+
 	function formatMetaDate(ts) {
 		if (!ts || !Number.isFinite(ts)) return "";
 		try {
@@ -7551,7 +7566,7 @@
 
 	function applyPersonalSpaceFiltersAndRender() {
 		if (!psState || !psState.authed) return;
-		const allNotes = Array.isArray(psState.notes) ? psState.notes : [];
+		const allNotes = dedupeNotesById(psState.notes);
 		const sortedAll = allNotes
 			.map((n) => ensureNoteUpdatedAt(n))
 			.slice()
@@ -11190,11 +11205,11 @@ self.onmessage = async (e) => {
 		psState.sharedRooms = Array.isArray(psState.sharedRooms)
 			? psState.sharedRooms
 			: [];
-		psState.notes = Array.isArray(psState.notes)
-			? psState.notes
-					.map((n) => ensureNoteUpdatedAt(n))
-					.filter((n) => !n || !n.deletedAt)
-			: [];
+		psState.notes = dedupeNotesById(
+			(Array.isArray(psState.notes) ? psState.notes : [])
+				.map((n) => ensureNoteUpdatedAt(n))
+				.filter((n) => !n || !n.deletedAt)
+		);
 
 		if (!psState.authed) {
 			psUnauthed.classList.remove("hidden");
@@ -16800,19 +16815,18 @@ self.onmessage = async (e) => {
 		if (auto) setPsAutoSaveStatus("Speichern…");
 		else if (psHint)
 			psHint.textContent = psEditingNoteId ? "Updating…" : "Saving…";
-		if (!psEditingNoteId) {
-			if (!allowEmpty) {
-				const existing = findNoteByText(rawText);
-				if (existing && existing.id) {
-					applyNoteToEditor(existing);
-					psAutoSaveLastSavedNoteId = psEditingNoteId;
-					psAutoSaveLastSavedText = rawText;
-					setPsAutoSaveStatus("Bereits gespeichert");
-					if (psHint) psHint.textContent = "Bereits gespeichert.";
-					if (!auto) toast("Personal Space: bereits gespeichert.", "info");
-					return true;
-				}
+		let targetNoteId = String(psEditingNoteId || "").trim();
+		let targetNoteKind = psEditingNoteKind;
+		if (!targetNoteId && !allowEmpty) {
+			const existing = findNoteByText(rawText);
+			if (existing && existing.id) {
+				targetNoteId = String(existing.id);
+				targetNoteKind = String(existing.kind || "");
+				psEditingNoteId = targetNoteId;
+				psEditingNoteKind = targetNoteKind;
 			}
+		}
+		if (!targetNoteId) {
 			const res = await api("/api/notes", {
 				method: "POST",
 				body: JSON.stringify({
@@ -16828,10 +16842,7 @@ self.onmessage = async (e) => {
 				psEditingNoteId = String(saved.id);
 				psEditingNoteKind = String(saved.kind || "");
 				const notes = Array.isArray(psState.notes) ? psState.notes : [];
-				const nextNotes = notes.filter(
-					(n) => String(n && n.id ? n.id : "") !== psEditingNoteId
-				);
-				psState.notes = [saved, ...nextNotes];
+				psState.notes = dedupeNotesById([saved, ...notes]);
 				applyPersonalSpaceFiltersAndRender();
 				syncPsEditingNoteTagsFromState();
 				updateEditorMetaYaml();
@@ -16854,7 +16865,7 @@ self.onmessage = async (e) => {
 			return true;
 		}
 
-		const res = await api(`/api/notes/${encodeURIComponent(psEditingNoteId)}`, {
+		const res = await api(`/api/notes/${encodeURIComponent(targetNoteId)}`, {
 			method: "PUT",
 			body: JSON.stringify({
 				text: allowEmpty ? "" : rawText,
@@ -16866,18 +16877,16 @@ self.onmessage = async (e) => {
 			saved.updatedAt = Date.now();
 			const notes = Array.isArray(psState.notes) ? psState.notes : [];
 			const id = String(saved.id);
-			const idx = notes.findIndex((n) => String(n && n.id ? n.id : "") === id);
-			psState.notes =
-				idx >= 0
-					? [...notes.slice(0, idx), saved, ...notes.slice(idx + 1)]
-					: [saved, ...notes];
+			psState.notes = dedupeNotesById([saved, ...notes.filter((n) => String(n && n.id ? n.id : "") !== id)]);
 			applyPersonalSpaceFiltersAndRender();
 			syncPsEditingNoteTagsFromState();
 			updateEditorMetaYaml();
 		}
-		psAutoSaveLastSavedNoteId = psEditingNoteId;
+		psEditingNoteId = targetNoteId;
+		psEditingNoteKind = targetNoteKind;
+		psAutoSaveLastSavedNoteId = targetNoteId;
 		psAutoSaveLastSavedText = rawText;
-		updateRoomTabsForNoteId(psEditingNoteId, rawText);
+		updateRoomTabsForNoteId(targetNoteId, rawText);
 		if (auto) setPsAutoSaveStatus("Automatisch gespeichert");
 		else setPsAutoSaveStatus("Gespeichert");
 		if (psHint) psHint.textContent = auto ? "" : "Updated.";
