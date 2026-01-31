@@ -2062,3 +2062,14 @@ body[data-theme="monoDark"] .md-content .pw-field {
 body[data-theme="monoDark"] .md-content .pw-mask {
 	color: #8b949e;
 }
+
+/* Mono themes: hide/grey out glow toggle (glow is forced off) */
+body[data-theme="monoLight"] #settingsGlowToggle,
+body[data-theme="monoDark"] #settingsGlowToggle {
+	opacity: 0.35 !important;
+	filter: grayscale(1);
+	pointer-events: none !important;
+	background-color: transparent !important;
+	border-color: #30363d !important;
+	color: #6e7681 !important;
+}
