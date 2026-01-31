@@ -84,6 +84,7 @@ Detect and document significant project changes:
 - Dependency updates
 - Performance improvements
 
+
 For each change, update project-overview.md with:
 - Detailed description
 - Reason for change
