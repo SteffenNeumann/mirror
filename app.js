@@ -15,7 +15,6 @@
 	const newRoomBtn = document.getElementById("newRoom");
 	const favoritesSelect = document.getElementById("favoritesSelect");
 	const toggleFavoriteBtn = document.getElementById("toggleFavorite");
-	const roomTabs = document.getElementById("roomTabs");
 	const metaLeft = document.getElementById("metaLeft");
 	const metaRight = document.getElementById("metaRight");
 	const presenceSummary = document.getElementById("presenceSummary");
@@ -332,6 +331,28 @@
 	const psUserUnauthed = document.getElementById("psUserUnauthed");
 	const bgBlobTop = document.getElementById("bgBlobTop");
 	const bgBlobBottom = document.getElementById("bgBlobBottom");
+
+	const SCROLLBAR_REVEAL_MS = 800;
+
+	function attachScrollbarReveal(el) {
+		if (!el || !el.addEventListener) return;
+		let hideTimer = null;
+		const show = () => {
+			el.classList.add("scrollbar-active");
+			if (hideTimer) window.clearTimeout(hideTimer);
+			hideTimer = window.setTimeout(() => {
+				el.classList.remove("scrollbar-active");
+			}, SCROLLBAR_REVEAL_MS);
+		};
+		["scroll", "wheel", "touchmove"].forEach((evt) => {
+			el.addEventListener(evt, show, { passive: true });
+		});
+	}
+
+	function setupScrollbarReveal() {
+		attachScrollbarReveal(psList);
+		attachScrollbarReveal(textarea);
+	}
 
 	const params = new URLSearchParams(location.search);
 	const defaultWsUrl =
@@ -8446,7 +8467,8 @@
 				: "rgba(2,6,23,.1)";
 			const fallbackDoc = `<!doctype html><html lang="en"><head><meta charset="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
-				<style>:root{color-scheme:${fallbackColorScheme};--scrollbar-thumb:${fallbackScrollThumb};--scrollbar-thumb-hover:${fallbackScrollThumbHover};}body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:${fallbackBg};color:${fallbackText};overflow-x:hidden;scrollbar-gutter:stable;}a{color:${fallbackLink};}*{scrollbar-width:thin;scrollbar-color:transparent transparent;}*::-webkit-scrollbar{width:10px;height:10px;}*::-webkit-scrollbar-track{background:transparent;}*::-webkit-scrollbar-thumb{background-color:transparent;border-radius:999px;border:2px solid transparent;transition:background-color 90ms ease,border-color 90ms ease;}body:hover{scrollbar-color:var(--scrollbar-thumb) transparent;}body:hover *::-webkit-scrollbar-thumb{background-color:var(--scrollbar-thumb);border-color:${fallbackScrollBorder};}body:hover *::-webkit-scrollbar-thumb:hover{background-color:var(--scrollbar-thumb-hover);}</style>
+				<style>:root{color-scheme:${fallbackColorScheme};--scrollbar-thumb:${fallbackScrollThumb};--scrollbar-thumb-hover:${fallbackScrollThumbHover};}body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:${fallbackBg};color:${fallbackText};overflow-x:hidden;scrollbar-gutter:stable;}a{color:${fallbackLink};}*{scrollbar-width:thin;scrollbar-color:transparent transparent;}*::-webkit-scrollbar{width:10px;height:10px;}*::-webkit-scrollbar-track{background:transparent;}*::-webkit-scrollbar-thumb{background-color:transparent;border-radius:999px;border:2px solid transparent;transition:background-color 90ms ease,border-color 90ms ease;}body.scrollbar-active{scrollbar-color:var(--scrollbar-thumb) transparent;}body.scrollbar-active *::-webkit-scrollbar-thumb{background-color:var(--scrollbar-thumb);border-color:${fallbackScrollBorder};}body.scrollbar-active *::-webkit-scrollbar-thumb:hover{background-color:var(--scrollbar-thumb-hover);}</style>
+				<script>(function(){var body=document.body;var hideTimer=null;function show(){body.classList.add('scrollbar-active');if(hideTimer)clearTimeout(hideTimer);hideTimer=setTimeout(function(){body.classList.remove('scrollbar-active');},800);}['scroll','wheel','touchmove'].forEach(function(evt){window.addEventListener(evt,show,{passive:true});});window.addEventListener('keydown',function(e){if(e && (e.key==='PageDown'||e.key==='PageUp'||e.key==='End'||e.key==='Home')){show();}});})();</script>
 				</head><body><!--ts:${stamp}--><strong>Markdown preview unavailable.</strong><div style="margin-top:8px;color:#94a3b8">Reload the page or check for CDN blocking (AdBlock / corporate proxy).</div></body></html>`;
 			setPreviewDocument(fallbackDoc);
 			return;
@@ -8618,9 +8640,9 @@
 		*::-webkit-scrollbar{width:10px;height:10px;}
 		*::-webkit-scrollbar-track{background:transparent;}
 		*::-webkit-scrollbar-thumb{background-color:transparent;border-radius:999px;border:2px solid transparent;transition:background-color 90ms ease,border-color 90ms ease;}
-		body:hover{scrollbar-color:var(--scrollbar-thumb) transparent;}
-		body:hover *::-webkit-scrollbar-thumb{background-color:var(--scrollbar-thumb);border-color:${previewScrollBorder};}
-		body:hover *::-webkit-scrollbar-thumb:hover{background-color:var(--scrollbar-thumb-hover);}
+		body.scrollbar-active{scrollbar-color:var(--scrollbar-thumb) transparent;}
+		body.scrollbar-active *::-webkit-scrollbar-thumb{background-color:var(--scrollbar-thumb);border-color:${previewScrollBorder};}
+		body.scrollbar-active *::-webkit-scrollbar-thumb:hover{background-color:var(--scrollbar-thumb-hover);}
     h1,h2,h3{line-height:1.25;}
     table{border-collapse:collapse;width:100%;}
 		th,td{border:1px solid ${previewTableBorder};padding:6px 8px;}
@@ -8657,6 +8679,7 @@
 		.toc-collapsed .toc-header{border-bottom:0;}
 		@media (max-width: 900px){.toc-float{right:10px;top:10px;width:180px;max-height:55vh;}}
   </style>
+	<script>(function(){var body=document.body;var hideTimer=null;function show(){body.classList.add('scrollbar-active');if(hideTimer)clearTimeout(hideTimer);hideTimer=setTimeout(function(){body.classList.remove('scrollbar-active');},800);}['scroll','wheel','touchmove'].forEach(function(evt){window.addEventListener(evt,show,{passive:true});});window.addEventListener('keydown',function(e){if(e && (e.key==='PageDown'||e.key==='PageUp'||e.key==='End'||e.key==='Home')){show();}});}());</script>
 </head>
 <body>
 	<div id="tocFloat" class="toc-float" aria-hidden="true">
@@ -17749,6 +17772,7 @@ self.onmessage = async (e) => {
 	}
 
 	function initStartupTasks() {
+		setupScrollbarReveal();
 	initUiLanguage();
 	loadMobileAutoNoteSeconds();
 	void initAutoBackup();
