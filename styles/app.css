@@ -1581,6 +1581,12 @@ body[data-theme="coffeeDark"] .md-content .pw-mask {
 	color: #c7ae9d;
 }
 
+body[data-theme="coffeeDark"] #mirror.pw-mask-enabled,
+body[data-theme="coffeeDark"] #mirror.attribution-active {
+	color: transparent !important;
+	caret-color: #e8d9cc;
+}
+
 /* Coffee themes: visually disable glow toggle (glow is off) */
 body[data-theme="coffeeLight"] #settingsGlowToggle {
 	opacity: 0.35 !important;
