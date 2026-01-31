@@ -7174,6 +7174,94 @@
 			.toLowerCase();
 	}
 
+	function colognePhonetic(raw) {
+		const input = String(raw || "")
+			.toLowerCase()
+			.replace(/[ä]/g, "a")
+			.replace(/[ö]/g, "o")
+			.replace(/[ü]/g, "u")
+			.replace(/ß/g, "s")
+			.replace(/[^a-z]/g, " ");
+		const chars = Array.from(input);
+		const digits = [];
+		for (let i = 0; i < chars.length; i += 1) {
+			const c = chars[i];
+			const prev = i > 0 ? chars[i - 1] : "";
+			const next = i + 1 < chars.length ? chars[i + 1] : "";
+			let code = "";
+			switch (c) {
+				case "a":
+				case "e":
+				case "i":
+				case "j":
+				case "o":
+				case "u":
+				case "y":
+					code = "0";
+					break;
+				case "h":
+					code = "-";
+					break;
+				case "b":
+					code = "1";
+					break;
+				case "p":
+					code = next === "h" ? "3" : "1";
+					break;
+				case "d":
+				case "t":
+					code = next && "scxz".includes(next) ? "8" : "2";
+					break;
+				case "f":
+				case "v":
+				case "w":
+					code = "3";
+					break;
+				case "g":
+				case "k":
+				case "q":
+					code = "4";
+					break;
+				case "c": {
+					const front = "ahkloqrux".includes(next);
+					if (i === 0) code = front ? "4" : "8";
+					else if ("sz".includes(prev)) code = "8";
+					else if (front) code = "4";
+					else code = "8";
+					break;
+				}
+				case "x":
+					digits.push("4");
+					digits.push("8");
+					continue;
+				case "l":
+					code = "5";
+					break;
+				case "m":
+				case "n":
+					code = "6";
+					break;
+				case "r":
+					code = "7";
+					break;
+				case "s":
+				case "z":
+					code = "8";
+					break;
+				default:
+					code = "";
+			}
+			if (!code || code === "-") continue;
+			digits.push(code);
+		}
+		const compact = [];
+		digits.forEach((d) => {
+			if (!d) return;
+			if (compact[compact.length - 1] !== d) compact.push(d);
+		});
+		return compact.filter((d) => d !== "0").join("");
+	}
+
 	function loadPsSearchQuery() {
 		try {
 			psSearchQuery = String(localStorage.getItem(PS_SEARCH_QUERY_KEY) || "");
@@ -7395,19 +7483,32 @@
 		const tags = Array.isArray(note && note.tags) ? note.tags : [];
 		const tagsLower = tags.map((t) => String(t || "").toLowerCase());
 		const hay = `${text}\n${tagsLower.join(" ")}`;
+		const phoneticTokens = new Set();
+		const addPhonetic = (word) => {
+			const code = colognePhonetic(word);
+			if (code) phoneticTokens.add(code);
+		};
+		text
+			.split(/[^a-z0-9äöüß]+/i)
+			.filter(Boolean)
+			.forEach((w) => addPhonetic(w));
+		tagsLower.forEach((t) => addPhonetic(t));
 		return tokens.every((tokRaw) => {
 			let tok = String(tokRaw || "")
 				.trim()
 				.toLowerCase();
 			if (!tok) return true;
 			if (tok.startsWith("#")) tok = tok.slice(1);
-			if (!tok) return true;
 			if (tok.startsWith("tag:")) {
 				const want = tok.slice(4).trim();
 				if (!want) return true;
 				return tagsLower.includes(want);
 			}
-			return hay.includes(tok);
+			if (!tok) return true;
+			const phon = colognePhonetic(tok);
+			if (hay.includes(tok)) return true;
+			if (phon && phoneticTokens.has(phon)) return true;
+			return false;
 		});
 	}
 
