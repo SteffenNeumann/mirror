@@ -205,6 +205,13 @@ body.glow-disabled .bg-glow {
 	scrollbar-gutter: stable;
 }
 
+#mdPreview {
+	background-color: var(--selection-menu-bg);
+	border: 1px solid var(--selection-menu-border);
+	border-radius: 12px;
+	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+}
+
 #psList::-webkit-scrollbar,
 #mirror::-webkit-scrollbar,
 #mdPreview::-webkit-scrollbar {

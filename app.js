@@ -4437,6 +4437,11 @@
 			label: "Coffee Dark",
 			top: "rgba(38, 29, 26, 0.9)",
 			bottom: "rgba(28, 22, 20, 0.92)",
+			previewBg: "#1c1614",
+			previewMetaBg: "rgba(53, 38, 32, 0.75)",
+			previewMetaBorder: "rgba(201, 155, 119, 0.38)",
+			previewMetaText: "rgba(233, 219, 204, 0.92)",
+			previewLink: "rgba(201, 155, 119, 0.9)",
 			accentBgSoft: "rgba(201, 155, 119, 0.12)",
 			accentBg: "rgba(201, 155, 119, 0.16)",
 			accentBgHover: "rgba(201, 155, 119, 0.22)",
@@ -4460,6 +4465,11 @@
 			label: "Coffee Light",
 			top: "rgba(248, 241, 233, 0.95)",
 			bottom: "rgba(239, 226, 217, 0.94)",
+			previewBg: "#f8f1e9",
+			previewMetaBg: "rgba(240, 227, 216, 0.9)",
+			previewMetaBorder: "rgba(176, 112, 73, 0.32)",
+			previewMetaText: "rgba(68, 45, 30, 0.9)",
+			previewLink: "rgba(176, 112, 73, 0.95)",
 			accentBgSoft: "rgba(176, 112, 73, 0.08)",
 			accentBg: "rgba(176, 112, 73, 0.12)",
 			accentBgHover: "rgba(176, 112, 73, 0.16)",
@@ -8709,13 +8719,13 @@
 				"rgba(148,163,184,.45)"
 			: nonMonoScrollbarThumb;
 		const previewColorScheme = isMonoLight ? "light" : "dark";
-		const previewBg = isMonoLight
-			? "#f8fafc"
-			: isMonoDark
-				? "#0d1117"
-				: themeColors.previewBg || "rgba(2, 6, 23, 0.4)";
-		const previewText = isMonoLight ? "#0f172a" : "#e2e8f0";
-		const previewLink = isMonoLight ? "#2563eb" : "#60a5fa";
+		const previewBg =
+			themeColors.previewBg ||
+			(isMonoLight ? "#f8fafc" : isMonoDark ? "#0d1117" : "rgba(2, 6, 23, 0.4)");
+		const previewText =
+			themeColors.previewText || (isMonoLight ? "#0f172a" : "#e2e8f0");
+		const previewLink =
+			themeColors.previewLink || (isMonoLight ? "#2563eb" : "#60a5fa");
 		const previewPreBg = isMonoLight
 			? "rgba(15,23,42,.04)"
 			: "rgba(2,6,23,.6)";
@@ -8737,33 +8747,35 @@
 		const previewValueText = isMonoLight
 			? "rgba(15,23,42,.95)"
 			: "rgba(226,232,240,.95)";
-		const previewMetaBg = isMonoLight
-			? "rgba(15,23,42,.04)"
-			: "rgba(15,23,42,.55)";
-		const previewMetaBorder = isMonoLight
-			? "rgba(15,23,42,.12)"
-			: "rgba(148,163,184,.18)";
-		const previewMetaText = isMonoLight
-			? "rgba(71,85,105,.9)"
-			: "rgba(148,163,184,.9)";
-		const tocBg = previewBg;
-		const tocBorder = isMonoLight
-			? "rgba(15,23,42,.12)"
-			: "rgba(148,163,184,.18)";
-		const tocText = isMonoLight
-			? "rgba(15,23,42,.95)"
-			: "rgba(226,232,240,.95)";
-		const tocMuted = isMonoLight
-			? "rgba(71,85,105,.85)"
-			: "rgba(148,163,184,.8)";
-		const tocHover = isMonoLight
-			? "rgba(15,23,42,.06)"
-			: "rgba(148,163,184,.14)";
+		const previewMetaBg =
+			themeColors.previewMetaBg ||
+			(isMonoLight ? "rgba(15,23,42,.04)" : "rgba(15,23,42,.55)");
+		const previewMetaBorder =
+			themeColors.previewMetaBorder ||
+			(isMonoLight ? "rgba(15,23,42,.12)" : "rgba(148,163,184,.18)");
+		const previewMetaText =
+			themeColors.previewMetaText ||
+			(isMonoLight ? "rgba(71,85,105,.9)" : "rgba(148,163,184,.9)");
+		const tocBg = themeColors.tocBg || previewBg;
+		const tocBorder =
+			themeColors.tocBorder ||
+			(isMonoLight ? "rgba(15,23,42,.12)" : "rgba(148,163,184,.18)");
+		const tocText =
+			themeColors.tocText ||
+			(isMonoLight ? "rgba(15,23,42,.95)" : "rgba(226,232,240,.95)");
+		const tocMuted =
+			themeColors.tocMuted ||
+			(isMonoLight ? "rgba(71,85,105,.85)" : "rgba(148,163,184,.8)");
+		const tocHover =
+			themeColors.tocHover ||
+			(isMonoLight ? "rgba(15,23,42,.06)" : "rgba(148,163,184,.14)");
 		const tocRing =
 			themeColors.accentRing || "rgba(217,70,239,.25)";
-		const tocShadow = isMonoLight
-			? "0 6px 14px rgba(27,31,36,.08)"
-			: "0 12px 26px rgba(0,0,0,.45)";
+		const tocShadow =
+			themeColors.tocShadow ||
+			(isMonoLight
+				? "0 6px 14px rgba(27,31,36,.08)"
+				: "0 12px 26px rgba(0,0,0,.45)");
 		const previewTableBorder = isMonoLight
 			? "rgba(15,23,42,.12)"
 			: "rgba(255,255,255,.12)";
