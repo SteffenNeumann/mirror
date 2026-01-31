@@ -9364,6 +9364,7 @@
 		const noteId = getActiveRoomTabNoteId();
 		if (noteId) updateLocalNoteText(noteId, textarea.value);
 		schedulePsAutoSave();
+		schedulePsListRerender();
 		scheduleSend();
 		if (metaLeft)
 			metaLeft.textContent = uiLang === "de" ? "Aufgaben sortiert." : "Tasks sorted.";
