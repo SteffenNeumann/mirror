@@ -1581,6 +1581,25 @@ body[data-theme="coffeeDark"] .md-content .pw-mask {
 	color: #c7ae9d;
 }
 
+/* Coffee themes: visually disable glow toggle (glow is off) */
+body[data-theme="coffeeLight"] #settingsGlowToggle {
+	opacity: 0.35 !important;
+	filter: grayscale(1);
+	pointer-events: none !important;
+	background-color: transparent !important;
+	border-color: #d9c7bc !important;
+	color: #8a6b55 !important;
+}
+
+body[data-theme="coffeeDark"] #settingsGlowToggle {
+	opacity: 0.35 !important;
+	filter: grayscale(1);
+	pointer-events: none !important;
+	background-color: transparent !important;
+	border-color: #35261e !important;
+	color: #b49885 !important;
+}
+
 
 body[data-theme="monoLight"] {
 	color-scheme: light;
