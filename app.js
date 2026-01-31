@@ -4266,6 +4266,7 @@
 	let psAutoSaveQueuedText = "";
 	let psAutoSaveQueuedNoteId = "";
 	let psAutoSaveQueuedTags = null;
+	let psListRerenderTimer = 0;
 	let previewOpen = false;
 	let fullPreview = false;
 	let mobilePsOpen = false;
@@ -6923,6 +6924,18 @@
 	function updatePsSaveVisibility() {
 		if (!psSaveMain || !psSaveMain.classList) return;
 		psSaveMain.classList.toggle("hidden", canAutoSavePsNote());
+	}
+
+	function schedulePsListRerender() {
+		if (psListRerenderTimer) {
+			window.clearTimeout(psListRerenderTimer);
+			psListRerenderTimer = 0;
+		}
+		psListRerenderTimer = window.setTimeout(() => {
+			psListRerenderTimer = 0;
+			if (!psState || !psState.authed) return;
+			applyPersonalSpaceFiltersAndRender();
+		}, 120);
 	}
 
 	function resetPsAutoSaveState() {
@@ -15905,6 +15918,7 @@ self.onmessage = async (e) => {
 		if (activePsNoteId && activePsNoteId !== tabNoteId) {
 			updateLocalNoteText(activePsNoteId, textarea.value);
 		}
+		schedulePsListRerender();
 		scheduleRoomTabSync({
 			room,
 			key,
