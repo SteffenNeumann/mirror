@@ -865,9 +865,9 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	background-color: var(--calendar-event-bg) !important;
 }
 
-#calendarGrid.calendar-grid-month {
+/* #calendarGrid.calendar-grid-month {
 	overflow: visible;
-}
+} */
 
 @media (max-width: 640px) {
 	#calendarGrid.calendar-grid-month {
