@@ -10534,8 +10534,8 @@
 					ev.stopPropagation();
 				});
 			});
-			row.addEventListener("click", (ev) => {
-				void flushPendingPsAutoSave();
+			row.addEventListener("click", async (ev) => {
+				await flushPendingPsAutoSave();
 				const id = row.getAttribute("data-note-id") || "";
 				if (!id) return;
 				const toggle = Boolean(ev && (ev.metaKey || ev.ctrlKey));
