@@ -26,6 +26,7 @@
 	--scrollbar-thumb: rgba(103, 232, 249, 0.1);
 	--scrollbar-thumb-hover: rgba(103, 232, 249, 0.1);
 	--scrollbar-border: rgba(2, 6, 23, 0.1);
+	--glow-opacity: 0.55;
 }
 
 * {
@@ -59,7 +60,7 @@ body {
 	min-height: 100dvh;
 	padding: 16px;
 	box-sizing: border-box;
-	background-color: var(--theme-body-bg, #060910);
+	background-color: var(--theme-body-bg, #070a11);
 	overflow: hidden;
 }
 
@@ -70,7 +71,7 @@ body:not([data-theme="monoLight"]):not([data-theme="monoDark"]) #editorPanel {
 }
 
 body:not([data-theme="monoLight"]):not([data-theme="monoDark"]) #commentPanel {
-	background-color: var(--theme-panel-bg, rgba(255, 255, 255, 0.05)) !important;
+	background-color: var(--theme-panel-bg-strong, rgba(255, 255, 255, 0.08)) !important;
 	border-color: var(--theme-panel-border, rgba(255, 255, 255, 0.08)) !important;
 }
 
@@ -149,7 +150,7 @@ body.glow-disabled .bg-glow {
 	height: 60vmax;
 	border-radius: 999px;
 	filter: blur(140px);
-	opacity: 0.81;
+	opacity: var(--glow-opacity, 0.55);
 	left: 50%;
 	transform: translateX(-50%);
 }

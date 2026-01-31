@@ -5883,8 +5883,19 @@
 			toAlphaColor(colors && colors.accentTextSoft, 0.1) ||
 			toAlphaColor(colors && colors.accentText, 0.1) ||
 			"rgba(103, 232, 249, 0.1)";
-		if (bgBlobTop && colors) bgBlobTop.style.background = colors.top;
-		if (bgBlobBottom && colors) bgBlobBottom.style.background = colors.bottom;
+		if (colors) {
+			const glowTop =
+				toAlphaColor(colors.top || colors.accentBg, 0.32) ||
+				colors.top ||
+				colors.accentBg;
+			const glowBottom =
+				toAlphaColor(colors.bottom || colors.top || colors.accentBg, 0.26) ||
+				colors.bottom ||
+				colors.top ||
+				colors.accentBg;
+			if (bgBlobTop) bgBlobTop.style.background = glowTop;
+			if (bgBlobBottom) bgBlobBottom.style.background = glowBottom;
+		}
 		if (colors) {
 			const root = document.documentElement;
 			root.style.setProperty(
@@ -5990,34 +6001,49 @@
 				"--calendar-tooltip-text",
 				colors.accentText || "rgba(226, 232, 240, 0.95)"
 			);
+			root.style.setProperty(
+				"--glow-opacity",
+				isMonoTheme ? "0" : "0.55"
+			);
 			const themeBodyBg = isMonoLightTheme
 				? "#f6f8fa"
 				: isMonoDarkTheme
 					? "#0d1117"
 					: toAlphaColor(
 							colors.bottom || colors.top || colors.accentBg,
-							0.12
-					  ) || "rgba(5, 8, 20, 0.97)";
+							0.08
+					  ) || "rgba(5, 8, 20, 0.975)";
 			const themePanelBg = isMonoLightTheme
 				? "#ffffff"
 				: isMonoDarkTheme
 					? "rgba(255, 255, 255, 0.04)"
 					: toAlphaColor(
 							colors.accentBg || colors.accentBgSoft || colors.top,
-							0.08
+							0.05
 					  ) ||
-						toAlphaColor(colors.top, 0.07) ||
-						"rgba(15, 23, 42, 0.38)";
+						toAlphaColor(colors.top, 0.05) ||
+						"rgba(15, 23, 42, 0.32)";
+			const themePanelBgStrong = isMonoLightTheme
+				? "#ffffff"
+				: isMonoDarkTheme
+					? "rgba(255, 255, 255, 0.06)"
+					: toAlphaColor(
+							colors.accentBg || colors.accentBgSoft || colors.top,
+							0.12
+					  ) ||
+						toAlphaColor(colors.top, 0.1) ||
+						"rgba(15, 23, 42, 0.4)";
 			const themePanelBorder = isMonoLightTheme
 				? "rgba(208, 215, 222, 0.6)"
 				: isMonoDarkTheme
 					? "rgba(255, 255, 255, 0.08)"
 					: toAlphaColor(
 							colors.accentBorder || colors.accentStrong || colors.top,
-							0.16
-					  ) || "rgba(255, 255, 255, 0.07)";
+							0.12
+					  ) || "rgba(255, 255, 255, 0.06)";
 			root.style.setProperty("--theme-body-bg", themeBodyBg);
 			root.style.setProperty("--theme-panel-bg", themePanelBg);
+			root.style.setProperty("--theme-panel-bg-strong", themePanelBgStrong);
 			root.style.setProperty("--theme-panel-border", themePanelBorder);
 		}
 		try {
