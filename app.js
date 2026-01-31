@@ -15964,6 +15964,7 @@ self.onmessage = async (e) => {
 		scheduleSelectionSend();
 		const tabNoteId = getRoomTabNoteIdForRoom(room, key);
 		const activePsNoteId = getActiveRoomTabNoteId();
+		const noteId = tabNoteId || activePsNoteId;
 		updateRoomTabTextLocal(room, key, textarea.value);
 		if (tabNoteId) updateLocalNoteText(tabNoteId, textarea.value);
 		if (activePsNoteId && activePsNoteId !== tabNoteId) {
