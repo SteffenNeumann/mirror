@@ -1493,6 +1493,19 @@ body[data-theme="coffeeDark"] #psEditorTagsSuggest {
 	border-color: #35261e !important;
 }
 
+body[data-theme="coffeeDark"] #settingsBackdrop {
+	background-color: rgba(16, 12, 10, 0.6) !important;
+}
+
+body[data-theme="coffeeDark"] #settingsPanel {
+	background-color: #1a130f !important;
+	border-color: #35261e !important;
+}
+
+body[data-theme="coffeeDark"] #settingsNav {
+	background-color: #211712 !important;
+}
+
 body[data-theme="coffeeDark"] .shadow-soft {
 	box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
 }
