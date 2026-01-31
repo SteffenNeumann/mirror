@@ -59,14 +59,7 @@ body {
 	min-height: 100dvh;
 	padding: 16px;
 	box-sizing: border-box;
-	background-color: var(--theme-body-bg, #020617);
 	overflow: hidden;
-}
-
-body:not([data-theme="monoLight"]):not([data-theme="monoDark"]) #psPanel,
-body:not([data-theme="monoLight"]):not([data-theme="monoDark"]) #editorPanel {
-	background-color: var(--theme-panel-bg, rgba(255, 255, 255, 0.05)) !important;
-	border-color: var(--theme-panel-border, rgba(255, 255, 255, 0.08)) !important;
 }
 
 #selectionMenu {

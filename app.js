@@ -5990,35 +5990,6 @@
 				"--calendar-tooltip-text",
 				colors.accentText || "rgba(226, 232, 240, 0.95)"
 			);
-			const themeBodyBg = isMonoLightTheme
-				? "#f6f8fa"
-				: isMonoDarkTheme
-					? "#0d1117"
-					: toAlphaColor(
-							colors.bottom || colors.top || colors.accentBg,
-							0.55
-					  ) || "rgba(2, 6, 23, 0.9)";
-			const themePanelBg = isMonoLightTheme
-				? "#ffffff"
-				: isMonoDarkTheme
-					? "rgba(255, 255, 255, 0.04)"
-					: toAlphaColor(
-							colors.accentBg || colors.accentBgSoft || colors.top,
-							0.35
-					  ) ||
-						toAlphaColor(colors.top, 0.55) ||
-						"rgba(15, 23, 42, 0.65)";
-			const themePanelBorder = isMonoLightTheme
-				? "rgba(208, 215, 222, 0.6)"
-				: isMonoDarkTheme
-					? "rgba(255, 255, 255, 0.08)"
-					: toAlphaColor(
-							colors.accentBorder || colors.accentStrong || colors.top,
-							0.5
-					  ) || "rgba(255, 255, 255, 0.12)";
-			root.style.setProperty("--theme-body-bg", themeBodyBg);
-			root.style.setProperty("--theme-panel-bg", themePanelBg);
-			root.style.setProperty("--theme-panel-border", themePanelBorder);
 		}
 		try {
 			document.body.setAttribute("data-theme", next);
