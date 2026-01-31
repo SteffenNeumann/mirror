@@ -16435,31 +16435,26 @@ self.onmessage = async (e) => {
 				cached && typeof cached.text === "string" ? cached.text : "";
 			const nextText = note
 				? String(note.text || "")
-				: !resolvedNoteId
-					? cachedText || pendingRoomBootstrapText || ""
-					: "";
+				: cachedText || pendingRoomBootstrapText || "";
 			pendingRoomBootstrapText = "";
+			textarea.value = nextText;
 			if (note) {
 				applyNoteToEditor(note, null, { skipHistory: true });
-			} else {
-				if (resolvedNoteId) {
-					psEditingNoteId = resolvedNoteId;
-					if (psMainHint) {
-						psMainHint.classList.remove("hidden");
-						psMainHint.textContent = "Loading…";
-					}
-					const targetRoom = room;
-					const targetKey = key;
-					void refreshPersonalSpace().then(() => {
-						if (room !== targetRoom || key !== targetKey) return;
-						const refreshed = findNoteById(resolvedNoteId);
-						if (refreshed) {
-							applyNoteToEditor(refreshed, null, { skipHistory: true });
-						}
-					});
-				} else {
-					textarea.value = nextText;
+			} else if (resolvedNoteId) {
+				psEditingNoteId = resolvedNoteId;
+				if (psMainHint) {
+					psMainHint.classList.remove("hidden");
+					psMainHint.textContent = "Loading…";
 				}
+				const targetRoom = room;
+				const targetKey = key;
+				void refreshPersonalSpace().then(() => {
+					if (room !== targetRoom || key !== targetKey) return;
+					const refreshed = findNoteById(resolvedNoteId);
+					if (refreshed) {
+						applyNoteToEditor(refreshed, null, { skipHistory: true });
+					}
+				});
 			}
 			lastLocalText = textarea.value;
 			metaLeft.textContent = note ? "Room geladen (Note)." : "Room geladen (lokal).";
