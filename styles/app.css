@@ -192,27 +192,43 @@ body.glow-disabled .bg-glow {
 #psList,
 #mirror,
 #mdPreview {
-	scrollbar-width: none;
+	scrollbar-width: thin;
+	scrollbar-color: transparent transparent;
+	scrollbar-gutter: stable both-edges;
 }
 
 #psList::-webkit-scrollbar,
 #mirror::-webkit-scrollbar,
 #mdPreview::-webkit-scrollbar {
-	width: 0;
-	height: 0;
-}
-
-#psList:hover,
-#mirror:hover,
-#mdPreview:hover {
-	scrollbar-width: thin;
-}
-
-#psList:hover::-webkit-scrollbar,
-#mirror:hover::-webkit-scrollbar,
-#mdPreview:hover::-webkit-scrollbar {
 	width: 10px;
 	height: 10px;
+}
+
+#psList::-webkit-scrollbar-thumb,
+#mirror::-webkit-scrollbar-thumb,
+#mdPreview::-webkit-scrollbar-thumb {
+	background-color: transparent;
+	border-color: transparent;
+	transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+#psList:hover {
+	scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+#mirror:hover {
+	scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+#mdPreview:hover {
+	scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+#psList:hover::-webkit-scrollbar-thumb,
+#mirror:hover::-webkit-scrollbar-thumb,
+#mdPreview:hover::-webkit-scrollbar-thumb {
+	background-color: var(--scrollbar-thumb);
+	border-color: var(--scrollbar-border);
 }
 
 .ps-tag-section {
