@@ -15898,9 +15898,13 @@ self.onmessage = async (e) => {
 		setTyping(true);
 		scheduleTypingStop();
 		scheduleSelectionSend();
-		const noteId = getRoomTabNoteIdForRoom(room, key);
+		const tabNoteId = getRoomTabNoteIdForRoom(room, key);
+		const activePsNoteId = getActiveRoomTabNoteId();
 		updateRoomTabTextLocal(room, key, textarea.value);
-		if (noteId) updateLocalNoteText(noteId, textarea.value);
+		if (tabNoteId) updateLocalNoteText(tabNoteId, textarea.value);
+		if (activePsNoteId && activePsNoteId !== tabNoteId) {
+			updateLocalNoteText(activePsNoteId, textarea.value);
+		}
 		scheduleRoomTabSync({
 			room,
 			key,
