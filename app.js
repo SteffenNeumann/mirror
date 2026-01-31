@@ -256,6 +256,7 @@
 	const settingsSections = document.querySelectorAll("[data-settings-section]");
 	const settingsThemeList = document.getElementById("settingsThemeList");
 	const settingsGlowToggle = document.getElementById("settingsGlowToggle");
+	const taskAutoSortToggle = document.getElementById("taskAutoSort");
 	const mobileAutoNoteSecondsInput = document.getElementById(
 		"mobileAutoNoteSeconds"
 	);
@@ -4306,6 +4307,7 @@
 	let jsRunnerFrame = null;
 	let jsRunnerPending = new Map();
 	let previewRunState = { status: "", output: "", error: "", source: "" };
+	let previewTaskEditsPending = false;
 	let psNextImportMode = "merge";
 	let psSearchQuery = "";
 	let psSearchDebounceTimer = 0;
@@ -4336,6 +4338,7 @@
 	const AI_API_MODEL_KEY = "mirror_ai_api_model";
 	const THEME_KEY = "mirror_theme";
 	const GLOW_ENABLED_KEY = "mirror_glow_enabled";
+	const TASK_AUTO_SORT_KEY = "mirror_task_auto_sort";
 	const UI_LANG_KEY = "mirror_ui_lang";
 	const UI_LANG_DEFAULT = "de";
 	const UI_LANGS = ["de", "en"];
@@ -4360,6 +4363,7 @@
 	let uiLang = UI_LANG_DEFAULT;
 	let activeTheme = "fuchsia";
 	let glowEnabled = true;
+	let taskAutoSortEnabled = false;
 	let mobileAutoNoteSeconds = 0;
 	let mobileAutoNoteChecked = false;
 	let psAutoBackupEnabled = false;
@@ -4679,6 +4683,10 @@
 				"settings.language.desc": "Sprache der Oberfläche auswählen.",
 				"settings.language.de": "Deutsch",
 				"settings.language.en": "Englisch",
+				"settings.tasks.title": "Markdown-Aufgaben",
+				"settings.tasks.desc":
+					"Offene Aufgaben beim Schließen der Vorschau automatisch nach oben sortieren.",
+				"settings.tasks.auto_sort": "Offene Einträge zuerst",
 				"settings.export.title": "Export/Import",
 				"settings.export.desc":
 					"Personal Space Notizen sichern oder importieren.",
@@ -4937,6 +4945,10 @@
 				"settings.language.desc": "Choose the interface language.",
 				"settings.language.de": "German",
 				"settings.language.en": "English",
+				"settings.tasks.title": "Markdown tasks",
+				"settings.tasks.desc":
+					"Automatically move open tasks to the top when closing preview.",
+				"settings.tasks.auto_sort": "Open items first",
 				"settings.export.title": "Export/Import",
 				"settings.export.desc": "Back up or import your Personal Space notes.",
 				"settings.export.export": "Export",
@@ -5250,6 +5262,31 @@
 			// ignore
 		}
 		applyGlowEnabled();
+	}
+
+	function applyTaskAutoSortUi() {
+		if (!taskAutoSortToggle) return;
+		taskAutoSortToggle.checked = Boolean(taskAutoSortEnabled);
+	}
+
+	function loadTaskAutoSortEnabled() {
+		try {
+			const raw = localStorage.getItem(TASK_AUTO_SORT_KEY);
+			taskAutoSortEnabled = raw === "1";
+		} catch {
+			taskAutoSortEnabled = false;
+		}
+		applyTaskAutoSortUi();
+	}
+
+	function saveTaskAutoSortEnabled(next) {
+		taskAutoSortEnabled = Boolean(next);
+		try {
+			localStorage.setItem(TASK_AUTO_SORT_KEY, taskAutoSortEnabled ? "1" : "0");
+		} catch {
+			// ignore
+		}
+		applyTaskAutoSortUi();
 	}
 
 	function loadAiPrompt() {
@@ -8501,6 +8538,7 @@
 	}
 
 	function setPreviewVisible(next) {
+		const wasPreviewOpen = previewOpen;
 		previewOpen = Boolean(next);
 		if (!previewPanel || !editorPreviewGrid) return;
 		previewPanel.classList.toggle("hidden", !previewOpen);
@@ -8525,6 +8563,9 @@
 			previewMsgToken = "";
 			if (metaLeft) metaLeft.textContent = "Ready.";
 			if (metaRight) metaRight.textContent = "";
+		}
+		if (!previewOpen && wasPreviewOpen) {
+			maybeAutoSortTasksAfterPreview();
 		}
 		setFullPreview(fullPreview);
 		syncMobileFocusState();
@@ -9169,6 +9210,44 @@
 		return true;
 	}
 
+	function sortMarkdownTasksOpenFirst(src) {
+		const lines = String(src || "").split("\n");
+		const out = [];
+		let changed = false;
+		for (let i = 0; i < lines.length; ) {
+			const line = String(lines[i] || "");
+			if (!TASK_LINE_RE.test(line)) {
+				out.push(line);
+				i += 1;
+				continue;
+			}
+			const block = [];
+			let j = i;
+			while (j < lines.length && TASK_LINE_RE.test(String(lines[j] || ""))) {
+				block.push(lines[j]);
+				j += 1;
+			}
+			const open = [];
+			const done = [];
+			block.forEach((raw) => {
+				const m = String(raw || "").match(TASK_LINE_RE);
+				if (!m) return;
+				const isDone = String(m[2] || "").toLowerCase() === "x";
+				(isDone ? done : open).push(raw);
+			});
+			const sortedBlock = open.concat(done);
+			if (
+				!changed &&
+				sortedBlock.some((lineValue, idx) => lineValue !== block[idx])
+			) {
+				changed = true;
+			}
+			out.push(...sortedBlock);
+			i = j;
+		}
+		return { text: changed ? out.join("\n") : src, changed };
+	}
+
 	let lastPreviewTaskToggle = null;
 	function markPreviewTaskToggle(index, checked) {
 		lastPreviewTaskToggle = {
@@ -9187,6 +9266,9 @@
 		const ok = toggleMarkdownTaskAtIndex(index, checked);
 		if (metaLeft) metaLeft.textContent = ok ? "Todo updated." : "Todo not found.";
 		if (metaRight) metaRight.textContent = nowIso();
+		if (ok) {
+			previewTaskEditsPending = true;
+		}
 		if (ok && textarea) {
 			try {
 				textarea.dispatchEvent(new Event("input", { bubbles: true }));
@@ -9195,6 +9277,41 @@
 			}
 		}
 		return ok;
+	}
+
+	function maybeAutoSortTasksAfterPreview() {
+		if (!taskAutoSortEnabled) {
+			previewTaskEditsPending = false;
+			return;
+		}
+		if (!previewTaskEditsPending) return;
+		if (!textarea) {
+			previewTaskEditsPending = false;
+			return;
+		}
+		const before = String(textarea.value || "");
+		const { text, changed } = sortMarkdownTasksOpenFirst(before);
+		previewTaskEditsPending = false;
+		if (!changed) return;
+		const startSel = Number(textarea.selectionStart || 0);
+		const endSel = Number(textarea.selectionEnd || 0);
+		textarea.value = text;
+		try {
+			const len = text.length;
+			textarea.setSelectionRange(
+				Math.min(startSel, len),
+				Math.min(endSel, len)
+			);
+		} catch {
+			// ignore
+		}
+		const noteId = getActiveRoomTabNoteId();
+		if (noteId) updateLocalNoteText(noteId, textarea.value);
+		schedulePsAutoSave();
+		scheduleSend();
+		if (metaLeft)
+			metaLeft.textContent = uiLang === "de" ? "Aufgaben sortiert." : "Tasks sorted.";
+		if (metaRight) metaRight.textContent = nowIso();
 	}
 
 	let previewCheckboxDoc = null;
@@ -9326,6 +9443,8 @@
 			}
 		}
 	}
+
+	const TASK_LINE_RE = /^(\s*(?:>\s*)?(?:[-*+]|\d+[.)])\s+\[)([ xX])(\].*)$/;
 
 	function sortTagList(list) {
 		return list.slice().sort((a, b) => a.localeCompare(b));
@@ -16332,6 +16451,7 @@ self.onmessage = async (e) => {
 	renderThemeList();
 	loadTheme();
 	loadGlowEnabled();
+	loadTaskAutoSortEnabled();
 	loadAiApiConfig();
 	loadEditorMaskDisabled();
 	setEditorMaskToggleUi();
@@ -17418,6 +17538,11 @@ self.onmessage = async (e) => {
 		settingsGlowToggle.addEventListener("click", () => {
 			if (activeTheme === "monoLight" || activeTheme === "monoDark") return;
 			saveGlowEnabled(!glowEnabled);
+		});
+	}
+	if (taskAutoSortToggle) {
+		taskAutoSortToggle.addEventListener("change", () => {
+			saveTaskAutoSortEnabled(Boolean(taskAutoSortToggle.checked));
 		});
 	}
 	if (uiLangDeBtn) {
