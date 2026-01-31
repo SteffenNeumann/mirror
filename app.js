@@ -16968,10 +16968,6 @@ self.onmessage = async (e) => {
 			psAutoSaveQueuedText = "";
 			psAutoSaveQueuedNoteId = "";
 			psAutoSaveQueuedTags = null;
-			if (queuedNoteId && queuedNoteId !== currentNoteId) {
-				psAutoSaveInFlight = false;
-				return;
-			}
 			if (!queuedText.trim()) {
 				psAutoSaveInFlight = false;
 				return;
