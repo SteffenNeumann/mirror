@@ -4460,6 +4460,9 @@
 			previewMetaBg: "rgba(53, 38, 32, 0.75)",
 			previewMetaBorder: "rgba(201, 155, 119, 0.38)",
 			previewMetaText: "rgba(233, 219, 204, 0.92)",
+			previewPreBg: "rgba(45, 32, 26, 0.94)",
+			previewPreBorder: "rgba(201, 155, 119, 0.52)",
+			previewCodeBg: "rgba(201, 155, 119, 0.16)",
 			previewLink: "rgba(201, 155, 119, 0.9)",
 			accentBgSoft: "rgba(201, 155, 119, 0.12)",
 			accentBg: "rgba(201, 155, 119, 0.16)",
@@ -4489,9 +4492,9 @@
 			previewMetaBg: "rgba(240, 227, 216, 0.9)",
 			previewMetaBorder: "rgba(176, 112, 73, 0.32)",
 			previewMetaText: "rgba(68, 45, 30, 0.9)",
-			previewPreBg: "rgba(28, 21, 17, 0.92)", // Added new property
-			previewPreBorder: "rgba(201, 155, 119, 0.42)", // Added new property
-			previewCodeBg: "rgba(201, 155, 119, 0.12)", // Added new property
+			previewPreBg: "#f6ebdf",
+			previewPreBorder: "rgba(176, 112, 73, 0.42)",
+			previewCodeBg: "rgba(176, 112, 73, 0.18)",
 			accentBgSoft: "rgba(176, 112, 73, 0.08)",
 			accentBg: "rgba(176, 112, 73, 0.12)",
 			accentBgHover: "rgba(176, 112, 73, 0.16)",
@@ -8791,25 +8794,25 @@
 			? "https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css"
 			: "https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css";
 		const syntaxCss = isCoffeeDark
-			? `.hljs{color:${previewText};background:${previewPreBg};}
-			.hljs-keyword,.hljs-selector-tag,.hljs-built_in{color:#f1b97d;}
-			.hljs-string,.hljs-template-tag,.hljs-template-variable{color:#d7c4a0;}
-			.hljs-number,.hljs-attribute,.hljs-literal{color:#d9a46b;}
-			.hljs-title,.hljs-section,.hljs-name{color:#f4d4a6;}
-			.hljs-comment{color:#a8846a;}
-			.hljs-meta,.hljs-quote{color:#c3a07f;}
-			.hljs-attr,.hljs-variable,.hljs-symbol{color:#f3a982;}
-			.hljs-doctag{color:#d7c4a0;}`
+			? `.hljs{color:${previewText} !important;background:${previewPreBg} !important;}
+			.hljs-keyword,.hljs-selector-tag,.hljs-built_in{color:#f6cfa0 !important;}
+			.hljs-string,.hljs-template-tag,.hljs-template-variable{color:#f1c89a !important;}
+			.hljs-number,.hljs-attribute,.hljs-literal{color:#f2b87a !important;}
+			.hljs-title,.hljs-section,.hljs-name{color:#f8dcb2 !important;}
+			.hljs-comment{color:#b89274 !important;}
+			.hljs-meta,.hljs-quote{color:#c9a685 !important;}
+			.hljs-attr,.hljs-variable,.hljs-symbol{color:#f4b489 !important;}
+			.hljs-doctag{color:#f1c89a !important;}`
 			: isCoffeeLight
-				? `.hljs{color:${previewText};background:${previewPreBg};}
-				.hljs-keyword,.hljs-selector-tag,.hljs-built_in{color:#b86c32;}
-				.hljs-string,.hljs-template-tag,.hljs-template-variable{color:#8a5a2e;}
-				.hljs-number,.hljs-attribute,.hljs-literal{color:#a15f2d;}
-				.hljs-title,.hljs-section,.hljs-name{color:#c2702d;}
-				.hljs-comment{color:#a07b60;}
-				.hljs-meta,.hljs-quote{color:#8a6a52;}
-				.hljs-attr,.hljs-variable,.hljs-symbol{color:#b86c32;}
-				.hljs-doctag{color:#8a5a2e;}`
+				? `.hljs{color:${previewText} !important;background:${previewPreBg} !important;}
+				.hljs-keyword,.hljs-selector-tag,.hljs-built_in{color:#b65a20 !important;}
+				.hljs-string,.hljs-template-tag,.hljs-template-variable{color:#a2521e !important;}
+				.hljs-number,.hljs-attribute,.hljs-literal{color:#b65a20 !important;}
+				.hljs-title,.hljs-section,.hljs-name{color:#c76a28 !important;}
+				.hljs-comment{color:#9a765d !important;}
+				.hljs-meta,.hljs-quote{color:#8b664d !important;}
+				.hljs-attr,.hljs-variable,.hljs-symbol{color:#b65a20 !important;}
+				.hljs-doctag{color:#8a5a2e !important;}`
 				: "";
 		const pdfJsUrl = "/vendor/pdfjs/pdf.mjs";
 		const pdfWorkerUrl = "/vendor/pdfjs/pdf.worker.mjs";
