@@ -6936,6 +6936,30 @@
 		psAutoSaveQueuedTags = null;
 	}
 
+	async function flushPendingPsAutoSave() {
+		if (!canAutoSavePsNote()) return;
+		const currentNoteId = String(psEditingNoteId || "").trim();
+		if (!currentNoteId) return;
+		const currentText = String(textarea && textarea.value ? textarea.value : "");
+		if (!currentText.trim()) return;
+		if (psAutoSaveTimer) {
+			window.clearTimeout(psAutoSaveTimer);
+			psAutoSaveTimer = 0;
+		}
+		const queuedText = psAutoSaveQueuedText || currentText;
+		const queuedNoteId = psAutoSaveQueuedNoteId || currentNoteId;
+		const queuedTags = psAutoSaveQueuedTags || buildCurrentPsTagsPayload();
+		psAutoSaveQueuedText = "";
+		psAutoSaveQueuedNoteId = "";
+		psAutoSaveQueuedTags = null;
+		psAutoSaveInFlight = true;
+		try {
+			await savePersonalSpaceNoteSnapshot(queuedNoteId, queuedText, queuedTags);
+		} finally {
+			psAutoSaveInFlight = false;
+		}
+	}
+
 	function ensureNoteUpdatedAt(note) {
 		if (!note || typeof note !== "object") return note;
 		if (
@@ -10511,6 +10535,7 @@
 				});
 			});
 			row.addEventListener("click", (ev) => {
+				void flushPendingPsAutoSave();
 				const id = row.getAttribute("data-note-id") || "";
 				if (!id) return;
 				const toggle = Boolean(ev && (ev.metaKey || ev.ctrlKey));
