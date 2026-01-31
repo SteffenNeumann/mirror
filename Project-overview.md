@@ -1,8 +1,13 @@
 # Project overview
 
-Datum: 2026-01-24
+Datum: 2026-01-31
 
 Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische Analyse, keine Laufzeitauflösung).
+
+## Aktuelle Änderungen (2026-01-31)
+
+- Commit `Fix PS note dedupe and tag updates`: Neues `dedupeNotesById` entdoppelt Personal-Space-Notizen nach ID (jüngste gewinnt); `savePersonalSpaceNote` aktualisiert bei Tag-Änderungen die bestehende Note statt eine neue anzulegen; Rendering/Filter nutzen die dedupte Liste.
+- Commit `Update gitstamp`: `gitstamp.txt` auf aktuellen Stand (SHA `1f0983b364cde01846e5437a7664ccaf5bf2cad2`) aktualisiert.
 
 ## Grafische Übersicht (ASCII)
 
@@ -54,6 +59,7 @@ Server-Start
 7) Personal Space (Notizen, Tags, Auto-Save)
 - Zweck: Notizen laden/filtern, Tags, Auto-Save, Tabs/History.
 - Umsetzung: `refreshPersonalSpace`, `applyPersonalSpaceFiltersAndRender`, `savePersonalSpaceNote`, `updateRoomTabsForNoteId`.
+- Hinweis: Notizen werden per `filterRealNotes` nur auf gültige IDs geprüft (keine Entdoppelung), Tag-Änderungen aktualisieren bestehende Notizen statt neue anzulegen.
 
 8) Settings/Tools (Uploads, Kalender, AI)
 - Zweck: Uploads/Trash/Calendar/AI-Einstellungen verwalten.
@@ -311,6 +317,7 @@ Server-Start
 - Zweck: Setzt ps auto save status. Umsetzung: `setPsAutoSaveStatus` ([app.js](app.js#L5828)). Abhängigkeiten: `updatePsSaveVisibility`.
 - Zweck: Aktualisiert ps save visibility. Umsetzung: `updatePsSaveVisibility` ([app.js](app.js#L5836)). Abhängigkeiten: `canAutoSavePsNote`.
 - Zweck: Stellt sicher: note updated at. Umsetzung: `ensureNoteUpdatedAt` ([app.js](app.js#L5841)). Abhängigkeiten: keine internen Funktionsaufrufe.
+- Zweck: Filtert nur gültige Notizen (mit ID), ohne Entdoppelung. Umsetzung: `filterRealNotes` ([app.js](app.js#L5855)). Abhängigkeiten: keine.
 - Zweck: Formatiert meta date. Umsetzung: `formatMetaDate` ([app.js](app.js#L5853)). Abhängigkeiten: `t`.
 - Zweck: Baut note meta yaml. Umsetzung: `buildNoteMetaYaml` ([app.js](app.js#L5869)). Abhängigkeiten: `ensureNoteUpdatedAt`, `formatMetaDate`, `stripManualTagsMarker`, `stripPinnedTag`, `t`.
 - Zweck: Setzt ps meta visible. Umsetzung: `setPsMetaVisible` ([app.js](app.js#L5892)). Abhängigkeiten: `updateEditorMetaYaml`, `updatePreview`.

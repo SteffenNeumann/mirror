@@ -6937,19 +6937,12 @@
 		return note;
 	}
 
-	function dedupeNotesById(notes) {
-		const map = new Map();
-		for (const note of Array.isArray(notes) ? notes : []) {
-			if (!note) continue;
+	function filterRealNotes(notes) {
+		return (Array.isArray(notes) ? notes : []).filter((note) => {
+			if (!note || typeof note !== "object") return false;
 			const id = String(note.id || "").trim();
-			if (!id) continue;
-			const prev = map.get(id);
-			const next = ensureNoteUpdatedAt({ ...note });
-			if (!prev || Number(next.updatedAt || 0) >= Number(prev.updatedAt || 0)) {
-				map.set(id, next);
-			}
-		}
-		return Array.from(map.values());
+			return Boolean(id);
+		});
 	}
 
 	function formatMetaDate(ts) {
@@ -7566,7 +7559,7 @@
 
 	function applyPersonalSpaceFiltersAndRender() {
 		if (!psState || !psState.authed) return;
-		const allNotes = dedupeNotesById(psState.notes);
+		const allNotes = filterRealNotes(psState.notes);
 		const sortedAll = allNotes
 			.map((n) => ensureNoteUpdatedAt(n))
 			.slice()
@@ -11205,7 +11198,7 @@ self.onmessage = async (e) => {
 		psState.sharedRooms = Array.isArray(psState.sharedRooms)
 			? psState.sharedRooms
 			: [];
-		psState.notes = dedupeNotesById(
+		psState.notes = filterRealNotes(
 			(Array.isArray(psState.notes) ? psState.notes : [])
 				.map((n) => ensureNoteUpdatedAt(n))
 				.filter((n) => !n || !n.deletedAt)
@@ -16842,7 +16835,7 @@ self.onmessage = async (e) => {
 				psEditingNoteId = String(saved.id);
 				psEditingNoteKind = String(saved.kind || "");
 				const notes = Array.isArray(psState.notes) ? psState.notes : [];
-				psState.notes = dedupeNotesById([saved, ...notes]);
+				psState.notes = filterRealNotes([saved, ...notes]);
 				applyPersonalSpaceFiltersAndRender();
 				syncPsEditingNoteTagsFromState();
 				updateEditorMetaYaml();
@@ -16877,7 +16870,7 @@ self.onmessage = async (e) => {
 			saved.updatedAt = Date.now();
 			const notes = Array.isArray(psState.notes) ? psState.notes : [];
 			const id = String(saved.id);
-			psState.notes = dedupeNotesById([saved, ...notes.filter((n) => String(n && n.id ? n.id : "") !== id)]);
+			psState.notes = filterRealNotes([saved, ...notes.filter((n) => String(n && n.id ? n.id : "") !== id)]);
 			applyPersonalSpaceFiltersAndRender();
 			syncPsEditingNoteTagsFromState();
 			updateEditorMetaYaml();
