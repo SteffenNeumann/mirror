@@ -1893,6 +1893,7 @@ body[data-theme="monoLight"] .md-content .pw-mask {
 
 body[data-theme="monoLight"] #mirror.pw-mask-enabled,
 body[data-theme="monoLight"] #mirror.attribution-active {
+	color: transparent !important;
 	caret-color: #24292f;
 }
 
@@ -2080,6 +2081,12 @@ body[data-theme="monoDark"] .md-content .pw-field {
 
 body[data-theme="monoDark"] .md-content .pw-mask {
 	color: #8b949e;
+}
+
+body[data-theme="monoDark"] #mirror.pw-mask-enabled,
+body[data-theme="monoDark"] #mirror.attribution-active {
+	color: transparent !important;
+	caret-color: #c9d1d9;
 }
 
 /* Mono themes: hide/grey out glow toggle (glow is forced off) */
