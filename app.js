@@ -6925,6 +6925,17 @@
 		psSaveMain.classList.toggle("hidden", canAutoSavePsNote());
 	}
 
+	function resetPsAutoSaveState() {
+		if (psAutoSaveTimer) {
+			window.clearTimeout(psAutoSaveTimer);
+			psAutoSaveTimer = 0;
+		}
+		psAutoSaveInFlight = false;
+		psAutoSaveQueuedText = "";
+		psAutoSaveQueuedNoteId = "";
+		psAutoSaveQueuedTags = null;
+	}
+
 	function ensureNoteUpdatedAt(note) {
 		if (!note || typeof note !== "object") return note;
 		if (
@@ -16509,7 +16520,7 @@ self.onmessage = async (e) => {
 			psEditingNotePinned = false;
 			psAutoSaveLastSavedNoteId = "";
 			psAutoSaveLastSavedText = "";
-			if (psAutoSaveTimer) window.clearTimeout(psAutoSaveTimer);
+			resetPsAutoSaveState();
 			setPsAutoSaveStatus("");
 			syncPsEditorTagsInput();
 			try {
@@ -16937,6 +16948,9 @@ self.onmessage = async (e) => {
 
 	function schedulePsAutoSave() {
 		if (!canAutoSavePsNote()) return;
+		if (psAutoSaveInFlight && !psAutoSaveTimer) {
+			resetPsAutoSaveState();
+		}
 		const text = String(textarea && textarea.value ? textarea.value : "");
 		if (!text.trim()) return;
 		const noteId = String(psEditingNoteId || "").trim();
@@ -16953,10 +16967,14 @@ self.onmessage = async (e) => {
 		if (psAutoSaveInFlight) {
 			return;
 		}
-		if (psAutoSaveTimer) window.clearTimeout(psAutoSaveTimer);
+		if (psAutoSaveTimer) {
+			window.clearTimeout(psAutoSaveTimer);
+			psAutoSaveTimer = 0;
+		}
 		setPsAutoSaveStatus("Speichern…");
 		psAutoSaveInFlight = true;
 		psAutoSaveTimer = window.setTimeout(async () => {
+			psAutoSaveTimer = 0;
 			if (!canAutoSavePsNote()) {
 				psAutoSaveInFlight = false;
 				return;
