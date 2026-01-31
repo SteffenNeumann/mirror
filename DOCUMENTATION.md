@@ -1,3 +1,24 @@
+# Dokumentation – Änderungen (2026-01-31)
+
+## Ziel
+- Markdown-Aufgaben beim Verlassen der Vorschau automatisch sortieren (offen oben).
+
+## Änderungen
+- Neue Einstellung in den Benutzer-Einstellungen: "Markdown-Aufgaben" → "Offene Einträge zuerst" (lokal gespeichert).
+- Preview-Checkbox-Toggles markieren Pending-Tasks; beim Schließen der Vorschau werden zusammenhängende Aufgabenblöcke neu geordnet: offene `- [ ]` vor erledigten `- [x]`.
+- Sortiertes Ergebnis wird in den Editor übernommen, Autosave/Synchronisation angestoßen, Statusmeldung angezeigt.
+
+## Auswirkungen
+- **UI/UX:** Offene Tasks stehen oben, sobald die Vorschau verlassen wird; optisches Feedback durch Statuszeile.
+- **Feature-Interaktionen:** Gilt für Markdown-Tasklisten im Editor/Preview; Note-Text wird aktualisiert und gespeichert.
+- **Datenebene:** Keine Server-Änderung, Einstellung liegt in `localStorage`.
+
+## Tests (Smoke)
+- Nicht ausgeführt (UI-Änderung ohne Build-Schritt).
+
+## Sonstiges
+- `gitstamp.txt` auf aktuellen Commit-Hash aktualisiert (Build-Metadaten).
+
 # Dokumentation – Änderungen (2026-01-29)
 
 ## Ziel
