@@ -189,6 +189,32 @@ body.glow-disabled .bg-glow {
 	overflow-x: hidden;
 }
 
+#psList,
+#mirror,
+#mdPreview {
+	scrollbar-width: none;
+}
+
+#psList::-webkit-scrollbar,
+#mirror::-webkit-scrollbar,
+#mdPreview::-webkit-scrollbar {
+	width: 0;
+	height: 0;
+}
+
+#psList:hover,
+#mirror:hover,
+#mdPreview:hover {
+	scrollbar-width: thin;
+}
+
+#psList:hover::-webkit-scrollbar,
+#mirror:hover::-webkit-scrollbar,
+#mdPreview:hover::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+
 .ps-tag-section {
 	--ps-tag-border: rgba(217, 70, 239, 0.25);
 	--ps-tag-border-strong: rgba(217, 70, 239, 0.45);
