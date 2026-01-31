@@ -194,7 +194,7 @@ body.glow-disabled .bg-glow {
 #mdPreview {
 	scrollbar-width: thin;
 	scrollbar-color: transparent transparent;
-	scrollbar-gutter: stable both-edges;
+	scrollbar-gutter: stable;
 }
 
 #psList::-webkit-scrollbar,
@@ -209,7 +209,7 @@ body.glow-disabled .bg-glow {
 #mdPreview::-webkit-scrollbar-thumb {
 	background-color: transparent;
 	border-color: transparent;
-	transition: background-color 150ms ease, border-color 150ms ease;
+	transition: background-color 90ms ease, border-color 90ms ease;
 }
 
 #psList:hover {

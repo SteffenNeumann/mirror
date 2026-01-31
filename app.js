@@ -8445,9 +8445,9 @@
 					: "rgba(2,6,23,.35)"
 				: "rgba(2,6,23,.1)";
 			const fallbackDoc = `<!doctype html><html lang="en"><head><meta charset="utf-8" />
-			<meta name="viewport" content="width=device-width, initial-scale=1" />
-			<style>:root{color-scheme:${fallbackColorScheme};--scrollbar-thumb:${fallbackScrollThumb};--scrollbar-thumb-hover:${fallbackScrollThumbHover};}body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:${fallbackBg};color:${fallbackText};overflow-x:hidden;}a{color:${fallbackLink};}*{scrollbar-width:thin;scrollbar-color:var(--scrollbar-thumb) transparent;}*::-webkit-scrollbar{width:10px;height:10px;}*::-webkit-scrollbar-track{background:transparent;}*::-webkit-scrollbar-thumb{background-color:var(--scrollbar-thumb);border-radius:999px;border:2px solid ${fallbackScrollBorder};}*::-webkit-scrollbar-thumb:hover{background-color:var(--scrollbar-thumb-hover);}</style>
-			</head><body><!--ts:${stamp}--><strong>Markdown preview unavailable.</strong><div style="margin-top:8px;color:#94a3b8">Reload the page or check for CDN blocking (AdBlock / corporate proxy).</div></body></html>`;
+				<meta name="viewport" content="width=device-width, initial-scale=1" />
+				<style>:root{color-scheme:${fallbackColorScheme};--scrollbar-thumb:${fallbackScrollThumb};--scrollbar-thumb-hover:${fallbackScrollThumbHover};}body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:${fallbackBg};color:${fallbackText};overflow-x:hidden;scrollbar-gutter:stable;}a{color:${fallbackLink};}*{scrollbar-width:thin;scrollbar-color:transparent transparent;}*::-webkit-scrollbar{width:10px;height:10px;}*::-webkit-scrollbar-track{background:transparent;}*::-webkit-scrollbar-thumb{background-color:transparent;border-radius:999px;border:2px solid transparent;transition:background-color 90ms ease,border-color 90ms ease;}body:hover{scrollbar-color:var(--scrollbar-thumb) transparent;}body:hover *::-webkit-scrollbar-thumb{background-color:var(--scrollbar-thumb);border-color:${fallbackScrollBorder};}body:hover *::-webkit-scrollbar-thumb:hover{background-color:var(--scrollbar-thumb-hover);}</style>
+				</head><body><!--ts:${stamp}--><strong>Markdown preview unavailable.</strong><div style="margin-top:8px;color:#94a3b8">Reload the page or check for CDN blocking (AdBlock / corporate proxy).</div></body></html>`;
 			setPreviewDocument(fallbackDoc);
 			return;
 		}
@@ -8594,7 +8594,7 @@
 	<!--ts:${stamp}-->
   <style>
 		:root{color-scheme:${previewColorScheme};--blockquote-border:${blockquoteBorder};--blockquote-text:${blockquoteText};--scrollbar-thumb:${scrollbarThumb};--scrollbar-thumb-hover:${scrollbarThumbHover};--toc-bg:${tocBg};--toc-border:${tocBorder};--toc-text:${tocText};--toc-muted:${tocMuted};--toc-hover:${tocHover};--toc-ring:${tocRing};--toc-accent:${previewLink};--toc-shadow:${tocShadow};}
-	body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:${previewBg};color:${previewText};overflow-x:hidden;}
+	body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:${previewBg};color:${previewText};overflow-x:hidden;scrollbar-gutter:stable;}
     a{color:${previewLink};}
 		img{max-width:100%;height:auto;}
 		.img-wrap{position:relative;display:inline-block;max-width:100%;}
@@ -8614,11 +8614,13 @@
 		.pw-toggle,.pw-copy{display:inline-flex;align-items:center;justify-content:center;height:1.4rem;min-width:1.4rem;padding:0 .35rem;border-radius:999px;border:1px solid ${previewFieldBorder};background:${previewCodeBg};color:${previewFieldText};font-size:.75rem;line-height:1;cursor:pointer;}
 		.pw-toggle:hover,.pw-copy:hover{background:${previewPreBg};}
 		.meta-yaml{margin:0 0 12px 0;font-size:11px;line-height:1.4;color:${previewMetaText};background:${previewMetaBg};border:1px solid ${previewMetaBorder};border-radius:10px;padding:8px 10px;white-space:pre-wrap;}
-		*{scrollbar-width:thin;scrollbar-color:var(--scrollbar-thumb) transparent;}
+		*{scrollbar-width:thin;scrollbar-color:transparent transparent;}
 		*::-webkit-scrollbar{width:10px;height:10px;}
 		*::-webkit-scrollbar-track{background:transparent;}
-		*::-webkit-scrollbar-thumb{background-color:var(--scrollbar-thumb);border-radius:999px;border:2px solid ${previewScrollBorder};}
-		*::-webkit-scrollbar-thumb:hover{background-color:var(--scrollbar-thumb-hover);}
+		*::-webkit-scrollbar-thumb{background-color:transparent;border-radius:999px;border:2px solid transparent;transition:background-color 90ms ease,border-color 90ms ease;}
+		body:hover{scrollbar-color:var(--scrollbar-thumb) transparent;}
+		body:hover *::-webkit-scrollbar-thumb{background-color:var(--scrollbar-thumb);border-color:${previewScrollBorder};}
+		body:hover *::-webkit-scrollbar-thumb:hover{background-color:var(--scrollbar-thumb-hover);}
     h1,h2,h3{line-height:1.25;}
     table{border-collapse:collapse;width:100%;}
 		th,td{border:1px solid ${previewTableBorder};padding:6px 8px;}
