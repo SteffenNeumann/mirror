@@ -67,6 +67,14 @@ body {
 	border-color: var(--selection-menu-border);
 }
 
+#psMetaYaml,
+#psMetaYamlInline {
+	background-color: var(--selection-menu-bg) !important;
+	border-color: var(--selection-menu-border) !important;
+	color: var(--calendar-tooltip-text);
+	box-shadow: var(--calendar-tooltip-shadow);
+}
+
 .run-output-icon {
 	display: inline-flex;
 	width: 12px;
