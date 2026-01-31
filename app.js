@@ -5996,26 +5996,26 @@
 					? "#0d1117"
 					: toAlphaColor(
 							colors.bottom || colors.top || colors.accentBg,
-							0.12
-					  ) || "rgba(5, 8, 20, 0.97)";
+							0.18
+					  ) || "rgba(5, 8, 20, 0.96)";
 			const themePanelBg = isMonoLightTheme
 				? "#ffffff"
 				: isMonoDarkTheme
 					? "rgba(255, 255, 255, 0.04)"
 					: toAlphaColor(
 							colors.accentBg || colors.accentBgSoft || colors.top,
-							0.08
+							0.12
 					  ) ||
-						toAlphaColor(colors.top, 0.07) ||
-						"rgba(15, 23, 42, 0.38)";
+						toAlphaColor(colors.top, 0.1) ||
+						"rgba(15, 23, 42, 0.45)";
 			const themePanelBorder = isMonoLightTheme
 				? "rgba(208, 215, 222, 0.6)"
 				: isMonoDarkTheme
 					? "rgba(255, 255, 255, 0.08)"
 					: toAlphaColor(
 							colors.accentBorder || colors.accentStrong || colors.top,
-							0.16
-					  ) || "rgba(255, 255, 255, 0.07)";
+							0.24
+					  ) || "rgba(255, 255, 255, 0.08)";
 			root.style.setProperty("--theme-body-bg", themeBodyBg);
 			root.style.setProperty("--theme-panel-bg", themePanelBg);
 			root.style.setProperty("--theme-panel-border", themePanelBorder);
