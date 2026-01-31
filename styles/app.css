@@ -1097,6 +1097,463 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	z-index: 5;
 }
 
+body[data-theme="coffeeLight"] {
+	color-scheme: light;
+	background-color: #f8f1e9;
+	color: #3b2a21;
+	--scrollbar-thumb: rgba(176, 112, 73, 0.2);
+	--scrollbar-thumb-hover: rgba(176, 112, 73, 0.3);
+	--scrollbar-border: rgba(250, 244, 237, 0.9);
+	--calendar-event-bg: rgba(255, 250, 244, 0.95);
+	--comment-item-bg: #fff8f0;
+	--calendar-tooltip-bg: #f8f1e9;
+	--calendar-tooltip-border: rgba(176, 112, 73, 0.35);
+	--calendar-tooltip-text: #3b2a21;
+	--calendar-tooltip-shadow: 0 12px 28px rgba(68, 45, 30, 0.16),
+		inset 0 0 0 1px rgba(176, 112, 73, 0.14);
+	--selection-menu-bg: #fffaf4;
+	--selection-menu-border: #d9c7bc;
+}
+
+body[data-theme="coffeeLight"] .bg-glow {
+	display: none;
+}
+
+body[data-theme="coffeeLight"] .border-white\/10 {
+	border-color: #d9c7bc !important;
+}
+
+body[data-theme="coffeeLight"] .text-slate-100 {
+	color: #3b2a21 !important;
+}
+body[data-theme="coffeeLight"] .text-slate-200 {
+	color: #5b4436 !important;
+}
+body[data-theme="coffeeLight"] .text-slate-300 {
+	color: #745844 !important;
+}
+body[data-theme="coffeeLight"] .text-slate-400 {
+	color: #8a6b55 !important;
+}
+body[data-theme="coffeeLight"] .text-slate-500 {
+	color: #a0806b !important;
+}
+
+body[data-theme="coffeeLight"] .bg-white\/5,
+body[data-theme="coffeeLight"] .bg-white\/10,
+body[data-theme="coffeeLight"] .bg-white\/15,
+body[data-theme="coffeeLight"] .bg-white\/20 {
+	background-color: #f8f1e9 !important;
+}
+
+body[data-theme="coffeeLight"] .bg-slate-950\/10,
+body[data-theme="coffeeLight"] .bg-slate-950\/20,
+body[data-theme="coffeeLight"] .bg-slate-950\/25,
+body[data-theme="coffeeLight"] .bg-slate-950\/30,
+body[data-theme="coffeeLight"] .bg-slate-950\/40,
+body[data-theme="coffeeLight"] .bg-slate-950\/60,
+body[data-theme="coffeeLight"] .bg-slate-950\/90 {
+	background-color: #f2e6dc !important;
+}
+
+body[data-theme="coffeeLight"] .bg-slate-950\/70 {
+	background-color: rgba(68, 45, 30, 0.35) !important;
+}
+
+body[data-theme="coffeeLight"] .bg-slate-950\/80 {
+	background-color: rgba(68, 45, 30, 0.45) !important;
+}
+
+body[data-theme="coffeeLight"] #settingsBackdrop {
+	background-color: rgba(68, 45, 30, 0.2) !important;
+}
+
+body[data-theme="coffeeLight"] #settingsPanel {
+	background-color: #fffaf4 !important;
+	border-color: #d9c7bc !important;
+}
+
+body[data-theme="coffeeLight"] #settingsNav {
+	background-color: #f8f1e9 !important;
+}
+
+body[data-theme="coffeeLight"] #psEditorTagsBar > div {
+	background-color: #f2e7db !important;
+	border-color: #d9c7bc !important;
+}
+
+body[data-theme="coffeeLight"] #psEditorTagsSuggest {
+	background-color: #f2e7db !important;
+	border-color: #d9c7bc !important;
+}
+
+body[data-theme="coffeeLight"] #psEditorTagsInput {
+	background-color: #f2e7db !important;
+	color: #3b2a21 !important;
+}
+
+body[data-theme="coffeeLight"] #previewPanel .bg-fuchsia-600\/20 {
+	background-color: rgba(176, 112, 73, 0.12) !important;
+}
+
+body[data-theme="coffeeLight"] #previewPanel .text-fuchsia-300 {
+	color: #b07049 !important;
+}
+
+body[data-theme="coffeeLight"] .theme-swatch {
+	box-shadow: none;
+}
+
+body[data-theme="coffeeLight"] .ps-note-item.ps-note-active .ps-note-actions button {
+	box-shadow: none !important;
+	background-color: rgba(176, 112, 73, 0.08) !important;
+	border-color: rgba(176, 112, 73, 0.25) !important;
+}
+
+body[data-theme="coffeeLight"] .ps-note-item.ps-note-active .ps-note-actions button:hover {
+	background-color: rgba(176, 112, 73, 0.14) !important;
+}
+
+body[data-theme="coffeeLight"] .ps-note-item.ps-note-active span.rounded-full.border {
+	background-color: rgba(176, 112, 73, 0.08) !important;
+	border-color: rgba(176, 112, 73, 0.25) !important;
+	color: #3b2a21 !important;
+}
+
+body[data-theme="coffeeLight"] .ps-note-pin.bg-fuchsia-500\/20 {
+	background-color: rgba(176, 112, 73, 0.12) !important;
+	border-color: rgba(176, 112, 73, 0.35) !important;
+	color: #b07049 !important;
+}
+
+body[data-theme="coffeeLight"] #aiUsePreviewBtn {
+	border-color: rgba(176, 112, 73, 0.35) !important;
+	background-color: rgba(176, 112, 73, 0.12) !important;
+	color: #2c1f18 !important;
+}
+
+body[data-theme="coffeeLight"] #aiUsePreviewBtn span:first-child {
+	background-color: #b07049 !important;
+}
+
+body[data-theme="coffeeLight"] .ai-chat-badge {
+	color: #2c1f18 !important;
+	background-color: rgba(68, 45, 30, 0.12) !important;
+}
+
+body[data-theme="coffeeLight"] .ai-chat-badge-ai {
+	color: #b07049 !important;
+	background-color: rgba(176, 112, 73, 0.14) !important;
+}
+
+body[data-theme="coffeeLight"] .comment-md-btn {
+	color: #5b4436;
+}
+
+body[data-theme="coffeeLight"] .comment-md-btn:hover {
+	color: #3b2a21;
+	background: rgba(176, 112, 73, 0.08);
+}
+
+body[data-theme="coffeeLight"] .comment-body code {
+	background: rgba(176, 112, 73, 0.12);
+}
+
+body[data-theme="coffeeLight"] .comment-body pre {
+	border-color: rgba(68, 45, 30, 0.15);
+	background: rgba(176, 112, 73, 0.08);
+}
+
+body[data-theme="coffeeLight"] .comment-reply-badge {
+	color: #2c1f18;
+}
+
+body[data-theme="coffeeLight"] .shadow-soft {
+	box-shadow: 0 6px 14px rgba(68, 45, 30, 0.12);
+}
+
+body[data-theme="coffeeLight"] #previewPanel {
+	background-color: #fffaf4 !important;
+	border-color: #d9c7bc !important;
+}
+
+body[data-theme="coffeeLight"] #toggleComments,
+body[data-theme="coffeeLight"] #psMetaToggle,
+body[data-theme="coffeeLight"] #clearMirror,
+body[data-theme="coffeeLight"] #copyMirror,
+body[data-theme="coffeeLight"] #psEditorTagsBar,
+body[data-theme="coffeeLight"] #psEditorTagsBar > div {
+	background: rgba(255, 250, 244, 0.76) !important;
+	border-color: rgba(217, 199, 188, 0.7) !important;
+	box-shadow: 0 3px 8px rgba(68, 45, 30, 0.14) !important;
+}
+
+body[data-theme="coffeeLight"] #commentPanel {
+	background: rgba(255, 250, 244, 0.76) !important;
+	border-color: rgba(217, 199, 188, 0.7) !important;
+	box-shadow: 0 4px 12px rgba(68, 45, 30, 0.14) !important;
+}
+
+body[data-theme="coffeeLight"] #commentPanel .bg-rose-500\/10 {
+	background-color: rgba(176, 112, 73, 0.12) !important;
+	border-color: rgba(176, 112, 73, 0.35) !important;
+	color: #8c5a3a !important;
+}
+
+
+body[data-theme="coffeeLight"] #roomTabs .text-fuchsia-100 {
+	background-color: #f2e7db !important;
+	border-color: #d9c7bc !important;
+	color: #3b2a21 !important;
+	color: #2c1f18 !important;
+}
+
+body[data-theme="coffeeLight"] .hover\:bg-white\/5:hover {
+	background-color: #f3e9df !important;
+}
+body[data-theme="coffeeLight"] .hover\:bg-white\/10:hover {
+	background-color: #f0e3d8 !important;
+}
+body[data-theme="coffeeLight"] .hover\:bg-white\/15:hover {
+	background-color: #ead9cc !important;
+}
+body[data-theme="coffeeLight"] .active\:bg-white\/10:active {
+	background-color: #e4d1c3 !important;
+}
+body[data-theme="coffeeLight"] .active\:bg-white\/15:active {
+	background-color: #dcc8b9 !important;
+}
+body[data-theme="coffeeLight"] .active\:bg-white\/20:active {
+	background-color: #cfb7a9 !important;
+}
+
+body[data-theme="coffeeLight"] input,
+body[data-theme="coffeeLight"] select,
+body[data-theme="coffeeLight"] textarea {
+	background-color: #fffaf4;
+	color: #3b2a21;
+	border-color: #d9c7bc;
+}
+
+body[data-theme="coffeeLight"] ::placeholder {
+	color: #8c6f5b;
+}
+
+body[data-theme="coffeeLight"] .md-content pre {
+	background: #f3e9df;
+	border-color: #d9c7bc;
+}
+
+body[data-theme="coffeeLight"] .md-content code {
+	background: #f0e3d8;
+}
+
+body[data-theme="coffeeLight"] .md-content th,
+body[data-theme="coffeeLight"] .md-content td {
+	border-color: #d9c7bc;
+}
+
+body[data-theme="coffeeLight"] .md-content .pw-field {
+	background: #f3e9df;
+	border-color: #d9c7bc;
+	color: #3b2a21;
+}
+
+body[data-theme="coffeeLight"] .md-content .pw-mask {
+	color: #5b4436;
+}
+
+body[data-theme="coffeeLight"] #mirror.pw-mask-enabled,
+body[data-theme="coffeeLight"] #mirror.attribution-active {
+	caret-color: #3b2a21;
+}
+
+body[data-theme="coffeeDark"] {
+	color-scheme: dark;
+	background-color: #1c1614;
+	color: #e8d9cc;
+	--selection-menu-bg: #1c1511;
+	--selection-menu-border: #3b2820;
+	--comment-item-bg: #261b16;
+	--calendar-event-bg: rgba(34, 26, 21, 0.82);
+	--calendar-tooltip-bg: #1f1612;
+	--calendar-tooltip-border: rgba(201, 155, 119, 0.35);
+	--calendar-tooltip-text: #e8d9cc;
+	--calendar-tooltip-shadow: 0 12px 28px rgba(0, 0, 0, 0.36),
+		inset 0 0 0 1px rgba(201, 155, 119, 0.14);
+	--scrollbar-thumb: rgba(201, 155, 119, 0.2);
+	--scrollbar-thumb-hover: rgba(201, 155, 119, 0.3);
+	--scrollbar-border: rgba(16, 12, 10, 0.6);
+}
+
+body[data-theme="coffeeDark"] .bg-glow {
+	display: none;
+}
+
+body[data-theme="coffeeDark"] .border-white\/10 {
+	border-color: #3b2820 !important;
+}
+
+body[data-theme="coffeeDark"] .text-slate-100 {
+	color: #e8d9cc !important;
+}
+body[data-theme="coffeeDark"] .text-slate-200 {
+	color: #d9c4b5 !important;
+}
+body[data-theme="coffeeDark"] .text-slate-300 {
+	color: #c7ae9d !important;
+}
+body[data-theme="coffeeDark"] .text-slate-400 {
+	color: #b49885 !important;
+}
+body[data-theme="coffeeDark"] .text-slate-500 {
+	color: #9b755f !important;
+}
+
+body[data-theme="coffeeDark"] .bg-white\/5,
+body[data-theme="coffeeDark"] .bg-white\/10,
+body[data-theme="coffeeDark"] .bg-white\/15,
+body[data-theme="coffeeDark"] .bg-white\/20 {
+	background-color: #211712 !important;
+}
+
+body[data-theme="coffeeDark"] .bg-slate-950\/10,
+body[data-theme="coffeeDark"] .bg-slate-950\/20,
+body[data-theme="coffeeDark"] .bg-slate-950\/25,
+body[data-theme="coffeeDark"] .bg-slate-950\/30,
+body[data-theme="coffeeDark"] .bg-slate-950\/40,
+body[data-theme="coffeeDark"] .bg-slate-950\/60,
+body[data-theme="coffeeDark"] .bg-slate-950\/90 {
+	background-color: #1c1614 !important;
+}
+
+body[data-theme="coffeeDark"] .bg-slate-950\/70 {
+	background-color: rgba(201, 155, 119, 0.18) !important;
+}
+
+body[data-theme="coffeeDark"] .bg-slate-950\/80 {
+	background-color: rgba(201, 155, 119, 0.24) !important;
+}
+
+body[data-theme="coffeeDark"] .ps-note-item.ps-note-active {
+	background-color: rgba(201, 155, 119, 0.12) !important;
+	border-color: rgba(201, 155, 119, 0.45) !important;
+	box-shadow: 0 6px 14px rgba(201, 155, 119, 0.14);
+}
+
+body[data-theme="coffeeDark"] .ps-note-item .ps-note-actions button {
+	box-shadow: none !important;
+	background-color: rgba(201, 155, 119, 0.12) !important;
+	border-color: rgba(201, 155, 119, 0.3) !important;
+}
+
+body[data-theme="coffeeDark"] .ps-note-item .ps-note-actions button:hover {
+	background-color: rgba(201, 155, 119, 0.18) !important;
+}
+
+body[data-theme="coffeeDark"] .ps-note-item.ps-note-active span.rounded-full.border {
+	background-color: rgba(201, 155, 119, 0.12) !important;
+	border-color: rgba(201, 155, 119, 0.3) !important;
+	color: #e8d9cc !important;
+}
+
+body[data-theme="coffeeDark"] #psEditorTagsBar > div {
+	background-color: #211712 !important;
+	border-color: #35261e !important;
+}
+
+body[data-theme="coffeeDark"] #psEditorTagsBar input,
+body[data-theme="coffeeDark"] #psEditorTagsBar select {
+	background-color: #211712 !important;
+	border-color: #35261e !important;
+	color: #e8d9cc !important;
+}
+
+body[data-theme="coffeeDark"] #psEditorTagsInput {
+	background-color: #211712 !important;
+}
+
+body[data-theme="coffeeDark"] #psEditorTagsSuggest {
+	background-color: #1c1511 !important;
+	border-color: #35261e !important;
+}
+
+body[data-theme="coffeeDark"] .shadow-soft {
+	box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+}
+
+body[data-theme="coffeeDark"] #previewPanel,
+body[data-theme="coffeeDark"] #commentPanel {
+	background: rgba(28, 21, 17, 0.78) !important;
+	border-color: rgba(53, 38, 32, 0.78) !important;
+}
+
+body[data-theme="coffeeDark"] #toggleComments,
+body[data-theme="coffeeDark"] #psMetaToggle,
+body[data-theme="coffeeDark"] #clearMirror,
+body[data-theme="coffeeDark"] #copyMirror,
+body[data-theme="coffeeDark"] #psEditorTagsBar,
+body[data-theme="coffeeDark"] #psEditorTagsBar > div {
+	background: rgba(28, 21, 17, 0.78) !important;
+	border-color: rgba(53, 38, 32, 0.78) !important;
+}
+
+body[data-theme="coffeeDark"] .hover\:bg-white\/5:hover {
+	background-color: #241913 !important;
+}
+body[data-theme="coffeeDark"] .hover\:bg-white\/10:hover {
+	background-color: #2b1f18 !important;
+}
+body[data-theme="coffeeDark"] .hover\:bg-white\/15:hover {
+	background-color: #32251c !important;
+}
+body[data-theme="coffeeDark"] .active\:bg-white\/10:active {
+	background-color: #2b1f18 !important;
+}
+body[data-theme="coffeeDark"] .active\:bg-white\/15:active {
+	background-color: #33261d !important;
+}
+body[data-theme="coffeeDark"] .active\:bg-white\/20:active {
+	background-color: #3b2c21 !important;
+}
+
+body[data-theme="coffeeDark"] input,
+body[data-theme="coffeeDark"] select,
+body[data-theme="coffeeDark"] textarea {
+	background-color: #1c1511;
+	color: #e8d9cc;
+	border-color: #35261e;
+}
+
+body[data-theme="coffeeDark"] ::placeholder {
+	color: #b49885;
+}
+
+body[data-theme="coffeeDark"] .md-content pre {
+	background: #1c1511;
+	border-color: #35261e;
+}
+
+body[data-theme="coffeeDark"] .md-content code {
+	background: rgba(234, 208, 187, 0.1);
+}
+
+body[data-theme="coffeeDark"] .md-content th,
+body[data-theme="coffeeDark"] .md-content td {
+	border-color: #35261e;
+}
+
+body[data-theme="coffeeDark"] .md-content .pw-field {
+	background: #1c1511;
+	border-color: #35261e;
+	color: #e8d9cc;
+}
+
+body[data-theme="coffeeDark"] .md-content .pw-mask {
+	color: #c7ae9d;
+}
+
+
 body[data-theme="monoLight"] {
 	color-scheme: light;
 	background-color: #f6f8fa;
