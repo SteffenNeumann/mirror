@@ -1518,6 +1518,9 @@ const roomPresence = new Map();
 /** roomKey -> { update?: string, text?: string, ts?: number, ciphertext?: string, iv?: string, v?: string } */
 const roomCrdtSnapshots = new Map();
 
+/** roomKey -> Map<noteId, { visible: boolean, offset: { x: number, y: number } }> */
+const roomExcalidrawState = new Map();
+
 function getRoomSockets(roomKeyName) {
 	let set = roomSockets.get(roomKeyName);
 	if (!set) {
@@ -1532,6 +1535,15 @@ function getRoomPresence(roomKeyName) {
 	if (!map) {
 		map = new Map();
 		roomPresence.set(roomKeyName, map);
+	}
+	return map;
+}
+
+function getRoomExcalidrawState(roomKeyName) {
+	let map = roomExcalidrawState.get(roomKeyName);
+	if (!map) {
+		map = new Map();
+		roomExcalidrawState.set(roomKeyName, map);
 	}
 	return map;
 }
@@ -3824,6 +3836,23 @@ wss.on("connection", (ws, req) => {
 		ws.send(JSON.stringify(payload));
 	}
 
+	const initialExcal = roomExcalidrawState.get(rk);
+	if (initialExcal && initialExcal.size > 0) {
+		const items = Array.from(initialExcal.entries()).map(([noteId, state]) => ({
+			noteId,
+			visible: Boolean(state && state.visible),
+			offset: {
+				x: Number(state && state.offset && state.offset.x) || 0,
+				y: Number(state && state.offset && state.offset.y) || 0,
+			},
+		}));
+		try {
+			ws.send(JSON.stringify({ type: "excalidraw_state", room, items }));
+		} catch {
+			// ignore
+		}
+	}
+
 	ws.on("message", (raw) => {
 		const msg = safeJsonParse(String(raw));
 		if (!msg || msg.room !== room) return;
@@ -3988,6 +4017,43 @@ wss.on("connection", (ws, req) => {
 					);
 					return;
 				}
+
+				if (msg.type === "excalidraw_state") {
+					const items = Array.isArray(msg.items)
+						? msg.items
+						: msg.noteId
+						? [
+							{
+								noteId: msg.noteId,
+								visible: msg.visible,
+								offset: msg.offset,
+							},
+						]
+						: [];
+					const sanitized = [];
+					for (const it of items) {
+						const noteId = String(it && it.noteId ? it.noteId : "").trim();
+						if (!noteId) continue;
+						const visible = Boolean(it && it.visible);
+						const oxRaw = Number(it && it.offset && it.offset.x);
+						const oyRaw = Number(it && it.offset && it.offset.y);
+						const ox = Number.isFinite(oxRaw) ? Math.max(-4000, Math.min(4000, oxRaw)) : 0;
+						const oy = Number.isFinite(oyRaw) ? Math.max(-4000, Math.min(4000, oyRaw)) : 0;
+						sanitized.push({ noteId, visible, offset: { x: ox, y: oy } });
+					}
+					if (sanitized.length === 0) return;
+					const map = getRoomExcalidrawState(rk);
+					const fromClientId = typeof msg.clientId === "string" ? msg.clientId : "";
+					for (const it of sanitized) {
+						map.set(it.noteId, { visible: it.visible, offset: it.offset });
+					}
+					broadcast(
+						rk,
+						{ type: "excalidraw_state", room, clientId: fromClientId, items: sanitized },
+						ws
+					);
+					return;
+				}
 				if (snap.update || snap.text) {
 					ws.send(
 						JSON.stringify({
@@ -4096,6 +4162,22 @@ wss.on("connection", (ws, req) => {
 						: { type: "set", room, text: cur.text, ts: cur.ts };
 				ws.send(JSON.stringify(payload));
 			}
+			const excal = roomExcalidrawState.get(rk);
+			if (excal && excal.size > 0) {
+				const items = Array.from(excal.entries()).map(([noteId, state]) => ({
+					noteId,
+					visible: Boolean(state && state.visible),
+					offset: {
+						x: Number(state && state.offset && state.offset.x) || 0,
+						y: Number(state && state.offset && state.offset.y) || 0,
+					},
+				}));
+				try {
+					ws.send(JSON.stringify({ type: "excalidraw_state", room, items }));
+				} catch {
+					// ignore
+				}
+			}
 			return;
 		}
 	});
@@ -4109,7 +4191,10 @@ wss.on("connection", (ws, req) => {
 			broadcastPresenceState(rk, room);
 			if (map.size === 0) roomPresence.delete(rk);
 		}
-		if (sockets.size === 0) roomSockets.delete(rk);
+		if (sockets.size === 0) {
+			roomSockets.delete(rk);
+			roomExcalidrawState.delete(rk);
+		}
 	});
 });
 

@@ -15488,6 +15488,8 @@ self.onmessage = async (e) => {
 				avatar: identity.avatar,
 				ts: Date.now(),
 			});
+			const currentExcalNote = getExcalidrawNoteId();
+			if (currentExcalNote) sendExcalidrawStateForNote(currentExcalNote);
 			void loadCommentsForRoom();
 			ensureYjsLoaded().then((ok) => {
 				if (mySeq !== connectionSeq) return;
@@ -15556,6 +15558,28 @@ self.onmessage = async (e) => {
 
 			if (msg.type === "presence_update") {
 				applyPresenceUpdate(msg);
+				return;
+			}
+
+			if (msg.type === "excalidraw_state") {
+				if (msg.clientId && msg.clientId === clientId) return;
+				const items = Array.isArray(msg.items) ? msg.items : [];
+				const activeId = getExcalidrawNoteId();
+				for (const it of items) {
+					const noteId = String(it && it.noteId ? it.noteId : "").trim();
+					if (!noteId) continue;
+					const visible = Boolean(it && it.visible);
+					const offset = {
+						x: Number(it && it.offset && it.offset.x) || 0,
+						y: Number(it && it.offset && it.offset.y) || 0,
+					};
+					excalidrawVisibleByNote.set(noteId, visible);
+					excalidrawOffsetByNote.set(noteId, offset);
+					if (noteId === activeId) {
+						applyExcalidrawOffset(offset);
+						setExcalidrawVisible(visible, { remember: false });
+					}
+				}
 				return;
 			}
 
@@ -15908,6 +15932,35 @@ self.onmessage = async (e) => {
 	let excalidrawOffset = { x: 0, y: 0 };
 	const excalidrawOffsetByNote = new Map();
 
+	const getExcalidrawNoteId = () => String(psEditingNoteId || "").trim();
+
+	const getExcalidrawStateForNote = (noteId) => {
+		const activeId = String(noteId || "").trim();
+		if (!activeId) return null;
+		const offset = excalidrawOffsetByNote.get(activeId) || { x: 0, y: 0 };
+		const visible = Boolean(excalidrawVisibleByNote.get(activeId));
+		return {
+			noteId: activeId,
+			visible,
+			offset: {
+				x: Number(offset.x || 0) || 0,
+				y: Number(offset.y || 0) || 0,
+			},
+		};
+	};
+
+	const sendExcalidrawStateForNote = (noteId) => {
+		const state = getExcalidrawStateForNote(noteId);
+		if (!state) return;
+		if (!ws || ws.readyState !== WebSocket.OPEN) return;
+		sendMessage({
+			type: "excalidraw_state",
+			room,
+			clientId,
+			items: [state],
+		});
+	};
+
 	const applyExcalidrawOffset = (offset) => {
 		const ox = Number(offset && offset.x ? offset.x : 0) || 0;
 		const oy = Number(offset && offset.y ? offset.y : 0) || 0;
@@ -15934,6 +15987,7 @@ self.onmessage = async (e) => {
 			x: Number(offset && offset.x ? offset.x : 0) || 0,
 			y: Number(offset && offset.y ? offset.y : 0) || 0,
 		});
+		sendExcalidrawStateForNote(activeId);
 	};
 
 	const setExcalidrawVisible = (nextVisible, opts = {}) => {
@@ -15955,6 +16009,7 @@ self.onmessage = async (e) => {
 		}
 		if (remember && activeNoteId) {
 			excalidrawVisibleByNote.set(activeNoteId, excalidrawVisible);
+			sendExcalidrawStateForNote(activeNoteId);
 		}
 		if (textarea) {
 			textarea.classList.toggle("excalidraw-active", excalidrawVisible);
@@ -15976,6 +16031,12 @@ self.onmessage = async (e) => {
 			: false;
 		loadExcalidrawOffsetForNote(activeId);
 		setExcalidrawVisible(savedVisible, { remember: false });
+		if (
+			activeId &&
+			(excalidrawVisibleByNote.has(activeId) || excalidrawOffsetByNote.has(activeId))
+		) {
+			sendExcalidrawStateForNote(activeId);
+		}
 	};
 
 	if (toggleExcalidrawBtn && excalidrawEmbed) {
