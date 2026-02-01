@@ -96,6 +96,7 @@
 	const aiChatList = document.getElementById("aiChatList");
 	const aiChatClearBtn = document.getElementById("aiChatClear");
 	const copyMirrorBtn = document.getElementById("copyMirror");
+	const toggleExcalidrawBtn = document.getElementById("toggleExcalidraw");
 	const toggleCommentsBtn = document.getElementById("toggleComments");
 	const commentPanel = document.getElementById("commentPanel");
 	const commentList = document.getElementById("commentList");
@@ -125,6 +126,10 @@
 	);
 	const commentOverlay = document.getElementById("commentOverlay");
 	const commentOverlayContent = document.getElementById("commentOverlayContent");
+	const excalidrawEmbed = document.getElementById("excalidrawEmbed");
+	const excalidrawFrame = excalidrawEmbed
+		? excalidrawEmbed.querySelector("iframe")
+		: null;
 	let cursorOverlay = null;
 	let cursorOverlayContent = null;
 	const mainGrid = document.getElementById("mainGrid");
@@ -15891,6 +15896,40 @@ self.onmessage = async (e) => {
 					toast("Copy not available.", "error");
 				}
 			}
+		});
+	}
+
+	let excalidrawVisible = false;
+	const setExcalidrawVisible = (nextVisible) => {
+		excalidrawVisible = Boolean(nextVisible);
+		if (excalidrawEmbed) {
+			excalidrawEmbed.classList.toggle("hidden", !excalidrawVisible);
+			excalidrawEmbed.setAttribute(
+				"aria-hidden",
+				excalidrawVisible ? "false" : "true"
+			);
+		}
+		if (toggleExcalidrawBtn) {
+			toggleExcalidrawBtn.setAttribute(
+				"aria-pressed",
+				excalidrawVisible ? "true" : "false"
+			);
+		}
+		if (textarea) {
+			textarea.classList.toggle("excalidraw-active", excalidrawVisible);
+		}
+		if (excalidrawVisible && excalidrawFrame) {
+			try {
+				excalidrawFrame.focus();
+			} catch {
+				// ignore
+			}
+		}
+	};
+
+	if (toggleExcalidrawBtn && excalidrawEmbed) {
+		toggleExcalidrawBtn.addEventListener("click", () => {
+			setExcalidrawVisible(!excalidrawVisible);
 		});
 	}
 

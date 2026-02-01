@@ -505,6 +505,18 @@
 											class="pointer-events-none absolute inset-0 hidden overflow-hidden rounded-xl px-4 pt-20 pb-12 pr-11 font-sans text-base leading-relaxed text-slate-100">
 											<div id="commentOverlayContent"></div>
 										</div>
+										<div
+											id="excalidrawEmbed"
+											class="excalidraw-embed hidden"
+											aria-hidden="true">
+											<iframe
+												src="https://excalidraw.com/"
+												title="Excalidraw"
+												loading="lazy"
+												allow="clipboard-write; fullscreen"
+												referrerpolicy="no-referrer"
+												class="excalidraw-iframe"></iframe>
+										</div>
 									<div
 										id="slashMenu"
 										class="absolute left-2 top-12 z-40 hidden w-[min(92vw,360px)] overflow-hidden rounded-xl border border-white/10 bg-slate-950/80 shadow-soft backdrop-blur">
@@ -820,6 +832,26 @@
 											<rect x="9" y="9" width="13" height="13" rx="2" />
 											<path
 												d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+										</svg>
+									</button>
+									<button
+										id="toggleExcalidraw"
+										type="button"
+										class="absolute bottom-2 right-12 z-10 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150 transition hover:bg-white/10 active:bg-white/15"
+										title="Excalidraw ein-/ausblenden"
+										aria-label="Excalidraw ein-/ausblenden"
+										aria-pressed="false">
+										<svg
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											class="h-4 w-4">
+											<rect x="3" y="3" width="18" height="18" rx="3" />
+											<path d="M7 12h10" />
+											<path d="M12 7v10" />
 										</svg>
 									</button>
 											<button
