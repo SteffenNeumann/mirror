@@ -16020,6 +16020,26 @@ self.onmessage = async (e) => {
 		});
 	};
 
+	const clampExcalidrawOffsetToMirror = (next, dragState) => {
+		if (!textarea || !excalidrawEmbed) return next;
+		const mirrorRect = dragState && dragState.mirrorRect ? dragState.mirrorRect : textarea.getBoundingClientRect();
+		const baseRect = dragState && dragState.baseRect ? dragState.baseRect : excalidrawEmbed.getBoundingClientRect();
+		if (!mirrorRect || !baseRect) return next;
+		const baseX = dragState ? dragState.baseX : excalidrawOffset.x || 0;
+		const baseY = dragState ? dragState.baseY : excalidrawOffset.y || 0;
+		const dx = next.x - baseX;
+		const dy = next.y - baseY;
+		const clampedDx = Math.min(
+			Math.max(dx, mirrorRect.left - baseRect.left),
+			mirrorRect.right - baseRect.right
+		);
+		const clampedDy = Math.min(
+			Math.max(dy, mirrorRect.top - baseRect.top),
+			mirrorRect.bottom - baseRect.bottom
+		);
+		return { x: baseX + clampedDx, y: baseY + clampedDy };
+	};
+
 	const scheduleSendExcalidrawScene = () => {
 		if (!pendingExcalidrawScene) return;
 		window.clearTimeout(excalidrawSceneSendTimer);
@@ -16181,11 +16201,12 @@ self.onmessage = async (e) => {
 			if (!excalidrawDragState) return;
 			const dx = Number(ev.clientX || 0) - excalidrawDragState.startX;
 			const dy = Number(ev.clientY || 0) - excalidrawDragState.startY;
-			const next = {
-				x: excalidrawDragState.baseX + dx,
-				y: excalidrawDragState.baseY + dy,
-			};
-			applyExcalidrawOffset(next);
+				const rawNext = {
+					x: excalidrawDragState.baseX + dx,
+					y: excalidrawDragState.baseY + dy,
+				};
+				const next = clampExcalidrawOffsetToMirror(rawNext, excalidrawDragState);
+				applyExcalidrawOffset(next);
 		};
 
 		excalidrawDragHandle.addEventListener("pointerdown", (ev) => {
@@ -16197,6 +16218,8 @@ self.onmessage = async (e) => {
 				baseX: Number(excalidrawOffset.x || 0),
 				baseY: Number(excalidrawOffset.y || 0),
 				pointerId: ev.pointerId,
+					mirrorRect: textarea ? textarea.getBoundingClientRect() : null,
+					baseRect: excalidrawEmbed.getBoundingClientRect(),
 			};
 			excalidrawEmbed.classList.add("excalidraw-dragging");
 			try {
