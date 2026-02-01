@@ -576,9 +576,10 @@ body.code-lang-active #clearMirror {
 	opacity: 0;
 	pointer-events: none;
 }
+
 #excalidrawEmbed.excalidraw-embed {
 	position: absolute;
-	top: 6.25rem;
+	top: 10.25rem;
 	right: 0;
 	bottom: 4.5rem;
 	left: 0;
