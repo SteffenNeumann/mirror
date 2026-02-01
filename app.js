@@ -130,6 +130,7 @@
 	const excalidrawFrame = excalidrawEmbed
 		? excalidrawEmbed.querySelector("iframe")
 		: null;
+	const excalidrawDragHandle = document.getElementById("excalidrawDragHandle");
 	let cursorOverlay = null;
 	let cursorOverlayContent = null;
 	const mainGrid = document.getElementById("mainGrid");
@@ -15904,6 +15905,37 @@ self.onmessage = async (e) => {
 
 	let excalidrawVisible = false;
 	const excalidrawVisibleByNote = new Map();
+	let excalidrawOffset = { x: 0, y: 0 };
+	const excalidrawOffsetByNote = new Map();
+
+	const applyExcalidrawOffset = (offset) => {
+		const ox = Number(offset && offset.x ? offset.x : 0) || 0;
+		const oy = Number(offset && offset.y ? offset.y : 0) || 0;
+		excalidrawOffset = { x: ox, y: oy };
+		if (excalidrawEmbed) {
+			excalidrawEmbed.style.transform = `translate3d(${ox}px, ${oy}px, 0)`;
+		}
+	};
+
+	const loadExcalidrawOffsetForNote = (noteId) => {
+		const activeId = String(noteId || "").trim();
+		const saved = activeId ? excalidrawOffsetByNote.get(activeId) : null;
+		if (saved) {
+			applyExcalidrawOffset({ x: saved.x || 0, y: saved.y || 0 });
+			return;
+		}
+		applyExcalidrawOffset({ x: 0, y: 0 });
+	};
+
+	const storeExcalidrawOffsetForNote = (noteId, offset) => {
+		const activeId = String(noteId || "").trim();
+		if (!activeId) return;
+		excalidrawOffsetByNote.set(activeId, {
+			x: Number(offset && offset.x ? offset.x : 0) || 0,
+			y: Number(offset && offset.y ? offset.y : 0) || 0,
+		});
+	};
+
 	const setExcalidrawVisible = (nextVisible, opts = {}) => {
 		excalidrawVisible = Boolean(nextVisible);
 		const remember = opts.remember !== false;
@@ -15927,6 +15959,7 @@ self.onmessage = async (e) => {
 		if (textarea) {
 			textarea.classList.toggle("excalidraw-active", excalidrawVisible);
 		}
+		applyExcalidrawOffset(excalidrawOffset);
 		if (excalidrawVisible && excalidrawFrame) {
 			try {
 				excalidrawFrame.focus();
@@ -15941,12 +15974,66 @@ self.onmessage = async (e) => {
 		const savedVisible = activeId
 			? Boolean(excalidrawVisibleByNote.get(activeId))
 			: false;
+		loadExcalidrawOffsetForNote(activeId);
 		setExcalidrawVisible(savedVisible, { remember: false });
 	};
 
 	if (toggleExcalidrawBtn && excalidrawEmbed) {
 		toggleExcalidrawBtn.addEventListener("click", () => {
 			setExcalidrawVisible(!excalidrawVisible);
+		});
+	}
+
+	if (excalidrawDragHandle && excalidrawEmbed) {
+		let excalidrawDragState = null;
+		const endExcalidrawDrag = (ev) => {
+			if (!excalidrawDragState) return;
+			try {
+				excalidrawDragHandle.releasePointerCapture(
+					excalidrawDragState.pointerId
+				);
+			} catch {
+				// ignore
+			}
+			window.removeEventListener("pointermove", onExcalidrawDragMove);
+			window.removeEventListener("pointerup", endExcalidrawDrag);
+			window.removeEventListener("pointercancel", endExcalidrawDrag);
+			excalidrawEmbed.classList.remove("excalidraw-dragging");
+			const activeNoteId = String(psEditingNoteId || "").trim();
+			storeExcalidrawOffsetForNote(activeNoteId, excalidrawOffset);
+			excalidrawDragState = null;
+		};
+
+		const onExcalidrawDragMove = (ev) => {
+			if (!excalidrawDragState) return;
+			const dx = Number(ev.clientX || 0) - excalidrawDragState.startX;
+			const dy = Number(ev.clientY || 0) - excalidrawDragState.startY;
+			const next = {
+				x: excalidrawDragState.baseX + dx,
+				y: excalidrawDragState.baseY + dy,
+			};
+			applyExcalidrawOffset(next);
+		};
+
+		excalidrawDragHandle.addEventListener("pointerdown", (ev) => {
+			if (!excalidrawVisible) return;
+			ev.preventDefault();
+			excalidrawDragState = {
+				startX: Number(ev.clientX || 0),
+				startY: Number(ev.clientY || 0),
+				baseX: Number(excalidrawOffset.x || 0),
+				baseY: Number(excalidrawOffset.y || 0),
+				pointerId: ev.pointerId,
+			};
+			excalidrawEmbed.classList.add("excalidraw-dragging");
+			try {
+				excalidrawDragHandle.setPointerCapture(ev.pointerId);
+			} catch {
+				// ignore
+			}
+			window.addEventListener("pointermove", onExcalidrawDragMove);
+			window.addEventListener("pointerup", endExcalidrawDrag);
+			window.addEventListener("pointercancel", endExcalidrawDrag);
 		});
 	}
 
