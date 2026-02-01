@@ -4624,6 +4624,28 @@
 		},
 	};
 
+	const THEME_ORDER = [
+		"fuchsia",
+		"cyan",
+		"emerald",
+		"violet",
+		"coffeeDark",
+		"coffeeLight",
+		"bitterDark",
+		"bitterLight",
+		"monoDark",
+		"monoLight",
+	];
+
+	const GLOW_BLOCKED_THEMES = new Set([
+		"monoLight",
+		"monoDark",
+		"coffeeLight",
+		"coffeeDark",
+		"bitterLight",
+		"bitterDark",
+	]);
+
 		const UI_STRINGS = {
 			de: {
 				"ps.title": "Personal Space",
@@ -5265,7 +5287,13 @@
 	function renderThemeList() {
 		if (!settingsThemeList) return;
 		settingsThemeList.innerHTML = "";
-		Object.entries(THEMES).forEach(([key, theme]) => {
+		const orderedKeys = THEME_ORDER.filter((key) => THEMES[key]);
+		const remainingKeys = Object.keys(THEMES).filter(
+			(key) => !THEME_ORDER.includes(key)
+		);
+		const keys = [...orderedKeys, ...remainingKeys];
+		keys.forEach((key) => {
+			const theme = THEMES[key];
 			const btn = document.createElement("button");
 			const top = theme.top || theme.accentBg || "rgba(148, 163, 184, 0.4)";
 			const bottom =
@@ -5308,8 +5336,8 @@
 	}
 
 	function applyGlowEnabled() {
-		const isMonoTheme = activeTheme === "monoLight" || activeTheme === "monoDark";
-		const effectiveGlowEnabled = glowEnabled && !isMonoTheme;
+		const glowBlocked = GLOW_BLOCKED_THEMES.has(activeTheme);
+		const effectiveGlowEnabled = glowEnabled && !glowBlocked;
 		document.body.classList.toggle("glow-disabled", !effectiveGlowEnabled);
 		if (settingsGlowToggle) {
 			settingsGlowToggle.setAttribute(
@@ -5331,10 +5359,10 @@
 				"bg-white/5",
 				!effectiveGlowEnabled
 			);
-			settingsGlowToggle.classList.toggle("opacity-60", isMonoTheme);
-			settingsGlowToggle.classList.toggle("cursor-not-allowed", isMonoTheme);
-			settingsGlowToggle.classList.toggle("pointer-events-none", isMonoTheme);
-			if (isMonoTheme) {
+			settingsGlowToggle.classList.toggle("opacity-60", glowBlocked);
+			settingsGlowToggle.classList.toggle("cursor-not-allowed", glowBlocked);
+			settingsGlowToggle.classList.toggle("pointer-events-none", glowBlocked);
+			if (glowBlocked) {
 				settingsGlowToggle.setAttribute("disabled", "disabled");
 				settingsGlowToggle.setAttribute("aria-disabled", "true");
 			} else {

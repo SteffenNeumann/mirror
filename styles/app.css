@@ -1889,6 +1889,19 @@ body[data-theme="bitterDark"] .bg-slate-950\/80 {
 	background-color: rgba(255, 35, 1, 0.24) !important;
 }
 
+body[data-theme="bitterDark"] #settingsBackdrop {
+	background-color: rgba(13, 12, 16, 0.6) !important;
+}
+
+body[data-theme="bitterDark"] #settingsPanel {
+	background-color: #151518 !important;
+	border-color: #2a2a30 !important;
+}
+
+body[data-theme="bitterDark"] #settingsNav {
+	background-color: #0d0c10 !important;
+}
+
 body[data-theme="bitterDark"] .ps-note-item.ps-note-active {
 	background-color: rgba(255, 35, 1, 0.1) !important;
 	border-color: rgba(255, 35, 1, 0.38) !important;
@@ -2030,6 +2043,25 @@ body[data-theme="coffeeDark"] #settingsGlowToggle {
 	background-color: transparent !important;
 	border-color: #35261e !important;
 	color: #b49885 !important;
+}
+
+/* Bitter themes: disable glow toggle (glow stays off) */
+body[data-theme="bitterLight"] #settingsGlowToggle {
+	opacity: 0.35 !important;
+	filter: grayscale(1);
+	pointer-events: none !important;
+	background-color: transparent !important;
+	border-color: #d8d2cb !important;
+	color: #5b5a64 !important;
+}
+
+body[data-theme="bitterDark"] #settingsGlowToggle {
+	opacity: 0.35 !important;
+	filter: grayscale(1);
+	pointer-events: none !important;
+	background-color: transparent !important;
+	border-color: #2a2a30 !important;
+	color: #c0b5ad !important;
 }
 
 
