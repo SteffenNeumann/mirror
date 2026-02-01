@@ -15932,10 +15932,21 @@ self.onmessage = async (e) => {
 	let excalidrawOffset = { x: 0, y: 0 };
 	const excalidrawOffsetByNote = new Map();
 
-	const getExcalidrawNoteId = () => String(psEditingNoteId || "").trim();
+	const getExcalidrawRoomScope = () => {
+		const roomName = normalizeRoom(room);
+		if (!roomName) return "";
+		const keyName = normalizeKey(key);
+		return `room:${roomName}:${keyName || "nokey"}`;
+	};
+
+	const getExcalidrawNoteId = () => {
+		const noteId = String(psEditingNoteId || "").trim();
+		if (noteId) return noteId;
+		return getExcalidrawRoomScope();
+	};
 
 	const getExcalidrawStateForNote = (noteId) => {
-		const activeId = String(noteId || "").trim();
+		const activeId = String(noteId || "").trim() || getExcalidrawNoteId();
 		if (!activeId) return null;
 		const offset = excalidrawOffsetByNote.get(activeId) || { x: 0, y: 0 };
 		const visible = Boolean(excalidrawVisibleByNote.get(activeId));
@@ -15971,7 +15982,7 @@ self.onmessage = async (e) => {
 	};
 
 	const loadExcalidrawOffsetForNote = (noteId) => {
-		const activeId = String(noteId || "").trim();
+		const activeId = String(noteId || "").trim() || getExcalidrawNoteId();
 		const saved = activeId ? excalidrawOffsetByNote.get(activeId) : null;
 		if (saved) {
 			applyExcalidrawOffset({ x: saved.x || 0, y: saved.y || 0 });
@@ -15981,7 +15992,7 @@ self.onmessage = async (e) => {
 	};
 
 	const storeExcalidrawOffsetForNote = (noteId, offset) => {
-		const activeId = String(noteId || "").trim();
+		const activeId = String(noteId || "").trim() || getExcalidrawNoteId();
 		if (!activeId) return;
 		excalidrawOffsetByNote.set(activeId, {
 			x: Number(offset && offset.x ? offset.x : 0) || 0,
@@ -15993,7 +16004,7 @@ self.onmessage = async (e) => {
 	const setExcalidrawVisible = (nextVisible, opts = {}) => {
 		excalidrawVisible = Boolean(nextVisible);
 		const remember = opts.remember !== false;
-		const activeNoteId = String(psEditingNoteId || "").trim();
+		const activeNoteId = getExcalidrawNoteId();
 		if (excalidrawEmbed) {
 			excalidrawEmbed.classList.toggle("hidden", !excalidrawVisible);
 			excalidrawEmbed.setAttribute(
@@ -16025,7 +16036,7 @@ self.onmessage = async (e) => {
 	};
 
 	const syncExcalidrawForNote = (noteId) => {
-		const activeId = String(noteId || "").trim();
+		const activeId = String(noteId || "").trim() || getExcalidrawNoteId();
 		const savedVisible = activeId
 			? Boolean(excalidrawVisibleByNote.get(activeId))
 			: false;
@@ -16060,7 +16071,7 @@ self.onmessage = async (e) => {
 			window.removeEventListener("pointerup", endExcalidrawDrag);
 			window.removeEventListener("pointercancel", endExcalidrawDrag);
 			excalidrawEmbed.classList.remove("excalidraw-dragging");
-			const activeNoteId = String(psEditingNoteId || "").trim();
+			const activeNoteId = getExcalidrawNoteId();
 			storeExcalidrawOffsetForNote(activeNoteId, excalidrawOffset);
 			excalidrawDragState = null;
 		};
