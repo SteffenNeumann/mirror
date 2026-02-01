@@ -586,7 +586,7 @@ body.code-lang-active #clearMirror {
 	z-index: 20;
 	border-radius: 0.75rem;
 	overflow: hidden;
-	background: rgba(2, 6, 23, 0.9);
+	background: rgba(2, 6, 23, 0.65);
 	backdrop-filter: blur(14px) saturate(140%);
 	-webkit-backdrop-filter: blur(14px) saturate(140%);
 	transform: translate3d(0, 0, 0);
@@ -601,8 +601,8 @@ body.code-lang-active #clearMirror {
 
 .excalidraw-drag-handle {
 	position: absolute;
-	top: 0.5rem;
-	left: 0.5rem;
+	top: 1.75rem;
+	left: 4.5rem;
 	z-index: 25;
 	inline-size: 2.25rem;
 	block-size: 2.25rem;
