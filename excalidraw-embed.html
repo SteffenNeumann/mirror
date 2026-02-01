@@ -6,7 +6,7 @@
 	<title>Excalidraw Embed</title>
 	<link
 		rel="stylesheet"
-		href="https://esm.sh/@excalidraw/excalidraw@0.17.6/dist/excalidraw.min.css"
+		href="https://cdn.jsdelivr.net/npm/@excalidraw/excalidraw@0.17.6/dist/excalidraw.min.css"
 	/>
 	<style>
 		html,
@@ -27,9 +27,9 @@
 <body>
 	<div id="root"></div>
 	<script type="module">
-		import React, { useEffect, useRef } from "https://esm.sh/react@18.2.0";
-		import { createRoot } from "https://esm.sh/react-dom@18.2.0/client";
-		import { Excalidraw } from "https://esm.sh/@excalidraw/excalidraw@0.17.6?dev=false&exports=Excalidraw";
+		import React, { useEffect, useRef } from "https://esm.sh/react@18.2.0?dev=false";
+		import { createRoot } from "https://esm.sh/react-dom@18.2.0/client?dev=false";
+		import { Excalidraw } from "https://esm.sh/@excalidraw/excalidraw@0.17.6?dev=false&alias=react:react@18.2.0,react-dom:react-dom@18.2.0&exports=Excalidraw";
 
 		const MAX_BYTES = 200000;
 
