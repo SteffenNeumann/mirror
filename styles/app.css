@@ -2214,10 +2214,22 @@ body[data-theme="monoLight"] .ps-note-pin.bg-fuchsia-500\/20 {
 	color: #0969da !important;
 }
 
-body[data-theme="monoDark"] .ps-note-pin.bg-fuchsia-500\/20 {
-	background-color: rgba(31, 111, 235, 0.22) !important;
-	border-color: rgba(31, 111, 235, 0.45) !important;
+body[data-theme="monoDark"] .ps-note-item.ps-note-active .ps-note-actions button {
+	box-shadow: none !important;
+	background-color: rgba(31, 111, 235, 0.12) !important;
+	border-color: rgba(31, 111, 235, 0.35) !important;
 	color: #d6e5ff !important;
+}
+
+body[data-theme="monoDark"] .ps-note-item.ps-note-active .ps-note-actions button:hover {
+	background-color: rgba(31, 111, 235, 0.18) !important;
+}
+
+body[data-theme="monoDark"] .ps-note-pin.bg-fuchsia-500\/20 {
+	background-color: rgba(31, 111, 235, 0.32) !important;
+	border-color: rgba(31, 111, 235, 0.6) !important;
+	color: #e6f0ff !important;
+	box-shadow: 0 0 0 1px rgba(31, 111, 235, 0.35), 0 4px 10px rgba(0, 0, 0, 0.35) !important;
 }
 
 body[data-theme="monoLight"] #aiUsePreviewBtn {
