@@ -1520,6 +1520,9 @@ const roomCrdtSnapshots = new Map();
 
 /** roomKey -> Map<noteId, { visible: boolean, offset: { x: number, y: number } }> */
 const roomExcalidrawState = new Map();
+/** roomKey -> Map<noteId, sceneJsonString> */
+const roomExcalidrawScenes = new Map();
+const EXCALIDRAW_SCENE_MAX_BYTES = 200000;
 
 function getRoomSockets(roomKeyName) {
 	let set = roomSockets.get(roomKeyName);
@@ -1544,6 +1547,15 @@ function getRoomExcalidrawState(roomKeyName) {
 	if (!map) {
 		map = new Map();
 		roomExcalidrawState.set(roomKeyName, map);
+	}
+	return map;
+}
+
+function getRoomExcalidrawScenes(roomKeyName) {
+	let map = roomExcalidrawScenes.get(roomKeyName);
+	if (!map) {
+		map = new Map();
+		roomExcalidrawScenes.set(roomKeyName, map);
 	}
 	return map;
 }
@@ -3853,6 +3865,21 @@ wss.on("connection", (ws, req) => {
 		}
 	}
 
+	const initialScenes = roomExcalidrawScenes.get(rk);
+	if (initialScenes && initialScenes.size > 0) {
+		const items = Array.from(initialScenes.entries()).map(([noteId, scene]) => ({
+			noteId,
+			scene: typeof scene === "string" ? scene : "",
+		})).filter((it) => it.noteId && it.scene);
+		if (items.length > 0) {
+			try {
+				ws.send(JSON.stringify({ type: "excalidraw_scene", room, items }));
+			} catch {
+				// ignore
+			}
+		}
+	}
+
 	ws.on("message", (raw) => {
 		const msg = safeJsonParse(String(raw));
 		if (!msg || msg.room !== room) return;
@@ -3953,6 +3980,34 @@ wss.on("connection", (ws, req) => {
 			broadcast(
 				rk,
 				{ type: "excalidraw_state", room, clientId: fromClientId, items: sanitized },
+				ws
+			);
+			return;
+		}
+
+		if (msg.type === "excalidraw_scene") {
+			const items = Array.isArray(msg.items)
+				? msg.items
+				: msg.noteId && typeof msg.scene === "string"
+				? [{ noteId: msg.noteId, scene: msg.scene }]
+				: [];
+			const sanitized = [];
+			for (const it of items) {
+				const noteId = String(it && it.noteId ? it.noteId : "").trim();
+				const scene = typeof it === "object" && typeof it.scene === "string" ? it.scene : "";
+				if (!noteId || !scene) continue;
+				if (scene.length > EXCALIDRAW_SCENE_MAX_BYTES) continue;
+				sanitized.push({ noteId, scene });
+			}
+			if (sanitized.length === 0) return;
+			const map = getRoomExcalidrawScenes(rk);
+			for (const it of sanitized) {
+				map.set(it.noteId, it.scene);
+			}
+			const fromClientId = typeof msg.clientId === "string" ? msg.clientId : "";
+			broadcast(
+				rk,
+				{ type: "excalidraw_scene", room, clientId: fromClientId, items: sanitized },
 				ws
 			);
 			return;
@@ -4182,6 +4237,22 @@ wss.on("connection", (ws, req) => {
 					// ignore
 				}
 			}
+			const scenes = roomExcalidrawScenes.get(rk);
+			if (scenes && scenes.size > 0) {
+				const items = Array.from(scenes.entries())
+					.map(([noteId, scene]) => ({
+						noteId,
+						scene: typeof scene === "string" ? scene : "",
+					}))
+					.filter((it) => it.noteId && it.scene);
+				if (items.length > 0) {
+					try {
+						ws.send(JSON.stringify({ type: "excalidraw_scene", room, items }));
+					} catch {
+						// ignore
+					}
+				}
+			}
 			return;
 		}
 	});
@@ -4198,6 +4269,7 @@ wss.on("connection", (ws, req) => {
 		if (sockets.size === 0) {
 			roomSockets.delete(rk);
 			roomExcalidrawState.delete(rk);
+			roomExcalidrawScenes.delete(rk);
 		}
 	});
 });

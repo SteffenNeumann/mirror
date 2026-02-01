@@ -131,6 +131,13 @@
 		? excalidrawEmbed.querySelector("iframe")
 		: null;
 	const excalidrawDragHandle = document.getElementById("excalidrawDragHandle");
+	const EXCALIDRAW_SCENE_MAX_BYTES = 200000;
+	const EXCALIDRAW_EMPTY_SCENE =
+		"{" +
+		"\"elements\":[]," +
+		"\"appState\":{}," +
+		"\"files\":{}" +
+		"}";
 	let cursorOverlay = null;
 	let cursorOverlayContent = null;
 	const mainGrid = document.getElementById("mainGrid");
@@ -15490,6 +15497,13 @@ self.onmessage = async (e) => {
 			});
 			const currentExcalNote = getExcalidrawNoteId();
 			if (currentExcalNote) sendExcalidrawStateForNote(currentExcalNote);
+			if (currentExcalNote) {
+				const scene = getExcalidrawSceneForNote(currentExcalNote);
+				if (scene) {
+					pendingExcalidrawScene = { noteId: currentExcalNote, scene };
+					scheduleSendExcalidrawScene();
+				}
+			}
 			void loadCommentsForRoom();
 			ensureYjsLoaded().then((ok) => {
 				if (mySeq !== connectionSeq) return;
@@ -15578,6 +15592,23 @@ self.onmessage = async (e) => {
 					if (noteId === activeId) {
 						applyExcalidrawOffset(offset);
 						setExcalidrawVisible(visible, { remember: false });
+					}
+				}
+				return;
+			}
+
+			if (msg.type === "excalidraw_scene") {
+				if (msg.clientId && msg.clientId === clientId) return;
+				const items = Array.isArray(msg.items) ? msg.items : [];
+				const activeId = getExcalidrawNoteId();
+				for (const it of items) {
+					const noteId = String(it && it.noteId ? it.noteId : "").trim();
+					const scene = typeof it === "object" && typeof it.scene === "string" ? it.scene : "";
+					if (!noteId || !scene) continue;
+					if (scene.length > EXCALIDRAW_SCENE_MAX_BYTES) continue;
+					excalidrawSceneByNote.set(noteId, scene);
+					if (noteId === activeId) {
+						sendExcalidrawSceneToEmbed(noteId, scene);
 					}
 				}
 				return;
@@ -15931,6 +15962,9 @@ self.onmessage = async (e) => {
 	const excalidrawVisibleByNote = new Map();
 	let excalidrawOffset = { x: 0, y: 0 };
 	const excalidrawOffsetByNote = new Map();
+	const excalidrawSceneByNote = new Map();
+	let excalidrawSceneSendTimer = null;
+	let pendingExcalidrawScene = null;
 
 	const getExcalidrawRoomScope = () => {
 		const roomName = normalizeRoom(room);
@@ -15958,6 +15992,49 @@ self.onmessage = async (e) => {
 				y: Number(offset.y || 0) || 0,
 			},
 		};
+	};
+
+	const getExcalidrawSceneForNote = (noteId) => {
+		const activeId = String(noteId || "").trim() || getExcalidrawNoteId();
+		if (!activeId) return "";
+		return String(excalidrawSceneByNote.get(activeId) || "");
+	};
+
+	const postExcalidrawMessage = (payload) => {
+		if (!excalidrawFrame || !excalidrawFrame.contentWindow) return;
+		try {
+			excalidrawFrame.contentWindow.postMessage(payload, window.location.origin);
+		} catch {
+			// ignore
+		}
+	};
+
+	const sendExcalidrawSceneToEmbed = (noteId, scene) => {
+		const targetId = String(noteId || "").trim() || getExcalidrawNoteId();
+		if (!targetId) return;
+		const payloadScene = scene || getExcalidrawSceneForNote(targetId) || EXCALIDRAW_EMPTY_SCENE;
+		postExcalidrawMessage({
+			type: "excalidraw_load_scene",
+			noteId: targetId,
+			scene: payloadScene,
+		});
+	};
+
+	const scheduleSendExcalidrawScene = () => {
+		if (!pendingExcalidrawScene) return;
+		window.clearTimeout(excalidrawSceneSendTimer);
+		excalidrawSceneSendTimer = window.setTimeout(() => {
+			if (!pendingExcalidrawScene) return;
+			if (!ws || ws.readyState !== WebSocket.OPEN) return;
+			const items = [pendingExcalidrawScene];
+			pendingExcalidrawScene = null;
+			sendMessage({
+				type: "excalidraw_scene",
+				room,
+				clientId,
+				items,
+			});
+		}, 400);
 	};
 
 	const sendExcalidrawStateForNote = (noteId) => {
@@ -16035,6 +16112,29 @@ self.onmessage = async (e) => {
 		}
 	};
 
+	const handleExcalidrawEmbedMessage = (ev) => {
+		if (ev && ev.origin && ev.origin !== window.location.origin) return;
+		const msg = ev && ev.data ? ev.data : null;
+		if (!msg || msg.type !== "excalidraw_scene_change") return;
+		const noteId = String(msg.noteId || getExcalidrawNoteId() || "").trim();
+		const scene = typeof msg.scene === "string" ? msg.scene : "";
+		if (!noteId || !scene) return;
+		if (scene.length > EXCALIDRAW_SCENE_MAX_BYTES) return;
+		excalidrawSceneByNote.set(noteId, scene);
+		pendingExcalidrawScene = { noteId, scene };
+		scheduleSendExcalidrawScene();
+	};
+
+	if (typeof window !== "undefined") {
+		window.addEventListener("message", handleExcalidrawEmbedMessage);
+	}
+
+	if (excalidrawFrame) {
+		excalidrawFrame.addEventListener("load", () => {
+			sendExcalidrawSceneToEmbed(getExcalidrawNoteId());
+		});
+	}
+
 	const syncExcalidrawForNote = (noteId) => {
 		const activeId = String(noteId || "").trim() || getExcalidrawNoteId();
 		const savedVisible = activeId
@@ -16042,6 +16142,7 @@ self.onmessage = async (e) => {
 			: false;
 		loadExcalidrawOffsetForNote(activeId);
 		setExcalidrawVisible(savedVisible, { remember: false });
+		sendExcalidrawSceneToEmbed(activeId);
 		if (
 			activeId &&
 			(excalidrawVisibleByNote.has(activeId) || excalidrawOffsetByNote.has(activeId))
