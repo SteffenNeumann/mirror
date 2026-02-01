@@ -10228,6 +10228,7 @@
 		psEditingNotePinned = false;
 		syncPsEditorTagsInput(true);
 		updatePsEditingTagsHint();
+		syncExcalidrawForNote("");
 		if (psMainHint && !(opts && opts.keepHint)) {
 			psMainHint.classList.add("hidden");
 		}
@@ -10281,6 +10282,7 @@
 		}
 		updateEditorMetaYaml();
 		if (prevNoteId !== psEditingNoteId) {
+			syncExcalidrawForNote(psEditingNoteId);
 			void loadCommentsForRoom();
 		}
 		if (opts && opts.updateList) applyPersonalSpaceFiltersAndRender();
@@ -10327,6 +10329,7 @@
 		psAutoSaveLastSavedNoteId = psEditingNoteId;
 		psAutoSaveLastSavedText = String(textarea.value || "");
 		setPsAutoSaveStatus("");
+		syncExcalidrawForNote(psEditingNoteId);
 		if (room && key) {
 			setRoomTabNoteId(room, key, psEditingNoteId);
 		}
@@ -15900,8 +15903,11 @@ self.onmessage = async (e) => {
 	}
 
 	let excalidrawVisible = false;
-	const setExcalidrawVisible = (nextVisible) => {
+	const excalidrawVisibleByNote = new Map();
+	const setExcalidrawVisible = (nextVisible, opts = {}) => {
 		excalidrawVisible = Boolean(nextVisible);
+		const remember = opts.remember !== false;
+		const activeNoteId = String(psEditingNoteId || "").trim();
 		if (excalidrawEmbed) {
 			excalidrawEmbed.classList.toggle("hidden", !excalidrawVisible);
 			excalidrawEmbed.setAttribute(
@@ -15915,6 +15921,9 @@ self.onmessage = async (e) => {
 				excalidrawVisible ? "true" : "false"
 			);
 		}
+		if (remember && activeNoteId) {
+			excalidrawVisibleByNote.set(activeNoteId, excalidrawVisible);
+		}
 		if (textarea) {
 			textarea.classList.toggle("excalidraw-active", excalidrawVisible);
 		}
@@ -15925,6 +15934,14 @@ self.onmessage = async (e) => {
 				// ignore
 			}
 		}
+	};
+
+	const syncExcalidrawForNote = (noteId) => {
+		const activeId = String(noteId || "").trim();
+		const savedVisible = activeId
+			? Boolean(excalidrawVisibleByNote.get(activeId))
+			: false;
+		setExcalidrawVisible(savedVisible, { remember: false });
 	};
 
 	if (toggleExcalidrawBtn && excalidrawEmbed) {
