@@ -2089,6 +2089,7 @@ body[data-theme="monoLight"] {
 	color-scheme: light;
 	background-color: #f6f8fa;
 	color: #24292f;
+	--mono-accent: #0969da;
 	--scrollbar-thumb: rgba(148, 163, 184, 0.3);
 	--scrollbar-thumb-hover: rgba(148, 163, 184, 0.45);
 	--scrollbar-border: rgba(2, 6, 23, 0.35);
@@ -2105,6 +2106,30 @@ body[data-theme="monoLight"] {
 
 body[data-theme="monoLight"] .bg-glow {
 	display: none;
+}
+
+body[data-theme="monoLight"] .border-fuchsia-400\/30 {
+	border-color: var(--mono-accent) !important;
+}
+
+body[data-theme="monoLight"] .bg-fuchsia-500\/15,
+body[data-theme="monoLight"] .bg-fuchsia-500\/20,
+body[data-theme="monoLight"] .bg-fuchsia-500\/25,
+body[data-theme="monoLight"] .bg-fuchsia-600\/20 {
+	background-color: transparent !important;
+	color: var(--mono-accent) !important;
+}
+
+body[data-theme="monoLight"] .hover\:bg-fuchsia-500\/20:hover,
+body[data-theme="monoLight"] .hover\:bg-fuchsia-500\/25:hover {
+	background-color: transparent !important;
+	color: var(--mono-accent) !important;
+}
+
+body[data-theme="monoLight"] .text-fuchsia-100,
+body[data-theme="monoLight"] .text-fuchsia-200,
+body[data-theme="monoLight"] .text-fuchsia-300 {
+	color: var(--mono-accent) !important;
 }
 
 body[data-theme="monoLight"] .border-white\/10 {
@@ -2181,7 +2206,7 @@ body[data-theme="monoLight"] #psEditorTagsInput {
 }
 
 body[data-theme="monoLight"] #previewPanel .bg-fuchsia-600\/20 {
-	background-color: rgba(9, 105, 218, 0.12) !important;
+	background-color: transparent !important;
 }
 
 body[data-theme="monoLight"] #previewPanel .text-fuchsia-300 {
@@ -2194,22 +2219,22 @@ body[data-theme="monoLight"] .theme-swatch {
 
 body[data-theme="monoLight"] .ps-note-item.ps-note-active .ps-note-actions button {
 	box-shadow: none !important;
-	background-color: rgba(9, 105, 218, 0.08) !important;
+	background-color: transparent !important;
 	border-color: rgba(9, 105, 218, 0.25) !important;
 }
 
 body[data-theme="monoLight"] .ps-note-item.ps-note-active .ps-note-actions button:hover {
-	background-color: rgba(9, 105, 218, 0.14) !important;
+	background-color: transparent !important;
 }
 
 body[data-theme="monoLight"] .ps-note-item.ps-note-active span.rounded-full.border {
-	background-color: rgba(9, 105, 218, 0.08) !important;
+	background-color: transparent !important;
 	border-color: rgba(9, 105, 218, 0.25) !important;
 	color: #24292f !important;
 }
 
 body[data-theme="monoLight"] .ps-note-pin.bg-fuchsia-500\/20 {
-	background-color: rgba(9, 105, 218, 0.12) !important;
+	background-color: transparent !important;
 	border-color: rgba(9, 105, 218, 0.35) !important;
 	color: #0969da !important;
 }
@@ -2234,12 +2259,12 @@ body[data-theme="monoDark"] .ps-note-pin.bg-fuchsia-500\/20 {
 
 body[data-theme="monoLight"] #aiUsePreviewBtn {
 	border-color: rgba(9, 105, 218, 0.35) !important;
-	background-color: rgba(9, 105, 218, 0.12) !important;
-	color: #0b1f33 !important;
+	background-color: transparent !important;
+	color: #0969da !important;
 }
 
 body[data-theme="monoLight"] #aiUsePreviewBtn span:first-child {
-	background-color: #0969da !important;
+	background-color: transparent !important;
 }
 
 body[data-theme="monoLight"] .ai-chat-badge {
@@ -2403,6 +2428,7 @@ body[data-theme="monoDark"] {
 	color-scheme: dark;
 	background-color: #0d1117;
 	color: #c9d1d9;
+	--mono-accent: #58a6ff;
 	--selection-menu-bg: #0d1117;
 	--selection-menu-border: #30363d;
 	--comment-item-bg: #1f2937;
@@ -2413,6 +2439,30 @@ body[data-theme="monoDark"] {
 
 body[data-theme="monoDark"] .bg-glow {
 	display: none;
+}
+
+body[data-theme="monoDark"] .border-fuchsia-400\/30 {
+	border-color: var(--mono-accent) !important;
+}
+
+body[data-theme="monoDark"] .bg-fuchsia-500\/15,
+body[data-theme="monoDark"] .bg-fuchsia-500\/20,
+body[data-theme="monoDark"] .bg-fuchsia-500\/25,
+body[data-theme="monoDark"] .bg-fuchsia-600\/20 {
+	background-color: transparent !important;
+	color: var(--mono-accent) !important;
+}
+
+body[data-theme="monoDark"] .hover\:bg-fuchsia-500\/20:hover,
+body[data-theme="monoDark"] .hover\:bg-fuchsia-500\/25:hover {
+	background-color: transparent !important;
+	color: var(--mono-accent) !important;
+}
+
+body[data-theme="monoDark"] .text-fuchsia-100,
+body[data-theme="monoDark"] .text-fuchsia-200,
+body[data-theme="monoDark"] .text-fuchsia-300 {
+	color: var(--mono-accent) !important;
 }
 
 body[data-theme="monoDark"] .border-white\/10 {
@@ -2461,46 +2511,32 @@ body[data-theme="monoDark"] .bg-slate-950\/80 {
 }
 
 body[data-theme="monoDark"] .ps-note-item.ps-note-active {
-	background-color: rgba(88, 166, 255, 0.08) !important;
+	background-color: transparent !important;
 	border-color: rgba(88, 166, 255, 0.45) !important;
 	box-shadow: 0 6px 14px rgba(88, 166, 255, 0.12);
 }
 
 body[data-theme="monoDark"] .ps-note-item .ps-note-actions button {
 	box-shadow: none !important;
-	background-color: rgba(88, 166, 255, 0.08) !important;
+	background-color: transparent !important;
 	border-color: rgba(88, 166, 255, 0.28) !important;
 }
 
 body[data-theme="monoDark"] .ps-note-item .ps-note-actions button:hover {
-	background-color: rgba(88, 166, 255, 0.14) !important;
+	background-color: transparent !important;
 }
 
 body[data-theme="monoDark"] .ps-note-item.ps-note-active span.rounded-full.border {
-	background-color: rgba(88, 166, 255, 0.08) !important;
+	background-color: transparent !important;
 	border-color: rgba(88, 166, 255, 0.28) !important;
 	color: #c9d1d9 !important;
 }
 
-body[data-theme="monoDark"] #psEditorTagsBar > div {
-	background-color: #161b22 !important;
-	border-color: #30363d !important;
-}
-
-body[data-theme="monoDark"] #psEditorTagsBar input,
-body[data-theme="monoDark"] #psEditorTagsBar select {
-	background-color: #161b22 !important;
-	border-color: #30363d !important;
-	color: #c9d1d9 !important;
-}
-
-body[data-theme="monoDark"] #psEditorTagsInput {
-	background-color: #161b22 !important;
-}
-
-body[data-theme="monoDark"] #psEditorTagsSuggest {
-	background-color: #0d1117 !important;
-	border-color: #30363d !important;
+body[data-theme="monoDark"] .ps-note-pin.bg-fuchsia-500\/20 {
+	background-color: transparent !important;
+	border-color: rgba(31, 111, 235, 0.6) !important;
+	color: #e6f0ff !important;
+	box-shadow: 0 0 0 1px rgba(31, 111, 235, 0.35), 0 4px 10px rgba(0, 0, 0, 0.35) !important;
 }
 
 body[data-theme="monoDark"] .shadow-soft {
