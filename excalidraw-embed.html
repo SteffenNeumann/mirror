@@ -80,20 +80,18 @@
 				);
 			};
 
-			return (
-				<Excalidraw
-					excalidrawAPI={(api) => {
-						apiRef.current = api;
-						if (pendingSceneRef.current && apiRef.current.updateScene) {
-							apiRef.current.updateScene(pendingSceneRef.current);
-							lastSentRef.current = JSON.stringify(pendingSceneRef.current);
-							pendingSceneRef.current = null;
-						}
-					}}
-					onChange={handleChange}
-					UIOptions={{ canvasActions: { saveToActiveFile: false } }}
-				/>
-			);
+			return React.createElement(Excalidraw, {
+				excalidrawAPI: (api) => {
+					apiRef.current = api;
+					if (pendingSceneRef.current && apiRef.current.updateScene) {
+						apiRef.current.updateScene(pendingSceneRef.current);
+						lastSentRef.current = JSON.stringify(pendingSceneRef.current);
+						pendingSceneRef.current = null;
+					}
+				},
+				onChange: handleChange,
+				UIOptions: { canvasActions: { saveToActiveFile: false } },
+			});
 		}
 
 		const root = createRoot(document.getElementById("root"));

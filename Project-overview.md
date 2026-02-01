@@ -1,13 +1,13 @@
 # Project overview
 
-Datum: 2026-01-31
+Datum: 2026-02-01
 
 Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische Analyse, keine Laufzeitauflösung).
 
-## Aktuelle Änderungen (2026-01-31)
+## Aktuelle Änderungen (2026-02-01)
 
-- Commit `Fix PS note dedupe and tag updates`: Neues `dedupeNotesById` entdoppelt Personal-Space-Notizen nach ID (jüngste gewinnt); `savePersonalSpaceNote` aktualisiert bei Tag-Änderungen die bestehende Note statt eine neue anzulegen; Rendering/Filter nutzen die dedupte Liste.
-- Commit `Update gitstamp`: `gitstamp.txt` auf aktuellen Stand (SHA `1f0983b364cde01846e5437a7664ccaf5bf2cad2`) aktualisiert.
+- Commit `Add self-hosted Excalidraw scene sync`: Excalidraw läuft nun lokal via `/excalidraw-embed.html` (React/Excalidraw-CDN), Szenen werden per PostMessage gelesen/geschrieben, über WebSocket-Typ `excalidraw_scene` pro Note/Room-Scope synchronisiert und serverseitig gepuffert; max Payload ~200 KB, Sichtbarkeit/Offset bleiben wie zuvor. Sichtbare Unterschiede: kein externer excalidraw.com-Login nötig, Inhalt synchronisiert zwischen Clients.
+- Commit `Update gitstamp`: `gitstamp.txt` auf aktuellen Stand (SHA `acf430dcd5154afa2f3e65d08309c7cbad0d7bf5`) aktualisiert.
 
 ## Grafische Übersicht (ASCII)
 
