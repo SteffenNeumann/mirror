@@ -3917,47 +3917,6 @@ wss.on("connection", (ws, req) => {
 			return;
 		}
 
-		if (msg.type === "excalidraw_state") {
-			const items = Array.isArray(msg.items)
-				? msg.items
-				: msg.noteId
-				? [
-					{
-						noteId: msg.noteId,
-						visible: msg.visible,
-						offset: msg.offset,
-					},
-				]
-				: [];
-			const sanitized = [];
-			for (const it of items) {
-				const noteId = String(it && it.noteId ? it.noteId : "").trim();
-				if (!noteId) continue;
-				const visible = Boolean(it && it.visible);
-				const oxRaw = Number(it && it.offset && it.offset.x);
-				const oyRaw = Number(it && it.offset && it.offset.y);
-				const ox = Number.isFinite(oxRaw)
-					? Math.max(-4000, Math.min(4000, oxRaw))
-					: 0;
-				const oy = Number.isFinite(oyRaw)
-					? Math.max(-4000, Math.min(4000, oyRaw))
-					: 0;
-				sanitized.push({ noteId, visible, offset: { x: ox, y: oy } });
-			}
-			if (sanitized.length === 0) return;
-			const map = getRoomExcalidrawState(rk);
-			const fromClientId = typeof msg.clientId === "string" ? msg.clientId : "";
-			for (const it of sanitized) {
-				map.set(it.noteId, { visible: it.visible, offset: it.offset });
-			}
-			broadcast(
-				rk,
-				{ type: "excalidraw_state", room, clientId: fromClientId, items: sanitized },
-				ws
-			);
-			return;
-		}
-
 		if (msg.type === "comment_update") {
 			const clientId = String(msg.clientId || "").trim();
 			if (!clientId) return;
@@ -4056,6 +4015,45 @@ wss.on("connection", (ws, req) => {
 							ts: snap.ts,
 						})
 					);
+					return;
+				}
+
+				if (msg.type === "excalidraw_state") {
+					const items = Array.isArray(msg.items)
+						? msg.items
+						: msg.noteId
+						? [
+							{
+								noteId: msg.noteId,
+								visible: msg.visible,
+								offset: msg.offset,
+							},
+						]
+						: [];
+					const sanitized = [];
+					for (const it of items) {
+						const noteId = String(it && it.noteId ? it.noteId : "").trim();
+						if (!noteId) continue;
+						const visible = Boolean(it && it.visible);
+						const oxRaw = Number(it && it.offset && it.offset.x);
+						const oyRaw = Number(it && it.offset && it.offset.y);
+						const ox = Number.isFinite(oxRaw) ? Math.max(-4000, Math.min(4000, oxRaw)) : 0;
+						const oy = Number.isFinite(oyRaw) ? Math.max(-4000, Math.min(4000, oyRaw)) : 0;
+						sanitized.push({ noteId, visible, offset: { x: ox, y: oy } });
+					}
+					if (sanitized.length === 0) return;
+					const map = getRoomExcalidrawState(rk);
+					const fromClientId = typeof msg.clientId === "string" ? msg.clientId : "";
+					for (const it of sanitized) {
+						map.set(it.noteId, { visible: it.visible, offset: it.offset });
+					}
+					broadcast(
+						rk,
+						{ type: "excalidraw_state", room, clientId: fromClientId, items: sanitized },
+						ws
+					);
+					return;
+				}
 				if (snap.update || snap.text) {
 					ws.send(
 						JSON.stringify({
