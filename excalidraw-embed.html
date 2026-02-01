@@ -33,6 +33,33 @@
 
 		const MAX_BYTES = 200000;
 
+		const normalizeAppStateForLoad = (appState) => {
+			const clean = appState && typeof appState === "object" ? { ...appState } : {};
+			if (clean.collaborators instanceof Map) return clean;
+			const { collaborators, ...rest } = clean;
+			return { ...rest, collaborators: new Map() };
+		};
+
+		const prepareAppStateForSend = (appState) => {
+			const clean = appState && typeof appState === "object" ? { ...appState } : {};
+			const { collaborators, ...rest } = clean;
+			return rest;
+		};
+
+		const normalizeScene = (raw) => {
+			if (!raw || typeof raw !== "object") return null;
+			const elements = Array.isArray(raw.elements) ? raw.elements : [];
+			const appState = normalizeAppStateForLoad(raw.appState);
+			const files = raw.files && typeof raw.files === "object" ? raw.files : {};
+			return { elements, appState, files };
+		};
+
+		const buildScenePayload = (elements, appState, files) => ({
+			elements: Array.isArray(elements) ? elements : [],
+			appState: prepareAppStateForSend(appState),
+			files: files && typeof files === "object" ? files : {},
+		});
+
 		function safeParse(raw) {
 			try {
 				return JSON.parse(String(raw || ""));
@@ -52,13 +79,15 @@
 					const msg = ev && ev.data ? ev.data : null;
 					if (!msg || msg.type !== "excalidraw_load_scene") return;
 					noteIdRef.current = typeof msg.noteId === "string" ? msg.noteId : "";
-					const data = safeParse(msg.scene);
-					if (!data) return;
+					const parsed = normalizeScene(safeParse(msg.scene));
+					if (!parsed) return;
 					if (apiRef.current && apiRef.current.updateScene) {
-						apiRef.current.updateScene(data);
-						lastSentRef.current = JSON.stringify(data);
+						apiRef.current.updateScene(parsed);
+						lastSentRef.current = JSON.stringify(
+							buildScenePayload(parsed.elements, parsed.appState, parsed.files)
+						);
 					} else {
-						pendingSceneRef.current = data;
+						pendingSceneRef.current = parsed;
 					}
 				};
 				window.addEventListener("message", onMessage);
@@ -66,7 +95,9 @@
 			}, []);
 
 			const handleChange = (elements, appState, files) => {
-				const payload = JSON.stringify({ elements, appState, files });
+				const payload = JSON.stringify(
+					buildScenePayload(elements, appState, files)
+				);
 				if (payload.length > MAX_BYTES) return;
 				if (payload === lastSentRef.current) return;
 				lastSentRef.current = payload;
@@ -85,7 +116,13 @@
 					apiRef.current = api;
 					if (pendingSceneRef.current && apiRef.current.updateScene) {
 						apiRef.current.updateScene(pendingSceneRef.current);
-						lastSentRef.current = JSON.stringify(pendingSceneRef.current);
+						lastSentRef.current = JSON.stringify(
+							buildScenePayload(
+								pendingSceneRef.current.elements,
+								pendingSceneRef.current.appState,
+								pendingSceneRef.current.files
+							)
+						);
 						pendingSceneRef.current = null;
 					}
 				},
