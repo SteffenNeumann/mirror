@@ -4456,13 +4456,9 @@
 			top: "rgba(38, 29, 26, 0.9)",
 			bottom: "rgba(28, 22, 20, 0.92)",
 			previewBg: "#1c1614",
-			previewText: "#e8d9cc",
 			previewMetaBg: "rgba(53, 38, 32, 0.75)",
 			previewMetaBorder: "rgba(201, 155, 119, 0.38)",
 			previewMetaText: "rgba(233, 219, 204, 0.92)",
-			previewPreBg: "rgba(45, 32, 26, 0.94)",
-			previewPreBorder: "rgba(201, 155, 119, 0.52)",
-			previewCodeBg: "rgba(201, 155, 119, 0.16)",
 			previewLink: "rgba(201, 155, 119, 0.9)",
 			accentBgSoft: "rgba(201, 155, 119, 0.12)",
 			accentBg: "rgba(201, 155, 119, 0.16)",
@@ -4483,6 +4479,39 @@
 			scrollbarThumbHover: "rgba(201, 155, 119, 0.3)",
 			scrollbarBorder: "rgba(16, 12, 10, 0.6)",
 		},
+		bitterDark: {
+			label: "Bitter Dark",
+			top: "#0d0c10",
+			bottom: "#151518",
+			previewBg: "#0d0c10",
+			previewText: "#f6f3ef",
+			previewLink: "#ff2301",
+			previewMetaBg: "rgba(21, 21, 24, 0.85)",
+			previewMetaBorder: "rgba(255, 35, 1, 0.32)",
+			previewMetaText: "rgba(240, 232, 223, 0.9)",
+			tocBorder: "rgba(255, 35, 1, 0.28)",
+			tocText: "#f6f3ef",
+			tocMuted: "rgba(216, 204, 194, 0.82)",
+			tocHover: "rgba(255, 35, 1, 0.12)",
+			accentBgSoft: "rgba(255, 35, 1, 0.08)",
+			accentBg: "rgba(255, 35, 1, 0.12)",
+			accentBgHover: "rgba(255, 35, 1, 0.18)",
+			accentBadgeBg: "rgba(255, 35, 1, 0.18)",
+			accentStrong: "#ff2301",
+			accentStrongHover: "#e51f00",
+			accentStrongActive: "#c61a00",
+			accentBorder: "rgba(255, 35, 1, 0.32)",
+			accentBorderStrong: "rgba(255, 35, 1, 0.45)",
+			accentText: "rgba(255, 241, 232, 0.98)",
+			accentTextSoft: "rgba(255, 210, 194, 0.92)",
+			accentRing: "rgba(255, 35, 1, 0.28)",
+			accentRingStrong: "rgba(255, 35, 1, 0.4)",
+			blockquoteBorder: "rgba(255, 35, 1, 0.28)",
+			blockquoteText: "rgba(240, 232, 223, 0.9)",
+			scrollbarThumb: "rgba(255, 210, 194, 0.25)",
+			scrollbarThumbHover: "rgba(255, 210, 194, 0.35)",
+			scrollbarBorder: "rgba(13, 12, 16, 0.8)",
+		},
 		coffeeLight: {
 			label: "Coffee Light",
 			top: "rgba(248, 241, 233, 0.95)",
@@ -4492,9 +4521,9 @@
 			previewMetaBg: "rgba(240, 227, 216, 0.9)",
 			previewMetaBorder: "rgba(176, 112, 73, 0.32)",
 			previewMetaText: "rgba(68, 45, 30, 0.9)",
-			previewPreBg: "#f6ebdf",
-			previewPreBorder: "rgba(176, 112, 73, 0.42)",
-			previewCodeBg: "rgba(176, 112, 73, 0.18)",
+			previewLink: "rgba(176, 112, 73, 0.95)",
+			tocText: "#3b2a21",
+			tocMuted: "rgba(92, 70, 53, 0.85)",
 			accentBgSoft: "rgba(176, 112, 73, 0.08)",
 			accentBg: "rgba(176, 112, 73, 0.12)",
 			accentBgHover: "rgba(176, 112, 73, 0.16)",
@@ -4513,6 +4542,39 @@
 			scrollbarThumb: "rgba(176, 112, 73, 0.2)",
 			scrollbarThumbHover: "rgba(176, 112, 73, 0.3)",
 			scrollbarBorder: "rgba(250, 244, 237, 0.9)",
+		},
+		bitterLight: {
+			label: "Bitter Light",
+			top: "#f7f6f4",
+			bottom: "#f0eeeb",
+			previewBg: "#f7f6f4",
+			previewText: "#0d0c10",
+			previewLink: "#ff2301",
+			previewMetaBg: "rgba(240, 238, 234, 0.95)",
+			previewMetaBorder: "rgba(255, 35, 1, 0.22)",
+			previewMetaText: "rgba(21, 21, 24, 0.9)",
+			tocBorder: "rgba(255, 35, 1, 0.2)",
+			tocText: "#0d0c10",
+			tocMuted: "rgba(52, 52, 60, 0.85)",
+			tocHover: "rgba(255, 35, 1, 0.08)",
+			accentBgSoft: "rgba(255, 35, 1, 0.08)",
+			accentBg: "rgba(255, 35, 1, 0.12)",
+			accentBgHover: "rgba(255, 35, 1, 0.16)",
+			accentBadgeBg: "rgba(255, 35, 1, 0.14)",
+			accentStrong: "#ff2301",
+			accentStrongHover: "#e51f00",
+			accentStrongActive: "#c61a00",
+			accentBorder: "rgba(255, 35, 1, 0.25)",
+			accentBorderStrong: "rgba(255, 35, 1, 0.36)",
+			accentText: "rgba(255, 250, 248, 0.98)",
+			accentTextSoft: "rgba(255, 226, 217, 0.94)",
+			accentRing: "rgba(255, 35, 1, 0.2)",
+			accentRingStrong: "rgba(255, 35, 1, 0.32)",
+			blockquoteBorder: "rgba(255, 35, 1, 0.2)",
+			blockquoteText: "rgba(52, 52, 60, 0.9)",
+			scrollbarThumb: "rgba(21, 21, 24, 0.25)",
+			scrollbarThumbHover: "rgba(21, 21, 24, 0.35)",
+			scrollbarBorder: "rgba(230, 228, 224, 0.9)",
 		},
 		monoDark: {
 			label: "Mono Dark",
@@ -4546,9 +4608,9 @@
 			accentBgHover: "rgba(9, 105, 218, 0.16)",
 			accentBadgeBg: "rgba(9, 105, 218, 0.14)",
 			accentStrong: "#0969da",
-			previewPreBg: "rgba(68, 45, 30, 0.06)", // Added new property
-			previewPreBorder: "rgba(176, 112, 73, 0.28)", // Added new property
-			previewCodeBg: "rgba(176, 112, 73, 0.14)", // Added new property
+			accentStrongHover: "#0550ae",
+			accentStrongActive: "#033d8b",
+			accentBorder: "rgba(9, 105, 218, 0.28)",
 			accentBorderStrong: "rgba(9, 105, 218, 0.4)",
 			accentText: "rgba(255, 255, 255, 0.98)",
 			accentTextSoft: "rgba(219, 234, 254, 0.95)",
@@ -8659,8 +8721,6 @@
 		const isMonoLight = activeTheme === "monoLight";
 		const isMonoDark = activeTheme === "monoDark";
 		const isMonoTheme = isMonoLight || isMonoDark;
-		const isCoffeeDark = activeTheme === "coffeeDark";
-		const isCoffeeLight = activeTheme === "coffeeLight";
 		const themeColors = THEMES[activeTheme] || THEMES.fuchsia || {};
 		const nonMonoScrollbarThumb =
 			toAlphaColor(themeColors.accentTextSoft, 0.1) ||
@@ -8735,12 +8795,15 @@
 			themeColors.previewText || (isMonoLight ? "#0f172a" : "#e2e8f0");
 		const previewLink =
 			themeColors.previewLink || (isMonoLight ? "#2563eb" : "#60a5fa");
-		const previewPreBg =
-			themeColors.previewPreBg || (isMonoLight ? "rgba(15,23,42,.04)" : "rgba(2,6,23,.6)");
-		const previewPreBorder =
-			themeColors.previewPreBorder || (isMonoLight ? "rgba(15,23,42,.1)" : "rgba(255,255,255,.08)");
-		const previewCodeBg =
-			themeColors.previewCodeBg || (isMonoLight ? "rgba(15,23,42,.06)" : "rgba(255,255,255,.06)");
+		const previewPreBg = isMonoLight
+			? "rgba(15,23,42,.04)"
+			: "rgba(2,6,23,.6)";
+		const previewPreBorder = isMonoLight
+			? "rgba(15,23,42,.1)"
+			: "rgba(255,255,255,.08)";
+		const previewCodeBg = isMonoLight
+			? "rgba(15,23,42,.06)"
+			: "rgba(255,255,255,.06)";
 		const previewFieldBg = isMonoLight
 			? "rgba(15,23,42,.06)"
 			: "rgba(15,23,42,.6)";
@@ -8793,27 +8856,6 @@
 		const highlightCssUrl = isMonoLight
 			? "https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css"
 			: "https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css";
-		const syntaxCss = isCoffeeDark
-			? `.hljs{color:${previewText} !important;background:${previewPreBg} !important;}
-			.hljs-keyword,.hljs-selector-tag,.hljs-built_in{color:#f6cfa0 !important;}
-			.hljs-string,.hljs-template-tag,.hljs-template-variable{color:#f1c89a !important;}
-			.hljs-number,.hljs-attribute,.hljs-literal{color:#f2b87a !important;}
-			.hljs-title,.hljs-section,.hljs-name{color:#f8dcb2 !important;}
-			.hljs-comment{color:#b89274 !important;}
-			.hljs-meta,.hljs-quote{color:#c9a685 !important;}
-			.hljs-attr,.hljs-variable,.hljs-symbol{color:#f4b489 !important;}
-			.hljs-doctag{color:#f1c89a !important;}`
-			: isCoffeeLight
-				? `.hljs{color:${previewText} !important;background:${previewPreBg} !important;}
-				.hljs-keyword,.hljs-selector-tag,.hljs-built_in{color:#b65a20 !important;}
-				.hljs-string,.hljs-template-tag,.hljs-template-variable{color:#a2521e !important;}
-				.hljs-number,.hljs-attribute,.hljs-literal{color:#b65a20 !important;}
-				.hljs-title,.hljs-section,.hljs-name{color:#c76a28 !important;}
-				.hljs-comment{color:#9a765d !important;}
-				.hljs-meta,.hljs-quote{color:#8b664d !important;}
-				.hljs-attr,.hljs-variable,.hljs-symbol{color:#b65a20 !important;}
-				.hljs-doctag{color:#8a5a2e !important;}`
-				: "";
 		const pdfJsUrl = "/vendor/pdfjs/pdf.mjs";
 		const pdfWorkerUrl = "/vendor/pdfjs/pdf.worker.mjs";
 		const previewBase =
@@ -8883,7 +8925,6 @@
 		.pw-toggle,.pw-copy{display:inline-flex;align-items:center;justify-content:center;height:1.4rem;min-width:1.4rem;padding:0 .35rem;border-radius:999px;border:1px solid ${previewFieldBorder};background:${previewCodeBg};color:${previewFieldText};font-size:.75rem;line-height:1;cursor:pointer;}
 		.pw-toggle:hover,.pw-copy:hover{background:${previewPreBg};}
 		.meta-yaml{margin:0 0 12px 0;font-size:11px;line-height:1.4;color:${previewMetaText};background:${previewMetaBg};border:1px solid ${previewMetaBorder};border-radius:10px;padding:8px 10px;white-space:pre-wrap;}
-		${syntaxCss}
 		*{scrollbar-width:thin;scrollbar-color:transparent transparent;}
 		*::-webkit-scrollbar{width:10px;height:10px;}
 		*::-webkit-scrollbar-track{background:transparent;}
@@ -15964,7 +16005,6 @@ self.onmessage = async (e) => {
 		scheduleSelectionSend();
 		const tabNoteId = getRoomTabNoteIdForRoom(room, key);
 		const activePsNoteId = getActiveRoomTabNoteId();
-		const noteId = tabNoteId || activePsNoteId;
 		updateRoomTabTextLocal(room, key, textarea.value);
 		if (tabNoteId) updateLocalNoteText(tabNoteId, textarea.value);
 		if (activePsNoteId && activePsNoteId !== tabNoteId) {
@@ -16460,26 +16500,31 @@ self.onmessage = async (e) => {
 				cached && typeof cached.text === "string" ? cached.text : "";
 			const nextText = note
 				? String(note.text || "")
-				: cachedText || pendingRoomBootstrapText || "";
+				: !resolvedNoteId
+					? cachedText || pendingRoomBootstrapText || ""
+					: "";
 			pendingRoomBootstrapText = "";
-			textarea.value = nextText;
 			if (note) {
 				applyNoteToEditor(note, null, { skipHistory: true });
-			} else if (resolvedNoteId) {
-				psEditingNoteId = resolvedNoteId;
-				if (psMainHint) {
-					psMainHint.classList.remove("hidden");
-					psMainHint.textContent = "Loading…";
-				}
-				const targetRoom = room;
-				const targetKey = key;
-				void refreshPersonalSpace().then(() => {
-					if (room !== targetRoom || key !== targetKey) return;
-					const refreshed = findNoteById(resolvedNoteId);
-					if (refreshed) {
-						applyNoteToEditor(refreshed, null, { skipHistory: true });
+			} else {
+				if (resolvedNoteId) {
+					psEditingNoteId = resolvedNoteId;
+					if (psMainHint) {
+						psMainHint.classList.remove("hidden");
+						psMainHint.textContent = "Loading…";
 					}
-				});
+					const targetRoom = room;
+					const targetKey = key;
+					void refreshPersonalSpace().then(() => {
+						if (room !== targetRoom || key !== targetKey) return;
+						const refreshed = findNoteById(resolvedNoteId);
+						if (refreshed) {
+							applyNoteToEditor(refreshed, null, { skipHistory: true });
+						}
+					});
+				} else {
+					textarea.value = nextText;
+				}
 			}
 			lastLocalText = textarea.value;
 			metaLeft.textContent = note ? "Room geladen (Note)." : "Room geladen (lokal).";

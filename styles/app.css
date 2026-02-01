@@ -1581,6 +1581,432 @@ body[data-theme="coffeeDark"] .md-content .pw-mask {
 	color: #c7ae9d;
 }
 
+body[data-theme="bitterLight"] {
+	color-scheme: light;
+	background-color: #f7f6f4;
+	color: #0d0c10;
+	--scrollbar-thumb: rgba(21, 21, 24, 0.25);
+	--scrollbar-thumb-hover: rgba(21, 21, 24, 0.35);
+	--scrollbar-border: rgba(230, 228, 224, 0.9);
+	--calendar-event-bg: rgba(247, 246, 244, 0.95);
+	--comment-item-bg: #f7f6f4;
+	--calendar-tooltip-bg: #f7f6f4;
+	--calendar-tooltip-border: rgba(255, 35, 1, 0.24);
+	--calendar-tooltip-text: #0d0c10;
+	--calendar-tooltip-shadow: 0 12px 28px rgba(13, 12, 16, 0.12),
+		inset 0 0 0 1px rgba(255, 35, 1, 0.06);
+	--selection-menu-bg: #fff9f4;
+	--selection-menu-border: #d8d2cb;
+}
+
+body[data-theme="bitterLight"] .bg-glow {
+	display: none;
+}
+
+body[data-theme="bitterLight"] .border-white\/10 {
+	border-color: #d8d2cb !important;
+}
+
+body[data-theme="bitterLight"] .text-slate-100 {
+	color: #0d0c10 !important;
+}
+body[data-theme="bitterLight"] .text-slate-200 {
+	color: #2a292f !important;
+}
+body[data-theme="bitterLight"] .text-slate-300 {
+	color: #414048 !important;
+}
+body[data-theme="bitterLight"] .text-slate-400 {
+	color: #5b5a64 !important;
+}
+body[data-theme="bitterLight"] .text-slate-500 {
+	color: #6f6e79 !important;
+}
+
+body[data-theme="bitterLight"] .bg-white\/5,
+body[data-theme="bitterLight"] .bg-white\/10,
+body[data-theme="bitterLight"] .bg-white\/15,
+body[data-theme="bitterLight"] .bg-white\/20 {
+	background-color: #f7f6f4 !important;
+}
+
+body[data-theme="bitterLight"] .bg-slate-950\/10,
+body[data-theme="bitterLight"] .bg-slate-950\/20,
+body[data-theme="bitterLight"] .bg-slate-950\/25,
+body[data-theme="bitterLight"] .bg-slate-950\/30,
+body[data-theme="bitterLight"] .bg-slate-950\/40,
+body[data-theme="bitterLight"] .bg-slate-950\/60,
+body[data-theme="bitterLight"] .bg-slate-950\/90 {
+	background-color: #f0eeeb !important;
+}
+
+body[data-theme="bitterLight"] .bg-slate-950\/70 {
+	background-color: rgba(21, 21, 24, 0.35) !important;
+}
+
+body[data-theme="bitterLight"] .bg-slate-950\/80 {
+	background-color: rgba(21, 21, 24, 0.45) !important;
+}
+
+body[data-theme="bitterLight"] #settingsBackdrop {
+	background-color: rgba(21, 21, 24, 0.2) !important;
+}
+
+body[data-theme="bitterLight"] #settingsPanel {
+	background-color: #fff9f4 !important;
+	border-color: #d8d2cb !important;
+}
+
+body[data-theme="bitterLight"] #settingsNav {
+	background-color: #f7f6f4 !important;
+}
+
+body[data-theme="bitterLight"] #psEditorTagsBar > div {
+	background-color: #f0eeeb !important;
+	border-color: #d8d2cb !important;
+}
+
+body[data-theme="bitterLight"] #psEditorTagsSuggest {
+	background-color: #f0eeeb !important;
+	border-color: #d8d2cb !important;
+}
+
+body[data-theme="bitterLight"] #psEditorTagsInput {
+	background-color: #f0eeeb !important;
+	color: #0d0c10 !important;
+}
+
+body[data-theme="bitterLight"] #previewPanel .bg-fuchsia-600\/20 {
+	background-color: rgba(255, 35, 1, 0.12) !important;
+}
+
+body[data-theme="bitterLight"] #previewPanel .text-fuchsia-300 {
+	color: #ff2301 !important;
+}
+
+body[data-theme="bitterLight"] .theme-swatch {
+	box-shadow: none;
+}
+
+body[data-theme="bitterLight"] #aiUsePreviewBtn {
+	border-color: rgba(255, 35, 1, 0.25) !important;
+	background-color: rgba(255, 35, 1, 0.12) !important;
+	color: #0d0c10 !important;
+}
+
+body[data-theme="bitterLight"] #aiUsePreviewBtn span:first-child {
+	background-color: #ff2301 !important;
+}
+
+body[data-theme="bitterLight"] .ai-chat-badge {
+	color: #0d0c10 !important;
+	background-color: rgba(21, 21, 24, 0.12) !important;
+}
+
+body[data-theme="bitterLight"] .ai-chat-badge-ai {
+	color: #ff2301 !important;
+	background-color: rgba(255, 35, 1, 0.12) !important;
+}
+
+body[data-theme="bitterLight"] .comment-md-btn {
+	color: #2a292f;
+}
+
+body[data-theme="bitterLight"] .comment-md-btn:hover {
+	color: #0d0c10;
+	background: rgba(255, 35, 1, 0.08);
+}
+
+body[data-theme="bitterLight"] .comment-body code {
+	background: rgba(255, 35, 1, 0.12);
+}
+
+body[data-theme="bitterLight"] .comment-body pre {
+	border-color: rgba(21, 21, 24, 0.14);
+	background: rgba(255, 35, 1, 0.06);
+}
+
+body[data-theme="bitterLight"] .comment-reply-badge {
+	color: #0d0c10;
+}
+
+body[data-theme="bitterLight"] .shadow-soft {
+	box-shadow: 0 6px 14px rgba(13, 12, 16, 0.12);
+}
+
+body[data-theme="bitterLight"] #previewPanel {
+	background-color: #fff9f4 !important;
+	border-color: #d8d2cb !important;
+}
+
+body[data-theme="bitterLight"] #toggleComments,
+body[data-theme="bitterLight"] #psMetaToggle,
+body[data-theme="bitterLight"] #clearMirror,
+body[data-theme="bitterLight"] #copyMirror,
+body[data-theme="bitterLight"] #psEditorTagsBar,
+body[data-theme="bitterLight"] #psEditorTagsBar > div {
+	background: rgba(247, 246, 244, 0.8) !important;
+	border-color: rgba(216, 210, 203, 0.7) !important;
+	box-shadow: 0 3px 8px rgba(13, 12, 16, 0.12) !important;
+}
+
+body[data-theme="bitterLight"] #commentPanel {
+	background: rgba(247, 246, 244, 0.8) !important;
+	border-color: rgba(216, 210, 203, 0.7) !important;
+	box-shadow: 0 4px 12px rgba(13, 12, 16, 0.12) !important;
+}
+
+body[data-theme="bitterLight"] #commentPanel .bg-rose-500\/10 {
+	background-color: rgba(255, 35, 1, 0.12) !important;
+	border-color: rgba(255, 35, 1, 0.3) !important;
+	color: #b01b00 !important;
+}
+
+body[data-theme="bitterLight"] .hover\:bg-white\/5:hover {
+	background-color: #f0eeeb !important;
+}
+body[data-theme="bitterLight"] .hover\:bg-white\/10:hover {
+	background-color: #ebe9e6 !important;
+}
+body[data-theme="bitterLight"] .hover\:bg-white\/15:hover {
+	background-color: #e6e3df !important;
+}
+body[data-theme="bitterLight"] .active\:bg-white\/10:active {
+	background-color: #e0dcd7 !important;
+}
+body[data-theme="bitterLight"] .active\:bg-white\/15:active {
+	background-color: #d8d3cd !important;
+}
+body[data-theme="bitterLight"] .active\:bg-white\/20:active {
+	background-color: #cfc9c3 !important;
+}
+
+body[data-theme="bitterLight"] input,
+body[data-theme="bitterLight"] select,
+body[data-theme="bitterLight"] textarea {
+	background-color: #fff9f4;
+	color: #0d0c10;
+	border-color: #d8d2cb;
+}
+
+body[data-theme="bitterLight"] ::placeholder {
+	color: #5b5a64;
+}
+
+body[data-theme="bitterLight"] .md-content pre {
+	background: #f0eeeb;
+	border-color: #d8d2cb;
+}
+
+body[data-theme="bitterLight"] .md-content code {
+	background: #ebe9e6;
+}
+
+body[data-theme="bitterLight"] .md-content th,
+body[data-theme="bitterLight"] .md-content td {
+	border-color: #d8d2cb;
+}
+
+body[data-theme="bitterLight"] .md-content .pw-field {
+	background: #f0eeeb;
+	border-color: #d8d2cb;
+	color: #0d0c10;
+}
+
+body[data-theme="bitterLight"] .md-content .pw-mask {
+	color: #2a292f;
+}
+
+body[data-theme="bitterLight"] #mirror.pw-mask-enabled,
+body[data-theme="bitterLight"] #mirror.attribution-active {
+	caret-color: #0d0c10;
+}
+
+body[data-theme="bitterDark"] {
+	color-scheme: dark;
+	background-color: #0d0c10;
+	color: #f0e8df;
+	--selection-menu-bg: #151518;
+	--selection-menu-border: #2a2a30;
+	--comment-item-bg: #151518;
+	--calendar-event-bg: rgba(13, 12, 16, 0.9);
+	--calendar-tooltip-bg: #151518;
+	--calendar-tooltip-border: rgba(255, 35, 1, 0.32);
+	--calendar-tooltip-text: #f0e8df;
+	--calendar-tooltip-shadow: 0 12px 28px rgba(0, 0, 0, 0.42),
+		inset 0 0 0 1px rgba(255, 35, 1, 0.12);
+	--scrollbar-thumb: rgba(255, 210, 194, 0.25);
+	--scrollbar-thumb-hover: rgba(255, 210, 194, 0.35);
+	--scrollbar-border: rgba(13, 12, 16, 0.8);
+}
+
+body[data-theme="bitterDark"] .bg-glow {
+	display: none;
+}
+
+body[data-theme="bitterDark"] .border-white\/10 {
+	border-color: #2a2a30 !important;
+}
+
+body[data-theme="bitterDark"] .text-slate-100 {
+	color: #f0e8df !important;
+}
+body[data-theme="bitterDark"] .text-slate-200 {
+	color: #d8cdc3 !important;
+}
+body[data-theme="bitterDark"] .text-slate-300 {
+	color: #c0b5ad !important;
+}
+body[data-theme="bitterDark"] .text-slate-400 {
+	color: #a4968c !important;
+}
+body[data-theme="bitterDark"] .text-slate-500 {
+	color: #8a7b70 !important;
+}
+
+body[data-theme="bitterDark"] .bg-white\/5,
+body[data-theme="bitterDark"] .bg-white\/10,
+body[data-theme="bitterDark"] .bg-white\/15,
+body[data-theme="bitterDark"] .bg-white\/20 {
+	background-color: #151518 !important;
+}
+
+body[data-theme="bitterDark"] .bg-slate-950\/10,
+body[data-theme="bitterDark"] .bg-slate-950\/20,
+body[data-theme="bitterDark"] .bg-slate-950\/25,
+body[data-theme="bitterDark"] .bg-slate-950\/30,
+body[data-theme="bitterDark"] .bg-slate-950\/40,
+body[data-theme="bitterDark"] .bg-slate-950\/60,
+body[data-theme="bitterDark"] .bg-slate-950\/90 {
+	background-color: #0d0c10 !important;
+}
+
+body[data-theme="bitterDark"] .bg-slate-950\/70 {
+	background-color: rgba(255, 35, 1, 0.18) !important;
+}
+
+body[data-theme="bitterDark"] .bg-slate-950\/80 {
+	background-color: rgba(255, 35, 1, 0.24) !important;
+}
+
+body[data-theme="bitterDark"] .ps-note-item.ps-note-active {
+	background-color: rgba(255, 35, 1, 0.1) !important;
+	border-color: rgba(255, 35, 1, 0.38) !important;
+	box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+}
+
+body[data-theme="bitterDark"] .ps-note-item .ps-note-actions button {
+	box-shadow: none !important;
+	background-color: rgba(255, 35, 1, 0.1) !important;
+	border-color: rgba(255, 35, 1, 0.28) !important;
+}
+
+body[data-theme="bitterDark"] .ps-note-item .ps-note-actions button:hover {
+	background-color: rgba(255, 35, 1, 0.16) !important;
+}
+
+body[data-theme="bitterDark"] .ps-note-item.ps-note-active span.rounded-full.border {
+	background-color: rgba(255, 35, 1, 0.1) !important;
+	border-color: rgba(255, 35, 1, 0.28) !important;
+	color: #f0e8df !important;
+}
+
+body[data-theme="bitterDark"] #psEditorTagsBar > div {
+	background-color: #151518 !important;
+	border-color: #2a2a30 !important;
+}
+
+body[data-theme="bitterDark"] #psEditorTagsBar input,
+body[data-theme="bitterDark"] #psEditorTagsBar select {
+	background-color: #151518 !important;
+	border-color: #2a2a30 !important;
+	color: #f0e8df !important;
+}
+
+body[data-theme="bitterDark"] #psEditorTagsInput {
+	background-color: #151518 !important;
+}
+
+body[data-theme="bitterDark"] #psEditorTagsSuggest {
+	background-color: #0d0c10 !important;
+	border-color: #2a2a30 !important;
+}
+
+body[data-theme="bitterDark"] .shadow-soft {
+	box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+}
+
+body[data-theme="bitterDark"] #previewPanel,
+body[data-theme="bitterDark"] #commentPanel {
+	background: rgba(21, 21, 24, 0.88) !important;
+	border-color: rgba(42, 42, 48, 0.7) !important;
+}
+
+body[data-theme="bitterDark"] #toggleComments,
+body[data-theme="bitterDark"] #psMetaToggle,
+body[data-theme="bitterDark"] #clearMirror,
+body[data-theme="bitterDark"] #copyMirror,
+body[data-theme="bitterDark"] #psEditorTagsBar,
+body[data-theme="bitterDark"] #psEditorTagsBar > div {
+	background: rgba(21, 21, 24, 0.88) !important;
+	border-color: rgba(42, 42, 48, 0.7) !important;
+}
+
+body[data-theme="bitterDark"] .hover\:bg-white\/5:hover {
+	background-color: #1a191f !important;
+}
+body[data-theme="bitterDark"] .hover\:bg-white\/10:hover {
+	background-color: #201f25 !important;
+}
+body[data-theme="bitterDark"] .hover\:bg-white\/15:hover {
+	background-color: #26252c !important;
+}
+body[data-theme="bitterDark"] .active\:bg-white\/10:active {
+	background-color: #201f25 !important;
+}
+body[data-theme="bitterDark"] .active\:bg-white\/15:active {
+	background-color: #27262d !important;
+}
+body[data-theme="bitterDark"] .active\:bg-white\/20:active {
+	background-color: #2f2d35 !important;
+}
+
+body[data-theme="bitterDark"] input,
+body[data-theme="bitterDark"] select,
+body[data-theme="bitterDark"] textarea {
+	background-color: #0d0c10;
+	color: #f0e8df;
+	border-color: #2a2a30;
+}
+
+body[data-theme="bitterDark"] ::placeholder {
+	color: #a4968c;
+}
+
+body[data-theme="bitterDark"] .md-content pre {
+	background: #0d0c10;
+	border-color: #2a2a30;
+}
+
+body[data-theme="bitterDark"] .md-content code {
+	background: rgba(255, 210, 194, 0.1);
+}
+
+body[data-theme="bitterDark"] .md-content th,
+body[data-theme="bitterDark"] .md-content td {
+	border-color: #2a2a30;
+}
+
+body[data-theme="bitterDark"] .md-content .pw-field {
+	background: #0d0c10;
+	border-color: #2a2a30;
+	color: #f0e8df;
+}
+
+body[data-theme="bitterDark"] .md-content .pw-mask {
+	color: #c0b5ad;
+}
+
 body[data-theme="coffeeDark"] #mirror.pw-mask-enabled,
 body[data-theme="coffeeDark"] #mirror.attribution-active {
 	color: transparent !important;
