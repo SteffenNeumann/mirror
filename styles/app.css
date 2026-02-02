@@ -1440,10 +1440,12 @@ body[data-theme="coffeeLight"] ::placeholder {
 body[data-theme="coffeeLight"] .md-content pre {
 	background: #f3e9df;
 	border-color: #d9c7bc;
+	color: #3b2a21;
 }
 
 body[data-theme="coffeeLight"] .md-content code {
 	background: #f0e3d8;
+	color: #3b2a21;
 }
 
 body[data-theme="coffeeLight"] .md-content th,
@@ -1951,10 +1953,12 @@ body[data-theme="bitterLight"] ::placeholder {
 body[data-theme="bitterLight"] .md-content pre {
 	background: #f0eeeb;
 	border-color: #d8d2cb;
+	color: #0d0c10;
 }
 
 body[data-theme="bitterLight"] .md-content code {
 	background: #ebe9e6;
+	color: #0d0c10;
 }
 
 body[data-theme="bitterLight"] .md-content th,
@@ -2209,10 +2213,12 @@ body[data-theme="bitterDark"] ::placeholder {
 body[data-theme="bitterDark"] .md-content pre {
 	background: #0d0c10;
 	border-color: #2a2a30;
+	color: #f0e8df;
 }
 
 body[data-theme="bitterDark"] .md-content code {
 	background: rgba(255, 210, 194, 0.1);
+	color: #f0e8df;
 }
 
 body[data-theme="bitterDark"] .md-content th,

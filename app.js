@@ -16381,7 +16381,7 @@ self.onmessage = async (e) => {
 		scheduleRoomTabSync({
 			room,
 			key,
-			text: resolveRoomTabSnapshotText(noteId, String(textarea.value || "")),
+			text: resolveRoomTabSnapshotText(tabNoteId, String(textarea.value || "")),
 			lastUsed: Date.now(),
 		});
 		updatePreview();
