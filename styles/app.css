@@ -1450,6 +1450,7 @@ body[data-theme="coffeeDark"] {
 	color-scheme: dark;
 	background-color: #1c1614;
 	color: #e8d9cc;
+	--coffee-accent: #c99b77;
 	--selection-menu-bg: #1c1511;
 	--selection-menu-border: #3b2820;
 	--comment-item-bg: #261b16;
@@ -1513,26 +1514,64 @@ body[data-theme="coffeeDark"] .bg-slate-950\/80 {
 	background-color: rgba(201, 155, 119, 0.24) !important;
 }
 
+body[data-theme="coffeeDark"] .border-fuchsia-400\/30 {
+	border-color: rgba(201, 155, 119, 0.55) !important;
+}
+
+body[data-theme="coffeeDark"] .bg-fuchsia-500\/15,
+body[data-theme="coffeeDark"] .bg-fuchsia-500\/20,
+body[data-theme="coffeeDark"] .bg-fuchsia-500\/25,
+body[data-theme="coffeeDark"] .bg-fuchsia-600\/20 {
+	background-color: transparent !important;
+	color: var(--coffee-accent) !important;
+}
+
+body[data-theme="coffeeDark"] .hover\:bg-fuchsia-500\/20:hover,
+body[data-theme="coffeeDark"] .hover\:bg-fuchsia-500\/25:hover {
+	background-color: transparent !important;
+	color: var(--coffee-accent) !important;
+}
+
+body[data-theme="coffeeDark"] .text-fuchsia-100,
+body[data-theme="coffeeDark"] .text-fuchsia-200,
+body[data-theme="coffeeDark"] .text-fuchsia-300 {
+	color: var(--coffee-accent) !important;
+}
+
 body[data-theme="coffeeDark"] .ps-note-item.ps-note-active {
-	background-color: rgba(201, 155, 119, 0.12) !important;
-	border-color: rgba(201, 155, 119, 0.45) !important;
-	box-shadow: 0 6px 14px rgba(201, 155, 119, 0.14);
+	background-color: transparent !important;
+	border-color: rgba(201, 155, 119, 0.55) !important;
+	box-shadow: none;
+	color: var(--coffee-accent) !important;
+}
+
+body[data-theme="coffeeDark"] .ps-note-item.ps-note-active .ps-note-excerpt,
+body[data-theme="coffeeDark"] .ps-note-item.ps-note-active .ps-note-title {
+	color: var(--coffee-accent) !important;
 }
 
 body[data-theme="coffeeDark"] .ps-note-item .ps-note-actions button {
 	box-shadow: none !important;
-	background-color: rgba(201, 155, 119, 0.12) !important;
-	border-color: rgba(201, 155, 119, 0.3) !important;
+	background-color: transparent !important;
+	border-color: rgba(201, 155, 119, 0.45) !important;
+	color: var(--coffee-accent) !important;
 }
 
 body[data-theme="coffeeDark"] .ps-note-item .ps-note-actions button:hover {
-	background-color: rgba(201, 155, 119, 0.18) !important;
+	background-color: transparent !important;
 }
 
 body[data-theme="coffeeDark"] .ps-note-item.ps-note-active span.rounded-full.border {
-	background-color: rgba(201, 155, 119, 0.12) !important;
-	border-color: rgba(201, 155, 119, 0.3) !important;
-	color: #e8d9cc !important;
+	background-color: transparent !important;
+	border-color: rgba(201, 155, 119, 0.45) !important;
+	color: var(--coffee-accent) !important;
+}
+
+body[data-theme="coffeeDark"] [aria-pressed="true"],
+body[data-theme="coffeeDark"] .ps-tag-button.ps-tag-active,
+body[data-theme="coffeeDark"] .ps-note-item.ps-note-active,
+body[data-theme="coffeeDark"] .ps-tag-section .ps-tag-active {
+	color: var(--coffee-accent) !important;
 }
 
 body[data-theme="coffeeDark"] #psEditorTagsBar > div {
@@ -1904,6 +1943,7 @@ body[data-theme="bitterDark"] {
 	color-scheme: dark;
 	background-color: #0d0c10;
 	color: #f0e8df;
+	--bitter-accent: #ff3b1f;
 	--selection-menu-bg: #151518;
 	--selection-menu-border: #2a2a30;
 	--comment-item-bg: #151518;
@@ -1967,6 +2007,30 @@ body[data-theme="bitterDark"] .bg-slate-950\/80 {
 	background-color: rgba(255, 35, 1, 0.24) !important;
 }
 
+body[data-theme="bitterDark"] .border-fuchsia-400\/30 {
+	border-color: rgba(255, 35, 1, 0.55) !important;
+}
+
+body[data-theme="bitterDark"] .bg-fuchsia-500\/15,
+body[data-theme="bitterDark"] .bg-fuchsia-500\/20,
+body[data-theme="bitterDark"] .bg-fuchsia-500\/25,
+body[data-theme="bitterDark"] .bg-fuchsia-600\/20 {
+	background-color: transparent !important;
+	color: var(--bitter-accent) !important;
+}
+
+body[data-theme="bitterDark"] .hover\:bg-fuchsia-500\/20:hover,
+body[data-theme="bitterDark"] .hover\:bg-fuchsia-500\/25:hover {
+	background-color: transparent !important;
+	color: var(--bitter-accent) !important;
+}
+
+body[data-theme="bitterDark"] .text-fuchsia-100,
+body[data-theme="bitterDark"] .text-fuchsia-200,
+body[data-theme="bitterDark"] .text-fuchsia-300 {
+	color: var(--bitter-accent) !important;
+}
+
 body[data-theme="bitterDark"] #settingsBackdrop {
 	background-color: rgba(13, 12, 16, 0.6) !important;
 }
@@ -1981,25 +2045,39 @@ body[data-theme="bitterDark"] #settingsNav {
 }
 
 body[data-theme="bitterDark"] .ps-note-item.ps-note-active {
-	background-color: rgba(255, 35, 1, 0.1) !important;
-	border-color: rgba(255, 35, 1, 0.38) !important;
-	box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+	background-color: transparent !important;
+	border-color: rgba(255, 35, 1, 0.48) !important;
+	box-shadow: none;
+	color: var(--bitter-accent) !important;
+}
+
+body[data-theme="bitterDark"] .ps-note-item.ps-note-active .ps-note-excerpt,
+body[data-theme="bitterDark"] .ps-note-item.ps-note-active .ps-note-title {
+	color: var(--bitter-accent) !important;
 }
 
 body[data-theme="bitterDark"] .ps-note-item .ps-note-actions button {
 	box-shadow: none !important;
-	background-color: rgba(255, 35, 1, 0.1) !important;
-	border-color: rgba(255, 35, 1, 0.28) !important;
+	background-color: transparent !important;
+	border-color: rgba(255, 35, 1, 0.48) !important;
+	color: var(--bitter-accent) !important;
 }
 
 body[data-theme="bitterDark"] .ps-note-item .ps-note-actions button:hover {
-	background-color: rgba(255, 35, 1, 0.16) !important;
+	background-color: transparent !important;
 }
 
 body[data-theme="bitterDark"] .ps-note-item.ps-note-active span.rounded-full.border {
-	background-color: rgba(255, 35, 1, 0.1) !important;
-	border-color: rgba(255, 35, 1, 0.28) !important;
-	color: #f0e8df !important;
+	background-color: transparent !important;
+	border-color: rgba(255, 35, 1, 0.48) !important;
+	color: var(--bitter-accent) !important;
+}
+
+body[data-theme="bitterDark"] [aria-pressed="true"],
+body[data-theme="bitterDark"] .ps-tag-button.ps-tag-active,
+body[data-theme="bitterDark"] .ps-note-item.ps-note-active,
+body[data-theme="bitterDark"] .ps-tag-section .ps-tag-active {
+	color: var(--bitter-accent) !important;
 }
 
 body[data-theme="bitterDark"] #psEditorTagsBar > div {
