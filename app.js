@@ -10671,7 +10671,7 @@
 									: ""
 							}
 						</div>
-						${chips ? `<div class="mt-2 flex flex-wrap gap-1">${chips}</div>` : ""}
+						${chips ? `<div class="mt-2 flex flex-wrap gap-1 ps-note-tags">${chips}</div>` : ""}
 					</div>
 				`;
 			})

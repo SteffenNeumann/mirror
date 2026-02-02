@@ -370,6 +370,12 @@ body.code-lang-active #clearMirror {
 	pointer-events: auto;
 	transform: none;
 }
+#psList .ps-note-tags {
+	display: none !important;
+}
+#psList .ps-note-item:hover .ps-note-tags {
+	display: flex !important;
+}
 .md-content a {
 	color: rgb(96 165 250);
 	text-decoration: underline;
