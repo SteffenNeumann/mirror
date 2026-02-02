@@ -925,18 +925,21 @@ body.preview-only #editorPreviewGrid > div:first-child {
 }
 #aiUsePreviewBtn {
 	background-color: var(--accent-bg) !important;
+	color: inherit !important;
 }
 #aiUsePreviewBtn:hover {
 	background-color: var(--accent-bg-hover) !important;
 }
 #aiUsePreviewBtn[aria-pressed="true"] {
 	background-color: var(--accent-bg-soft) !important;
+	color: var(--accent-text) !important;
 }
 #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
 	background-color: rgba(255, 255, 255, 0.5) !important;
 }
 #aiUsePreviewBtn[aria-pressed="false"] {
 	background-color: transparent !important;
+	color: inherit !important;
 }
 #aiUsePreviewBtn[aria-pressed="false"] span:first-child {
 	background-color: rgba(255, 255, 255, 0.35) !important;
@@ -1582,12 +1585,14 @@ body[data-theme="coffeeDark"] #psEditorTagsBar > div {
 #psNewNote {
 	transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease,
 		border-color 0.15s ease;
+	color: inherit !important;
 }
 
 #psNewNote:hover {
 	background-color: rgba(255, 255, 255, 0.08) !important;
 	box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
 	transform: translateY(-1px);
+	color: var(--accent-text) !important;
 }
 
 #psNewNote:active {
