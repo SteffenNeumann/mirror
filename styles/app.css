@@ -2104,10 +2104,34 @@ body[data-theme="bitterDark"] .ps-note-item.ps-note-active span.rounded-full.bor
 	border-color: rgba(42, 42, 48, 0.7) !important;
 }
 
+body[data-theme="bitterDark"] #psNewNote,
+body[data-theme="bitterDark"] #psSaveMain,
+body[data-theme="bitterDark"] #roomTabs .text-fuchsia-100 {
+	background-color: var(--bitter-accent) !important;
+	border-color: var(--bitter-accent) !important;
+	color: #ffffff !important;
+}
+
+body[data-theme="bitterDark"] #aiUsePreviewBtn[aria-pressed="true"] {
+	background-color: var(--bitter-accent) !important;
+	border-color: var(--bitter-accent) !important;
+	color: #ffffff !important;
+}
+
+body[data-theme="bitterDark"] #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
+	background-color: #ffffff !important;
+}
+
+body[data-theme="bitterDark"] #aiUsePreviewBtn[aria-pressed="true"] span:last-child {
+	color: #ffffff !important;
+}
+
 body[data-theme="bitterDark"] [aria-pressed="true"],
 body[data-theme="bitterDark"] .ps-tag-button.ps-tag-active,
 body[data-theme="bitterDark"] .ps-tag-section .ps-tag-active {
-	color: var(--bitter-accent) !important;
+	background-color: var(--bitter-accent) !important;
+	color: #ffffff !important;
+	border-color: var(--bitter-accent) !important;
 }
 
 body[data-theme="bitterDark"] #psEditorTagsBar > div {
@@ -2682,6 +2706,28 @@ body[data-theme="monoDark"] .ps-note-item.ps-note-active {
 	box-shadow: 0 6px 14px rgba(88, 166, 255, 0.12);
 }
 
+body[data-theme="monoDark"] #psNewNote,
+body[data-theme="monoDark"] #psSaveMain,
+body[data-theme="monoDark"] #roomTabs .text-fuchsia-100 {
+	background-color: var(--mono-accent) !important;
+	border-color: var(--mono-accent) !important;
+	color: #ffffff !important;
+}
+
+body[data-theme="monoDark"] #aiUsePreviewBtn[aria-pressed="true"] {
+	background-color: var(--mono-accent) !important;
+	border-color: var(--mono-accent) !important;
+	color: #ffffff !important;
+}
+
+body[data-theme="monoDark"] #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
+	background-color: #ffffff !important;
+}
+
+body[data-theme="monoDark"] #aiUsePreviewBtn[aria-pressed="true"] span:last-child {
+	color: #ffffff !important;
+}
+
 body[data-theme="monoDark"] .ps-note-item .ps-note-actions button {
 	box-shadow: none !important;
 	background-color: transparent !important;
@@ -2696,6 +2742,14 @@ body[data-theme="monoDark"] .ps-note-item.ps-note-active span.rounded-full.borde
 	background-color: transparent !important;
 	border-color: rgba(88, 166, 255, 0.28) !important;
 	color: #c9d1d9 !important;
+}
+
+body[data-theme="monoDark"] [aria-pressed="true"],
+body[data-theme="monoDark"] .ps-tag-button.ps-tag-active,
+body[data-theme="monoDark"] .ps-tag-section .ps-tag-active {
+	background-color: var(--mono-accent) !important;
+	color: #ffffff !important;
+	border-color: var(--mono-accent) !important;
 }
 
 body[data-theme="monoDark"] .ps-note-pin.bg-fuchsia-500\/20 {
