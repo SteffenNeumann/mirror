@@ -119,6 +119,14 @@ Best Practices:
 - Encourage team collaboration
 - Keep it concise and clear
 
+## Version Control Workflow
+- - Branch: main (primary branch)-use allway the actual branch
+- Before starting work:
+- git pull
+- After finishing work:
+- git add .
+- git commit -m "Description of changes"
+git push
 
 ## 5. Safety and Testing Guidelines
 

@@ -188,6 +188,25 @@ body.glow-disabled .bg-glow {
 	box-shadow: 0 5px 14px rgba(2, 6, 23, 0.22);
 }
 
+#toggleExcalidraw {
+	color: var(--accent-text) !important;
+	background: var(--accent-bg) !important;
+	border-color: var(--accent-border) !important;
+	box-shadow: 0 5px 14px rgba(217, 70, 239, 0.22) !important;
+}
+
+#toggleExcalidraw:hover {
+	background: var(--accent-bg-hover) !important;
+	border-color: var(--accent-border-strong) !important;
+	color: var(--accent-text-soft) !important;
+}
+
+#toggleExcalidraw[aria-pressed="true"] {
+	background: var(--accent-bg-hover) !important;
+	border-color: var(--accent-border-strong) !important;
+	box-shadow: 0 6px 18px rgba(217, 70, 239, 0.3) !important;
+}
+
 #psEditorTagsBar > div {
 	flex-wrap: nowrap;
 	overflow-x: auto;
@@ -586,16 +605,21 @@ body.code-lang-active #clearMirror {
 	display: none;
 }
 #mirror.excalidraw-active {
-	opacity: 0;
-	pointer-events: none;
+	opacity: 1;
+	pointer-events: auto;
 }
 
 #excalidrawEmbed.excalidraw-embed {
 	position: absolute;
-	top: 12.5rem;
-	right: 0;
-	bottom: 4.5rem;
-	left: 0;
+	top: 6rem;
+	left: 0.75rem;
+	width: min(960px, calc(100% - 1.5rem));
+	height: min(640px, calc(100% - 6rem));
+	max-width: calc(100% - 1.5rem);
+	max-height: calc(100% - 6rem);
+	min-width: min(480px, calc(100% - 1.5rem));
+	min-height: 320px;
+	resize: both;
 	z-index: 20;
 	border-radius: 0.75rem;
 	overflow: hidden;
@@ -614,8 +638,8 @@ body.code-lang-active #clearMirror {
 
 .excalidraw-drag-handle {
 	position: absolute;
-	top: 1.75rem;
-	left: 4.5rem;
+	top: 0.75rem;
+	left: 0.75rem;
 	z-index: 25;
 	inline-size: 2.25rem;
 	block-size: 2.25rem;
@@ -623,18 +647,24 @@ body.code-lang-active #clearMirror {
 	align-items: center;
 	justify-content: center;
 	border-radius: 0.75rem;
-	border: 1px solid rgba(255, 255, 255, 0.12);
-	background: rgba(2, 6, 23, 0.75);
-	color: rgba(226, 232, 240, 0.9);
-	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
+	border: 1px solid var(--accent-border);
+	background: var(--accent-bg);
+	color: var(--accent-text);
+	box-shadow: 0 4px 14px rgba(217, 70, 239, 0.25);
 	cursor: grab;
 	user-select: none;
 	backdrop-filter: blur(12px) saturate(140%);
 	-webkit-backdrop-filter: blur(12px) saturate(140%);
 }
+.excalidraw-drag-handle:hover {
+	background: var(--accent-bg-hover);
+	border-color: var(--accent-border-strong);
+	color: var(--accent-text-soft);
+}
 .excalidraw-drag-handle:active {
 	cursor: grabbing;
-	background: rgba(2, 6, 23, 0.82);
+	background: var(--accent-bg-hover);
+	box-shadow: 0 4px 14px rgba(217, 70, 239, 0.3);
 }
 #excalidrawEmbed.excalidraw-dragging {
 	transition: none;
