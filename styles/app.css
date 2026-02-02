@@ -926,6 +926,7 @@ body.preview-only #editorPreviewGrid > div:first-child {
 #aiUsePreviewBtn {
 	background-color: var(--accent-bg) !important;
 	color: inherit !important;
+	--ai-preview-dot-off: rgba(148, 163, 184, 0.65);
 }
 #aiUsePreviewBtn:hover {
 	background-color: var(--accent-bg-hover) !important;
@@ -935,14 +936,14 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	color: var(--accent-text) !important;
 }
 #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
-	background-color: rgba(255, 255, 255, 0.5) !important;
+	background-color: var(--accent-text) !important;
 }
 #aiUsePreviewBtn[aria-pressed="false"] {
 	background-color: transparent !important;
 	color: inherit !important;
 }
 #aiUsePreviewBtn[aria-pressed="false"] span:first-child {
-	background-color: rgba(255, 255, 255, 0.35) !important;
+	background-color: var(--ai-preview-dot-off) !important;
 }
 .border-fuchsia-400\/30 {
 	border-color: var(--accent-border) !important;
@@ -1566,8 +1567,8 @@ body[data-theme="coffeeDark"] .ps-note-item .ps-note-actions button:hover {
 
 body[data-theme="coffeeDark"] .ps-note-item.ps-note-active span.rounded-full.border {
 	background-color: transparent !important;
-	border-color: rgba(201, 155, 119, 0.45) !important;
-	color: var(--coffee-accent) !important;
+	border-color: rgba(53, 38, 30, 0.65) !important;
+	color: inherit !important;
 }
 
 body[data-theme="coffeeDark"] [aria-pressed="true"],
@@ -2084,7 +2085,7 @@ body[data-theme="bitterDark"] .ps-note-item .ps-note-actions button:hover {
 
 body[data-theme="bitterDark"] .ps-note-item.ps-note-active span.rounded-full.border {
 	background-color: transparent !important;
-	border-color: rgba(255, 35, 1, 0.48) !important;
+	border-color: rgba(42, 42, 48, 0.7) !important;
 }
 
 body[data-theme="bitterDark"] [aria-pressed="true"],
