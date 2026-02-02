@@ -1443,6 +1443,16 @@ body[data-theme="coffeeLight"] .md-content pre {
 	color: #3b2a21;
 }
 
+body[data-theme="coffeeLight"] .md-content pre.hljs {
+	background: #f3e9df;
+	border-color: #d9c7bc;
+	color: #3b2a21;
+}
+
+body[data-theme="coffeeLight"] .md-content pre.hljs code.hljs {
+	color: #3b2a21;
+}
+
 body[data-theme="coffeeLight"] .md-content code {
 	background: #f0e3d8;
 	color: #3b2a21;
@@ -1976,6 +1986,16 @@ body[data-theme="bitterLight"] .md-content pre {
 	color: #0d0c10;
 }
 
+body[data-theme="bitterLight"] .md-content pre.hljs {
+	background: #f0eeeb;
+	border-color: #d8d2cb;
+	color: #0d0c10;
+}
+
+body[data-theme="bitterLight"] .md-content pre.hljs code.hljs {
+	color: #0d0c10;
+}
+
 body[data-theme="bitterLight"] .md-content code {
 	background: #ebe9e6;
 	color: #0d0c10;
@@ -2253,6 +2273,16 @@ body[data-theme="bitterDark"] ::placeholder {
 body[data-theme="bitterDark"] .md-content pre {
 	background: #0d0c10;
 	border-color: #2a2a30;
+	color: #f0e8df;
+}
+
+body[data-theme="bitterDark"] .md-content pre.hljs {
+	background: #0d0c10;
+	border-color: #2a2a30;
+	color: #f0e8df;
+}
+
+body[data-theme="bitterDark"] .md-content pre.hljs code.hljs {
 	color: #f0e8df;
 }
 
