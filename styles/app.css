@@ -933,13 +933,13 @@ body.preview-only #editorPreviewGrid > div:first-child {
 }
 #aiUsePreviewBtn[aria-pressed="true"] {
 	background-color: transparent !important;
-	color: rgb(255 35 1) !important;
+	color: var(--accent-text, #ff2301) !important;
 }
 #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
-	background-color: rgb(255 35 1) !important;
+	background-color: var(--accent-text, #ff2301) !important;
 }
 #aiUsePreviewBtn[aria-pressed="true"] span:last-child {
-	color: rgb(255 35 1) !important;
+	color: var(--accent-text, #ff2301) !important;
 }
 #aiUsePreviewBtn[aria-pressed="false"] {
 	background-color: transparent !important;
