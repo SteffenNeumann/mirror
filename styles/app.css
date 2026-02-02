@@ -924,15 +924,15 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	background-color: var(--accent-bg-hover) !important;
 }
 #aiUsePreviewBtn {
-	background-color: var(--accent-bg) !important;
+	background-color: transparent !important;
 	color: inherit !important;
 	--ai-preview-dot-off: rgba(148, 163, 184, 0.65);
 }
 #aiUsePreviewBtn:hover {
-	background-color: var(--accent-bg-hover) !important;
+	background-color: transparent !important;
 }
 #aiUsePreviewBtn[aria-pressed="true"] {
-	background-color: var(--accent-bg-soft) !important;
+	background-color: transparent !important;
 	color: var(--accent-text) !important;
 }
 #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
