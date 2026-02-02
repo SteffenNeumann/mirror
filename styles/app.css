@@ -175,7 +175,6 @@ body.glow-disabled .bg-glow {
 }
 
 #toggleComments,
-#toggleExcalidraw,
 #psMetaToggle,
 #clearMirror,
 #copyMirror,
@@ -192,7 +191,9 @@ body.glow-disabled .bg-glow {
 	color: var(--accent-text) !important;
 	background: var(--accent-bg) !important;
 	border-color: var(--accent-border) !important;
-	box-shadow: 0 5px 14px rgba(217, 70, 239, 0.22) !important;
+	box-shadow: none !important;
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
 }
 
 #toggleExcalidraw:hover {
@@ -204,7 +205,7 @@ body.glow-disabled .bg-glow {
 #toggleExcalidraw[aria-pressed="true"] {
 	background: var(--accent-bg-hover) !important;
 	border-color: var(--accent-border-strong) !important;
-	box-shadow: 0 6px 18px rgba(217, 70, 239, 0.3) !important;
+	box-shadow: none !important;
 }
 
 #psEditorTagsBar > div {
@@ -2460,6 +2461,15 @@ body[data-theme="monoLight"] .bg-fuchsia-600\/20 {
 	color: var(--mono-accent) !important;
 }
 
+body[data-theme="monoLight"] #toggleExcalidraw {
+	background: transparent !important;
+	color: var(--mono-accent) !important;
+	border-color: #d0d7de !important;
+	box-shadow: none !important;
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
+}
+
 body[data-theme="monoLight"] .hover\:bg-fuchsia-500\/20:hover,
 body[data-theme="monoLight"] .hover\:bg-fuchsia-500\/25:hover {
 	background-color: transparent !important;
@@ -2791,6 +2801,15 @@ body[data-theme="monoDark"] .bg-fuchsia-500\/25,
 body[data-theme="monoDark"] .bg-fuchsia-600\/20 {
 	background-color: transparent !important;
 	color: var(--mono-accent) !important;
+}
+
+body[data-theme="monoDark"] #toggleExcalidraw {
+	background: transparent !important;
+	color: var(--mono-accent) !important;
+	border-color: #30363d !important;
+	box-shadow: none !important;
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
 }
 
 body[data-theme="monoDark"] .hover\:bg-fuchsia-500\/20:hover,
