@@ -371,10 +371,17 @@ body.code-lang-active #clearMirror {
 	transform: none;
 }
 #psList .ps-note-tags {
-	display: none !important;
+	display: flex;
+	min-height: 24px;
+	visibility: hidden;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.15s ease;
 }
 #psList .ps-note-item:hover .ps-note-tags {
-	display: flex !important;
+	visibility: visible;
+	opacity: 1;
+	pointer-events: auto;
 }
 .md-content a {
 	color: rgb(96 165 250);
