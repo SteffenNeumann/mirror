@@ -938,6 +938,9 @@ body.preview-only #editorPreviewGrid > div:first-child {
 #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
 	background-color: var(--accent-text) !important;
 }
+#aiUsePreviewBtn[aria-pressed="true"] span:last-child {
+	color: var(--accent-text) !important;
+}
 #aiUsePreviewBtn[aria-pressed="false"] {
 	background-color: transparent !important;
 	color: inherit !important;
