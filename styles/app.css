@@ -2212,6 +2212,23 @@ body[data-theme="bitterDark"] #psEditorTagsBar select {
 	color: #f0e8df !important;
 }
 
+body[data-theme="bitterDark"] #psSortMenu {
+	background-color: #151518 !important;
+	border-color: #2a2a30 !important;
+}
+
+body[data-theme="bitterDark"] #psSortMenu .ps-sort-option {
+	color: #f0e8df !important;
+}
+
+body[data-theme="bitterDark"] #psSortMenu .ps-sort-option:hover {
+	background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+body[data-theme="bitterDark"] #psSortMenu .ps-sort-check {
+	color: var(--bitter-accent) !important;
+}
+
 body[data-theme="bitterDark"] #psEditorTagsInput {
 	background-color: #151518 !important;
 }
