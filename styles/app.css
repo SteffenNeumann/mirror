@@ -1438,14 +1438,14 @@ body[data-theme="coffeeLight"] ::placeholder {
 }
 
 body[data-theme="coffeeLight"] .md-content pre {
-	background: #f3e9df;
-	border-color: #d9c7bc;
+	background: #f8f1e9;
+	border-color: #f8f1e9;
 	color: #3b2a21;
 }
 
 body[data-theme="coffeeLight"] .md-content pre.hljs {
-	background: #f3e9df;
-	border-color: #d9c7bc;
+	background: #f8f1e9;
+	border-color: #f8f1e9;
 	color: #3b2a21;
 }
 
@@ -1981,14 +1981,14 @@ body[data-theme="bitterLight"] ::placeholder {
 }
 
 body[data-theme="bitterLight"] .md-content pre {
-	background: #f0eeeb;
-	border-color: #d8d2cb;
+	background: #f7f6f4;
+	border-color: #f7f6f4;
 	color: #0d0c10;
 }
 
 body[data-theme="bitterLight"] .md-content pre.hljs {
-	background: #f0eeeb;
-	border-color: #d8d2cb;
+	background: #f7f6f4;
+	border-color: #f7f6f4;
 	color: #0d0c10;
 }
 

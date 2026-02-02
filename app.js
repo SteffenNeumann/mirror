@@ -8920,16 +8920,16 @@
 				case "coffeeLight":
 					return {
 						...base,
-						preBg: "#f3e9df",
-						preBorder: "#d9c7bc",
+						preBg: "#f8f1e9",
+						preBorder: "#f8f1e9",
 						preText: "#3b2a21",
 						codeBg: "#f0e3d8",
 					};
 				case "bitterLight":
 					return {
 						...base,
-						preBg: "#f0eeeb",
-						preBorder: "#d8d2cb",
+						preBg: "#f7f6f4",
+						preBorder: "#f7f6f4",
 						preText: "#0d0c10",
 						codeBg: "#ebe9e6",
 					};
@@ -8950,7 +8950,7 @@
 			switch (theme) {
 				case "coffeeLight":
 					return `
-					pre.hljs{background:#f3e9df;border-color:#d9c7bc;color:#3b2a21;}
+					pre.hljs{background:#f8f1e9;border-color:#f8f1e9;color:#3b2a21;}
 					pre.hljs code.hljs, code.hljs{color:#3b2a21;}
 					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#b07049;}
 					.hljs-string,.hljs-attr,.hljs-number{color:#5b3a28;}
@@ -8958,7 +8958,7 @@
 					`;
 				case "bitterLight":
 					return `
-					pre.hljs{background:#f0eeeb;border-color:#d8d2cb;color:#0d0c10;}
+					pre.hljs{background:#f7f6f4;border-color:#f7f6f4;color:#0d0c10;}
 					pre.hljs code.hljs, code.hljs{color:#0d0c10;}
 					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#ff2301;}
 					.hljs-string,.hljs-attr,.hljs-number{color:#7a4c35;}
