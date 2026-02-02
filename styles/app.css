@@ -638,15 +638,15 @@ body.code-lang-active #clearMirror {
 
 .excalidraw-drag-handle {
 	position: absolute;
-	bottom: 0.85rem;
-	right: 3.5rem;
+	bottom: 0.4rem;
+	right: 0.9rem;
 	z-index: 25;
-	inline-size: 2.25rem;
-	block-size: 2.25rem;
+	inline-size: 2.1rem;
+	block-size: 2.1rem;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	border-radius: 0.75rem;
+	border-radius: 0.5rem;
 	border: 1px solid #cbd5e1;
 	background: #e5e7eb;
 	color: #374151;
