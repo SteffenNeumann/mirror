@@ -8828,7 +8828,11 @@
 				themeColors.accentText ||
 				"rgba(148,163,184,.45)"
 			: nonMonoScrollbarThumb;
-		const previewColorScheme = isMonoLight ? "light" : "dark";
+		const isLightSyntax =
+			activeTheme === "monoLight" ||
+			activeTheme === "coffeeLight" ||
+			activeTheme === "bitterLight";
+		const previewColorScheme = isLightSyntax ? "light" : "dark";
 		const previewBg =
 			themeColors.previewBg ||
 			(isMonoLight ? "#f8fafc" : isMonoDark ? "#0d1117" : "rgba(2, 6, 23, 0.4)");
@@ -8836,15 +8840,14 @@
 			themeColors.previewText || (isMonoLight ? "#0f172a" : "#e2e8f0");
 		const previewLink =
 			themeColors.previewLink || (isMonoLight ? "#2563eb" : "#60a5fa");
-		const previewPreBg = isMonoLight
-			? "rgba(15,23,42,.04)"
-			: "rgba(2,6,23,.6)";
-		const previewPreBorder = isMonoLight
-			? "rgba(15,23,42,.1)"
-			: "rgba(255,255,255,.08)";
-		const previewCodeBg = isMonoLight
-			? "rgba(15,23,42,.06)"
-			: "rgba(255,255,255,.06)";
+		const previewPreColors = getPreviewPreColors(activeTheme, {
+			isLightSyntax,
+			previewText,
+		});
+		const previewPreBg = previewPreColors.preBg;
+		const previewPreBorder = previewPreColors.preBorder;
+		const previewPreText = previewPreColors.preText;
+		const previewCodeBg = previewPreColors.codeBg;
 		const previewFieldBg = isMonoLight
 			? "rgba(15,23,42,.06)"
 			: "rgba(15,23,42,.6)";
@@ -8894,9 +8897,85 @@
 				? "rgba(241,245,249,.9)"
 				: "rgba(2,6,23,.35)"
 			: "rgba(2,6,23,.1)";
-		const highlightCssUrl = isMonoLight
+		const highlightCssUrl = isLightSyntax
 			? "https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css"
 			: "https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css";
+		const highlightThemeCss = buildPreviewHighlightCss(activeTheme);
+
+		function getPreviewPreColors(theme, opts) {
+			const lightDefaults = {
+				preBg: "rgba(15,23,42,.04)",
+				preBorder: "rgba(15,23,42,.1)",
+				preText: opts.previewText || "#0f172a",
+				codeBg: "rgba(15,23,42,.06)",
+			};
+			const darkDefaults = {
+				preBg: "rgba(2,6,23,.6)",
+				preBorder: "rgba(255,255,255,.08)",
+				preText: opts.previewText || "#e2e8f0",
+				codeBg: "rgba(255,255,255,.06)",
+			};
+			const base = opts.isLightSyntax ? lightDefaults : darkDefaults;
+			switch (theme) {
+				case "coffeeLight":
+					return {
+						...base,
+						preBg: "#f3e9df",
+						preBorder: "#d9c7bc",
+						preText: "#3b2a21",
+						codeBg: "#f0e3d8",
+					};
+				case "bitterLight":
+					return {
+						...base,
+						preBg: "#f0eeeb",
+						preBorder: "#d8d2cb",
+						preText: "#0d0c10",
+						codeBg: "#ebe9e6",
+					};
+				case "bitterDark":
+					return {
+						...base,
+						preBg: "#0d0c10",
+						preBorder: "#2a2a30",
+						preText: "#f0e8df",
+						codeBg: "rgba(255,210,194,.1)",
+					};
+				default:
+					return base;
+			}
+		}
+
+		function buildPreviewHighlightCss(theme) {
+			switch (theme) {
+				case "coffeeLight":
+					return `
+					pre.hljs{background:#f3e9df;border-color:#d9c7bc;color:#3b2a21;}
+					pre.hljs code.hljs, code.hljs{color:#3b2a21;}
+					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#b07049;}
+					.hljs-string,.hljs-attr,.hljs-number{color:#5b3a28;}
+					.hljs-comment,.hljs-quote{color:rgba(59,42,33,.6);}
+					`;
+				case "bitterLight":
+					return `
+					pre.hljs{background:#f0eeeb;border-color:#d8d2cb;color:#0d0c10;}
+					pre.hljs code.hljs, code.hljs{color:#0d0c10;}
+					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#ff2301;}
+					.hljs-string,.hljs-attr,.hljs-number{color:#7a4c35;}
+					.hljs-comment,.hljs-quote{color:rgba(13,12,16,.55);}
+					`;
+				case "bitterDark":
+					return `
+					pre.hljs{background:#0d0c10;border-color:#2a2a30;color:#f0e8df;}
+					pre.hljs code.hljs, code.hljs{color:#f0e8df;}
+					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#ff2301;}
+					.hljs-string,.hljs-attr,.hljs-number{color:#ffb199;}
+					.hljs-comment,.hljs-quote{color:rgba(240,232,223,.55);}
+					`;
+				default:
+					return "";
+			}
+		}
 		const pdfJsUrl = "/vendor/pdfjs/pdf.mjs";
 		const pdfWorkerUrl = "/vendor/pdfjs/pdf.worker.mjs";
 		const previewBase =
@@ -8955,7 +9034,7 @@
 		.img-tools button{border:0;background:rgba(148,163,184,.15);color:${previewText};font-size:11px;line-height:1;padding:4px 6px;border-radius:999px;cursor:pointer;}
 		.img-tools button:hover{background:rgba(148,163,184,.3);}
     code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;}
-    pre{overflow:auto;border:1px solid ${previewPreBorder};border-radius:12px;padding:12px;background:${previewPreBg};}
+	pre{overflow:auto;border:1px solid ${previewPreBorder};border-radius:12px;padding:12px;background:${previewPreBg};color:${previewPreText};}
     code{background:${previewCodeBg};padding:.15em .35em;border-radius:.35em;}
     pre code{background:transparent;padding:0;}
 		.pw-field{display:inline-flex;align-items:center;gap:.35rem;padding:.1rem .45rem;border-radius:999px;border:1px solid ${previewFieldBorder};background:${previewFieldBg};font-size:.85em;line-height:1.2;}
@@ -9008,6 +9087,7 @@
 		.toc-collapsed .toc-list{display:none;}
 		.toc-collapsed .toc-header{border-bottom:0;}
 		@media (max-width: 900px){.toc-float{right:10px;top:10px;width:180px;max-height:55vh;}}
+${highlightThemeCss}
   </style>
 	<script>(function(){var body=document.body;var hideTimer=null;function show(){body.classList.add('scrollbar-active');if(hideTimer)clearTimeout(hideTimer);hideTimer=setTimeout(function(){body.classList.remove('scrollbar-active');},800);}['scroll','wheel','touchmove'].forEach(function(evt){window.addEventListener(evt,show,{passive:true});});window.addEventListener('keydown',function(e){if(e && (e.key==='PageDown'||e.key==='PageUp'||e.key==='End'||e.key==='Home')){show();}});}());</script>
 </head>
