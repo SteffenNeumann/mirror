@@ -2597,6 +2597,21 @@ body[data-theme="monoLight"] .ps-note-pin.bg-fuchsia-500\/20 {
 	color: #0969da !important;
 }
 
+body[data-theme="monoLight"] .ps-note-item.ps-note-active {
+	background-color: transparent !important;
+	border-color: rgba(9, 105, 218, 0.45) !important;
+	box-shadow: 0 6px 14px rgba(9, 105, 218, 0.12);
+}
+
+body[data-theme="monoLight"] #psNewNote,
+body[data-theme="monoLight"] #psSaveMain,
+body[data-theme="monoLight"] #commentAdd,
+body[data-theme="monoLight"] #aiAssist {
+	background-color: var(--mono-accent) !important;
+	border-color: var(--mono-accent) !important;
+	color: #ffffff !important;
+}
+
 body[data-theme="monoDark"] .ps-note-item.ps-note-active .ps-note-actions button {
 	box-shadow: none !important;
 	background-color: rgba(31, 111, 235, 0.12) !important;
@@ -2623,6 +2638,20 @@ body[data-theme="monoLight"] #aiUsePreviewBtn {
 
 body[data-theme="monoLight"] #aiUsePreviewBtn span:first-child {
 	background-color: transparent !important;
+}
+
+body[data-theme="monoLight"] #aiUsePreviewBtn[aria-pressed="true"] {
+	background-color: var(--mono-accent) !important;
+	border-color: var(--mono-accent) !important;
+	color: #ffffff !important;
+}
+
+body[data-theme="monoLight"] #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
+	background-color: #ffffff !important;
+}
+
+body[data-theme="monoLight"] #aiUsePreviewBtn[aria-pressed="true"] span:last-child {
+	color: #ffffff !important;
 }
 
 body[data-theme="monoLight"] .ai-chat-badge {
@@ -2719,6 +2748,14 @@ body[data-theme="monoLight"] #roomTabs .text-fuchsia-100 {
 	border-color: #d0d7de !important;
 	color: #24292f !important;
 	color: #0b1f33 !important;
+}
+
+body[data-theme="monoLight"] [aria-pressed="true"],
+body[data-theme="monoLight"] .ps-tag-button.ps-tag-active,
+body[data-theme="monoLight"] .ps-tag-section .ps-tag-active {
+	background-color: var(--mono-accent) !important;
+	color: #ffffff !important;
+	border-color: var(--mono-accent) !important;
 }
 
 body[data-theme="monoLight"] .hover\:bg-white\/5:hover {
