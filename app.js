@@ -2171,6 +2171,22 @@
 		if (!menu || !el) return;
 		const coords = getTextareaCaretCoords(el, caretPos);
 		const elRect = el.getBoundingClientRect();
+		if (menu.id === "selectionMenu") {
+			const menuRect = menu.getBoundingClientRect();
+			const baseLeft = coords.left - el.scrollLeft + elRect.left;
+			const baseTop = coords.top - el.scrollTop + elRect.top;
+			const maxLeft = window.innerWidth - Math.max(0, menuRect.width) - 8;
+			const maxTop = window.innerHeight - Math.max(0, menuRect.height) - 8;
+			const nextLeft = Math.max(8, Math.min(baseLeft, maxLeft));
+			const nextTop = Math.max(
+				8,
+				Math.min(baseTop + coords.height + (offsetY || 8), maxTop)
+			);
+			menu.style.position = "fixed";
+			menu.style.left = `${Math.round(nextLeft)}px`;
+			menu.style.top = `${Math.round(nextTop)}px`;
+			return;
+		}
 		const offsetParent = menu.offsetParent || menu.parentElement;
 		if (!offsetParent) return;
 		const parentRect = offsetParent.getBoundingClientRect();
