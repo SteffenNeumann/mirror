@@ -1796,6 +1796,17 @@ body[data-theme="coffeeDark"] .ps-note-pin.bg-fuchsia-500\/20 {
 	color: #e8d9cc !important;
 }
 
+/* Make pinned state obvious in monochrome themes by filling the pin glyph */
+body[data-theme="coffeeDark"] .ps-note-pin.bg-fuchsia-500\/20 svg path,
+body[data-theme="coffeeLight"] .ps-note-pin.bg-fuchsia-500\/20 svg path,
+body[data-theme="bitterDark"] .ps-note-pin.bg-fuchsia-500\/20 svg path,
+body[data-theme="bitterLight"] .ps-note-pin.bg-fuchsia-500\/20 svg path,
+body[data-theme="monoDark"] .ps-note-pin.bg-fuchsia-500\/20 svg path,
+body[data-theme="monoLight"] .ps-note-pin.bg-fuchsia-500\/20 svg path {
+	fill: currentColor !important;
+	stroke: currentColor !important;
+}
+
 body[data-theme="coffeeDark"] #settingsBackdrop {
 	background-color: rgba(16, 12, 10, 0.6) !important;
 }
