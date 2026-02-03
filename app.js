@@ -2173,16 +2173,18 @@
 		const elRect = el.getBoundingClientRect();
 		if (menu.id === "selectionMenu") {
 			const menuRect = menu.getBoundingClientRect();
-			const baseLeft = coords.left - el.scrollLeft + elRect.left;
+			const baseLeft = elRect.left + 50;
 			const baseTop = coords.top - el.scrollTop + elRect.top;
 			const desiredTop = baseTop + coords.height + (offsetY || 8);
 			const flippedTop = baseTop - menuRect.height - (offsetY || 8);
-			const maxLeft = window.innerWidth - Math.max(0, menuRect.width) - 8;
-			const maxTop = window.innerHeight - Math.max(0, menuRect.height) - 8;
-			const nextLeft = Math.max(8, Math.min(baseLeft, maxLeft));
+			const minTop = elRect.top + 8;
+			const maxTop = elRect.bottom - Math.max(0, menuRect.height) - 8;
+			const nextLeft = Math.round(baseLeft);
 			const preferredTop =
-				desiredTop > maxTop && flippedTop >= 8 ? flippedTop : desiredTop;
-			const nextTop = Math.max(8, Math.min(preferredTop, maxTop));
+				desiredTop > maxTop && flippedTop >= minTop
+					? flippedTop
+					: desiredTop;
+			const nextTop = Math.max(minTop, Math.min(preferredTop, maxTop));
 			menu.style.position = "fixed";
 			menu.style.left = `${Math.round(nextLeft)}px`;
 			menu.style.top = `${Math.round(nextTop)}px`;
