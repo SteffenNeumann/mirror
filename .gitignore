@@ -9,3 +9,4 @@ data/
 *.sqlite-wal
 *.sqlite-shm
 *.db
+.github/copilot-instructions.md

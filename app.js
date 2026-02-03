@@ -2170,12 +2170,43 @@
 	function positionFloatingMenu(menu, el, caretPos, offsetY) {
 		if (!menu || !el) return;
 		const coords = getTextareaCaretCoords(el, caretPos);
-		const parent = el.parentElement;
-		if (!parent) return;
 		const elRect = el.getBoundingClientRect();
-		const parentRect = parent.getBoundingClientRect();
-		const left = coords.left - el.scrollLeft + (elRect.left - parentRect.left);
-		const top = coords.top - el.scrollTop + (elRect.top - parentRect.top);
+		if (menu.id === "selectionMenu") {
+			const menuRect = menu.getBoundingClientRect();
+			const selStart = Math.min(
+				Number(el.selectionStart || 0),
+				Number(el.selectionEnd || 0)
+			);
+			const selEnd = Math.max(
+				Number(el.selectionStart || 0),
+				Number(el.selectionEnd || 0)
+			);
+			const startCoords = getTextareaCaretCoords(el, selStart);
+			const endCoords = getTextareaCaretCoords(el, selEnd);
+			const selectionCenter = (startCoords.left + endCoords.left) / 2;
+			const selectionTop = Math.min(startCoords.top, endCoords.top);
+			const desiredLeft =
+				elRect.left + selectionCenter - el.scrollLeft - menuRect.width / 2;
+			const desiredTop =
+				elRect.top + selectionTop - el.scrollTop - menuRect.height - 18;
+			const minTop = elRect.top + 8;
+			const maxTop = elRect.bottom - Math.max(0, menuRect.height) - 8;
+			const minLeft = elRect.left + 8;
+			const maxLeft = elRect.right - Math.max(0, menuRect.width) - 8;
+			const nextLeft = Math.max(minLeft, Math.min(desiredLeft, maxLeft));
+			const nextTop = Math.max(minTop, Math.min(desiredTop, maxTop));
+			menu.style.position = "fixed";
+			menu.style.left = `${Math.round(nextLeft)}px`;
+			menu.style.top = `${Math.round(nextTop)}px`;
+			return;
+		}
+		const offsetParent = menu.offsetParent || menu.parentElement;
+		if (!offsetParent) return;
+		const parentRect = offsetParent.getBoundingClientRect();
+		const left =
+			coords.left - el.scrollLeft + (elRect.left - parentRect.left);
+		const top =
+			coords.top - el.scrollTop + (elRect.top - parentRect.top);
 		const menuRect = menu.getBoundingClientRect();
 		const maxLeft = parentRect.width - Math.max(0, menuRect.width) - 8;
 		const maxTop = parentRect.height - Math.max(0, menuRect.height) - 8;
@@ -3264,7 +3295,9 @@
 			return;
 		}
 		setSelectionMenuOpen(true);
-		positionFloatingMenu(selectionMenu, textarea, range.end, 10);
+		const caretPos =
+			textarea.selectionDirection === "backward" ? range.start : range.end;
+		positionFloatingMenu(selectionMenu, textarea, caretPos, 2);
 	}
 
 	function getWikiContext() {
@@ -4322,6 +4355,8 @@
 	let jsRunnerPending = new Map();
 	let previewRunState = { status: "", output: "", error: "", source: "" };
 	let previewTaskEditsPending = false;
+	let previewTaskAutoSortTimer = 0;
+	const PREVIEW_TASK_AUTO_SORT_DELAY = 220;
 	let psNextImportMode = "merge";
 	let psSearchQuery = "";
 	let psSearchDebounceTimer = 0;
@@ -8751,7 +8786,7 @@
 			if (metaRight) metaRight.textContent = "";
 		}
 		if (!previewOpen && wasPreviewOpen) {
-			maybeAutoSortTasksAfterPreview();
+			// Auto-sort is handled on preview interaction with delay.
 		}
 		setFullPreview(fullPreview);
 		syncMobileFocusState();
@@ -8828,7 +8863,11 @@
 				themeColors.accentText ||
 				"rgba(148,163,184,.45)"
 			: nonMonoScrollbarThumb;
-		const previewColorScheme = isMonoLight ? "light" : "dark";
+		const isLightSyntax =
+			activeTheme === "monoLight" ||
+			activeTheme === "coffeeLight" ||
+			activeTheme === "bitterLight";
+		const previewColorScheme = isLightSyntax ? "light" : "dark";
 		const previewBg =
 			themeColors.previewBg ||
 			(isMonoLight ? "#f8fafc" : isMonoDark ? "#0d1117" : "rgba(2, 6, 23, 0.4)");
@@ -8836,15 +8875,14 @@
 			themeColors.previewText || (isMonoLight ? "#0f172a" : "#e2e8f0");
 		const previewLink =
 			themeColors.previewLink || (isMonoLight ? "#2563eb" : "#60a5fa");
-		const previewPreBg = isMonoLight
-			? "rgba(15,23,42,.04)"
-			: "rgba(2,6,23,.6)";
-		const previewPreBorder = isMonoLight
-			? "rgba(15,23,42,.1)"
-			: "rgba(255,255,255,.08)";
-		const previewCodeBg = isMonoLight
-			? "rgba(15,23,42,.06)"
-			: "rgba(255,255,255,.06)";
+		const previewPreColors = getPreviewPreColors(activeTheme, {
+			isLightSyntax,
+			previewText,
+		});
+		const previewPreBg = previewPreColors.preBg;
+		const previewPreBorder = previewPreColors.preBorder;
+		const previewPreText = previewPreColors.preText;
+		const previewCodeBg = previewPreColors.codeBg;
 		const previewFieldBg = isMonoLight
 			? "rgba(15,23,42,.06)"
 			: "rgba(15,23,42,.6)";
@@ -8894,9 +8932,85 @@
 				? "rgba(241,245,249,.9)"
 				: "rgba(2,6,23,.35)"
 			: "rgba(2,6,23,.1)";
-		const highlightCssUrl = isMonoLight
+		const highlightCssUrl = isLightSyntax
 			? "https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css"
 			: "https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css";
+		const highlightThemeCss = buildPreviewHighlightCss(activeTheme);
+
+		function getPreviewPreColors(theme, opts) {
+			const lightDefaults = {
+				preBg: "rgba(15,23,42,.04)",
+				preBorder: "rgba(15,23,42,.1)",
+				preText: opts.previewText || "#0f172a",
+				codeBg: "rgba(15,23,42,.06)",
+			};
+			const darkDefaults = {
+				preBg: "rgba(2,6,23,.6)",
+				preBorder: "rgba(255,255,255,.08)",
+				preText: opts.previewText || "#e2e8f0",
+				codeBg: "rgba(255,255,255,.06)",
+			};
+			const base = opts.isLightSyntax ? lightDefaults : darkDefaults;
+			switch (theme) {
+				case "coffeeLight":
+					return {
+						...base,
+						preBg: "#f8f1e9",
+						preBorder: "#f8f1e9",
+						preText: "#3b2a21",
+						codeBg: "#f0e3d8",
+					};
+				case "bitterLight":
+					return {
+						...base,
+						preBg: "#f7f6f4",
+						preBorder: "#f7f6f4",
+						preText: "#0d0c10",
+						codeBg: "#ebe9e6",
+					};
+				case "bitterDark":
+					return {
+						...base,
+						preBg: "#0d0c10",
+						preBorder: "#2a2a30",
+						preText: "#f0e8df",
+						codeBg: "rgba(255,210,194,.1)",
+					};
+				default:
+					return base;
+			}
+		}
+
+		function buildPreviewHighlightCss(theme) {
+			switch (theme) {
+				case "coffeeLight":
+					return `
+					pre.hljs{background:#f8f1e9;border-color:#f8f1e9;color:#3b2a21;}
+					pre.hljs code.hljs, code.hljs{color:#3b2a21;}
+					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#b07049;}
+					.hljs-string,.hljs-attr,.hljs-number{color:#5b3a28;}
+					.hljs-comment,.hljs-quote{color:rgba(59,42,33,.6);}
+					`;
+				case "bitterLight":
+					return `
+					pre.hljs{background:#f7f6f4;border-color:#f7f6f4;color:#0d0c10;}
+					pre.hljs code.hljs, code.hljs{color:#0d0c10;}
+					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#ff2301;}
+					.hljs-string,.hljs-attr,.hljs-number{color:#7a4c35;}
+					.hljs-comment,.hljs-quote{color:rgba(13,12,16,.55);}
+					`;
+				case "bitterDark":
+					return `
+					pre.hljs{background:#0d0c10;border-color:#2a2a30;color:#f0e8df;}
+					pre.hljs code.hljs, code.hljs{color:#f0e8df;}
+					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#ff2301;}
+					.hljs-string,.hljs-attr,.hljs-number{color:#ffb199;}
+					.hljs-comment,.hljs-quote{color:rgba(240,232,223,.55);}
+					`;
+				default:
+					return "";
+			}
+		}
 		const pdfJsUrl = "/vendor/pdfjs/pdf.mjs";
 		const pdfWorkerUrl = "/vendor/pdfjs/pdf.worker.mjs";
 		const previewBase =
@@ -8955,7 +9069,7 @@
 		.img-tools button{border:0;background:rgba(148,163,184,.15);color:${previewText};font-size:11px;line-height:1;padding:4px 6px;border-radius:999px;cursor:pointer;}
 		.img-tools button:hover{background:rgba(148,163,184,.3);}
     code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;}
-    pre{overflow:auto;border:1px solid ${previewPreBorder};border-radius:12px;padding:12px;background:${previewPreBg};}
+	pre{overflow:auto;border:1px solid ${previewPreBorder};border-radius:12px;padding:12px;background:${previewPreBg};color:${previewPreText};}
     code{background:${previewCodeBg};padding:.15em .35em;border-radius:.35em;}
     pre code{background:transparent;padding:0;}
 		.pw-field{display:inline-flex;align-items:center;gap:.35rem;padding:.1rem .45rem;border-radius:999px;border:1px solid ${previewFieldBorder};background:${previewFieldBg};font-size:.85em;line-height:1.2;}
@@ -8978,10 +9092,11 @@
 		th,td{border:1px solid ${previewTableBorder};padding:6px 8px;}
 		blockquote{border-left:3px solid var(--blockquote-border);margin:0;padding:0 12px;color:var(--blockquote-text);}
     ul.task-list{list-style:none;padding-left:0;}
-    ul.task-list li{display:flex;gap:.55rem;align-items:flex-start;}
+		ul.task-list li{display:flex;gap:.55rem;align-items:flex-start;transition:transform .28s ease,opacity .28s ease;animation:task-fade .28s ease both;will-change:transform,opacity;}
 		ul.task-list li.task-list-item.checked{opacity:.75;text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:rgba(148,163,184,.7);}
 		ul.task-list li.task-list-item.checked input[type=checkbox]{opacity:1;}
     ul.task-list input[type=checkbox]{margin-top:.2rem;}
+		@keyframes task-fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 		.pdf-embed{margin:12px 0;border:1px solid ${previewTableBorder};border-radius:12px;overflow:hidden;background:${previewPreBg};}
 		.pdf-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;border-bottom:1px solid ${previewTableBorder};font-size:12px;background:${previewMetaBg};}
 		.pdf-nav{display:flex;align-items:center;gap:6px;}
@@ -8991,8 +9106,8 @@
 		.pdf-actions{display:flex;justify-content:flex-end;gap:8px;}
 		.pdf-frame{width:100%;height:auto;display:block;background:${previewBg};}
 		.pdf-fallback{padding:10px 12px;font-size:12px;color:${previewMetaText};background:${previewMetaBg};border-bottom:1px solid ${previewTableBorder};}
-		.toc-float{position:fixed;top:12px;right:12px;z-index:20;width:200px;max-height:calc(100vh - 24px);display:flex;flex-direction:column;border:1px solid var(--toc-border);background:var(--toc-bg);border-radius:12px;box-shadow:var(--toc-shadow);backdrop-filter:blur(12px);color:var(--toc-text);}
-		.toc-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-bottom:1px solid var(--toc-border);font-size:11px;font-weight:600;letter-spacing:.02em;}
+		.toc-float{position:fixed;top:12px;right:12px;z-index:20;width:200px;max-height:calc(100vh - 24px);display:flex;flex-direction:column;border:1px solid var(--toc-border);background:var(--toc-bg);border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,0.08);backdrop-filter:blur(12px);color:var(--toc-text);}
+		.toc-header{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 10px;border-bottom:1px solid var(--toc-border);font-size:11px;font-weight:600;letter-spacing:.02em;box-shadow:0 1px 0 rgba(0,0,0,0.03);}
 		.toc-title{display:inline-flex;align-items:center;justify-content:center;color:var(--toc-text);}
 		.toc-title svg{width:14px;height:14px;}
 		.toc-toggle{border:1px solid var(--toc-border);background:transparent;color:var(--toc-muted);border-radius:999px;padding:1px 7px;font-size:10px;cursor:pointer;}
@@ -9008,6 +9123,7 @@
 		.toc-collapsed .toc-list{display:none;}
 		.toc-collapsed .toc-header{border-bottom:0;}
 		@media (max-width: 900px){.toc-float{right:10px;top:10px;width:180px;max-height:55vh;}}
+${highlightThemeCss}
   </style>
 	<script>(function(){var body=document.body;var hideTimer=null;function show(){body.classList.add('scrollbar-active');if(hideTimer)clearTimeout(hideTimer);hideTimer=setTimeout(function(){body.classList.remove('scrollbar-active');},800);}['scroll','wheel','touchmove'].forEach(function(evt){window.addEventListener(evt,show,{passive:true});});window.addEventListener('keydown',function(e){if(e && (e.key==='PageDown'||e.key==='PageUp'||e.key==='End'||e.key==='Home')){show();}});}());</script>
 </head>
@@ -9464,7 +9580,30 @@
 				// ignore
 			}
 		}
+		if (ok) schedulePreviewTaskAutoSort();
 		return ok;
+	}
+
+	function schedulePreviewTaskAutoSort() {
+		if (!taskAutoSortEnabled) return;
+		if (!previewTaskEditsPending) return;
+		if (previewTaskAutoSortTimer) {
+			window.clearTimeout(previewTaskAutoSortTimer);
+			previewTaskAutoSortTimer = 0;
+		}
+		previewTaskAutoSortTimer = window.setTimeout(() => {
+			previewTaskAutoSortTimer = 0;
+			maybeAutoSortTasksAfterPreview();
+		}, PREVIEW_TASK_AUTO_SORT_DELAY);
+	}
+
+	function forcePreviewTaskAutoSortNow() {
+		if (previewTaskAutoSortTimer) {
+			window.clearTimeout(previewTaskAutoSortTimer);
+			previewTaskAutoSortTimer = 0;
+		}
+		if (!previewTaskEditsPending) return;
+		maybeAutoSortTasksAfterPreview();
 	}
 
 	function maybeAutoSortTasksAfterPreview() {
@@ -9493,11 +9632,24 @@
 		} catch {
 			// ignore
 		}
+		if (isCrdtEnabled()) {
+			updateCrdtFromTextarea();
+		} else {
+			scheduleSend();
+		}
+		updatePreview();
 		const noteId = getActiveRoomTabNoteId();
 		if (noteId) updateLocalNoteText(noteId, textarea.value);
+		updateRoomTabTextLocal(room, key, textarea.value);
+		const tabNoteId = getRoomTabNoteIdForRoom(room, key);
+		scheduleRoomTabSync({
+			room,
+			key,
+			text: resolveRoomTabSnapshotText(tabNoteId, String(textarea.value || "")),
+			lastUsed: Date.now(),
+		});
 		schedulePsAutoSave();
 		schedulePsListRerender();
-		scheduleSend();
 		if (metaLeft)
 			metaLeft.textContent = uiLang === "de" ? "Aufgaben sortiert." : "Tasks sorted.";
 		if (metaRight) metaRight.textContent = nowIso();
@@ -10671,7 +10823,7 @@
 									: ""
 							}
 						</div>
-						${chips ? `<div class="mt-2 flex flex-wrap gap-1">${chips}</div>` : ""}
+						${chips ? `<div class="mt-2 flex flex-wrap gap-1 ps-note-tags">${chips}</div>` : ""}
 					</div>
 				`;
 			})
@@ -10684,6 +10836,7 @@
 				});
 			});
 			row.addEventListener("click", async (ev) => {
+				forcePreviewTaskAutoSortNow();
 				await flushPendingPsAutoSave();
 				const id = row.getAttribute("data-note-id") || "";
 				if (!id) return;
@@ -15776,6 +15929,7 @@ self.onmessage = async (e) => {
 	function goToRoom(roomName) {
 		const next = normalizeRoom(roomName);
 		if (!next) return;
+		forcePreviewTaskAutoSortNow();
 		setCalendarPanelActive(false);
 		flushRoomTabSync();
 		location.hash = buildShareHash(next, key);
@@ -15785,6 +15939,7 @@ self.onmessage = async (e) => {
 		const next = normalizeRoom(roomName);
 		const nextKey = normalizeKey(keyName);
 		if (!next) return;
+		forcePreviewTaskAutoSortNow();
 		setCalendarPanelActive(false);
 		flushRoomTabSync();
 		location.hash = buildShareHash(next, nextKey);
@@ -15802,6 +15957,7 @@ self.onmessage = async (e) => {
 	newRoomBtn.addEventListener("click", () => {
 		const nextRoom = randomRoom();
 		const nextKey = randomKey();
+		forcePreviewTaskAutoSortNow();
 		flushRoomTabSync();
 		location.hash = buildShareHash(nextRoom, nextKey);
 	});
@@ -15840,6 +15996,7 @@ self.onmessage = async (e) => {
 		favoritesSelect.addEventListener("change", () => {
 			const v = String(favoritesSelect.value || "");
 			if (!v) return;
+			forcePreviewTaskAutoSortNow();
 			location.hash = v;
 		});
 	}
@@ -16381,7 +16538,7 @@ self.onmessage = async (e) => {
 		scheduleRoomTabSync({
 			room,
 			key,
-			text: resolveRoomTabSnapshotText(noteId, String(textarea.value || "")),
+			text: resolveRoomTabSnapshotText(tabNoteId, String(textarea.value || "")),
 			lastUsed: Date.now(),
 		});
 		updatePreview();

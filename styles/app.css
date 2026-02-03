@@ -175,7 +175,6 @@ body.glow-disabled .bg-glow {
 }
 
 #toggleComments,
-#toggleExcalidraw,
 #psMetaToggle,
 #clearMirror,
 #copyMirror,
@@ -183,9 +182,37 @@ body.glow-disabled .bg-glow {
 #psEditorTagsBar > div {
 	background: rgba(2, 6, 23, 0.75) !important;
 	border-color: rgba(255, 255, 255, 0.12) !important;
+	border-radius: 12px;
 	backdrop-filter: blur(18px) saturate(160%);
 	-webkit-backdrop-filter: blur(18px) saturate(160%);
 	box-shadow: 0 5px 14px rgba(2, 6, 23, 0.22);
+}
+
+#psEditorTagsBar input,
+#psEditorTagsBar select {
+	background: rgba(2, 6, 23, 0.75) !important;
+	border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+#toggleExcalidraw {
+	color: var(--accent-text) !important;
+	background: var(--accent-bg) !important;
+	border-color: var(--accent-border) !important;
+	box-shadow: none !important;
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
+}
+
+#toggleExcalidraw:hover {
+	background: var(--accent-bg-hover) !important;
+	border-color: var(--accent-border-strong) !important;
+	color: var(--accent-text-soft) !important;
+}
+
+#toggleExcalidraw[aria-pressed="true"] {
+	background: var(--accent-bg-hover) !important;
+	border-color: var(--accent-border-strong) !important;
+	box-shadow: none !important;
 }
 
 #psEditorTagsBar > div {
@@ -208,8 +235,8 @@ body.glow-disabled .bg-glow {
 
 #mdPreview {
 	background-color: var(--selection-menu-bg);
-	border: 1px solid var(--selection-menu-border);
-	border-radius: 12px;
+	border: 0;
+	border-radius: 0;
 	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
 }
 
@@ -369,6 +396,19 @@ body.code-lang-active #clearMirror {
 	opacity: 1;
 	pointer-events: auto;
 	transform: none;
+}
+#psList .ps-note-tags {
+	display: flex;
+	min-height: 24px;
+	visibility: hidden;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.15s ease;
+}
+#psList .ps-note-item:hover .ps-note-tags {
+	visibility: visible;
+	opacity: 1;
+	pointer-events: auto;
 }
 .md-content a {
 	color: rgb(96 165 250);
@@ -573,16 +613,21 @@ body.code-lang-active #clearMirror {
 	display: none;
 }
 #mirror.excalidraw-active {
-	opacity: 0;
-	pointer-events: none;
+	opacity: 1;
+	pointer-events: auto;
 }
 
 #excalidrawEmbed.excalidraw-embed {
 	position: absolute;
-	top: 12.5rem;
-	right: 0;
-	bottom: 4.5rem;
-	left: 0;
+	top: 6rem;
+	left: 0.75rem;
+	width: min(960px, calc(100% - 1.5rem));
+	height: min(640px, calc(100% - 6rem));
+	max-width: calc(100% - 1.5rem);
+	max-height: calc(100% - 6rem);
+	min-width: min(480px, calc(100% - 1.5rem));
+	min-height: 320px;
+	resize: both;
 	z-index: 20;
 	border-radius: 0.75rem;
 	overflow: hidden;
@@ -601,27 +646,38 @@ body.code-lang-active #clearMirror {
 
 .excalidraw-drag-handle {
 	position: absolute;
-	top: 1.75rem;
-	left: 4.5rem;
+	bottom: 1.1rem;
+	right: 5.25rem;
 	z-index: 25;
-	inline-size: 2.25rem;
-	block-size: 2.25rem;
-	display: inline-flex;
-	align-items: center;
-	justify-content: center;
-	border-radius: 0.75rem;
-	border: 1px solid rgba(255, 255, 255, 0.12);
-	background: rgba(2, 6, 23, 0.75);
-	color: rgba(226, 232, 240, 0.9);
-	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.2);
 	cursor: grab;
 	user-select: none;
-	backdrop-filter: blur(12px) saturate(140%);
-	-webkit-backdrop-filter: blur(12px) saturate(140%);
 }
 .excalidraw-drag-handle:active {
 	cursor: grabbing;
-	background: rgba(2, 6, 23, 0.82);
+}
+
+.help-icon {
+	inline-size: 2.1rem;
+	block-size: 2.1rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: 0.5rem;
+	border: 1px solid #cbd5e1;
+	background: #e5e7eb;
+	color: #374151;
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
+}
+.help-icon:hover {
+	background: #f1f5f9;
+	border-color: #cbd5e1;
+	color: #1f2937;
+}
+.help-icon:active {
+	background: #e2e8f0;
+	box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
 }
 #excalidrawEmbed.excalidraw-dragging {
 	transition: none;
@@ -924,22 +980,30 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	background-color: var(--accent-bg-hover) !important;
 }
 #aiUsePreviewBtn {
-	background-color: var(--accent-bg) !important;
+	background-color: transparent !important;
+	color: inherit !important;
+	--ai-preview-dot-off: rgba(203, 213, 225, 0.9);
+	--ai-preview-dot-on: var(--accent-strong-active, #ff2301);
 }
 #aiUsePreviewBtn:hover {
-	background-color: var(--accent-bg-hover) !important;
+	background-color: transparent !important;
 }
 #aiUsePreviewBtn[aria-pressed="true"] {
-	background-color: var(--accent-bg-soft) !important;
+	background-color: transparent !important;
+	color: inherit !important;
 }
 #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
-	background-color: rgba(255, 255, 255, 0.5) !important;
+	background-color: var(--ai-preview-dot-on) !important;
+}
+#aiUsePreviewBtn[aria-pressed="true"] span:last-child {
+	color: inherit !important;
 }
 #aiUsePreviewBtn[aria-pressed="false"] {
 	background-color: transparent !important;
+	color: inherit !important;
 }
 #aiUsePreviewBtn[aria-pressed="false"] span:first-child {
-	background-color: rgba(255, 255, 255, 0.35) !important;
+	background-color: var(--ai-preview-dot-off) !important;
 }
 .border-fuchsia-400\/30 {
 	border-color: var(--accent-border) !important;
@@ -1304,14 +1368,44 @@ body[data-theme="coffeeLight"] .ps-note-pin.bg-fuchsia-500\/20 {
 	color: #b07049 !important;
 }
 
+body[data-theme="coffeeLight"] .ps-note-item.ps-note-active {
+	background-color: transparent !important;
+	border-color: rgba(176, 112, 73, 0.45) !important;
+	box-shadow: 0 6px 14px rgba(176, 112, 73, 0.12);
+}
+
+body[data-theme="coffeeLight"] #psNewNote,
+body[data-theme="coffeeLight"] #psSaveMain,
+body[data-theme="coffeeLight"] #commentAdd,
+body[data-theme="coffeeLight"] #aiAssist {
+	background-color: #b07049 !important;
+	border-color: #b07049 !important;
+	color: #ffffff !important;
+}
+
 body[data-theme="coffeeLight"] #aiUsePreviewBtn {
 	border-color: rgba(176, 112, 73, 0.35) !important;
-	background-color: rgba(176, 112, 73, 0.12) !important;
-	color: #2c1f18 !important;
+	background-color: transparent !important;
+	color: inherit !important;
+	--ai-preview-dot-on: #b07049;
 }
 
 body[data-theme="coffeeLight"] #aiUsePreviewBtn span:first-child {
-	background-color: #b07049 !important;
+	background-color: var(--ai-preview-dot-off) !important;
+}
+
+body[data-theme="coffeeLight"] #aiUsePreviewBtn[aria-pressed="true"] {
+	background-color: transparent !important;
+	border-color: rgba(176, 112, 73, 0.55) !important;
+	color: inherit !important;
+}
+
+body[data-theme="coffeeLight"] #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
+	background-color: var(--ai-preview-dot-on) !important;
+}
+
+body[data-theme="coffeeLight"] #aiUsePreviewBtn[aria-pressed="true"] span:last-child {
+	color: inherit !important;
 }
 
 body[data-theme="coffeeLight"] .ai-chat-badge {
@@ -1355,6 +1449,11 @@ body[data-theme="coffeeLight"] #previewPanel {
 	border-color: #d9c7bc !important;
 }
 
+body[data-theme="coffeeLight"] #mdPreview {
+	background-color: inherit !important;
+	box-shadow: none !important;
+}
+
 body[data-theme="coffeeLight"] #toggleComments,
 body[data-theme="coffeeLight"] #psMetaToggle,
 body[data-theme="coffeeLight"] #clearMirror,
@@ -1364,6 +1463,12 @@ body[data-theme="coffeeLight"] #psEditorTagsBar > div {
 	background: rgba(255, 250, 244, 0.76) !important;
 	border-color: rgba(217, 199, 188, 0.7) !important;
 	box-shadow: 0 3px 8px rgba(68, 45, 30, 0.14) !important;
+}
+
+body[data-theme="coffeeLight"] #psEditorTagsBar input,
+body[data-theme="coffeeLight"] #psEditorTagsBar select {
+	background: rgba(255, 250, 244, 0.76) !important;
+	border-color: rgba(217, 199, 188, 0.7) !important;
 }
 
 body[data-theme="coffeeLight"] #commentPanel {
@@ -1380,10 +1485,15 @@ body[data-theme="coffeeLight"] #commentPanel .bg-rose-500\/10 {
 
 
 body[data-theme="coffeeLight"] #roomTabs .text-fuchsia-100 {
-	background-color: #f2e7db !important;
-	border-color: #d9c7bc !important;
-	color: #3b2a21 !important;
-	color: #2c1f18 !important;
+	border-color: #b07049 !important;
+}
+
+body[data-theme="coffeeLight"] [aria-pressed="true"],
+body[data-theme="coffeeLight"] .ps-tag-button.ps-tag-active,
+body[data-theme="coffeeLight"] .ps-tag-section .ps-tag-active {
+	background-color: #b07049 !important;
+	color: #ffffff !important;
+	border-color: #b07049 !important;
 }
 
 body[data-theme="coffeeLight"] .hover\:bg-white\/5:hover {
@@ -1418,12 +1528,44 @@ body[data-theme="coffeeLight"] ::placeholder {
 }
 
 body[data-theme="coffeeLight"] .md-content pre {
-	background: #f3e9df;
-	border-color: #d9c7bc;
+	background: #f8f1e9;
+	border-color: #f8f1e9;
+	color: #3b2a21;
+}
+
+body[data-theme="coffeeLight"] .md-content pre.hljs {
+	background: #f8f1e9;
+	border-color: #f8f1e9;
+	color: #3b2a21;
+}
+
+body[data-theme="coffeeLight"] .md-content pre.hljs code.hljs {
+	color: #3b2a21;
 }
 
 body[data-theme="coffeeLight"] .md-content code {
 	background: #f0e3d8;
+	color: #3b2a21;
+}
+
+/* Coffee Light syntax highlights */
+body[data-theme="coffeeLight"] .md-content code.hljs,
+body[data-theme="coffeeLight"] .md-content pre code.hljs {
+	color: #3b2a21;
+}
+body[data-theme="coffeeLight"] .md-content .hljs-keyword,
+body[data-theme="coffeeLight"] .md-content .hljs-selector-tag,
+body[data-theme="coffeeLight"] .md-content .hljs-title {
+	color: #b07049;
+}
+body[data-theme="coffeeLight"] .md-content .hljs-string,
+body[data-theme="coffeeLight"] .md-content .hljs-attr,
+body[data-theme="coffeeLight"] .md-content .hljs-number {
+	color: #5b3a28;
+}
+body[data-theme="coffeeLight"] .md-content .hljs-comment,
+body[data-theme="coffeeLight"] .md-content .hljs-quote {
+	color: rgba(59, 42, 33, 0.6);
 }
 
 body[data-theme="coffeeLight"] .md-content th,
@@ -1450,6 +1592,7 @@ body[data-theme="coffeeDark"] {
 	color-scheme: dark;
 	background-color: #1c1614;
 	color: #e8d9cc;
+	--coffee-accent: #c99b77;
 	--selection-menu-bg: #1c1511;
 	--selection-menu-border: #3b2820;
 	--comment-item-bg: #261b16;
@@ -1513,26 +1656,64 @@ body[data-theme="coffeeDark"] .bg-slate-950\/80 {
 	background-color: rgba(201, 155, 119, 0.24) !important;
 }
 
+body[data-theme="coffeeDark"] .border-fuchsia-400\/30 {
+	border-color: rgba(201, 155, 119, 0.55) !important;
+}
+
+body[data-theme="coffeeDark"] .bg-fuchsia-500\/15,
+body[data-theme="coffeeDark"] .bg-fuchsia-500\/20,
+body[data-theme="coffeeDark"] .bg-fuchsia-500\/25,
+body[data-theme="coffeeDark"] .bg-fuchsia-600\/20 {
+	background-color: transparent !important;
+	color: var(--coffee-accent) !important;
+}
+
+body[data-theme="coffeeDark"] .hover\:bg-fuchsia-500\/20:hover,
+body[data-theme="coffeeDark"] .hover\:bg-fuchsia-500\/25:hover {
+	background-color: transparent !important;
+	color: var(--coffee-accent) !important;
+}
+
+body[data-theme="coffeeDark"] .text-fuchsia-100,
+body[data-theme="coffeeDark"] .text-fuchsia-200,
+body[data-theme="coffeeDark"] .text-fuchsia-300 {
+	color: var(--coffee-accent) !important;
+}
+
 body[data-theme="coffeeDark"] .ps-note-item.ps-note-active {
-	background-color: rgba(201, 155, 119, 0.12) !important;
-	border-color: rgba(201, 155, 119, 0.45) !important;
-	box-shadow: 0 6px 14px rgba(201, 155, 119, 0.14);
+	background-color: transparent !important;
+	border-color: rgba(201, 155, 119, 0.55) !important;
+	box-shadow: none;
+	color: var(--coffee-accent) !important;
+}
+
+body[data-theme="coffeeDark"] .ps-note-item.ps-note-active .ps-note-excerpt,
+body[data-theme="coffeeDark"] .ps-note-item.ps-note-active .ps-note-title {
+	color: var(--coffee-accent) !important;
 }
 
 body[data-theme="coffeeDark"] .ps-note-item .ps-note-actions button {
 	box-shadow: none !important;
-	background-color: rgba(201, 155, 119, 0.12) !important;
-	border-color: rgba(201, 155, 119, 0.3) !important;
+	background-color: transparent !important;
+	border-color: rgba(201, 155, 119, 0.45) !important;
+	color: var(--coffee-accent) !important;
 }
 
 body[data-theme="coffeeDark"] .ps-note-item .ps-note-actions button:hover {
-	background-color: rgba(201, 155, 119, 0.18) !important;
+	background-color: transparent !important;
 }
 
 body[data-theme="coffeeDark"] .ps-note-item.ps-note-active span.rounded-full.border {
-	background-color: rgba(201, 155, 119, 0.12) !important;
-	border-color: rgba(201, 155, 119, 0.3) !important;
-	color: #e8d9cc !important;
+	background-color: transparent !important;
+	border-color: rgba(53, 38, 30, 0.65) !important;
+	color: inherit !important;
+}
+
+body[data-theme="coffeeDark"] [aria-pressed="true"],
+body[data-theme="coffeeDark"] .ps-tag-button.ps-tag-active,
+body[data-theme="coffeeDark"] .ps-note-item.ps-note-active,
+body[data-theme="coffeeDark"] .ps-tag-section .ps-tag-active {
+	color: var(--coffee-accent) !important;
 }
 
 body[data-theme="coffeeDark"] #psEditorTagsBar > div {
@@ -1540,10 +1721,28 @@ body[data-theme="coffeeDark"] #psEditorTagsBar > div {
 	border-color: #35261e !important;
 }
 
+#psNewNote {
+	transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease,
+		border-color 0.15s ease;
+	color: inherit !important;
+}
+
+#psNewNote:hover {
+	background-color: rgba(255, 255, 255, 0.08) !important;
+	box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+	transform: translateY(-1px);
+	color: var(--accent-text) !important;
+}
+
+#psNewNote:active {
+	transform: translateY(0);
+	box-shadow: 0 5px 14px rgba(0, 0, 0, 0.24);
+}
+
 body[data-theme="coffeeDark"] #psEditorTagsBar input,
 body[data-theme="coffeeDark"] #psEditorTagsBar select {
-	background-color: #211712 !important;
-	border-color: #35261e !important;
+	background: rgba(28, 21, 17, 0.78) !important;
+	border-color: rgba(53, 38, 32, 0.78) !important;
 	color: #e8d9cc !important;
 }
 
@@ -1554,6 +1753,27 @@ body[data-theme="coffeeDark"] #psEditorTagsInput {
 body[data-theme="coffeeDark"] #psEditorTagsSuggest {
 	background-color: #1c1511 !important;
 	border-color: #35261e !important;
+}
+
+body[data-theme="coffeeDark"] #aiUsePreviewBtn {
+	border-color: rgba(201, 155, 119, 0.45) !important;
+	background-color: transparent !important;
+	color: inherit !important;
+	--ai-preview-dot-on: var(--coffee-accent, #c99b77);
+}
+
+body[data-theme="coffeeDark"] #aiUsePreviewBtn[aria-pressed="true"] {
+	background-color: transparent !important;
+	border-color: rgba(201, 155, 119, 0.65) !important;
+	color: inherit !important;
+}
+
+body[data-theme="coffeeDark"] #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
+	background-color: var(--ai-preview-dot-on) !important;
+}
+
+body[data-theme="coffeeDark"] #aiUsePreviewBtn[aria-pressed="true"] span:last-child {
+	color: inherit !important;
 }
 
 body[data-theme="coffeeDark"] .ps-note-pin.bg-fuchsia-500\/20 {
@@ -1695,10 +1915,23 @@ body[data-theme="bitterLight"] .text-fuchsia-100 {
 	color: #ff2301 !important;
 }
 
+body[data-theme="bitterLight"] .ps-note-item.ps-note-active {
+	background-color: transparent !important;
+	border-color: rgba(255, 35, 1, 0.45) !important;
+	box-shadow: 0 6px 14px rgba(255, 35, 1, 0.12);
+}
+
+body[data-theme="bitterLight"] #psNewNote,
+body[data-theme="bitterLight"] #psSaveMain,
+body[data-theme="bitterLight"] #commentAdd,
+body[data-theme="bitterLight"] #aiAssist {
+	background-color: #ff2301 !important;
+	border-color: #ff2301 !important;
+	color: #ffffff !important;
+}
+
 body[data-theme="bitterLight"] #roomTabs .text-fuchsia-100 {
-	background-color: rgba(255, 35, 1, 0.12) !important;
-	border-color: rgba(255, 35, 1, 0.28) !important;
-	color: #ff2301 !important;
+	border-color: #ff2301 !important;
 }
 
 body[data-theme="bitterLight"] .bg-white\/5,
@@ -1767,13 +2000,29 @@ body[data-theme="bitterLight"] .theme-swatch {
 }
 
 body[data-theme="bitterLight"] #aiUsePreviewBtn {
-	border-color: rgba(255, 35, 1, 0.25) !important;
-	background-color: rgba(255, 35, 1, 0.12) !important;
-	color: #0d0c10 !important;
+	border-color: rgba(255, 35, 1, 0.35) !important;
+	background-color: transparent !important;
+	color: inherit !important;
+	--ai-preview-dot-off: rgba(203, 213, 225, 0.9);
+	--ai-preview-dot-on: #ff2301;
 }
 
 body[data-theme="bitterLight"] #aiUsePreviewBtn span:first-child {
-	background-color: #ff2301 !important;
+	background-color: var(--ai-preview-dot-off) !important;
+}
+
+body[data-theme="bitterLight"] #aiUsePreviewBtn[aria-pressed="true"] {
+	background-color: transparent !important;
+	border-color: rgba(255, 35, 1, 0.6) !important;
+	color: inherit !important;
+}
+
+body[data-theme="bitterLight"] #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
+	background-color: var(--ai-preview-dot-on) !important;
+}
+
+body[data-theme="bitterLight"] #aiUsePreviewBtn[aria-pressed="true"] span:last-child {
+	color: inherit !important;
 }
 
 body[data-theme="bitterLight"] .ai-chat-badge {
@@ -1817,6 +2066,11 @@ body[data-theme="bitterLight"] #previewPanel {
 	border-color: #d8d2cb !important;
 }
 
+body[data-theme="bitterLight"] #mdPreview {
+	background-color: inherit !important;
+	box-shadow: none !important;
+}
+
 body[data-theme="bitterLight"] #toggleComments,
 body[data-theme="bitterLight"] #psMetaToggle,
 body[data-theme="bitterLight"] #clearMirror,
@@ -1826,6 +2080,12 @@ body[data-theme="bitterLight"] #psEditorTagsBar > div {
 	background: rgba(247, 246, 244, 0.8) !important;
 	border-color: rgba(216, 210, 203, 0.7) !important;
 	box-shadow: 0 3px 8px rgba(13, 12, 16, 0.12) !important;
+}
+
+body[data-theme="bitterLight"] #psEditorTagsBar input,
+body[data-theme="bitterLight"] #psEditorTagsBar select {
+	background: rgba(247, 246, 244, 0.8) !important;
+	border-color: rgba(216, 210, 203, 0.7) !important;
 }
 
 body[data-theme="bitterLight"] #commentPanel {
@@ -1838,6 +2098,14 @@ body[data-theme="bitterLight"] #commentPanel .bg-rose-500\/10 {
 	background-color: rgba(255, 35, 1, 0.12) !important;
 	border-color: rgba(255, 35, 1, 0.3) !important;
 	color: #b01b00 !important;
+}
+
+body[data-theme="bitterLight"] [aria-pressed="true"],
+body[data-theme="bitterLight"] .ps-tag-button.ps-tag-active,
+body[data-theme="bitterLight"] .ps-tag-section .ps-tag-active {
+	background-color: #ff2301 !important;
+	color: #ffffff !important;
+	border-color: #ff2301 !important;
 }
 
 body[data-theme="bitterLight"] .hover\:bg-white\/5:hover {
@@ -1872,12 +2140,44 @@ body[data-theme="bitterLight"] ::placeholder {
 }
 
 body[data-theme="bitterLight"] .md-content pre {
-	background: #f0eeeb;
-	border-color: #d8d2cb;
+	background: #f7f6f4;
+	border-color: #f7f6f4;
+	color: #0d0c10;
+}
+
+body[data-theme="bitterLight"] .md-content pre.hljs {
+	background: #f7f6f4;
+	border-color: #f7f6f4;
+	color: #0d0c10;
+}
+
+body[data-theme="bitterLight"] .md-content pre.hljs code.hljs {
+	color: #0d0c10;
 }
 
 body[data-theme="bitterLight"] .md-content code {
 	background: #ebe9e6;
+	color: #0d0c10;
+}
+
+/* Bitter Light syntax highlights */
+body[data-theme="bitterLight"] .md-content code.hljs,
+body[data-theme="bitterLight"] .md-content pre code.hljs {
+	color: #0d0c10;
+}
+body[data-theme="bitterLight"] .md-content .hljs-keyword,
+body[data-theme="bitterLight"] .md-content .hljs-selector-tag,
+body[data-theme="bitterLight"] .md-content .hljs-title {
+	color: #ff2301;
+}
+body[data-theme="bitterLight"] .md-content .hljs-string,
+body[data-theme="bitterLight"] .md-content .hljs-attr,
+body[data-theme="bitterLight"] .md-content .hljs-number {
+	color: #7a4c35;
+}
+body[data-theme="bitterLight"] .md-content .hljs-comment,
+body[data-theme="bitterLight"] .md-content .hljs-quote {
+	color: rgba(13, 12, 16, 0.55);
 }
 
 body[data-theme="bitterLight"] .md-content th,
@@ -1904,6 +2204,7 @@ body[data-theme="bitterDark"] {
 	color-scheme: dark;
 	background-color: #0d0c10;
 	color: #f0e8df;
+	--bitter-accent: #ff3b1f;
 	--selection-menu-bg: #151518;
 	--selection-menu-border: #2a2a30;
 	--comment-item-bg: #151518;
@@ -1967,6 +2268,30 @@ body[data-theme="bitterDark"] .bg-slate-950\/80 {
 	background-color: rgba(255, 35, 1, 0.24) !important;
 }
 
+body[data-theme="bitterDark"] .border-fuchsia-400\/30 {
+	border-color: rgba(255, 35, 1, 0.55) !important;
+}
+
+body[data-theme="bitterDark"] .bg-fuchsia-500\/15,
+body[data-theme="bitterDark"] .bg-fuchsia-500\/20,
+body[data-theme="bitterDark"] .bg-fuchsia-500\/25,
+body[data-theme="bitterDark"] .bg-fuchsia-600\/20 {
+	background-color: transparent !important;
+	color: var(--bitter-accent) !important;
+}
+
+body[data-theme="bitterDark"] .hover\:bg-fuchsia-500\/20:hover,
+body[data-theme="bitterDark"] .hover\:bg-fuchsia-500\/25:hover {
+	background-color: transparent !important;
+	color: var(--bitter-accent) !important;
+}
+
+body[data-theme="bitterDark"] .text-fuchsia-100,
+body[data-theme="bitterDark"] .text-fuchsia-200,
+body[data-theme="bitterDark"] .text-fuchsia-300 {
+	color: var(--bitter-accent) !important;
+}
+
 body[data-theme="bitterDark"] #settingsBackdrop {
 	background-color: rgba(13, 12, 16, 0.6) !important;
 }
@@ -1981,25 +2306,72 @@ body[data-theme="bitterDark"] #settingsNav {
 }
 
 body[data-theme="bitterDark"] .ps-note-item.ps-note-active {
-	background-color: rgba(255, 35, 1, 0.1) !important;
-	border-color: rgba(255, 35, 1, 0.38) !important;
-	box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35);
+	background-color: transparent !important;
+	border-color: rgba(255, 35, 1, 0.48) !important;
+	box-shadow: none;
 }
 
 body[data-theme="bitterDark"] .ps-note-item .ps-note-actions button {
 	box-shadow: none !important;
-	background-color: rgba(255, 35, 1, 0.1) !important;
-	border-color: rgba(255, 35, 1, 0.28) !important;
+	background-color: transparent !important;
+	border-color: rgba(255, 35, 1, 0.48) !important;
+	color: var(--bitter-accent) !important;
 }
 
 body[data-theme="bitterDark"] .ps-note-item .ps-note-actions button:hover {
-	background-color: rgba(255, 35, 1, 0.16) !important;
+	background-color: transparent !important;
 }
 
 body[data-theme="bitterDark"] .ps-note-item.ps-note-active span.rounded-full.border {
-	background-color: rgba(255, 35, 1, 0.1) !important;
-	border-color: rgba(255, 35, 1, 0.28) !important;
-	color: #f0e8df !important;
+	background-color: transparent !important;
+	border-color: rgba(42, 42, 48, 0.7) !important;
+}
+
+body[data-theme="bitterDark"] #psNewNote,
+body[data-theme="bitterDark"] #psSaveMain,
+body[data-theme="bitterDark"] #commentAdd,
+body[data-theme="bitterDark"] #aiAssist {
+	background-color: var(--bitter-accent) !important;
+	border-color: var(--bitter-accent) !important;
+	color: #ffffff !important;
+}
+
+body[data-theme="bitterDark"] #roomTabs .border-fuchsia-400\/40 {
+	border-color: var(--bitter-accent) !important;
+}
+
+body[data-theme="bitterDark"] #roomTabs .text-fuchsia-100 {
+	background-color: transparent !important;
+	color: inherit !important;
+}
+
+body[data-theme="bitterDark"] #aiUsePreviewBtn {
+	border-color: rgba(255, 35, 1, 0.45) !important;
+	background-color: transparent !important;
+	color: inherit !important;
+	--ai-preview-dot-on: var(--bitter-accent);
+}
+
+body[data-theme="bitterDark"] #aiUsePreviewBtn[aria-pressed="true"] {
+	background-color: transparent !important;
+	border-color: rgba(255, 35, 1, 0.6) !important;
+	color: inherit !important;
+}
+
+body[data-theme="bitterDark"] #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
+	background-color: var(--ai-preview-dot-on) !important;
+}
+
+body[data-theme="bitterDark"] #aiUsePreviewBtn[aria-pressed="true"] span:last-child {
+	color: inherit !important;
+}
+
+body[data-theme="bitterDark"] [aria-pressed="true"],
+body[data-theme="bitterDark"] .ps-tag-button.ps-tag-active,
+body[data-theme="bitterDark"] .ps-tag-section .ps-tag-active {
+	background-color: var(--bitter-accent) !important;
+	color: #ffffff !important;
+	border-color: var(--bitter-accent) !important;
 }
 
 body[data-theme="bitterDark"] #psEditorTagsBar > div {
@@ -2009,9 +2381,26 @@ body[data-theme="bitterDark"] #psEditorTagsBar > div {
 
 body[data-theme="bitterDark"] #psEditorTagsBar input,
 body[data-theme="bitterDark"] #psEditorTagsBar select {
+	background: rgba(21, 21, 24, 0.88) !important;
+	border-color: rgba(42, 42, 48, 0.7) !important;
+	color: #f0e8df !important;
+}
+
+body[data-theme="bitterDark"] #psSortMenu {
 	background-color: #151518 !important;
 	border-color: #2a2a30 !important;
+}
+
+body[data-theme="bitterDark"] #psSortMenu .ps-sort-option {
 	color: #f0e8df !important;
+}
+
+body[data-theme="bitterDark"] #psSortMenu .ps-sort-option:hover {
+	background-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+body[data-theme="bitterDark"] #psSortMenu .ps-sort-check {
+	color: var(--bitter-accent) !important;
 }
 
 body[data-theme="bitterDark"] #psEditorTagsInput {
@@ -2077,10 +2466,42 @@ body[data-theme="bitterDark"] ::placeholder {
 body[data-theme="bitterDark"] .md-content pre {
 	background: #0d0c10;
 	border-color: #2a2a30;
+	color: #f0e8df;
+}
+
+body[data-theme="bitterDark"] .md-content pre.hljs {
+	background: #0d0c10;
+	border-color: #2a2a30;
+	color: #f0e8df;
+}
+
+body[data-theme="bitterDark"] .md-content pre.hljs code.hljs {
+	color: #f0e8df;
 }
 
 body[data-theme="bitterDark"] .md-content code {
 	background: rgba(255, 210, 194, 0.1);
+	color: #f0e8df;
+}
+
+/* Bitter Dark syntax highlights */
+body[data-theme="bitterDark"] .md-content code.hljs,
+body[data-theme="bitterDark"] .md-content pre code.hljs {
+	color: #f0e8df;
+}
+body[data-theme="bitterDark"] .md-content .hljs-keyword,
+body[data-theme="bitterDark"] .md-content .hljs-selector-tag,
+body[data-theme="bitterDark"] .md-content .hljs-title {
+	color: #ff2301;
+}
+body[data-theme="bitterDark"] .md-content .hljs-string,
+body[data-theme="bitterDark"] .md-content .hljs-attr,
+body[data-theme="bitterDark"] .md-content .hljs-number {
+	color: #ffb199;
+}
+body[data-theme="bitterDark"] .md-content .hljs-comment,
+body[data-theme="bitterDark"] .md-content .hljs-quote {
+	color: rgba(240, 232, 223, 0.55);
 }
 
 body[data-theme="bitterDark"] .md-content th,
@@ -2176,6 +2597,15 @@ body[data-theme="monoLight"] .bg-fuchsia-500\/25,
 body[data-theme="monoLight"] .bg-fuchsia-600\/20 {
 	background-color: transparent !important;
 	color: var(--mono-accent) !important;
+}
+
+body[data-theme="monoLight"] #toggleExcalidraw {
+	background: transparent !important;
+	color: var(--mono-accent) !important;
+	border-color: #d0d7de !important;
+	box-shadow: none !important;
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
 }
 
 body[data-theme="monoLight"] .hover\:bg-fuchsia-500\/20:hover,
@@ -2297,6 +2727,21 @@ body[data-theme="monoLight"] .ps-note-pin.bg-fuchsia-500\/20 {
 	color: #0969da !important;
 }
 
+body[data-theme="monoLight"] .ps-note-item.ps-note-active {
+	background-color: transparent !important;
+	border-color: rgba(9, 105, 218, 0.45) !important;
+	box-shadow: 0 6px 14px rgba(9, 105, 218, 0.12);
+}
+
+body[data-theme="monoLight"] #psNewNote,
+body[data-theme="monoLight"] #psSaveMain,
+body[data-theme="monoLight"] #commentAdd,
+body[data-theme="monoLight"] #aiAssist {
+	background-color: var(--mono-accent) !important;
+	border-color: var(--mono-accent) !important;
+	color: #ffffff !important;
+}
+
 body[data-theme="monoDark"] .ps-note-item.ps-note-active .ps-note-actions button {
 	box-shadow: none !important;
 	background-color: rgba(31, 111, 235, 0.12) !important;
@@ -2318,11 +2763,26 @@ body[data-theme="monoDark"] .ps-note-pin.bg-fuchsia-500\/20 {
 body[data-theme="monoLight"] #aiUsePreviewBtn {
 	border-color: rgba(9, 105, 218, 0.35) !important;
 	background-color: transparent !important;
-	color: #0969da !important;
+	color: inherit !important;
+	--ai-preview-dot-on: var(--mono-accent);
 }
 
 body[data-theme="monoLight"] #aiUsePreviewBtn span:first-child {
+	background-color: var(--ai-preview-dot-off) !important;
+}
+
+body[data-theme="monoLight"] #aiUsePreviewBtn[aria-pressed="true"] {
 	background-color: transparent !important;
+	border-color: rgba(9, 105, 218, 0.55) !important;
+	color: inherit !important;
+}
+
+body[data-theme="monoLight"] #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
+	background-color: var(--ai-preview-dot-on) !important;
+}
+
+body[data-theme="monoLight"] #aiUsePreviewBtn[aria-pressed="true"] span:last-child {
+	color: inherit !important;
 }
 
 body[data-theme="monoLight"] .ai-chat-badge {
@@ -2390,6 +2850,11 @@ body[data-theme="monoLight"] #previewPanel {
 	border-color: #d0d7de !important;
 }
 
+body[data-theme="monoLight"] #mdPreview {
+	background-color: inherit !important;
+	box-shadow: none !important;
+}
+
 body[data-theme="monoLight"] #toggleComments,
 body[data-theme="monoLight"] #psMetaToggle,
 body[data-theme="monoLight"] #clearMirror,
@@ -2399,6 +2864,12 @@ body[data-theme="monoLight"] #psEditorTagsBar > div {
 	background: rgba(255, 255, 255, 0.7) !important;
 	border-color: rgba(208, 215, 222, 0.6) !important;
 	box-shadow: 0 3px 8px rgba(15, 23, 42, 0.12) !important;
+}
+
+body[data-theme="monoLight"] #psEditorTagsBar input,
+body[data-theme="monoLight"] #psEditorTagsBar select {
+	background: rgba(255, 255, 255, 0.7) !important;
+	border-color: rgba(208, 215, 222, 0.6) !important;
 }
 
 body[data-theme="monoLight"] #commentPanel {
@@ -2415,10 +2886,15 @@ body[data-theme="monoLight"] #commentPanel .bg-rose-500\/10 {
 
 
 body[data-theme="monoLight"] #roomTabs .text-fuchsia-100 {
-	background-color: #f0f3f6 !important;
-	border-color: #d0d7de !important;
-	color: #24292f !important;
-	color: #0b1f33 !important;
+	border-color: var(--mono-accent) !important;
+}
+
+body[data-theme="monoLight"] [aria-pressed="true"],
+body[data-theme="monoLight"] .ps-tag-button.ps-tag-active,
+body[data-theme="monoLight"] .ps-tag-section .ps-tag-active {
+	background-color: var(--mono-accent) !important;
+	color: #ffffff !important;
+	border-color: var(--mono-accent) !important;
 }
 
 body[data-theme="monoLight"] .hover\:bg-white\/5:hover {
@@ -2486,7 +2962,7 @@ body[data-theme="monoDark"] {
 	color-scheme: dark;
 	background-color: #0d1117;
 	color: #c9d1d9;
-	--mono-accent: #58a6ff;
+	--mono-accent: #0079d4;
 	--selection-menu-bg: #0d1117;
 	--selection-menu-border: #30363d;
 	--comment-item-bg: #1f2937;
@@ -2509,6 +2985,15 @@ body[data-theme="monoDark"] .bg-fuchsia-500\/25,
 body[data-theme="monoDark"] .bg-fuchsia-600\/20 {
 	background-color: transparent !important;
 	color: var(--mono-accent) !important;
+}
+
+body[data-theme="monoDark"] #toggleExcalidraw {
+	background: transparent !important;
+	color: var(--mono-accent) !important;
+	border-color: #30363d !important;
+	box-shadow: none !important;
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
 }
 
 body[data-theme="monoDark"] .hover\:bg-fuchsia-500\/20:hover,
@@ -2574,6 +3059,44 @@ body[data-theme="monoDark"] .ps-note-item.ps-note-active {
 	box-shadow: 0 6px 14px rgba(88, 166, 255, 0.12);
 }
 
+body[data-theme="monoDark"] #psNewNote,
+body[data-theme="monoDark"] #psSaveMain,
+body[data-theme="monoDark"] #commentAdd,
+body[data-theme="monoDark"] #aiAssist {
+	background-color: var(--mono-accent) !important;
+	border-color: var(--mono-accent) !important;
+	color: #ffffff !important;
+}
+
+body[data-theme="monoDark"] #roomTabs .border-fuchsia-400\/40 {
+	border-color: var(--mono-accent) !important;
+}
+
+body[data-theme="monoDark"] #roomTabs .text-fuchsia-100 {
+	border-color: var(--mono-accent) !important;
+}
+
+body[data-theme="monoDark"] #aiUsePreviewBtn {
+	border-color: rgba(0, 121, 212, 0.4) !important;
+	background-color: transparent !important;
+	color: inherit !important;
+	--ai-preview-dot-on: var(--mono-accent);
+}
+
+body[data-theme="monoDark"] #aiUsePreviewBtn[aria-pressed="true"] {
+	background-color: transparent !important;
+	border-color: rgba(0, 121, 212, 0.6) !important;
+	color: inherit !important;
+}
+
+body[data-theme="monoDark"] #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
+	background-color: var(--ai-preview-dot-on) !important;
+}
+
+body[data-theme="monoDark"] #aiUsePreviewBtn[aria-pressed="true"] span:last-child {
+	color: inherit !important;
+}
+
 body[data-theme="monoDark"] .ps-note-item .ps-note-actions button {
 	box-shadow: none !important;
 	background-color: transparent !important;
@@ -2588,6 +3111,14 @@ body[data-theme="monoDark"] .ps-note-item.ps-note-active span.rounded-full.borde
 	background-color: transparent !important;
 	border-color: rgba(88, 166, 255, 0.28) !important;
 	color: #c9d1d9 !important;
+}
+
+body[data-theme="monoDark"] [aria-pressed="true"],
+body[data-theme="monoDark"] .ps-tag-button.ps-tag-active,
+body[data-theme="monoDark"] .ps-tag-section .ps-tag-active {
+	background-color: var(--mono-accent) !important;
+	color: #ffffff !important;
+	border-color: var(--mono-accent) !important;
 }
 
 body[data-theme="monoDark"] .ps-note-pin.bg-fuchsia-500\/20 {
@@ -2613,6 +3144,12 @@ body[data-theme="monoDark"] #clearMirror,
 body[data-theme="monoDark"] #copyMirror,
 body[data-theme="monoDark"] #psEditorTagsBar,
 body[data-theme="monoDark"] #psEditorTagsBar > div {
+	background: rgba(13, 17, 23, 0.65) !important;
+	border-color: rgba(48, 54, 61, 0.65) !important;
+}
+
+body[data-theme="monoDark"] #psEditorTagsBar input,
+body[data-theme="monoDark"] #psEditorTagsBar select {
 	background: rgba(13, 17, 23, 0.65) !important;
 	border-color: rgba(48, 54, 61, 0.65) !important;
 }
