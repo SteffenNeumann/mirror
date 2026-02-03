@@ -215,6 +215,15 @@ body.glow-disabled .bg-glow {
 	box-shadow: none !important;
 }
 
+#toggleHeader:hover,
+#toggleHeader:focus-visible,
+#toggleHeader:active,
+#togglePersonalSpace:hover,
+#togglePersonalSpace:focus-visible,
+#togglePersonalSpace:active {
+	background-color: transparent;
+}
+
 #psEditorTagsBar > div {
 	flex-wrap: nowrap;
 	overflow-x: auto;
