@@ -234,7 +234,7 @@ body.glow-disabled .bg-glow {
 
 #mdPreview {
 	background-color: var(--selection-menu-bg);
-	border: 1px solid var(--selection-menu-border);
+	border: 0;
 	border-radius: 0;
 	box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
 }
