@@ -4355,6 +4355,8 @@
 	let jsRunnerPending = new Map();
 	let previewRunState = { status: "", output: "", error: "", source: "" };
 	let previewTaskEditsPending = false;
+	let previewTaskAutoSortTimer = 0;
+	const PREVIEW_TASK_AUTO_SORT_DELAY = 220;
 	let psNextImportMode = "merge";
 	let psSearchQuery = "";
 	let psSearchDebounceTimer = 0;
@@ -8784,7 +8786,7 @@
 			if (metaRight) metaRight.textContent = "";
 		}
 		if (!previewOpen && wasPreviewOpen) {
-			maybeAutoSortTasksAfterPreview();
+			// Auto-sort is handled on preview interaction with delay.
 		}
 		setFullPreview(fullPreview);
 		syncMobileFocusState();
@@ -9577,7 +9579,21 @@ ${highlightThemeCss}
 				// ignore
 			}
 		}
+		if (ok) schedulePreviewTaskAutoSort();
 		return ok;
+	}
+
+	function schedulePreviewTaskAutoSort() {
+		if (!taskAutoSortEnabled) return;
+		if (!previewTaskEditsPending) return;
+		if (previewTaskAutoSortTimer) {
+			window.clearTimeout(previewTaskAutoSortTimer);
+			previewTaskAutoSortTimer = 0;
+		}
+		previewTaskAutoSortTimer = window.setTimeout(() => {
+			previewTaskAutoSortTimer = 0;
+			maybeAutoSortTasksAfterPreview();
+		}, PREVIEW_TASK_AUTO_SORT_DELAY);
 	}
 
 	function maybeAutoSortTasksAfterPreview() {
@@ -9606,6 +9622,7 @@ ${highlightThemeCss}
 		} catch {
 			// ignore
 		}
+		updatePreview();
 		const noteId = getActiveRoomTabNoteId();
 		if (noteId) updateLocalNoteText(noteId, textarea.value);
 		schedulePsAutoSave();
