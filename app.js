@@ -9092,10 +9092,11 @@
 		th,td{border:1px solid ${previewTableBorder};padding:6px 8px;}
 		blockquote{border-left:3px solid var(--blockquote-border);margin:0;padding:0 12px;color:var(--blockquote-text);}
     ul.task-list{list-style:none;padding-left:0;}
-    ul.task-list li{display:flex;gap:.55rem;align-items:flex-start;}
+		ul.task-list li{display:flex;gap:.55rem;align-items:flex-start;transition:transform .18s ease,opacity .18s ease;animation:task-fade .18s ease;}
 		ul.task-list li.task-list-item.checked{opacity:.75;text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:rgba(148,163,184,.7);}
 		ul.task-list li.task-list-item.checked input[type=checkbox]{opacity:1;}
     ul.task-list input[type=checkbox]{margin-top:.2rem;}
+		@keyframes task-fade{from{opacity:.4;transform:translateY(2px);}to{opacity:1;transform:translateY(0);}}
 		.pdf-embed{margin:12px 0;border:1px solid ${previewTableBorder};border-radius:12px;overflow:hidden;background:${previewPreBg};}
 		.pdf-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;border-bottom:1px solid ${previewTableBorder};font-size:12px;background:${previewMetaBg};}
 		.pdf-nav{display:flex;align-items:center;gap:6px;}
@@ -9594,6 +9595,15 @@ ${highlightThemeCss}
 			previewTaskAutoSortTimer = 0;
 			maybeAutoSortTasksAfterPreview();
 		}, PREVIEW_TASK_AUTO_SORT_DELAY);
+	}
+
+	function forcePreviewTaskAutoSortNow() {
+		if (previewTaskAutoSortTimer) {
+			window.clearTimeout(previewTaskAutoSortTimer);
+			previewTaskAutoSortTimer = 0;
+		}
+		if (!previewTaskEditsPending) return;
+		maybeAutoSortTasksAfterPreview();
 	}
 
 	function maybeAutoSortTasksAfterPreview() {
@@ -10814,6 +10824,7 @@ ${highlightThemeCss}
 				});
 			});
 			row.addEventListener("click", async (ev) => {
+				forcePreviewTaskAutoSortNow();
 				await flushPendingPsAutoSave();
 				const id = row.getAttribute("data-note-id") || "";
 				if (!id) return;
@@ -15906,6 +15917,7 @@ self.onmessage = async (e) => {
 	function goToRoom(roomName) {
 		const next = normalizeRoom(roomName);
 		if (!next) return;
+		forcePreviewTaskAutoSortNow();
 		setCalendarPanelActive(false);
 		flushRoomTabSync();
 		location.hash = buildShareHash(next, key);
@@ -15915,6 +15927,7 @@ self.onmessage = async (e) => {
 		const next = normalizeRoom(roomName);
 		const nextKey = normalizeKey(keyName);
 		if (!next) return;
+		forcePreviewTaskAutoSortNow();
 		setCalendarPanelActive(false);
 		flushRoomTabSync();
 		location.hash = buildShareHash(next, nextKey);
@@ -15932,6 +15945,7 @@ self.onmessage = async (e) => {
 	newRoomBtn.addEventListener("click", () => {
 		const nextRoom = randomRoom();
 		const nextKey = randomKey();
+		forcePreviewTaskAutoSortNow();
 		flushRoomTabSync();
 		location.hash = buildShareHash(nextRoom, nextKey);
 	});
@@ -15970,6 +15984,7 @@ self.onmessage = async (e) => {
 		favoritesSelect.addEventListener("change", () => {
 			const v = String(favoritesSelect.value || "");
 			if (!v) return;
+			forcePreviewTaskAutoSortNow();
 			location.hash = v;
 		});
 	}
