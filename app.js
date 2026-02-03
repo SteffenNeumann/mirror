@@ -9092,11 +9092,11 @@
 		th,td{border:1px solid ${previewTableBorder};padding:6px 8px;}
 		blockquote{border-left:3px solid var(--blockquote-border);margin:0;padding:0 12px;color:var(--blockquote-text);}
     ul.task-list{list-style:none;padding-left:0;}
-		ul.task-list li{display:flex;gap:.55rem;align-items:flex-start;transition:transform .18s ease,opacity .18s ease;animation:task-fade .18s ease;}
+		ul.task-list li{display:flex;gap:.55rem;align-items:flex-start;transition:transform .28s ease,opacity .28s ease;animation:task-fade .28s ease both;will-change:transform,opacity;}
 		ul.task-list li.task-list-item.checked{opacity:.75;text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:rgba(148,163,184,.7);}
 		ul.task-list li.task-list-item.checked input[type=checkbox]{opacity:1;}
     ul.task-list input[type=checkbox]{margin-top:.2rem;}
-		@keyframes task-fade{from{opacity:.4;transform:translateY(2px);}to{opacity:1;transform:translateY(0);}}
+		@keyframes task-fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 		.pdf-embed{margin:12px 0;border:1px solid ${previewTableBorder};border-radius:12px;overflow:hidden;background:${previewPreBg};}
 		.pdf-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;border-bottom:1px solid ${previewTableBorder};font-size:12px;background:${previewMetaBg};}
 		.pdf-nav{display:flex;align-items:center;gap:6px;}
@@ -9632,12 +9632,24 @@ ${highlightThemeCss}
 		} catch {
 			// ignore
 		}
+		if (isCrdtEnabled()) {
+			updateCrdtFromTextarea();
+		} else {
+			scheduleSend();
+		}
 		updatePreview();
 		const noteId = getActiveRoomTabNoteId();
 		if (noteId) updateLocalNoteText(noteId, textarea.value);
+		updateRoomTabTextLocal(room, key, textarea.value);
+		const tabNoteId = getRoomTabNoteIdForRoom(room, key);
+		scheduleRoomTabSync({
+			room,
+			key,
+			text: resolveRoomTabSnapshotText(tabNoteId, String(textarea.value || "")),
+			lastUsed: Date.now(),
+		});
 		schedulePsAutoSave();
 		schedulePsListRerender();
-		scheduleSend();
 		if (metaLeft)
 			metaLeft.textContent = uiLang === "de" ? "Aufgaben sortiert." : "Tasks sorted.";
 		if (metaRight) metaRight.textContent = nowIso();
