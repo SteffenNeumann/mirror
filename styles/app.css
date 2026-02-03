@@ -2206,12 +2206,19 @@ body[data-theme="bitterDark"] .ps-note-item.ps-note-active span.rounded-full.bor
 
 body[data-theme="bitterDark"] #psNewNote,
 body[data-theme="bitterDark"] #psSaveMain,
-body[data-theme="bitterDark"] #roomTabs .text-fuchsia-100,
 body[data-theme="bitterDark"] #commentAdd,
 body[data-theme="bitterDark"] #aiAssist {
 	background-color: var(--bitter-accent) !important;
 	border-color: var(--bitter-accent) !important;
 	color: #ffffff !important;
+}
+
+body[data-theme="bitterDark"] #roomTabs .border-fuchsia-400\/40 {
+	border-color: var(--bitter-accent) !important;
+}
+
+body[data-theme="bitterDark"] #roomTabs .text-fuchsia-100 {
+	background-color: transparent !important;
 }
 
 body[data-theme="bitterDark"] #aiUsePreviewBtn[aria-pressed="true"] {
@@ -2877,12 +2884,19 @@ body[data-theme="monoDark"] .ps-note-item.ps-note-active {
 
 body[data-theme="monoDark"] #psNewNote,
 body[data-theme="monoDark"] #psSaveMain,
-body[data-theme="monoDark"] #roomTabs .text-fuchsia-100,
 body[data-theme="monoDark"] #commentAdd,
 body[data-theme="monoDark"] #aiAssist {
 	background-color: var(--mono-accent) !important;
 	border-color: var(--mono-accent) !important;
 	color: #ffffff !important;
+}
+
+body[data-theme="monoDark"] #roomTabs .border-fuchsia-400\/40 {
+	border-color: var(--mono-accent) !important;
+}
+
+body[data-theme="monoDark"] #roomTabs .text-fuchsia-100 {
+	background-color: transparent !important;
 }
 
 body[data-theme="monoDark"] #aiUsePreviewBtn[aria-pressed="true"] {
