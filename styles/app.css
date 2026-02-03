@@ -982,20 +982,21 @@ body.preview-only #editorPreviewGrid > div:first-child {
 #aiUsePreviewBtn {
 	background-color: transparent !important;
 	color: inherit !important;
-	--ai-preview-dot-off: rgba(148, 163, 184, 0.65);
+	--ai-preview-dot-off: rgba(203, 213, 225, 0.9);
+	--ai-preview-dot-on: var(--accent-strong-active, #ff2301);
 }
 #aiUsePreviewBtn:hover {
 	background-color: transparent !important;
 }
 #aiUsePreviewBtn[aria-pressed="true"] {
 	background-color: transparent !important;
-	color: var(--accent-text, #ff2301) !important;
+	color: inherit !important;
 }
 #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
-	background-color: var(--accent-text, #ff2301) !important;
+	background-color: var(--ai-preview-dot-on) !important;
 }
 #aiUsePreviewBtn[aria-pressed="true"] span:last-child {
-	color: var(--accent-text, #ff2301) !important;
+	color: inherit !important;
 }
 #aiUsePreviewBtn[aria-pressed="false"] {
 	background-color: transparent !important;
@@ -1384,26 +1385,27 @@ body[data-theme="coffeeLight"] #aiAssist {
 
 body[data-theme="coffeeLight"] #aiUsePreviewBtn {
 	border-color: rgba(176, 112, 73, 0.35) !important;
-	background-color: rgba(176, 112, 73, 0.12) !important;
-	color: #2c1f18 !important;
+	background-color: transparent !important;
+	color: inherit !important;
+	--ai-preview-dot-on: #b07049;
 }
 
 body[data-theme="coffeeLight"] #aiUsePreviewBtn span:first-child {
-	background-color: #b07049 !important;
+	background-color: var(--ai-preview-dot-off) !important;
 }
 
 body[data-theme="coffeeLight"] #aiUsePreviewBtn[aria-pressed="true"] {
-	background-color: #b07049 !important;
-	border-color: #b07049 !important;
-	color: #ffffff !important;
+	background-color: transparent !important;
+	border-color: rgba(176, 112, 73, 0.55) !important;
+	color: inherit !important;
 }
 
 body[data-theme="coffeeLight"] #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
-	background-color: #ffffff !important;
+	background-color: var(--ai-preview-dot-on) !important;
 }
 
 body[data-theme="coffeeLight"] #aiUsePreviewBtn[aria-pressed="true"] span:last-child {
-	color: #ffffff !important;
+	color: inherit !important;
 }
 
 body[data-theme="coffeeLight"] .ai-chat-badge {
@@ -1750,22 +1752,23 @@ body[data-theme="coffeeDark"] #psEditorTagsSuggest {
 
 body[data-theme="coffeeDark"] #aiUsePreviewBtn {
 	border-color: rgba(201, 155, 119, 0.45) !important;
-	background-color: rgba(201, 155, 119, 0.18) !important;
-	color: #e8d9cc !important;
+	background-color: transparent !important;
+	color: inherit !important;
+	--ai-preview-dot-on: var(--coffee-accent, #c99b77);
 }
 
 body[data-theme="coffeeDark"] #aiUsePreviewBtn[aria-pressed="true"] {
-	background-color: var(--coffee-accent) !important;
-	border-color: var(--coffee-accent) !important;
-	color: #ffffff !important;
+	background-color: transparent !important;
+	border-color: rgba(201, 155, 119, 0.65) !important;
+	color: inherit !important;
 }
 
 body[data-theme="coffeeDark"] #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
-	background-color: #ffffff !important;
+	background-color: var(--ai-preview-dot-on) !important;
 }
 
 body[data-theme="coffeeDark"] #aiUsePreviewBtn[aria-pressed="true"] span:last-child {
-	color: #ffffff !important;
+	color: inherit !important;
 }
 
 body[data-theme="coffeeDark"] .ps-note-pin.bg-fuchsia-500\/20 {
@@ -1994,8 +1997,9 @@ body[data-theme="bitterLight"] .theme-swatch {
 body[data-theme="bitterLight"] #aiUsePreviewBtn {
 	border-color: rgba(255, 35, 1, 0.35) !important;
 	background-color: transparent !important;
-	color: #0d0c10 !important;
-	--ai-preview-dot-off: rgba(13, 12, 16, 0.45);
+	color: inherit !important;
+	--ai-preview-dot-off: rgba(203, 213, 225, 0.9);
+	--ai-preview-dot-on: #ff2301;
 }
 
 body[data-theme="bitterLight"] #aiUsePreviewBtn span:first-child {
@@ -2003,17 +2007,17 @@ body[data-theme="bitterLight"] #aiUsePreviewBtn span:first-child {
 }
 
 body[data-theme="bitterLight"] #aiUsePreviewBtn[aria-pressed="true"] {
-	background-color: #ff2301 !important;
-	border-color: #ff2301 !important;
-	color: #ffffff !important;
+	background-color: transparent !important;
+	border-color: rgba(255, 35, 1, 0.6) !important;
+	color: inherit !important;
 }
 
 body[data-theme="bitterLight"] #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
-	background-color: #ffffff !important;
+	background-color: var(--ai-preview-dot-on) !important;
 }
 
 body[data-theme="bitterLight"] #aiUsePreviewBtn[aria-pressed="true"] span:last-child {
-	color: #ffffff !important;
+	color: inherit !important;
 }
 
 body[data-theme="bitterLight"] .ai-chat-badge {
