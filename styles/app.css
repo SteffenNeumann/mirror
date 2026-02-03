@@ -3263,3 +3263,19 @@ body[data-theme="monoDark"] #settingsGlowToggle {
 	border-color: #30363d !important;
 	color: #6e7681 !important;
 }
+
+#toggleHeader,
+#togglePersonalSpace {
+	background-color: transparent !important;
+}
+
+#toggleHeader:hover,
+#toggleHeader:focus-visible,
+#toggleHeader:active,
+#toggleHeader[aria-pressed="true"],
+#togglePersonalSpace:hover,
+#togglePersonalSpace:focus-visible,
+#togglePersonalSpace:active,
+#togglePersonalSpace[aria-pressed="true"] {
+	background-color: transparent !important;
+}
