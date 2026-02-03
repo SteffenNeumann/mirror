@@ -3046,7 +3046,7 @@ body[data-theme="monoDark"] .bg-fuchsia-500\/15,
 body[data-theme="monoDark"] .bg-fuchsia-500\/20,
 body[data-theme="monoDark"] .bg-fuchsia-500\/25,
 body[data-theme="monoDark"] .bg-fuchsia-600\/20 {
-	background-color: transparent !important;
+	background-color: rgba(0, 121, 212, 0.2) !important;
 	color: var(--mono-accent) !important;
 }
 
