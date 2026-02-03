@@ -178,6 +178,7 @@ body.glow-disabled .bg-glow {
 #psMetaToggle,
 #clearMirror,
 #copyMirror,
+#toggleExcalidraw,
 #psEditorTagsBar,
 #psEditorTagsBar > div {
 	background: rgba(2, 6, 23, 0.75) !important;
@@ -192,27 +193,6 @@ body.glow-disabled .bg-glow {
 #psEditorTagsBar select {
 	background: rgba(2, 6, 23, 0.75) !important;
 	border-color: rgba(255, 255, 255, 0.12) !important;
-}
-
-#toggleExcalidraw {
-	color: var(--accent-text) !important;
-	background: var(--accent-bg) !important;
-	border-color: var(--accent-border) !important;
-	box-shadow: none !important;
-	backdrop-filter: none !important;
-	-webkit-backdrop-filter: none !important;
-}
-
-#toggleExcalidraw:hover {
-	background: var(--accent-bg-hover) !important;
-	border-color: var(--accent-border-strong) !important;
-	color: var(--accent-text-soft) !important;
-}
-
-#toggleExcalidraw[aria-pressed="true"] {
-	background: var(--accent-bg-hover) !important;
-	border-color: var(--accent-border-strong) !important;
-	box-shadow: none !important;
 }
 
 #psEditorTagsBar > div {
