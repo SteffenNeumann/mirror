@@ -1920,6 +1920,20 @@ body[data-theme="bitterLight"] .text-fuchsia-100 {
 	color: #ff2301 !important;
 }
 
+body[data-theme="bitterLight"] .bg-fuchsia-500\/15,
+body[data-theme="bitterLight"] .bg-fuchsia-500\/20,
+body[data-theme="bitterLight"] .bg-fuchsia-500\/25,
+body[data-theme="bitterLight"] .bg-fuchsia-600\/20 {
+	background-color: rgba(13, 12, 16, 0.08) !important;
+	color: #0d0c10 !important;
+}
+
+body[data-theme="bitterLight"] .hover\:bg-fuchsia-500\/20:hover,
+body[data-theme="bitterLight"] .hover\:bg-fuchsia-500\/25:hover {
+	background-color: rgba(13, 12, 16, 0.12) !important;
+	color: #0d0c10 !important;
+}
+
 body[data-theme="bitterLight"] .ps-note-item.ps-note-active {
 	background-color: transparent !important;
 	border-color: rgba(255, 35, 1, 0.45) !important;
@@ -2601,8 +2615,8 @@ body[data-theme="monoLight"] .bg-fuchsia-500\/15,
 body[data-theme="monoLight"] .bg-fuchsia-500\/20,
 body[data-theme="monoLight"] .bg-fuchsia-500\/25,
 body[data-theme="monoLight"] .bg-fuchsia-600\/20 {
-	background-color: transparent !important;
-	color: var(--mono-accent) !important;
+	background-color: rgba(27, 31, 36, 0.08) !important;
+	color: #24292f !important;
 }
 
 body[data-theme="monoLight"] #toggleExcalidraw {
@@ -2616,8 +2630,8 @@ body[data-theme="monoLight"] #toggleExcalidraw {
 
 body[data-theme="monoLight"] .hover\:bg-fuchsia-500\/20:hover,
 body[data-theme="monoLight"] .hover\:bg-fuchsia-500\/25:hover {
-	background-color: transparent !important;
-	color: var(--mono-accent) !important;
+	background-color: rgba(27, 31, 36, 0.12) !important;
+	color: #24292f !important;
 }
 
 body[data-theme="monoLight"] .text-fuchsia-100,
