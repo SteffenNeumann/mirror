@@ -3074,6 +3074,7 @@ body[data-theme="monoDark"] #roomTabs .border-fuchsia-400\/40 {
 
 body[data-theme="monoDark"] #roomTabs .text-fuchsia-100 {
 	border-color: var(--mono-accent) !important;
+	color: #c9d1d9 !important;
 }
 
 body[data-theme="monoDark"] #aiUsePreviewBtn {
