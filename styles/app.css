@@ -1709,9 +1709,9 @@ body[data-theme="coffeeDark"] .ps-note-item .ps-note-actions button {
 }
 
 body[data-theme="coffeeDark"] .ps-note-pin.bg-fuchsia-500\/20 {
-	background-color: rgba(201, 155, 119, 0.25) !important;
+	background-color: rgba(201, 155, 119, 0.28) !important;
 	border-color: rgba(201, 155, 119, 0.6) !important;
-	color: var(--coffee-accent) !important;
+	color: #e8d9cc !important;
 }
 
 body[data-theme="coffeeDark"] .ps-note-pin.bg-fuchsia-500\/20 svg path {
@@ -2339,9 +2339,9 @@ body[data-theme="bitterDark"] .text-fuchsia-300 {
 }
 
 body[data-theme="bitterDark"] .ps-note-pin.bg-fuchsia-500\/20 {
-	background-color: rgba(255, 59, 31, 0.24) !important;
+	background-color: rgba(255, 59, 31, 0.26) !important;
 	border-color: rgba(255, 59, 31, 0.6) !important;
-	color: var(--bitter-accent) !important;
+	color: #f0e8df !important;
 }
 
 body[data-theme="bitterDark"] .ps-note-pin.bg-fuchsia-500\/20 svg path {
@@ -2811,9 +2811,9 @@ body[data-theme="monoDark"] .ps-note-item.ps-note-active .ps-note-actions button
 }
 
 body[data-theme="monoDark"] .ps-note-pin.bg-fuchsia-500\/20 {
-	background-color: rgba(31, 111, 235, 0.32) !important;
-	border-color: rgba(31, 111, 235, 0.6) !important;
-	color: #e6f0ff !important;
+	background-color: rgba(0, 121, 212, 0.32) !important;
+	border-color: rgba(0, 121, 212, 0.6) !important;
+	color: #c9d1d9 !important;
 	box-shadow: 0 0 0 1px rgba(31, 111, 235, 0.35), 0 4px 10px rgba(0, 0, 0, 0.35) !important;
 }
 
