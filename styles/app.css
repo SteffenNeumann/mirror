@@ -3192,6 +3192,18 @@ body[data-theme="monoDark"] .ps-note-pin.bg-fuchsia-500\/20 {
 	box-shadow: 0 0 0 1px rgba(31, 111, 235, 0.35), 0 4px 10px rgba(0, 0, 0, 0.35) !important;
 }
 
+/* Override generic fuchsia reset to keep pin visible in monoDark */
+body[data-theme="monoDark"] .ps-note-pin.bg-fuchsia-500\/20 {
+	background-color: var(--mono-accent) !important;
+	border-color: var(--mono-accent) !important;
+	color: #c9d1d9 !important;
+}
+
+body[data-theme="monoDark"] .ps-note-pin.bg-fuchsia-500\/20 svg path {
+	fill: currentColor !important;
+	stroke: currentColor !important;
+}
+
 body[data-theme="monoDark"] .shadow-soft {
 	box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
 }
