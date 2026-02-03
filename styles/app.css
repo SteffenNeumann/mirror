@@ -1465,10 +1465,7 @@ body[data-theme="coffeeLight"] #commentPanel .bg-rose-500\/10 {
 
 
 body[data-theme="coffeeLight"] #roomTabs .text-fuchsia-100 {
-	background-color: #f2e7db !important;
-	border-color: #d9c7bc !important;
-	color: #3b2a21 !important;
-	color: #2c1f18 !important;
+	border-color: #b07049 !important;
 }
 
 body[data-theme="coffeeLight"] [aria-pressed="true"],
@@ -1893,9 +1890,7 @@ body[data-theme="bitterLight"] #aiAssist {
 }
 
 body[data-theme="bitterLight"] #roomTabs .text-fuchsia-100 {
-	background-color: rgba(255, 35, 1, 0.12) !important;
-	border-color: rgba(255, 35, 1, 0.28) !important;
-	color: #ff2301 !important;
+	border-color: #ff2301 !important;
 }
 
 body[data-theme="bitterLight"] .bg-white\/5,
@@ -2818,10 +2813,7 @@ body[data-theme="monoLight"] #commentPanel .bg-rose-500\/10 {
 
 
 body[data-theme="monoLight"] #roomTabs .text-fuchsia-100 {
-	background-color: #f0f3f6 !important;
-	border-color: #d0d7de !important;
-	color: #24292f !important;
-	color: #0b1f33 !important;
+	border-color: var(--mono-accent) !important;
 }
 
 body[data-theme="monoLight"] [aria-pressed="true"],
@@ -3008,8 +3000,7 @@ body[data-theme="monoDark"] #roomTabs .border-fuchsia-400\/40 {
 }
 
 body[data-theme="monoDark"] #roomTabs .text-fuchsia-100 {
-	background-color: transparent !important;
-	color: inherit !important;
+	border-color: var(--mono-accent) !important;
 }
 
 body[data-theme="monoDark"] #aiUsePreviewBtn[aria-pressed="true"] {
