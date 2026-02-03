@@ -1367,11 +1367,6 @@ body[data-theme="coffeeLight"] .ps-note-item.ps-note-active .ps-note-actions but
 body[data-theme="coffeeLight"] .ps-note-item.ps-note-active span.rounded-full.border {
 	background-color: rgba(176, 112, 73, 0.08) !important;
 	border-color: rgba(176, 112, 73, 0.25) !important;
-body[data-theme="bitterDark"] .ps-note-pin.bg-fuchsia-500\/20 {
-	background-color: rgba(255, 35, 1, 0.2) !important;
-	border-color: rgba(255, 35, 1, 0.42) !important;
-	color: #f0e8df !important;
-}
 	color: #3b2a21 !important;
 }
 
@@ -1711,6 +1706,17 @@ body[data-theme="coffeeDark"] .ps-note-item .ps-note-actions button {
 	background-color: transparent !important;
 	border-color: rgba(201, 155, 119, 0.45) !important;
 	color: var(--coffee-accent) !important;
+}
+
+body[data-theme="coffeeDark"] .ps-note-pin.bg-fuchsia-500\/20 {
+	background-color: rgba(201, 155, 119, 0.25) !important;
+	border-color: rgba(201, 155, 119, 0.6) !important;
+	color: var(--coffee-accent) !important;
+}
+
+body[data-theme="coffeeDark"] .ps-note-pin.bg-fuchsia-500\/20 svg path {
+	fill: currentColor !important;
+	stroke: currentColor !important;
 }
 
 body[data-theme="coffeeDark"] .ps-note-item .ps-note-actions button:hover {
@@ -2332,6 +2338,17 @@ body[data-theme="bitterDark"] .text-fuchsia-300 {
 	color: var(--bitter-accent) !important;
 }
 
+body[data-theme="bitterDark"] .ps-note-pin.bg-fuchsia-500\/20 {
+	background-color: rgba(255, 59, 31, 0.24) !important;
+	border-color: rgba(255, 59, 31, 0.6) !important;
+	color: var(--bitter-accent) !important;
+}
+
+body[data-theme="bitterDark"] .ps-note-pin.bg-fuchsia-500\/20 svg path {
+	fill: currentColor !important;
+	stroke: currentColor !important;
+}
+
 body[data-theme="bitterDark"] #settingsBackdrop {
 	background-color: rgba(13, 12, 16, 0.6) !important;
 }
@@ -2798,6 +2815,11 @@ body[data-theme="monoDark"] .ps-note-pin.bg-fuchsia-500\/20 {
 	border-color: rgba(31, 111, 235, 0.6) !important;
 	color: #e6f0ff !important;
 	box-shadow: 0 0 0 1px rgba(31, 111, 235, 0.35), 0 4px 10px rgba(0, 0, 0, 0.35) !important;
+}
+
+body[data-theme="monoDark"] .ps-note-pin.bg-fuchsia-500\/20 svg path {
+	fill: currentColor !important;
+	stroke: currentColor !important;
 }
 
 body[data-theme="monoLight"] #aiUsePreviewBtn {
