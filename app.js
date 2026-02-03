@@ -3264,7 +3264,7 @@
 			return;
 		}
 		setSelectionMenuOpen(true);
-		positionFloatingMenu(selectionMenu, textarea, range.end, 10);
+		positionFloatingMenu(selectionMenu, textarea, range.end, 16);
 	}
 
 	function getWikiContext() {
