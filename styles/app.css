@@ -2840,6 +2840,10 @@ body[data-theme="monoLight"] #previewPanel {
 	border-color: #d0d7de !important;
 }
 
+body[data-theme="monoLight"] #mdPreview {
+	background-color: #ffffff !important;
+}
+
 body[data-theme="monoLight"] #toggleComments,
 body[data-theme="monoLight"] #psMetaToggle,
 body[data-theme="monoLight"] #clearMirror,
