@@ -2219,6 +2219,7 @@ body[data-theme="bitterDark"] #roomTabs .border-fuchsia-400\/40 {
 
 body[data-theme="bitterDark"] #roomTabs .text-fuchsia-100 {
 	background-color: transparent !important;
+	color: inherit !important;
 }
 
 body[data-theme="bitterDark"] #aiUsePreviewBtn[aria-pressed="true"] {
@@ -2897,6 +2898,7 @@ body[data-theme="monoDark"] #roomTabs .border-fuchsia-400\/40 {
 
 body[data-theme="monoDark"] #roomTabs .text-fuchsia-100 {
 	background-color: transparent !important;
+	color: inherit !important;
 }
 
 body[data-theme="monoDark"] #aiUsePreviewBtn[aria-pressed="true"] {
