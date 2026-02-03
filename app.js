@@ -3264,7 +3264,9 @@
 			return;
 		}
 		setSelectionMenuOpen(true);
-		positionFloatingMenu(selectionMenu, textarea, range.end, 16);
+		const caretPos =
+			textarea.selectionDirection === "backward" ? range.start : range.end;
+		positionFloatingMenu(selectionMenu, textarea, caretPos, 16);
 	}
 
 	function getWikiContext() {
