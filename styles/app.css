@@ -1360,6 +1360,21 @@ body[data-theme="coffeeLight"] .ps-note-pin.bg-fuchsia-500\/20 {
 	color: #b07049 !important;
 }
 
+body[data-theme="coffeeLight"] .ps-note-item.ps-note-active {
+	background-color: transparent !important;
+	border-color: rgba(176, 112, 73, 0.45) !important;
+	box-shadow: 0 6px 14px rgba(176, 112, 73, 0.12);
+}
+
+body[data-theme="coffeeLight"] #psNewNote,
+body[data-theme="coffeeLight"] #psSaveMain,
+body[data-theme="coffeeLight"] #commentAdd,
+body[data-theme="coffeeLight"] #aiAssist {
+	background-color: #b07049 !important;
+	border-color: #b07049 !important;
+	color: #ffffff !important;
+}
+
 body[data-theme="coffeeLight"] #aiUsePreviewBtn {
 	border-color: rgba(176, 112, 73, 0.35) !important;
 	background-color: rgba(176, 112, 73, 0.12) !important;
@@ -1368,6 +1383,20 @@ body[data-theme="coffeeLight"] #aiUsePreviewBtn {
 
 body[data-theme="coffeeLight"] #aiUsePreviewBtn span:first-child {
 	background-color: #b07049 !important;
+}
+
+body[data-theme="coffeeLight"] #aiUsePreviewBtn[aria-pressed="true"] {
+	background-color: #b07049 !important;
+	border-color: #b07049 !important;
+	color: #ffffff !important;
+}
+
+body[data-theme="coffeeLight"] #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
+	background-color: #ffffff !important;
+}
+
+body[data-theme="coffeeLight"] #aiUsePreviewBtn[aria-pressed="true"] span:last-child {
+	color: #ffffff !important;
 }
 
 body[data-theme="coffeeLight"] .ai-chat-badge {
@@ -1440,6 +1469,14 @@ body[data-theme="coffeeLight"] #roomTabs .text-fuchsia-100 {
 	border-color: #d9c7bc !important;
 	color: #3b2a21 !important;
 	color: #2c1f18 !important;
+}
+
+body[data-theme="coffeeLight"] [aria-pressed="true"],
+body[data-theme="coffeeLight"] .ps-tag-button.ps-tag-active,
+body[data-theme="coffeeLight"] .ps-tag-section .ps-tag-active {
+	background-color: #b07049 !important;
+	color: #ffffff !important;
+	border-color: #b07049 !important;
 }
 
 body[data-theme="coffeeLight"] .hover\:bg-white\/5:hover {
@@ -1840,6 +1877,21 @@ body[data-theme="bitterLight"] .text-fuchsia-100 {
 	color: #ff2301 !important;
 }
 
+body[data-theme="bitterLight"] .ps-note-item.ps-note-active {
+	background-color: transparent !important;
+	border-color: rgba(255, 35, 1, 0.45) !important;
+	box-shadow: 0 6px 14px rgba(255, 35, 1, 0.12);
+}
+
+body[data-theme="bitterLight"] #psNewNote,
+body[data-theme="bitterLight"] #psSaveMain,
+body[data-theme="bitterLight"] #commentAdd,
+body[data-theme="bitterLight"] #aiAssist {
+	background-color: #ff2301 !important;
+	border-color: #ff2301 !important;
+	color: #ffffff !important;
+}
+
 body[data-theme="bitterLight"] #roomTabs .text-fuchsia-100 {
 	background-color: rgba(255, 35, 1, 0.12) !important;
 	border-color: rgba(255, 35, 1, 0.28) !important;
@@ -1921,6 +1973,20 @@ body[data-theme="bitterLight"] #aiUsePreviewBtn span:first-child {
 	background-color: #ff2301 !important;
 }
 
+body[data-theme="bitterLight"] #aiUsePreviewBtn[aria-pressed="true"] {
+	background-color: #ff2301 !important;
+	border-color: #ff2301 !important;
+	color: #ffffff !important;
+}
+
+body[data-theme="bitterLight"] #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
+	background-color: #ffffff !important;
+}
+
+body[data-theme="bitterLight"] #aiUsePreviewBtn[aria-pressed="true"] span:last-child {
+	color: #ffffff !important;
+}
+
 body[data-theme="bitterLight"] .ai-chat-badge {
 	color: #0d0c10 !important;
 	background-color: rgba(21, 21, 24, 0.12) !important;
@@ -1983,6 +2049,14 @@ body[data-theme="bitterLight"] #commentPanel .bg-rose-500\/10 {
 	background-color: rgba(255, 35, 1, 0.12) !important;
 	border-color: rgba(255, 35, 1, 0.3) !important;
 	color: #b01b00 !important;
+}
+
+body[data-theme="bitterLight"] [aria-pressed="true"],
+body[data-theme="bitterLight"] .ps-tag-button.ps-tag-active,
+body[data-theme="bitterLight"] .ps-tag-section .ps-tag-active {
+	background-color: #ff2301 !important;
+	color: #ffffff !important;
+	border-color: #ff2301 !important;
 }
 
 body[data-theme="bitterLight"] .hover\:bg-white\/5:hover {
