@@ -1106,6 +1106,10 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	overflow: visible;
 }
 
+#roomTabs .text-fuchsia-100 {
+	color: #e2e8f0 !important;
+}
+
 .room-tabs-scroll {
 	overflow-x: auto;
 	overflow-y: visible;
@@ -1486,6 +1490,7 @@ body[data-theme="coffeeLight"] #commentPanel .bg-rose-500\/10 {
 
 body[data-theme="coffeeLight"] #roomTabs .text-fuchsia-100 {
 	border-color: #b07049 !important;
+	color: #3b2a21 !important;
 }
 
 body[data-theme="coffeeLight"] [aria-pressed="true"],
@@ -1932,6 +1937,7 @@ body[data-theme="bitterLight"] #aiAssist {
 
 body[data-theme="bitterLight"] #roomTabs .text-fuchsia-100 {
 	border-color: #ff2301 !important;
+	color: #0d0c10 !important;
 }
 
 body[data-theme="bitterLight"] .bg-white\/5,
@@ -2887,6 +2893,7 @@ body[data-theme="monoLight"] #commentPanel .bg-rose-500\/10 {
 
 body[data-theme="monoLight"] #roomTabs .text-fuchsia-100 {
 	border-color: var(--mono-accent) !important;
+	color: #24292f !important;
 }
 
 body[data-theme="monoLight"] [aria-pressed="true"],
