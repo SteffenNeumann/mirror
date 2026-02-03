@@ -1449,6 +1449,10 @@ body[data-theme="coffeeLight"] #previewPanel {
 	border-color: #d9c7bc !important;
 }
 
+body[data-theme="coffeeLight"] #mdPreview {
+	background-color: #fffaf4 !important;
+}
+
 body[data-theme="coffeeLight"] #toggleComments,
 body[data-theme="coffeeLight"] #psMetaToggle,
 body[data-theme="coffeeLight"] #clearMirror,
@@ -2059,6 +2063,10 @@ body[data-theme="bitterLight"] .shadow-soft {
 body[data-theme="bitterLight"] #previewPanel {
 	background-color: #fff9f4 !important;
 	border-color: #d8d2cb !important;
+}
+
+body[data-theme="bitterLight"] #mdPreview {
+	background-color: #fff9f4 !important;
 }
 
 body[data-theme="bitterLight"] #toggleComments,
