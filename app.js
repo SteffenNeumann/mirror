@@ -3285,7 +3285,7 @@
 		setSelectionMenuOpen(true);
 		const caretPos =
 			textarea.selectionDirection === "backward" ? range.start : range.end;
-		positionFloatingMenu(selectionMenu, textarea, caretPos, 16);
+		positionFloatingMenu(selectionMenu, textarea, caretPos, 46);
 	}
 
 	function getWikiContext() {
