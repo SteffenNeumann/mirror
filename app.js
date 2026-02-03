@@ -2170,12 +2170,14 @@
 	function positionFloatingMenu(menu, el, caretPos, offsetY) {
 		if (!menu || !el) return;
 		const coords = getTextareaCaretCoords(el, caretPos);
-		const parent = el.parentElement;
-		if (!parent) return;
 		const elRect = el.getBoundingClientRect();
-		const parentRect = parent.getBoundingClientRect();
-		const left = coords.left - el.scrollLeft + (elRect.left - parentRect.left);
-		const top = coords.top - el.scrollTop + (elRect.top - parentRect.top);
+		const offsetParent = menu.offsetParent || menu.parentElement;
+		if (!offsetParent) return;
+		const parentRect = offsetParent.getBoundingClientRect();
+		const left =
+			coords.left - el.scrollLeft + (elRect.left - parentRect.left);
+		const top =
+			coords.top - el.scrollTop + (elRect.top - parentRect.top);
 		const menuRect = menu.getBoundingClientRect();
 		const maxLeft = parentRect.width - Math.max(0, menuRect.width) - 8;
 		const maxTop = parentRect.height - Math.max(0, menuRect.height) - 8;
