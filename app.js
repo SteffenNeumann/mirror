@@ -2173,8 +2173,7 @@
 		const elRect = el.getBoundingClientRect();
 		if (menu.id === "selectionMenu") {
 			const menuRect = menu.getBoundingClientRect();
-			const baseLeft =
-				coords.left - el.scrollLeft + elRect.left - menuRect.width / 2;
+			const baseLeft = elRect.left + (elRect.width - menuRect.width) / 2;
 			const baseTop = coords.top - el.scrollTop + elRect.top;
 			const desiredTop = baseTop + coords.height + (offsetY || 8);
 			const minTop = elRect.top + 8;
@@ -3285,7 +3284,7 @@
 		setSelectionMenuOpen(true);
 		const caretPos =
 			textarea.selectionDirection === "backward" ? range.start : range.end;
-		positionFloatingMenu(selectionMenu, textarea, caretPos, 8);
+		positionFloatingMenu(selectionMenu, textarea, caretPos, 2);
 	}
 
 	function getWikiContext() {
