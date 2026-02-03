@@ -1703,9 +1703,7 @@ body[data-theme="coffeeDark"] .ps-note-item.ps-note-active .ps-note-title {
 
 body[data-theme="coffeeDark"] .ps-note-item .ps-note-actions button {
 	box-shadow: none !important;
-	background-color: transparent !important;
 	border-color: rgba(201, 155, 119, 0.45) !important;
-	color: var(--coffee-accent) !important;
 }
 
 body[data-theme="coffeeDark"] .ps-note-pin.bg-fuchsia-500\/20 {
@@ -2373,9 +2371,7 @@ body[data-theme="bitterDark"] .ps-note-item.ps-note-active {
 
 body[data-theme="bitterDark"] .ps-note-item .ps-note-actions button {
 	box-shadow: none !important;
-	background-color: transparent !important;
 	border-color: rgba(255, 35, 1, 0.48) !important;
-	color: var(--bitter-accent) !important;
 }
 
 body[data-theme="bitterDark"] .ps-note-item .ps-note-actions button:hover {
@@ -3167,7 +3163,6 @@ body[data-theme="monoDark"] #aiUsePreviewBtn[aria-pressed="true"] span:last-chil
 
 body[data-theme="monoDark"] .ps-note-item .ps-note-actions button {
 	box-shadow: none !important;
-	background-color: transparent !important;
 	border-color: rgba(88, 166, 255, 0.28) !important;
 }
 
