@@ -2800,8 +2800,8 @@ body[data-theme="monoLight"] #aiAssist {
 
 body[data-theme="monoDark"] .ps-note-item.ps-note-active .ps-note-actions button {
 	box-shadow: none !important;
-	background-color: rgba(31, 111, 235, 0.12) !important;
-	border-color: rgba(31, 111, 235, 0.35) !important;
+	background-color: rgba(31, 111, 235, 0.22) !important;
+	border-color: rgba(31, 111, 235, 0.45) !important;
 	color: #d6e5ff !important;
 }
 
