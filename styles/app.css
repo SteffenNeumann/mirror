@@ -1450,7 +1450,8 @@ body[data-theme="coffeeLight"] #previewPanel {
 }
 
 body[data-theme="coffeeLight"] #mdPreview {
-	background-color: #fffaf4 !important;
+	background-color: inherit !important;
+	box-shadow: none !important;
 }
 
 body[data-theme="coffeeLight"] #toggleComments,
@@ -2066,7 +2067,8 @@ body[data-theme="bitterLight"] #previewPanel {
 }
 
 body[data-theme="bitterLight"] #mdPreview {
-	background-color: #fff9f4 !important;
+	background-color: inherit !important;
+	box-shadow: none !important;
 }
 
 body[data-theme="bitterLight"] #toggleComments,
@@ -2849,7 +2851,8 @@ body[data-theme="monoLight"] #previewPanel {
 }
 
 body[data-theme="monoLight"] #mdPreview {
-	background-color: #ffffff !important;
+	background-color: inherit !important;
+	box-shadow: none !important;
 }
 
 body[data-theme="monoLight"] #toggleComments,
