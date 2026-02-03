@@ -1709,7 +1709,8 @@ body[data-theme="coffeeDark"] .ps-note-item .ps-note-actions button {
 }
 
 body[data-theme="coffeeDark"] .ps-note-pin.bg-fuchsia-500\/20 {
-	background-color: rgba(201, 155, 119, 0.28) !important;
+	background: var(--coffee-accent) !important;
+	background-image: none !important;
 	border-color: rgba(201, 155, 119, 0.6) !important;
 	color: #e8d9cc !important;
 }
@@ -1797,8 +1798,9 @@ body[data-theme="coffeeDark"] #aiUsePreviewBtn[aria-pressed="true"] span:last-ch
 }
 
 body[data-theme="coffeeDark"] .ps-note-pin.bg-fuchsia-500\/20 {
-	background-color: rgba(201, 155, 119, 0.18) !important;
-	border-color: rgba(201, 155, 119, 0.42) !important;
+	background: var(--coffee-accent) !important;
+	background-image: none !important;
+	border-color: rgba(201, 155, 119, 0.6) !important;
 	color: #e8d9cc !important;
 }
 
@@ -2339,8 +2341,9 @@ body[data-theme="bitterDark"] .text-fuchsia-300 {
 }
 
 body[data-theme="bitterDark"] .ps-note-pin.bg-fuchsia-500\/20 {
-	background-color: rgba(255, 59, 31, 0.26) !important;
-	border-color: rgba(255, 59, 31, 0.6) !important;
+	background: var(--bitter-accent) !important;
+	background-image: none !important;
+	border-color: rgba(255, 59, 31, 0.65) !important;
 	color: #f0e8df !important;
 }
 
@@ -2811,8 +2814,9 @@ body[data-theme="monoDark"] .ps-note-item.ps-note-active .ps-note-actions button
 }
 
 body[data-theme="monoDark"] .ps-note-pin.bg-fuchsia-500\/20 {
-	background-color: rgba(0, 121, 212, 0.32) !important;
-	border-color: rgba(0, 121, 212, 0.6) !important;
+	background: var(--mono-accent) !important;
+	background-image: none !important;
+	border-color: var(--mono-accent) !important;
 	color: #c9d1d9 !important;
 	box-shadow: 0 0 0 1px rgba(31, 111, 235, 0.35), 0 4px 10px rgba(0, 0, 0, 0.35) !important;
 }
@@ -3186,7 +3190,8 @@ body[data-theme="monoDark"] .ps-tag-section .ps-tag-active {
 }
 
 body[data-theme="monoDark"] .ps-note-pin.bg-fuchsia-500\/20 {
-	background-color: var(--mono-accent) !important;
+	background: var(--mono-accent) !important;
+	background-image: none !important;
 	border-color: var(--mono-accent) !important;
 	color: #c9d1d9 !important;
 	box-shadow: 0 0 0 1px rgba(31, 111, 235, 0.35), 0 4px 10px rgba(0, 0, 0, 0.35) !important;
