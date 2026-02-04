@@ -17059,6 +17059,7 @@ self.onmessage = async (e) => {
 					removeNoteRoomBindingByRoom(roomName, keyName);
 				}
 				syncPermanentLinkToggleUi();
+				schedulePsListRerender();
 				toast("Permanent-Link deaktiviert.", "info");
 				return;
 			}
@@ -17121,6 +17122,7 @@ self.onmessage = async (e) => {
 				lastUsed: Date.now(),
 			});
 			syncPermanentLinkToggleUi();
+			schedulePsListRerender();
 			toast("Permanent-Link aktiviert.", "success");
 		});
 	}
