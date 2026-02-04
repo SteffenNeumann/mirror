@@ -6,7 +6,7 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
 
 ## Aktuelle Änderungen (2026-02-04)
 
-- Commit `Permanent-Link for room tabs`: Neuer Permanent-Link-Button neben Copy im Editor; verlinkter Inhalt (Notiz oder lokaler Text) bleibt dem Raum-Tab zugeordnet und wird bei Tabwechsel wiederhergestellt; Room-Sync wird nur für verlinkten Inhalt ausgeführt, Pin-Status lokal gespeichert.
+- Commit `Permanent-Link for room tabs`: Neuer Permanent-Link-Button neben Copy im Editor; verlinkter Inhalt (Notiz oder lokaler Text) bleibt dem Raum-Tab zugeordnet und wird bei Tabwechsel wiederhergestellt; Room-Sync wird nur für verlinkten Inhalt ausgeführt; Pins werden lokal + serverseitig für Personal-Space Nutzer synchronisiert.
 - Commit `Add Linear integration for shared rooms`: Neuer Settings-Bereich "Integrationen" inkl. Linear API-Key und Projektauswahl; Linear-Panel mit Projektpicker/Refresh im Editor; Tasks werden read-only pro Room/Note-Scope über WebSocket-Events `linear_state`/`linear_data` verteilt und serverseitig gepuffert (in-memory).
 - Commit `Add Ethercalc Fly service + embed`: Ethercalc wird als Fly.io-Service bereitgestellt (eigener Dockerfile/fly.toml) und im Editor als eingebettete Tabelle genutzt; Sheet-URL wird pro Room/Key generiert, Excel-Toggle/Drag bleibt erhalten. Persistenz ist optional über REDIS_URL.
 
@@ -491,22 +491,26 @@ Server-Start
 - Zweck: Entfernt Duplikate für room tabs. Umsetzung: `dedupeRoomTabs` ([app.js](app.js#L10212)). Abhängigkeiten: `normalizeKey`, `normalizeRoom`, `normalizeRoomTabEntry`, `t`.
 - Zweck: Allgemeiner Helfer: show room tab limit modal. Umsetzung: `showRoomTabLimitModal` ([app.js](app.js#L10260)). Abhängigkeiten: `openModal`.
 - Zweck: Führt zusammen: room tabs. Umsetzung: `mergeRoomTabs` ([app.js](app.js#L10273)). Abhängigkeiten: `normalizeRoomTabEntry`, `t`.
-- Zweck: Normalisiert room pinned entry. Umsetzung: `normalizeRoomPinnedEntry` ([app.js](app.js#L12715)). Abhängigkeiten: `normalizeKey`, `normalizeRoom`.
-- Zweck: Lädt room pinned entries. Umsetzung: `loadRoomPinnedEntries` ([app.js](app.js#L12726)). Abhängigkeiten: `normalizeRoomPinnedEntry`, `saveRoomPinnedEntries`.
-- Zweck: Speichert room pinned entries. Umsetzung: `saveRoomPinnedEntries` ([app.js](app.js#L12743)). Abhängigkeiten: `normalizeRoomPinnedEntry`.
-- Zweck: Liest room pinned entry. Umsetzung: `getRoomPinnedEntry` ([app.js](app.js#L12754)). Abhängigkeiten: `loadRoomPinnedEntries`, `normalizeKey`, `normalizeRoom`.
-- Zweck: Setzt room pinned entry. Umsetzung: `setRoomPinnedEntry` ([app.js](app.js#L12765)). Abhängigkeiten: `loadRoomPinnedEntries`, `normalizeKey`, `normalizeRoom`, `normalizeRoomPinnedEntry`, `saveRoomPinnedEntries`.
-- Zweck: Entfernt room pinned entry. Umsetzung: `clearRoomPinnedEntry` ([app.js](app.js#L12784)). Abhängigkeiten: `loadRoomPinnedEntries`, `normalizeKey`, `normalizeRoom`, `saveRoomPinnedEntries`.
-- Zweck: Prüft pinned content aktiv. Umsetzung: `isPinnedContentActiveForRoom` ([app.js](app.js#L12794)). Abhängigkeiten: `getRoomPinnedEntry`.
-- Zweck: Prüft room sync erlaubt. Umsetzung: `shouldSyncRoomContentNow` ([app.js](app.js#L12802)). Abhängigkeiten: `isPinnedContentActiveForRoom`.
-- Zweck: Synchronisiert Permanent-Link-Toggle UI. Umsetzung: `syncPermanentLinkToggleUi` ([app.js](app.js#L12806)). Abhängigkeiten: `getRoomPinnedEntry`.
+- Zweck: Normalisiert room pinned entry. Umsetzung: `normalizeRoomPinnedEntry` ([app.js](app.js#L12749)). Abhängigkeiten: `normalizeKey`, `normalizeRoom`.
+- Zweck: Führt zusammen: room pinned entries. Umsetzung: `mergeRoomPinnedEntries` ([app.js](app.js#L12760)). Abhängigkeiten: `normalizeRoomPinnedEntry`.
+- Zweck: Lädt local room pinned entries. Umsetzung: `loadLocalRoomPinnedEntries` ([app.js](app.js#L12776)). Abhängigkeiten: `normalizeRoomPinnedEntry`, `saveRoomPinnedEntries`.
+- Zweck: Lädt room pinned entries. Umsetzung: `loadRoomPinnedEntries` ([app.js](app.js#L12793)). Abhängigkeiten: `loadLocalRoomPinnedEntries`, `mergeRoomPinnedEntries`.
+- Zweck: Speichert room pinned entries. Umsetzung: `saveRoomPinnedEntries` ([app.js](app.js#L12804)). Abhängigkeiten: `normalizeRoomPinnedEntry`.
+- Zweck: Liest room pinned entry. Umsetzung: `getRoomPinnedEntry` ([app.js](app.js#L12818)). Abhängigkeiten: `loadRoomPinnedEntries`, `normalizeKey`, `normalizeRoom`.
+- Zweck: Setzt room pinned entry. Umsetzung: `setRoomPinnedEntry` ([app.js](app.js#L12829)). Abhängigkeiten: `loadRoomPinnedEntries`, `normalizeKey`, `normalizeRoom`, `normalizeRoomPinnedEntry`, `saveRoomPinnedEntries`, `syncRoomPinToServer`.
+- Zweck: Entfernt room pinned entry. Umsetzung: `clearRoomPinnedEntry` ([app.js](app.js#L12851)). Abhängigkeiten: `loadRoomPinnedEntries`, `normalizeKey`, `normalizeRoom`, `removeRoomPinFromState`, `saveRoomPinnedEntries`.
+- Zweck: Prüft pinned content aktiv. Umsetzung: `isPinnedContentActiveForRoom` ([app.js](app.js#L12870)). Abhängigkeiten: `getRoomPinnedEntry`.
+- Zweck: Prüft room sync erlaubt. Umsetzung: `shouldSyncRoomContentNow` ([app.js](app.js#L12878)). Abhängigkeiten: `isPinnedContentActiveForRoom`.
+- Zweck: Synchronisiert Permanent-Link-Toggle UI. Umsetzung: `syncPermanentLinkToggleUi` ([app.js](app.js#L12882)). Abhängigkeiten: `getRoomPinnedEntry`.
 - Zweck: Lädt local room tabs. Umsetzung: `loadLocalRoomTabs` ([app.js](app.js#L10305)). Abhängigkeiten: `dedupeRoomTabs`, `saveRoomTabs`.
 - Zweck: Lädt room tabs. Umsetzung: `loadRoomTabs` ([app.js](app.js#L10320)). Abhängigkeiten: `dedupeRoomTabs`, `loadLocalRoomTabs`, `mergeRoomTabs`.
 - Zweck: Speichert room tabs. Umsetzung: `saveRoomTabs` ([app.js](app.js#L10329)). Abhängigkeiten: `dedupeRoomTabs`.
 - Zweck: Liest active room tab note id. Umsetzung: `getActiveRoomTabNoteId` ([app.js](app.js#L10341)). Abhängigkeiten: keine internen Funktionsaufrufe.
 - Zweck: Allgemeiner Helfer: resolve room tab snapshot text. Umsetzung: `resolveRoomTabSnapshotText` ([app.js](app.js#L10345)). Abhängigkeiten: keine internen Funktionsaufrufe.
 - Zweck: Allgemeiner Helfer: upsert room tab in state. Umsetzung: `upsertRoomTabInState` ([app.js](app.js#L10351)). Abhängigkeiten: `normalizeRoomTabEntry`.
+- Zweck: Allgemeiner Helfer: upsert room pin in state. Umsetzung: `upsertRoomPinInState` ([app.js](app.js#L13223)). Abhängigkeiten: `normalizeRoomPinnedEntry`.
 - Zweck: Entfernt room tab from state. Umsetzung: `removeRoomTabFromState` ([app.js](app.js#L10367)). Abhängigkeiten: `normalizeKey`, `normalizeRoom`.
+- Zweck: Entfernt room pin from state. Umsetzung: `removeRoomPinFromState` ([app.js](app.js#L13243)). Abhängigkeiten: `normalizeKey`, `normalizeRoom`.
 - Zweck: Aktualisiert room tab text local. Umsetzung: `updateRoomTabTextLocal` ([app.js](app.js#L10380)). Abhängigkeiten: `dedupeRoomTabs`, `getActiveRoomTabNoteId`, `loadRoomTabs`, `normalizeKey`, `normalizeRoom`, `resolveRoomTabSnapshotText`, `saveRoomTabs`, `t`.
 - Zweck: Aktualisiert room tabs for note id. Umsetzung: `updateRoomTabsForNoteId` ([app.js](app.js#L10406)). Abhängigkeiten: `dedupeRoomTabs`, `loadRoomTabs`, `saveRoomTabs`.
 - Zweck: Setzt room tab note id. Umsetzung: `setRoomTabNoteId` ([app.js](app.js#L10420)). Abhängigkeiten: `dedupeRoomTabs`, `loadRoomTabs`, `normalizeKey`, `normalizeRoom`, `saveRoomTabs`.
@@ -514,9 +518,11 @@ Server-Start
 - Zweck: Aktualisiert local note text. Umsetzung: `updateLocalNoteText` ([app.js](app.js#L10455)). Abhängigkeiten: keine internen Funktionsaufrufe.
 - Zweck: Allgemeiner Helfer: upsert favorite in state. Umsetzung: `upsertFavoriteInState` ([app.js](app.js#L10477)). Abhängigkeiten: `normalizeFavoriteEntry`.
 - Zweck: Synchronisiert room tab to server. Umsetzung: `syncRoomTabToServer` ([app.js](app.js#L10499)). Abhängigkeiten: `api`, `normalizeKey`, `normalizeRoom`, `renderRoomTabs`, `upsertRoomTabInState`.
+- Zweck: Synchronisiert room pin to server. Umsetzung: `syncRoomPinToServer` ([app.js](app.js#L13288)). Abhängigkeiten: `api`, `normalizeKey`, `normalizeRoom`, `upsertRoomPinInState`.
 - Zweck: Plant oder entprellt room tab sync. Umsetzung: `scheduleRoomTabSync` ([app.js](app.js#L10526)). Abhängigkeiten: `syncRoomTabToServer`, `t`.
 - Zweck: Allgemeiner Helfer: flush room tab sync. Umsetzung: `flushRoomTabSync` ([app.js](app.js#L10548)). Abhängigkeiten: `getActiveRoomTabNoteId`, `resolveRoomTabSnapshotText`, `scheduleRoomTabSync`, `t`.
 - Zweck: Synchronisiert local room tabs to server. Umsetzung: `syncLocalRoomTabsToServer` ([app.js](app.js#L10560)). Abhängigkeiten: `loadLocalRoomTabs`, `normalizeKey`, `normalizeRoom`, `syncRoomTabToServer`, `t`.
+- Zweck: Synchronisiert local room pins to server. Umsetzung: `syncLocalRoomPinsToServer` ([app.js](app.js#L13452)). Abhängigkeiten: `loadLocalRoomPinnedEntries`, `normalizeRoomPinnedEntry`, `syncRoomPinToServer`.
 - Zweck: Allgemeiner Helfer: touch room tab. Umsetzung: `touchRoomTab` ([app.js](app.js#L10584)). Abhängigkeiten: `dedupeRoomTabs`, `getActiveRoomTabNoteId`, `loadRoomTabs`, `normalizeKey`, `normalizeRoom`, `resolveRoomTabSnapshotText`, `saveRoomTabs`, `scheduleRoomTabSync`, `showRoomTabLimitModal`, `t`.
 - Zweck: Allgemeiner Helfer: escape html. Umsetzung: `escapeHtml` ([app.js](app.js#L10615)). Abhängigkeiten: keine internen Funktionsaufrufe.
 - Zweck: Allgemeiner Helfer: escape attr. Umsetzung: `escapeAttr` ([app.js](app.js#L10622)). Abhängigkeiten: `api`, `buildShareHash`, `closeRoomTab`, `dedupeFavorites`, `escapeHtml`, `findFavoriteIndex`, `loadFavorites`, `loadLocalFavorites`, `loadRoomTabs`, `normalizeKey`, `normalizeRoom`, `randomKey`, `randomRoom`, `removeRoomTabFromState`, `renderFavorites`, `renderRoomTabs`, `saveFavorites`, `saveRoomTabs`, `t`.

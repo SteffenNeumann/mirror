@@ -12067,6 +12067,7 @@ self.onmessage = async (e) => {
 				notes: [],
 				favorites: [],
 				roomTabs: [],
+				roomPins: [],
 				sharedRooms: [],
 			};
 			if (psHint) psHint.textContent = "";
@@ -12076,6 +12077,9 @@ self.onmessage = async (e) => {
 			: [];
 		psState.roomTabs = Array.isArray(psState.roomTabs)
 			? psState.roomTabs
+			: [];
+		psState.roomPins = Array.isArray(psState.roomPins)
+			? psState.roomPins
 			: [];
 		psState.sharedRooms = Array.isArray(psState.sharedRooms)
 			? psState.sharedRooms
@@ -12112,6 +12116,15 @@ self.onmessage = async (e) => {
 		if (psUserUnauthed) psUserUnauthed.classList.add("hidden");
 		setPsEditorTagsVisible(true);
 		syncCalendarSettingsFromServer();
+		const serverRoomPins = Array.isArray(psState.roomPins)
+			? psState.roomPins
+			: [];
+		const mergedRoomPins = mergeRoomPinnedEntries(
+			loadLocalRoomPinnedEntries(),
+			serverRoomPins
+		);
+		saveRoomPinnedEntries(mergedRoomPins);
+		psState.roomPins = mergedRoomPins;
 
 		await loadPsCommentIndex();
 		applyPersonalSpaceFiltersAndRender();
@@ -12126,6 +12139,7 @@ self.onmessage = async (e) => {
 		maybeStartMobileAutoNoteSession();
 		await syncLocalRoomTabsToServer();
 		await syncLocalSharedRoomsToServer();
+		await syncLocalRoomPinsToServer(serverRoomPins);
 		void loadCommentsForRoom();
 		maybeApplyStartupFavoriteFromPs();
 	}
@@ -12743,7 +12757,23 @@ self.onmessage = async (e) => {
 		return { room: roomName, key: keyName, noteId, text, updatedAt };
 	}
 
-	function loadRoomPinnedEntries() {
+	function mergeRoomPinnedEntries(localList, serverList) {
+		const map = new Map();
+		const add = (entry) => {
+			const normalized = normalizeRoomPinnedEntry(entry);
+			if (!normalized) return;
+			const keyId = `${normalized.room}:${normalized.key}`;
+			const existing = map.get(keyId);
+			if (!existing || normalized.updatedAt >= existing.updatedAt) {
+				map.set(keyId, normalized);
+			}
+		};
+		for (const s of serverList || []) add(s);
+		for (const l of localList || []) add(l);
+		return Array.from(map.values());
+	}
+
+	function loadLocalRoomPinnedEntries() {
 		try {
 			const raw = localStorage.getItem(ROOM_PINNED_KEY);
 			const parsed = JSON.parse(raw || "[]");
@@ -12760,12 +12790,26 @@ self.onmessage = async (e) => {
 		}
 	}
 
+	function loadRoomPinnedEntries() {
+		const localPins = loadLocalRoomPinnedEntries();
+		if (psState && psState.authed) {
+			const serverPins = Array.isArray(psState.roomPins)
+				? psState.roomPins
+				: [];
+			return mergeRoomPinnedEntries(localPins, serverPins);
+		}
+		return localPins;
+	}
+
 	function saveRoomPinnedEntries(list) {
 		try {
 			const cleaned = Array.isArray(list)
 				? list.map(normalizeRoomPinnedEntry).filter(Boolean)
 				: [];
 			localStorage.setItem(ROOM_PINNED_KEY, JSON.stringify(cleaned));
+			if (psState && psState.authed) {
+				psState.roomPins = cleaned;
+			}
 		} catch {
 			// ignore
 		}
@@ -12799,6 +12843,9 @@ self.onmessage = async (e) => {
 		);
 		list.push(base);
 		saveRoomPinnedEntries(list);
+		if (psState && psState.authed) {
+			syncRoomPinToServer(base);
+		}
 	}
 
 	function clearRoomPinnedEntry(roomName, keyName) {
@@ -12809,6 +12856,15 @@ self.onmessage = async (e) => {
 			(e) => !(e.room === nextRoom && e.key === nextKey)
 		);
 		saveRoomPinnedEntries(list);
+		if (psState && psState.authed) {
+			api("/api/room-pins", {
+				method: "DELETE",
+				body: JSON.stringify({ room: nextRoom, key: nextKey }),
+			}).catch(() => {
+				// ignore
+			});
+			removeRoomPinFromState(nextRoom, nextKey);
+		}
 	}
 
 	function isPinnedContentActiveForRoom(roomName, keyName, activeNoteId) {
@@ -13164,12 +13220,45 @@ self.onmessage = async (e) => {
 		psState.sharedRooms = [normalized, ...shared];
 	}
 
+	function upsertRoomPinInState(entry) {
+		if (!psState || !psState.authed) return;
+		const normalized = normalizeRoomPinnedEntry(entry);
+		if (!normalized) return;
+		const pins = Array.isArray(psState.roomPins) ? psState.roomPins : [];
+		const idx = pins.findIndex(
+			(p) => p.room === normalized.room && p.key === normalized.key
+		);
+		if (idx >= 0) {
+			const updated = { ...pins[idx], ...normalized };
+			psState.roomPins = [
+				...pins.slice(0, idx),
+				updated,
+				...pins.slice(idx + 1),
+			];
+			return;
+		}
+		psState.roomPins = [normalized, ...pins];
+	}
+
+	function removeRoomPinFromState(roomName, keyName) {
+		if (!psState || !psState.authed) return;
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!nextRoom) return;
+		const pins = Array.isArray(psState.roomPins) ? psState.roomPins : [];
+		const next = pins.filter(
+			(p) => !(p.room === nextRoom && p.key === nextKey)
+		);
+		psState.roomPins = next;
+	}
+
 	let roomTabSyncTimer = 0;
 	let roomTabSyncPayload = null;
 	let roomTabSyncInFlight = false;
 	let roomTabSyncQueued = false;
 	let roomTabsSyncedFromLocal = false;
 	let sharedRoomsSyncedFromLocal = false;
+	let roomPinsSyncedFromLocal = false;
 
 	async function syncSharedRoomToServer(payload) {
 		if (!psState || !psState.authed) return;
@@ -13190,6 +13279,34 @@ self.onmessage = async (e) => {
 			if (res && res.sharedRoom) {
 				upsertSharedRoomInState(res.sharedRoom);
 				renderRoomTabs();
+			}
+		} catch {
+			// ignore
+		}
+	}
+
+	async function syncRoomPinToServer(payload) {
+		if (!psState || !psState.authed) return;
+		if (!payload || !payload.room) return;
+		const roomName = normalizeRoom(payload.room);
+		const keyName = normalizeKey(payload.key);
+		if (!roomName) return;
+		const noteId = String(payload.noteId || "").trim();
+		const textVal = noteId ? "" : String(payload.text || "");
+		const updatedAt = Number(payload.updatedAt) || Date.now();
+		try {
+			const res = await api("/api/room-pins", {
+				method: "POST",
+				body: JSON.stringify({
+					room: roomName,
+					key: keyName,
+					noteId,
+					text: textVal,
+					updatedAt,
+				}),
+			});
+			if (res && res.roomPin) {
+				upsertRoomPinInState(res.roomPin);
 			}
 		} catch {
 			// ignore
@@ -13329,6 +13446,40 @@ self.onmessage = async (e) => {
 				key: keyName,
 				updatedAt: s.updatedAt || Date.now(),
 			});
+		}
+	}
+
+	async function syncLocalRoomPinsToServer(serverPins) {
+		if (!psState || !psState.authed) return;
+		if (roomPinsSyncedFromLocal) return;
+		roomPinsSyncedFromLocal = true;
+		const localPins = loadLocalRoomPinnedEntries();
+		if (!localPins.length) return;
+		const serverList = Array.isArray(serverPins)
+			? serverPins
+			: Array.isArray(psState.roomPins)
+				? psState.roomPins
+				: [];
+		const byKey = new Map(
+			serverList
+				.map(normalizeRoomPinnedEntry)
+				.filter(Boolean)
+				.map((p) => [`${p.room}:${p.key}`, p])
+		);
+		for (const p of localPins) {
+			const normalized = normalizeRoomPinnedEntry(p);
+			if (!normalized) continue;
+			const keyId = `${normalized.room}:${normalized.key}`;
+			const server = byKey.get(keyId);
+			if (!server || normalized.updatedAt > server.updatedAt) {
+				await syncRoomPinToServer({
+					room: normalized.room,
+					key: normalized.key,
+					noteId: normalized.noteId,
+					text: normalized.text,
+					updatedAt: normalized.updatedAt || Date.now(),
+				});
+			}
 		}
 	}
 

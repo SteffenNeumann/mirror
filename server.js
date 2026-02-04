@@ -99,6 +99,9 @@ let stmtFavoriteClearStartup;
 let stmtRoomTabUpsert;
 let stmtRoomTabDelete;
 let stmtRoomTabsByUser;
+let stmtRoomPinUpsert;
+let stmtRoomPinDelete;
+let stmtRoomPinsByUser;
 let stmtSharedRoomUpsert;
 let stmtSharedRoomDelete;
 let stmtSharedRoomsByUser;
@@ -187,6 +190,19 @@ function initDb() {
 				UNIQUE(user_id, room, room_key)
 			);
 			CREATE INDEX IF NOT EXISTS idx_room_tabs_user_used ON room_tabs(user_id, last_used DESC);
+			CREATE TABLE IF NOT EXISTS room_pins (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				user_id INTEGER NOT NULL,
+				room TEXT NOT NULL,
+				room_key TEXT NOT NULL,
+				note_id TEXT NOT NULL,
+				text TEXT NOT NULL,
+				added_at INTEGER NOT NULL,
+				updated_at INTEGER NOT NULL,
+				FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+				UNIQUE(user_id, room, room_key)
+			);
+			CREATE INDEX IF NOT EXISTS idx_room_pins_user_updated ON room_pins(user_id, updated_at DESC);
 		CREATE TABLE IF NOT EXISTS shared_rooms (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			user_id INTEGER NOT NULL,
@@ -439,6 +455,15 @@ function initDb() {
 	);
 	stmtFavoriteDelete = db.prepare(
 		"DELETE FROM room_favorites WHERE user_id = ? AND room = ? AND room_key = ?"
+	);
+	stmtRoomPinUpsert = db.prepare(
+		"INSERT INTO room_pins(user_id, room, room_key, note_id, text, added_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, room, room_key) DO UPDATE SET note_id = excluded.note_id, text = excluded.text, updated_at = excluded.updated_at"
+	);
+	stmtRoomPinDelete = db.prepare(
+		"DELETE FROM room_pins WHERE user_id = ? AND room = ? AND room_key = ?"
+	);
+	stmtRoomPinsByUser = db.prepare(
+		"SELECT room, room_key, note_id, text, added_at, updated_at FROM room_pins WHERE user_id = ? ORDER BY updated_at DESC"
 	);
 	stmtFavoritesByUser = db.prepare(
 		"SELECT room, room_key, text, is_startup, added_at FROM room_favorites WHERE user_id = ? ORDER BY added_at DESC LIMIT 200"
@@ -1197,6 +1222,18 @@ function listRoomTabs(userId) {
 		text: r.text,
 		lastUsed: r.last_used,
 		addedAt: r.added_at,
+	}));
+}
+
+function listRoomPins(userId) {
+	initDb();
+	return stmtRoomPinsByUser.all(userId).map((r) => ({
+		room: r.room,
+		key: r.room_key,
+		noteId: r.note_id,
+		text: r.text,
+		addedAt: r.added_at,
+		updatedAt: r.updated_at,
 	}));
 }
 
@@ -2334,6 +2371,7 @@ const server = http.createServer(async (req, res) => {
 		const tags = listTags(userId);
 		const favorites = listFavorites(userId);
 		const roomTabs = listRoomTabs(userId);
+		const roomPins = listRoomPins(userId);
 		const sharedRooms = listSharedRooms(userId);
 		const settings = getUserSettings(userId);
 		json(res, 200, {
@@ -2344,6 +2382,7 @@ const server = http.createServer(async (req, res) => {
 			notes,
 			favorites,
 			roomTabs,
+			roomPins,
 			sharedRooms,
 			settings,
 		});
@@ -2458,6 +2497,102 @@ const server = http.createServer(async (req, res) => {
 				const userId = getOrCreateUserId(email);
 				initDb();
 				stmtRoomTabDelete.run(userId, room, key);
+				json(res, 200, { ok: true });
+			})
+			.catch((e) => {
+				if (String(e && e.message) === "body_too_large") {
+					json(res, 413, { ok: false, error: "body_too_large" });
+					return;
+				}
+				json(res, 400, { ok: false, error: "invalid_json" });
+			});
+		return;
+	}
+
+	if (url.pathname === "/api/room-pins" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const roomPins = listRoomPins(userId);
+		json(res, 200, { ok: true, roomPins });
+		return;
+	}
+
+	if (url.pathname === "/api/room-pins" && req.method === "POST") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		readJson(req)
+			.then((body) => {
+				const room = clampRoom(body && body.room);
+				const key = clampKey(body && body.key);
+				const rawNoteId = String(body && body.noteId ? body.noteId : "").trim();
+				const rawText = String(body && body.text ? body.text : "");
+				const textVal = rawNoteId ? "" : rawText;
+				const updatedAtRaw = Number(body && body.updatedAt);
+				const updatedAt = Number.isFinite(updatedAtRaw)
+					? updatedAtRaw
+					: Date.now();
+				if (!room) {
+					json(res, 400, { ok: false, error: "invalid_room" });
+					return;
+				}
+				const userId = getOrCreateUserId(email);
+				const now = Date.now();
+				initDb();
+				stmtRoomPinUpsert.run(
+					userId,
+					room,
+					key,
+					rawNoteId,
+					textVal,
+					now,
+					updatedAt
+				);
+				json(res, 200, {
+					ok: true,
+					roomPin: {
+						room,
+						key,
+						noteId: rawNoteId,
+						text: textVal,
+						addedAt: now,
+						updatedAt,
+					},
+				});
+			})
+			.catch((e) => {
+				if (String(e && e.message) === "body_too_large") {
+					json(res, 413, { ok: false, error: "body_too_large" });
+					return;
+				}
+				json(res, 400, { ok: false, error: "invalid_json" });
+			});
+		return;
+	}
+
+	if (url.pathname === "/api/room-pins" && req.method === "DELETE") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		readJson(req)
+			.then((body) => {
+				const room = clampRoom(body && body.room);
+				const key = clampKey(body && body.key);
+				if (!room) {
+					json(res, 400, { ok: false, error: "invalid_room" });
+					return;
+				}
+				const userId = getOrCreateUserId(email);
+				initDb();
+				stmtRoomPinDelete.run(userId, room, key);
 				json(res, 200, { ok: true });
 			})
 			.catch((e) => {

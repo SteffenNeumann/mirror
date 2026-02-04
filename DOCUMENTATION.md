@@ -7,11 +7,12 @@
 - Neuer Permanent-Link-Button neben Copy im Editor.
 - Verlinkter Inhalt (Notiz oder lokaler Text) bleibt dem Raum-Tab zugeordnet und wird beim Tabwechsel wiederhergestellt.
 - Room-Sync wird nur für den verlinkten Inhalt ausgeführt.
+- Permanent-Link wird für eingeloggte Personal-Space Nutzer serverseitig gespeichert und synchronisiert.
 
 ## Auswirkungen
 - **UI/UX:** Link-Button mit aktivem Zustand im Editor.
 - **Feature-Interaktionen:** Room-Tab bleibt auf verlinktem Inhalt, PS-Notizen öffnen verknüpfte Tabs.
-- **Datenebene:** Pinned-Rooms werden lokal gespeichert.
+- **Datenebene:** Neue Tabelle `room_pins` + API `/api/room-pins`; Pins werden lokal + serverseitig gemerged.
 
 ## Tests (Smoke)
 - Nicht ausgeführt.
