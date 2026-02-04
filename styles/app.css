@@ -194,37 +194,52 @@ body.glow-disabled .bg-glow {
 	border-color: rgba(255, 255, 255, 0.12) !important;
 }
 
-#toggleExcalidraw,
+#copyMirror,
 #toggleExcalidraw,
 #toggleExcel,
 #toggleLinear {
-	background: var(--accent-bg) !important;
-	border-color: var(--accent-border) !important;
+	background: var(--selection-menu-bg) !important;
+	border-color: var(--selection-menu-border) !important;
+	border-radius: 0.75rem;
 	box-shadow: none !important;
-	backdrop-filter: none !important;
-	-webkit-backdrop-filter: none !important;
+	backdrop-filter: blur(18px) saturate(160%) !important;
+	-webkit-backdrop-filter: blur(18px) saturate(160%) !important;
 }
 
-#toggleExcalidraw:hover,
 #toggleExcalidraw:hover,
 #toggleExcel:hover,
-#toggleLinear:hover {
+#toggleLinear:hover,
+#copyMirror:hover {
 	border-color: var(--accent-border-strong) !important;
-	color: var(--accent-text-soft) !important;
 }
 
-#toggleExcalidraw[aria-pressed="true"],
 #toggleExcalidraw[aria-pressed="true"],
 #toggleExcel[aria-pressed="true"],
 #toggleLinear[aria-pressed="true"] {
 	border-color: var(--accent-border-strong) !important;
-	box-shadow: none !important;
 }
 
-#toggleExcel[aria-pressed="true"] {
-	background: var(--accent-bg) !important;
-	border-color: var(--accent-border) !important;
-	color: var(--accent-text) !important;
+#copyMirror,
+#toggleExcalidraw,
+#toggleExcel,
+#toggleLinear {
+	bottom: 0.5rem;
+}
+
+#copyMirror {
+	right: 0.5rem;
+}
+
+#toggleExcel {
+	right: 3.25rem;
+}
+
+#toggleExcalidraw {
+	right: 6rem;
+}
+
+#toggleLinear {
+	right: 8.75rem;
 }
 
 #toggleHeader:hover,
