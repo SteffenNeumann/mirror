@@ -11265,15 +11265,11 @@ ${highlightThemeCss}
 		}
 		const byId = new Map(items.map((n) => [String(n.id || ""), n]));
 		const linkedNoteIds = new Set(
-			loadNoteRoomBindings()
-				.map((b) => String(b && b.noteId ? b.noteId : "").trim())
+			loadRoomPinnedEntries()
+				.filter((p) => p && p.noteId)
+				.map((p) => String(p.noteId || "").trim())
 				.filter(Boolean)
 		);
-		loadRoomPinnedEntries()
-			.filter((p) => p && p.noteId)
-			.forEach((p) => {
-				linkedNoteIds.add(String(p.noteId || "").trim());
-			});
 		psRenderedNoteIds = items.map((n) => String(n.id || "")).filter(Boolean);
 		prunePsSelectedNotes(psRenderedNoteIds);
 		psList.innerHTML = items
@@ -16547,8 +16543,15 @@ self.onmessage = async (e) => {
 				if (msg.clientId && msg.clientId === clientId) return;
 				const items = Array.isArray(msg.items) ? msg.items : [];
 				const activeId = getExcalidrawNoteId();
+				const pinned = getRoomPinnedEntry(room, key);
+				const pinnedNoteId = pinned && pinned.noteId ? String(pinned.noteId || "") : "";
+				const pinnedScope = pinned ? getExcalidrawRoomScope() : "";
 				for (const it of items) {
-					const noteId = String(it && it.noteId ? it.noteId : "").trim();
+					const rawNoteId = String(it && it.noteId ? it.noteId : "").trim();
+					const noteId =
+						pinnedNoteId && rawNoteId === pinnedNoteId && pinnedScope
+							? pinnedScope
+							: rawNoteId;
 					if (!noteId) continue;
 					const visible = Boolean(it && it.visible);
 					const offset = {
@@ -16569,8 +16572,15 @@ self.onmessage = async (e) => {
 				if (msg.clientId && msg.clientId === clientId) return;
 				const items = Array.isArray(msg.items) ? msg.items : [];
 				const activeId = getExcelNoteId();
+				const pinned = getRoomPinnedEntry(room, key);
+				const pinnedNoteId = pinned && pinned.noteId ? String(pinned.noteId || "") : "";
+				const pinnedScope = pinned ? getExcelRoomScope() : "";
 				for (const it of items) {
-					const noteId = String(it && it.noteId ? it.noteId : "").trim();
+					const rawNoteId = String(it && it.noteId ? it.noteId : "").trim();
+					const noteId =
+						pinnedNoteId && rawNoteId === pinnedNoteId && pinnedScope
+							? pinnedScope
+							: rawNoteId;
 					if (!noteId) continue;
 					const visible = Boolean(it && it.visible);
 					const offset = {
@@ -16591,8 +16601,15 @@ self.onmessage = async (e) => {
 				if (msg.clientId && msg.clientId === clientId) return;
 				const items = Array.isArray(msg.items) ? msg.items : [];
 				const activeId = getLinearNoteId();
+				const pinned = getRoomPinnedEntry(room, key);
+				const pinnedNoteId = pinned && pinned.noteId ? String(pinned.noteId || "") : "";
+				const pinnedScope = pinned ? getLinearRoomScope() : "";
 				for (const it of items) {
-					const noteId = String(it && it.noteId ? it.noteId : "").trim();
+					const rawNoteId = String(it && it.noteId ? it.noteId : "").trim();
+					const noteId =
+						pinnedNoteId && rawNoteId === pinnedNoteId && pinnedScope
+							? pinnedScope
+							: rawNoteId;
 					if (!noteId) continue;
 					const visible = Boolean(it && it.visible);
 					const projectId = String(it && it.projectId ? it.projectId : "");
@@ -16623,8 +16640,15 @@ self.onmessage = async (e) => {
 				if (msg.clientId && msg.clientId === clientId) return;
 				const items = Array.isArray(msg.items) ? msg.items : [];
 				const activeId = getLinearNoteId();
+				const pinned = getRoomPinnedEntry(room, key);
+				const pinnedNoteId = pinned && pinned.noteId ? String(pinned.noteId || "") : "";
+				const pinnedScope = pinned ? getLinearRoomScope() : "";
 				for (const it of items) {
-					const noteId = String(it && it.noteId ? it.noteId : "").trim();
+					const rawNoteId = String(it && it.noteId ? it.noteId : "").trim();
+					const noteId =
+						pinnedNoteId && rawNoteId === pinnedNoteId && pinnedScope
+							? pinnedScope
+							: rawNoteId;
 					if (!noteId) continue;
 					const payload = {
 						projectId: String(it && it.projectId ? it.projectId : ""),
@@ -16644,8 +16668,15 @@ self.onmessage = async (e) => {
 				if (msg.clientId && msg.clientId === clientId) return;
 				const items = Array.isArray(msg.items) ? msg.items : [];
 				const activeId = getExcalidrawNoteId();
+				const pinned = getRoomPinnedEntry(room, key);
+				const pinnedNoteId = pinned && pinned.noteId ? String(pinned.noteId || "") : "";
+				const pinnedScope = pinned ? getExcalidrawRoomScope() : "";
 				for (const it of items) {
-					const noteId = String(it && it.noteId ? it.noteId : "").trim();
+					const rawNoteId = String(it && it.noteId ? it.noteId : "").trim();
+					const noteId =
+						pinnedNoteId && rawNoteId === pinnedNoteId && pinnedScope
+							? pinnedScope
+							: rawNoteId;
 					const scene = typeof it === "object" && typeof it.scene === "string" ? it.scene : "";
 					if (!noteId || !scene) continue;
 					if (scene.length > EXCALIDRAW_SCENE_MAX_BYTES) continue;
