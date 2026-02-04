@@ -775,7 +775,15 @@ body.code-lang-active #clearMirror {
 	color: rgba(226, 232, 240, 0.95);
 	font-size: 0.7rem;
 	padding: 0.3rem 0.55rem;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
 	transition: background-color 0.15s ease;
+}
+.linear-embed-icon {
+	width: 0.75rem;
+	height: 0.75rem;
+	flex: 0 0 auto;
 }
 .linear-embed-btn:hover {
 	background: rgba(255, 255, 255, 0.12);
@@ -1767,6 +1775,11 @@ body[data-theme="coffeeLight"] .linear-empty {
 	color: #3b2a21;
 }
 
+body[data-theme="coffeeLight"] #linearProjectApply,
+body[data-theme="coffeeLight"] #linearRefresh {
+	color: #3b2a21;
+}
+
 body[data-theme="coffeeLight"] .linear-kanban-column {
 	background: rgba(176, 112, 73, 0.05);
 	border-color: rgba(217, 199, 188, 0.7);
@@ -2466,6 +2479,11 @@ body[data-theme="bitterLight"] .linear-task-link {
 body[data-theme="bitterLight"] .linear-embed-title,
 body[data-theme="bitterLight"] .linear-status,
 body[data-theme="bitterLight"] .linear-empty {
+	color: #0d0c10;
+}
+
+body[data-theme="bitterLight"] #linearProjectApply,
+body[data-theme="bitterLight"] #linearRefresh {
 	color: #0d0c10;
 }
 
@@ -3312,6 +3330,11 @@ body[data-theme="monoLight"] .linear-task-link {
 body[data-theme="monoLight"] .linear-embed-title,
 body[data-theme="monoLight"] .linear-status,
 body[data-theme="monoLight"] .linear-empty {
+	color: #24292f;
+}
+
+body[data-theme="monoLight"] #linearProjectApply,
+body[data-theme="monoLight"] #linearRefresh {
 	color: #24292f;
 }
 
