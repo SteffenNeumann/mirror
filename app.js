@@ -6392,7 +6392,7 @@
 			: token.startsWith("lin_api_")
 				? token
 				: `Bearer ${token}`;
-		const res = await fetch("https://api.linear.app/graphql", {
+		const res = await fetch("/api/linear", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",

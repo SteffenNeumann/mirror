@@ -1630,6 +1630,46 @@ const server = http.createServer(async (req, res) => {
 		return;
 	}
 
+	if (url.pathname === "/api/linear" && req.method === "POST") {
+		const authHeader = String(req.headers.authorization || "").trim();
+		if (!authHeader) {
+			json(res, 401, { ok: false, error: "missing_auth" });
+			return;
+		}
+		let payload;
+		try {
+			payload = await readJsonWithLimit(req, MAX_BODY_BYTES);
+		} catch (err) {
+			const code = err && err.message === "body_too_large" ? 413 : 400;
+			json(res, code, { ok: false, error: "invalid_body" });
+			return;
+		}
+		if (!payload) {
+			json(res, 400, { ok: false, error: "invalid_body" });
+			return;
+		}
+		try {
+			const apiRes = await fetch("https://api.linear.app/graphql", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: authHeader,
+				},
+				body: JSON.stringify(payload),
+			});
+			const bodyText = await apiRes.text();
+			res.writeHead(apiRes.status, {
+				"Content-Type": apiRes.headers.get("content-type") || "application/json",
+				"Cache-Control": "no-store",
+			});
+			res.end(bodyText);
+			return;
+		} catch {
+			json(res, 502, { ok: false, error: "linear_api_failed" });
+			return;
+		}
+	}
+
 	if (url.pathname === "/api/calendar/google/status" && req.method === "GET") {
 		const email = getAuthedEmail(req);
 		if (!email) {
