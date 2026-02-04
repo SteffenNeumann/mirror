@@ -3228,6 +3228,20 @@
 				toggleFencedCodeBlock(textarea);
 				updateCodeLangOverlay();
 				break;
+			case "link": {
+				const value = String(textarea.value || "");
+				const start = Number(textarea.selectionStart || 0);
+				const end = Number(textarea.selectionEnd || 0);
+				if (end <= start) return;
+				const selected = value.slice(start, end);
+				const urlPlaceholder = "https://";
+				const insert = `[${selected}](${urlPlaceholder})`;
+				textarea.value = value.slice(0, start) + insert + value.slice(end);
+				const urlStart = start + selected.length + 3;
+				textarea.selectionStart = urlStart;
+				textarea.selectionEnd = urlStart + urlPlaceholder.length;
+				break;
+			}
 			case "comment":
 				void openCommentFromSelection();
 				return;
@@ -4795,6 +4809,7 @@
 				"menu.task_label": "☐ Aufgabe",
 				"menu.divider": "Trenner",
 				"menu.code": "Codeblock",
+				"menu.link": "Link",
 				"menu.comment": "Kommentar",
 				"menu.sort_az": "Sortieren A–Z",
 				"menu.code_lang_label": "Sprache",
@@ -5060,6 +5075,7 @@
 				"menu.task_label": "☐ Task",
 				"menu.divider": "Divider",
 				"menu.code": "Code block",
+				"menu.link": "Link",
 				"menu.comment": "Comment",
 				"menu.sort_az": "Sort A–Z",
 				"menu.code_lang_label": "Language",
