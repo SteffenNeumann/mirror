@@ -198,8 +198,8 @@ body.glow-disabled .bg-glow {
 #toggleExcalidraw,
 #toggleExcel,
 #toggleLinear {
-	/* background: var(--accent-bg) !important; */
-	/* border-color: var(--accent-border) !important; */
+	background: var(--accent-bg) !important;
+	border-color: var(--accent-border) !important;
 	box-shadow: none !important;
 	backdrop-filter: none !important;
 	-webkit-backdrop-filter: none !important;
