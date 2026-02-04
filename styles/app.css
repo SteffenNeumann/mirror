@@ -195,25 +195,28 @@ body.glow-disabled .bg-glow {
 }
 
 #toggleExcalidraw,
-#toggleExcel {
-	color: var(--accent-text) !important;
-	background: var(--accent-bg) !important;
-	border-color: var(--accent-border) !important;
+#toggleExcalidraw,
+#toggleExcel,
+#toggleLinear {
+	/* background: var(--accent-bg) !important; */
+	/* border-color: var(--accent-border) !important; */
 	box-shadow: none !important;
 	backdrop-filter: none !important;
 	-webkit-backdrop-filter: none !important;
 }
 
 #toggleExcalidraw:hover,
-#toggleExcel:hover {
-	background: var(--accent-bg-hover) !important;
+#toggleExcalidraw:hover,
+#toggleExcel:hover,
+#toggleLinear:hover {
 	border-color: var(--accent-border-strong) !important;
 	color: var(--accent-text-soft) !important;
 }
 
 #toggleExcalidraw[aria-pressed="true"],
-#toggleExcel[aria-pressed="true"] {
-	background: var(--accent-bg-hover) !important;
+#toggleExcalidraw[aria-pressed="true"],
+#toggleExcel[aria-pressed="true"],
+#toggleLinear[aria-pressed="true"] {
 	border-color: var(--accent-border-strong) !important;
 	box-shadow: none !important;
 }
@@ -633,6 +636,9 @@ body.code-lang-active #clearMirror {
 #editorPreviewGrid.comment-panel-open #toggleExcel {
 	display: none;
 }
+#editorPreviewGrid.comment-panel-open #toggleLinear {
+	display: none;
+}
 #mirror.excalidraw-active {
 	opacity: 1;
 	pointer-events: auto;
@@ -692,6 +698,119 @@ body.code-lang-active #clearMirror {
 	background: transparent;
 }
 
+#linearEmbed.linear-embed {
+	position: absolute;
+	top: 6rem;
+	left: 0.75rem;
+	width: min(820px, calc(100% - 1.5rem));
+	height: min(620px, calc(100% - 6rem));
+	max-width: calc(100% - 1.5rem);
+	max-height: calc(100% - 6rem);
+	min-width: min(420px, calc(100% - 1.5rem));
+	min-height: 280px;
+	resize: both;
+	z-index: 22;
+	border-radius: 0.75rem;
+	overflow: hidden;
+	background: rgba(2, 6, 23, 0.7);
+	backdrop-filter: blur(14px) saturate(140%);
+	-webkit-backdrop-filter: blur(14px) saturate(140%);
+	transform: translate3d(0, 0, 0);
+	transition: transform 80ms ease;
+	display: flex;
+	flex-direction: column;
+}
+
+.linear-embed-toolbar {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.6rem 0.75rem;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+	background: rgba(2, 6, 23, 0.65);
+}
+
+.linear-embed-title {
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: rgba(226, 232, 240, 0.95);
+}
+
+.linear-project-select {
+	min-width: 180px;
+	max-width: 240px;
+	border-radius: 0.5rem;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	background: rgba(2, 6, 23, 0.6);
+	color: rgba(226, 232, 240, 0.95);
+	font-size: 0.75rem;
+	padding: 0.3rem 0.5rem;
+}
+
+.linear-embed-btn {
+	border-radius: 0.5rem;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	background: rgba(255, 255, 255, 0.06);
+	color: rgba(226, 232, 240, 0.95);
+	font-size: 0.7rem;
+	padding: 0.3rem 0.55rem;
+	transition: background-color 0.15s ease;
+}
+.linear-embed-btn:hover {
+	background: rgba(255, 255, 255, 0.12);
+}
+
+.linear-status {
+	padding: 0.4rem 0.75rem 0;
+	font-size: 0.7rem;
+	color: rgba(148, 163, 184, 0.9);
+}
+
+.linear-empty {
+	padding: 0.6rem 0.75rem;
+	font-size: 0.75rem;
+	color: rgba(148, 163, 184, 0.9);
+}
+
+.linear-task-list {
+	flex: 1;
+	overflow: auto;
+	padding: 0.5rem 0.75rem 0.75rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.5rem;
+}
+
+.linear-task-item {
+	border-radius: 0.65rem;
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	background: rgba(15, 23, 42, 0.55);
+	padding: 0.55rem 0.6rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.25rem;
+}
+
+.linear-task-title {
+	font-size: 0.8rem;
+	font-weight: 600;
+	color: rgba(226, 232, 240, 0.95);
+}
+
+.linear-task-meta {
+	font-size: 0.7rem;
+	color: rgba(148, 163, 184, 0.9);
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.linear-task-link {
+	font-size: 0.7rem;
+	color: rgba(96, 165, 250, 0.9);
+	text-decoration: underline;
+}
+
 
 .excel-drag-handle {
 	position: absolute;
@@ -702,6 +821,18 @@ body.code-lang-active #clearMirror {
 	user-select: none;
 }
 .excel-drag-handle:active {
+	cursor: grabbing;
+}
+
+.linear-drag-handle {
+	position: absolute;
+	bottom: 0.6rem;
+	right: 0.6rem;
+	z-index: 25;
+	cursor: grab;
+	user-select: none;
+}
+.linear-drag-handle:active {
 	cursor: grabbing;
 }
 
@@ -744,6 +875,9 @@ body.code-lang-active #clearMirror {
 	transition: none;
 }
 #excelEmbed.excel-dragging {
+	transition: none;
+}
+#linearEmbed.linear-dragging {
 	transition: none;
 }
 #mirror.attribution-active {

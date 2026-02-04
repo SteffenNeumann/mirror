@@ -1522,6 +1522,10 @@ const roomCrdtSnapshots = new Map();
 const roomExcalidrawState = new Map();
 /** roomKey -> Map<noteId, { visible: boolean, offset: { x: number, y: number } }> */
 const roomExcelState = new Map();
+/** roomKey -> Map<noteId, { visible: boolean, offset: { x: number, y: number }, projectId?: string, projectName?: string }> */
+const roomLinearState = new Map();
+/** roomKey -> Map<noteId, { projectId?: string, projectName?: string, updatedAt?: number, tasks?: Array<object> }> */
+const roomLinearData = new Map();
 /** roomKey -> Map<noteId, sceneJsonString> */
 const roomExcalidrawScenes = new Map();
 const EXCALIDRAW_SCENE_MAX_BYTES = 200000;
@@ -1558,6 +1562,24 @@ function getRoomExcelState(roomKeyName) {
 	if (!map) {
 		map = new Map();
 		roomExcelState.set(roomKeyName, map);
+	}
+	return map;
+}
+
+function getRoomLinearState(roomKeyName) {
+	let map = roomLinearState.get(roomKeyName);
+	if (!map) {
+		map = new Map();
+		roomLinearState.set(roomKeyName, map);
+	}
+	return map;
+}
+
+function getRoomLinearData(roomKeyName) {
+	let map = roomLinearData.get(roomKeyName);
+	if (!map) {
+		map = new Map();
+		roomLinearData.set(roomKeyName, map);
 	}
 	return map;
 }
@@ -3893,6 +3915,41 @@ wss.on("connection", (ws, req) => {
 		}
 	}
 
+	const initialLinear = roomLinearState.get(rk);
+	if (initialLinear && initialLinear.size > 0) {
+		const items = Array.from(initialLinear.entries()).map(([noteId, state]) => ({
+			noteId,
+			visible: Boolean(state && state.visible),
+			projectId: state && state.projectId ? String(state.projectId) : "",
+			projectName: state && state.projectName ? String(state.projectName) : "",
+			offset: {
+				x: Number(state && state.offset && state.offset.x) || 0,
+				y: Number(state && state.offset && state.offset.y) || 0,
+			},
+		}));
+		try {
+			ws.send(JSON.stringify({ type: "linear_state", room, items }));
+		} catch {
+			// ignore
+		}
+	}
+
+	const initialLinearData = roomLinearData.get(rk);
+	if (initialLinearData && initialLinearData.size > 0) {
+		const items = Array.from(initialLinearData.entries()).map(([noteId, data]) => ({
+			noteId,
+			projectId: data && data.projectId ? String(data.projectId) : "",
+			projectName: data && data.projectName ? String(data.projectName) : "",
+			updatedAt: Number(data && data.updatedAt ? data.updatedAt : 0) || 0,
+			tasks: Array.isArray(data && data.tasks) ? data.tasks : [],
+		}));
+		try {
+			ws.send(JSON.stringify({ type: "linear_data", room, items }));
+		} catch {
+			// ignore
+		}
+	}
+
 	const initialScenes = roomExcalidrawScenes.get(rk);
 	if (initialScenes && initialScenes.size > 0) {
 		const items = Array.from(initialScenes.entries()).map(([noteId, scene]) => ({
@@ -4049,6 +4106,123 @@ wss.on("connection", (ws, req) => {
 			broadcast(
 				rk,
 				{ type: "excel_state", room, clientId: fromClientId, items: sanitized },
+				ws
+			);
+			return;
+		}
+
+		if (msg.type === "linear_state") {
+			const items = Array.isArray(msg.items)
+				? msg.items
+				: msg.noteId
+				? [
+					{
+						noteId: msg.noteId,
+						visible: msg.visible,
+						offset: msg.offset,
+						projectId: msg.projectId,
+						projectName: msg.projectName,
+					},
+				]
+				: [];
+			const sanitized = [];
+			for (const it of items) {
+				const noteId = String(it && it.noteId ? it.noteId : "").trim();
+				if (!noteId) continue;
+				const visible = Boolean(it && it.visible);
+				const oxRaw = Number(it && it.offset && it.offset.x);
+				const oyRaw = Number(it && it.offset && it.offset.y);
+				const ox = Number.isFinite(oxRaw)
+					? Math.max(-4000, Math.min(4000, oxRaw))
+					: 0;
+				const oy = Number.isFinite(oyRaw)
+					? Math.max(-4000, Math.min(4000, oyRaw))
+					: 0;
+				const projectId = String(it && it.projectId ? it.projectId : "").slice(0, 120);
+				const projectName = String(it && it.projectName ? it.projectName : "").slice(0, 160);
+				sanitized.push({
+					noteId,
+					visible,
+					projectId,
+					projectName,
+					offset: { x: ox, y: oy },
+				});
+			}
+			if (sanitized.length === 0) return;
+			const map = getRoomLinearState(rk);
+			const fromClientId = typeof msg.clientId === "string" ? msg.clientId : "";
+			for (const it of sanitized) {
+				map.set(it.noteId, {
+					visible: it.visible,
+					offset: it.offset,
+					projectId: it.projectId,
+					projectName: it.projectName,
+				});
+			}
+			broadcast(
+				rk,
+				{ type: "linear_state", room, clientId: fromClientId, items: sanitized },
+				ws
+			);
+			return;
+		}
+
+		if (msg.type === "linear_data") {
+			const items = Array.isArray(msg.items)
+				? msg.items
+				: msg.noteId
+				? [
+					{
+						noteId: msg.noteId,
+						projectId: msg.projectId,
+						projectName: msg.projectName,
+						updatedAt: msg.updatedAt,
+						tasks: msg.tasks,
+					},
+				]
+				: [];
+			const sanitized = [];
+			for (const it of items) {
+				const noteId = String(it && it.noteId ? it.noteId : "").trim();
+				if (!noteId) continue;
+				const projectId = String(it && it.projectId ? it.projectId : "").slice(0, 120);
+				const projectName = String(it && it.projectName ? it.projectName : "").slice(0, 160);
+				const updatedAt =
+					typeof it.updatedAt === "number" && Number.isFinite(it.updatedAt)
+						? it.updatedAt
+						: Date.now();
+				const tasks = Array.isArray(it && it.tasks) ? it.tasks.slice(0, 200) : [];
+				const safeTasks = tasks.map((task) => ({
+					id: String(task && task.id ? task.id : "").slice(0, 120),
+					title: String(task && task.title ? task.title : "").slice(0, 240),
+					identifier: String(task && task.identifier ? task.identifier : "").slice(0, 60),
+					url: String(task && task.url ? task.url : "").slice(0, 400),
+					dueDate: String(task && task.dueDate ? task.dueDate : "").slice(0, 40),
+					state: String(task && task.state ? task.state : "").slice(0, 80),
+					assignee: String(task && task.assignee ? task.assignee : "").slice(0, 120),
+				}));
+				sanitized.push({
+					noteId,
+					projectId,
+					projectName,
+					updatedAt,
+					tasks: safeTasks,
+				});
+			}
+			if (sanitized.length === 0) return;
+			const map = getRoomLinearData(rk);
+			const fromClientId = typeof msg.clientId === "string" ? msg.clientId : "";
+			for (const it of sanitized) {
+				map.set(it.noteId, {
+					projectId: it.projectId,
+					projectName: it.projectName,
+					updatedAt: it.updatedAt,
+					tasks: it.tasks,
+				});
+			}
+			broadcast(
+				rk,
+				{ type: "linear_data", room, clientId: fromClientId, items: sanitized },
 				ws
 			);
 			return;
@@ -4322,6 +4496,39 @@ wss.on("connection", (ws, req) => {
 					// ignore
 				}
 			}
+			const linearState = roomLinearState.get(rk);
+			if (linearState && linearState.size > 0) {
+				const items = Array.from(linearState.entries()).map(([noteId, state]) => ({
+					noteId,
+					visible: Boolean(state && state.visible),
+					projectId: state && state.projectId ? String(state.projectId) : "",
+					projectName: state && state.projectName ? String(state.projectName) : "",
+					offset: {
+						x: Number(state && state.offset && state.offset.x) || 0,
+						y: Number(state && state.offset && state.offset.y) || 0,
+					},
+				}));
+				try {
+					ws.send(JSON.stringify({ type: "linear_state", room, items }));
+				} catch {
+					// ignore
+				}
+			}
+			const linearData = roomLinearData.get(rk);
+			if (linearData && linearData.size > 0) {
+				const items = Array.from(linearData.entries()).map(([noteId, data]) => ({
+					noteId,
+					projectId: data && data.projectId ? String(data.projectId) : "",
+					projectName: data && data.projectName ? String(data.projectName) : "",
+					updatedAt: Number(data && data.updatedAt ? data.updatedAt : 0) || 0,
+					tasks: Array.isArray(data && data.tasks) ? data.tasks : [],
+				}));
+				try {
+					ws.send(JSON.stringify({ type: "linear_data", room, items }));
+				} catch {
+					// ignore
+				}
+			}
 			const scenes = roomExcalidrawScenes.get(rk);
 			if (scenes && scenes.size > 0) {
 				const items = Array.from(scenes.entries())
@@ -4355,6 +4562,8 @@ wss.on("connection", (ws, req) => {
 			roomSockets.delete(rk);
 			roomExcalidrawState.delete(rk);
 			roomExcelState.delete(rk);
+			roomLinearState.delete(rk);
+			roomLinearData.delete(rk);
 			roomExcalidrawScenes.delete(rk);
 		}
 	});

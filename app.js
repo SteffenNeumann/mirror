@@ -97,6 +97,7 @@
 	const aiChatClearBtn = document.getElementById("aiChatClear");
 	const copyMirrorBtn = document.getElementById("copyMirror");
 	const toggleExcalidrawBtn = document.getElementById("toggleExcalidraw");
+	const toggleLinearBtn = document.getElementById("toggleLinear");
 	const toggleExcelBtn = document.getElementById("toggleExcel");
 	const toggleCommentsBtn = document.getElementById("toggleComments");
 	const commentPanel = document.getElementById("commentPanel");
@@ -135,6 +136,14 @@
 	const excelEmbed = document.getElementById("excelEmbed");
 	const excelFrame = excelEmbed ? excelEmbed.querySelector("iframe") : null;
 	const excelDragHandle = document.getElementById("excelDragHandle");
+	const linearEmbed = document.getElementById("linearEmbed");
+	const linearDragHandle = document.getElementById("linearDragHandle");
+	const linearProjectSelect = document.getElementById("linearProjectSelect");
+	const linearProjectApplyBtn = document.getElementById("linearProjectApply");
+	const linearRefreshBtn = document.getElementById("linearRefresh");
+	const linearStatus = document.getElementById("linearStatus");
+	const linearEmpty = document.getElementById("linearEmpty");
+	const linearTaskList = document.getElementById("linearTaskList");
 	const EXCALIDRAW_SCENE_MAX_BYTES = 200000;
 	const EXCALIDRAW_EMPTY_SCENE =
 		"{" +
@@ -284,6 +293,13 @@
 	const aiApiSaveBtn = document.getElementById("aiApiSave");
 	const aiApiClearBtn = document.getElementById("aiApiClear");
 	const aiApiStatus = document.getElementById("aiApiStatus");
+	const linearApiKeyInput = document.getElementById("linearApiKey");
+	const linearApiSaveBtn = document.getElementById("linearApiSave");
+	const linearApiClearBtn = document.getElementById("linearApiClear");
+	const linearLoadProjectsBtn = document.getElementById("linearLoadProjects");
+	const linearProjectsList = document.getElementById("linearProjectsList");
+	const linearProjectsEmpty = document.getElementById("linearProjectsEmpty");
+	const linearApiStatus = document.getElementById("linearApiStatus");
 	const faqSearchInput = document.getElementById("faqSearch");
 	const faqList = document.getElementById("faqList");
 	const favoritesManageList = document.getElementById("favoritesManageList");
@@ -4451,6 +4467,9 @@
 	const AI_USE_ANSWER_KEY = "mirror_ai_use_answer";
 	const AI_API_KEY_KEY = "mirror_ai_api_key";
 	const AI_API_MODEL_KEY = "mirror_ai_api_model";
+	const LINEAR_API_KEY_KEY = "mirror_linear_api_key";
+	const LINEAR_PROJECTS_KEY = "mirror_linear_projects";
+	const LINEAR_PROJECTS_ENABLED_KEY = "mirror_linear_projects_enabled";
 	const THEME_KEY = "mirror_theme";
 	const GLOW_ENABLED_KEY = "mirror_glow_enabled";
 	const TASK_AUTO_SORT_KEY = "mirror_task_auto_sort";
@@ -4466,6 +4485,9 @@
 	let aiUseAnswer = true;
 	let aiApiKey = "";
 	let aiApiModel = "";
+	let linearApiKey = "";
+	let linearProjects = [];
+	let linearEnabledProjectIds = new Set();
 	let aiDictationAvailable = false;
 	let aiDictationActive = false;
 	let aiDictationRecognizer = null;
@@ -4883,6 +4905,7 @@
 				"settings.nav.export": "Export/Import",
 				"settings.nav.themes": "Themes",
 				"settings.nav.calendar": "Kalender",
+				"settings.nav.integrations": "Integrationen",
 				"settings.nav.ai": "KI",
 				"settings.nav.uploads": "Uploads",
 				"settings.nav.faq": "FAQ",
@@ -4995,6 +5018,21 @@
 					"https://example.com/calendar.ics",
 				"settings.calendar.add.active": "Aktiv",
 				"settings.calendar.add.submit": "Hinzufügen",
+				"settings.integrations.title": "Integrationen",
+				"settings.integrations.desc":
+					"App-Integrationen verwalten (lokal gespeichert).",
+				"settings.integrations.linear.title": "Linear",
+				"settings.integrations.linear.desc":
+					"API-Key lokal speichern und Projekte für die Freigabe auswählen.",
+				"settings.integrations.linear.key_label": "Linear API-Key",
+				"settings.integrations.linear.save": "Speichern",
+				"settings.integrations.linear.clear": "Löschen",
+				"settings.integrations.linear.load": "Projekte laden",
+				"settings.integrations.linear.projects.title":
+					"Projekte für Raumfreigabe",
+				"settings.integrations.linear.projects.desc":
+					"Wähle die Projekte, die im Raum geteilt werden dürfen.",
+				"settings.integrations.linear.projects.empty": "Keine Projekte geladen.",
 				"settings.trash.title": "Papierkorb",
 				"settings.trash.desc":
 					"Gelöschte Notizen bleiben 30 Tage erhalten und können wiederhergestellt werden.",
@@ -5042,6 +5080,25 @@
 				"toast.ai_saved": "KI-Einstellungen gespeichert.",
 				"toast.ai_cleared": "KI-Einstellungen gelöscht.",
 				"toast.ps_activated": "Personal Space aktiviert.",
+				"toast.linear_saved": "Linear-Einstellungen gespeichert.",
+				"toast.linear_cleared": "Linear-Einstellungen gelöscht.",
+				"toast.linear_projects_loaded": "Linear-Projekte geladen.",
+				"toast.linear_projects_failed": "Linear-Projekte konnten nicht geladen werden.",
+				"toast.linear_tasks_failed": "Linear-Aufgaben konnten nicht geladen werden.",
+				"toast.linear_select_project": "Bitte ein Linear-Projekt auswählen.",
+				"toast.linear_missing_key": "Linear API-Key fehlt.",
+				"linear.embed.title": "Linear",
+				"linear.embed.select_placeholder": "Projekt auswählen",
+				"linear.embed.apply": "Teilen",
+				"linear.embed.refresh": "Aktualisieren",
+				"linear.embed.empty": "Keine Aufgaben geladen.",
+				"linear.embed.open": "In Linear öffnen",
+				"linear.status.key_set": "API-Key gesetzt.",
+				"linear.status.key_set_with_projects":
+					"API-Key gesetzt · {count} Projekte",
+				"linear.status.no_key": "Kein API-Key gesetzt.",
+				"linear.status.loading": "Linear lädt…",
+				"linear.status.failed": "Linear nicht erreichbar.",
 			},
 			en: {
 				"ps.title": "Personal Space",
@@ -5161,6 +5218,7 @@
 				"settings.nav.export": "Export/Import",
 				"settings.nav.themes": "Themes",
 				"settings.nav.calendar": "Calendar",
+				"settings.nav.integrations": "Integrations",
 				"settings.nav.ai": "AI",
 				"settings.nav.uploads": "Uploads",
 				"settings.nav.faq": "FAQ",
@@ -5266,6 +5324,20 @@
 					"https://example.com/calendar.ics",
 				"settings.calendar.add.active": "Active",
 				"settings.calendar.add.submit": "Add",
+				"settings.integrations.title": "Integrations",
+				"settings.integrations.desc":
+					"Manage app integrations (stored locally).",
+				"settings.integrations.linear.title": "Linear",
+				"settings.integrations.linear.desc":
+					"Store the API key locally and pick projects for sharing.",
+				"settings.integrations.linear.key_label": "Linear API key",
+				"settings.integrations.linear.save": "Save",
+				"settings.integrations.linear.clear": "Clear",
+				"settings.integrations.linear.load": "Load projects",
+				"settings.integrations.linear.projects.title": "Projects for room sharing",
+				"settings.integrations.linear.projects.desc":
+					"Select which projects can be shared in rooms.",
+				"settings.integrations.linear.projects.empty": "No projects loaded.",
 				"settings.trash.title": "Trash",
 				"settings.trash.desc": "Deleted notes are kept for 30 days and can be restored.",
 				"settings.trash.refresh": "Refresh",
@@ -5310,6 +5382,25 @@
 				"toast.ai_saved": "AI settings saved.",
 				"toast.ai_cleared": "AI settings cleared.",
 				"toast.ps_activated": "Personal Space activated.",
+				"toast.linear_saved": "Linear settings saved.",
+				"toast.linear_cleared": "Linear settings cleared.",
+				"toast.linear_projects_loaded": "Linear projects loaded.",
+				"toast.linear_projects_failed": "Linear projects could not be loaded.",
+				"toast.linear_tasks_failed": "Linear tasks could not be loaded.",
+				"toast.linear_select_project": "Please select a Linear project.",
+				"toast.linear_missing_key": "Linear API key is missing.",
+				"linear.embed.title": "Linear",
+				"linear.embed.select_placeholder": "Select project",
+				"linear.embed.apply": "Share",
+				"linear.embed.refresh": "Refresh",
+				"linear.embed.empty": "No tasks loaded.",
+				"linear.embed.open": "Open in Linear",
+				"linear.status.key_set": "API key set.",
+				"linear.status.key_set_with_projects":
+					"API key set · {count} projects",
+				"linear.status.no_key": "No API key set.",
+				"linear.status.loading": "Loading Linear…",
+				"linear.status.failed": "Linear unavailable.",
 			},
 		};
 
@@ -5407,6 +5498,9 @@
 			syncUiLangButtons();
 			applyGlowEnabled();
 			renderFaq();
+			updateLinearProjectSelectOptions(getLinearNoteId());
+			renderLinearTasks(getLinearNoteId());
+			updateLinearApiStatus();
 			if (aiDictationRecognizer) {
 				aiDictationRecognizer.lang = getUiSpeechLocale();
 			}
@@ -6167,6 +6261,226 @@
 		};
 	}
 
+	function loadLinearApiConfig() {
+		try {
+			linearApiKey = String(localStorage.getItem(LINEAR_API_KEY_KEY) || "");
+		} catch {
+			linearApiKey = "";
+		}
+		if (linearApiKeyInput) {
+			linearApiKeyInput.value = linearApiKey ? "••••••••" : "";
+		}
+		updateLinearApiStatus();
+	}
+
+	function saveLinearApiConfig(nextKey) {
+		linearApiKey = String(nextKey || "").trim();
+		try {
+			localStorage.setItem(LINEAR_API_KEY_KEY, linearApiKey);
+		} catch {
+			// ignore
+		}
+		if (linearApiKeyInput) {
+			linearApiKeyInput.value = linearApiKey ? "••••••••" : "";
+		}
+		updateLinearApiStatus();
+	}
+
+	function readLinearApiKeyInput() {
+		if (!linearApiKeyInput) return linearApiKey;
+		const raw = String(linearApiKeyInput.value || "").trim();
+		if (!raw || raw === "••••••••") return linearApiKey;
+		return raw;
+	}
+
+	function loadLinearProjectsFromStorage() {
+		try {
+			const raw = String(localStorage.getItem(LINEAR_PROJECTS_KEY) || "");
+			const parsed = raw ? JSON.parse(raw) : [];
+			linearProjects = Array.isArray(parsed)
+				? parsed
+						.map((p) => ({
+							id: String(p && p.id ? p.id : ""),
+							name: String(p && p.name ? p.name : ""),
+						}))
+						.filter((p) => p.id && p.name)
+				: [];
+		} catch {
+			linearProjects = [];
+		}
+		loadLinearProjectSelections();
+		renderLinearProjectsList();
+		updateLinearProjectSelectOptions(getLinearNoteId());
+	}
+
+	function saveLinearProjectsToStorage(nextProjects) {
+		linearProjects = Array.isArray(nextProjects) ? nextProjects : [];
+		try {
+			localStorage.setItem(LINEAR_PROJECTS_KEY, JSON.stringify(linearProjects));
+		} catch {
+			// ignore
+		}
+		renderLinearProjectsList();
+		updateLinearProjectSelectOptions(getLinearNoteId());
+	}
+
+	function loadLinearProjectSelections() {
+		try {
+			const raw = String(
+				localStorage.getItem(LINEAR_PROJECTS_ENABLED_KEY) || ""
+			);
+			const parsed = raw ? JSON.parse(raw) : [];
+			const ids = Array.isArray(parsed) ? parsed.map((id) => String(id || "")) : [];
+			linearEnabledProjectIds = new Set(ids.filter(Boolean));
+		} catch {
+			linearEnabledProjectIds = new Set();
+		}
+	}
+
+	function saveLinearProjectSelections() {
+		try {
+			const ids = Array.from(linearEnabledProjectIds || []);
+			localStorage.setItem(LINEAR_PROJECTS_ENABLED_KEY, JSON.stringify(ids));
+		} catch {
+			// ignore
+		}
+		updateLinearProjectSelectOptions(getLinearNoteId());
+	}
+
+	function updateLinearApiStatus() {
+		if (!linearApiStatus) return;
+		const keySet = Boolean(String(linearApiKey || "").trim());
+		const count = Array.isArray(linearProjects) ? linearProjects.length : 0;
+		if (keySet) {
+			linearApiStatus.textContent = count
+				? formatUi(t("linear.status.key_set_with_projects"), { count })
+				: t("linear.status.key_set");
+			return;
+		}
+		linearApiStatus.textContent = t("linear.status.no_key");
+	}
+
+	function renderLinearProjectsList() {
+		if (!linearProjectsList) return;
+		const list = Array.isArray(linearProjects) ? linearProjects : [];
+		if (linearProjectsEmpty) {
+			linearProjectsEmpty.classList.toggle("hidden", list.length > 0);
+		}
+		if (!list.length) {
+			linearProjectsList.innerHTML = "";
+			return;
+		}
+		linearProjectsList.innerHTML = list
+			.map((p) => {
+				const id = String(p.id || "");
+				const name = String(p.name || "");
+				const checked = linearEnabledProjectIds.has(id) ? "checked" : "";
+				return `
+					<label class="flex items-center gap-2 text-xs text-slate-200" data-linear-project-id="${id}">
+						<input type="checkbox" class="h-4 w-4 rounded border-white/20 bg-slate-950/40 text-fuchsia-400" ${checked} />
+						<span>${name}</span>
+					</label>`;
+			})
+			.join("");
+	}
+
+	async function linearRequest(query, variables) {
+		const token = String(linearApiKey || "").trim();
+		if (!token) throw new Error("missing_key");
+		const res = await fetch("https://api.linear.app/graphql", {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				Authorization: `Bearer ${token}`,
+			},
+			body: JSON.stringify({ query, variables: variables || {} }),
+		});
+		if (!res.ok) throw new Error("linear_http");
+		const payload = await res.json();
+		if (payload && Array.isArray(payload.errors) && payload.errors.length) {
+			throw new Error("linear_api");
+		}
+		return payload ? payload.data : null;
+	}
+
+	async function fetchLinearProjectsFromApi() {
+		if (!linearApiKey) {
+			toast(t("toast.linear_missing_key"), "error");
+			return;
+		}
+		if (linearApiStatus) linearApiStatus.textContent = t("linear.status.loading");
+		try {
+			const data = await linearRequest(
+				"query { projects { nodes { id name } } }"
+			);
+			const nodes =
+				data && data.projects && Array.isArray(data.projects.nodes)
+					? data.projects.nodes
+					: [];
+			const cleaned = nodes
+				.map((p) => ({
+					id: String(p && p.id ? p.id : ""),
+					name: String(p && p.name ? p.name : ""),
+				}))
+				.filter((p) => p.id && p.name);
+			saveLinearProjectsToStorage(cleaned);
+			updateLinearApiStatus();
+			toast(t("toast.linear_projects_loaded"), "success");
+		} catch {
+			if (linearApiStatus) {
+				linearApiStatus.textContent = t("linear.status.failed");
+			}
+			toast(t("toast.linear_projects_failed"), "error");
+		}
+	}
+
+	async function fetchLinearTasksForProject(noteId, projectId) {
+		const activeId = String(noteId || "").trim() || getLinearNoteId();
+		if (!activeId || !projectId) return;
+		if (!linearApiKey) {
+			toast(t("toast.linear_missing_key"), "error");
+			return;
+		}
+		if (linearStatus) linearStatus.textContent = t("linear.status.loading");
+		try {
+			const data = await linearRequest(
+				"query($id: String!) { project(id: $id) { id name issues(first: 50, orderBy: updatedAt) { nodes { id title identifier url dueDate state { name } assignee { name } } } } }",
+				{ id: String(projectId) }
+			);
+			const project = data && data.project ? data.project : null;
+			const projectName = String(project && project.name ? project.name : "");
+			const nodes = project && project.issues && Array.isArray(project.issues.nodes)
+				? project.issues.nodes
+				: [];
+			const tasks = nodes.map((task) => ({
+				id: String(task && task.id ? task.id : ""),
+				title: String(task && task.title ? task.title : ""),
+				identifier: String(task && task.identifier ? task.identifier : ""),
+				url: String(task && task.url ? task.url : ""),
+				dueDate: String(task && task.dueDate ? task.dueDate : ""),
+				state: String(task && task.state && task.state.name ? task.state.name : ""),
+				assignee: String(task && task.assignee && task.assignee.name ? task.assignee.name : ""),
+			}));
+			const payload = {
+				projectId: String(projectId || ""),
+				projectName: projectName,
+				updatedAt: Date.now(),
+				tasks,
+			};
+			linearDataByNote.set(activeId, payload);
+			renderLinearTasks(activeId);
+			sendLinearDataForNote(activeId, payload);
+			if (linearStatus) {
+				linearStatus.textContent = `${projectName || "Linear"} · ${new Date(
+					payload.updatedAt
+				).toLocaleString()}`;
+			}
+		} catch {
+			if (linearStatus) linearStatus.textContent = t("linear.status.failed");
+			toast(t("toast.linear_tasks_failed"), "error");
+		}
+	}
+
 	function loadTheme() {
 		try {
 			activeTheme = String(localStorage.getItem(THEME_KEY) || "fuchsia");
@@ -6376,6 +6690,11 @@
 		if (target === "calendar") {
 			renderCalendarSettings();
 			fetchGoogleCalendarStatus();
+		}
+		if (target === "integrations") {
+			updateLinearApiStatus();
+			renderLinearProjectsList();
+			updateLinearProjectSelectOptions(getLinearNoteId());
 		}
 	}
 
@@ -10549,6 +10868,7 @@ ${highlightThemeCss}
 		updatePsEditingTagsHint();
 		syncExcalidrawForNote("");
 		syncExcelForNote("");
+		syncLinearForNote("");
 		if (psMainHint && !(opts && opts.keepHint)) {
 			psMainHint.classList.add("hidden");
 		}
@@ -10604,6 +10924,7 @@ ${highlightThemeCss}
 		if (prevNoteId !== psEditingNoteId) {
 			syncExcalidrawForNote(psEditingNoteId);
 			syncExcelForNote(psEditingNoteId);
+			syncLinearForNote(psEditingNoteId);
 			void loadCommentsForRoom();
 		}
 		if (opts && opts.updateList) applyPersonalSpaceFiltersAndRender();
@@ -10652,6 +10973,7 @@ ${highlightThemeCss}
 		setPsAutoSaveStatus("");
 		syncExcalidrawForNote(psEditingNoteId);
 		syncExcelForNote(psEditingNoteId);
+		syncLinearForNote(psEditingNoteId);
 		if (room && key) {
 			setRoomTabNoteId(room, key, psEditingNoteId);
 		}
@@ -15821,6 +16143,11 @@ self.onmessage = async (e) => {
 			}
 			const currentExcelNote = getExcelNoteId();
 			if (currentExcelNote) sendExcelStateForNote(currentExcelNote);
+			const currentLinearNote = getLinearNoteId();
+			if (currentLinearNote) sendLinearStateForNote(currentLinearNote);
+			if (currentLinearNote && linearDataByNote.has(currentLinearNote)) {
+				sendLinearDataForNote(currentLinearNote);
+			}
 			void loadCommentsForRoom();
 			ensureYjsLoaded().then((ok) => {
 				if (mySeq !== connectionSeq) return;
@@ -15931,6 +16258,59 @@ self.onmessage = async (e) => {
 					if (noteId === activeId) {
 						applyExcelOffset(offset);
 						setExcelVisible(visible, { remember: false });
+					}
+				}
+				return;
+			}
+
+			if (msg.type === "linear_state") {
+				if (msg.clientId && msg.clientId === clientId) return;
+				const items = Array.isArray(msg.items) ? msg.items : [];
+				const activeId = getLinearNoteId();
+				for (const it of items) {
+					const noteId = String(it && it.noteId ? it.noteId : "").trim();
+					if (!noteId) continue;
+					const visible = Boolean(it && it.visible);
+					const projectId = String(it && it.projectId ? it.projectId : "");
+					const projectName = String(it && it.projectName ? it.projectName : "");
+					const offset = {
+						x: Number(it && it.offset && it.offset.x) || 0,
+						y: Number(it && it.offset && it.offset.y) || 0,
+					};
+					linearVisibleByNote.set(noteId, visible);
+					linearOffsetByNote.set(noteId, offset);
+					if (projectId) {
+						linearProjectByNote.set(noteId, {
+							projectId,
+							projectName,
+						});
+					}
+					if (noteId === activeId) {
+						applyLinearOffset(offset);
+						setLinearVisible(visible, { remember: false });
+						updateLinearProjectSelectOptions(activeId);
+						renderLinearTasks(activeId);
+					}
+				}
+				return;
+			}
+
+			if (msg.type === "linear_data") {
+				if (msg.clientId && msg.clientId === clientId) return;
+				const items = Array.isArray(msg.items) ? msg.items : [];
+				const activeId = getLinearNoteId();
+				for (const it of items) {
+					const noteId = String(it && it.noteId ? it.noteId : "").trim();
+					if (!noteId) continue;
+					const payload = {
+						projectId: String(it && it.projectId ? it.projectId : ""),
+						projectName: String(it && it.projectName ? it.projectName : ""),
+						updatedAt: Number(it && it.updatedAt ? it.updatedAt : 0) || Date.now(),
+						tasks: Array.isArray(it && it.tasks) ? it.tasks : [],
+					};
+					linearDataByNote.set(noteId, payload);
+					if (noteId === activeId) {
+						renderLinearTasks(activeId);
 					}
 				}
 				return;
@@ -16091,6 +16471,17 @@ self.onmessage = async (e) => {
 					scheduleCrdtSnapshot();
 				} else {
 					sendCurrentState();
+				}
+				const activeExcal = getExcalidrawNoteId();
+				if (activeExcal) sendExcalidrawStateForNote(activeExcal);
+				const activeExcel = getExcelNoteId();
+				if (activeExcel) sendExcelStateForNote(activeExcel);
+				const activeLinear = getLinearNoteId();
+				if (activeLinear) {
+					sendLinearStateForNote(activeLinear);
+					if (linearDataByNote.has(activeLinear)) {
+						sendLinearDataForNote(activeLinear);
+					}
 				}
 			}
 		});
@@ -16312,6 +16703,14 @@ self.onmessage = async (e) => {
 	const excelVisibleByNote = new Map();
 	let excelOffset = { x: 0, y: 0 };
 	const excelOffsetByNote = new Map();
+	let linearVisible = false;
+	const linearVisibleByNote = new Map();
+	let linearOffset = { x: 0, y: 0 };
+	const linearOffsetByNote = new Map();
+	const linearProjectByNote = new Map();
+	const linearDataByNote = new Map();
+	let linearDataSendTimer = null;
+	let pendingLinearData = null;
 
 	const getExcalidrawRoomScope = () => {
 		const roomName = normalizeRoom(room);
@@ -16337,6 +16736,19 @@ self.onmessage = async (e) => {
 		const noteId = String(psEditingNoteId || "").trim();
 		if (noteId) return noteId;
 		return getExcelRoomScope();
+	};
+
+	const getLinearRoomScope = () => {
+		const roomName = normalizeRoom(room);
+		if (!roomName) return "";
+		const keyName = normalizeKey(key);
+		return `room:${roomName}:${keyName || "nokey"}`;
+	};
+
+	const getLinearNoteId = () => {
+		const noteId = String(psEditingNoteId || "").trim();
+		if (noteId) return noteId;
+		return getLinearRoomScope();
 	};
 
 	const getExcelBaseUrl = () => {
@@ -16406,6 +16818,30 @@ self.onmessage = async (e) => {
 		};
 	};
 
+	const getLinearStateForNote = (noteId) => {
+		const activeId = String(noteId || "").trim() || getLinearNoteId();
+		if (!activeId) return null;
+		const offset = linearOffsetByNote.get(activeId) || { x: 0, y: 0 };
+		const visible = Boolean(linearVisibleByNote.get(activeId));
+		const project = linearProjectByNote.get(activeId) || null;
+		return {
+			noteId: activeId,
+			visible,
+			projectId: project && project.projectId ? project.projectId : "",
+			projectName: project && project.projectName ? project.projectName : "",
+			offset: {
+				x: Number(offset.x || 0) || 0,
+				y: Number(offset.y || 0) || 0,
+			},
+		};
+	};
+
+	const getLinearDataForNote = (noteId) => {
+		const activeId = String(noteId || "").trim() || getLinearNoteId();
+		if (!activeId) return null;
+		return linearDataByNote.get(activeId) || null;
+	};
+
 	const postExcalidrawMessage = (payload) => {
 		if (!excalidrawFrame || !excalidrawFrame.contentWindow) return;
 		try {
@@ -16466,6 +16902,26 @@ self.onmessage = async (e) => {
 		return { x: baseX + clampedDx, y: baseY + clampedDy };
 	};
 
+	const clampLinearOffsetToMirror = (next, dragState) => {
+		if (!textarea || !linearEmbed) return next;
+		const mirrorRect = dragState && dragState.mirrorRect ? dragState.mirrorRect : textarea.getBoundingClientRect();
+		const baseRect = dragState && dragState.baseRect ? dragState.baseRect : linearEmbed.getBoundingClientRect();
+		if (!mirrorRect || !baseRect) return next;
+		const baseX = dragState ? dragState.baseX : linearOffset.x || 0;
+		const baseY = dragState ? dragState.baseY : linearOffset.y || 0;
+		const dx = next.x - baseX;
+		const dy = next.y - baseY;
+		const clampedDx = Math.min(
+			Math.max(dx, mirrorRect.left - baseRect.left),
+			mirrorRect.right - baseRect.right
+		);
+		const clampedDy = Math.min(
+			Math.max(dy, mirrorRect.top - baseRect.top),
+			mirrorRect.bottom - baseRect.bottom
+		);
+		return { x: baseX + clampedDx, y: baseY + clampedDy };
+	};
+
 	const scheduleSendExcalidrawScene = () => {
 		if (!pendingExcalidrawScene) return;
 		window.clearTimeout(excalidrawSceneSendTimer);
@@ -16507,6 +16963,51 @@ self.onmessage = async (e) => {
 		});
 	};
 
+	const sendLinearStateForNote = (noteId) => {
+		const state = getLinearStateForNote(noteId);
+		if (!state) return;
+		if (!ws || ws.readyState !== WebSocket.OPEN) return;
+		sendMessage({
+			type: "linear_state",
+			room,
+			clientId,
+			items: [state],
+		});
+	};
+
+	const scheduleSendLinearData = () => {
+		if (!pendingLinearData) return;
+		window.clearTimeout(linearDataSendTimer);
+		linearDataSendTimer = window.setTimeout(() => {
+			if (!pendingLinearData) return;
+			if (!ws || ws.readyState !== WebSocket.OPEN) return;
+			const items = [pendingLinearData];
+			pendingLinearData = null;
+			sendMessage({
+				type: "linear_data",
+				room,
+				clientId,
+				items,
+			});
+		}, 500);
+	};
+
+	const sendLinearDataForNote = (noteId, data) => {
+		const activeId = String(noteId || "").trim() || getLinearNoteId();
+		if (!activeId) return;
+		const payload = data || getLinearDataForNote(activeId);
+		if (!payload) return;
+		if (!ws || ws.readyState !== WebSocket.OPEN) return;
+		pendingLinearData = {
+			noteId: activeId,
+			projectId: String(payload.projectId || ""),
+			projectName: String(payload.projectName || ""),
+			updatedAt: Number(payload.updatedAt || Date.now()) || Date.now(),
+			tasks: Array.isArray(payload.tasks) ? payload.tasks.slice(0, 200) : [],
+		};
+		scheduleSendLinearData();
+	};
+
 	const applyExcalidrawOffset = (offset) => {
 		const ox = Number(offset && offset.x ? offset.x : 0) || 0;
 		const oy = Number(offset && offset.y ? offset.y : 0) || 0;
@@ -16522,6 +17023,15 @@ self.onmessage = async (e) => {
 		excelOffset = { x: ox, y: oy };
 		if (excelEmbed) {
 			excelEmbed.style.transform = `translate3d(${ox}px, ${oy}px, 0)`;
+		}
+	};
+
+	const applyLinearOffset = (offset) => {
+		const ox = Number(offset && offset.x ? offset.x : 0) || 0;
+		const oy = Number(offset && offset.y ? offset.y : 0) || 0;
+		linearOffset = { x: ox, y: oy };
+		if (linearEmbed) {
+			linearEmbed.style.transform = `translate3d(${ox}px, ${oy}px, 0)`;
 		}
 	};
 
@@ -16545,6 +17055,16 @@ self.onmessage = async (e) => {
 		applyExcelOffset({ x: 0, y: 0 });
 	};
 
+	const loadLinearOffsetForNote = (noteId) => {
+		const activeId = String(noteId || "").trim() || getLinearNoteId();
+		const saved = activeId ? linearOffsetByNote.get(activeId) : null;
+		if (saved) {
+			applyLinearOffset({ x: saved.x || 0, y: saved.y || 0 });
+			return;
+		}
+		applyLinearOffset({ x: 0, y: 0 });
+	};
+
 	const storeExcalidrawOffsetForNote = (noteId, offset) => {
 		const activeId = String(noteId || "").trim() || getExcalidrawNoteId();
 		if (!activeId) return;
@@ -16563,6 +17083,16 @@ self.onmessage = async (e) => {
 			y: Number(offset && offset.y ? offset.y : 0) || 0,
 		});
 		sendExcelStateForNote(activeId);
+	};
+
+	const storeLinearOffsetForNote = (noteId, offset) => {
+		const activeId = String(noteId || "").trim() || getLinearNoteId();
+		if (!activeId) return;
+		linearOffsetByNote.set(activeId, {
+			x: Number(offset && offset.x ? offset.x : 0) || 0,
+			y: Number(offset && offset.y ? offset.y : 0) || 0,
+		});
+		sendLinearStateForNote(activeId);
 	};
 
 	const setExcalidrawVisible = (nextVisible, opts = {}) => {
@@ -16630,6 +17160,30 @@ self.onmessage = async (e) => {
 		}
 	};
 
+	const setLinearVisible = (nextVisible, opts = {}) => {
+		linearVisible = Boolean(nextVisible);
+		const remember = opts.remember !== false;
+		const activeNoteId = getLinearNoteId();
+		if (linearEmbed) {
+			linearEmbed.classList.toggle("hidden", !linearVisible);
+			linearEmbed.setAttribute(
+				"aria-hidden",
+				linearVisible ? "false" : "true"
+			);
+		}
+		if (toggleLinearBtn) {
+			toggleLinearBtn.setAttribute(
+				"aria-pressed",
+				linearVisible ? "true" : "false"
+			);
+		}
+		if (remember && activeNoteId) {
+			linearVisibleByNote.set(activeNoteId, linearVisible);
+			sendLinearStateForNote(activeNoteId);
+		}
+		applyLinearOffset(linearOffset);
+	};
+
 	const handleExcalidrawEmbedMessage = (ev) => {
 		if (ev && ev.origin && ev.origin !== window.location.origin) return;
 		const msg = ev && ev.data ? ev.data : null;
@@ -16682,9 +17236,128 @@ self.onmessage = async (e) => {
 		}
 	};
 
+	const updateLinearProjectSelectOptions = (activeId) => {
+		if (!linearProjectSelect) return;
+		const enabled = Array.from(linearEnabledProjectIds || []).filter(Boolean);
+		const enabledSet = new Set(enabled);
+		const allowedProjects = Array.isArray(linearProjects)
+			? linearProjects.filter((p) => enabledSet.has(p.id))
+			: [];
+		const current = activeId ? linearProjectByNote.get(activeId) : null;
+		let selectedId = current && current.projectId ? current.projectId : "";
+		if (selectedId && !enabledSet.has(selectedId)) {
+			selectedId = "";
+			if (activeId) linearProjectByNote.delete(activeId);
+		}
+		const options = [
+			{ id: "", name: t("linear.embed.select_placeholder") },
+			...allowedProjects.map((p) => ({ id: p.id, name: p.name })),
+		];
+		linearProjectSelect.innerHTML = options
+			.map((opt) => {
+				const safeId = String(opt.id || "");
+				const safeName = String(opt.name || "");
+				const selected = safeId && safeId === selectedId ? "selected" : "";
+				return `<option value="${safeId}" ${selected}>${safeName}</option>`;
+			})
+			.join("");
+		linearProjectSelect.value = selectedId || "";
+	};
+
+	const renderLinearTasks = (noteId) => {
+		if (!linearTaskList) return;
+		const activeId = String(noteId || "").trim() || getLinearNoteId();
+		const data = getLinearDataForNote(activeId);
+		const tasks = data && Array.isArray(data.tasks) ? data.tasks : [];
+		const openLabel = t("linear.embed.open");
+		linearTaskList.innerHTML = tasks
+			.map((task) => {
+				const title = String(task && task.title ? task.title : "");
+				const id = String(task && task.identifier ? task.identifier : "");
+				const state = String(task && task.state ? task.state : "");
+				const assignee = String(task && task.assignee ? task.assignee : "");
+				const due = String(task && task.dueDate ? task.dueDate : "");
+				const url = String(task && task.url ? task.url : "");
+				const metaParts = [id, state, assignee, due].filter(Boolean);
+				return `
+					<div class="linear-task-item">
+						<div class="linear-task-title">${title || "—"}</div>
+						<div class="linear-task-meta">${metaParts.join(" · ")}</div>
+						${
+							url
+								? `<a class="linear-task-link" href="${url}" target="_blank" rel="noreferrer">${openLabel}</a>`
+								: ""
+						}
+					</div>`;
+			})
+			.join("");
+		if (linearStatus) {
+			const project = activeId ? linearProjectByNote.get(activeId) : null;
+			if (!project || !project.projectId) {
+				linearStatus.textContent = t("linear.embed.select_placeholder");
+			} else if (data && data.updatedAt) {
+				linearStatus.textContent = `${
+					project.projectName || "Linear"
+				} · ${new Date(data.updatedAt).toLocaleString()}`;
+			} else {
+				linearStatus.textContent = project.projectName || "Linear";
+			}
+		}
+		if (linearEmpty) {
+			linearEmpty.classList.toggle("hidden", tasks.length > 0);
+		}
+	};
+
+	const setLinearProjectForNote = (noteId, project) => {
+		const activeId = String(noteId || "").trim() || getLinearNoteId();
+		if (!activeId || !project) return;
+		const projectId = String(project.projectId || project.id || "");
+		const projectName = String(project.projectName || project.name || "");
+		if (!projectId) return;
+		linearProjectByNote.set(activeId, { projectId, projectName });
+		updateLinearProjectSelectOptions(activeId);
+		sendLinearStateForNote(activeId);
+		if (linearStatus) {
+			linearStatus.textContent = `${projectName || "Linear"}`;
+		}
+	};
+
+	const syncLinearForNote = (noteId) => {
+		const activeId = String(noteId || "").trim() || getLinearNoteId();
+		const savedVisible = activeId
+			? Boolean(linearVisibleByNote.get(activeId))
+			: false;
+		loadLinearOffsetForNote(activeId);
+		setLinearVisible(savedVisible, { remember: false });
+		updateLinearProjectSelectOptions(activeId);
+		renderLinearTasks(activeId);
+		if (activeId && (linearVisibleByNote.has(activeId) || linearOffsetByNote.has(activeId))) {
+			sendLinearStateForNote(activeId);
+		}
+		if (activeId && linearDataByNote.has(activeId)) {
+			sendLinearDataForNote(activeId);
+		}
+	};
+
 	if (toggleExcalidrawBtn && excalidrawEmbed) {
 		toggleExcalidrawBtn.addEventListener("click", () => {
 			setExcalidrawVisible(!excalidrawVisible);
+		});
+	}
+
+	if (toggleLinearBtn && linearEmbed) {
+		toggleLinearBtn.addEventListener("click", () => {
+			const activeId = getLinearNoteId();
+			if (!linearVisible) {
+				updateLinearProjectSelectOptions(activeId);
+				const current = activeId ? linearProjectByNote.get(activeId) : null;
+				if (!current || !current.projectId) {
+					setLinearVisible(true, { remember: false });
+					toast(t("toast.linear_select_project"), "info");
+					return;
+				}
+			}
+			setLinearVisible(!linearVisible);
 		});
 	}
 
@@ -16692,6 +17365,44 @@ self.onmessage = async (e) => {
 		toggleExcelBtn.addEventListener("click", () => {
 			setExcelEmbedUrl();
 			setExcelVisible(!excelVisible);
+		});
+	}
+
+	if (linearProjectApplyBtn) {
+		linearProjectApplyBtn.addEventListener("click", () => {
+			const activeId = getLinearNoteId();
+			const selected = String(
+				linearProjectSelect ? linearProjectSelect.value : ""
+			).trim();
+			if (!selected) {
+				toast(t("toast.linear_select_project"), "info");
+				return;
+			}
+			const project = Array.isArray(linearProjects)
+				? linearProjects.find((p) => String(p.id || "") === selected)
+				: null;
+			if (!project) {
+				toast(t("toast.linear_projects_failed"), "error");
+				return;
+			}
+			setLinearProjectForNote(activeId, {
+				projectId: project.id,
+				projectName: project.name,
+			});
+			setLinearVisible(true);
+			void fetchLinearTasksForProject(activeId, project.id);
+		});
+	}
+
+	if (linearRefreshBtn) {
+		linearRefreshBtn.addEventListener("click", () => {
+			const activeId = getLinearNoteId();
+			const current = activeId ? linearProjectByNote.get(activeId) : null;
+			if (!current || !current.projectId) {
+				toast(t("toast.linear_select_project"), "info");
+				return;
+			}
+			void fetchLinearTasksForProject(activeId, current.projectId);
 		});
 	}
 
@@ -16802,6 +17513,60 @@ self.onmessage = async (e) => {
 			window.addEventListener("pointermove", onExcelDragMove);
 			window.addEventListener("pointerup", endExcelDrag);
 			window.addEventListener("pointercancel", endExcelDrag);
+		});
+	}
+
+	if (linearDragHandle && linearEmbed) {
+		let linearDragState = null;
+		const endLinearDrag = (ev) => {
+			if (!linearDragState) return;
+			try {
+				linearDragHandle.releasePointerCapture(linearDragState.pointerId);
+			} catch {
+				// ignore
+			}
+			window.removeEventListener("pointermove", onLinearDragMove);
+			window.removeEventListener("pointerup", endLinearDrag);
+			window.removeEventListener("pointercancel", endLinearDrag);
+			linearEmbed.classList.remove("linear-dragging");
+			const activeNoteId = getLinearNoteId();
+			storeLinearOffsetForNote(activeNoteId, linearOffset);
+			linearDragState = null;
+		};
+
+		const onLinearDragMove = (ev) => {
+			if (!linearDragState) return;
+			const dx = Number(ev.clientX || 0) - linearDragState.startX;
+			const dy = Number(ev.clientY || 0) - linearDragState.startY;
+			const rawNext = {
+				x: linearDragState.baseX + dx,
+				y: linearDragState.baseY + dy,
+			};
+			const next = clampLinearOffsetToMirror(rawNext, linearDragState);
+			applyLinearOffset(next);
+		};
+
+		linearDragHandle.addEventListener("pointerdown", (ev) => {
+			if (!linearVisible) return;
+			ev.preventDefault();
+			linearDragState = {
+				startX: Number(ev.clientX || 0),
+				startY: Number(ev.clientY || 0),
+				baseX: Number(linearOffset.x || 0),
+				baseY: Number(linearOffset.y || 0),
+				pointerId: ev.pointerId,
+				mirrorRect: textarea ? textarea.getBoundingClientRect() : null,
+				baseRect: linearEmbed.getBoundingClientRect(),
+			};
+			linearEmbed.classList.add("linear-dragging");
+			try {
+				linearDragHandle.setPointerCapture(ev.pointerId);
+			} catch {
+				// ignore
+			}
+			window.addEventListener("pointermove", onLinearDragMove);
+			window.addEventListener("pointerup", endLinearDrag);
+			window.addEventListener("pointercancel", endLinearDrag);
 		});
 	}
 
@@ -17549,6 +18314,9 @@ self.onmessage = async (e) => {
 	loadDateFormatSetting();
 	loadTimeFormatSetting();
 	loadAiApiConfig();
+	loadLinearApiConfig();
+	loadLinearProjectsFromStorage();
+	syncLinearForNote(getLinearNoteId());
 	loadEditorMaskDisabled();
 	setEditorMaskToggleUi();
 	loadCrdtMarksStyle();
@@ -19051,6 +19819,13 @@ self.onmessage = async (e) => {
 			if (aiApiKeyInput.value === "••••••••") aiApiKeyInput.value = "";
 		});
 	}
+	if (linearApiKeyInput) {
+		linearApiKeyInput.addEventListener("focus", () => {
+			if (linearApiKeyInput.value === "••••••••") {
+				linearApiKeyInput.value = "";
+			}
+		});
+	}
 	if (aiApiSaveBtn) {
 		aiApiSaveBtn.addEventListener("click", () => {
 			const nextKey = readAiApiKeyInput();
@@ -19062,6 +19837,13 @@ self.onmessage = async (e) => {
 			toast(t("toast.ai_saved"), "success");
 		});
 	}
+	if (linearApiSaveBtn) {
+		linearApiSaveBtn.addEventListener("click", () => {
+			const nextKey = readLinearApiKeyInput();
+			saveLinearApiConfig(nextKey);
+			toast(t("toast.linear_saved"), "success");
+		});
+	}
 	if (aiApiClearBtn) {
 		aiApiClearBtn.addEventListener("click", () => {
 			saveAiApiConfig("", "");
@@ -19069,6 +19851,31 @@ self.onmessage = async (e) => {
 			if (aiApiModelInput) aiApiModelInput.value = "";
 			loadAiStatus();
 			toast(t("toast.ai_cleared"), "success");
+		});
+	}
+	if (linearApiClearBtn) {
+		linearApiClearBtn.addEventListener("click", () => {
+			saveLinearApiConfig("");
+			if (linearApiKeyInput) linearApiKeyInput.value = "";
+			toast(t("toast.linear_cleared"), "success");
+		});
+	}
+	if (linearLoadProjectsBtn) {
+		linearLoadProjectsBtn.addEventListener("click", () => {
+			void fetchLinearProjectsFromApi();
+		});
+	}
+	if (linearProjectsList) {
+		linearProjectsList.addEventListener("change", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLInputElement)) return;
+			const row = target.closest("[data-linear-project-id]");
+			if (!row) return;
+			const id = String(row.getAttribute("data-linear-project-id") || "");
+			if (!id) return;
+			if (target.checked) linearEnabledProjectIds.add(id);
+			else linearEnabledProjectIds.delete(id);
+			saveLinearProjectSelections();
 		});
 	}
 	if (faqSearchInput) {

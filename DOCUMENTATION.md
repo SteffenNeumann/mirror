@@ -1,6 +1,23 @@
 # Dokumentation – Änderungen (2026-02-04)
 
 ## Ziel
+- Linear-Integration in privaten Räumen: Projekte auswählen, Tasks read-only anzeigen, kollaborativ teilen.
+
+## Änderungen
+- Neuer Bereich in den Einstellungen für App-Integrationen (Linear API-Key + Projektauswahl).
+- Neuer Linear-Button neben Excalidraw/Excel, inkl. Projektauswahl und Refresh im Embed.
+- Lineare Tasks werden pro Raum synchronisiert (State + Daten) via WebSocket.
+
+## Auswirkungen
+- **UI/UX:** Linear-Panel mit Projektpicker, Taskliste und Statusanzeige.
+- **Feature-Interaktionen:** Tasks werden read-only gezeigt und kollaborativ geteilt.
+- **Datenebene:** Linear-State und Taskliste werden im Room-State (in-memory) verteilt.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check server.js`
+
+## Ziel
 - Eingebettete Tabelle per Button; Ethercalc auf Fly.io als eingebettete Lösung.
 
 ## Änderungen
