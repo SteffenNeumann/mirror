@@ -17041,6 +17041,44 @@ self.onmessage = async (e) => {
 			});
 			if (noteId) {
 				setRoomTabNoteId(roomName, keyName, noteId);
+				const excalRoom = getExcalidrawRoomScope();
+				const excelRoom = getExcelRoomScope();
+				const linearRoom = getLinearRoomScope();
+				const excalState = getExcalidrawStateForNote(noteId);
+				if (excalState && excalRoom) {
+					excalidrawVisibleByNote.set(excalRoom, excalState.visible);
+					excalidrawOffsetByNote.set(excalRoom, excalState.offset || { x: 0, y: 0 });
+					sendExcalidrawStateForNote(excalRoom);
+					const scene = getExcalidrawSceneForNote(noteId);
+					if (scene) {
+						excalidrawSceneByNote.set(excalRoom, scene);
+						pendingExcalidrawScene = { noteId: excalRoom, scene };
+						scheduleSendExcalidrawScene();
+					}
+				}
+				const excelState = getExcelStateForNote(noteId);
+				if (excelState && excelRoom) {
+					excelVisibleByNote.set(excelRoom, excelState.visible);
+					excelOffsetByNote.set(excelRoom, excelState.offset || { x: 0, y: 0 });
+					sendExcelStateForNote(excelRoom);
+				}
+				const linearState = getLinearStateForNote(noteId);
+				if (linearState && linearRoom) {
+					linearVisibleByNote.set(linearRoom, linearState.visible);
+					linearOffsetByNote.set(linearRoom, linearState.offset || { x: 0, y: 0 });
+					if (linearState.projectId) {
+						linearProjectByNote.set(linearRoom, {
+							projectId: linearState.projectId,
+							projectName: linearState.projectName,
+						});
+					}
+					sendLinearStateForNote(linearRoom);
+					const linearData = getLinearDataForNote(noteId);
+					if (linearData) {
+						linearDataByNote.set(linearRoom, { ...linearData });
+						sendLinearDataForNote(linearRoom, linearData);
+					}
+				}
 			} else {
 				setRoomTabNoteId(roomName, keyName, "");
 				updateRoomTabTextLocal(roomName, keyName, textSnapshot);
@@ -17084,6 +17122,8 @@ self.onmessage = async (e) => {
 	};
 
 	const getExcalidrawNoteId = () => {
+		const pinned = getRoomPinnedEntry(room, key);
+		if (pinned) return getExcalidrawRoomScope();
 		const noteId = String(psEditingNoteId || "").trim();
 		if (noteId) return noteId;
 		return getExcalidrawRoomScope();
@@ -17097,6 +17137,8 @@ self.onmessage = async (e) => {
 	};
 
 	const getExcelNoteId = () => {
+		const pinned = getRoomPinnedEntry(room, key);
+		if (pinned) return getExcelRoomScope();
 		const noteId = String(psEditingNoteId || "").trim();
 		if (noteId) return noteId;
 		return getExcelRoomScope();
@@ -17110,6 +17152,8 @@ self.onmessage = async (e) => {
 	};
 
 	const getLinearNoteId = () => {
+		const pinned = getRoomPinnedEntry(room, key);
+		if (pinned) return getLinearRoomScope();
 		const noteId = String(psEditingNoteId || "").trim();
 		if (noteId) return noteId;
 		return getLinearRoomScope();

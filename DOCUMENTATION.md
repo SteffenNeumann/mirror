@@ -8,10 +8,12 @@
 - Verlinkter Inhalt (Notiz oder lokaler Text) bleibt dem Raum-Tab zugeordnet und wird beim Tabwechsel wiederhergestellt.
 - Room-Sync wird nur für den verlinkten Inhalt ausgeführt.
 - Permanent-Link wird für eingeloggte Personal-Space Nutzer serverseitig gespeichert und synchronisiert.
+- Verlinkte Apps (Excalidraw/Excel/Linear) werden für den Raum-Scope gespeichert und bei Room-Aufruf automatisch wieder geöffnet.
 
 ## Auswirkungen
 - **UI/UX:** Link-Button mit aktivem Zustand im Editor.
 - **Feature-Interaktionen:** Room-Tab bleibt auf verlinktem Inhalt, PS-Notizen öffnen verknüpfte Tabs.
+- **Feature-Interaktionen:** Geteilte Rooms zeigen verlinkte Apps dauerhaft an.
 - **Datenebene:** Neue Tabelle `room_pins` + API `/api/room-pins`; Pins werden lokal + serverseitig gemerged.
 
 ## Tests (Smoke)
