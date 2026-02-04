@@ -864,7 +864,7 @@ body.code-lang-active #clearMirror {
 .linear-task-item {
 	border-radius: 0.65rem;
 	border: 1px solid rgba(255, 255, 255, 0.08);
-	background: rgba(15, 23, 42, 0.55);
+	background: transparent;
 	padding: 0.55rem 0.6rem;
 	display: flex;
 	flex-direction: column;
@@ -1765,7 +1765,7 @@ body[data-theme="coffeeLight"] #linearEmbed {
 }
 
 body[data-theme="coffeeLight"] .linear-task-item {
-	background: rgba(176, 112, 73, 0.08);
+	background: transparent;
 	border-color: rgba(68, 45, 30, 0.15);
 }
 
@@ -2472,7 +2472,7 @@ body[data-theme="bitterLight"] #linearEmbed {
 }
 
 body[data-theme="bitterLight"] .linear-task-item {
-	background: rgba(255, 35, 1, 0.08);
+	background: transparent;
 	border-color: rgba(21, 21, 24, 0.14);
 }
 
@@ -3323,7 +3323,7 @@ body[data-theme="monoLight"] #linearEmbed {
 }
 
 body[data-theme="monoLight"] .linear-task-item {
-	background: rgba(15, 23, 42, 0.06);
+	background: transparent;
 	border-color: rgba(208, 215, 222, 0.7);
 }
 
