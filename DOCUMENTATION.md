@@ -1,19 +1,17 @@
 # Dokumentation – Änderungen (2026-02-04)
 
 ## Ziel
-- Excel-Spreadsheet wie Excalidraw per Button ein-/ausblenden und im Raum kollaborativ nutzbar machen.
+- Eingebettete Tabelle per Button; Ethercalc auf Fly.io als eingebettete Lösung.
 
 ## Änderungen
-- Excel-Embed (iframe) mit Drag-Handle im Editor hinzugefügt.
-- Neuer Toggle-Button für Excel im Editor.
-- Excel-Visibility/Position werden per WebSocket im Raum synchronisiert.
-- Fallback-Link „In neuem Tab öffnen“ bei Embed-Blockade ergänzt.
+- Excel-Embed nutzt nun Ethercalc-Base-URL und generiert Sheet-URL pro Room/Key.
+- Ethercalc-Service-Konfiguration für Fly.io ergänzt (Dockerfile + fly.toml).
+- Toggle/Drag/Synchronisierung für Excel bleibt erhalten.
 
 ## Auswirkungen
-- **UI/UX:** Excel kann im Editor ein-/ausgeblendet und verschoben werden.
-- **Feature-Interaktionen:** Sichtbarkeit/Position wird zwischen Raum-Teilnehmern geteilt; Excel-Collab läuft über Microsoft 365.
-- **Fallback:** Bei iframe-Blockade kann das Sheet per Link geöffnet werden.
-- **Datenebene:** Keine Persistenz, nur Room-State im WebSocket.
+- **UI/UX:** Tabellen lassen sich im Editor ein-/ausblenden und verschieben.
+- **Feature-Interaktionen:** Realtime-Collab über Ethercalc; Sichtbarkeit/Position per WebSocket.
+- **Datenebene:** Persistenz via Redis möglich (REDIS_URL), sonst In-Memory.
 
 ## Tests (Smoke)
 - Nicht ausgeführt.

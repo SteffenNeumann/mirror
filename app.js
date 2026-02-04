@@ -16340,6 +16340,40 @@ self.onmessage = async (e) => {
 		return getExcelRoomScope();
 	};
 
+	const getExcelBaseUrl = () => {
+		if (excelEmbed) {
+			const base = String(excelEmbed.getAttribute("data-excel-base") || "").trim();
+			if (base) return base;
+		}
+		return "";
+	};
+
+	const buildExcelSheetId = () => {
+		const roomName = normalizeRoom(room);
+		if (roomName) {
+			const keyName = normalizeKey(key);
+			return keyName ? `${roomName}-${keyName}` : roomName;
+		}
+		const fallbackNoteId = String(psEditingNoteId || "").trim();
+		if (fallbackNoteId) return `note-${fallbackNoteId}`;
+		return "default";
+	};
+
+	const setExcelEmbedUrl = () => {
+		const base = getExcelBaseUrl();
+		if (!base || !excelFrame) return;
+		const sheetId = buildExcelSheetId();
+		const cleanBase = base.replace(/\/+$/, "");
+		const nextUrl = `${cleanBase}/${encodeURIComponent(sheetId)}`;
+		const currentUrl = String(excelFrame.getAttribute("src") || "").trim();
+		if (currentUrl !== nextUrl) {
+			excelFrame.setAttribute("src", nextUrl);
+		}
+		if (excelOpenLinkBtn) {
+			excelOpenLinkBtn.setAttribute("data-excel-url", nextUrl);
+		}
+	};
+
 	const getExcalidrawStateForNote = (noteId) => {
 		const activeId = String(noteId || "").trim() || getExcalidrawNoteId();
 		if (!activeId) return null;
@@ -16641,6 +16675,7 @@ self.onmessage = async (e) => {
 
 	const syncExcelForNote = (noteId) => {
 		const activeId = String(noteId || "").trim() || getExcelNoteId();
+		setExcelEmbedUrl();
 		const savedVisible = activeId
 			? Boolean(excelVisibleByNote.get(activeId))
 			: false;
@@ -16659,6 +16694,7 @@ self.onmessage = async (e) => {
 
 	if (toggleExcelBtn && excelEmbed) {
 		toggleExcelBtn.addEventListener("click", () => {
+			setExcelEmbedUrl();
 			setExcelVisible(!excelVisible);
 		});
 	}
@@ -17398,6 +17434,7 @@ self.onmessage = async (e) => {
 		lastLocalText = "";
 		roomLabel.textContent = room;
 		updateShareLink();
+		syncExcelForNote("");
 		roomInput.value = room;
 		saveRecentRoom(room);
 		renderRecentRooms();
