@@ -17277,6 +17277,51 @@ self.onmessage = async (e) => {
 		linearProjectSelect.value = selectedId || "";
 	};
 
+	const getLinearStatusColor = (state) => {
+		const value = String(state || "").trim().toLowerCase();
+		if (!value) return "#38bdf8";
+		if (
+			value.includes("done") ||
+			value.includes("completed") ||
+			value.includes("closed") ||
+			value.includes("finished")
+		) {
+			return "#22c55e";
+		}
+		if (
+			value.includes("progress") ||
+			value.includes("doing") ||
+			value.includes("active")
+		) {
+			return "#f59e0b";
+		}
+		if (
+			value.includes("review") ||
+			value.includes("qa") ||
+			value.includes("test")
+		) {
+			return "#a855f7";
+		}
+		if (
+			value.includes("blocked") ||
+			value.includes("cancelled") ||
+			value.includes("canceled") ||
+			value.includes("failed")
+		) {
+			return "#ef4444";
+		}
+		if (
+			value.includes("backlog") ||
+			value.includes("todo") ||
+			value.includes("open") ||
+			value.includes("triage") ||
+			value.includes("new")
+		) {
+			return "#94a3b8";
+		}
+		return "#38bdf8";
+	};
+
 	const renderLinearTasks = (noteId) => {
 		if (!linearTaskList) return;
 		const activeId = String(noteId || "").trim() || getLinearNoteId();
@@ -17306,11 +17351,12 @@ self.onmessage = async (e) => {
 				${stateOrder
 					.map((state) => {
 						const items = columns.get(state) || [];
+						const statusColor = getLinearStatusColor(state);
 						return `
 							<div class="linear-kanban-column">
 								<div class="linear-kanban-header">
 									<span class="linear-kanban-title">
-										<svg class="linear-kanban-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+										<svg class="linear-kanban-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="color: ${statusColor}">
 											<path d="M3 3h7v7H3z" />
 											<path d="M14 3h7v7h-7z" />
 											<path d="M3 14h7v7H3z" />
