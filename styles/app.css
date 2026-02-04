@@ -2512,6 +2512,14 @@ body[data-theme="bitterLight"] #toggleLinear {
 	color: #0d0c10 !important;
 }
 
+body[data-theme="bitterLight"] #togglePermanentLink {
+	color: #0d0c10 !important;
+}
+
+body[data-theme="bitterLight"] #togglePermanentLink[aria-pressed="true"] {
+	color: #ff2301 !important;
+}
+
 body[data-theme="bitterLight"] #linearEmbed {
 	background: rgba(247, 246, 244, 0.85) !important;
 	border-color: rgba(216, 210, 203, 0.7) !important;
@@ -3365,6 +3373,14 @@ body[data-theme="monoLight"] #commentPanel {
 
 body[data-theme="monoLight"] #toggleLinear {
 	color: #24292f !important;
+}
+
+body[data-theme="monoLight"] #togglePermanentLink {
+	color: #24292f !important;
+}
+
+body[data-theme="monoLight"] #togglePermanentLink[aria-pressed="true"] {
+	color: var(--mono-accent) !important;
 }
 
 body[data-theme="monoLight"] #linearEmbed {
