@@ -11264,6 +11264,16 @@ ${highlightThemeCss}
 			return;
 		}
 		const byId = new Map(items.map((n) => [String(n.id || ""), n]));
+		const linkedNoteIds = new Set(
+			loadNoteRoomBindings()
+				.map((b) => String(b && b.noteId ? b.noteId : "").trim())
+				.filter(Boolean)
+		);
+		loadRoomPinnedEntries()
+			.filter((p) => p && p.noteId)
+			.forEach((p) => {
+				linkedNoteIds.add(String(p.noteId || "").trim());
+			});
 		psRenderedNoteIds = items.map((n) => String(n.id || "")).filter(Boolean);
 		prunePsSelectedNotes(psRenderedNoteIds);
 		psList.innerHTML = items
@@ -11273,6 +11283,7 @@ ${highlightThemeCss}
 				const selected = id && psSelectedNoteIds.has(id);
 				const rawTags = Array.isArray(n.tags) ? n.tags : [];
 				const pinned = rawTags.some((t) => String(t || "") === PS_PINNED_TAG);
+				const linked = id && linkedNoteIds.has(id);
 				const tags = stripPinnedTag(stripManualTagsMarker(rawTags));
 				const showTags = tags.length > 6 ? tags.slice(-6) : tags;
 				const chips = showTags
@@ -11285,6 +11296,14 @@ ${highlightThemeCss}
 				const titleHtml = escapeHtml(info.title);
 				const previewLines = getNotePreviewLines(n && n.text ? n.text : "", 3);
 				const excerptHtml = escapeHtml(previewLines.join("\n"));
+				const linkedBadge = linked
+					? `<span class="ps-note-link-badge" aria-label="Permanent-Link" title="Permanent-Link">
+						<svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1" />
+							<path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1" />
+						</svg>
+					</span>`
+					: "";
 				return `
 					<div data-note-id="${id}" class="group ps-note-item relative cursor-pointer rounded-xl border ${
 					active
@@ -11348,6 +11367,7 @@ ${highlightThemeCss}
 							}
 						</div>
 						${chips ? `<div class="mt-2 flex flex-wrap gap-1 ps-note-tags">${chips}</div>` : ""}
+						${linkedBadge}
 					</div>
 				`;
 			})

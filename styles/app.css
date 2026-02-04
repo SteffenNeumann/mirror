@@ -168,6 +168,24 @@ body.glow-disabled .bg-glow {
 		0 8px 16px rgba(0, 0, 0, 0.35);
 }
 
+.ps-note-link-badge {
+	position: absolute;
+	right: 0.5rem;
+	bottom: 0.5rem;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 1.35rem;
+	height: 1.35rem;
+	border-radius: 999px;
+	border: 1px solid var(--selection-menu-border);
+	background: var(--selection-menu-bg);
+	color: rgba(148, 163, 184, 0.95);
+	box-shadow: 0 4px 12px rgba(2, 6, 23, 0.2);
+	backdrop-filter: blur(10px) saturate(140%);
+	-webkit-backdrop-filter: blur(10px) saturate(140%);
+}
+
 #psTagsPanel {
 	max-height: 62.5vh;
 	overflow-y: auto;
