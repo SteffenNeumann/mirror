@@ -178,10 +178,9 @@ body.glow-disabled .bg-glow {
 	width: 1.35rem;
 	height: 1.35rem;
 	border-radius: 999px;
-	border: 1px solid var(--selection-menu-border);
-	background: var(--selection-menu-bg);
-	color: rgba(148, 163, 184, 0.95);
-	box-shadow: 0 4px 12px rgba(2, 6, 23, 0.2);
+	border: 0;
+	background: transparent;
+	color: var(--accent-text-soft);
 	backdrop-filter: blur(10px) saturate(140%);
 	-webkit-backdrop-filter: blur(10px) saturate(140%);
 }
