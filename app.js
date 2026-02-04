@@ -17190,6 +17190,23 @@ self.onmessage = async (e) => {
 		return getLinearRoomScope();
 	};
 
+	const resolvePinnedAppScope = (noteId, kind) => {
+		const pinned = getRoomPinnedEntry(room, key);
+		if (!pinned || !pinned.noteId) return "";
+		const targetId = String(noteId || "").trim();
+		if (!targetId || targetId !== String(pinned.noteId || "").trim()) return "";
+		switch (kind) {
+			case "excalidraw":
+				return getExcalidrawRoomScope();
+			case "excel":
+				return getExcelRoomScope();
+			case "linear":
+				return getLinearRoomScope();
+			default:
+				return "";
+		}
+	};
+
 	const getExcelBaseUrl = () => {
 		if (excelEmbed) {
 			const base = String(excelEmbed.getAttribute("data-excel-base") || "").trim();
@@ -17647,7 +17664,8 @@ self.onmessage = async (e) => {
 	}
 
 	const syncExcalidrawForNote = (noteId) => {
-		const activeId = String(noteId || "").trim() || getExcalidrawNoteId();
+		const pinnedScope = resolvePinnedAppScope(noteId, "excalidraw");
+		const activeId = pinnedScope || String(noteId || "").trim() || getExcalidrawNoteId();
 		const savedVisible = activeId
 			? Boolean(excalidrawVisibleByNote.get(activeId))
 			: false;
@@ -17663,7 +17681,8 @@ self.onmessage = async (e) => {
 	};
 
 	const syncExcelForNote = (noteId) => {
-		const activeId = String(noteId || "").trim() || getExcelNoteId();
+		const pinnedScope = resolvePinnedAppScope(noteId, "excel");
+		const activeId = pinnedScope || String(noteId || "").trim() || getExcelNoteId();
 		setExcelEmbedUrl();
 		const savedVisible = activeId
 			? Boolean(excelVisibleByNote.get(activeId))
@@ -17850,7 +17869,8 @@ self.onmessage = async (e) => {
 	};
 
 	const syncLinearForNote = (noteId) => {
-		const activeId = String(noteId || "").trim() || getLinearNoteId();
+		const pinnedScope = resolvePinnedAppScope(noteId, "linear");
+		const activeId = pinnedScope || String(noteId || "").trim() || getLinearNoteId();
 		const savedVisible = activeId
 			? Boolean(linearVisibleByNote.get(activeId))
 			: false;
