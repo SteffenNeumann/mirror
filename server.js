@@ -44,6 +44,9 @@ const ANTHROPIC_API_KEY = String(process.env.ANTHROPIC_API_KEY || "").trim();
 const ANTHROPIC_MODEL = String(
 	process.env.ANTHROPIC_MODEL || "claude-3-5-sonnet-20241022"
 ).trim();
+const LINEAR_KEY_SECRET = String(
+	process.env.MIRROR_LINEAR_KEY_SECRET || ""
+).trim();
 const GOOGLE_OAUTH_CLIENT_ID = String(
 	process.env.GOOGLE_OAUTH_CLIENT_ID || ""
 ).trim();
@@ -108,6 +111,7 @@ let stmtSharedRoomsByUser;
 let stmtSharedRoomsDeleteAll;
 let stmtUserSettingsGet;
 let stmtUserSettingsUpsert;
+let stmtUserLinearKeyUpsert;
 let stmtGoogleTokenGet;
 let stmtGoogleTokenUpsert;
 let stmtGoogleTokenDelete;
@@ -360,6 +364,38 @@ function initDb() {
 		}
 	}
 
+	const settingsCols = db.prepare("PRAGMA table_info(user_settings)").all();
+	const hasLinearCiphertext = settingsCols.some(
+		(c) => String(c && c.name) === "linear_api_key_ciphertext"
+	);
+	const hasLinearIv = settingsCols.some(
+		(c) => String(c && c.name) === "linear_api_key_iv"
+	);
+	const hasLinearTag = settingsCols.some(
+		(c) => String(c && c.name) === "linear_api_key_tag"
+	);
+	if (!hasLinearCiphertext) {
+		try {
+			db.exec("ALTER TABLE user_settings ADD COLUMN linear_api_key_ciphertext TEXT");
+		} catch {
+			// ignore
+		}
+	}
+	if (!hasLinearIv) {
+		try {
+			db.exec("ALTER TABLE user_settings ADD COLUMN linear_api_key_iv TEXT");
+		} catch {
+			// ignore
+		}
+	}
+	if (!hasLinearTag) {
+		try {
+			db.exec("ALTER TABLE user_settings ADD COLUMN linear_api_key_tag TEXT");
+		} catch {
+			// ignore
+		}
+	}
+
 	const favoriteCols = db.prepare("PRAGMA table_info(room_favorites)").all();
 	const hasIsStartup = favoriteCols.some(
 		(c) => String(c && c.name) === "is_startup"
@@ -493,10 +529,13 @@ function initDb() {
 		"DELETE FROM shared_rooms WHERE user_id = ?"
 	);
 	stmtUserSettingsGet = db.prepare(
-		"SELECT calendar_json, updated_at FROM user_settings WHERE user_id = ?"
+		"SELECT calendar_json, linear_api_key_ciphertext, linear_api_key_iv, linear_api_key_tag, updated_at FROM user_settings WHERE user_id = ?"
 	);
 	stmtUserSettingsUpsert = db.prepare(
 		"INSERT INTO user_settings(user_id, calendar_json, updated_at) VALUES(?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET calendar_json = excluded.calendar_json, updated_at = excluded.updated_at"
+	);
+	stmtUserLinearKeyUpsert = db.prepare(
+		"INSERT INTO user_settings(user_id, calendar_json, linear_api_key_ciphertext, linear_api_key_iv, linear_api_key_tag, updated_at) VALUES(?, ?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET linear_api_key_ciphertext = excluded.linear_api_key_ciphertext, linear_api_key_iv = excluded.linear_api_key_iv, linear_api_key_tag = excluded.linear_api_key_tag, updated_at = excluded.updated_at"
 	);
 	stmtGoogleTokenGet = db.prepare(
 		"SELECT access_token, refresh_token, expires_at, scope, token_type, updated_at FROM google_calendar_tokens WHERE user_id = ?"
@@ -1326,16 +1365,73 @@ function parseCalendarJson(raw) {
 	}
 }
 
-function getUserSettings(userId) {
+function getLinearKeyCipherKey() {
+	if (!LINEAR_KEY_SECRET) return null;
+	return crypto.createHash("sha256").update(LINEAR_KEY_SECRET).digest();
+}
+
+function encryptLinearApiKey(raw) {
+	const key = getLinearKeyCipherKey();
+	if (!key) return { ok: false, error: "linear_key_secret_missing" };
+	try {
+		const iv = crypto.randomBytes(12);
+		const cipher = crypto.createCipheriv("aes-256-gcm", key, iv);
+		const ciphertext = Buffer.concat([
+			cipher.update(String(raw || ""), "utf8"),
+			cipher.final(),
+		]);
+		const tag = cipher.getAuthTag();
+		return {
+			ok: true,
+			ciphertext: ciphertext.toString("base64url"),
+			iv: iv.toString("base64url"),
+			tag: tag.toString("base64url"),
+		};
+	} catch {
+		return { ok: false, error: "linear_key_encrypt_failed" };
+	}
+}
+
+function decryptLinearApiKey(ciphertext, iv, tag) {
+	const key = getLinearKeyCipherKey();
+	if (!key) return { ok: false, error: "linear_key_secret_missing" };
+	try {
+		const decipher = crypto.createDecipheriv(
+			"aes-256-gcm",
+			key,
+			Buffer.from(String(iv || ""), "base64url")
+		);
+		decipher.setAuthTag(Buffer.from(String(tag || ""), "base64url"));
+		const plaintext = Buffer.concat([
+			decipher.update(Buffer.from(String(ciphertext || ""), "base64url")),
+			decipher.final(),
+		]);
+		return { ok: true, value: plaintext.toString("utf8") };
+	} catch {
+		return { ok: false, error: "linear_key_decrypt_failed" };
+	}
+}
+
+function getUserSettingsRow(userId) {
 	initDb();
-	const row = stmtUserSettingsGet.get(userId);
+	return stmtUserSettingsGet.get(userId) || null;
+}
+
+function getUserSettings(userId) {
+	const row = getUserSettingsRow(userId);
 	if (!row) return null;
 	const calendar = parseCalendarJson(row.calendar_json);
+	const linearApiKeySet = Boolean(
+		row.linear_api_key_ciphertext &&
+			row.linear_api_key_iv &&
+			row.linear_api_key_tag
+	);
 	return {
 		calendar:
 			calendar ||
 			{ sources: [], defaultView: "month", localEvents: [], googleCalendarId: "primary" },
 		updatedAt: Number(row.updated_at) || 0,
+		linearApiKeySet,
 	};
 }
 
@@ -1349,6 +1445,47 @@ function upsertUserSettings(userId, settings) {
 	);
 	stmtUserSettingsUpsert.run(userId, calendarJson, now);
 	return { calendar, updatedAt: now };
+}
+
+function getUserLinearApiKey(userId) {
+	const row = getUserSettingsRow(userId);
+	if (!row) return { ok: true, key: "" };
+	const ciphertext = String(row.linear_api_key_ciphertext || "");
+	const iv = String(row.linear_api_key_iv || "");
+	const tag = String(row.linear_api_key_tag || "");
+	if (!ciphertext || !iv || !tag) return { ok: true, key: "" };
+	const decrypted = decryptLinearApiKey(ciphertext, iv, tag);
+	if (!decrypted.ok) return { ok: false, error: decrypted.error };
+	return { ok: true, key: String(decrypted.value || "") };
+}
+
+function saveUserLinearApiKey(userId, apiKey) {
+	const nextKey = String(apiKey || "").trim();
+	const now = Date.now();
+	const row = getUserSettingsRow(userId);
+	const calendarJson = row && row.calendar_json
+		? String(row.calendar_json)
+		: JSON.stringify({
+			sources: [],
+			defaultView: "month",
+			localEvents: [],
+			googleCalendarId: "primary",
+		});
+	if (!nextKey) {
+		stmtUserLinearKeyUpsert.run(userId, calendarJson, "", "", "", now);
+		return { ok: true };
+	}
+	const encrypted = encryptLinearApiKey(nextKey);
+	if (!encrypted.ok) return encrypted;
+	stmtUserLinearKeyUpsert.run(
+		userId,
+		calendarJson,
+		String(encrypted.ciphertext || ""),
+		String(encrypted.iv || ""),
+		String(encrypted.tag || ""),
+		now
+	);
+	return { ok: true };
 }
 
 function googleConfigured() {
@@ -2413,6 +2550,53 @@ const server = http.createServer(async (req, res) => {
 				const calendar = sanitizeCalendarSettings(body && body.calendar);
 				const settings = upsertUserSettings(userId, { calendar });
 				json(res, 200, { ok: true, settings });
+			})
+			.catch((e) => {
+				if (String(e && e.message) === "body_too_large") {
+					json(res, 413, { ok: false, error: "body_too_large" });
+					return;
+				}
+				json(res, 400, { ok: false, error: "invalid_json" });
+			});
+		return;
+	}
+
+	if (url.pathname === "/api/linear-key" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const keyRes = getUserLinearApiKey(userId);
+		if (!keyRes.ok) {
+			json(res, 500, { ok: false, error: keyRes.error || "linear_key_read_failed" });
+			return;
+		}
+		const key = String(keyRes.key || "").trim();
+		json(res, 200, { ok: true, apiKey: key, configured: Boolean(key) });
+		return;
+	}
+
+	if (url.pathname === "/api/linear-key" && req.method === "POST") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		readJson(req)
+			.then((body) => {
+				const userId = getOrCreateUserId(email);
+				const apiKey = String(body && body.apiKey ? body.apiKey : "").trim();
+				const saveRes = saveUserLinearApiKey(userId, apiKey);
+				if (!saveRes.ok) {
+					json(res, 500, {
+						ok: false,
+						error: saveRes.error || "linear_key_save_failed",
+					});
+					return;
+				}
+				json(res, 200, { ok: true });
 			})
 			.catch((e) => {
 				if (String(e && e.message) === "body_too_large") {

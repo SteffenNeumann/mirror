@@ -5033,10 +5033,10 @@
 				"settings.calendar.add.submit": "Hinzufügen",
 				"settings.integrations.title": "Integrationen",
 				"settings.integrations.desc":
-					"App-Integrationen verwalten (lokal gespeichert).",
+					"App-Integrationen verwalten (API-Keys serverseitig verschlüsselt).",
 				"settings.integrations.linear.title": "Linear",
 				"settings.integrations.linear.desc":
-					"API-Key lokal speichern und Projekte für die Freigabe auswählen.",
+					"API-Key verschlüsselt im Personal Space speichern und Projekte für die Freigabe auswählen.",
 				"settings.integrations.linear.key_label": "Linear API-Key",
 				"settings.integrations.linear.save": "Speichern",
 				"settings.integrations.linear.clear": "Löschen",
@@ -5095,6 +5095,7 @@
 				"toast.ps_activated": "Personal Space aktiviert.",
 				"toast.linear_saved": "Linear-Einstellungen gespeichert.",
 				"toast.linear_cleared": "Linear-Einstellungen gelöscht.",
+				"toast.linear_key_failed": "Linear-API-Key konnte nicht gespeichert werden.",
 				"toast.linear_projects_loaded": "Linear-Projekte geladen.",
 				"toast.linear_projects_failed": "Linear-Projekte konnten nicht geladen werden.",
 				"toast.linear_tasks_failed": "Linear-Aufgaben konnten nicht geladen werden.",
@@ -5339,10 +5340,10 @@
 				"settings.calendar.add.submit": "Add",
 				"settings.integrations.title": "Integrations",
 				"settings.integrations.desc":
-					"Manage app integrations (stored locally).",
+					"Manage app integrations (API keys encrypted on the server).",
 				"settings.integrations.linear.title": "Linear",
 				"settings.integrations.linear.desc":
-					"Store the API key locally and pick projects for sharing.",
+					"Store the API key encrypted in Personal Space and pick projects for sharing.",
 				"settings.integrations.linear.key_label": "Linear API key",
 				"settings.integrations.linear.save": "Save",
 				"settings.integrations.linear.clear": "Clear",
@@ -5397,6 +5398,7 @@
 				"toast.ps_activated": "Personal Space activated.",
 				"toast.linear_saved": "Linear settings saved.",
 				"toast.linear_cleared": "Linear settings cleared.",
+				"toast.linear_key_failed": "Linear API key could not be saved.",
 				"toast.linear_projects_loaded": "Linear projects loaded.",
 				"toast.linear_projects_failed": "Linear projects could not be loaded.",
 				"toast.linear_tasks_failed": "Linear tasks could not be loaded.",
@@ -6275,28 +6277,96 @@
 	}
 
 	function loadLinearApiConfig() {
-		try {
-			linearApiKey = String(localStorage.getItem(LINEAR_API_KEY_KEY) || "");
-		} catch {
-			linearApiKey = "";
-		}
+		linearApiKey = "";
 		if (linearApiKeyInput) {
-			linearApiKeyInput.value = linearApiKey ? "••••••••" : "";
+			linearApiKeyInput.value = "";
 		}
 		updateLinearApiStatus();
 	}
 
-	function saveLinearApiConfig(nextKey) {
-		linearApiKey = String(nextKey || "").trim();
+	function readLocalLinearApiKey() {
 		try {
-			localStorage.setItem(LINEAR_API_KEY_KEY, linearApiKey);
+			return String(localStorage.getItem(LINEAR_API_KEY_KEY) || "").trim();
 		} catch {
-			// ignore
+			return "";
 		}
-		if (linearApiKeyInput) {
-			linearApiKeyInput.value = linearApiKey ? "••••••••" : "";
+	}
+
+	async function saveLinearApiKeyToServer(nextKey, opts) {
+		const apiKey = String(nextKey || "").trim();
+		if (!psState || !psState.authed) {
+			if (!(opts && opts.silent)) {
+				toast("Please enable Personal Space first (sign in).", "error");
+			}
+			return false;
 		}
-		updateLinearApiStatus();
+		try {
+			await api("/api/linear-key", {
+				method: "POST",
+				body: JSON.stringify({ apiKey }),
+			});
+			linearApiKey = apiKey;
+			if (linearApiKeyInput) {
+				linearApiKeyInput.value = apiKey ? "••••••••" : "";
+			}
+			updateLinearApiStatus();
+			if (!(opts && opts.silent)) {
+				toast(
+					apiKey ? t("toast.linear_saved") : t("toast.linear_cleared"),
+					"success"
+				);
+			}
+			return true;
+		} catch {
+			if (!(opts && opts.silent)) {
+				toast(t("toast.linear_key_failed"), "error");
+			}
+			return false;
+		}
+	}
+
+	async function syncLinearApiKeyFromServer() {
+		if (!psState || !psState.authed) {
+			linearApiKey = "";
+			if (linearApiKeyInput) linearApiKeyInput.value = "";
+			updateLinearApiStatus();
+			return;
+		}
+		let serverKey = "";
+		try {
+			const res = await api("/api/linear-key");
+			serverKey = String(res && res.apiKey ? res.apiKey : "").trim();
+		} catch {
+			updateLinearApiStatus();
+			return;
+		}
+		if (serverKey) {
+			linearApiKey = serverKey;
+			if (linearApiKeyInput) linearApiKeyInput.value = "••••••••";
+			updateLinearApiStatus();
+			try {
+				localStorage.removeItem(LINEAR_API_KEY_KEY);
+			} catch {
+				// ignore
+			}
+			return;
+		}
+		const legacyKey = readLocalLinearApiKey();
+		if (legacyKey) {
+			const saved = await saveLinearApiKeyToServer(legacyKey, { silent: true });
+			if (saved) {
+				try {
+					localStorage.removeItem(LINEAR_API_KEY_KEY);
+				} catch {
+					// ignore
+				}
+			}
+		}
+		if (!legacyKey) {
+			linearApiKey = "";
+			if (linearApiKeyInput) linearApiKeyInput.value = "";
+			updateLinearApiStatus();
+		}
 	}
 
 	function readLinearApiKeyInput() {
@@ -12093,6 +12163,9 @@ self.onmessage = async (e) => {
 			if (psUserAuthed) psUserAuthed.classList.add("hidden");
 			if (psUserUnauthed) psUserUnauthed.classList.remove("hidden");
 			if (psEmail) psEmail.textContent = "";
+			linearApiKey = "";
+			if (linearApiKeyInput) linearApiKeyInput.value = "";
+			updateLinearApiStatus();
 			clearPsSelection();
 			setPsEditorTagsVisible(false);
 			updatePsPinnedToggle();
@@ -12111,6 +12184,7 @@ self.onmessage = async (e) => {
 		if (psUserAuthed) psUserAuthed.classList.remove("hidden");
 		if (psUserUnauthed) psUserUnauthed.classList.add("hidden");
 		setPsEditorTagsVisible(true);
+		await syncLinearApiKeyFromServer();
 		syncCalendarSettingsFromServer();
 		const serverRoomPins = Array.isArray(psState.roomPins)
 			? psState.roomPins
@@ -20434,10 +20508,9 @@ self.onmessage = async (e) => {
 		});
 	}
 	if (linearApiSaveBtn) {
-		linearApiSaveBtn.addEventListener("click", () => {
+		linearApiSaveBtn.addEventListener("click", async () => {
 			const nextKey = readLinearApiKeyInput();
-			saveLinearApiConfig(nextKey);
-			toast(t("toast.linear_saved"), "success");
+			await saveLinearApiKeyToServer(nextKey);
 		});
 	}
 	if (aiApiClearBtn) {
@@ -20450,10 +20523,9 @@ self.onmessage = async (e) => {
 		});
 	}
 	if (linearApiClearBtn) {
-		linearApiClearBtn.addEventListener("click", () => {
-			saveLinearApiConfig("");
+		linearApiClearBtn.addEventListener("click", async () => {
+			await saveLinearApiKeyToServer("");
 			if (linearApiKeyInput) linearApiKeyInput.value = "";
-			toast(t("toast.linear_cleared"), "success");
 		});
 	}
 	if (linearLoadProjectsBtn) {
