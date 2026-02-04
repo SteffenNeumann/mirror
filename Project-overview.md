@@ -491,6 +491,15 @@ Server-Start
 - Zweck: Entfernt Duplikate für room tabs. Umsetzung: `dedupeRoomTabs` ([app.js](app.js#L10212)). Abhängigkeiten: `normalizeKey`, `normalizeRoom`, `normalizeRoomTabEntry`, `t`.
 - Zweck: Allgemeiner Helfer: show room tab limit modal. Umsetzung: `showRoomTabLimitModal` ([app.js](app.js#L10260)). Abhängigkeiten: `openModal`.
 - Zweck: Führt zusammen: room tabs. Umsetzung: `mergeRoomTabs` ([app.js](app.js#L10273)). Abhängigkeiten: `normalizeRoomTabEntry`, `t`.
+- Zweck: Normalisiert room pinned entry. Umsetzung: `normalizeRoomPinnedEntry` ([app.js](app.js#L12715)). Abhängigkeiten: `normalizeKey`, `normalizeRoom`.
+- Zweck: Lädt room pinned entries. Umsetzung: `loadRoomPinnedEntries` ([app.js](app.js#L12726)). Abhängigkeiten: `normalizeRoomPinnedEntry`, `saveRoomPinnedEntries`.
+- Zweck: Speichert room pinned entries. Umsetzung: `saveRoomPinnedEntries` ([app.js](app.js#L12743)). Abhängigkeiten: `normalizeRoomPinnedEntry`.
+- Zweck: Liest room pinned entry. Umsetzung: `getRoomPinnedEntry` ([app.js](app.js#L12754)). Abhängigkeiten: `loadRoomPinnedEntries`, `normalizeKey`, `normalizeRoom`.
+- Zweck: Setzt room pinned entry. Umsetzung: `setRoomPinnedEntry` ([app.js](app.js#L12765)). Abhängigkeiten: `loadRoomPinnedEntries`, `normalizeKey`, `normalizeRoom`, `normalizeRoomPinnedEntry`, `saveRoomPinnedEntries`.
+- Zweck: Entfernt room pinned entry. Umsetzung: `clearRoomPinnedEntry` ([app.js](app.js#L12784)). Abhängigkeiten: `loadRoomPinnedEntries`, `normalizeKey`, `normalizeRoom`, `saveRoomPinnedEntries`.
+- Zweck: Prüft pinned content aktiv. Umsetzung: `isPinnedContentActiveForRoom` ([app.js](app.js#L12794)). Abhängigkeiten: `getRoomPinnedEntry`.
+- Zweck: Prüft room sync erlaubt. Umsetzung: `shouldSyncRoomContentNow` ([app.js](app.js#L12802)). Abhängigkeiten: `isPinnedContentActiveForRoom`.
+- Zweck: Synchronisiert Permanent-Link-Toggle UI. Umsetzung: `syncPermanentLinkToggleUi` ([app.js](app.js#L12806)). Abhängigkeiten: `getRoomPinnedEntry`.
 - Zweck: Lädt local room tabs. Umsetzung: `loadLocalRoomTabs` ([app.js](app.js#L10305)). Abhängigkeiten: `dedupeRoomTabs`, `saveRoomTabs`.
 - Zweck: Lädt room tabs. Umsetzung: `loadRoomTabs` ([app.js](app.js#L10320)). Abhängigkeiten: `dedupeRoomTabs`, `loadLocalRoomTabs`, `mergeRoomTabs`.
 - Zweck: Speichert room tabs. Umsetzung: `saveRoomTabs` ([app.js](app.js#L10329)). Abhängigkeiten: `dedupeRoomTabs`.
