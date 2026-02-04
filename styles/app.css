@@ -938,6 +938,19 @@ body.code-lang-active #clearMirror {
 	cursor: grab;
 	user-select: none;
 }
+#linearDragHandle.help-icon {
+	background: transparent !important;
+	border-color: transparent !important;
+	box-shadow: none !important;
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
+}
+#linearDragHandle.help-icon:hover,
+#linearDragHandle.help-icon:active {
+	background: transparent !important;
+	border-color: transparent !important;
+	box-shadow: none !important;
+}
 .linear-drag-handle:active {
 	cursor: grabbing;
 }
@@ -1781,6 +1794,10 @@ body[data-theme="coffeeLight"] #commentPanel {
 }
 
 body[data-theme="coffeeLight"] #toggleLinear {
+	color: #3b2a21 !important;
+}
+
+body[data-theme="coffeeLight"] #togglePermanentLink {
 	color: #3b2a21 !important;
 }
 
