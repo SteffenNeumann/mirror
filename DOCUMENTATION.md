@@ -7,10 +7,12 @@
 - Excel-Embed (iframe) mit Drag-Handle im Editor hinzugefügt.
 - Neuer Toggle-Button für Excel im Editor.
 - Excel-Visibility/Position werden per WebSocket im Raum synchronisiert.
+- Fallback-Link „In neuem Tab öffnen“ bei Embed-Blockade ergänzt.
 
 ## Auswirkungen
 - **UI/UX:** Excel kann im Editor ein-/ausgeblendet und verschoben werden.
 - **Feature-Interaktionen:** Sichtbarkeit/Position wird zwischen Raum-Teilnehmern geteilt; Excel-Collab läuft über Microsoft 365.
+- **Fallback:** Bei iframe-Blockade kann das Sheet per Link geöffnet werden.
 - **Datenebene:** Keine Persistenz, nur Room-State im WebSocket.
 
 ## Tests (Smoke)

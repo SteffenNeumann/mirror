@@ -686,6 +686,40 @@ body.code-lang-active #clearMirror {
 	background: transparent;
 }
 
+.excel-embed-hint {
+	position: absolute;
+	left: 10px;
+	bottom: 10px;
+	display: inline-flex;
+	align-items: center;
+	gap: 8px;
+	padding: 6px 10px;
+	border-radius: 999px;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	background: rgba(2, 6, 23, 0.75);
+	color: rgba(226, 232, 240, 0.92);
+	font-size: 11px;
+	box-shadow: 0 4px 10px rgba(2, 6, 23, 0.25);
+	backdrop-filter: blur(10px) saturate(140%);
+	-webkit-backdrop-filter: blur(10px) saturate(140%);
+}
+
+.excel-open-btn {
+	border: 1px solid rgba(255, 255, 255, 0.18);
+	background: rgba(255, 255, 255, 0.08);
+	color: rgba(226, 232, 240, 0.95);
+	border-radius: 999px;
+	padding: 4px 10px;
+	font-size: 11px;
+	line-height: 1.1;
+	transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.excel-open-btn:hover {
+	background: rgba(255, 255, 255, 0.14);
+	border-color: rgba(255, 255, 255, 0.28);
+}
+
 .excel-drag-handle {
 	position: absolute;
 	bottom: 1.1rem;

@@ -135,6 +135,7 @@
 	const excelEmbed = document.getElementById("excelEmbed");
 	const excelFrame = excelEmbed ? excelEmbed.querySelector("iframe") : null;
 	const excelDragHandle = document.getElementById("excelDragHandle");
+	const excelOpenLinkBtn = document.getElementById("excelOpenLink");
 	const EXCALIDRAW_SCENE_MAX_BYTES = 200000;
 	const EXCALIDRAW_EMPTY_SCENE =
 		"{" +
@@ -16659,6 +16660,19 @@ self.onmessage = async (e) => {
 	if (toggleExcelBtn && excelEmbed) {
 		toggleExcelBtn.addEventListener("click", () => {
 			setExcelVisible(!excelVisible);
+		});
+	}
+
+	if (excelOpenLinkBtn) {
+		excelOpenLinkBtn.addEventListener("click", () => {
+			const urlFromBtn = excelOpenLinkBtn.getAttribute("data-excel-url");
+			const urlFromFrame = excelFrame ? excelFrame.getAttribute("src") : "";
+			const targetUrl = String(urlFromFrame || urlFromBtn || "").trim();
+			if (!targetUrl) {
+				toast("Excel-Link fehlt.", "error");
+				return;
+			}
+			window.open(targetUrl, "_blank", "noopener,noreferrer");
 		});
 	}
 
