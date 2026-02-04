@@ -17283,27 +17283,61 @@ self.onmessage = async (e) => {
 		const data = getLinearDataForNote(activeId);
 		const tasks = data && Array.isArray(data.tasks) ? data.tasks : [];
 		const openLabel = t("linear.embed.open");
-		linearTaskList.innerHTML = tasks
-			.map((task) => {
-				const title = String(task && task.title ? task.title : "");
-				const id = String(task && task.identifier ? task.identifier : "");
-				const state = String(task && task.state ? task.state : "");
-				const assignee = String(task && task.assignee ? task.assignee : "");
-				const due = String(task && task.dueDate ? task.dueDate : "");
-				const url = String(task && task.url ? task.url : "");
-				const metaParts = [id, state, assignee, due].filter(Boolean);
-				return `
-					<div class="linear-task-item">
-						<div class="linear-task-title">${title || "—"}</div>
-						<div class="linear-task-meta">${metaParts.join(" · ")}</div>
-						${
-							url
-								? `<a class="linear-task-link" href="${url}" target="_blank" rel="noreferrer">${openLabel}</a>`
-								: ""
-						}
-					</div>`;
-			})
-			.join("");
+		const normalized = tasks.map((task) => {
+			const title = String(task && task.title ? task.title : "");
+			const id = String(task && task.identifier ? task.identifier : "");
+			const state = String(task && task.state ? task.state : "").trim();
+			const assignee = String(task && task.assignee ? task.assignee : "");
+			const due = String(task && task.dueDate ? task.dueDate : "");
+			const url = String(task && task.url ? task.url : "");
+			return { title, id, state: state || "Unbekannt", assignee, due, url };
+		});
+		const columns = new Map();
+		const stateOrder = [];
+		for (const item of normalized) {
+			if (!columns.has(item.state)) {
+				columns.set(item.state, []);
+				stateOrder.push(item.state);
+			}
+			columns.get(item.state).push(item);
+		}
+		linearTaskList.innerHTML = `
+			<div class="linear-kanban">
+				${stateOrder
+					.map((state) => {
+						const items = columns.get(state) || [];
+						return `
+							<div class="linear-kanban-column">
+								<div class="linear-kanban-header">
+									<span class="linear-kanban-title">${state}</span>
+									<span class="linear-kanban-count">${items.length}</span>
+								</div>
+								<div class="linear-kanban-list">
+									${items
+										.map((task) => {
+											const metaParts = [
+												task.id,
+												task.assignee,
+												task.due,
+											].filter(Boolean);
+											return `
+												<div class="linear-task-item">
+													<div class="linear-task-title">${task.title || "—"}</div>
+													<div class="linear-task-meta">${metaParts.join(" · ")}</div>
+													${
+														task.url
+															? `<a class="linear-task-link" href="${task.url}" target="_blank" rel="noreferrer">${openLabel}</a>`
+															: ""
+													}
+												</div>`;
+										})
+										.join("")}
+								</div>
+							</div>`;
+					})
+					.join("")}
+			</div>
+		`;
 		if (linearStatus) {
 			const project = activeId ? linearProjectByNote.get(activeId) : null;
 			if (!project || !project.projectId) {
