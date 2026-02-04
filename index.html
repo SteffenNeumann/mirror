@@ -613,11 +613,26 @@
 														Aktualisieren
 													</button>
 												</div>
+												<div class="linear-embed-tabs" role="tablist" aria-label="Linear Ansicht">
+													<button
+														id="linearViewBoard"
+														type="button"
+														class="linear-embed-tab"
+														aria-pressed="true"
+														data-i18n="linear.view.board">Board</button>
+													<button
+														id="linearViewStats"
+														type="button"
+														class="linear-embed-tab"
+														aria-pressed="false"
+														data-i18n="linear.view.stats">Auswertung</button>
+												</div>
 												<div id="linearStatus" class="linear-status"></div>
 												<div id="linearEmpty" class="linear-empty" data-i18n="linear.embed.empty">
 													Keine Aufgaben geladen.
 												</div>
 												<div id="linearTaskList" class="linear-task-list"></div>
+												<div id="linearStatsPanel" class="linear-stats hidden" aria-live="polite"></div>
 											</div>
 									<div
 										id="slashMenu"

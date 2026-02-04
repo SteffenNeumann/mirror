@@ -145,6 +145,9 @@
 	const linearStatus = document.getElementById("linearStatus");
 	const linearEmpty = document.getElementById("linearEmpty");
 	const linearTaskList = document.getElementById("linearTaskList");
+	const linearStatsPanel = document.getElementById("linearStatsPanel");
+	const linearViewBoardBtn = document.getElementById("linearViewBoard");
+	const linearViewStatsBtn = document.getElementById("linearViewStats");
 	const EXCALIDRAW_SCENE_MAX_BYTES = 200000;
 	const EXCALIDRAW_EMPTY_SCENE =
 		"{" +
@@ -5107,6 +5110,20 @@
 				"linear.embed.refresh": "Aktualisieren",
 				"linear.embed.empty": "Keine Aufgaben geladen.",
 				"linear.embed.open": "In Linear öffnen",
+				"linear.view.board": "Board",
+				"linear.view.stats": "Statistik",
+				"linear.stats.empty": "Keine Aufgaben für die Auswertung.",
+				"linear.stats.total": "Gesamt · {count}",
+				"linear.stats.done": "Erledigt",
+				"linear.stats.in_progress": "In Arbeit",
+				"linear.stats.blocked": "Blockiert",
+				"linear.stats.overdue": "Überfällig",
+				"linear.stats.due_soon": "Fällig (7 Tage)",
+				"linear.stats.by_status": "Status",
+				"linear.stats.by_assignee": "Zuständig",
+				"linear.stats.unassigned": "Ohne Owner",
+				"linear.stats.updated": "Aktualisiert · {date}",
+				"linear.stats.unknown": "Unbekannt",
 				"linear.status.key_set": "API-Key gesetzt.",
 				"linear.status.key_set_with_projects":
 					"API-Key gesetzt · {count} Projekte",
@@ -5410,6 +5427,20 @@
 				"linear.embed.refresh": "Refresh",
 				"linear.embed.empty": "No tasks loaded.",
 				"linear.embed.open": "Open in Linear",
+				"linear.view.board": "Board",
+				"linear.view.stats": "Stats",
+				"linear.stats.empty": "No tasks available for analysis.",
+				"linear.stats.total": "Total · {count}",
+				"linear.stats.done": "Done",
+				"linear.stats.in_progress": "In progress",
+				"linear.stats.blocked": "Blocked",
+				"linear.stats.overdue": "Overdue",
+				"linear.stats.due_soon": "Due soon (7d)",
+				"linear.stats.by_status": "Status",
+				"linear.stats.by_assignee": "Assignee",
+				"linear.stats.unassigned": "Unassigned",
+				"linear.stats.updated": "Updated · {date}",
+				"linear.stats.unknown": "Unknown",
 				"linear.status.key_set": "API key set.",
 				"linear.status.key_set_with_projects":
 					"API key set · {count} projects",
@@ -17218,6 +17249,8 @@ self.onmessage = async (e) => {
 	const linearOffsetByNote = new Map();
 	const linearProjectByNote = new Map();
 	const linearDataByNote = new Map();
+	const linearViewByNote = new Map();
+	let linearActiveView = "board";
 	let linearDataSendTimer = null;
 	let pendingLinearData = null;
 
@@ -17770,6 +17803,50 @@ self.onmessage = async (e) => {
 		}
 	};
 
+	const normalizeLinearView = (value) => (value === "stats" ? "stats" : "board");
+
+	const getLinearViewForNote = (noteId) => {
+		const activeId = String(noteId || "").trim() || getLinearNoteId();
+		if (!activeId) return "board";
+		const saved = linearViewByNote.get(activeId);
+		return normalizeLinearView(saved);
+	};
+
+	const applyLinearView = (view) => {
+		const next = normalizeLinearView(view);
+		linearActiveView = next;
+		if (linearViewBoardBtn) {
+			linearViewBoardBtn.setAttribute(
+				"aria-pressed",
+				next === "board" ? "true" : "false"
+			);
+		}
+		if (linearViewStatsBtn) {
+			linearViewStatsBtn.setAttribute(
+				"aria-pressed",
+				next === "stats" ? "true" : "false"
+			);
+		}
+		if (linearTaskList) {
+			linearTaskList.classList.toggle("hidden", next !== "board");
+		}
+		if (linearStatsPanel) {
+			linearStatsPanel.classList.toggle("hidden", next !== "stats");
+		}
+		if (linearEmpty && next !== "board") {
+			linearEmpty.classList.add("hidden");
+		}
+	};
+
+	const setLinearViewForNote = (noteId, view) => {
+		const activeId = String(noteId || "").trim() || getLinearNoteId();
+		const next = normalizeLinearView(view);
+		if (activeId) {
+			linearViewByNote.set(activeId, next);
+		}
+		applyLinearView(next);
+	};
+
 	const updateLinearProjectSelectOptions = (activeId) => {
 		if (!linearProjectSelect) return;
 		const enabled = Array.from(linearEnabledProjectIds || []).filter(Boolean);
@@ -17843,13 +17920,53 @@ self.onmessage = async (e) => {
 		return "#38bdf8";
 	};
 
-	const renderLinearTasks = (noteId) => {
-		if (!linearTaskList) return;
-		const activeId = String(noteId || "").trim() || getLinearNoteId();
-		const data = getLinearDataForNote(activeId);
-		const tasks = data && Array.isArray(data.tasks) ? data.tasks : [];
-		const openLabel = t("linear.embed.open");
-		const normalized = tasks.map((task) => {
+	const getLinearStatusBucket = (state) => {
+		const value = String(state || "").trim().toLowerCase();
+		if (
+			value.includes("done") ||
+			value.includes("completed") ||
+			value.includes("closed") ||
+			value.includes("finished")
+		) {
+			return "done";
+		}
+		if (
+			value.includes("progress") ||
+			value.includes("doing") ||
+			value.includes("active")
+		) {
+			return "in_progress";
+		}
+		if (
+			value.includes("review") ||
+			value.includes("qa") ||
+			value.includes("test")
+		) {
+			return "review";
+		}
+		if (
+			value.includes("blocked") ||
+			value.includes("cancelled") ||
+			value.includes("canceled") ||
+			value.includes("failed")
+		) {
+			return "blocked";
+		}
+		if (
+			value.includes("backlog") ||
+			value.includes("todo") ||
+			value.includes("open") ||
+			value.includes("triage") ||
+			value.includes("new")
+		) {
+			return "backlog";
+		}
+		return "other";
+	};
+
+	const normalizeLinearTasks = (tasks) => {
+		const list = Array.isArray(tasks) ? tasks : [];
+		return list.map((task) => {
 			const title = String(task && task.title ? task.title : "");
 			const id = String(task && task.identifier ? task.identifier : "");
 			const state = String(task && task.state ? task.state : "").trim();
@@ -17858,9 +17975,18 @@ self.onmessage = async (e) => {
 			const url = String(task && task.url ? task.url : "");
 			return { title, id, state: state || "Unbekannt", assignee, due, url };
 		});
+	};
+
+	const renderLinearTasks = (noteId) => {
+		if (!linearTaskList) return;
+		const activeId = String(noteId || "").trim() || getLinearNoteId();
+		const data = getLinearDataForNote(activeId);
+		const rawTasks = data && Array.isArray(data.tasks) ? data.tasks : [];
+		const tasks = normalizeLinearTasks(rawTasks);
+		const openLabel = t("linear.embed.open");
 		const columns = new Map();
 		const stateOrder = [];
-		for (const item of normalized) {
+		for (const item of tasks) {
 			if (!columns.has(item.state)) {
 				columns.set(item.state, []);
 				stateOrder.push(item.state);
@@ -17928,6 +18054,142 @@ self.onmessage = async (e) => {
 		if (linearEmpty) {
 			linearEmpty.classList.toggle("hidden", tasks.length > 0);
 		}
+		renderLinearStats(activeId);
+		applyLinearView(getLinearViewForNote(activeId));
+	};
+
+	const renderLinearStats = (noteId) => {
+		if (!linearStatsPanel) return;
+		const activeId = String(noteId || "").trim() || getLinearNoteId();
+		const data = getLinearDataForNote(activeId);
+		const rawTasks = data && Array.isArray(data.tasks) ? data.tasks : [];
+		const tasks = normalizeLinearTasks(rawTasks);
+		if (!tasks.length) {
+			linearStatsPanel.innerHTML = `<div class="linear-stats-empty">${t(
+				"linear.stats.empty"
+			)}</div>`;
+			return;
+		}
+		const project = activeId ? linearProjectByNote.get(activeId) : null;
+		const projectName = project && project.projectName ? project.projectName : "Linear";
+		const updatedAt = data && data.updatedAt
+			? new Date(data.updatedAt).toLocaleString(getUiLocale())
+			: "";
+		const total = tasks.length;
+		let done = 0;
+		let inProgress = 0;
+		let blocked = 0;
+		let overdue = 0;
+		let dueSoon = 0;
+		const stateCounts = new Map();
+		const assigneeCounts = new Map();
+		const now = new Date();
+		const today = new Date(
+			now.getFullYear(),
+			now.getMonth(),
+			now.getDate()
+		).getTime();
+		const soonLimit = today + 7 * 24 * 60 * 60 * 1000;
+		for (const task of tasks) {
+			const bucket = getLinearStatusBucket(task.state);
+			if (bucket === "done") done += 1;
+			if (bucket === "in_progress") inProgress += 1;
+			if (bucket === "blocked") blocked += 1;
+			const stateKey = task.state || t("linear.stats.unknown");
+			stateCounts.set(stateKey, (stateCounts.get(stateKey) || 0) + 1);
+			const assigneeLabel = task.assignee
+				? task.assignee
+				: t("linear.stats.unassigned");
+			assigneeCounts.set(
+				assigneeLabel,
+				(assigneeCounts.get(assigneeLabel) || 0) + 1
+			);
+			const dueTs = task.due ? Date.parse(task.due) : NaN;
+			if (!Number.isNaN(dueTs)) {
+				if (dueTs < today) overdue += 1;
+				else if (dueTs <= soonLimit) dueSoon += 1;
+			}
+		}
+		const stateRows = Array.from(stateCounts.entries()).sort(
+			(a, b) => b[1] - a[1]
+		);
+		const assigneeRows = Array.from(assigneeCounts.entries())
+			.sort((a, b) => b[1] - a[1])
+			.slice(0, 6);
+		const maxState = Math.max(1, ...stateRows.map((row) => row[1]));
+		const maxAssignee = Math.max(1, ...assigneeRows.map((row) => row[1]));
+		const totalLabel = formatUi(t("linear.stats.total"), { count: total });
+		const updatedLabel = updatedAt
+			? formatUi(t("linear.stats.updated"), { date: updatedAt })
+			: "";
+		linearStatsPanel.innerHTML = `
+			<div class="linear-stats-header">
+				<div>
+					<div class="linear-stats-title">${projectName}</div>
+					${updatedLabel ? `<div class="linear-stats-sub">${updatedLabel}</div>` : ""}
+				</div>
+				<div class="linear-stats-badge">${totalLabel}</div>
+			</div>
+			<div class="linear-stats-grid">
+				<div class="linear-stat-card">
+					<div class="linear-stat-label">${t("linear.stats.done")}</div>
+					<div class="linear-stat-value">${done}</div>
+				</div>
+				<div class="linear-stat-card">
+					<div class="linear-stat-label">${t("linear.stats.in_progress")}</div>
+					<div class="linear-stat-value">${inProgress}</div>
+				</div>
+				<div class="linear-stat-card">
+					<div class="linear-stat-label">${t("linear.stats.blocked")}</div>
+					<div class="linear-stat-value">${blocked}</div>
+				</div>
+				<div class="linear-stat-card">
+					<div class="linear-stat-label">${t("linear.stats.overdue")}</div>
+					<div class="linear-stat-value">${overdue}</div>
+				</div>
+				<div class="linear-stat-card">
+					<div class="linear-stat-label">${t("linear.stats.due_soon")}</div>
+					<div class="linear-stat-value">${dueSoon}</div>
+				</div>
+			</div>
+			<div class="linear-stats-section">
+				<div class="linear-stats-section-title">${t("linear.stats.by_status")}</div>
+				<div class="linear-stats-list">
+					${stateRows
+						.map(([label, count]) => {
+							const width = Math.max(6, Math.round((count / maxState) * 100));
+							const color = getLinearStatusColor(label);
+							return `
+								<div class="linear-stats-row">
+									<div class="linear-stats-row-label">${label}</div>
+									<div class="linear-stats-row-bar">
+										<div class="linear-stats-row-fill" style="width: ${width}%; background: ${color};"></div>
+									</div>
+									<div class="linear-stats-row-value">${count}</div>
+								</div>`;
+						})
+						.join("")}
+				</div>
+			</div>
+			<div class="linear-stats-section">
+				<div class="linear-stats-section-title">${t("linear.stats.by_assignee")}</div>
+				<div class="linear-stats-list">
+					${assigneeRows
+						.map(([label, count]) => {
+							const width = Math.max(6, Math.round((count / maxAssignee) * 100));
+							return `
+								<div class="linear-stats-row">
+									<div class="linear-stats-row-label">${label}</div>
+									<div class="linear-stats-row-bar">
+										<div class="linear-stats-row-fill" style="width: ${width}%;"></div>
+									</div>
+									<div class="linear-stats-row-value">${count}</div>
+								</div>`;
+						})
+						.join("")}
+				</div>
+			</div>
+		`;
 	};
 
 	const setLinearProjectForNote = (noteId, project) => {
@@ -17981,6 +18243,22 @@ self.onmessage = async (e) => {
 				}
 			}
 			setLinearVisible(!linearVisible);
+		});
+	}
+
+	if (linearViewBoardBtn) {
+		linearViewBoardBtn.addEventListener("click", () => {
+			const activeId = getLinearNoteId();
+			setLinearViewForNote(activeId, "board");
+			renderLinearTasks(activeId);
+		});
+	}
+
+	if (linearViewStatsBtn) {
+		linearViewStatsBtn.addEventListener("click", () => {
+			const activeId = getLinearNoteId();
+			setLinearViewForNote(activeId, "stats");
+			renderLinearStats(activeId);
 		});
 	}
 
