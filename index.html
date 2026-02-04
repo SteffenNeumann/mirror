@@ -532,6 +532,33 @@
 												referrerpolicy="no-referrer"
 												class="excalidraw-iframe"></iframe>
 										</div>
+										<div
+											id="excelEmbed"
+											class="excel-embed hidden"
+											aria-hidden="true">
+											<div
+												id="excelDragHandle"
+												class="excel-drag-handle help-icon"
+												role="button"
+												aria-label="Excel verschieben"
+												title="Excel verschieben">
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+													<path d="M9 5l3-3 3 3" />
+													<path d="M5 9l-3 3 3 3" />
+													<path d="M19 9l3 3-3 3" />
+													<path d="M9 19l3 3 3-3" />
+													<path d="M5 12h14" />
+													<path d="M12 5v14" />
+												</svg>
+											</div>
+											<iframe
+												src="https://excel.cloud.microsoft/open/onedrive/?docId=B18CE5FF0ADCDC2F%21sc85b7022170348a9a0bf57c81600dd43&driveId=B18CE5FF0ADCDC2F"
+												title="Excel"
+												loading="lazy"
+												allow="clipboard-read; clipboard-write; fullscreen"
+												referrerpolicy="no-referrer"
+												class="excel-iframe"></iframe>
+										</div>
 									<div
 										id="slashMenu"
 										class="absolute left-2 top-12 z-40 hidden w-[min(92vw,360px)] overflow-hidden rounded-xl border border-white/10 bg-slate-950/80 shadow-soft backdrop-blur">
@@ -877,6 +904,28 @@
 											<path d="M18 22l3-3" />
 											<path d="M2 7l3-3" />
 											<path d="M10 14l-4 4" />
+										</svg>
+									</button>
+									<button
+										id="toggleExcel"
+										type="button"
+										class="absolute bottom-2 right-[88px] z-30 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150 transition hover:bg-white/10 active:bg-white/15"
+										title="Excel ein-/ausblenden"
+										aria-label="Excel ein-/ausblenden"
+										aria-pressed="false">
+										<svg
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											class="h-4 w-4">
+											<rect x="3" y="3" width="18" height="18" rx="2" />
+											<path d="M3 9h18" />
+											<path d="M3 15h18" />
+											<path d="M9 3v18" />
+											<path d="M15 3v18" />
 										</svg>
 									</button>
 											<button

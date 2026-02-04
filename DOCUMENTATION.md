@@ -1,3 +1,21 @@
+# Dokumentation – Änderungen (2026-02-04)
+
+## Ziel
+- Excel-Spreadsheet wie Excalidraw per Button ein-/ausblenden und im Raum kollaborativ nutzbar machen.
+
+## Änderungen
+- Excel-Embed (iframe) mit Drag-Handle im Editor hinzugefügt.
+- Neuer Toggle-Button für Excel im Editor.
+- Excel-Visibility/Position werden per WebSocket im Raum synchronisiert.
+
+## Auswirkungen
+- **UI/UX:** Excel kann im Editor ein-/ausgeblendet und verschoben werden.
+- **Feature-Interaktionen:** Sichtbarkeit/Position wird zwischen Raum-Teilnehmern geteilt; Excel-Collab läuft über Microsoft 365.
+- **Datenebene:** Keine Persistenz, nur Room-State im WebSocket.
+
+## Tests (Smoke)
+- Nicht ausgeführt.
+
 # Dokumentation – Änderungen (2026-01-31)
 
 ## Ziel

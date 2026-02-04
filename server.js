@@ -1520,6 +1520,8 @@ const roomCrdtSnapshots = new Map();
 
 /** roomKey -> Map<noteId, { visible: boolean, offset: { x: number, y: number } }> */
 const roomExcalidrawState = new Map();
+/** roomKey -> Map<noteId, { visible: boolean, offset: { x: number, y: number } }> */
+const roomExcelState = new Map();
 /** roomKey -> Map<noteId, sceneJsonString> */
 const roomExcalidrawScenes = new Map();
 const EXCALIDRAW_SCENE_MAX_BYTES = 200000;
@@ -1547,6 +1549,15 @@ function getRoomExcalidrawState(roomKeyName) {
 	if (!map) {
 		map = new Map();
 		roomExcalidrawState.set(roomKeyName, map);
+	}
+	return map;
+}
+
+function getRoomExcelState(roomKeyName) {
+	let map = roomExcelState.get(roomKeyName);
+	if (!map) {
+		map = new Map();
+		roomExcelState.set(roomKeyName, map);
 	}
 	return map;
 }
@@ -3865,6 +3876,23 @@ wss.on("connection", (ws, req) => {
 		}
 	}
 
+	const initialExcel = roomExcelState.get(rk);
+	if (initialExcel && initialExcel.size > 0) {
+		const items = Array.from(initialExcel.entries()).map(([noteId, state]) => ({
+			noteId,
+			visible: Boolean(state && state.visible),
+			offset: {
+				x: Number(state && state.offset && state.offset.x) || 0,
+				y: Number(state && state.offset && state.offset.y) || 0,
+			},
+		}));
+		try {
+			ws.send(JSON.stringify({ type: "excel_state", room, items }));
+		} catch {
+			// ignore
+		}
+	}
+
 	const initialScenes = roomExcalidrawScenes.get(rk);
 	if (initialScenes && initialScenes.size > 0) {
 		const items = Array.from(initialScenes.entries()).map(([noteId, scene]) => ({
@@ -3980,6 +4008,47 @@ wss.on("connection", (ws, req) => {
 			broadcast(
 				rk,
 				{ type: "excalidraw_state", room, clientId: fromClientId, items: sanitized },
+				ws
+			);
+			return;
+		}
+
+		if (msg.type === "excel_state") {
+			const items = Array.isArray(msg.items)
+				? msg.items
+				: msg.noteId
+				? [
+					{
+						noteId: msg.noteId,
+						visible: msg.visible,
+						offset: msg.offset,
+					},
+				]
+				: [];
+			const sanitized = [];
+			for (const it of items) {
+				const noteId = String(it && it.noteId ? it.noteId : "").trim();
+				if (!noteId) continue;
+				const visible = Boolean(it && it.visible);
+				const oxRaw = Number(it && it.offset && it.offset.x);
+				const oyRaw = Number(it && it.offset && it.offset.y);
+				const ox = Number.isFinite(oxRaw)
+					? Math.max(-4000, Math.min(4000, oxRaw))
+					: 0;
+				const oy = Number.isFinite(oyRaw)
+					? Math.max(-4000, Math.min(4000, oyRaw))
+					: 0;
+				sanitized.push({ noteId, visible, offset: { x: ox, y: oy } });
+			}
+			if (sanitized.length === 0) return;
+			const map = getRoomExcelState(rk);
+			const fromClientId = typeof msg.clientId === "string" ? msg.clientId : "";
+			for (const it of sanitized) {
+				map.set(it.noteId, { visible: it.visible, offset: it.offset });
+			}
+			broadcast(
+				rk,
+				{ type: "excel_state", room, clientId: fromClientId, items: sanitized },
 				ws
 			);
 			return;
@@ -4237,6 +4306,22 @@ wss.on("connection", (ws, req) => {
 					// ignore
 				}
 			}
+			const excel = roomExcelState.get(rk);
+			if (excel && excel.size > 0) {
+				const items = Array.from(excel.entries()).map(([noteId, state]) => ({
+					noteId,
+					visible: Boolean(state && state.visible),
+					offset: {
+						x: Number(state && state.offset && state.offset.x) || 0,
+						y: Number(state && state.offset && state.offset.y) || 0,
+					},
+				}));
+				try {
+					ws.send(JSON.stringify({ type: "excel_state", room, items }));
+				} catch {
+					// ignore
+				}
+			}
 			const scenes = roomExcalidrawScenes.get(rk);
 			if (scenes && scenes.size > 0) {
 				const items = Array.from(scenes.entries())
@@ -4269,6 +4354,7 @@ wss.on("connection", (ws, req) => {
 		if (sockets.size === 0) {
 			roomSockets.delete(rk);
 			roomExcalidrawState.delete(rk);
+			roomExcelState.delete(rk);
 			roomExcalidrawScenes.delete(rk);
 		}
 	});

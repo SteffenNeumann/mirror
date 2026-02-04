@@ -97,6 +97,7 @@
 	const aiChatClearBtn = document.getElementById("aiChatClear");
 	const copyMirrorBtn = document.getElementById("copyMirror");
 	const toggleExcalidrawBtn = document.getElementById("toggleExcalidraw");
+	const toggleExcelBtn = document.getElementById("toggleExcel");
 	const toggleCommentsBtn = document.getElementById("toggleComments");
 	const commentPanel = document.getElementById("commentPanel");
 	const commentList = document.getElementById("commentList");
@@ -131,6 +132,9 @@
 		? excalidrawEmbed.querySelector("iframe")
 		: null;
 	const excalidrawDragHandle = document.getElementById("excalidrawDragHandle");
+	const excelEmbed = document.getElementById("excelEmbed");
+	const excelFrame = excelEmbed ? excelEmbed.querySelector("iframe") : null;
+	const excelDragHandle = document.getElementById("excelDragHandle");
 	const EXCALIDRAW_SCENE_MAX_BYTES = 200000;
 	const EXCALIDRAW_EMPTY_SCENE =
 		"{" +
@@ -10544,6 +10548,7 @@ ${highlightThemeCss}
 		syncPsEditorTagsInput(true);
 		updatePsEditingTagsHint();
 		syncExcalidrawForNote("");
+		syncExcelForNote("");
 		if (psMainHint && !(opts && opts.keepHint)) {
 			psMainHint.classList.add("hidden");
 		}
@@ -10598,6 +10603,7 @@ ${highlightThemeCss}
 		updateEditorMetaYaml();
 		if (prevNoteId !== psEditingNoteId) {
 			syncExcalidrawForNote(psEditingNoteId);
+			syncExcelForNote(psEditingNoteId);
 			void loadCommentsForRoom();
 		}
 		if (opts && opts.updateList) applyPersonalSpaceFiltersAndRender();
@@ -10645,6 +10651,7 @@ ${highlightThemeCss}
 		psAutoSaveLastSavedText = String(textarea.value || "");
 		setPsAutoSaveStatus("");
 		syncExcalidrawForNote(psEditingNoteId);
+		syncExcelForNote(psEditingNoteId);
 		if (room && key) {
 			setRoomTabNoteId(room, key, psEditingNoteId);
 		}
@@ -15812,6 +15819,8 @@ self.onmessage = async (e) => {
 					scheduleSendExcalidrawScene();
 				}
 			}
+			const currentExcelNote = getExcelNoteId();
+			if (currentExcelNote) sendExcelStateForNote(currentExcelNote);
 			void loadCommentsForRoom();
 			ensureYjsLoaded().then((ok) => {
 				if (mySeq !== connectionSeq) return;
@@ -15900,6 +15909,28 @@ self.onmessage = async (e) => {
 					if (noteId === activeId) {
 						applyExcalidrawOffset(offset);
 						setExcalidrawVisible(visible, { remember: false });
+					}
+				}
+				return;
+			}
+
+			if (msg.type === "excel_state") {
+				if (msg.clientId && msg.clientId === clientId) return;
+				const items = Array.isArray(msg.items) ? msg.items : [];
+				const activeId = getExcelNoteId();
+				for (const it of items) {
+					const noteId = String(it && it.noteId ? it.noteId : "").trim();
+					if (!noteId) continue;
+					const visible = Boolean(it && it.visible);
+					const offset = {
+						x: Number(it && it.offset && it.offset.x) || 0,
+						y: Number(it && it.offset && it.offset.y) || 0,
+					};
+					excelVisibleByNote.set(noteId, visible);
+					excelOffsetByNote.set(noteId, offset);
+					if (noteId === activeId) {
+						applyExcelOffset(offset);
+						setExcelVisible(visible, { remember: false });
 					}
 				}
 				return;
@@ -16277,6 +16308,10 @@ self.onmessage = async (e) => {
 	const excalidrawSceneByNote = new Map();
 	let excalidrawSceneSendTimer = null;
 	let pendingExcalidrawScene = null;
+	let excelVisible = false;
+	const excelVisibleByNote = new Map();
+	let excelOffset = { x: 0, y: 0 };
+	const excelOffsetByNote = new Map();
 
 	const getExcalidrawRoomScope = () => {
 		const roomName = normalizeRoom(room);
@@ -16289,6 +16324,19 @@ self.onmessage = async (e) => {
 		const noteId = String(psEditingNoteId || "").trim();
 		if (noteId) return noteId;
 		return getExcalidrawRoomScope();
+	};
+
+	const getExcelRoomScope = () => {
+		const roomName = normalizeRoom(room);
+		if (!roomName) return "";
+		const keyName = normalizeKey(key);
+		return `room:${roomName}:${keyName || "nokey"}`;
+	};
+
+	const getExcelNoteId = () => {
+		const noteId = String(psEditingNoteId || "").trim();
+		if (noteId) return noteId;
+		return getExcelRoomScope();
 	};
 
 	const getExcalidrawStateForNote = (noteId) => {
@@ -16310,6 +16358,21 @@ self.onmessage = async (e) => {
 		const activeId = String(noteId || "").trim() || getExcalidrawNoteId();
 		if (!activeId) return "";
 		return String(excalidrawSceneByNote.get(activeId) || "");
+	};
+
+	const getExcelStateForNote = (noteId) => {
+		const activeId = String(noteId || "").trim() || getExcelNoteId();
+		if (!activeId) return null;
+		const offset = excelOffsetByNote.get(activeId) || { x: 0, y: 0 };
+		const visible = Boolean(excelVisibleByNote.get(activeId));
+		return {
+			noteId: activeId,
+			visible,
+			offset: {
+				x: Number(offset.x || 0) || 0,
+				y: Number(offset.y || 0) || 0,
+			},
+		};
 	};
 
 	const postExcalidrawMessage = (payload) => {
@@ -16352,6 +16415,26 @@ self.onmessage = async (e) => {
 		return { x: baseX + clampedDx, y: baseY + clampedDy };
 	};
 
+	const clampExcelOffsetToMirror = (next, dragState) => {
+		if (!textarea || !excelEmbed) return next;
+		const mirrorRect = dragState && dragState.mirrorRect ? dragState.mirrorRect : textarea.getBoundingClientRect();
+		const baseRect = dragState && dragState.baseRect ? dragState.baseRect : excelEmbed.getBoundingClientRect();
+		if (!mirrorRect || !baseRect) return next;
+		const baseX = dragState ? dragState.baseX : excelOffset.x || 0;
+		const baseY = dragState ? dragState.baseY : excelOffset.y || 0;
+		const dx = next.x - baseX;
+		const dy = next.y - baseY;
+		const clampedDx = Math.min(
+			Math.max(dx, mirrorRect.left - baseRect.left),
+			mirrorRect.right - baseRect.right
+		);
+		const clampedDy = Math.min(
+			Math.max(dy, mirrorRect.top - baseRect.top),
+			mirrorRect.bottom - baseRect.bottom
+		);
+		return { x: baseX + clampedDx, y: baseY + clampedDy };
+	};
+
 	const scheduleSendExcalidrawScene = () => {
 		if (!pendingExcalidrawScene) return;
 		window.clearTimeout(excalidrawSceneSendTimer);
@@ -16381,12 +16464,33 @@ self.onmessage = async (e) => {
 		});
 	};
 
+	const sendExcelStateForNote = (noteId) => {
+		const state = getExcelStateForNote(noteId);
+		if (!state) return;
+		if (!ws || ws.readyState !== WebSocket.OPEN) return;
+		sendMessage({
+			type: "excel_state",
+			room,
+			clientId,
+			items: [state],
+		});
+	};
+
 	const applyExcalidrawOffset = (offset) => {
 		const ox = Number(offset && offset.x ? offset.x : 0) || 0;
 		const oy = Number(offset && offset.y ? offset.y : 0) || 0;
 		excalidrawOffset = { x: ox, y: oy };
 		if (excalidrawEmbed) {
 			excalidrawEmbed.style.transform = `translate3d(${ox}px, ${oy}px, 0)`;
+		}
+	};
+
+	const applyExcelOffset = (offset) => {
+		const ox = Number(offset && offset.x ? offset.x : 0) || 0;
+		const oy = Number(offset && offset.y ? offset.y : 0) || 0;
+		excelOffset = { x: ox, y: oy };
+		if (excelEmbed) {
+			excelEmbed.style.transform = `translate3d(${ox}px, ${oy}px, 0)`;
 		}
 	};
 
@@ -16400,6 +16504,16 @@ self.onmessage = async (e) => {
 		applyExcalidrawOffset({ x: 0, y: 0 });
 	};
 
+	const loadExcelOffsetForNote = (noteId) => {
+		const activeId = String(noteId || "").trim() || getExcelNoteId();
+		const saved = activeId ? excelOffsetByNote.get(activeId) : null;
+		if (saved) {
+			applyExcelOffset({ x: saved.x || 0, y: saved.y || 0 });
+			return;
+		}
+		applyExcelOffset({ x: 0, y: 0 });
+	};
+
 	const storeExcalidrawOffsetForNote = (noteId, offset) => {
 		const activeId = String(noteId || "").trim() || getExcalidrawNoteId();
 		if (!activeId) return;
@@ -16408,6 +16522,16 @@ self.onmessage = async (e) => {
 			y: Number(offset && offset.y ? offset.y : 0) || 0,
 		});
 		sendExcalidrawStateForNote(activeId);
+	};
+
+	const storeExcelOffsetForNote = (noteId, offset) => {
+		const activeId = String(noteId || "").trim() || getExcelNoteId();
+		if (!activeId) return;
+		excelOffsetByNote.set(activeId, {
+			x: Number(offset && offset.x ? offset.x : 0) || 0,
+			y: Number(offset && offset.y ? offset.y : 0) || 0,
+		});
+		sendExcelStateForNote(activeId);
 	};
 
 	const setExcalidrawVisible = (nextVisible, opts = {}) => {
@@ -16438,6 +16562,37 @@ self.onmessage = async (e) => {
 		if (excalidrawVisible && excalidrawFrame) {
 			try {
 				excalidrawFrame.focus();
+			} catch {
+				// ignore
+			}
+		}
+	};
+
+	const setExcelVisible = (nextVisible, opts = {}) => {
+		excelVisible = Boolean(nextVisible);
+		const remember = opts.remember !== false;
+		const activeNoteId = getExcelNoteId();
+		if (excelEmbed) {
+			excelEmbed.classList.toggle("hidden", !excelVisible);
+			excelEmbed.setAttribute(
+				"aria-hidden",
+				excelVisible ? "false" : "true"
+			);
+		}
+		if (toggleExcelBtn) {
+			toggleExcelBtn.setAttribute(
+				"aria-pressed",
+				excelVisible ? "true" : "false"
+			);
+		}
+		if (remember && activeNoteId) {
+			excelVisibleByNote.set(activeNoteId, excelVisible);
+			sendExcelStateForNote(activeNoteId);
+		}
+		applyExcelOffset(excelOffset);
+		if (excelVisible && excelFrame) {
+			try {
+				excelFrame.focus();
 			} catch {
 				// ignore
 			}
@@ -16483,9 +16638,27 @@ self.onmessage = async (e) => {
 		}
 	};
 
+	const syncExcelForNote = (noteId) => {
+		const activeId = String(noteId || "").trim() || getExcelNoteId();
+		const savedVisible = activeId
+			? Boolean(excelVisibleByNote.get(activeId))
+			: false;
+		loadExcelOffsetForNote(activeId);
+		setExcelVisible(savedVisible, { remember: false });
+		if (activeId && (excelVisibleByNote.has(activeId) || excelOffsetByNote.has(activeId))) {
+			sendExcelStateForNote(activeId);
+		}
+	};
+
 	if (toggleExcalidrawBtn && excalidrawEmbed) {
 		toggleExcalidrawBtn.addEventListener("click", () => {
 			setExcalidrawVisible(!excalidrawVisible);
+		});
+	}
+
+	if (toggleExcelBtn && excelEmbed) {
+		toggleExcelBtn.addEventListener("click", () => {
+			setExcelVisible(!excelVisible);
 		});
 	}
 
@@ -16542,6 +16715,60 @@ self.onmessage = async (e) => {
 			window.addEventListener("pointermove", onExcalidrawDragMove);
 			window.addEventListener("pointerup", endExcalidrawDrag);
 			window.addEventListener("pointercancel", endExcalidrawDrag);
+		});
+	}
+
+	if (excelDragHandle && excelEmbed) {
+		let excelDragState = null;
+		const endExcelDrag = (ev) => {
+			if (!excelDragState) return;
+			try {
+				excelDragHandle.releasePointerCapture(excelDragState.pointerId);
+			} catch {
+				// ignore
+			}
+			window.removeEventListener("pointermove", onExcelDragMove);
+			window.removeEventListener("pointerup", endExcelDrag);
+			window.removeEventListener("pointercancel", endExcelDrag);
+			excelEmbed.classList.remove("excel-dragging");
+			const activeNoteId = getExcelNoteId();
+			storeExcelOffsetForNote(activeNoteId, excelOffset);
+			excelDragState = null;
+		};
+
+		const onExcelDragMove = (ev) => {
+			if (!excelDragState) return;
+			const dx = Number(ev.clientX || 0) - excelDragState.startX;
+			const dy = Number(ev.clientY || 0) - excelDragState.startY;
+			const rawNext = {
+				x: excelDragState.baseX + dx,
+				y: excelDragState.baseY + dy,
+			};
+			const next = clampExcelOffsetToMirror(rawNext, excelDragState);
+			applyExcelOffset(next);
+		};
+
+		excelDragHandle.addEventListener("pointerdown", (ev) => {
+			if (!excelVisible) return;
+			ev.preventDefault();
+			excelDragState = {
+				startX: Number(ev.clientX || 0),
+				startY: Number(ev.clientY || 0),
+				baseX: Number(excelOffset.x || 0),
+				baseY: Number(excelOffset.y || 0),
+				pointerId: ev.pointerId,
+				mirrorRect: textarea ? textarea.getBoundingClientRect() : null,
+				baseRect: excelEmbed.getBoundingClientRect(),
+			};
+			excelEmbed.classList.add("excel-dragging");
+			try {
+				excelDragHandle.setPointerCapture(ev.pointerId);
+			} catch {
+				// ignore
+			}
+			window.addEventListener("pointermove", onExcelDragMove);
+			window.addEventListener("pointerup", endExcelDrag);
+			window.addEventListener("pointercancel", endExcelDrag);
 		});
 	}
 
