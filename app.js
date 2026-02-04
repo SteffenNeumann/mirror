@@ -6387,11 +6387,16 @@
 	async function linearRequest(query, variables) {
 		const token = String(linearApiKey || "").trim();
 		if (!token) throw new Error("missing_key");
+		const authHeader = token.startsWith("Bearer ")
+			? token
+			: token.startsWith("lin_api_")
+				? token
+				: `Bearer ${token}`;
 		const res = await fetch("https://api.linear.app/graphql", {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
-				Authorization: `Bearer ${token}`,
+				Authorization: authHeader,
 			},
 			body: JSON.stringify({ query, variables: variables || {} }),
 		});
@@ -6404,6 +6409,10 @@
 	}
 
 	async function fetchLinearProjectsFromApi() {
+		const inputKey = readLinearApiKeyInput();
+		if (inputKey && inputKey !== linearApiKey) {
+			linearApiKey = inputKey;
+		}
 		if (!linearApiKey) {
 			toast(t("toast.linear_missing_key"), "error");
 			return;
@@ -6437,6 +6446,10 @@
 	async function fetchLinearTasksForProject(noteId, projectId) {
 		const activeId = String(noteId || "").trim() || getLinearNoteId();
 		if (!activeId || !projectId) return;
+		const inputKey = readLinearApiKeyInput();
+		if (inputKey && inputKey !== linearApiKey) {
+			linearApiKey = inputKey;
+		}
 		if (!linearApiKey) {
 			toast(t("toast.linear_missing_key"), "error");
 			return;
