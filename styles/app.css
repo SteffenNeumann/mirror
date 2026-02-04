@@ -218,6 +218,12 @@ body.glow-disabled .bg-glow {
 	box-shadow: none !important;
 }
 
+#toggleExcel[aria-pressed="true"] {
+	background: var(--accent-bg) !important;
+	border-color: var(--accent-border) !important;
+	color: var(--accent-text) !important;
+}
+
 #toggleHeader:hover,
 #toggleHeader:focus-visible,
 #toggleHeader:active,
