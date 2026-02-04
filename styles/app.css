@@ -239,6 +239,10 @@ body.glow-disabled .bg-glow {
 	border-color: var(--accent-border-strong) !important;
 }
 
+#togglePermanentLink[aria-pressed="true"] {
+	color: var(--accent-text) !important;
+}
+
 #copyMirror,
 #togglePermanentLink,
 #toggleExcalidraw,
@@ -1801,6 +1805,14 @@ body[data-theme="coffeeLight"] #togglePermanentLink {
 	color: #3b2a21 !important;
 }
 
+body[data-theme="coffeeLight"] #togglePermanentLink[aria-pressed="true"] {
+	color: #b07049 !important;
+}
+
+body[data-theme="coffeeLight"] .ps-note-link-badge {
+	color: #b07049 !important;
+}
+
 body[data-theme="coffeeLight"] #linearEmbed {
 	background: rgba(255, 250, 244, 0.82) !important;
 	border-color: rgba(217, 199, 188, 0.7) !important;
@@ -1986,6 +1998,10 @@ body[data-theme="coffeeDark"] {
 
 body[data-theme="coffeeDark"] .bg-glow {
 	display: none;
+}
+
+body[data-theme="coffeeDark"] #togglePermanentLink[aria-pressed="true"] {
+	color: var(--coffee-accent) !important;
 }
 
 body[data-theme="coffeeDark"] .border-white\/10 {
@@ -2517,6 +2533,14 @@ body[data-theme="bitterLight"] #togglePermanentLink {
 }
 
 body[data-theme="bitterLight"] #togglePermanentLink[aria-pressed="true"] {
+	color: #ff2301 !important;
+}
+
+body[data-theme="bitterDark"] #togglePermanentLink[aria-pressed="true"] {
+	color: var(--bitter-accent) !important;
+}
+
+body[data-theme="bitterLight"] .ps-note-link-badge {
 	color: #ff2301 !important;
 }
 
@@ -3089,7 +3113,7 @@ body[data-theme="monoLight"] .bg-fuchsia-600\/20 {
 
 body[data-theme="monoLight"] #toggleExcalidraw {
 	background: transparent !important;
-	color: var(--mono-accent) !important;
+	color: #24292f !important;
 	border-color: #d0d7de !important;
 	box-shadow: none !important;
 	backdrop-filter: none !important;
@@ -3383,6 +3407,10 @@ body[data-theme="monoLight"] #togglePermanentLink[aria-pressed="true"] {
 	color: var(--mono-accent) !important;
 }
 
+body[data-theme="monoLight"] .ps-note-link-badge {
+	color: var(--mono-accent) !important;
+}
+
 body[data-theme="monoLight"] #linearEmbed {
 	background: rgba(255, 255, 255, 0.8) !important;
 	border-color: rgba(208, 215, 222, 0.6) !important;
@@ -3547,7 +3575,7 @@ body[data-theme="monoDark"] .bg-fuchsia-600\/20 {
 
 body[data-theme="monoDark"] #toggleExcalidraw {
 	background: transparent !important;
-	color: var(--mono-accent) !important;
+	color: #c9d1d9 !important;
 	border-color: #30363d !important;
 	box-shadow: none !important;
 	backdrop-filter: none !important;
@@ -3557,6 +3585,10 @@ body[data-theme="monoDark"] #toggleExcalidraw {
 body[data-theme="monoDark"] .hover\:bg-fuchsia-500\/20:hover,
 body[data-theme="monoDark"] .hover\:bg-fuchsia-500\/25:hover {
 	background-color: transparent !important;
+	color: #c9d1d9 !important;
+}
+
+body[data-theme="monoDark"] #togglePermanentLink[aria-pressed="true"] {
 	color: var(--mono-accent) !important;
 }
 
