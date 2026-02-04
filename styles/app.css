@@ -689,8 +689,8 @@ body.code-lang-active #clearMirror {
 
 .excel-drag-handle {
 	position: absolute;
-	bottom: 1.1rem;
-	right: 5.25rem;
+	bottom: 0.6rem;
+	right: 0.6rem;
 	z-index: 25;
 	cursor: grab;
 	user-select: none;
