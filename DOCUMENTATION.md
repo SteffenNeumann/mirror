@@ -1,6 +1,24 @@
 # Dokumentation – Änderungen (2026-02-04)
 
 ## Ziel
+- Permanent-Link pro Raum-Tab: aktuellen Inhalt fest mit dem Tab verknüpfen.
+
+## Änderungen
+- Neuer Permanent-Link-Button neben Copy im Editor.
+- Verlinkter Inhalt (Notiz oder lokaler Text) bleibt dem Raum-Tab zugeordnet und wird beim Tabwechsel wiederhergestellt.
+- Room-Sync wird nur für den verlinkten Inhalt ausgeführt.
+
+## Auswirkungen
+- **UI/UX:** Link-Button mit aktivem Zustand im Editor.
+- **Feature-Interaktionen:** Room-Tab bleibt auf verlinktem Inhalt, PS-Notizen öffnen verknüpfte Tabs.
+- **Datenebene:** Pinned-Rooms werden lokal gespeichert.
+
+## Tests (Smoke)
+- Nicht ausgeführt.
+
+# Dokumentation – Änderungen (2026-02-04)
+
+## Ziel
 - Linear-Integration in privaten Räumen: Projekte auswählen, Tasks read-only anzeigen, kollaborativ teilen.
 
 ## Änderungen

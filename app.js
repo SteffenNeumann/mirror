@@ -96,6 +96,7 @@
 	const aiChatList = document.getElementById("aiChatList");
 	const aiChatClearBtn = document.getElementById("aiChatClear");
 	const copyMirrorBtn = document.getElementById("copyMirror");
+	const togglePermanentLinkBtn = document.getElementById("togglePermanentLink");
 	const toggleExcalidrawBtn = document.getElementById("toggleExcalidraw");
 	const toggleLinearBtn = document.getElementById("toggleLinear");
 	const toggleExcelBtn = document.getElementById("toggleExcel");
@@ -3329,23 +3330,35 @@
 		if (changed) {
 			metaLeft.textContent = "Formatting";
 			metaRight.textContent = nowIso();
-			if (isCrdtEnabled()) {
-				updateCrdtFromTextarea();
-			} else {
-				scheduleSend();
+			const canSyncRoom = shouldSyncRoomContentNow();
+			if (canSyncRoom) {
+				if (isCrdtEnabled()) {
+					updateCrdtFromTextarea();
+				} else {
+					scheduleSend();
+				}
 			}
 			setTyping(true);
 			scheduleTypingStop();
 			scheduleSelectionSend();
 			const noteId = getRoomTabNoteIdForRoom(room, key);
-			updateRoomTabTextLocal(room, key, textarea.value);
-			if (noteId) updateLocalNoteText(noteId, textarea.value);
-			scheduleRoomTabSync({
-				room,
-				key,
-				text: resolveRoomTabSnapshotText(noteId, String(textarea.value || "")),
-				lastUsed: Date.now(),
-			});
+			const activePsNoteId = getActiveRoomTabNoteId();
+			if (canSyncRoom) {
+				updateRoomTabTextLocal(room, key, textarea.value);
+				if (noteId) updateLocalNoteText(noteId, textarea.value);
+				scheduleRoomTabSync({
+					room,
+					key,
+					text: resolveRoomTabSnapshotText(
+						noteId,
+						String(textarea.value || "")
+					),
+					lastUsed: Date.now(),
+				});
+			}
+			if (activePsNoteId && activePsNoteId !== noteId) {
+				updateLocalNoteText(activePsNoteId, textarea.value);
+			}
 		}
 		updatePreview();
 		updatePasswordMaskOverlay();
@@ -10988,14 +11001,28 @@ ${highlightThemeCss}
 		syncExcelForNote(psEditingNoteId);
 		syncLinearForNote(psEditingNoteId);
 		if (room && key) {
-			setRoomTabNoteId(room, key, psEditingNoteId);
+			const canSyncRoom = isPinnedContentActiveForRoom(
+				room,
+				key,
+				psEditingNoteId
+			);
+			if (canSyncRoom) {
+				setRoomTabNoteId(room, key, psEditingNoteId);
+			}
 		}
 		if (room && key && !(opts && opts.skipText)) {
-			updateRoomTabTextLocal(room, key, textarea.value);
-			if (isCrdtEnabled()) {
-				updateCrdtFromTextarea();
-			} else {
-				scheduleSend();
+			const canSyncRoom = isPinnedContentActiveForRoom(
+				room,
+				key,
+				psEditingNoteId
+			);
+			if (canSyncRoom) {
+				updateRoomTabTextLocal(room, key, textarea.value);
+				if (isCrdtEnabled()) {
+					updateCrdtFromTextarea();
+				} else {
+					scheduleSend();
+				}
 			}
 		}
 		if (!(opts && opts.skipText)) {
@@ -12358,6 +12385,7 @@ self.onmessage = async (e) => {
 	const FAVORITES_KEY = "mirror_favorites_v1";
 	const ROOM_TABS_KEY = "mirror_room_tabs_v1";
 	const NOTE_ROOM_BINDINGS_KEY = "mirror_note_room_bindings_v1";
+	const ROOM_PINNED_KEY = "mirror_room_pinned_v1";
 	const SHARED_ROOMS_KEY = "mirror_shared_rooms_v1";
 	const SHARED_ROOMS_RESET_KEY = "mirror_shared_rooms_reset_v1";
 	const COMMENT_STORAGE_KEY = "mirror_comments_v1";
@@ -12684,6 +12712,107 @@ self.onmessage = async (e) => {
 		return Array.from(byNote.values());
 	}
 
+	function normalizeRoomPinnedEntry(it) {
+		const roomName = normalizeRoom(it && it.room);
+		const keyName = normalizeKey(it && it.key);
+		const noteId = String(it && it.noteId ? it.noteId : "").trim();
+		const updatedAt = Number(it && it.updatedAt) || 0;
+		const rawText = String(it && it.text ? it.text : "");
+		const text = noteId ? "" : rawText;
+		if (!roomName) return null;
+		return { room: roomName, key: keyName, noteId, text, updatedAt };
+	}
+
+	function loadRoomPinnedEntries() {
+		try {
+			const raw = localStorage.getItem(ROOM_PINNED_KEY);
+			const parsed = JSON.parse(raw || "[]");
+			if (!Array.isArray(parsed)) return [];
+			const cleaned = parsed
+				.map(normalizeRoomPinnedEntry)
+				.filter(Boolean);
+			if (cleaned.length !== parsed.length) {
+				saveRoomPinnedEntries(cleaned);
+			}
+			return cleaned;
+		} catch {
+			return [];
+		}
+	}
+
+	function saveRoomPinnedEntries(list) {
+		try {
+			const cleaned = Array.isArray(list)
+				? list.map(normalizeRoomPinnedEntry).filter(Boolean)
+				: [];
+			localStorage.setItem(ROOM_PINNED_KEY, JSON.stringify(cleaned));
+		} catch {
+			// ignore
+		}
+	}
+
+	function getRoomPinnedEntry(roomName, keyName) {
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!nextRoom) return null;
+		return (
+			loadRoomPinnedEntries().find(
+				(e) => e.room === nextRoom && e.key === nextKey
+			) || null
+		);
+	}
+
+	function setRoomPinnedEntry(roomName, keyName, payload) {
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!nextRoom) return;
+		const base = normalizeRoomPinnedEntry({
+			room: nextRoom,
+			key: nextKey,
+			noteId: payload && payload.noteId ? payload.noteId : "",
+			text: payload && payload.text ? payload.text : "",
+			updatedAt: Date.now(),
+		});
+		if (!base) return;
+		const list = loadRoomPinnedEntries().filter(
+			(e) => !(e.room === nextRoom && e.key === nextKey)
+		);
+		list.push(base);
+		saveRoomPinnedEntries(list);
+	}
+
+	function clearRoomPinnedEntry(roomName, keyName) {
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!nextRoom) return;
+		const list = loadRoomPinnedEntries().filter(
+			(e) => !(e.room === nextRoom && e.key === nextKey)
+		);
+		saveRoomPinnedEntries(list);
+	}
+
+	function isPinnedContentActiveForRoom(roomName, keyName, activeNoteId) {
+		const pinned = getRoomPinnedEntry(roomName, keyName);
+		if (!pinned) return true;
+		const activeId = String(activeNoteId || "").trim();
+		if (pinned.noteId) return pinned.noteId === activeId;
+		return !activeId;
+	}
+
+	function shouldSyncRoomContentNow() {
+		return isPinnedContentActiveForRoom(room, key, psEditingNoteId);
+	}
+
+	function syncPermanentLinkToggleUi() {
+		if (!togglePermanentLinkBtn) return;
+		const pinned = getRoomPinnedEntry(room, key);
+		const active = Boolean(pinned);
+		const label = active ? "Permanent-Link aktiv" : "Permanent-Link";
+		togglePermanentLinkBtn.setAttribute("aria-pressed", active ? "true" : "false");
+		togglePermanentLinkBtn.setAttribute("title", label);
+		togglePermanentLinkBtn.setAttribute("aria-label", label);
+	}
+
 	function loadNoteRoomBindings() {
 		try {
 			const raw = localStorage.getItem(NOTE_ROOM_BINDINGS_KEY);
@@ -12742,6 +12871,8 @@ self.onmessage = async (e) => {
 		const nextRoom = normalizeRoom(roomName);
 		const nextKey = normalizeKey(keyName);
 		if (!nextRoom) return;
+		const pinned = getRoomPinnedEntry(nextRoom, nextKey);
+		if (pinned && pinned.noteId) return;
 		const list = loadNoteRoomBindings().filter(
 			(b) => !(b.room === nextRoom && b.key === nextKey)
 		);
@@ -12772,6 +12903,8 @@ self.onmessage = async (e) => {
 		const nextRoom = normalizeRoom(roomName);
 		const nextKey = normalizeKey(keyName);
 		if (!nextRoom) return "";
+		const pinned = getRoomPinnedEntry(nextRoom, nextKey);
+		if (pinned && pinned.noteId) return String(pinned.noteId || "").trim();
 		const tabs = loadRoomTabs();
 		const cached = tabs.find((t) => t.room === nextRoom && t.key === nextKey);
 		if (cached && cached.noteId) return String(cached.noteId || "").trim();
@@ -13188,8 +13321,10 @@ self.onmessage = async (e) => {
 		const idx = tabs.findIndex(
 			(t) => t.room === nextRoom && t.key === nextKey
 		);
+		const pinned = getRoomPinnedEntry(nextRoom, nextKey);
+		const pinnedNoteId = pinned && pinned.noteId ? String(pinned.noteId || "").trim() : "";
 		const bound = findNoteRoomBindingByRoom(nextRoom, nextKey);
-		const boundNoteId = bound && bound.noteId ? String(bound.noteId || "").trim() : "";
+		const boundNoteId = pinnedNoteId || (bound && bound.noteId ? String(bound.noteId || "").trim() : "");
 		if (idx >= 0) {
 			tabs[idx].lastUsed = now;
 			if (boundNoteId && !String(tabs[idx].noteId || "").trim()) {
@@ -13338,10 +13473,13 @@ self.onmessage = async (e) => {
 		);
 		if (idx < 0) return;
 		const isFavorite = findFavoriteIndex(nextRoom, nextKey) >= 0;
+		const pinned = getRoomPinnedEntry(nextRoom, nextKey);
 		tabs.splice(idx, 1);
 		saveRoomTabs(tabs);
 		removeRoomTabFromState(nextRoom, nextKey);
-		if (!isFavorite) removeNoteRoomBindingByRoom(nextRoom, nextKey);
+		if (!isFavorite && !(pinned && pinned.noteId)) {
+			removeNoteRoomBindingByRoom(nextRoom, nextKey);
+		}
 		renderRoomTabs();
 		if (psState && psState.authed) {
 			api("/api/room-tabs", {
@@ -15983,6 +16121,7 @@ self.onmessage = async (e) => {
 	}
 
 	function updateCrdtFromTextarea() {
+		if (!shouldSyncRoomContentNow()) return;
 		if (!ytext || !crdtReady) return;
 		const current = ytext.toString();
 		if (crdtLastText !== current) {
@@ -16065,6 +16204,7 @@ self.onmessage = async (e) => {
 	function scheduleSend() {
 		if (isCrdtEnabled()) return;
 		if (suppressSend) return;
+		if (!shouldSyncRoomContentNow()) return;
 		window.clearTimeout(sendTimer);
 		sendTimer = window.setTimeout(() => {
 			const text = textarea.value;
@@ -16702,6 +16842,46 @@ self.onmessage = async (e) => {
 					toast("Copy not available.", "error");
 				}
 			}
+		});
+	}
+
+	if (togglePermanentLinkBtn) {
+		togglePermanentLinkBtn.addEventListener("click", () => {
+			const roomName = normalizeRoom(room);
+			const keyName = normalizeKey(key);
+			if (!roomName) return;
+			const current = getRoomPinnedEntry(roomName, keyName);
+			if (current) {
+				clearRoomPinnedEntry(roomName, keyName);
+				if (current.noteId) {
+					removeNoteRoomBindingByRoom(roomName, keyName);
+				}
+				syncPermanentLinkToggleUi();
+				toast("Permanent-Link deaktiviert.", "info");
+				return;
+			}
+			const noteId = String(psEditingNoteId || "").trim();
+			const textSnapshot = noteId
+				? ""
+				: String(textarea && textarea.value ? textarea.value : "");
+			setRoomPinnedEntry(roomName, keyName, {
+				noteId,
+				text: textSnapshot,
+			});
+			if (noteId) {
+				setRoomTabNoteId(roomName, keyName, noteId);
+			} else {
+				setRoomTabNoteId(roomName, keyName, "");
+				updateRoomTabTextLocal(roomName, keyName, textSnapshot);
+			}
+			scheduleRoomTabSync({
+				room: roomName,
+				key: keyName,
+				text: resolveRoomTabSnapshotText(noteId, textSnapshot),
+				lastUsed: Date.now(),
+			});
+			syncPermanentLinkToggleUi();
+			toast("Permanent-Link aktiviert.", "success");
 		});
 	}
 
@@ -17800,28 +17980,38 @@ self.onmessage = async (e) => {
 
 	textarea.addEventListener("input", () => {
 		metaLeft.textContent = "Typing…";
-		if (isCrdtEnabled()) {
-			updateCrdtFromTextarea();
-		} else {
-			scheduleSend();
+		const canSyncRoom = shouldSyncRoomContentNow();
+		if (canSyncRoom) {
+			if (isCrdtEnabled()) {
+				updateCrdtFromTextarea();
+			} else {
+				scheduleSend();
+			}
 		}
 		setTyping(true);
 		scheduleTypingStop();
 		scheduleSelectionSend();
 		const tabNoteId = getRoomTabNoteIdForRoom(room, key);
 		const activePsNoteId = getActiveRoomTabNoteId();
-		updateRoomTabTextLocal(room, key, textarea.value);
-		if (tabNoteId) updateLocalNoteText(tabNoteId, textarea.value);
+		if (canSyncRoom) {
+			updateRoomTabTextLocal(room, key, textarea.value);
+			if (tabNoteId) updateLocalNoteText(tabNoteId, textarea.value);
+		}
 		if (activePsNoteId && activePsNoteId !== tabNoteId) {
 			updateLocalNoteText(activePsNoteId, textarea.value);
 		}
 		schedulePsListRerender();
-		scheduleRoomTabSync({
-			room,
-			key,
-			text: resolveRoomTabSnapshotText(tabNoteId, String(textarea.value || "")),
-			lastUsed: Date.now(),
-		});
+		if (canSyncRoom) {
+			scheduleRoomTabSync({
+				room,
+				key,
+				text: resolveRoomTabSnapshotText(
+					tabNoteId,
+					String(textarea.value || "")
+				),
+				lastUsed: Date.now(),
+			});
+		}
 		updatePreview();
 		updatePasswordMaskOverlay();
 		updateCommentOverlay();
@@ -18270,10 +18460,15 @@ self.onmessage = async (e) => {
 				skipStartupTabRestore.key === key);
 		pendingClosedTab = null;
 		skipStartupTabRestore = null;
-		if (textarea && !suppressRestore) {
+		const canSyncPrev = isPinnedContentActiveForRoom(
+			room,
+			key,
+			psEditingNoteId
+		);
+		if (textarea && !suppressRestore && canSyncPrev) {
 			updateRoomTabTextLocal(room, key, textarea.value);
 		}
-		if (!suppressRestore) {
+		if (!suppressRestore && canSyncPrev) {
 			flushRoomTabSync();
 		}
 		room = nextRoom;
@@ -18290,6 +18485,7 @@ self.onmessage = async (e) => {
 		updateFavoritesUI();
 		touchRoomTab(room, key, { skipSync: true });
 		renderRoomTabs();
+		syncPermanentLinkToggleUi();
 		if (textarea) {
 			const cached = loadRoomTabs().find(
 				(t) => t.room === room && t.key === key
@@ -18297,8 +18493,17 @@ self.onmessage = async (e) => {
 			const cachedNoteId = cached && cached.noteId ? String(cached.noteId || "") : "";
 			const bound = findNoteRoomBindingByRoom(room, key);
 			const boundNoteId = bound && bound.noteId ? String(bound.noteId || "") : "";
-			const resolvedNoteId = cachedNoteId || boundNoteId;
-			if (!cachedNoteId && boundNoteId) {
+			const pinned = getRoomPinnedEntry(room, key);
+			const pinnedNoteId = pinned && pinned.noteId ? String(pinned.noteId || "") : "";
+			const pinnedText = pinned && !pinnedNoteId ? String(pinned.text || "") : "";
+			const resolvedNoteId = pinnedNoteId || cachedNoteId || boundNoteId;
+			if (pinnedNoteId && cachedNoteId !== pinnedNoteId) {
+				setRoomTabNoteId(room, key, pinnedNoteId);
+			}
+			if (pinned && !pinnedNoteId && cachedNoteId) {
+				setRoomTabNoteId(room, key, "");
+			}
+			if (!pinnedNoteId && !cachedNoteId && boundNoteId) {
 				setRoomTabNoteId(room, key, boundNoteId);
 			}
 			const note = resolvedNoteId ? findNoteById(resolvedNoteId) : null;
@@ -18307,7 +18512,7 @@ self.onmessage = async (e) => {
 			const nextText = note
 				? String(note.text || "")
 				: !resolvedNoteId
-					? cachedText || pendingRoomBootstrapText || ""
+					? pinnedText || cachedText || pendingRoomBootstrapText || ""
 					: "";
 			pendingRoomBootstrapText = "";
 			if (note) {
@@ -18346,7 +18551,7 @@ self.onmessage = async (e) => {
 					clear: true,
 					updateList: true,
 				});
-				if (linked && psEditingNoteId) {
+				if (linked && psEditingNoteId && !pinned) {
 					setRoomTabNoteId(room, key, psEditingNoteId);
 				}
 			}
@@ -18424,6 +18629,7 @@ self.onmessage = async (e) => {
 	loadCrdtMarksPreference();
 	setCrdtMarksToggleUi();
 	updatePasswordMaskOverlay();
+	syncPermanentLinkToggleUi();
 
 	// Personal Space wiring
 	if (addPersonalSpaceBtn) {
@@ -18475,9 +18681,23 @@ self.onmessage = async (e) => {
 					allowEmpty: true,
 				});
 				if (created && prevRoom && String(psEditingNoteId || "").trim()) {
-					setRoomTabNoteId(prevRoom, prevKey, psEditingNoteId);
+					const canSyncRoom = isPinnedContentActiveForRoom(
+						prevRoom,
+						prevKey,
+						psEditingNoteId
+					);
+					if (canSyncRoom) {
+						setRoomTabNoteId(prevRoom, prevKey, psEditingNoteId);
+					}
 				} else if (prevRoom && prevNoteId) {
-					setRoomTabNoteId(prevRoom, prevKey, "");
+					const canSyncRoom = isPinnedContentActiveForRoom(
+						prevRoom,
+						prevKey,
+						prevNoteId
+					);
+					if (canSyncRoom) {
+						setRoomTabNoteId(prevRoom, prevKey, "");
+					}
 				}
 			} catch {
 				// ignore
@@ -18797,7 +19017,14 @@ self.onmessage = async (e) => {
 				syncPsEditingNoteTagsFromState();
 				updateEditorMetaYaml();
 				if (!auto && room && key) {
-					setRoomTabNoteId(room, key, psEditingNoteId);
+					const canSyncRoom = isPinnedContentActiveForRoom(
+						room,
+						key,
+						psEditingNoteId
+					);
+					if (canSyncRoom) {
+						setRoomTabNoteId(room, key, psEditingNoteId);
+					}
 				}
 				if (psMainHint) {
 					psMainHint.classList.remove("hidden");

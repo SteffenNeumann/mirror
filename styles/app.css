@@ -195,6 +195,7 @@ body.glow-disabled .bg-glow {
 }
 
 #copyMirror,
+#togglePermanentLink,
 #toggleExcalidraw,
 #toggleExcel,
 #toggleLinear {
@@ -209,17 +210,20 @@ body.glow-disabled .bg-glow {
 #toggleExcalidraw:hover,
 #toggleExcel:hover,
 #toggleLinear:hover,
+#togglePermanentLink:hover,
 #copyMirror:hover {
 	border-color: var(--accent-border-strong) !important;
 }
 
 #toggleExcalidraw[aria-pressed="true"],
 #toggleExcel[aria-pressed="true"],
-#toggleLinear[aria-pressed="true"] {
+#toggleLinear[aria-pressed="true"],
+#togglePermanentLink[aria-pressed="true"] {
 	border-color: var(--accent-border-strong) !important;
 }
 
 #copyMirror,
+#togglePermanentLink,
 #toggleExcalidraw,
 #toggleExcel,
 #toggleLinear {
@@ -230,16 +234,20 @@ body.glow-disabled .bg-glow {
 	right: 0.5rem;
 }
 
-#toggleExcel {
+#togglePermanentLink {
 	right: 3.25rem;
 }
 
-#toggleExcalidraw {
+#toggleExcel {
 	right: 6rem;
 }
 
-#toggleLinear {
+#toggleExcalidraw {
 	right: 8.75rem;
+}
+
+#toggleLinear {
+	right: 11.5rem;
 }
 
 #toggleHeader:hover,
