@@ -741,6 +741,17 @@ body.code-lang-active #clearMirror {
 	height: 100%;
 	border: none;
 	background: transparent;
+	filter: none;
+}
+
+body[data-theme="fuchsia"] .excel-iframe,
+body[data-theme="cyan"] .excel-iframe,
+body[data-theme="emerald"] .excel-iframe,
+body[data-theme="violet"] .excel-iframe,
+body[data-theme="coffeeDark"] .excel-iframe,
+body[data-theme="bitterDark"] .excel-iframe,
+body[data-theme="monoDark"] .excel-iframe {
+	filter: invert(1) hue-rotate(180deg);
 }
 
 #linearEmbed.linear-embed {
