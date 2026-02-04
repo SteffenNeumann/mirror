@@ -835,6 +835,18 @@ body.code-lang-active #clearMirror {
 	color: rgba(226, 232, 240, 0.9);
 }
 
+.linear-kanban-title {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+}
+
+.linear-kanban-icon {
+	width: 0.75rem;
+	height: 0.75rem;
+	flex: 0 0 auto;
+}
+
 .linear-kanban-count {
 	border-radius: 999px;
 	border: 1px solid rgba(255, 255, 255, 0.12);

@@ -17309,7 +17309,15 @@ self.onmessage = async (e) => {
 						return `
 							<div class="linear-kanban-column">
 								<div class="linear-kanban-header">
-									<span class="linear-kanban-title">${state}</span>
+									<span class="linear-kanban-title">
+										<svg class="linear-kanban-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+											<path d="M3 3h7v7H3z" />
+											<path d="M14 3h7v7h-7z" />
+											<path d="M3 14h7v7H3z" />
+											<path d="M14 14h7v7h-7z" />
+										</svg>
+										${state}
+									</span>
 									<span class="linear-kanban-count">${items.length}</span>
 								</div>
 								<div class="linear-kanban-list">
