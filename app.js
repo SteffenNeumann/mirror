@@ -270,6 +270,8 @@
 	const settingsThemeList = document.getElementById("settingsThemeList");
 	const settingsGlowToggle = document.getElementById("settingsGlowToggle");
 	const taskAutoSortToggle = document.getElementById("taskAutoSort");
+	const settingsDateFormatSelect = document.getElementById("settingsDateFormat");
+	const settingsTimeFormatSelect = document.getElementById("settingsTimeFormat");
 	const mobileAutoNoteSecondsInput = document.getElementById(
 		"mobileAutoNoteSeconds"
 	);
@@ -1534,16 +1536,62 @@
 
 	function fmtDate(ts) {
 		try {
-			return new Date(ts).toLocaleString(getUiLocale(), {
-				year: "numeric",
-				month: "2-digit",
-				day: "2-digit",
-				hour: "2-digit",
-				minute: "2-digit",
-			});
+			const date = new Date(ts);
+			if (Number.isNaN(date.getTime())) return "";
+			const datePart = formatDatePart(date);
+			const timePart = formatTimePart(date);
+			if (datePart && timePart) return `${datePart} ${timePart}`;
+			return datePart || timePart || "";
 		} catch {
 			return "";
 		}
+	}
+
+	function formatDatePart(date) {
+		if (!date || Number.isNaN(date.getTime())) return "";
+		if (dateFormat === "dmy") {
+			const dd = String(date.getDate()).padStart(2, "0");
+			const mm = String(date.getMonth() + 1).padStart(2, "0");
+			const yyyy = String(date.getFullYear());
+			return `${dd}.${mm}.${yyyy}`;
+		}
+		if (dateFormat === "ymd") {
+			const dd = String(date.getDate()).padStart(2, "0");
+			const mm = String(date.getMonth() + 1).padStart(2, "0");
+			const yyyy = String(date.getFullYear());
+			return `${yyyy}-${mm}-${dd}`;
+		}
+		if (dateFormat === "mdy") {
+			const dd = String(date.getDate()).padStart(2, "0");
+			const mm = String(date.getMonth() + 1).padStart(2, "0");
+			const yyyy = String(date.getFullYear());
+			return `${mm}/${dd}/${yyyy}`;
+		}
+		return date.toLocaleDateString(getUiLocale(), {
+			year: "numeric",
+			month: "2-digit",
+			day: "2-digit",
+		});
+	}
+
+	function formatTimePart(date) {
+		if (!date || Number.isNaN(date.getTime())) return "";
+		if (timeFormat === "24h") {
+			const hh = String(date.getHours()).padStart(2, "0");
+			const mm = String(date.getMinutes()).padStart(2, "0");
+			return `${hh}:${mm}`;
+		}
+		if (timeFormat === "12h") {
+			return date.toLocaleTimeString(getUiLocale(), {
+				hour: "2-digit",
+				minute: "2-digit",
+				hour12: true,
+			});
+		}
+		return date.toLocaleTimeString(getUiLocale(), {
+			hour: "2-digit",
+			minute: "2-digit",
+		});
 	}
 
 	function normalizeManualTags(rawTags) {
@@ -4402,6 +4450,8 @@
 	const THEME_KEY = "mirror_theme";
 	const GLOW_ENABLED_KEY = "mirror_glow_enabled";
 	const TASK_AUTO_SORT_KEY = "mirror_task_auto_sort";
+	const DATE_FORMAT_KEY = "mirror_date_format";
+	const TIME_FORMAT_KEY = "mirror_time_format";
 	const UI_LANG_KEY = "mirror_ui_lang";
 	const UI_LANG_DEFAULT = "de";
 	const UI_LANGS = ["de", "en"];
@@ -4427,6 +4477,8 @@
 	let activeTheme = "fuchsia";
 	let glowEnabled = true;
 	let taskAutoSortEnabled = false;
+	let dateFormat = "locale";
+	let timeFormat = "locale";
 	let mobileAutoNoteSeconds = 0;
 	let mobileAutoNoteChecked = false;
 	let psAutoBackupEnabled = false;
@@ -4862,6 +4914,18 @@
 				"settings.tasks.desc":
 					"Offene Aufgaben beim Schließen der Vorschau automatisch nach oben sortieren.",
 				"settings.tasks.auto_sort": "Offene Einträge zuerst",
+				"settings.datetime.title": "Datum & Zeit",
+				"settings.datetime.desc":
+					"Format für Datum und Uhrzeit im Personal Space.",
+				"settings.datetime.date_label": "Datumsformat",
+				"settings.datetime.time_label": "Zeitformat",
+				"settings.datetime.date_auto": "System",
+				"settings.datetime.date_dmy": "TT.MM.JJJJ",
+				"settings.datetime.date_ymd": "JJJJ-MM-TT",
+				"settings.datetime.date_mdy": "MM/TT/JJJJ",
+				"settings.datetime.time_auto": "System",
+				"settings.datetime.time_24h": "24h",
+				"settings.datetime.time_12h": "12h AM/PM",
 				"settings.export.title": "Export/Import",
 				"settings.export.desc":
 					"Personal Space Notizen sichern oder importieren.",
@@ -5125,6 +5189,18 @@
 				"settings.tasks.desc":
 					"Automatically move open tasks to the top when closing preview.",
 				"settings.tasks.auto_sort": "Open items first",
+				"settings.datetime.title": "Date & time",
+				"settings.datetime.desc":
+					"Date and time format for Personal Space.",
+				"settings.datetime.date_label": "Date format",
+				"settings.datetime.time_label": "Time format",
+				"settings.datetime.date_auto": "System",
+				"settings.datetime.date_dmy": "DD.MM.YYYY",
+				"settings.datetime.date_ymd": "YYYY-MM-DD",
+				"settings.datetime.date_mdy": "MM/DD/YYYY",
+				"settings.datetime.time_auto": "System",
+				"settings.datetime.time_24h": "24h",
+				"settings.datetime.time_12h": "12h AM/PM",
 				"settings.export.title": "Export/Import",
 				"settings.export.desc": "Back up or import your Personal Space notes.",
 				"settings.export.export": "Export",
@@ -5459,6 +5535,69 @@
 			taskAutoSortEnabled = false;
 		}
 		applyTaskAutoSortUi();
+	}
+
+	function normalizeDateFormat(raw) {
+		const next = String(raw || "").toLowerCase();
+		if (next === "dmy" || next === "ymd" || next === "mdy") return next;
+		return "locale";
+	}
+
+	function normalizeTimeFormat(raw) {
+		const next = String(raw || "").toLowerCase();
+		if (next === "24h" || next === "12h") return next;
+		return "locale";
+	}
+
+	function applyDateTimeFormatUi() {
+		if (settingsDateFormatSelect) {
+			settingsDateFormatSelect.value = dateFormat;
+		}
+		if (settingsTimeFormatSelect) {
+			settingsTimeFormatSelect.value = timeFormat;
+		}
+	}
+
+	function loadDateFormatSetting() {
+		try {
+			const raw = localStorage.getItem(DATE_FORMAT_KEY);
+			dateFormat = normalizeDateFormat(raw);
+		} catch {
+			dateFormat = "locale";
+		}
+		applyDateTimeFormatUi();
+	}
+
+	function loadTimeFormatSetting() {
+		try {
+			const raw = localStorage.getItem(TIME_FORMAT_KEY);
+			timeFormat = normalizeTimeFormat(raw);
+		} catch {
+			timeFormat = "locale";
+		}
+		applyDateTimeFormatUi();
+	}
+
+	function saveDateFormatSetting(next) {
+		dateFormat = normalizeDateFormat(next);
+		try {
+			localStorage.setItem(DATE_FORMAT_KEY, dateFormat);
+		} catch {
+			// ignore
+		}
+		applyDateTimeFormatUi();
+		schedulePsListRerender();
+	}
+
+	function saveTimeFormatSetting(next) {
+		timeFormat = normalizeTimeFormat(next);
+		try {
+			localStorage.setItem(TIME_FORMAT_KEY, timeFormat);
+		} catch {
+			// ignore
+		}
+		applyDateTimeFormatUi();
+		schedulePsListRerender();
 	}
 
 	function saveTaskAutoSortEnabled(next) {
@@ -17146,6 +17285,8 @@ self.onmessage = async (e) => {
 	loadTheme();
 	loadGlowEnabled();
 	loadTaskAutoSortEnabled();
+	loadDateFormatSetting();
+	loadTimeFormatSetting();
 	loadAiApiConfig();
 	loadEditorMaskDisabled();
 	setEditorMaskToggleUi();
@@ -18234,6 +18375,16 @@ self.onmessage = async (e) => {
 	if (taskAutoSortToggle) {
 		taskAutoSortToggle.addEventListener("change", () => {
 			saveTaskAutoSortEnabled(Boolean(taskAutoSortToggle.checked));
+		});
+	}
+	if (settingsDateFormatSelect) {
+		settingsDateFormatSelect.addEventListener("change", () => {
+			saveDateFormatSetting(settingsDateFormatSelect.value);
+		});
+	}
+	if (settingsTimeFormatSelect) {
+		settingsTimeFormatSelect.addEventListener("change", () => {
+			saveTimeFormatSetting(settingsTimeFormatSelect.value);
 		});
 	}
 	if (uiLangDeBtn) {
