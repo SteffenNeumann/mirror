@@ -3582,6 +3582,10 @@ body[data-theme="monoDark"] #toggleExcalidraw {
 	-webkit-backdrop-filter: none !important;
 }
 
+body[data-theme="monoDark"] #toggleExcalidraw[aria-pressed="true"] {
+	border-color: var(--mono-accent) !important;
+}
+
 body[data-theme="monoDark"] .hover\:bg-fuchsia-500\/20:hover,
 body[data-theme="monoDark"] .hover\:bg-fuchsia-500\/25:hover {
 	background-color: transparent !important;
