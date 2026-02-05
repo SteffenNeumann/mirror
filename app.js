@@ -13450,6 +13450,22 @@ self.onmessage = async (e) => {
 		} catch {
 			// ignore
 		}
+		const serverShared =
+			psState && psState.authed && Array.isArray(psState.sharedRooms)
+				? psState.sharedRooms
+				: [];
+		const localShared = loadLocalSharedRooms();
+		if (serverShared.length || localShared.length) {
+			try {
+				localStorage.setItem(SHARED_ROOMS_RESET_KEY, "1");
+			} catch {
+				// ignore
+			}
+			if (serverShared.length) {
+				saveSharedRooms(serverShared);
+			}
+			return;
+		}
 		try {
 			localStorage.setItem(SHARED_ROOMS_KEY, JSON.stringify([]));
 			localStorage.setItem(SHARED_ROOMS_RESET_KEY, "1");
