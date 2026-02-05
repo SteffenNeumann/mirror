@@ -11396,11 +11396,11 @@ ${highlightThemeCss}
 				const linkedBadge = linked
 					? `<span class="ps-note-link-badge" aria-label="Permanent-Link" title="Permanent-Link">
 						<svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-							<path d="M12 2v4" />
-							<circle cx="12" cy="9" r="3" />
-							<path d="M5 12a7 7 0 0 0 14 0" />
-							<path d="M12 15v7" />
-							<path d="M8 22h8" />
+							<circle cx="12" cy="7" r="3" />
+							<path d="M12 10v8" />
+							<path d="M5 14a7 7 0 0 0 14 0" />
+							<path d="M8 18l-3-3" />
+							<path d="M16 18l3-3" />
 						</svg>
 					</span>`
 					: "";
