@@ -14519,41 +14519,34 @@ self.onmessage = async (e) => {
 	}
 
 	function formatTime(date) {
-		return date.toLocaleTimeString(getUiLocale(), {
-			hour: "2-digit",
-			minute: "2-digit",
-		});
+		return formatTimePart(date);
 	}
 
 	function formatDayLabel(date) {
-		return date.toLocaleDateString(getUiLocale(), {
+		const weekday = date.toLocaleDateString(getUiLocale(), {
 			weekday: "short",
-			day: "2-digit",
-			month: "2-digit",
 		});
+		const datePart = formatDatePart(date);
+		if (weekday && datePart) return `${weekday} ${datePart}`;
+		return weekday || datePart || "";
 	}
 
 	function formatCalendarTitle(view, date) {
 		if (view === "day") {
-			return date.toLocaleDateString(getUiLocale(), {
+			const weekday = date.toLocaleDateString(getUiLocale(), {
 				weekday: "long",
-				day: "2-digit",
-				month: "long",
-				year: "numeric",
 			});
+			const datePart = formatDatePart(date);
+			if (weekday && datePart) return `${weekday} · ${datePart}`;
+			return weekday || datePart || "";
 		}
 		if (view === "week") {
 			const start = startOfWeek(date);
 			const end = addDays(start, 6);
-			return `${start.toLocaleDateString(getUiLocale(), {
-				day: "2-digit",
-				month: "2-digit",
-				year: "numeric",
-			})} – ${end.toLocaleDateString(getUiLocale(), {
-				day: "2-digit",
-				month: "2-digit",
-				year: "numeric",
-			})}`;
+			const startPart = formatDatePart(start);
+			const endPart = formatDatePart(end);
+			if (startPart && endPart) return `${startPart} – ${endPart}`;
+			return startPart || endPart || "";
 		}
 		return date.toLocaleDateString(getUiLocale(), {
 			month: "long",
