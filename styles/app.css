@@ -2128,6 +2128,13 @@ body[data-theme="coffeeLight"] #roomTabs .text-fuchsia-100 {
 	color: #3b2a21 !important;
 }
 
+body[data-theme="coffeeLight"] .room-tab-link-badge,
+body[data-theme="coffeeLight"] .room-tab-link-badge.is-live {
+	background: transparent;
+	box-shadow: none;
+	color: #b07049;
+}
+
 body[data-theme="coffeeLight"] [aria-pressed="true"],
 body[data-theme="coffeeLight"] .ps-tag-button.ps-tag-active,
 body[data-theme="coffeeLight"] .ps-tag-section .ps-tag-active {
@@ -2613,6 +2620,13 @@ body[data-theme="bitterLight"] #aiAssist {
 body[data-theme="bitterLight"] #roomTabs .text-fuchsia-100 {
 	border-color: #ff2301 !important;
 	color: #0d0c10 !important;
+}
+
+body[data-theme="bitterLight"] .room-tab-link-badge,
+body[data-theme="bitterLight"] .room-tab-link-badge.is-live {
+	background: transparent;
+	box-shadow: none;
+	color: #ff2301;
 }
 
 body[data-theme="bitterLight"] .bg-white\/5,
@@ -3826,6 +3840,13 @@ body[data-theme="monoLight"] #commentPanel .bg-rose-500\/10 {
 body[data-theme="monoLight"] #roomTabs .text-fuchsia-100 {
 	border-color: var(--mono-accent) !important;
 	color: #24292f !important;
+}
+
+body[data-theme="monoLight"] .room-tab-link-badge,
+body[data-theme="monoLight"] .room-tab-link-badge.is-live {
+	background: transparent;
+	box-shadow: none;
+	color: var(--mono-accent);
 }
 
 body[data-theme="monoLight"] [aria-pressed="true"],
