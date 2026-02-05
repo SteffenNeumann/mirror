@@ -13696,13 +13696,12 @@ self.onmessage = async (e) => {
 					: `<span class="tab-tooltip inline-flex h-3 w-3 items-center justify-center text-slate-300" data-tooltip="${escapeAttr(
 						publicTooltip
 					)}" aria-label="${escapeAttr(publicTooltip)}"><svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15 15 0 0 1 0 20" /><path d="M12 2a15 15 0 0 0 0 20" /></svg></span>`;
-				const sharedLabel = t("tabs.badge.shared", "Link");
 				const sharedBadge = isShared
 					? `<span class="tab-tooltip room-tab-link-badge${
 							isCollab ? " is-live" : ""
 						}" data-tooltip="${escapeAttr(sharedTooltip)}" aria-label="${escapeAttr(
 							sharedTooltip
-						)}"><svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1" /><path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1" /></svg><span>${escapeHtml(sharedLabel)}</span></span>`
+						)}"><svg viewBox="0 0 24 24" class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 0 1 7 7l-1 1" /><path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 0 1-7-7l1-1" /></svg></span>`
 					: "";
 				const iconGroup = `<span class="inline-flex items-center gap-1">${privacyIcon}</span>`;
 				const closeBtn = canClose
