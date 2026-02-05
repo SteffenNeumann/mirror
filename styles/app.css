@@ -1839,6 +1839,32 @@ body[data-theme="coffeeLight"] #settingsNav {
 	background-color: #f8f1e9 !important;
 }
 
+body[data-theme="coffeeLight"] #shareModal [data-role="shareModalBackdrop"] {
+	background-color: rgba(68, 45, 30, 0.2) !important;
+}
+
+body[data-theme="coffeeLight"] #shareModal [role="dialog"] {
+	background-color: #fffaf4 !important;
+	border-color: #d9c7bc !important;
+	box-shadow: 0 10px 24px rgba(68, 45, 30, 0.18) !important;
+}
+
+body[data-theme="coffeeLight"] #shareModal .border-white\/10 {
+	border-color: rgba(217, 199, 188, 0.7) !important;
+}
+
+body[data-theme="coffeeLight"] #shareModal .bg-slate-950\/40,
+body[data-theme="coffeeLight"] #shareModal .bg-slate-950\/60,
+body[data-theme="coffeeLight"] #shareModal .bg-white\/5 {
+	background-color: #f2e7db !important;
+}
+
+body[data-theme="coffeeLight"] #shareModal .bg-white\/10,
+body[data-theme="coffeeLight"] #shareModal .bg-white\/15,
+body[data-theme="coffeeLight"] #shareModal .bg-white\/20 {
+	background-color: #fff3e8 !important;
+}
+
 body[data-theme="coffeeLight"] #psEditorTagsBar > div {
 	background-color: #f2e7db !important;
 	border-color: #d9c7bc !important;
@@ -2664,6 +2690,32 @@ body[data-theme="bitterLight"] #settingsPanel {
 }
 
 body[data-theme="bitterLight"] #settingsNav {
+	background-color: #f7f6f4 !important;
+}
+
+body[data-theme="bitterLight"] #shareModal [data-role="shareModalBackdrop"] {
+	background-color: rgba(21, 21, 24, 0.2) !important;
+}
+
+body[data-theme="bitterLight"] #shareModal [role="dialog"] {
+	background-color: #fff9f4 !important;
+	border-color: #d8d2cb !important;
+	box-shadow: 0 10px 24px rgba(13, 12, 16, 0.16) !important;
+}
+
+body[data-theme="bitterLight"] #shareModal .border-white\/10 {
+	border-color: rgba(216, 210, 203, 0.7) !important;
+}
+
+body[data-theme="bitterLight"] #shareModal .bg-slate-950\/40,
+body[data-theme="bitterLight"] #shareModal .bg-slate-950\/60,
+body[data-theme="bitterLight"] #shareModal .bg-white\/5 {
+	background-color: #f0eeeb !important;
+}
+
+body[data-theme="bitterLight"] #shareModal .bg-white\/10,
+body[data-theme="bitterLight"] #shareModal .bg-white\/15,
+body[data-theme="bitterLight"] #shareModal .bg-white\/20 {
 	background-color: #f7f6f4 !important;
 }
 
@@ -3504,6 +3556,32 @@ body[data-theme="monoLight"] #settingsPanel {
 
 body[data-theme="monoLight"] #settingsNav {
 	background-color: #f6f8fa !important;
+}
+
+body[data-theme="monoLight"] #shareModal [data-role="shareModalBackdrop"] {
+	background-color: rgba(27, 31, 36, 0.22) !important;
+}
+
+body[data-theme="monoLight"] #shareModal [role="dialog"] {
+	background-color: #ffffff !important;
+	border-color: #d0d7de !important;
+	box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12) !important;
+}
+
+body[data-theme="monoLight"] #shareModal .border-white\/10 {
+	border-color: rgba(208, 215, 222, 0.7) !important;
+}
+
+body[data-theme="monoLight"] #shareModal .bg-slate-950\/40,
+body[data-theme="monoLight"] #shareModal .bg-slate-950\/60,
+body[data-theme="monoLight"] #shareModal .bg-white\/5 {
+	background-color: #f6f8fa !important;
+}
+
+body[data-theme="monoLight"] #shareModal .bg-white\/10,
+body[data-theme="monoLight"] #shareModal .bg-white\/15,
+body[data-theme="monoLight"] #shareModal .bg-white\/20 {
+	background-color: #ffffff !important;
 }
 
 body[data-theme="monoLight"] #psEditorTagsBar > div {
