@@ -308,6 +308,12 @@
 	const faqList = document.getElementById("faqList");
 	const favoritesManageList = document.getElementById("favoritesManageList");
 	const favoritesManageEmpty = document.getElementById("favoritesManageEmpty");
+	const sharedRoomsManageList = document.getElementById("sharedRoomsManageList");
+	const sharedRoomsManageEmpty = document.getElementById(
+		"sharedRoomsManageEmpty"
+	);
+	const sharedRoomsFilterInput = document.getElementById("sharedRoomsFilter");
+	const sharedRoomsClearBtn = document.getElementById("sharedRoomsClear");
 	const uploadsRefreshBtn = document.getElementById("uploadsRefresh");
 	const uploadsManageList = document.getElementById("uploadsManageList");
 	const uploadsManageEmpty = document.getElementById("uploadsManageEmpty");
@@ -4919,6 +4925,7 @@
 				"settings.close": "Einstellungen schließen",
 				"settings.nav.user": "Benutzer-Einstellungen",
 				"settings.nav.export": "Export/Import",
+				"settings.nav.shared": "Geteilte Raeume",
 				"settings.nav.themes": "Themes",
 				"settings.nav.calendar": "Kalender",
 				"settings.nav.integrations": "Integrationen",
@@ -4936,6 +4943,19 @@
 				"settings.user.favorites.desc":
 					"Favoriten bearbeiten, Notizen hinzufügen oder entfernen.",
 				"settings.user.favorites.empty": "Keine Favoriten vorhanden.",
+				"settings.shared.title": "Geteilte Raeume",
+				"settings.shared.desc": "Geteilte Raeume verwalten und entfernen.",
+				"settings.shared.empty": "Keine geteilten Raeume gespeichert.",
+				"settings.shared.empty_filtered": "Keine Treffer fuer den Filter.",
+				"settings.shared.open": "Oeffnen",
+				"settings.shared.remove": "Entfernen",
+				"settings.shared.updated": "Zuletzt geteilt:",
+				"settings.shared.search_placeholder": "Geteilte Raeume suchen",
+				"settings.shared.clear": "Alle entfernen",
+				"settings.shared.clear_title": "Geteilte Raeume loeschen",
+				"settings.shared.clear_confirm": "Moechtest du alle geteilten Raeume entfernen?",
+				"settings.shared.clear_ok": "Alles entfernen",
+				"settings.shared.clear_cancel": "Abbrechen",
 				"settings.user.favorites.remove": "Entfernen",
 				"settings.user.favorites.note_label": "Notiz",
 				"settings.user.favorites.note_placeholder":
@@ -5247,6 +5267,7 @@
 				"settings.close": "Close settings",
 				"settings.nav.user": "User Settings",
 				"settings.nav.export": "Export/Import",
+				"settings.nav.shared": "Shared Rooms",
 				"settings.nav.themes": "Themes",
 				"settings.nav.calendar": "Calendar",
 				"settings.nav.integrations": "Integrations",
@@ -5263,6 +5284,19 @@
 				"settings.user.favorites.title": "Favorites",
 				"settings.user.favorites.desc": "Edit favorites, add or remove notes.",
 				"settings.user.favorites.empty": "No favorites yet.",
+				"settings.shared.title": "Shared Rooms",
+				"settings.shared.desc": "Manage and remove shared rooms.",
+				"settings.shared.empty": "No shared rooms saved.",
+				"settings.shared.empty_filtered": "No matches for the filter.",
+				"settings.shared.open": "Open",
+				"settings.shared.remove": "Remove",
+				"settings.shared.updated": "Last shared:",
+				"settings.shared.search_placeholder": "Search shared rooms",
+				"settings.shared.clear": "Remove all",
+				"settings.shared.clear_title": "Clear shared rooms",
+				"settings.shared.clear_confirm": "Do you want to remove all shared rooms?",
+				"settings.shared.clear_ok": "Remove all",
+				"settings.shared.clear_cancel": "Cancel",
 				"settings.user.favorites.remove": "Remove",
 				"settings.user.favorites.note_label": "Note",
 				"settings.user.favorites.note_placeholder": "Short note (optional)",
@@ -6786,6 +6820,7 @@
 			loadAiStatus();
 			renderFaq();
 			renderFavoritesManager();
+			renderSharedRoomsManager();
 		}
 	}
 
@@ -6822,6 +6857,9 @@
 			updateLinearApiStatus();
 			renderLinearProjectsList();
 			updateLinearProjectSelectOptions(getLinearNoteId());
+		}
+		if (target === "shared") {
+			renderSharedRoomsManager();
 		}
 	}
 
@@ -12524,8 +12562,10 @@ self.onmessage = async (e) => {
 	const ROOM_TABS_KEY = "mirror_room_tabs_v1";
 	const NOTE_ROOM_BINDINGS_KEY = "mirror_note_room_bindings_v1";
 	const ROOM_PINNED_KEY = "mirror_room_pinned_v1";
+	const ROOM_SHARED_PINNED_KEY = "mirror_room_shared_pinned_v1";
 	const SHARED_ROOMS_KEY = "mirror_shared_rooms_v1";
 	const SHARED_ROOMS_RESET_KEY = "mirror_shared_rooms_reset_v1";
+	const SHARED_ROOMS_FILTER_KEY = "mirror_shared_rooms_filter_v1";
 	const COMMENT_STORAGE_KEY = "mirror_comments_v1";
 	const CALENDAR_SOURCES_KEY = "mirror_calendar_sources_v1";
 	const CALENDAR_LOCAL_EVENTS_KEY = "mirror_calendar_local_events_v1";
@@ -12761,6 +12801,25 @@ self.onmessage = async (e) => {
 		}
 	}
 
+	function loadSharedRoomsFilterValue() {
+		try {
+			return String(localStorage.getItem(SHARED_ROOMS_FILTER_KEY) || "");
+		} catch {
+			return "";
+		}
+	}
+
+	function saveSharedRoomsFilterValue(value) {
+		try {
+			localStorage.setItem(
+				SHARED_ROOMS_FILTER_KEY,
+				String(value || "")
+			);
+		} catch {
+			// ignore
+		}
+	}
+
 	function loadSharedRooms() {
 		const local = loadLocalSharedRooms();
 		if (psState && psState.authed) {
@@ -12814,7 +12873,46 @@ self.onmessage = async (e) => {
 				updatedAt: Date.now(),
 			});
 		}
+		renderSharedRoomsManager();
 		return filtered.length !== list.length;
+	}
+
+	function removeSharedRoom(roomName, keyName) {
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!nextRoom) return;
+		const list = loadSharedRooms();
+		const keyId = `${nextRoom}:${nextKey}`;
+		const filtered = list.filter((r) => `${r.room}:${r.key}` !== keyId);
+		saveSharedRooms(filtered);
+		if (psState && psState.authed) {
+			api("/api/shared-rooms", {
+				method: "DELETE",
+				body: JSON.stringify({ room: nextRoom, key: nextKey }),
+			}).catch(() => {
+				// ignore
+			});
+			psState.sharedRooms = filtered;
+		}
+		renderRoomTabs();
+		renderSharedRoomsManager();
+	}
+
+	async function clearSharedRooms() {
+		saveSharedRooms([]);
+		if (psState && psState.authed) {
+			try {
+				await api("/api/shared-rooms", {
+					method: "DELETE",
+					body: JSON.stringify({ all: true }),
+				});
+			} catch {
+				// ignore
+			}
+			psState.sharedRooms = [];
+		}
+		renderRoomTabs();
+		renderSharedRoomsManager();
 	}
 
 	function normalizeNoteRoomBinding(it) {
@@ -12853,8 +12951,10 @@ self.onmessage = async (e) => {
 	function normalizeRoomPinnedEntry(it) {
 		const roomName = normalizeRoom(it && it.room);
 		const keyName = normalizeKey(it && it.key);
-		const noteId = String(it && it.noteId ? it.noteId : "").trim();
-		const updatedAt = Number(it && it.updatedAt) || 0;
+		const noteId = String(
+			it && (it.noteId || it.note_id) ? it.noteId || it.note_id : ""
+		).trim();
+		const updatedAt = Number(it && (it.updatedAt || it.updated_at)) || 0;
 		const rawText = String(it && it.text ? it.text : "");
 		const text = noteId ? "" : rawText;
 		if (!roomName) return null;
@@ -12877,6 +12977,63 @@ self.onmessage = async (e) => {
 		return Array.from(map.values());
 	}
 
+	function loadSharedRoomPinnedEntries() {
+		try {
+			const raw = localStorage.getItem(ROOM_SHARED_PINNED_KEY);
+			const parsed = JSON.parse(raw || "[]");
+			if (!Array.isArray(parsed)) return [];
+			const cleaned = parsed
+				.map(normalizeRoomPinnedEntry)
+				.filter(Boolean);
+			if (cleaned.length !== parsed.length) {
+				saveSharedRoomPinnedEntries(cleaned);
+			}
+			return cleaned;
+		} catch {
+			return [];
+		}
+	}
+
+	function saveSharedRoomPinnedEntries(list) {
+		try {
+			const cleaned = Array.isArray(list)
+				? list.map(normalizeRoomPinnedEntry).filter(Boolean)
+				: [];
+			localStorage.setItem(ROOM_SHARED_PINNED_KEY, JSON.stringify(cleaned));
+		} catch {
+			// ignore
+		}
+	}
+
+	function setSharedRoomPinnedEntry(roomName, keyName, payload) {
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!nextRoom) return;
+		const base = normalizeRoomPinnedEntry({
+			room: nextRoom,
+			key: nextKey,
+			noteId: payload && payload.noteId ? payload.noteId : "",
+			text: payload && payload.text ? payload.text : "",
+			updatedAt: Number(payload && payload.updatedAt) || Date.now(),
+		});
+		if (!base) return;
+		const list = loadSharedRoomPinnedEntries().filter(
+			(e) => !(e.room === nextRoom && e.key === nextKey)
+		);
+		list.push(base);
+		saveSharedRoomPinnedEntries(list);
+	}
+
+	function clearSharedRoomPinnedEntry(roomName, keyName) {
+		const nextRoom = normalizeRoom(roomName);
+		const nextKey = normalizeKey(keyName);
+		if (!nextRoom) return;
+		const list = loadSharedRoomPinnedEntries().filter(
+			(e) => !(e.room === nextRoom && e.key === nextKey)
+		);
+		saveSharedRoomPinnedEntries(list);
+	}
+
 	function loadLocalRoomPinnedEntries() {
 		try {
 			const raw = localStorage.getItem(ROOM_PINNED_KEY);
@@ -12896,13 +13053,15 @@ self.onmessage = async (e) => {
 
 	function loadRoomPinnedEntries() {
 		const localPins = loadLocalRoomPinnedEntries();
+		const sharedPins = loadSharedRoomPinnedEntries();
 		if (psState && psState.authed) {
 			const serverPins = Array.isArray(psState.roomPins)
 				? psState.roomPins
 				: [];
-			return mergeRoomPinnedEntries(localPins, serverPins);
+			const mergedLocal = mergeRoomPinnedEntries(sharedPins, localPins);
+			return mergeRoomPinnedEntries(mergedLocal, serverPins);
 		}
-		return localPins;
+		return mergeRoomPinnedEntries(sharedPins, localPins);
 	}
 
 	function saveRoomPinnedEntries(list) {
@@ -12971,11 +13130,31 @@ self.onmessage = async (e) => {
 		}
 	}
 
+	function sendRoomPinStateForRoom(roomName, keyName, payload) {
+		if (!ws || ws.readyState !== WebSocket.OPEN) return;
+		const nextRoom = normalizeRoom(roomName);
+		if (!nextRoom) return;
+		const noteId = String(payload && payload.noteId ? payload.noteId : "").trim();
+		const textVal = noteId ? "" : String(payload && payload.text ? payload.text : "");
+		const updatedAt = Number(payload && payload.updatedAt) || Date.now();
+		sendMessage({
+			type: "room_pin_state",
+			room: nextRoom,
+			clientId,
+			noteId,
+			text: textVal,
+			updatedAt,
+		});
+	}
+
 	function isPinnedContentActiveForRoom(roomName, keyName, activeNoteId) {
 		const pinned = getRoomPinnedEntry(roomName, keyName);
 		if (!pinned) return true;
 		const activeId = String(activeNoteId || "").trim();
-		if (pinned.noteId) return pinned.noteId === activeId;
+		if (pinned.noteId) {
+			if (!psState || !psState.authed) return true;
+			return pinned.noteId === activeId;
+		}
 		return !activeId;
 	}
 
@@ -13922,6 +14101,102 @@ self.onmessage = async (e) => {
 							placeholder="${t(
 								"settings.user.favorites.note_placeholder"
 							)}" />
+					</div>`;
+			})
+			.join("");
+	}
+
+	function renderSharedRoomsManager() {
+		if (!sharedRoomsManageList) return;
+		if (sharedRoomsFilterInput && !sharedRoomsFilterInput.dataset.synced) {
+			sharedRoomsFilterInput.value = loadSharedRoomsFilterValue();
+			sharedRoomsFilterInput.dataset.synced = "1";
+		}
+		const allRooms = loadSharedRooms().sort(
+			(a, b) => (b.updatedAt || 0) - (a.updatedAt || 0)
+		);
+		const query = String(
+			sharedRoomsFilterInput ? sharedRoomsFilterInput.value : ""
+		)
+			.trim()
+			.toLowerCase();
+		const rooms = query
+			? allRooms.filter((r) => {
+					const roomName = String(r.room || "").toLowerCase();
+					const keyName = String(r.key || "").toLowerCase();
+					return roomName.includes(query) || keyName.includes(query);
+			  })
+			: allRooms;
+		if (sharedRoomsManageEmpty && sharedRoomsManageEmpty.classList) {
+			sharedRoomsManageEmpty.textContent = rooms.length
+				? ""
+				: allRooms.length
+					? t("settings.shared.empty_filtered")
+					: t("settings.shared.empty");
+			sharedRoomsManageEmpty.classList.toggle("hidden", rooms.length > 0);
+		}
+		if (!rooms.length) {
+			sharedRoomsManageList.innerHTML = "";
+			return;
+		}
+		sharedRoomsManageList.innerHTML = rooms
+			.map((r) => {
+				const badge = r.key
+					? '<span class="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300">privat</span>'
+					: "";
+				const label = r.key ? `${r.room} (privat)` : r.room;
+				const updated = r.updatedAt
+					? new Date(r.updatedAt).toLocaleString(getUiLocale())
+					: "";
+				const updatedLabel = updated
+					? `${t("settings.shared.updated")} ${updated}`
+					: "";
+				const openLabel = t("settings.shared.open");
+				const removeLabel = t("settings.shared.remove");
+				return `
+					<div class="rounded-lg border border-white/10 bg-slate-950/30 p-2">
+						<div class="flex items-center justify-between gap-2">
+							<div class="flex items-center gap-2 text-xs text-slate-200">
+								<span class="font-medium">${escapeHtml(label)}</span>
+								${badge}
+							</div>
+							<div class="flex items-center gap-1.5">
+								<button
+									type="button"
+									data-shared-open
+									data-shared-room="${escapeAttr(r.room)}"
+									data-shared-key="${escapeAttr(r.key)}"
+									class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+									title="${escapeAttr(openLabel)}"
+									aria-label="${escapeAttr(openLabel)}">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5" aria-hidden="true">
+										<path d="M5 12h14" />
+										<path d="M12 5l7 7-7 7" />
+									</svg>
+								</button>
+								<button
+									type="button"
+									data-shared-remove
+									data-shared-room="${escapeAttr(r.room)}"
+									data-shared-key="${escapeAttr(r.key)}"
+									class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+									title="${escapeAttr(removeLabel)}"
+									aria-label="${escapeAttr(removeLabel)}">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5" aria-hidden="true">
+										<path d="M3 6h18" />
+										<path d="M8 6v-2h8v2" />
+										<path d="M19 6l-1 14H6L5 6" />
+										<path d="M10 11v6" />
+										<path d="M14 11v6" />
+									</svg>
+								</button>
+							</div>
+						</div>
+						${
+							updatedLabel
+								? `<div class="mt-2 text-[11px] text-slate-400">${escapeHtml(updatedLabel)}</div>`
+								: ""
+						}
 					</div>`;
 			})
 			.join("");
@@ -16779,6 +17054,30 @@ self.onmessage = async (e) => {
 				return;
 			}
 
+			if (msg.type === "room_pin_state") {
+				if (msg.clientId && msg.clientId === clientId) return;
+				const roomName = normalizeRoom(room);
+				if (!roomName) return;
+				const keyName = normalizeKey(key);
+				const noteId = String(msg && msg.noteId ? msg.noteId : "").trim();
+				const textVal = noteId ? "" : String(msg && msg.text ? msg.text : "");
+				const updatedAt = Number(msg && msg.updatedAt) || Date.now();
+				if (!noteId && !textVal) {
+					clearSharedRoomPinnedEntry(roomName, keyName);
+				} else {
+					setSharedRoomPinnedEntry(roomName, keyName, {
+						noteId,
+						text: textVal,
+						updatedAt,
+					});
+				}
+				syncPermanentLinkToggleUi();
+				syncExcalidrawForNote(psEditingNoteId);
+				syncExcelForNote(psEditingNoteId);
+				syncLinearForNote(psEditingNoteId);
+				return;
+			}
+
 			if (msg.type === "excalidraw_scene") {
 				if (msg.clientId && msg.clientId === clientId) return;
 				const items = Array.isArray(msg.items) ? msg.items : [];
@@ -17170,6 +17469,11 @@ self.onmessage = async (e) => {
 			const current = getRoomPinnedEntry(roomName, keyName);
 			if (current) {
 				clearRoomPinnedEntry(roomName, keyName);
+				sendRoomPinStateForRoom(roomName, keyName, {
+					noteId: "",
+					text: "",
+					updatedAt: Date.now(),
+				});
 				if (current.noteId) {
 					removeNoteRoomBindingByRoom(roomName, keyName);
 				}
@@ -17185,6 +17489,11 @@ self.onmessage = async (e) => {
 			setRoomPinnedEntry(roomName, keyName, {
 				noteId,
 				text: textSnapshot,
+			});
+			sendRoomPinStateForRoom(roomName, keyName, {
+				noteId,
+				text: textSnapshot,
+				updatedAt: Date.now(),
 			});
 			if (noteId) {
 				setRoomTabNoteId(roomName, keyName, noteId);
@@ -20740,6 +21049,42 @@ self.onmessage = async (e) => {
 			const roomName = input.getAttribute("data-fav-room") || "";
 			const keyName = input.getAttribute("data-fav-key") || "";
 			updateFavoriteText(roomName, keyName, input.value);
+		});
+	}
+	if (sharedRoomsManageList) {
+		sharedRoomsManageList.addEventListener("click", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLElement)) return;
+			const openBtn = target.closest("[data-shared-open]");
+			if (openBtn) {
+				const roomName = openBtn.getAttribute("data-shared-room") || "";
+				const keyName = openBtn.getAttribute("data-shared-key") || "";
+				goToRoomWithKey(roomName, keyName);
+				return;
+			}
+			const removeBtn = target.closest("[data-shared-remove]");
+			if (!removeBtn) return;
+			const roomName = removeBtn.getAttribute("data-shared-room") || "";
+			const keyName = removeBtn.getAttribute("data-shared-key") || "";
+			removeSharedRoom(roomName, keyName);
+		});
+	}
+	if (sharedRoomsFilterInput) {
+		sharedRoomsFilterInput.addEventListener("input", () => {
+			saveSharedRoomsFilterValue(sharedRoomsFilterInput.value);
+			renderSharedRoomsManager();
+		});
+	}
+	if (sharedRoomsClearBtn) {
+		sharedRoomsClearBtn.addEventListener("click", async () => {
+			const ok = await modalConfirm(t("settings.shared.clear_confirm"), {
+				title: t("settings.shared.clear_title"),
+				okText: t("settings.shared.clear_ok"),
+				cancelText: t("settings.shared.clear_cancel"),
+				danger: true,
+			});
+			if (!ok) return;
+			await clearSharedRooms();
 		});
 	}
 	if (uploadsRefreshBtn) {

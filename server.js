@@ -105,6 +105,9 @@ let stmtRoomTabsByUser;
 let stmtRoomPinUpsert;
 let stmtRoomPinDelete;
 let stmtRoomPinsByUser;
+let stmtRoomSharedPinUpsert;
+let stmtRoomSharedPinDelete;
+let stmtRoomSharedPinGet;
 let stmtSharedRoomUpsert;
 let stmtSharedRoomDelete;
 let stmtSharedRoomsByUser;
@@ -207,6 +210,17 @@ function initDb() {
 				UNIQUE(user_id, room, room_key)
 			);
 			CREATE INDEX IF NOT EXISTS idx_room_pins_user_updated ON room_pins(user_id, updated_at DESC);
+			CREATE TABLE IF NOT EXISTS room_shared_pins (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				room TEXT NOT NULL,
+				room_key TEXT NOT NULL,
+				note_id TEXT NOT NULL,
+				text TEXT NOT NULL,
+				added_at INTEGER NOT NULL,
+				updated_at INTEGER NOT NULL,
+				UNIQUE(room, room_key)
+			);
+			CREATE INDEX IF NOT EXISTS idx_room_shared_pins_updated ON room_shared_pins(updated_at DESC);
 		CREATE TABLE IF NOT EXISTS shared_rooms (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
 			user_id INTEGER NOT NULL,
@@ -501,6 +515,15 @@ function initDb() {
 	stmtRoomPinsByUser = db.prepare(
 		"SELECT room, room_key, note_id, text, added_at, updated_at FROM room_pins WHERE user_id = ? ORDER BY updated_at DESC"
 	);
+	stmtRoomSharedPinUpsert = db.prepare(
+		"INSERT INTO room_shared_pins(room, room_key, note_id, text, added_at, updated_at) VALUES(?, ?, ?, ?, ?, ?) ON CONFLICT(room, room_key) DO UPDATE SET note_id = excluded.note_id, text = excluded.text, updated_at = excluded.updated_at"
+	);
+	stmtRoomSharedPinDelete = db.prepare(
+		"DELETE FROM room_shared_pins WHERE room = ? AND room_key = ?"
+	);
+	stmtRoomSharedPinGet = db.prepare(
+		"SELECT room, room_key, note_id, text, updated_at FROM room_shared_pins WHERE room = ? AND room_key = ?"
+	);
 	stmtFavoritesByUser = db.prepare(
 		"SELECT room, room_key, text, is_startup, added_at FROM room_favorites WHERE user_id = ? ORDER BY added_at DESC LIMIT 200"
 	);
@@ -560,6 +583,17 @@ function loadPersistedRoomState(rk) {
 		iv: row.iv ? String(row.iv) : "",
 		v: row.v ? String(row.v) : "",
 	};
+}
+
+function loadPersistedRoomSharedPin(room, key) {
+	initDb();
+	const row = stmtRoomSharedPinGet.get(room, key);
+	if (!row) return null;
+	const noteId = String(row.note_id || "").trim();
+	const text = noteId ? "" : String(row.text || "");
+	const updatedAt = Number(row.updated_at) || 0;
+	if (!noteId && !text) return null;
+	return { noteId, text, updatedAt };
 }
 
 function persistRoomState(rk, state) {
@@ -1689,6 +1723,9 @@ const roomSockets = new Map();
 /** roomKey -> Map<clientId, presence> */
 const roomPresence = new Map();
 
+/** roomKey -> { noteId: string, text: string, updatedAt: number } */
+const roomSharedPins = new Map();
+
 /** roomKey -> { update?: string, text?: string, ts?: number, ciphertext?: string, iv?: string, v?: string } */
 const roomCrdtSnapshots = new Map();
 
@@ -1720,6 +1757,17 @@ function getRoomPresence(roomKeyName) {
 		roomPresence.set(roomKeyName, map);
 	}
 	return map;
+}
+
+function getRoomSharedPin(roomKeyName, room, key) {
+	let entry = roomSharedPins.get(roomKeyName);
+	if (entry) return entry;
+	const persisted = loadPersistedRoomSharedPin(room, key);
+	if (persisted) {
+		roomSharedPins.set(roomKeyName, persisted);
+		return persisted;
+	}
+	return null;
 }
 
 function getRoomExcalidrawState(roomKeyName) {
@@ -4324,6 +4372,23 @@ wss.on("connection", (ws, req) => {
 		}
 	}
 
+	const sharedPin = getRoomSharedPin(rk, room, key);
+	if (sharedPin) {
+		try {
+			ws.send(
+				JSON.stringify({
+					type: "room_pin_state",
+					room,
+					noteId: sharedPin.noteId || "",
+					text: sharedPin.text || "",
+					updatedAt: Number(sharedPin.updatedAt) || 0,
+				})
+			);
+		} catch {
+			// ignore
+		}
+	}
+
 	ws.on("message", (raw) => {
 		const msg = safeJsonParse(String(raw));
 		if (!msg || msg.room !== room) return;
@@ -4582,6 +4647,42 @@ wss.on("connection", (ws, req) => {
 			broadcast(
 				rk,
 				{ type: "linear_data", room, clientId: fromClientId, items: sanitized },
+				ws
+			);
+			return;
+		}
+
+		if (msg.type === "room_pin_state") {
+			const fromClientId = String(msg.clientId || "").trim();
+			const noteId = String(msg.noteId || "").trim();
+			const rawText = String(msg.text || "");
+			const textVal = noteId ? "" : rawText;
+			const updatedAt = Number(msg.updatedAt) || Date.now();
+			initDb();
+			if (!noteId && !textVal) {
+				roomSharedPins.delete(rk);
+				stmtRoomSharedPinDelete.run(room, key);
+			} else {
+				roomSharedPins.set(rk, { noteId, text: textVal, updatedAt });
+				stmtRoomSharedPinUpsert.run(
+					room,
+					key,
+					noteId,
+					textVal,
+					Date.now(),
+					updatedAt
+				);
+			}
+			broadcast(
+				rk,
+				{
+					type: "room_pin_state",
+					room,
+					clientId: fromClientId,
+					noteId,
+					text: textVal,
+					updatedAt,
+				},
 				ws
 			);
 			return;
@@ -4904,6 +5005,22 @@ wss.on("connection", (ws, req) => {
 					}
 				}
 			}
+			const sharedPin = getRoomSharedPin(rk, room, key);
+			if (sharedPin) {
+				try {
+					ws.send(
+						JSON.stringify({
+							type: "room_pin_state",
+							room,
+							noteId: sharedPin.noteId || "",
+							text: sharedPin.text || "",
+							updatedAt: Number(sharedPin.updatedAt) || 0,
+						})
+					);
+				} catch {
+					// ignore
+				}
+			}
 			return;
 		}
 	});
@@ -4924,6 +5041,7 @@ wss.on("connection", (ws, req) => {
 			roomLinearState.delete(rk);
 			roomLinearData.delete(rk);
 			roomExcalidrawScenes.delete(rk);
+			roomSharedPins.delete(rk);
 		}
 	});
 });
