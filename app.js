@@ -21054,7 +21054,7 @@ self.onmessage = async (e) => {
 	if (sharedRoomsManageList) {
 		sharedRoomsManageList.addEventListener("click", (ev) => {
 			const target = ev.target;
-			if (!(target instanceof HTMLElement)) return;
+			if (!(target instanceof Element)) return;
 			const openBtn = target.closest("[data-shared-open]");
 			if (openBtn) {
 				const roomName = openBtn.getAttribute("data-shared-room") || "";
