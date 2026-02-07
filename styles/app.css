@@ -305,9 +305,10 @@ body.glow-disabled .bg-glow {
 }
 
 #mirror {
-	white-space: pre;
-	overflow-wrap: normal;
-	word-break: normal;
+	white-space: pre !important;
+	overflow-wrap: normal !important;
+	word-break: normal !important;
+	overflow-x: auto;
 }
 
 #mdPreview {
