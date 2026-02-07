@@ -1,8 +1,13 @@
 # Project overview
 
-Datum: 2026-02-06
+Datum: 2026-02-07
 
 Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische Analyse, keine Laufzeitauflösung).
+
+## Aktuelle Änderungen (2026-02-07)
+
+- Personal Space Autosave: Auto-Save erzeugt keine neuen Notizen mehr ohne aktive Note-ID; verhindert doppelte Listeneintraege mit unterschiedlichen Ständen in `#psList`.
+  - Zuständige Funktionen: `savePersonalSpaceNote` ([app.js](app.js#L19920)), `schedulePsAutoSave` ([app.js](app.js#L20076)), `filterRealNotes` ([app.js](app.js#L7796)).
 
 ## Aktuelle Änderungen (2026-02-06)
 
@@ -70,7 +75,7 @@ Server-Start
 7) Personal Space (Notizen, Tags, Auto-Save)
 - Zweck: Notizen laden/filtern, Tags, Auto-Save, Tabs/History.
 - Umsetzung: `refreshPersonalSpace`, `applyPersonalSpaceFiltersAndRender`, `savePersonalSpaceNote`, `updateRoomTabsForNoteId`.
-- Hinweis: Notizen werden per `filterRealNotes` nur auf gültige IDs geprüft (keine Entdoppelung), Tag-Änderungen aktualisieren bestehende Notizen statt neue anzulegen.
+- Hinweis: Notizen werden per `filterRealNotes` auf gültige IDs geprüft und nach ID entdoppelt (neuestes `updatedAt`/`createdAt` bleibt); Tag-Änderungen aktualisieren bestehende Notizen statt neue anzulegen.
 
 8) Settings/Tools (Uploads, Kalender, AI)
 - Zweck: Uploads/Trash/Calendar/AI-Einstellungen verwalten.
@@ -328,7 +333,7 @@ Server-Start
 - Zweck: Setzt ps auto save status. Umsetzung: `setPsAutoSaveStatus` ([app.js](app.js#L5828)). Abhängigkeiten: `updatePsSaveVisibility`.
 - Zweck: Aktualisiert ps save visibility. Umsetzung: `updatePsSaveVisibility` ([app.js](app.js#L5836)). Abhängigkeiten: `canAutoSavePsNote`.
 - Zweck: Stellt sicher: note updated at. Umsetzung: `ensureNoteUpdatedAt` ([app.js](app.js#L5841)). Abhängigkeiten: keine internen Funktionsaufrufe.
-- Zweck: Filtert nur gültige Notizen (mit ID), ohne Entdoppelung. Umsetzung: `filterRealNotes` ([app.js](app.js#L5855)). Abhängigkeiten: keine.
+- Zweck: Filtert gültige Notizen (mit ID) und entdoppelt nach ID (neuestes `updatedAt`/`createdAt`). Umsetzung: `filterRealNotes` ([app.js](app.js#L7796)). Abhängigkeiten: keine.
 - Zweck: Formatiert meta date. Umsetzung: `formatMetaDate` ([app.js](app.js#L5853)). Abhängigkeiten: `t`.
 - Zweck: Baut note meta yaml. Umsetzung: `buildNoteMetaYaml` ([app.js](app.js#L5869)). Abhängigkeiten: `ensureNoteUpdatedAt`, `formatMetaDate`, `stripManualTagsMarker`, `stripPinnedTag`, `t`.
 - Zweck: Setzt ps meta visible. Umsetzung: `setPsMetaVisible` ([app.js](app.js#L5892)). Abhängigkeiten: `updateEditorMetaYaml`, `updatePreview`.
@@ -665,8 +670,8 @@ Server-Start
 - Zweck: Allgemeiner Helfer: go to room with key. Umsetzung: `goToRoomWithKey` ([app.js](app.js#L13530)). Abhängigkeiten: `buildShareHash`, `flushRoomTabSync`, `normalizeKey`, `normalizeRoom`, `setCalendarPanelActive`.
 - Zweck: Allgemeiner Helfer: refresh sync on focus. Umsetzung: `refreshSyncOnFocus` ([app.js](app.js#L14328)). Abhängigkeiten: `connect`, `isCrdtEnabled`, `sendMessage`, `t`.
 - Zweck: Allgemeiner Helfer: can auto save ps note. Umsetzung: `canAutoSavePsNote` ([app.js](app.js#L14681)). Abhängigkeiten: keine internen Funktionsaufrufe.
-- Zweck: Speichert personal space note. Umsetzung: `savePersonalSpaceNote` ([app.js](app.js#L14685)). Abhängigkeiten: `api`, `applyNoteToEditor`, `applyPersonalSpaceFiltersAndRender`, `buildEditorSystemTags`, `buildPsTagsPayload`, `findNoteByText`, `refreshPersonalSpace`, `setPsAutoSaveStatus`, `syncPsEditingNoteTagsFromState`, `t`, `toast`, `uniqTags`, `updateEditorMetaYaml`, `updateRoomTabsForNoteId`.
-- Zweck: Plant oder entprellt ps auto save. Umsetzung: `schedulePsAutoSave` ([app.js](app.js#L14794)). Abhängigkeiten: `canAutoSavePsNote`, `savePersonalSpaceNote`, `setPsAutoSaveStatus`, `t`.
+- Zweck: Speichert personal space note. Umsetzung: `savePersonalSpaceNote` ([app.js](app.js#L19920)). Abhängigkeiten: `api`, `applyNoteToEditor`, `applyPersonalSpaceFiltersAndRender`, `buildEditorSystemTags`, `buildPsTagsPayload`, `findNoteByText`, `refreshPersonalSpace`, `setPsAutoSaveStatus`, `syncPsEditingNoteTagsFromState`, `t`, `toast`, `uniqTags`, `updateEditorMetaYaml`, `updateRoomTabsForNoteId`.
+- Zweck: Plant oder entprellt ps auto save. Umsetzung: `schedulePsAutoSave` ([app.js](app.js#L20076)). Abhängigkeiten: `canAutoSavePsNote`, `savePersonalSpaceNote`, `setPsAutoSaveStatus`, `t`.
 - Zweck: Initialisiert ui event listeners. Umsetzung: `initUiEventListeners` ([app.js](app.js#L14836)). Abhängigkeiten: `addCommentFromDraft`, `addDays`, `addLocalCalendarEvent`, `aiAssistFromPreview`, `api`, `applyAiContextMode`, `applyBulkTagsToNotes`, `applyPersonalSpaceFiltersAndRender`, `applyPsTagContextInput`, `applyPsTagsCollapsed`, `applyPsVisible`, `attachPreviewCheckboxWriteback`, `buildLocalEventFromModal`, `clearPsEditingNoteState`, `clearPsSelection`, `closeCalendarEventModal`, `closePsContextMenu`, `closePsTagContextMenu`, `confirmPsTagContextDelete`, `createClientId`, `createGoogleCalendarEvent`, `deleteBulkNotes`, `deleteGoogleCalendarEvent`, `deleteUpload`, `findNoteById`, `getPreviewRunCombinedText`, `getSelectedNoteIds`, `isMobileViewport`, `loadAiStatus`, `loadCalendarSources`, `loadTrashManage`, `loadUploadsManage`, `modalConfirm`, `modalPrompt`, `moveCalendarCursor`, `normalizeAiModelInput`, `normalizeCalendarSource`, `normalizeManualTags`, `nowIso`, `openCalendarEventModal`, `openNoteShareModal`, `openSettingsAt`, `readAiApiKeyInput`, `recordMobileLastActive`, `refreshCalendarEvents`, `refreshPersonalSpace`, `removeFavorite`, `renderCalendarPanel`, `renderCalendarSettings`, `renderFaq`, `resetPsTagContextDelete`, `restoreTrashNote`, `saveAiApiConfig`, `saveAiPrompt`, `saveAiUseAnswer`, `saveAiUsePreview`, `saveCalendarDefaultView`, `saveCalendarFreeSlotsVisible`, `saveCalendarGoogleId`, `saveCalendarSources`, `saveGlowEnabled`, `saveLocalCalendarEvents`, `saveMobileAutoNoteSeconds`, `savePersonalSpaceNote`, `savePsPinnedOnly`, `savePsSearchQuery`, `savePsTagPrefs`, `savePsTagsCollapsed`, `savePsVisible`, `saveTheme`, `scheduleCalendarRefresh`, `scheduleSend`, `setActiveSettingsSection`, `setAiUseAnswerUi`, `setAiUsePreviewUi`, `setCalendarSidebarCollapsed`, `setCommentPanelOpen`, `setFullPreview`, `setGoogleCalendarUi`, `setPreviewRunOutput`, `setPreviewVisible`, `setPsAutoSaveStatus`, `setPsNoteSelected`, `setSettingsOpen`, `setUiLanguage`, `startAiDictation`, `stopAiDictation`, `syncMobileFocusState`, `syncPsListHeight`, `t`, `toast`, `togglePinnedForNote`, `togglePsSelectAll`, `updateCalendarEventTimeState`, `updateCalendarViewButtons`, `updateFavoriteText`, `updatePasswordMaskOverlay`, `updatePreview`, `updatePsPinnedToggle`, `updateRunOutputSizing`.
 - Zweck: Initialisiert startup tasks. Umsetzung: `initStartupTasks` ([app.js](app.js#L15750)). Abhängigkeiten: `applyAiContextMode`, `initAiDictation`, `initAutoBackup`, `initAutoImport`, `initUiLanguage`, `loadAiPrompt`, `loadAiUseAnswer`, `loadAiUsePreview`, `loadCommentsForRoom`, `loadMobileAutoNoteSeconds`, `refreshPersonalSpace`, `setCommentDraftSelection`, `syncMobileFocusState`, `t`, `updateTableMenuVisibility`.
 

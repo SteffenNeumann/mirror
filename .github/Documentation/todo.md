@@ -3,6 +3,7 @@
 - [ ] Google Kalender integration vervollstandigen( [https://console.cloud.google.com/auth/branding?
 - [ ] Themes anpassen(light Themes)
 - [ ] Tasks in Akzentfarbe
+- [ ] Kalender darf bei geteiltem Link nicht zu sehen sein
 - [ ] doppelte Items vermeiden
 - [ ] Tabpositionswechsel vermeiden
 - [ ] Item Preview verbessern(Falschanzeige)

@@ -3187,6 +3187,16 @@ body[data-theme="bitterDark"] #settingsNav {
 	background-color: #0d0c10 !important;
 }
 
+body[data-theme="bitterDark"] #shareModal [data-role="shareModalBackdrop"] {
+	background-color: rgba(13, 12, 16, 0.6) !important;
+}
+
+body[data-theme="bitterDark"] #shareModal [role="dialog"] {
+	background-color: #151518 !important;
+	border-color: #2a2a30 !important;
+	box-shadow: 0 12px 28px rgba(0, 0, 0, 0.42) !important;
+}
+
 body[data-theme="bitterDark"] .ps-note-item.ps-note-active {
 	background-color: transparent !important;
 	border-color: rgba(255, 35, 1, 0.48) !important;
