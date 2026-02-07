@@ -304,6 +304,12 @@ body.glow-disabled .bg-glow {
 	scrollbar-gutter: stable;
 }
 
+#mirror {
+	white-space: pre;
+	overflow-wrap: normal;
+	word-break: normal;
+}
+
 #mdPreview {
 	background-color: var(--selection-menu-bg);
 	border: 0;
@@ -1316,7 +1322,7 @@ body[data-theme="monoDark"] .excel-iframe {
 	flex-wrap: nowrap;
 	white-space: nowrap;
 	position: relative;
-	padding-bottom: 1.45rem;
+	padding-bottom: 1.8rem;
 	min-width: 0;
 	color: var(--accent-text);
 	font-size: 1.1rem;
@@ -1375,7 +1381,7 @@ body[data-theme="monoDark"] .excel-iframe {
 .md-content li.task-list-item > .task-closed-at {
 	position: absolute;
 	left: calc(2.3rem);
-	top: 1.45rem;
+	top: 1.7rem;
 	margin-left: 0;
 	white-space: nowrap;
 }
