@@ -9760,9 +9760,8 @@
 		ul.task-list,ol.task-list{list-style:none;padding-left:0;}
 		ul.task-list li,ol.task-list li,li.task-list-item{display:flex;gap:.55rem;align-items:flex-start;transition:transform .28s ease,opacity .28s ease;animation:task-fade .28s ease both;will-change:transform,opacity;color:var(--accent-text);font-size:1.1rem;font-weight:400;}
 		ul.task-list li label,ol.task-list li label,li.task-list-item label{font-weight:400;}
-		ul.task-list li strong,ol.task-list li strong,li.task-list-item strong,ul.task-list li b,ol.task-list li b,li.task-list-item b{font-weight:400;}
+		ul.task-list li *,ol.task-list li *,li.task-list-item *{font-weight:400;}
 		ul.task-list li.task-list-item.checked,ol.task-list li.task-list-item.checked,li.task-list-item.checked{opacity:.8;color:var(--accent-text-soft);text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:var(--accent-text-soft);}
-		ul.task-list li.task-list-item.checked label,ol.task-list li.task-list-item.checked label,li.task-list-item.checked label{text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:var(--accent-text-soft);}
 		ul.task-list li.task-list-item.checked *,ol.task-list li.task-list-item.checked *,li.task-list-item.checked *{text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:var(--accent-text-soft);}
 		ul.task-list li.task-list-item.checked input[type=checkbox],ol.task-list li.task-list-item.checked input[type=checkbox],li.task-list-item.checked input[type=checkbox]{opacity:1;}
 		ul.task-list input[type=checkbox],ol.task-list input[type=checkbox],input.task-list-item-checkbox{appearance:none;-webkit-appearance:none;margin-top:.25rem;width:1.2rem;height:1.2rem;border-radius:.4rem;border:2px solid var(--accent-strong);background:transparent;display:inline-grid;place-content:center;}
@@ -9960,6 +9959,18 @@ ${highlightThemeCss}
 				var byUl = document.querySelectorAll('ul.task-list input[type="checkbox"]');
 				return byUl;
 			}
+			function syncTaskCheckedState(){
+				var boxes = allTaskCheckboxes();
+				if (!boxes || !boxes.length) return;
+				for (var i = 0; i < boxes.length; i++) {
+					var box = boxes[i];
+					if (!box) continue;
+					var li = box.closest ? box.closest('li.task-list-item') : null;
+					if (!li || !li.classList) continue;
+					if (box.checked) li.classList.add('checked');
+					else li.classList.remove('checked');
+				}
+			}
 			function indexOfCheckbox(box){
 				if (!box) return null;
 				var all = allTaskCheckboxes();
@@ -9973,6 +9984,7 @@ ${highlightThemeCss}
 				if (!box) return;
 				var idx = indexOfCheckbox(box);
 				if (idx === null) return;
+				syncTaskCheckedState();
 				send('mirror_task_toggle', { index: idx, checked: !!box.checked });
 			}, true);
 
@@ -9988,6 +10000,8 @@ ${highlightThemeCss}
 					ev.preventDefault();
 					send('mirror_note_open', { target: target });
 				}, true);
+
+				syncTaskCheckedState();
 
 					function setPasswordRevealed(field, on){
 						if (!field || !field.classList) return;

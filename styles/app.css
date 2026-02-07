@@ -1315,6 +1315,11 @@ body[data-theme="monoDark"] .excel-iframe {
 .md-content li.task-list-item label {
 	font-weight: 400;
 }
+.md-content ul.task-list li *,
+.md-content ol.task-list li *,
+.md-content li.task-list-item * {
+	font-weight: 400;
+}
 .md-content ul.task-list li strong,
 .md-content ol.task-list li strong,
 .md-content li.task-list-item strong,
@@ -1329,13 +1334,6 @@ body[data-theme="monoDark"] .excel-iframe {
 .md-content li.task-list-item.checked {
 	opacity: 0.8;
 	color: var(--accent-text-soft);
-	text-decoration: line-through;
-	text-decoration-thickness: 2px;
-	text-decoration-color: var(--accent-text-soft);
-}
-.md-content ul.task-list li.task-list-item.checked label,
-.md-content ol.task-list li.task-list-item.checked label,
-.md-content li.task-list-item.checked label {
 	text-decoration: line-through;
 	text-decoration-thickness: 2px;
 	text-decoration-color: var(--accent-text-soft);
