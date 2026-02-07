@@ -10594,9 +10594,7 @@ ${highlightThemeCss}
 				node.className = "task-closed-at";
 				node.textContent =
 					(uiLang === "en" ? "Closed " : "Geschlossen ") + stamp;
-				const label = li.querySelector("label");
-				if (label) label.appendChild(node);
-				else li.appendChild(node);
+				li.appendChild(node);
 			}
 			return container.innerHTML;
 		} catch {
