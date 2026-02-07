@@ -10,6 +10,8 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
   - Zuständige Funktionen: `savePersonalSpaceNote` ([app.js](app.js#L19920)), `schedulePsAutoSave` ([app.js](app.js#L20076)), `filterRealNotes` ([app.js](app.js#L7796)).
 - Markdown-Tasks: Beim Abhaken wird ein Abschluss-Timestamp gespeichert und in der Vorschau subtil unter erledigten Tasks angezeigt.
   - Zuständige Funktionen: `updatePreview` ([app.js](app.js#L9449)), `toggleMarkdownTaskAtIndex` ([app.js](app.js#L10146)), `applyTaskClosedTimestampsToHtml` ([app.js](app.js#L10557)).
+- Outlook Kalender: Microsoft Graph OAuth (Single-Tenant), neue Outlook-API-Endpunkte fuer Status, Kalenderliste und Event-Sync; Kalender-UI ergaenzt, Sync-Ziel im Termin-Dialog vereinheitlicht (lokal/Google/Outlook) und Outlook-Events im Kalender geladen.
+  - Zuständige Dateien: [app.js](app.js), [server.js](server.js), [index.html](index.html).
 
 ## Aktuelle Änderungen (2026-02-06)
 

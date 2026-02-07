@@ -2308,6 +2308,44 @@
 									</button>
 								</div>
 							</div>
+							<div class="rounded-xl border border-white/10 bg-white/5 p-3">
+								<div class="text-xs font-semibold text-slate-200" data-i18n="settings.calendar.outlook.title">
+									Outlook Calendar
+								</div>
+								<p class="mt-1 text-xs text-slate-400" data-i18n="settings.calendar.outlook.desc">
+									Verbinde deinen Outlook Kalender, um Termine zu schreiben.
+								</p>
+								<div id="calendarOutlookStatus" class="mt-2 text-xs text-slate-400" data-i18n="settings.calendar.outlook.status_disconnected">
+									Nicht verbunden.
+								</div>
+								<div class="mt-3">
+									<label for="calendarOutlookSelect" class="text-xs text-slate-300" data-i18n="settings.calendar.outlook.select">
+										Kalender auswählen
+									</label>
+									<select
+										id="calendarOutlookSelect"
+										disabled
+										class="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/30 px-3 py-2 text-sm text-slate-200 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30">
+										<option value="primary" data-i18n="settings.calendar.outlook.primary">Default</option>
+									</select>
+								</div>
+								<div class="mt-3 flex flex-wrap items-center gap-2">
+									<button
+										id="calendarOutlookConnect"
+										type="button"
+										class="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20"
+										data-i18n="settings.calendar.outlook.connect">
+										Outlook verbinden
+									</button>
+									<button
+										id="calendarOutlookDisconnect"
+										type="button"
+										class="hidden rounded-lg border border-white/10 bg-transparent px-3 py-2 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+										data-i18n="settings.calendar.outlook.disconnect">
+										Trennen
+									</button>
+								</div>
+							</div>
 							<div class="rounded-xl border border-white/10 bg-slate-950/40 p-3">
 								<div class="text-xs font-semibold text-slate-200" data-i18n="settings.calendar.add.title">
 									Neuen Kalender hinzufügen
@@ -2740,14 +2778,18 @@
 								placeholder="z. B. Office, Call"
 								class="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/30 px-3 py-2 text-sm text-slate-100 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
 						</div>
-						<label class="flex items-center gap-2 text-xs text-slate-300">
-							<input
-								id="calendarEventGoogleSync"
-								type="checkbox"
-								disabled
-								class="h-4 w-4 rounded border-white/20 bg-slate-950/40 text-fuchsia-400" />
-							In Google Calendar speichern
-						</label>
+						<div>
+							<label for="calendarEventSyncTarget" class="text-xs text-slate-300" data-i18n="calendar.modal.sync_label">
+								Sync-Ziel
+							</label>
+							<select
+								id="calendarEventSyncTarget"
+								class="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/30 px-3 py-2 text-sm text-slate-200 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30">
+								<option value="local" data-i18n="calendar.modal.sync.local">Nur lokal</option>
+								<option value="google" data-i18n="calendar.modal.sync.google">Google Calendar</option>
+								<option value="outlook" data-i18n="calendar.modal.sync.outlook">Outlook Calendar</option>
+							</select>
+						</div>
 					</div>
 					<div class="mt-4 flex items-center justify-end gap-2">
 						<button

@@ -56,6 +56,18 @@ const GOOGLE_OAUTH_CLIENT_SECRET = String(
 const GOOGLE_OAUTH_REDIRECT_URL = String(
 	process.env.GOOGLE_OAUTH_REDIRECT_URL || ""
 ).trim();
+const OUTLOOK_OAUTH_CLIENT_ID = String(
+	process.env.OUTLOOK_OAUTH_CLIENT_ID || ""
+).trim();
+const OUTLOOK_OAUTH_CLIENT_SECRET = String(
+	process.env.OUTLOOK_OAUTH_CLIENT_SECRET || ""
+).trim();
+const OUTLOOK_OAUTH_REDIRECT_URL = String(
+	process.env.OUTLOOK_OAUTH_REDIRECT_URL || ""
+).trim();
+const OUTLOOK_OAUTH_TENANT = String(
+	process.env.OUTLOOK_OAUTH_TENANT || ""
+).trim();
 const AI_MAX_INPUT_CHARS = 20000;
 const AI_MAX_OUTPUT_TOKENS = Number(process.env.AI_MAX_OUTPUT_TOKENS || 900);
 const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 30000);
@@ -118,6 +130,9 @@ let stmtUserLinearKeyUpsert;
 let stmtGoogleTokenGet;
 let stmtGoogleTokenUpsert;
 let stmtGoogleTokenDelete;
+let stmtOutlookTokenGet;
+let stmtOutlookTokenUpsert;
+let stmtOutlookTokenDelete;
 
 // In-memory rate limit: ip -> { count, resetAt }
 const aiRate = new Map();
@@ -244,6 +259,16 @@ function initDb() {
 			FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 		);
 		CREATE TABLE IF NOT EXISTS google_calendar_tokens (
+			user_id INTEGER PRIMARY KEY,
+			access_token TEXT NOT NULL,
+			refresh_token TEXT NOT NULL,
+			expires_at INTEGER NOT NULL,
+			scope TEXT NOT NULL,
+			token_type TEXT NOT NULL,
+			updated_at INTEGER NOT NULL,
+			FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+		);
+		CREATE TABLE IF NOT EXISTS outlook_calendar_tokens (
 			user_id INTEGER PRIMARY KEY,
 			access_token TEXT NOT NULL,
 			refresh_token TEXT NOT NULL,
@@ -568,6 +593,15 @@ function initDb() {
 	);
 	stmtGoogleTokenDelete = db.prepare(
 		"DELETE FROM google_calendar_tokens WHERE user_id = ?"
+	);
+	stmtOutlookTokenGet = db.prepare(
+		"SELECT access_token, refresh_token, expires_at, scope, token_type, updated_at FROM outlook_calendar_tokens WHERE user_id = ?"
+	);
+	stmtOutlookTokenUpsert = db.prepare(
+		"INSERT INTO outlook_calendar_tokens(user_id, access_token, refresh_token, expires_at, scope, token_type, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET access_token = excluded.access_token, refresh_token = excluded.refresh_token, expires_at = excluded.expires_at, scope = excluded.scope, token_type = excluded.token_type, updated_at = excluded.updated_at"
+	);
+	stmtOutlookTokenDelete = db.prepare(
+		"DELETE FROM outlook_calendar_tokens WHERE user_id = ?"
 	);
 }
 
@@ -1356,6 +1390,14 @@ function sanitizeCalendarSettings(input) {
 			const location = String(evt && evt.location ? evt.location : "")
 				.trim()
 				.slice(0, 200);
+			const googleEventId = String(evt && evt.googleEventId ? evt.googleEventId : "")
+				.trim()
+				.slice(0, 256);
+			const outlookEventId = String(
+				evt && evt.outlookEventId ? evt.outlookEventId : ""
+			)
+				.trim()
+				.slice(0, 256);
 			const startRaw = evt && evt.start ? evt.start : "";
 			const endRaw = evt && evt.end ? evt.end : "";
 			const startDate = new Date(startRaw);
@@ -1370,10 +1412,15 @@ function sanitizeCalendarSettings(input) {
 				end: endDate.toISOString(),
 				allDay,
 				location,
+				googleEventId,
+				outlookEventId,
 			};
 		})
 		.filter(Boolean);
 	const googleCalendarId = String(safe.googleCalendarId || "")
+		.trim()
+		.slice(0, 256);
+	const outlookCalendarId = String(safe.outlookCalendarId || "")
 		.trim()
 		.slice(0, 256);
 	const rawView = String(safe.defaultView || "").trim();
@@ -1385,6 +1432,7 @@ function sanitizeCalendarSettings(input) {
 		defaultView,
 		localEvents,
 		googleCalendarId: googleCalendarId || "primary",
+		outlookCalendarId: outlookCalendarId || "primary",
 	};
 }
 
@@ -1463,7 +1511,13 @@ function getUserSettings(userId) {
 	return {
 		calendar:
 			calendar ||
-			{ sources: [], defaultView: "month", localEvents: [], googleCalendarId: "primary" },
+			{
+				sources: [],
+				defaultView: "month",
+				localEvents: [],
+				googleCalendarId: "primary",
+				outlookCalendarId: "primary",
+			},
 		updatedAt: Number(row.updated_at) || 0,
 		linearApiKeySet,
 	};
@@ -1475,7 +1529,13 @@ function upsertUserSettings(userId, settings) {
 	const calendar = sanitizeCalendarSettings(settings && settings.calendar);
 	const calendarJson = JSON.stringify(
 		calendar ||
-			{ sources: [], defaultView: "month", localEvents: [], googleCalendarId: "primary" }
+			{
+				sources: [],
+				defaultView: "month",
+				localEvents: [],
+				googleCalendarId: "primary",
+				outlookCalendarId: "primary",
+			}
 	);
 	stmtUserSettingsUpsert.run(userId, calendarJson, now);
 	return { calendar, updatedAt: now };
@@ -1504,6 +1564,7 @@ function saveUserLinearApiKey(userId, apiKey) {
 			defaultView: "month",
 			localEvents: [],
 			googleCalendarId: "primary",
+			outlookCalendarId: "primary",
 		});
 	if (!nextKey) {
 		stmtUserLinearKeyUpsert.run(userId, calendarJson, "", "", "", now);
@@ -1530,6 +1591,15 @@ function googleConfigured() {
 	);
 }
 
+function outlookConfigured() {
+	return Boolean(
+		OUTLOOK_OAUTH_CLIENT_ID &&
+			OUTLOOK_OAUTH_CLIENT_SECRET &&
+			OUTLOOK_OAUTH_REDIRECT_URL &&
+			OUTLOOK_OAUTH_TENANT
+	);
+}
+
 function makeGoogleState(email) {
 	const exp = Date.now() + 1000 * 60 * 10;
 	const payload = Buffer.from(
@@ -1540,6 +1610,30 @@ function makeGoogleState(email) {
 }
 
 function parseGoogleState(state) {
+	const raw = String(state || "");
+	const [payload, sig] = raw.split(".");
+	if (!payload || !sig) return "";
+	if (sign(payload) !== sig) return "";
+	try {
+		const decoded = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
+		if (!decoded || typeof decoded !== "object") return "";
+		if (typeof decoded.exp !== "number" || Date.now() > decoded.exp) return "";
+		return typeof decoded.email === "string" ? decoded.email : "";
+	} catch {
+		return "";
+	}
+}
+
+function makeOutlookState(email) {
+	const exp = Date.now() + 1000 * 60 * 10;
+	const payload = Buffer.from(
+		JSON.stringify({ email, exp, nonce: crypto.randomUUID() }),
+		"utf8"
+	).toString("base64url");
+	return `${payload}.${sign(payload)}`;
+}
+
+function parseOutlookState(state) {
 	const raw = String(state || "");
 	const [payload, sig] = raw.split(".");
 	if (!payload || !sig) return "";
@@ -1578,9 +1672,40 @@ function deleteGoogleTokens(userId) {
 	stmtGoogleTokenDelete.run(userId);
 }
 
+function getOutlookTokens(userId) {
+	initDb();
+	return stmtOutlookTokenGet.get(userId) || null;
+}
+
+function saveOutlookTokens(userId, token) {
+	initDb();
+	const now = Date.now();
+	stmtOutlookTokenUpsert.run(
+		userId,
+		String(token.access_token || ""),
+		String(token.refresh_token || ""),
+		Number(token.expires_at || 0),
+		String(token.scope || ""),
+		String(token.token_type || ""),
+		now
+	);
+}
+
+function deleteOutlookTokens(userId) {
+	initDb();
+	stmtOutlookTokenDelete.run(userId);
+}
+
 function getGoogleCalendarIdForUser(userId) {
 	const settings = getUserSettings(userId);
 	const id = settings && settings.calendar ? settings.calendar.googleCalendarId : "";
+	const safe = String(id || "primary").trim() || "primary";
+	return safe.slice(0, 256);
+}
+
+function getOutlookCalendarIdForUser(userId) {
+	const settings = getUserSettings(userId);
+	const id = settings && settings.calendar ? settings.calendar.outlookCalendarId : "";
 	const safe = String(id || "primary").trim() || "primary";
 	return safe.slice(0, 256);
 }
@@ -1619,6 +1744,52 @@ async function getGoogleAccessToken(userId) {
 	try {
 		const refreshed = await refreshGoogleAccessToken(token.refresh_token);
 		saveGoogleTokens(userId, refreshed);
+		return refreshed;
+	} catch {
+		return null;
+	}
+}
+
+async function refreshOutlookAccessToken(refreshToken) {
+	const params = new URLSearchParams();
+	params.set("client_id", OUTLOOK_OAUTH_CLIENT_ID);
+	params.set("client_secret", OUTLOOK_OAUTH_CLIENT_SECRET);
+	params.set("refresh_token", refreshToken);
+	params.set("grant_type", "refresh_token");
+	params.set("scope", "https://graph.microsoft.com/Calendars.ReadWrite offline_access User.Read");
+	const res = await fetch(
+		`https://login.microsoftonline.com/${encodeURIComponent(
+			OUTLOOK_OAUTH_TENANT
+		)}/oauth2/v2.0/token`,
+		{
+			method: "POST",
+			headers: { "Content-Type": "application/x-www-form-urlencoded" },
+			body: params.toString(),
+		}
+	);
+	if (!res.ok) throw new Error("refresh_failed");
+	const data = await res.json();
+	const expiresAt = Date.now() + Number(data.expires_in || 0) * 1000;
+	return {
+		access_token: data.access_token,
+		refresh_token: refreshToken,
+		expires_at: expiresAt,
+		scope: String(data.scope || ""),
+		token_type: String(data.token_type || "Bearer"),
+	};
+}
+
+async function getOutlookAccessToken(userId) {
+	const token = getOutlookTokens(userId);
+	if (!token) return null;
+	const now = Date.now();
+	if (Number(token.expires_at || 0) - now > 60_000) {
+		return token;
+	}
+	if (!token.refresh_token) return null;
+	try {
+		const refreshed = await refreshOutlookAccessToken(token.refresh_token);
+		saveOutlookTokens(userId, refreshed);
 		return refreshed;
 	} catch {
 		return null;
@@ -2297,6 +2468,368 @@ const server = http.createServer(async (req, res) => {
 				json(res, 502, { ok: false, error: "calendar_fetch_failed" });
 			});
 		return;
+	}
+
+	if (url.pathname === "/api/calendar/outlook/status" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		if (!outlookConfigured()) {
+			json(res, 200, { ok: true, configured: false, connected: false });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const token = await getOutlookAccessToken(userId);
+		json(res, 200, {
+			ok: true,
+			configured: true,
+			connected: Boolean(token && token.access_token),
+			email,
+			calendarId: getOutlookCalendarIdForUser(userId),
+		});
+		return;
+	}
+
+	if (
+		url.pathname === "/api/calendar/outlook/calendars" &&
+		req.method === "GET"
+	) {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		if (!outlookConfigured()) {
+			json(res, 400, { ok: false, error: "not_configured" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const token = await getOutlookAccessToken(userId);
+		if (!token || !token.access_token) {
+			json(res, 401, { ok: false, error: "not_connected" });
+			return;
+		}
+		try {
+			const apiRes = await fetch("https://graph.microsoft.com/v1.0/me/calendars", {
+				headers: {
+					Authorization: `Bearer ${token.access_token}`,
+				},
+			});
+			if (!apiRes.ok) {
+				json(res, 502, { ok: false, error: "outlook_api_error" });
+				return;
+			}
+			const data = await apiRes.json();
+			const calendars = Array.isArray(data && data.value)
+				? data.value.map((item) => ({
+						id: String(item.id || "").trim(),
+						name: String(item.name || "").trim(),
+						isDefault: Boolean(item.isDefaultCalendar),
+					}))
+				: [];
+			json(res, 200, { ok: true, calendars });
+			return;
+		} catch {
+			json(res, 500, { ok: false, error: "outlook_api_failed" });
+			return;
+		}
+	}
+
+	if (url.pathname === "/api/calendar/outlook/auth" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		if (!outlookConfigured()) {
+			json(res, 400, { ok: false, error: "not_configured" });
+			return;
+		}
+		const state = makeOutlookState(email);
+		const params = new URLSearchParams();
+		params.set("client_id", OUTLOOK_OAUTH_CLIENT_ID);
+		params.set("redirect_uri", OUTLOOK_OAUTH_REDIRECT_URL);
+		params.set("response_type", "code");
+		params.set("response_mode", "query");
+		params.set("prompt", "consent");
+		params.set(
+			"scope",
+			"https://graph.microsoft.com/Calendars.ReadWrite offline_access User.Read"
+		);
+		params.set("state", state);
+		const authUrl = `https://login.microsoftonline.com/${encodeURIComponent(
+			OUTLOOK_OAUTH_TENANT
+		)}/oauth2/v2.0/authorize?${params.toString()}`;
+		redirect(res, authUrl);
+		return;
+	}
+
+	if (url.pathname === "/api/calendar/outlook/callback" && req.method === "GET") {
+		if (!outlookConfigured()) {
+			text(res, 400, "Outlook OAuth not configured.");
+			return;
+		}
+		const code = String(url.searchParams.get("code") || "").trim();
+		const state = String(url.searchParams.get("state") || "").trim();
+		const email = parseOutlookState(state);
+		if (!code || !email) {
+			text(res, 400, "Invalid OAuth callback.");
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const params = new URLSearchParams();
+		params.set("code", code);
+		params.set("client_id", OUTLOOK_OAUTH_CLIENT_ID);
+		params.set("client_secret", OUTLOOK_OAUTH_CLIENT_SECRET);
+		params.set("redirect_uri", OUTLOOK_OAUTH_REDIRECT_URL);
+		params.set("grant_type", "authorization_code");
+		params.set(
+			"scope",
+			"https://graph.microsoft.com/Calendars.ReadWrite offline_access User.Read"
+		);
+		try {
+			const tokenRes = await fetch(
+				`https://login.microsoftonline.com/${encodeURIComponent(
+					OUTLOOK_OAUTH_TENANT
+				)}/oauth2/v2.0/token`,
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/x-www-form-urlencoded" },
+					body: params.toString(),
+				}
+			);
+			if (!tokenRes.ok) {
+				text(res, 400, "OAuth token exchange failed.");
+				return;
+			}
+			const data = await tokenRes.json();
+			const existing = getOutlookTokens(userId);
+			const refreshToken =
+				String(data.refresh_token || "").trim() ||
+				(existing ? String(existing.refresh_token || "") : "");
+			if (!refreshToken) {
+				text(res, 400, "Missing refresh token.");
+				return;
+			}
+			const expiresAt = Date.now() + Number(data.expires_in || 0) * 1000;
+			saveOutlookTokens(userId, {
+				access_token: data.access_token,
+				refresh_token: refreshToken,
+				expires_at: expiresAt,
+				scope: String(data.scope || ""),
+				token_type: String(data.token_type || "Bearer"),
+			});
+			redirect(res, "/?outlook=connected");
+			return;
+		} catch {
+			text(res, 500, "OAuth flow failed.");
+			return;
+		}
+	}
+
+	if (
+		url.pathname === "/api/calendar/outlook/disconnect" &&
+		req.method === "POST"
+	) {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		deleteOutlookTokens(userId);
+		json(res, 200, { ok: true });
+		return;
+	}
+
+	if (url.pathname === "/api/calendar/outlook/events" && req.method === "POST") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		if (!outlookConfigured()) {
+			json(res, 400, { ok: false, error: "not_configured" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const token = await getOutlookAccessToken(userId);
+		if (!token || !token.access_token) {
+			json(res, 401, { ok: false, error: "not_connected" });
+			return;
+		}
+		const calendarId = getOutlookCalendarIdForUser(userId);
+		const body = await readJson(req);
+		const title = String(body && body.title ? body.title : "").trim();
+		if (!title) {
+			json(res, 400, { ok: false, error: "missing_title" });
+			return;
+		}
+		const allDay = Boolean(body && body.allDay);
+		const location = String(body && body.location ? body.location : "").trim();
+		const timeZone = String(body && body.timeZone ? body.timeZone : "UTC");
+		const startIso = String(body && body.start ? body.start : "").trim();
+		const endIso = String(body && body.end ? body.end : "").trim();
+		const startDate = String(body && body.startDate ? body.startDate : "").trim();
+		const endDate = String(body && body.endDate ? body.endDate : "").trim();
+		if (allDay && (!startDate || !endDate)) {
+			json(res, 400, { ok: false, error: "missing_date" });
+			return;
+		}
+		if (!allDay && (!startIso || !endIso)) {
+			json(res, 400, { ok: false, error: "missing_time" });
+			return;
+		}
+		const payload = {
+			subject: title,
+			location: location ? { displayName: location } : undefined,
+			start: allDay
+				? { dateTime: `${startDate}T00:00:00`, timeZone }
+				: { dateTime: startIso, timeZone },
+			end: allDay
+				? { dateTime: `${endDate}T00:00:00`, timeZone }
+				: { dateTime: endIso, timeZone },
+			isAllDay: Boolean(allDay),
+		};
+		const targetUrl =
+			calendarId && calendarId !== "primary"
+				? `https://graph.microsoft.com/v1.0/me/calendars/${encodeURIComponent(
+						calendarId
+					)}/events`
+				: "https://graph.microsoft.com/v1.0/me/calendar/events";
+		try {
+			const apiRes = await fetch(targetUrl, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${token.access_token}`,
+					"Content-Type": "application/json",
+				},
+				body: JSON.stringify(payload),
+			});
+			if (!apiRes.ok) {
+				json(res, 502, { ok: false, error: "outlook_api_error" });
+				return;
+			}
+			const data = await apiRes.json();
+			json(res, 200, { ok: true, eventId: data && data.id ? data.id : "" });
+			return;
+		} catch {
+			json(res, 500, { ok: false, error: "outlook_api_failed" });
+			return;
+		}
+	}
+
+	if (url.pathname === "/api/calendar/outlook/events" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		if (!outlookConfigured()) {
+			json(res, 400, { ok: false, error: "not_configured" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const token = await getOutlookAccessToken(userId);
+		if (!token || !token.access_token) {
+			json(res, 401, { ok: false, error: "not_connected" });
+			return;
+		}
+		const start = String(url.searchParams.get("start") || "").trim();
+		const end = String(url.searchParams.get("end") || "").trim();
+		if (!start || !end) {
+			json(res, 400, { ok: false, error: "missing_range" });
+			return;
+		}
+		const params = new URLSearchParams();
+		params.set("startDateTime", start);
+		params.set("endDateTime", end);
+		try {
+			const apiRes = await fetch(
+				`https://graph.microsoft.com/v1.0/me/calendarView?${params.toString()}`,
+				{
+					headers: {
+						Authorization: `Bearer ${token.access_token}`,
+						Prefer: 'outlook.timezone="UTC"',
+					},
+				}
+			);
+			if (!apiRes.ok) {
+				json(res, 502, { ok: false, error: "outlook_api_error" });
+				return;
+			}
+			const data = await apiRes.json();
+			const items = Array.isArray(data && data.value) ? data.value : [];
+			const events = items.map((evt) => ({
+				id: String(evt.id || ""),
+				title: String(evt.subject || "(Ohne Titel)"),
+				location: String(
+					evt.location && evt.location.displayName
+						? evt.location.displayName
+						: ""
+				),
+				allDay: Boolean(evt.isAllDay),
+				start: evt.start && evt.start.dateTime,
+				end: evt.end && evt.end.dateTime,
+			}));
+			json(res, 200, { ok: true, events });
+			return;
+		} catch {
+			json(res, 500, { ok: false, error: "outlook_api_failed" });
+			return;
+		}
+	}
+
+	if (
+		url.pathname.startsWith("/api/calendar/outlook/events/") &&
+		req.method === "DELETE"
+	) {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		if (!outlookConfigured()) {
+			json(res, 400, { ok: false, error: "not_configured" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const token = await getOutlookAccessToken(userId);
+		if (!token || !token.access_token) {
+			json(res, 401, { ok: false, error: "not_connected" });
+			return;
+		}
+		const eventId = decodeURIComponent(
+			url.pathname.replace("/api/calendar/outlook/events/", "")
+		);
+		if (!eventId) {
+			json(res, 400, { ok: false, error: "missing_event_id" });
+			return;
+		}
+		try {
+			const apiRes = await fetch(
+				`https://graph.microsoft.com/v1.0/me/events/${encodeURIComponent(
+					eventId
+				)}`,
+				{
+					method: "DELETE",
+					headers: {
+						Authorization: `Bearer ${token.access_token}`,
+					},
+				}
+			);
+			if (!apiRes.ok && apiRes.status !== 204) {
+				json(res, 502, { ok: false, error: "outlook_api_error" });
+				return;
+			}
+			json(res, 200, { ok: true });
+			return;
+		} catch {
+			json(res, 500, { ok: false, error: "outlook_api_failed" });
+			return;
+		}
 	}
 
 	if (url.pathname === "/api/uploads" && req.method === "POST") {

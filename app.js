@@ -354,6 +354,12 @@
 	const calendarGoogleDisconnect = document.getElementById(
 		"calendarGoogleDisconnect"
 	);
+	const calendarOutlookStatus = document.getElementById("calendarOutlookStatus");
+	const calendarOutlookSelect = document.getElementById("calendarOutlookSelect");
+	const calendarOutlookConnect = document.getElementById("calendarOutlookConnect");
+	const calendarOutlookDisconnect = document.getElementById(
+		"calendarOutlookDisconnect"
+	);
 	const calendarViewButtons = document.querySelectorAll("[data-calendar-view]");
 	const calendarLocalEventsList = document.getElementById("calendarLocalEventsList");
 	const calendarLocalEventsEmpty = document.getElementById("calendarLocalEventsEmpty");
@@ -367,8 +373,8 @@
 	const calendarEventStart = document.getElementById("calendarEventStart");
 	const calendarEventEnd = document.getElementById("calendarEventEnd");
 	const calendarEventLocation = document.getElementById("calendarEventLocation");
-	const calendarEventGoogleSync = document.getElementById(
-		"calendarEventGoogleSync"
+	const calendarEventSyncTarget = document.getElementById(
+		"calendarEventSyncTarget"
 	);
 	const calendarEventBackdrop = document.querySelector(
 		"[data-role=\"calendarEventBackdrop\"]"
@@ -5129,6 +5135,18 @@
 				"settings.calendar.google.primary": "Primär",
 				"settings.calendar.google.connect": "Google verbinden",
 				"settings.calendar.google.disconnect": "Trennen",
+				"settings.calendar.outlook.title": "Outlook Calendar",
+				"settings.calendar.outlook.desc":
+					"Verbinde deinen Outlook Kalender, um Termine zu schreiben.",
+				"settings.calendar.outlook.status_disconnected": "Nicht verbunden.",
+				"settings.calendar.outlook.connected": "Verbunden",
+				"settings.calendar.outlook.not_configured":
+					"Outlook Kalender ist nicht konfiguriert.",
+				"settings.calendar.outlook.unavailable": "Outlook Status nicht verfügbar.",
+				"settings.calendar.outlook.select": "Kalender auswählen",
+				"settings.calendar.outlook.primary": "Standard",
+				"settings.calendar.outlook.connect": "Outlook verbinden",
+				"settings.calendar.outlook.disconnect": "Trennen",
 				"settings.calendar.add.title": "Neuen Kalender hinzufügen",
 				"settings.calendar.add.name": "Name",
 				"settings.calendar.add.name_placeholder": "Team, Privat, Urlaub",
@@ -5196,6 +5214,10 @@
 				"calendar.modal.all_day": "Ganztägig",
 				"calendar.modal.start": "Start",
 				"calendar.modal.end": "Ende",
+				"calendar.modal.sync_label": "Sync-Ziel",
+				"calendar.modal.sync.local": "Nur lokal",
+				"calendar.modal.sync.google": "Google Calendar",
+				"calendar.modal.sync.outlook": "Outlook Calendar",
 				"toast.dictation_failed": "Diktat fehlgeschlagen.",
 				"toast.ai_saved": "KI-Einstellungen gespeichert.",
 				"toast.ai_cleared": "KI-Einstellungen gelöscht.",
@@ -5511,6 +5533,17 @@
 				"settings.calendar.google.primary": "Primary",
 				"settings.calendar.google.connect": "Connect Google",
 				"settings.calendar.google.disconnect": "Disconnect",
+				"settings.calendar.outlook.title": "Outlook Calendar",
+				"settings.calendar.outlook.desc": "Connect your Outlook Calendar to write events.",
+				"settings.calendar.outlook.status_disconnected": "Not connected.",
+				"settings.calendar.outlook.connected": "Connected",
+				"settings.calendar.outlook.not_configured":
+					"Outlook Calendar is not configured.",
+				"settings.calendar.outlook.unavailable": "Outlook status unavailable.",
+				"settings.calendar.outlook.select": "Select calendar",
+				"settings.calendar.outlook.primary": "Default",
+				"settings.calendar.outlook.connect": "Connect Outlook",
+				"settings.calendar.outlook.disconnect": "Disconnect",
 				"settings.calendar.add.title": "Add new calendar",
 				"settings.calendar.add.name": "Name",
 				"settings.calendar.add.name_placeholder": "Team, Personal, Vacation",
@@ -5574,6 +5607,10 @@
 				"calendar.modal.all_day": "All day",
 				"calendar.modal.start": "Start",
 				"calendar.modal.end": "End",
+				"calendar.modal.sync_label": "Sync target",
+				"calendar.modal.sync.local": "Local only",
+				"calendar.modal.sync.google": "Google Calendar",
+				"calendar.modal.sync.outlook": "Outlook Calendar",
 				"toast.dictation_failed": "Dictation failed.",
 				"toast.ai_saved": "AI settings saved.",
 				"toast.ai_cleared": "AI settings cleared.",
@@ -6983,6 +7020,7 @@
 		if (target === "calendar") {
 			renderCalendarSettings();
 			fetchGoogleCalendarStatus();
+			fetchOutlookCalendarStatus();
 		}
 		if (target === "integrations") {
 			updateLinearApiStatus();
@@ -12876,6 +12914,8 @@ self.onmessage = async (e) => {
 	const CALENDAR_DEFAULT_VIEW_KEY = "mirror_calendar_default_view_v1";
 	const CALENDAR_FREE_SLOTS_KEY = "mirror_calendar_free_slots_v1";
 	const CALENDAR_GOOGLE_CAL_ID_KEY = "mirror_calendar_google_id_v1";
+	const CALENDAR_OUTLOOK_CAL_ID_KEY = "mirror_calendar_outlook_id_v1";
+	const CALENDAR_SYNC_TARGET_KEY = "mirror_calendar_sync_target_v1";
 	const CALENDAR_VIEWS = ["day", "week", "month"];
 	const CALENDAR_SETTINGS_SYNC_DELAY = 1200;
 	const CALENDAR_WORK_START_HOUR = 9;
@@ -12889,6 +12929,11 @@ self.onmessage = async (e) => {
 		id: "google",
 		name: "Google Calendar",
 		color: "#4285f4",
+	};
+	const CALENDAR_OUTLOOK_SOURCE = {
+		id: "outlook",
+		name: "Outlook Calendar",
+		color: "#0a6cce",
 	};
 	const MAX_ROOM_TABS = 5;
 	let pendingRoomBootstrapText = "";
@@ -12905,6 +12950,8 @@ self.onmessage = async (e) => {
 	let calendarFreeSlotsVisible = true;
 	let googleCalendarConnected = false;
 	let googleCalendarList = [];
+	let outlookCalendarConnected = false;
+	let outlookCalendarList = [];
 	const calendarState = {
 		view: "month",
 		cursor: new Date(),
@@ -14696,6 +14743,7 @@ self.onmessage = async (e) => {
 			defaultView: loadCalendarDefaultView(),
 			localEvents: loadLocalCalendarEventsRaw(),
 			googleCalendarId: loadCalendarGoogleId(),
+			outlookCalendarId: loadCalendarOutlookId(),
 		};
 	}
 
@@ -14705,6 +14753,7 @@ self.onmessage = async (e) => {
 		const hasView = CALENDAR_VIEWS.includes(calendar.defaultView);
 		const hasLocalEvents = Array.isArray(calendar.localEvents);
 		const hasGoogleCalendarId = typeof calendar.googleCalendarId === "string";
+		const hasOutlookCalendarId = typeof calendar.outlookCalendarId === "string";
 		if (hasSources) saveCalendarSources(calendar.sources, { skipSync: true });
 		if (hasView) {
 			saveCalendarDefaultView(calendar.defaultView, {
@@ -14724,12 +14773,30 @@ self.onmessage = async (e) => {
 				skipRender: true,
 			});
 		}
-		if (hasSources || hasView || hasLocalEvents || hasGoogleCalendarId) {
+		if (hasOutlookCalendarId) {
+			saveCalendarOutlookId(calendar.outlookCalendarId, {
+				skipSync: true,
+				skipRender: true,
+			});
+		}
+		if (
+			hasSources ||
+			hasView ||
+			hasLocalEvents ||
+			hasGoogleCalendarId ||
+			hasOutlookCalendarId
+		) {
 			renderCalendarSettings();
 			scheduleCalendarRefresh();
 			if (!(opts && opts.skipRender)) renderCalendarPanel();
 		}
-		return hasSources || hasView || hasLocalEvents || hasGoogleCalendarId;
+		return (
+			hasSources ||
+			hasView ||
+			hasLocalEvents ||
+			hasGoogleCalendarId ||
+			hasOutlookCalendarId
+		);
 	}
 
 	async function syncCalendarSettingsToServer(calendar) {
@@ -14859,6 +14926,7 @@ self.onmessage = async (e) => {
 			.join("");
 		renderCalendarLocalEvents();
 		renderCalendarGoogleSelect();
+		renderCalendarOutlookSelect();
 	}
 
 	function renderCalendarGoogleSelect() {
@@ -14887,6 +14955,29 @@ self.onmessage = async (e) => {
 		calendarGoogleSelect.value = selected;
 	}
 
+	function renderCalendarOutlookSelect() {
+		if (!calendarOutlookSelect) return;
+		const selected = loadCalendarOutlookId();
+		const list = Array.isArray(outlookCalendarList)
+			? outlookCalendarList.slice()
+			: [];
+		const entries = list.length
+			? list
+			: [{ id: "primary", name: "Default", isDefault: true }];
+		calendarOutlookSelect.innerHTML = entries
+			.map((item) => {
+				const label = item.isDefault
+					? `${item.name || "Default"} (default)`
+					: item.name || item.id;
+				const value = item.id || "primary";
+				return `<option value="${escapeAttr(value)}">${escapeHtml(
+					label
+				)}</option>`;
+			})
+			.join("");
+		calendarOutlookSelect.value = selected;
+	}
+
 	function renderCalendarLocalEvents() {
 		if (!calendarLocalEventsList) return;
 		const list = Array.isArray(calendarState.localEvents)
@@ -14913,13 +15004,16 @@ self.onmessage = async (e) => {
 				const googleBadge = evt.googleEventId
 					? '<span class="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300">Google</span>'
 					: "";
+				const outlookBadge = evt.outlookEventId
+					? '<span class="rounded-full border border-white/10 bg-white/5 px-1.5 py-0.5 text-[10px] text-slate-300">Outlook</span>'
+					: "";
 				return `
 					<div class="rounded-lg border border-white/10 bg-slate-950/30 p-2">
 						<div class="flex items-start justify-between gap-2">
 							<div class="min-w-0">
 								<div class="flex flex-wrap items-center gap-2 text-xs font-medium text-slate-100">
 									<span>${escapeHtml(evt.title)}</span>
-									${googleBadge}
+										${googleBadge}${outlookBadge}
 								</div>
 								<div class="text-[11px] text-slate-400">${dateLabel} · ${timeLabel}</div>
 							</div>
@@ -14934,6 +15028,28 @@ self.onmessage = async (e) => {
 					</div>`;
 			})
 			.join("");
+	}
+
+	function updateCalendarSyncTargetOptions() {
+		if (!calendarEventSyncTarget) return;
+		const googleOption = calendarEventSyncTarget.querySelector(
+			'option[value="google"]'
+		);
+		const outlookOption = calendarEventSyncTarget.querySelector(
+			'option[value="outlook"]'
+		);
+		if (googleOption) googleOption.disabled = !googleCalendarConnected;
+		if (outlookOption) outlookOption.disabled = !outlookCalendarConnected;
+		let nextValue = String(calendarEventSyncTarget.value || "").trim();
+		if (!nextValue) nextValue = loadCalendarSyncTarget();
+		if (nextValue === "google" && !googleCalendarConnected) {
+			nextValue = "local";
+		}
+		if (nextValue === "outlook" && !outlookCalendarConnected) {
+			nextValue = "local";
+		}
+		calendarEventSyncTarget.value = nextValue;
+		saveCalendarSyncTarget(nextValue);
 	}
 
 	function setGoogleCalendarUi(connected, info) {
@@ -14953,13 +15069,34 @@ self.onmessage = async (e) => {
 		if (calendarGoogleDisconnect) {
 			calendarGoogleDisconnect.classList.toggle("hidden", !connected);
 		}
-		if (calendarEventGoogleSync) {
-			calendarEventGoogleSync.disabled = !connected;
-			if (!connected) calendarEventGoogleSync.checked = false;
-		}
+		updateCalendarSyncTargetOptions();
 		if (!connected) {
 			googleCalendarList = [];
 			renderCalendarGoogleSelect();
+		}
+	}
+
+	function setOutlookCalendarUi(connected, info) {
+		outlookCalendarConnected = Boolean(connected);
+		if (calendarOutlookStatus) {
+			const base = t("settings.calendar.outlook.connected");
+			calendarOutlookStatus.textContent = connected
+				? `${base}${info ? ` (${info})` : ""}.`
+				: t("settings.calendar.outlook.status_disconnected");
+		}
+		if (calendarOutlookSelect) {
+			calendarOutlookSelect.disabled = !connected;
+		}
+		if (calendarOutlookConnect) {
+			calendarOutlookConnect.classList.toggle("hidden", connected);
+		}
+		if (calendarOutlookDisconnect) {
+			calendarOutlookDisconnect.classList.toggle("hidden", !connected);
+		}
+		updateCalendarSyncTargetOptions();
+		if (!connected) {
+			outlookCalendarList = [];
+			renderCalendarOutlookSelect();
 		}
 	}
 
@@ -14974,6 +15111,20 @@ self.onmessage = async (e) => {
 		} catch {
 			googleCalendarList = [];
 			renderCalendarGoogleSelect();
+		}
+	}
+
+	async function fetchOutlookCalendarList() {
+		if (!psState || !psState.authed) return;
+		try {
+			const res = await api("/api/calendar/outlook/calendars");
+			outlookCalendarList = Array.isArray(res && res.calendars)
+				? res.calendars
+				: [];
+			renderCalendarOutlookSelect();
+		} catch {
+			outlookCalendarList = [];
+			renderCalendarOutlookSelect();
 		}
 	}
 
@@ -15013,6 +15164,42 @@ self.onmessage = async (e) => {
 		}
 	}
 
+	async function fetchOutlookCalendarStatus() {
+		if (!psState || !psState.authed) {
+			setOutlookCalendarUi(false);
+			return;
+		}
+		try {
+			const res = await api("/api/calendar/outlook/status");
+			if (!res || !res.configured) {
+				setOutlookCalendarUi(false);
+				if (calendarOutlookStatus) {
+					calendarOutlookStatus.textContent = t(
+						"settings.calendar.outlook.not_configured"
+					);
+				}
+				return;
+			}
+			setOutlookCalendarUi(Boolean(res.connected), res.email || "");
+			if (res && res.calendarId) {
+				saveCalendarOutlookId(res.calendarId, {
+					skipSync: true,
+					skipRender: true,
+				});
+			}
+			if (res.connected) {
+				await fetchOutlookCalendarList();
+			}
+		} catch {
+			setOutlookCalendarUi(false);
+			if (calendarOutlookStatus) {
+				calendarOutlookStatus.textContent = t(
+					"settings.calendar.outlook.unavailable"
+				);
+			}
+		}
+	}
+
 	async function createGoogleCalendarEvent(evt) {
 		const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
 		const startDate = evt.allDay ? formatDateInputValue(evt.start) : "";
@@ -15033,10 +15220,41 @@ self.onmessage = async (e) => {
 		});
 	}
 
+	async function createOutlookCalendarEvent(evt) {
+		const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+		const startDate = evt.allDay ? formatDateInputValue(evt.start) : "";
+		const endDate = evt.allDay ? formatDateInputValue(evt.end) : "";
+		const payload = {
+			title: evt.title,
+			location: evt.location || "",
+			start: evt.start.toISOString(),
+			end: evt.end.toISOString(),
+			allDay: Boolean(evt.allDay),
+			startDate,
+			endDate,
+			timeZone: timezone,
+		};
+		return api("/api/calendar/outlook/events", {
+			method: "POST",
+			body: JSON.stringify(payload),
+		});
+	}
+
 	async function deleteGoogleCalendarEvent(eventId) {
 		if (!eventId) return;
 		try {
 			await api(`/api/calendar/google/events/${encodeURIComponent(eventId)}`, {
+				method: "DELETE",
+			});
+		} catch {
+			// ignore
+		}
+	}
+
+	async function deleteOutlookCalendarEvent(eventId) {
+		if (!eventId) return;
+		try {
+			await api(`/api/calendar/outlook/events/${encodeURIComponent(eventId)}`, {
 				method: "DELETE",
 			});
 		} catch {
@@ -15057,6 +15275,7 @@ self.onmessage = async (e) => {
 			updateCalendarViewButtons();
 			applyCalendarFreeSlotsVisibility();
 			fetchGoogleCalendarStatus();
+			fetchOutlookCalendarStatus();
 			renderCalendarPanel();
 			refreshCalendarEvents(true);
 		}
@@ -15221,7 +15440,17 @@ self.onmessage = async (e) => {
 		const allDay = Boolean(it.allDay);
 		const location = String(it.location || "").trim();
 		const googleEventId = String(it.googleEventId || "").trim();
-		return { id, title, start, end, allDay, location, googleEventId };
+		const outlookEventId = String(it.outlookEventId || "").trim();
+		return {
+			id,
+			title,
+			start,
+			end,
+			allDay,
+			location,
+			googleEventId,
+			outlookEventId,
+		};
 	}
 
 	function serializeLocalCalendarEvent(evt) {
@@ -15233,6 +15462,7 @@ self.onmessage = async (e) => {
 			allDay: Boolean(evt.allDay),
 			location: evt.location || "",
 			googleEventId: evt.googleEventId || "",
+			outlookEventId: evt.outlookEventId || "",
 		};
 	}
 
@@ -15300,6 +15530,56 @@ self.onmessage = async (e) => {
 		}
 	}
 
+	function loadCalendarOutlookId() {
+		try {
+			const raw = String(
+				localStorage.getItem(CALENDAR_OUTLOOK_CAL_ID_KEY) || "primary"
+			).trim();
+			return raw || "primary";
+		} catch {
+			return "primary";
+		}
+	}
+
+	function saveCalendarOutlookId(id, opts) {
+		const safe = String(id || "primary").trim() || "primary";
+		try {
+			localStorage.setItem(CALENDAR_OUTLOOK_CAL_ID_KEY, safe);
+		} catch {
+			// ignore
+		}
+		if (!(opts && opts.skipRender)) {
+			renderCalendarSettings();
+		}
+		if (!(opts && opts.skipSync)) {
+			scheduleCalendarSettingsSync();
+		}
+	}
+
+	function loadCalendarSyncTarget() {
+		try {
+			const raw = String(
+				localStorage.getItem(CALENDAR_SYNC_TARGET_KEY) || "local"
+			)
+				.trim()
+				.toLowerCase();
+			return ["local", "google", "outlook"].includes(raw) ? raw : "local";
+		} catch {
+			return "local";
+		}
+	}
+
+	function saveCalendarSyncTarget(target) {
+		const safe = ["local", "google", "outlook"].includes(target)
+			? target
+			: "local";
+		try {
+			localStorage.setItem(CALENDAR_SYNC_TARGET_KEY, safe);
+		} catch {
+			// ignore
+		}
+	}
+
 	calendarFreeSlotsVisible = loadCalendarFreeSlotsVisible();
 	calendarState.localEvents = loadLocalCalendarEvents();
 	applyCalendarFreeSlotsVisibility();
@@ -15332,6 +15612,19 @@ self.onmessage = async (e) => {
 		if (!raw) return null;
 		if (isAllDay) {
 			const parts = raw.split("-").map((v) => Number(v));
+			if (parts.length !== 3) return null;
+			return new Date(parts[0], parts[1] - 1, parts[2]);
+		}
+		const date = new Date(raw);
+		return Number.isNaN(date.getTime()) ? null : date;
+	}
+
+	function parseOutlookDate(value, isAllDay) {
+		const raw = String(value || "").trim();
+		if (!raw) return null;
+		if (isAllDay) {
+			const datePart = raw.split("T")[0];
+			const parts = datePart.split("-").map((v) => Number(v));
 			if (parts.length !== 3) return null;
 			return new Date(parts[0], parts[1] - 1, parts[2]);
 		}
@@ -15486,6 +15779,41 @@ self.onmessage = async (e) => {
 		}
 	}
 
+	async function fetchOutlookCalendarEvents(range) {
+		if (!outlookCalendarConnected) return [];
+		const startIso = range.start.toISOString();
+		const endIso = range.end.toISOString();
+		try {
+			const res = await api(
+				`/api/calendar/outlook/events?start=${encodeURIComponent(
+					startIso
+				)}&end=${encodeURIComponent(endIso)}`
+			);
+			const items = Array.isArray(res && res.events) ? res.events : [];
+			return items
+				.map((evt) => {
+					const allDay = Boolean(evt.allDay);
+					const start = parseOutlookDate(evt.start, allDay);
+					const end = parseOutlookDate(evt.end, allDay);
+					if (!start || !end) return null;
+					return {
+						id: String(evt.id || ""),
+						start,
+						end,
+						allDay,
+						title: String(evt.title || "(Ohne Titel)"),
+						location: String(evt.location || ""),
+						calendarId: CALENDAR_OUTLOOK_SOURCE.id,
+						calendarName: CALENDAR_OUTLOOK_SOURCE.name,
+						color: CALENDAR_OUTLOOK_SOURCE.color,
+					};
+				})
+				.filter(Boolean);
+		} catch {
+			return [];
+		}
+	}
+
 	async function refreshCalendarEvents(force) {
 		if (calendarState.loading) return;
 		const now = Date.now();
@@ -15503,15 +15831,21 @@ self.onmessage = async (e) => {
 			calendarState.cursor || new Date()
 		);
 		let googleEvents = [];
+		let outlookEvents = [];
 		if (googleCalendarConnected) {
 			googleEvents = await fetchGoogleCalendarEvents(range);
 		}
+		if (outlookCalendarConnected) {
+			outlookEvents = await fetchOutlookCalendarEvents(range);
+		}
 		if (!sources.length) {
-			calendarState.externalEvents = googleEvents;
+			calendarState.externalEvents = [...googleEvents, ...outlookEvents];
 			calendarState.lastLoadedAt = Date.now();
 			calendarState.loading = false;
 			calendarStatus.textContent =
-				calendarState.localEvents.length > 0 || googleEvents.length > 0
+				calendarState.localEvents.length > 0 ||
+				googleEvents.length > 0 ||
+				outlookEvents.length > 0
 					? "Kalender aktualisiert."
 					: "Keine Kalenderquellen aktiv.";
 			renderCalendarPanel();
@@ -15532,13 +15866,16 @@ self.onmessage = async (e) => {
 		calendarState.externalEvents = [
 			...mergeCalendarEvents(sources, results),
 			...googleEvents,
+			...outlookEvents,
 		];
 		calendarState.lastLoadedAt = Date.now();
 		calendarState.loading = false;
 		const okCount = results.length - errors;
 		calendarStatus.textContent = `${okCount} calendars loaded${
 			errors ? ` · ${errors} errors` : ""
-		}${googleEvents.length ? " · Google sync" : ""}`;
+		}${googleEvents.length ? " · Google sync" : ""}${
+			outlookEvents.length ? " · Outlook sync" : ""
+		}`;
 		renderCalendarPanel();
 	}
 
@@ -15584,7 +15921,8 @@ self.onmessage = async (e) => {
 			? calendarState.localEvents.length
 			: 0;
 		const hasGoogle = googleCalendarConnected;
-		if (!sources.length && !localCount && !hasGoogle) {
+		const hasOutlook = outlookCalendarConnected;
+		if (!sources.length && !localCount && !hasGoogle && !hasOutlook) {
 			calendarLegend.innerHTML =
 				'<div class="text-xs text-slate-400">Keine Kalender verbunden.</div>';
 			return;
@@ -15617,7 +15955,21 @@ self.onmessage = async (e) => {
 					<span class="text-[10px] text-slate-500">sync</span>
 				</div>`
 			: "";
-		calendarLegend.innerHTML = `${localRow}${googleRow}${sources
+		const outlookRow = hasOutlook
+			? `
+				<div class="flex items-center justify-between gap-2 text-xs text-slate-300">
+					<div class="flex items-center gap-2">
+						<span class="inline-flex h-2.5 w-2.5 rounded-full" style="background:${escapeAttr(
+							CALENDAR_OUTLOOK_SOURCE.color
+						)}"></span>
+						<span class="truncate">${escapeHtml(
+							CALENDAR_OUTLOOK_SOURCE.name
+						)}</span>
+					</div>
+					<span class="text-[10px] text-slate-500">sync</span>
+				</div>`
+			: "";
+		calendarLegend.innerHTML = `${localRow}${googleRow}${outlookRow}${sources
 			.map((src) => {
 				const dot = `<span class="inline-flex h-2.5 w-2.5 rounded-full" style="background:${escapeAttr(
 					src.color
@@ -15975,9 +16327,9 @@ self.onmessage = async (e) => {
 		if (calendarEventAllDay) calendarEventAllDay.checked = false;
 		if (calendarEventStart) calendarEventStart.value = "09:00";
 		if (calendarEventEnd) calendarEventEnd.value = "10:00";
-		if (calendarEventGoogleSync) {
-			calendarEventGoogleSync.disabled = !googleCalendarConnected;
-			calendarEventGoogleSync.checked = googleCalendarConnected;
+		if (calendarEventSyncTarget) {
+			calendarEventSyncTarget.value = loadCalendarSyncTarget();
+			updateCalendarSyncTargetOptions();
 		}
 		updateCalendarEventTimeState();
 		setTimeout(() => {
@@ -16048,6 +16400,7 @@ self.onmessage = async (e) => {
 			allDay,
 			location,
 			googleEventId: "",
+			outlookEventId: "",
 		};
 	}
 
@@ -21155,9 +21508,23 @@ self.onmessage = async (e) => {
 			closeCalendarEventModal();
 		});
 	}
+	document.addEventListener("keydown", (ev) => {
+		if (!calendarEventModal) return;
+		if (calendarEventModal.classList.contains("hidden")) return;
+		if (ev && ev.key === "Escape") {
+			ev.preventDefault();
+			closeCalendarEventModal();
+		}
+	});
 	if (calendarEventAllDay) {
 		calendarEventAllDay.addEventListener("change", () => {
 			updateCalendarEventTimeState();
+		});
+	}
+	if (calendarEventSyncTarget) {
+		calendarEventSyncTarget.addEventListener("change", () => {
+			saveCalendarSyncTarget(calendarEventSyncTarget.value || "local");
+			updateCalendarSyncTargetOptions();
 		});
 	}
 	if (calendarEventSave) {
@@ -21165,17 +21532,36 @@ self.onmessage = async (e) => {
 			const evt = buildLocalEventFromModal();
 			if (!evt) return;
 			closeCalendarEventModal();
-			const shouldSync = Boolean(
-				calendarEventGoogleSync && calendarEventGoogleSync.checked
-			);
-			if (shouldSync) {
-				try {
-					const res = await createGoogleCalendarEvent(evt);
-					if (res && res.eventId) {
-						evt.googleEventId = String(res.eventId || "");
+			const syncTarget = calendarEventSyncTarget
+				? String(calendarEventSyncTarget.value || "local")
+				: "local";
+			saveCalendarSyncTarget(syncTarget);
+			if (syncTarget === "google") {
+				if (!googleCalendarConnected) {
+					toast("Google Kalender ist nicht verbunden.", "error");
+				} else {
+					try {
+						const res = await createGoogleCalendarEvent(evt);
+						if (res && res.eventId) {
+							evt.googleEventId = String(res.eventId || "");
+						}
+					} catch {
+						toast("Google Sync fehlgeschlagen.", "error");
 					}
-				} catch {
-					toast("Google Sync fehlgeschlagen.", "error");
+				}
+			}
+			if (syncTarget === "outlook") {
+				if (!outlookCalendarConnected) {
+					toast("Outlook Kalender ist nicht verbunden.", "error");
+				} else {
+					try {
+						const res = await createOutlookCalendarEvent(evt);
+						if (res && res.eventId) {
+							evt.outlookEventId = String(res.eventId || "");
+						}
+					} catch {
+						toast("Outlook Sync fehlgeschlagen.", "error");
+					}
 				}
 			}
 			addLocalCalendarEvent(evt);
@@ -21202,6 +21588,27 @@ self.onmessage = async (e) => {
 			saveCalendarGoogleId(calendarGoogleSelect.value || "primary");
 		});
 	}
+	if (calendarOutlookConnect) {
+		calendarOutlookConnect.addEventListener("click", () => {
+			window.location.href = "/api/calendar/outlook/auth";
+		});
+	}
+	if (calendarOutlookDisconnect) {
+		calendarOutlookDisconnect.addEventListener("click", async () => {
+			try {
+				await api("/api/calendar/outlook/disconnect", { method: "POST" });
+				setOutlookCalendarUi(false);
+				toast("Outlook Kalender getrennt.", "success");
+			} catch {
+				toast("Trennen fehlgeschlagen.", "error");
+			}
+		});
+	}
+	if (calendarOutlookSelect) {
+		calendarOutlookSelect.addEventListener("change", () => {
+			saveCalendarOutlookId(calendarOutlookSelect.value || "primary");
+		});
+	}
 	if (calendarLocalEventsList) {
 		calendarLocalEventsList.addEventListener("click", (ev) => {
 			const target = ev.target;
@@ -21220,115 +21627,15 @@ self.onmessage = async (e) => {
 			if (removed && removed.googleEventId && googleCalendarConnected) {
 				deleteGoogleCalendarEvent(removed.googleEventId);
 			}
+			if (removed && removed.outlookEventId && outlookCalendarConnected) {
+				deleteOutlookCalendarEvent(removed.outlookEventId);
+			}
 		});
 	}
 	if (calendarFreeToggle) {
 		calendarFreeToggle.addEventListener("click", () => {
 			saveCalendarFreeSlotsVisible(!calendarFreeSlotsVisible);
 			renderCalendarPanel();
-		});
-	}
-	if (calendarAddEventBtn) {
-		calendarAddEventBtn.addEventListener("click", () => {
-			openCalendarEventModal(calendarState.cursor || new Date());
-		});
-	}
-	if (calendarEventAllDay) {
-		calendarEventAllDay.addEventListener("change", () => {
-			updateCalendarEventTimeState();
-		});
-	}
-	if (calendarEventSave) {
-		calendarEventSave.addEventListener("click", () => {
-			const titleRaw = String(
-				calendarEventName ? calendarEventName.value : ""
-			).trim();
-			const title = titleRaw || "Termin";
-			const dateRaw = String(
-				calendarEventDate ? calendarEventDate.value : ""
-			).trim();
-			if (!dateRaw) {
-				toast("Bitte ein Datum wählen.", "error");
-				return;
-			}
-			const [yy, mm, dd] = dateRaw.split("-").map((v) => Number(v));
-			if (!yy || !mm || !dd) {
-				toast("Ungültiges Datum.", "error");
-				return;
-			}
-			const allDay = Boolean(calendarEventAllDay && calendarEventAllDay.checked);
-			let start;
-			let end;
-			if (allDay) {
-				start = new Date(yy, mm - 1, dd);
-				end = addDays(start, 1);
-			} else {
-				const startTime = String(
-					calendarEventStart ? calendarEventStart.value : ""
-				).trim();
-				const endTime = String(
-					calendarEventEnd ? calendarEventEnd.value : ""
-				).trim();
-				if (!startTime || !endTime) {
-					toast("Bitte Start- und Endzeit angeben.", "error");
-					return;
-				}
-				const [sh, sm] = startTime.split(":").map((v) => Number(v));
-				const [eh, em] = endTime.split(":").map((v) => Number(v));
-				start = new Date(yy, mm - 1, dd, sh || 0, sm || 0, 0);
-				end = new Date(yy, mm - 1, dd, eh || 0, em || 0, 0);
-				if (!(end > start)) {
-					toast("Endzeit muss nach der Startzeit liegen.", "error");
-					return;
-				}
-			}
-			const location = String(
-				calendarEventLocation ? calendarEventLocation.value : ""
-			).trim();
-			addLocalCalendarEvent({
-				id: createClientId(),
-				title,
-				start,
-				end,
-				allDay,
-				location,
-			});
-			closeCalendarEventModal();
-		});
-	}
-	if (calendarEventClose) {
-		calendarEventClose.addEventListener("click", () => {
-			closeCalendarEventModal();
-		});
-	}
-	if (calendarEventCancel) {
-		calendarEventCancel.addEventListener("click", () => {
-			closeCalendarEventModal();
-		});
-	}
-	if (calendarEventBackdrop) {
-		calendarEventBackdrop.addEventListener("click", () => {
-			closeCalendarEventModal();
-		});
-	}
-	document.addEventListener("keydown", (ev) => {
-		if (!calendarEventModal) return;
-		if (calendarEventModal.classList.contains("hidden")) return;
-		if (ev && ev.key === "Escape") {
-			ev.preventDefault();
-			closeCalendarEventModal();
-		}
-	});
-	if (calendarLocalEventsList) {
-		calendarLocalEventsList.addEventListener("click", (ev) => {
-			const target = ev.target;
-			if (!(target instanceof HTMLElement)) return;
-			const btn = target.closest("[data-local-event-remove]");
-			if (!btn) return;
-			const id = String(btn.getAttribute("data-local-event-id") || "");
-			if (!id) return;
-			const next = calendarState.localEvents.filter((evt) => evt.id !== id);
-			saveLocalCalendarEvents(next);
 		});
 	}
 	if (favoritesManageList) {
