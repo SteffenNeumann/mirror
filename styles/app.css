@@ -1295,15 +1295,20 @@ body[data-theme="monoDark"] .excel-iframe {
 	padding: 0 12px;
 	color: var(--blockquote-text);
 }
-.md-content ul.task-list,
-.md-content ol.task-list {
-	list-style: none;
+.md-content ul.task-list li,
+.md-content ol.task-list li,
+.md-content li.task-list-item {
 	padding-left: 0;
 }
 .md-content ul.task-list li,
 .md-content ol.task-list li,
 .md-content li.task-list-item {
+	font-weight: 400;
 	display: flex;
+.md-content ul.task-list li label,
+.md-content ol.task-list li label,
+.md-content li.task-list-item label {
+	font-weight: 400;
 	gap: 0.55rem;
 	align-items: flex-start;
 	color: var(--accent-text);
@@ -1333,7 +1338,7 @@ body[data-theme="monoDark"] .excel-iframe {
 	margin-top: 0.25rem;
 	width: 1.2rem;
 	height: 1.2rem;
-	border-radius: 0.35rem;
+	border-radius: 0.5rem;
 	border: 2px solid var(--accent-strong);
 	background: transparent;
 	display: inline-grid;
@@ -1343,8 +1348,8 @@ body[data-theme="monoDark"] .excel-iframe {
 .md-content ol.task-list input[type="checkbox"]::before,
 .md-content input.task-list-item-checkbox::before {
 	content: "";
-	width: 0.6rem;
-	height: 0.35rem;
+	width: 0.5rem;
+	height: 0.3rem;
 	border-left: 2px solid transparent;
 	border-bottom: 2px solid transparent;
 	transform: rotate(-45deg);

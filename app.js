@@ -4695,8 +4695,8 @@
 			accentStrongActive: "rgba(176, 112, 73, 0.92)",
 			accentBorder: "rgba(176, 112, 73, 0.35)",
 			accentBorderStrong: "rgba(176, 112, 73, 0.5)",
-			accentText: "rgba(68, 45, 30, 0.95)",
-			accentTextSoft: "rgba(102, 70, 47, 0.85)",
+			accentText: "rgba(68, 45, 30, 0.98)",
+			accentTextSoft: "rgba(92, 62, 41, 0.9)",
 			accentRing: "rgba(176, 112, 73, 0.28)",
 			accentRingStrong: "rgba(176, 112, 73, 0.42)",
 			blockquoteBorder: "rgba(176, 112, 73, 0.3)",
@@ -4728,8 +4728,8 @@
 			accentStrongActive: "#c61a00",
 			accentBorder: "rgba(255, 35, 1, 0.25)",
 			accentBorderStrong: "rgba(255, 35, 1, 0.36)",
-			accentText: "rgba(255, 250, 248, 0.98)",
-			accentTextSoft: "rgba(255, 226, 217, 0.94)",
+			accentText: "rgba(27, 27, 32, 0.98)",
+			accentTextSoft: "rgba(52, 52, 60, 0.9)",
 			accentRing: "rgba(255, 35, 1, 0.2)",
 			accentRingStrong: "rgba(255, 35, 1, 0.32)",
 			blockquoteBorder: "rgba(255, 35, 1, 0.2)",
@@ -4774,8 +4774,8 @@
 			accentStrongActive: "#033d8b",
 			accentBorder: "rgba(9, 105, 218, 0.28)",
 			accentBorderStrong: "rgba(9, 105, 218, 0.4)",
-			accentText: "rgba(255, 255, 255, 0.98)",
-			accentTextSoft: "rgba(219, 234, 254, 0.95)",
+			accentText: "rgba(15, 23, 42, 0.98)",
+			accentTextSoft: "rgba(51, 65, 85, 0.9)",
 			accentRing: "rgba(9, 105, 218, 0.25)",
 			accentRingStrong: "rgba(9, 105, 218, 0.4)",
 			blockquoteBorder: "rgba(208, 215, 222, 0.9)",
@@ -9758,11 +9758,12 @@
 		th,td{border:1px solid ${previewTableBorder};padding:6px 8px;}
 		blockquote{border-left:3px solid var(--blockquote-border);margin:0;padding:0 12px;color:var(--blockquote-text);}
 		ul.task-list,ol.task-list{list-style:none;padding-left:0;}
-		ul.task-list li,ol.task-list li,li.task-list-item{display:flex;gap:.55rem;align-items:flex-start;transition:transform .28s ease,opacity .28s ease;animation:task-fade .28s ease both;will-change:transform,opacity;color:var(--accent-text);font-size:1.1rem;}
+		ul.task-list li,ol.task-list li,li.task-list-item{display:flex;gap:.55rem;align-items:flex-start;transition:transform .28s ease,opacity .28s ease;animation:task-fade .28s ease both;will-change:transform,opacity;color:var(--accent-text);font-size:1.1rem;font-weight:400;}
+		ul.task-list li label,ol.task-list li label,li.task-list-item label{font-weight:400;}
 		ul.task-list li.task-list-item.checked,ol.task-list li.task-list-item.checked,li.task-list-item.checked{opacity:.8;color:var(--accent-text-soft);text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:var(--accent-text-soft);}
 		ul.task-list li.task-list-item.checked input[type=checkbox],ol.task-list li.task-list-item.checked input[type=checkbox],li.task-list-item.checked input[type=checkbox]{opacity:1;}
-		ul.task-list input[type=checkbox],ol.task-list input[type=checkbox],input.task-list-item-checkbox{appearance:none;-webkit-appearance:none;margin-top:.25rem;width:1.2rem;height:1.2rem;border-radius:.35rem;border:2px solid var(--accent-strong);background:transparent;display:inline-grid;place-content:center;}
-		ul.task-list input[type=checkbox]::before,ol.task-list input[type=checkbox]::before,input.task-list-item-checkbox::before{content:"";width:.6rem;height:.35rem;border-left:2px solid transparent;border-bottom:2px solid transparent;transform:rotate(-45deg);}
+		ul.task-list input[type=checkbox],ol.task-list input[type=checkbox],input.task-list-item-checkbox{appearance:none;-webkit-appearance:none;margin-top:.25rem;width:1.2rem;height:1.2rem;border-radius:.5rem;border:2px solid var(--accent-strong);background:transparent;display:inline-grid;place-content:center;}
+		ul.task-list input[type=checkbox]::before,ol.task-list input[type=checkbox]::before,input.task-list-item-checkbox::before{content:"";width:.5rem;height:.3rem;border-left:2px solid transparent;border-bottom:2px solid transparent;transform:rotate(-45deg);}
 		ul.task-list input[type=checkbox]:checked,ol.task-list input[type=checkbox]:checked,input.task-list-item-checkbox:checked{background:var(--accent-strong);}
 		ul.task-list input[type=checkbox]:checked::before,ol.task-list input[type=checkbox]:checked::before,input.task-list-item-checkbox:checked::before{border-color:var(--accent-text);}
 		ul.task-list li > .task-closed-at,ol.task-list li > .task-closed-at,li.task-list-item > .task-closed-at{margin-left:calc(1.2rem + .55rem);}
