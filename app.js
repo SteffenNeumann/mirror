@@ -7794,11 +7794,22 @@
 	}
 
 	function filterRealNotes(notes) {
-		return (Array.isArray(notes) ? notes : []).filter((note) => {
-			if (!note || typeof note !== "object") return false;
+		const list = Array.isArray(notes) ? notes : [];
+		const byId = new Map();
+		for (const note of list) {
+			if (!note || typeof note !== "object") continue;
 			const id = String(note.id || "").trim();
-			return Boolean(id);
-		});
+			if (!id) continue;
+			const prev = byId.get(id);
+			if (!prev) {
+				byId.set(id, note);
+				continue;
+			}
+			const prevUpdated = Number(prev.updatedAt || prev.createdAt || 0);
+			const nextUpdated = Number(note.updatedAt || note.createdAt || 0);
+			if (nextUpdated >= prevUpdated) byId.set(id, note);
+		}
+		return Array.from(byId.values());
 	}
 
 	function formatMetaDate(ts) {
@@ -19934,6 +19945,10 @@ self.onmessage = async (e) => {
 				psEditingNoteId = targetNoteId;
 				psEditingNoteKind = targetNoteKind;
 			}
+		}
+		if (auto && !targetNoteId) {
+			setPsAutoSaveStatus("Auto-Save uebersprungen");
+			return false;
 		}
 		if (!targetNoteId) {
 			const res = await api("/api/notes", {

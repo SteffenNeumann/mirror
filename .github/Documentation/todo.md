@@ -1,0 +1,73 @@
+# ToDo’s  
+
+- [ ] Google Kalender integration vervollstandigen( [https://console.cloud.google.com/auth/branding?
+- [ ] Themes anpassen(light Themes)
+- [ ] Tasks in Akzentfarbe
+- [ ] doppelte Items vermeiden
+- [ ] Tabpositionswechsel vermeiden
+- [ ] Item Preview verbessern(Falschanzeige)
+- [x] Markdown Kontextmenu Postion leicht Versetzt an aktueller Kurser Position
+- [x] Excalubur integrieren
+- [x] Themecolor orange dark einbauen
+- [x] passwort filter bei alles monochrom Thems verbessern
+- [x] Suche Kölner phonetik
+- [x] einstellung todolisten automatsich sortieren
+- [x] AI Chat Mirofon funktioniert nicht
+- [x] scrollbar automatisch ausblenden
+- [x] Comments/Markierungen müssen auch ohne aufgeklappte Kommentfeld zu sehen sein.
+- [x] lange Importe nicht stückeln
+- [x] Improve autosave bei ToDos
+- [x] Komentare müssen zur Notiz ID passen
+- [x] automatisch speichern bei Kontextmenu
+- [x] Kommentare müssen auch ohne Text Markierung geschrieben werden können
+- [x] Markdown Kontextmenu in Brightmode anpassem
+- [x] Preview TOC Hintergrund an Theme anpasssen
+- [x] abgehackte Todos müssen auch so gekennzeichnet bleiben
+- [x] AI Bereich Als kontext immer aktive-kein extra button mehr
+- [x] AI Bereich diktierfunktion
+- [x] AI Improvment: Kontext einbeziehen zusätlich Freie ANfragen stellen
+- [x] AI Nachfragen stellen ermöglichen
+- [x] Bei Tab wechsel muss sich der Aktuelle inhalt auch in der Liste der Notes als aktuelle MArkiert werden und nicht erst nach speichern
+- [x] beim bearbeiten der Tags vorschläge anzeigen
+- [x] Berechnungen einfügen
+- [x] Blockqoute Farbe muss sich dem Theme anpassen
+- [x] Button Neuer Eintrag verbessern(Cleaner-Englisch )
+- [x] CRDT Markierung EIn/Ausschalten können
+- [x] Dateien Einfügen/Möglichkeit zum Löschen in Menu/Settings/automatisches Speichern nach import aktivieren
+- [x] es werden immernoch doppelte Items angelegt, vermutlich durch Tab wechsel
+- [x] floating Inhaltsverzeichniss in Notiz generieren
+- [x] Inhalt aus tabwechsel muss sichj automatisch aktualisieren und nicht den alten inhalt speichern sondern die ID,Wenn keine Id vorhanden dann ungespeicherten Inhalt anzeigen
+- [x] kW in Kalender
+- [x] Link Teilen Option (per QR Code ,Mail,etc)
+- [x] Menu anlegen Settings
+- [x] Multiple Bearbeitung der Notizen ermöglichen
+- [x] nachdem eine Notiz gespeichert wurde alle folgeden Änderungen automatisch Speichern
+- [x] NotizenAnpinnen
+- [x] Option zum Weiterleiten der inhalte(Wie in Drafts)
+- [x] Passworter verstecken Möglichkeit
+- [x] PDF Seiten‑Navigation (Prev/Next)
+- [x] PS Tag Aera Anzeige weche Tags aktiv sind im header deas Tagbereichs
+- [x] PS Tag Aera Cleanr gestallten Scollbar hinzufügen
+- [x] PS Tag Aera Kontxt Menu zum Bearbeiten der Tag hinzufügen anstelle von Große Modal window
+- [x] Randnotizen der User ermöglichen
+- [x] Raumumbenennung ermöglichen->Rejected-unnötig
+- [x] Resposivität Mobile mit Prioritäten der Darstellung(Text input)
+- [x] Room Favorites in e-Mail speichern so das ich immer meine Favorieten sehe
+- [x] Run Command Fixen(alle Inhalte verstehen,inklusieve Sprache)
+- [x] Save Button soll nur erscheinen wenn es auch was zu Speichern gibt
+- [x] Scollbar better design
+- [x] Slashkommand Menuposition muss sich der Cursor Postion anpassen
+- [x] Sortiebare Seitenleiste
+- [x] Submenu Einblenden bei Textmarkieren(Formatierung ändern,Sortieren etc)
+- [x] Tabellen einfügen
+- [x] Tabs mit unterscheidlichen Räumen
+- [x] Tabschließen-Aktuellen ermöglichen,aktivierung des nächsten/Max Anzahl Tabs/Kein Umruch bei Mobilen 
+- [x] Tags automatisch zuornen (Jahr,Mon¡¡at Hauptgruppe,untergruppe)
+- [x] Tags Bearbeiten ermöglichen
+- [x] Text Formatierungen ermölichen via Slash commands
+- [x] Trashcan nur bei hover sichtbar
+- [x] Verknüpfugen ermöglichen
+- [x] Vor/Zurück Navigation
+- [x] wenn eine Notiz ausgewählt wird und diese beereits in einem Tab geladen ist nur dann den Tab öffnen
+- [x] Wenn eine Notiz bereits gespeichert wurde dann müssen sich bei erneutem Aufrufen
+- [x] Zenmodus anstatt 2 Buttons
