@@ -1295,9 +1295,9 @@ body[data-theme="monoDark"] .excel-iframe {
 	padding: 0 12px;
 	color: var(--blockquote-text);
 }
-.md-content ul.task-list li,
-.md-content ol.task-list li,
-.md-content li.task-list-item {
+.md-content ul.task-list,
+.md-content ol.task-list {
+	list-style: none;
 	padding-left: 0;
 }
 .md-content ul.task-list li,
@@ -1305,14 +1305,15 @@ body[data-theme="monoDark"] .excel-iframe {
 .md-content li.task-list-item {
 	font-weight: 400;
 	display: flex;
-.md-content ul.task-list li label,
-.md-content ol.task-list li label,
-.md-content li.task-list-item label {
-	font-weight: 400;
 	gap: 0.55rem;
 	align-items: flex-start;
 	color: var(--accent-text);
 	font-size: 1.1rem;
+}
+.md-content ul.task-list li label,
+.md-content ol.task-list li label,
+.md-content li.task-list-item label {
+	font-weight: 400;
 }
 /* Keep completed todos visibly marked */
 .md-content ul.task-list li.task-list-item.checked,
