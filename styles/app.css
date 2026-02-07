@@ -1325,6 +1325,13 @@ body[data-theme="monoDark"] .excel-iframe {
 	text-decoration-thickness: 2px;
 	text-decoration-color: var(--accent-text-soft);
 }
+.md-content ul.task-list li.task-list-item.checked label,
+.md-content ol.task-list li.task-list-item.checked label,
+.md-content li.task-list-item.checked label {
+	text-decoration: line-through;
+	text-decoration-thickness: 2px;
+	text-decoration-color: var(--accent-text-soft);
+}
 .md-content
 	ul.task-list
 	li.task-list-item.checked

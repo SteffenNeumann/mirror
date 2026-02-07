@@ -9761,13 +9761,14 @@
 		ul.task-list li,ol.task-list li,li.task-list-item{display:flex;gap:.55rem;align-items:flex-start;transition:transform .28s ease,opacity .28s ease;animation:task-fade .28s ease both;will-change:transform,opacity;color:var(--accent-text);font-size:1.1rem;font-weight:400;}
 		ul.task-list li label,ol.task-list li label,li.task-list-item label{font-weight:400;}
 		ul.task-list li.task-list-item.checked,ol.task-list li.task-list-item.checked,li.task-list-item.checked{opacity:.8;color:var(--accent-text-soft);text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:var(--accent-text-soft);}
+		ul.task-list li.task-list-item.checked label,ol.task-list li.task-list-item.checked label,li.task-list-item.checked label{text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:var(--accent-text-soft);}
 		ul.task-list li.task-list-item.checked input[type=checkbox],ol.task-list li.task-list-item.checked input[type=checkbox],li.task-list-item.checked input[type=checkbox]{opacity:1;}
 		ul.task-list input[type=checkbox],ol.task-list input[type=checkbox],input.task-list-item-checkbox{appearance:none;-webkit-appearance:none;margin-top:.25rem;width:1.2rem;height:1.2rem;border-radius:.4rem;border:2px solid var(--accent-strong);background:transparent;display:inline-grid;place-content:center;}
 		ul.task-list input[type=checkbox]::before,ol.task-list input[type=checkbox]::before,input.task-list-item-checkbox::before{content:"";width:.5rem;height:.2rem;border-left:2px solid transparent;border-bottom:2px solid transparent;transform:rotate(-45deg);}
 		ul.task-list input[type=checkbox]:checked,ol.task-list input[type=checkbox]:checked,input.task-list-item-checkbox:checked{background:var(--accent-strong);}
 		ul.task-list input[type=checkbox]:checked::before,ol.task-list input[type=checkbox]:checked::before,input.task-list-item-checkbox:checked::before{border-color:var(--accent-text);}
 		ul.task-list li > .task-closed-at,ol.task-list li > .task-closed-at,li.task-list-item > .task-closed-at{margin-left:calc(1.2rem + .55rem);}
-		.task-closed-at{display:block;margin-top:.2rem;font-size:.75rem;line-height:1.2;color:var(--task-closed-text);opacity:.85;}
+		.task-closed-at{display:block;margin-top:.2rem;font-size:.75rem;line-height:1.2;color:var(--task-closed-text);opacity:.85;text-decoration:none;}
 		@keyframes task-fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 		.pdf-embed{margin:12px 0;border:1px solid ${previewTableBorder};border-radius:12px;overflow:hidden;background:${previewPreBg};}
 		.pdf-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;border-bottom:1px solid ${previewTableBorder};font-size:12px;background:${previewMetaBg};}
