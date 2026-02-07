@@ -1313,7 +1313,10 @@ body[data-theme="monoDark"] .excel-iframe {
 	display: flex;
 	gap: 0.55rem;
 	align-items: flex-start;
-	flex-wrap: wrap;
+	flex-wrap: nowrap;
+	white-space: nowrap;
+	position: relative;
+	padding-bottom: 1.1rem;
 	color: var(--accent-text);
 	font-size: 1.1rem;
 }
@@ -1366,11 +1369,14 @@ body[data-theme="monoDark"] .excel-iframe {
 .md-content ul.task-list li > .task-closed-at,
 .md-content ol.task-list li > .task-closed-at,
 .md-content li.task-list-item > .task-closed-at {
-	flex-basis: 100%;
-	margin-left: calc(2.3rem);
+	position: absolute;
+	left: calc(2.3rem);
+	top: 1.2rem;
+	margin-left: 0;
+	white-space: nowrap;
 }
 .md-content .task-closed-at {
-	margin-top: -0.6rem;
+	margin-top: 0;
 	text-decoration: none !important;
 }
 .md-content
