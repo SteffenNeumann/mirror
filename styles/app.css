@@ -1295,11 +1295,14 @@ body[data-theme="monoDark"] .excel-iframe {
 	padding: 0 12px;
 	color: var(--blockquote-text);
 }
-.md-content ul.task-list {
+.md-content ul.task-list,
+.md-content ol.task-list {
 	list-style: none;
 	padding-left: 0;
 }
-.md-content ul.task-list li {
+.md-content ul.task-list li,
+.md-content ol.task-list li,
+.md-content li.task-list-item {
 	display: flex;
 	gap: 0.55rem;
 	align-items: flex-start;
@@ -1307,7 +1310,9 @@ body[data-theme="monoDark"] .excel-iframe {
 	font-size: 1.1rem;
 }
 /* Keep completed todos visibly marked */
-.md-content ul.task-list li.task-list-item.checked {
+.md-content ul.task-list li.task-list-item.checked,
+.md-content ol.task-list li.task-list-item.checked,
+.md-content li.task-list-item.checked {
 	opacity: 0.8;
 	color: var(--accent-text-soft);
 	text-decoration: line-through;
@@ -1320,7 +1325,9 @@ body[data-theme="monoDark"] .excel-iframe {
 	input[type="checkbox"] {
 	opacity: 1;
 }
-.md-content ul.task-list input[type="checkbox"] {
+.md-content ul.task-list input[type="checkbox"],
+.md-content ol.task-list input[type="checkbox"],
+.md-content input.task-list-item-checkbox {
 	appearance: none;
 	-webkit-appearance: none;
 	margin-top: 0.25rem;
@@ -1332,7 +1339,9 @@ body[data-theme="monoDark"] .excel-iframe {
 	display: inline-grid;
 	place-content: center;
 }
-.md-content ul.task-list input[type="checkbox"]::before {
+.md-content ul.task-list input[type="checkbox"]::before,
+.md-content ol.task-list input[type="checkbox"]::before,
+.md-content input.task-list-item-checkbox::before {
 	content: "";
 	width: 0.6rem;
 	height: 0.35rem;
@@ -1340,10 +1349,14 @@ body[data-theme="monoDark"] .excel-iframe {
 	border-bottom: 2px solid transparent;
 	transform: rotate(-45deg);
 }
-.md-content ul.task-list input[type="checkbox"]:checked {
+.md-content ul.task-list input[type="checkbox"]:checked,
+.md-content ol.task-list input[type="checkbox"]:checked,
+.md-content input.task-list-item-checkbox:checked {
 	background: var(--accent-strong);
 }
-.md-content ul.task-list input[type="checkbox"]:checked::before {
+.md-content ul.task-list input[type="checkbox"]:checked::before,
+.md-content ol.task-list input[type="checkbox"]:checked::before,
+.md-content input.task-list-item-checkbox:checked::before {
 	border-color: var(--accent-text);
 }
 .md-content ul li::marker,
