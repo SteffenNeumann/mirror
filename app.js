@@ -9493,8 +9493,14 @@
 		const srcRaw = String(textarea && textarea.value ? textarea.value : "");
 		const src = applyWikiLinksToMarkdown(srcRaw);
 		let bodyHtml = "";
+		const taskScopeKey = buildTaskScopeKey(getActiveRoomTabNoteId());
 		try {
 			bodyHtml = embedPdfLinks(applyHljsToHtml(renderer.render(src)));
+			bodyHtml = applyTaskClosedTimestampsToHtml(
+				bodyHtml,
+				srcRaw,
+				taskScopeKey
+			);
 		} catch {
 			bodyHtml = "";
 		}
@@ -9558,6 +9564,12 @@
 		const previewMetaText =
 			themeColors.previewMetaText ||
 			(isMonoLight ? "rgba(71,85,105,.9)" : "rgba(148,163,184,.9)");
+		const previewAccentStrong =
+			themeColors.accentStrong || themeColors.accentBg || previewLink;
+		const previewAccentText = themeColors.accentText || previewText;
+		const previewAccentTextSoft =
+			themeColors.accentTextSoft || previewMetaText;
+		const previewTaskClosedText = previewMetaText;
 		const tocBg = themeColors.tocBg || previewBg;
 		const tocBorder =
 			themeColors.tocBorder ||
@@ -9713,7 +9725,7 @@
   <link rel="stylesheet" href="${highlightCssUrl}">
 	<!--ts:${stamp}-->
   <style>
-		:root{color-scheme:${previewColorScheme};--blockquote-border:${blockquoteBorder};--blockquote-text:${blockquoteText};--scrollbar-thumb:${scrollbarThumb};--scrollbar-thumb-hover:${scrollbarThumbHover};--toc-bg:${tocBg};--toc-border:${tocBorder};--toc-text:${tocText};--toc-muted:${tocMuted};--toc-hover:${tocHover};--toc-ring:${tocRing};--toc-accent:${previewLink};--toc-shadow:${tocShadow};}
+		:root{color-scheme:${previewColorScheme};--blockquote-border:${blockquoteBorder};--blockquote-text:${blockquoteText};--scrollbar-thumb:${scrollbarThumb};--scrollbar-thumb-hover:${scrollbarThumbHover};--toc-bg:${tocBg};--toc-border:${tocBorder};--toc-text:${tocText};--toc-muted:${tocMuted};--toc-hover:${tocHover};--toc-ring:${tocRing};--toc-accent:${previewLink};--toc-shadow:${tocShadow};--accent-strong:${previewAccentStrong};--accent-text:${previewAccentText};--accent-text-soft:${previewAccentTextSoft};--task-closed-text:${previewTaskClosedText};}
 	body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:${previewBg};color:${previewText};overflow-x:hidden;scrollbar-gutter:stable;}
     a{color:${previewLink};}
 		img{max-width:100%;height:auto;}
@@ -9745,11 +9757,16 @@
     table{border-collapse:collapse;width:100%;}
 		th,td{border:1px solid ${previewTableBorder};padding:6px 8px;}
 		blockquote{border-left:3px solid var(--blockquote-border);margin:0;padding:0 12px;color:var(--blockquote-text);}
-    ul.task-list{list-style:none;padding-left:0;}
-		ul.task-list li{display:flex;gap:.55rem;align-items:flex-start;transition:transform .28s ease,opacity .28s ease;animation:task-fade .28s ease both;will-change:transform,opacity;}
-		ul.task-list li.task-list-item.checked{opacity:.75;text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:rgba(148,163,184,.7);}
+		ul.task-list{list-style:none;padding-left:0;}
+		ul.task-list li{display:flex;gap:.55rem;align-items:flex-start;transition:transform .28s ease,opacity .28s ease;animation:task-fade .28s ease both;will-change:transform,opacity;color:var(--accent-text);font-size:1.1rem;}
+		ul.task-list li.task-list-item.checked{opacity:.8;color:var(--accent-text-soft);text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:var(--accent-text-soft);}
 		ul.task-list li.task-list-item.checked input[type=checkbox]{opacity:1;}
-    ul.task-list input[type=checkbox]{margin-top:.2rem;}
+		ul.task-list input[type=checkbox]{appearance:none;-webkit-appearance:none;margin-top:.25rem;width:1.2rem;height:1.2rem;border-radius:.35rem;border:2px solid var(--accent-strong);background:transparent;display:inline-grid;place-content:center;}
+		ul.task-list input[type=checkbox]::before{content:"";width:.6rem;height:.35rem;border-left:2px solid transparent;border-bottom:2px solid transparent;transform:rotate(-45deg);}
+		ul.task-list input[type=checkbox]:checked{background:var(--accent-strong);}
+		ul.task-list input[type=checkbox]:checked::before{border-color:var(--accent-text);}
+		ul.task-list li > .task-closed-at{margin-left:calc(1.2rem + .55rem);}
+		.task-closed-at{display:block;margin-top:.2rem;font-size:.75rem;line-height:1.2;color:var(--task-closed-text);opacity:.85;}
 		@keyframes task-fade{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
 		.pdf-embed{margin:12px 0;border:1px solid ${previewTableBorder};border-radius:12px;overflow:hidden;background:${previewPreBg};}
 		.pdf-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;border-bottom:1px solid ${previewTableBorder};font-size:12px;background:${previewMetaBg};}
@@ -10134,17 +10151,30 @@ ${highlightThemeCss}
 		const lines = src.split("\n");
 		let seen = 0;
 		let changed = false;
+		const scopeKey = buildTaskScopeKey(getActiveRoomTabNoteId());
+		const counts = new Map();
 		for (let li = 0; li < lines.length; li++) {
 			const line = String(lines[li] || "");
 			const m = line.match(
 				/^(\s*(?:>\s*)?(?:[-*+]|\d+[.)])\s+\[)([ xX])(\].*)$/
 			);
 			if (!m) continue;
+			const taskText = normalizeTaskLineText(String(m[3] || "").slice(1));
+			const count = (counts.get(taskText) || 0) + 1;
+			counts.set(taskText, count);
 			if (seen === idx) {
+				const currentChecked = String(m[2] || " ").toLowerCase() === "x";
 				const nextChecked =
 					typeof forceChecked === "boolean"
 						? forceChecked
 						: String(m[2] || " ").toLowerCase() !== "x";
+				const taskKey = buildTaskKey(scopeKey, taskText, count);
+				if (taskKey && currentChecked !== nextChecked) {
+					setTaskClosedTimestamp(
+						taskKey,
+						nextChecked ? Date.now() : null
+					);
+				}
 				lines[li] = m[1] + (nextChecked ? "x" : " ") + m[3];
 				changed = true;
 				break;
@@ -10440,6 +10470,121 @@ ${highlightThemeCss}
 	}
 
 	const TASK_LINE_RE = /^(\s*(?:>\s*)?(?:[-*+]|\d+[.)])\s+\[)([ xX])(\].*)$/;
+	const TASK_CLOSED_TS_KEY = "mirror_task_closed_ts_v1";
+	let taskClosedTsCache = null;
+
+	function loadTaskClosedTsCache() {
+		if (taskClosedTsCache) return;
+		try {
+			const raw = localStorage.getItem(TASK_CLOSED_TS_KEY);
+			const parsed = raw ? JSON.parse(raw) : {};
+			taskClosedTsCache = parsed && typeof parsed === "object" ? parsed : {};
+		} catch {
+			taskClosedTsCache = {};
+		}
+	}
+
+	function saveTaskClosedTsCache() {
+		try {
+			if (!taskClosedTsCache) return;
+			localStorage.setItem(
+				TASK_CLOSED_TS_KEY,
+				JSON.stringify(taskClosedTsCache)
+			);
+		} catch {
+			// ignore
+		}
+	}
+
+	function getTaskClosedTimestamp(taskKey) {
+		if (!taskKey) return null;
+		loadTaskClosedTsCache();
+		const raw = taskClosedTsCache[taskKey];
+		const ts = typeof raw === "number" ? raw : Number(raw);
+		return Number.isFinite(ts) ? ts : null;
+	}
+
+	function setTaskClosedTimestamp(taskKey, ts) {
+		if (!taskKey) return;
+		loadTaskClosedTsCache();
+		const num = typeof ts === "number" ? ts : Number(ts);
+		if (!Number.isFinite(num)) {
+			delete taskClosedTsCache[taskKey];
+			saveTaskClosedTsCache();
+			return;
+		}
+		taskClosedTsCache[taskKey] = num;
+		saveTaskClosedTsCache();
+	}
+
+	function buildTaskScopeKey(noteId) {
+		const safeNoteId = String(noteId || "").trim();
+		if (safeNoteId) return `note:${safeNoteId}`;
+		const scopeRoom = String(room || "").trim();
+		const scopeKey = String(key || "").trim();
+		return `room:${scopeRoom}|key:${scopeKey}`;
+	}
+
+	function normalizeTaskLineText(raw) {
+		return String(raw || "").replace(/\s+/g, " ").trim();
+	}
+
+	function buildTaskKey(scopeKey, text, count) {
+		if (!scopeKey || !text) return "";
+		return `${scopeKey}|${encodeURIComponent(text)}|${count}`;
+	}
+
+	function collectTaskKeysFromSource(src, scopeKey) {
+		const lines = String(src || "").split("\n");
+		const counts = new Map();
+		const tasks = [];
+		for (let i = 0; i < lines.length; i++) {
+			const line = String(lines[i] || "");
+			const m = line.match(TASK_LINE_RE);
+			if (!m) continue;
+			const taskText = normalizeTaskLineText(String(m[3] || "").slice(1));
+			const count = (counts.get(taskText) || 0) + 1;
+			counts.set(taskText, count);
+			const keyValue = buildTaskKey(scopeKey, taskText, count);
+			tasks.push({
+				key: keyValue,
+				isDone: String(m[2] || " ").toLowerCase() === "x",
+			});
+		}
+		return tasks;
+	}
+
+	function applyTaskClosedTimestampsToHtml(html, src, scopeKey) {
+		try {
+			const tasks = collectTaskKeysFromSource(src, scopeKey);
+			if (!tasks.length) return html;
+			const container = document.createElement("div");
+			container.innerHTML = String(html || "");
+			const items = container.querySelectorAll("li.task-list-item");
+			if (!items || !items.length) return html;
+			const count = Math.min(items.length, tasks.length);
+			for (let i = 0; i < count; i++) {
+				const task = tasks[i];
+				if (!task || !task.isDone || !task.key) continue;
+				const ts = getTaskClosedTimestamp(task.key);
+				if (!ts) continue;
+				const stamp = formatMetaDate(ts);
+				if (!stamp) continue;
+				const li = items[i];
+				if (!li || li.querySelector(".task-closed-at")) continue;
+				const node = document.createElement("span");
+				node.className = "task-closed-at";
+				node.textContent =
+					(uiLang === "en" ? "Closed " : "Geschlossen ") + stamp;
+				const label = li.querySelector("label");
+				if (label) label.appendChild(node);
+				else li.appendChild(node);
+			}
+			return container.innerHTML;
+		} catch {
+			return html;
+		}
+	}
 
 	function sortTagList(list) {
 		return list.slice().sort((a, b) => a.localeCompare(b));

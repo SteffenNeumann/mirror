@@ -1303,13 +1303,16 @@ body[data-theme="monoDark"] .excel-iframe {
 	display: flex;
 	gap: 0.55rem;
 	align-items: flex-start;
+	color: var(--accent-text);
+	font-size: 1.1rem;
 }
 /* Keep completed todos visibly marked */
 .md-content ul.task-list li.task-list-item.checked {
-	opacity: 0.75;
+	opacity: 0.8;
+	color: var(--accent-text-soft);
 	text-decoration: line-through;
 	text-decoration-thickness: 2px;
-	text-decoration-color: rgba(148, 163, 184, 0.7);
+	text-decoration-color: var(--accent-text-soft);
 }
 .md-content
 	ul.task-list
@@ -1318,8 +1321,30 @@ body[data-theme="monoDark"] .excel-iframe {
 	opacity: 1;
 }
 .md-content ul.task-list input[type="checkbox"] {
-	margin-top: 0.2rem;
-	accent-color: var(--accent-strong);
+	appearance: none;
+	-webkit-appearance: none;
+	margin-top: 0.25rem;
+	width: 1.2rem;
+	height: 1.2rem;
+	border-radius: 0.35rem;
+	border: 2px solid var(--accent-strong);
+	background: transparent;
+	display: inline-grid;
+	place-content: center;
+}
+.md-content ul.task-list input[type="checkbox"]::before {
+	content: "";
+	width: 0.6rem;
+	height: 0.35rem;
+	border-left: 2px solid transparent;
+	border-bottom: 2px solid transparent;
+	transform: rotate(-45deg);
+}
+.md-content ul.task-list input[type="checkbox"]:checked {
+	background: var(--accent-strong);
+}
+.md-content ul.task-list input[type="checkbox"]:checked::before {
+	border-color: var(--accent-text);
 }
 .md-content ul li::marker,
 .md-content ol li::marker {
