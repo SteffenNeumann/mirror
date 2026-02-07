@@ -9943,6 +9943,7 @@
 		body.task-sort-animate li.task-list-item{transition:transform 1.8s ease,opacity 1.8s ease;}
 		body.task-sort-animate li.task-list-item.checked{transform:translateY(22px);}
 		body.task-sort-animate li.task-list-item:not(.checked){transform:translateY(-12px);}
+		body.task-sort-fadeout li.task-list-item{opacity:0;transition:opacity .45s ease;}
 		@keyframes task-fade{from{opacity:0;}to{opacity:1;}}
 		.pdf-embed{margin:12px 0;border:1px solid ${previewTableBorder};border-radius:12px;overflow:hidden;background:${previewPreBg};}
 		.pdf-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;border-bottom:1px solid ${previewTableBorder};font-size:12px;background:${previewMetaBg};}
@@ -10498,8 +10499,13 @@ ${highlightThemeCss}
 		}
 		doc.body.classList.add("task-sort-animate");
 		window.setTimeout(() => {
+			if (doc && doc.body && doc.body.classList) {
+				doc.body.classList.add("task-sort-fadeout");
+			}
+		}, 2200);
+		window.setTimeout(() => {
 			updatePreview();
-		}, 1800);
+		}, 2650);
 	}
 
 	function maybeAutoSortTasksAfterPreview() {
