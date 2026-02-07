@@ -67,6 +67,12 @@ body {
 	border-color: var(--selection-menu-border);
 }
 
+#slashMenu,
+#wikiMenu {
+	background-color: var(--selection-menu-bg) !important;
+	border-color: var(--selection-menu-border) !important;
+}
+
 #psMetaYaml,
 #psMetaYamlInline {
 	background-color: var(--selection-menu-bg) !important;
@@ -2667,7 +2673,7 @@ body[data-theme="bitterLight"] {
 	--calendar-tooltip-text: #0d0c10;
 	--calendar-tooltip-shadow: 0 12px 28px rgba(13, 12, 16, 0.12),
 		inset 0 0 0 1px rgba(255, 35, 1, 0.06);
-	--selection-menu-bg: #fff9f4;
+	--selection-menu-bg: #f7f6f4;
 	--selection-menu-border: #d8d2cb;
 }
 
@@ -3165,7 +3171,7 @@ body[data-theme="bitterDark"] {
 	background-color: #0d0c10;
 	color: #f0e8df;
 	--bitter-accent: #ff3b1f;
-	--selection-menu-bg: #151518;
+	--selection-menu-bg: #0d0c10;
 	--selection-menu-border: #2a2a30;
 	--comment-item-bg: #151518;
 	--calendar-event-bg: rgba(13, 12, 16, 0.9);
@@ -3565,7 +3571,7 @@ body[data-theme="monoLight"] {
 	--calendar-tooltip-text: #24292f;
 	--calendar-tooltip-shadow: 0 12px 28px rgba(15, 23, 42, 0.15),
 		inset 0 0 0 1px rgba(27, 31, 36, 0.06);
-	--selection-menu-bg: #ffffff;
+	--selection-menu-bg: #f6f8fa;
 	--selection-menu-border: #d0d7de;
 }
 
