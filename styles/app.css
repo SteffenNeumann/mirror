@@ -1313,7 +1313,8 @@ body[data-theme="monoDark"] .excel-iframe {
 	display: flex;
 	gap: 0.55rem;
 	align-items: flex-start;
-	flex-wrap: wrap;
+	flex-wrap: nowrap;
+	white-space: nowrap;
 	color: var(--accent-text);
 	font-size: 1.1rem;
 }

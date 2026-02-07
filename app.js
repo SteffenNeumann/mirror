@@ -9927,7 +9927,7 @@
 		th,td{border:1px solid ${previewTableBorder};padding:6px 8px;}
 		blockquote{border-left:3px solid var(--blockquote-border);margin:0;padding:0 12px;color:var(--blockquote-text);}
 		ul.task-list,ol.task-list{list-style:none;padding-left:0;}
-		ul.task-list li,ol.task-list li,li.task-list-item{display:flex;gap:.55rem;align-items:flex-start;flex-wrap:wrap;transition:transform .28s ease,opacity .28s ease;animation:task-fade .28s ease both;will-change:transform,opacity;color:var(--accent-text);font-size:1.1rem;font-weight:400;}
+		ul.task-list li,ol.task-list li,li.task-list-item{display:flex;gap:.55rem;align-items:flex-start;flex-wrap:nowrap;white-space:nowrap;transition:transform .28s ease,opacity .28s ease;animation:task-fade .28s ease both;will-change:transform,opacity;color:var(--accent-text);font-size:1.1rem;font-weight:400;}
 		ul.task-list li label,ol.task-list li label,li.task-list-item label{font-weight:400;}
 		ul.task-list li *,ol.task-list li *,li.task-list-item *{font-weight:400 !important;}
 		ul.task-list li.task-list-item.checked,ol.task-list li.task-list-item.checked,li.task-list-item.checked{opacity:.8;color:var(--accent-text-soft);}
