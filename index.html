@@ -637,13 +637,13 @@
 									<div
 										id="slashMenu"
 										class="absolute left-2 top-12 z-40 hidden w-[min(92vw,360px)] overflow-hidden rounded-xl border border-white/10 bg-slate-950/80 shadow-soft backdrop-blur">
-										<div
-											class="border-b border-white/10 px-3 py-2 text-[11px] text-slate-300">
-											Slash commands
-											<span class="text-slate-500"
-												>(Enter/Tab to insert, ↑↓ to navigate)</span
-											>
-										</div>
+											<div
+												class="border-b border-white/10 px-3 py-2 text-[11px] text-slate-300">
+												<span data-i18n="slash.menu.title">Slash commands</span>
+												<span class="text-slate-500" data-i18n="slash.menu.hint"
+													>(Enter/Tab to insert, ↑↓ to navigate)</span
+												>
+											</div>
 										<div
 											id="slashMenuList"
 											class="max-h-56 overflow-auto p-1"></div>
@@ -734,44 +734,44 @@
 												type="button"
 												data-selection-action="bold"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Bold"
-												data-i18n-title="menu.bold">
+												title="Make the selected text bold"
+												data-i18n-title="menu.bold_tip">
 												<strong>B</strong>
 											</button>
 											<button
 												type="button"
 												data-selection-action="italic"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Italic"
-												data-i18n-title="menu.italic">
+												title="Italicize the selected text"
+												data-i18n-title="menu.italic_tip">
 												<em>I</em>
 											</button>
 											<button
 												type="button"
 												data-selection-action="strike"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Strikethrough"
-												data-i18n-title="menu.strike">
+												title="Strike through the selected text"
+												data-i18n-title="menu.strike_tip">
 												<span class="line-through">S</span>
 											</button>
 											<button
 												type="button"
 												data-selection-action="password"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Passwort verstecken"
-												aria-label="Passwort verstecken"
-												data-i18n-title="menu.password_hide"
-												data-i18n-aria="menu.password_hide">
+												title="Hide the selected text as a password token"
+												aria-label="Hide the selected text as a password token"
+												data-i18n-title="menu.password_hide_tip"
+												data-i18n-aria="menu.password_hide_tip">
 												<span data-i18n="menu.password">PW</span>
 											</button>
 											<button
 												type="button"
 												data-selection-action="masktoggle"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Maskierung an/aus"
-												aria-label="Maskierung an/aus"
-												data-i18n-title="menu.mask_toggle"
-												data-i18n-aria="menu.mask_toggle"
+												title="Show or hide masked tokens in the editor"
+												aria-label="Show or hide masked tokens in the editor"
+												data-i18n-title="menu.mask_toggle_tip"
+												data-i18n-aria="menu.mask_toggle_tip"
 												aria-pressed="true">
 												<span data-i18n="menu.mask">Mask</span>
 											</button>
@@ -779,64 +779,64 @@
 												type="button"
 												data-selection-action="quote"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Blockquote"
-												data-i18n-title="menu.blockquote">
+												title="Turn the selection into a quote block"
+												data-i18n-title="menu.blockquote_tip">
 												“
 											</button>
 											<button
 												type="button"
 												data-selection-action="ul"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Bullet list"
-												data-i18n-title="menu.bullet">
+												title="Turn lines into a bulleted list"
+												data-i18n-title="menu.bullet_tip">
 												<span data-i18n="menu.bullet_label">• List</span>
 											</button>
 											<button
 												type="button"
 												data-selection-action="ol"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Numbered list"
-												data-i18n-title="menu.numbered">
+												title="Turn lines into a numbered list"
+												data-i18n-title="menu.numbered_tip">
 												<span data-i18n="menu.numbered_label">1. List</span>
 											</button>
 											<button
 												type="button"
 												data-selection-action="todo"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Task list"
-												data-i18n-title="menu.task">
+												title="Turn lines into a task list with checkboxes"
+												data-i18n-title="menu.task_tip">
 												<span data-i18n="menu.task_label">☐ Task</span>
 											</button>
 											<button
 												type="button"
 												data-selection-action="divider"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Divider"
-												data-i18n-title="menu.divider">
+												title="Insert a divider line"
+												data-i18n-title="menu.divider_tip">
 												---
 											</button>
 											<button
 												type="button"
 												data-selection-action="code"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Code block"
-												data-i18n-title="menu.code">
+												title="Wrap the selection in a code block"
+												data-i18n-title="menu.code_tip">
 												&lt;/&gt;
 											</button>
 											<button
 												type="button"
 												data-selection-action="link"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Link"
-												data-i18n-title="menu.link">
+												title="Convert the selection into a link"
+												data-i18n-title="menu.link_tip">
 												<span data-i18n="menu.link">Link</span>
 											</button>
 											<button
 												type="button"
 												data-selection-action="comment"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Comment"
-												data-i18n-title="menu.comment">
+												title="Add a comment to the selection"
+												data-i18n-title="menu.comment_tip">
 												<span data-i18n="menu.comment">Comment</span>
 											</button>
 											<div class="mx-1 h-6 w-px bg-white/10"></div>
@@ -844,9 +844,19 @@
 												type="button"
 												data-selection-action="sort"
 												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Sort A–Z"
-												data-i18n-title="menu.sort_az">
+												title="Sort selected lines A–Z"
+												data-i18n-title="menu.sort_az_tip">
 												<span data-i18n="menu.sort_az">Sort A–Z</span>
+											</button>
+											<button
+												type="button"
+												data-selection-action="help"
+												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
+												title="Open formatting help"
+												aria-label="Open formatting help"
+												data-i18n-title="menu.help_tip"
+												data-i18n-aria="menu.help_tip">
+												?
 											</button>
 										</div>
 									</div>

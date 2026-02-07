@@ -2105,41 +2105,68 @@
 
 	async function showSlashHelp() {
 		await openModal({
-			title: "Slash commands",
-			message:
-				"/h1 /h2 /h3 · /b (bold) · /i (italic) · /s (strike) · /quote · /ul · /ol · /todo · /done · /tasks · /code [lang] · /link · /hr · /divider · /table · /table row+ · /table row- · /table col+ · /table col-",
-			okText: "OK",
-			cancelText: "Close",
+			title: t("slash.help.title"),
+			message: t("slash.help.message"),
+			okText: t("modal.ok"),
+			cancelText: t("modal.close"),
+			backdropClose: true,
+		});
+	}
+
+	const SELECTION_HELP_KEYS = [
+		"menu.bold_tip",
+		"menu.italic_tip",
+		"menu.strike_tip",
+		"menu.password_hide_tip",
+		"menu.mask_toggle_tip",
+		"menu.blockquote_tip",
+		"menu.bullet_tip",
+		"menu.numbered_tip",
+		"menu.task_tip",
+		"menu.divider_tip",
+		"menu.code_tip",
+		"menu.link_tip",
+		"menu.comment_tip",
+		"menu.sort_az_tip",
+	];
+
+	async function showSelectionHelp() {
+		const message = SELECTION_HELP_KEYS.map((key) => t(key)).join(" · ");
+		await openModal({
+			title: t("selection.help.title"),
+			message,
+			okText: t("modal.ok"),
+			cancelText: t("modal.close"),
 			backdropClose: true,
 		});
 	}
 
 	const SLASH_SUGGESTIONS = [
-		{ cmd: "help", label: "Help", snippet: "/help" },
-		{ cmd: "h1", label: "Heading 1", snippet: "/h1" },
-		{ cmd: "h2", label: "Heading 2", snippet: "/h2" },
-		{ cmd: "h3", label: "Heading 3", snippet: "/h3" },
-		{ cmd: "b", label: "Bold", snippet: "/b" },
-		{ cmd: "i", label: "Italic", snippet: "/i" },
-		{ cmd: "s", label: "Strikethrough", snippet: "/s" },
-		{ cmd: "quote", label: "Blockquote", snippet: "/quote" },
-		{ cmd: "ul", label: "Bullet list", snippet: "/ul" },
-		{ cmd: "ol", label: "Numbered list", snippet: "/ol" },
-		{ cmd: "todo", label: "Task list", snippet: "/todo" },
-		{ cmd: "done", label: "Task (checked)", snippet: "/done" },
-		{ cmd: "tasks", label: "Task template", snippet: "/tasks" },
-		{ cmd: "table", label: "Table", snippet: "/table" },
-		{ cmd: "table", label: "Table (3x2)", snippet: "/table 3x2" },
-		{ cmd: "table", label: "Table: row +", snippet: "/table row+" },
-		{ cmd: "table", label: "Table: row -", snippet: "/table row-" },
-		{ cmd: "table", label: "Table: col +", snippet: "/table col+" },
-		{ cmd: "table", label: "Table: col -", snippet: "/table col-" },
-		{ cmd: "hr", label: "Horizontal rule", snippet: "/hr" },
-		{ cmd: "divider", label: "Divider", snippet: "/divider" },
-		{ cmd: "link", label: "Link", snippet: "/link" },
-		{ cmd: "code", label: "Code block", snippet: "/code" },
-		{ cmd: "code", label: "Code block (js)", snippet: "/code javascript" },
-		{ cmd: "code", label: "Code block (py)", snippet: "/code python" },
+		{ cmd: "help", labelKey: "slash.item.help", label: "Help", snippet: "/help" },
+		{ cmd: "h1", labelKey: "slash.item.h1", label: "Heading 1", snippet: "/h1" },
+		{ cmd: "h2", labelKey: "slash.item.h2", label: "Heading 2", snippet: "/h2" },
+		{ cmd: "h3", labelKey: "slash.item.h3", label: "Heading 3", snippet: "/h3" },
+		{ cmd: "b", labelKey: "slash.item.bold", label: "Bold", snippet: "/b" },
+		{ cmd: "i", labelKey: "slash.item.italic", label: "Italic", snippet: "/i" },
+		{ cmd: "s", labelKey: "slash.item.strike", label: "Strikethrough", snippet: "/s" },
+		{ cmd: "quote", labelKey: "slash.item.quote", label: "Blockquote", snippet: "/quote" },
+		{ cmd: "ul", labelKey: "slash.item.ul", label: "Bullet list", snippet: "/ul" },
+		{ cmd: "ol", labelKey: "slash.item.ol", label: "Numbered list", snippet: "/ol" },
+		{ cmd: "todo", labelKey: "slash.item.todo", label: "Task list", snippet: "/todo" },
+		{ cmd: "done", labelKey: "slash.item.done", label: "Task (checked)", snippet: "/done" },
+		{ cmd: "tasks", labelKey: "slash.item.tasks", label: "Task template", snippet: "/tasks" },
+		{ cmd: "table", labelKey: "slash.item.table", label: "Table", snippet: "/table" },
+		{ cmd: "table", labelKey: "slash.item.table_3x2", label: "Table (3x2)", snippet: "/table 3x2" },
+		{ cmd: "table", labelKey: "slash.item.table_row_add", label: "Table: row +", snippet: "/table row+" },
+		{ cmd: "table", labelKey: "slash.item.table_row_remove", label: "Table: row -", snippet: "/table row-" },
+		{ cmd: "table", labelKey: "slash.item.table_col_add", label: "Table: col +", snippet: "/table col+" },
+		{ cmd: "table", labelKey: "slash.item.table_col_remove", label: "Table: col -", snippet: "/table col-" },
+		{ cmd: "hr", labelKey: "slash.item.hr", label: "Horizontal rule", snippet: "/hr" },
+		{ cmd: "divider", labelKey: "slash.item.divider", label: "Divider", snippet: "/divider" },
+		{ cmd: "link", labelKey: "slash.item.link", label: "Link", snippet: "/link" },
+		{ cmd: "code", labelKey: "slash.item.code", label: "Code block", snippet: "/code" },
+		{ cmd: "code", labelKey: "slash.item.code_js", label: "Code block (js)", snippet: "/code javascript" },
+		{ cmd: "code", labelKey: "slash.item.code_py", label: "Code block (py)", snippet: "/code python" },
 	];
 
 	let slashMenuOpen = false;
@@ -3264,6 +3291,10 @@
 		if (!textarea) return;
 		const before = String(textarea.value || "");
 		switch (action) {
+			case "help":
+				setSelectionMenuOpen(false);
+				void showSelectionHelp();
+				return;
 			case "bold":
 				wrapSelectionToggle(textarea, "**", "**");
 				break;
@@ -3576,7 +3607,10 @@
 		if (!slashMenuList) return;
 		if (!slashMenuItems.length) {
 			slashMenuList.innerHTML =
-				'<div class="px-3 py-2 text-xs text-slate-400">No matches.</div>';
+				`<div class="px-3 py-2 text-xs text-slate-400">${t(
+					"slash.menu.empty",
+					"No matches."
+				)}</div>`;
 			return;
 		}
 		slashMenuList.innerHTML = slashMenuItems
@@ -3587,13 +3621,16 @@
 				const cls = active
 					? "bg-fuchsia-500/15 text-fuchsia-100"
 					: "hover:bg-white/5 text-slate-200";
+				const label = it.labelKey
+					? t(it.labelKey, it.label || it.cmd)
+					: String(it.label || it.cmd || "");
 				const right =
 					'<span class="text-[11px] text-slate-500">' +
 					String(it.snippet || "") +
 					"</span>";
 				return (
 					`<button type="button" data-slash-idx="${idx}" class="${base} ${cls}">` +
-					`<span class="font-medium">${String(it.label || it.cmd)}</span>` +
+					`<span class="font-medium">${String(label || "")}</span>` +
 					right +
 					"</button>"
 				);
@@ -4894,26 +4931,73 @@
 				"preview.clear_title": "Ausgabe löschen",
 				"preview.clear": "Löschen",
 				"menu.bold": "Fett",
+				"menu.bold_tip": "Markierten Text fett darstellen.",
 				"menu.italic": "Kursiv",
+				"menu.italic_tip": "Markierten Text kursiv darstellen.",
 				"menu.strike": "Durchgestrichen",
+				"menu.strike_tip": "Markierten Text durchstreichen.",
 				"menu.password_hide": "Passwort verstecken",
+				"menu.password_hide_tip": "Markierten Text als Passwort-Token verstecken.",
 				"menu.password": "PW",
 				"menu.mask_toggle": "Maskierung an/aus",
+				"menu.mask_toggle_tip": "Maskierte Tokens im Editor ein-/ausblenden.",
 				"menu.mask": "Mask",
 				"menu.blockquote": "Zitat",
+				"menu.blockquote_tip": "Auswahl in ein Zitat (Blockquote) umwandeln.",
 				"menu.bullet": "Liste (Aufzählung)",
+				"menu.bullet_tip": "Zeilen in eine Aufzählungsliste umwandeln.",
 				"menu.bullet_label": "• Liste",
 				"menu.numbered": "Liste (Nummeriert)",
+				"menu.numbered_tip": "Zeilen in eine nummerierte Liste umwandeln.",
 				"menu.numbered_label": "1. Liste",
 				"menu.task": "Aufgabenliste",
+				"menu.task_tip": "Zeilen in eine Aufgabenliste mit Checkboxen umwandeln.",
 				"menu.task_label": "☐ Aufgabe",
 				"menu.divider": "Trenner",
+				"menu.divider_tip": "Trennlinie einfügen.",
 				"menu.code": "Codeblock",
+				"menu.code_tip": "Auswahl in einen Codeblock setzen.",
 				"menu.link": "Link",
+				"menu.link_tip": "Auswahl in einen Link umwandeln.",
 				"menu.comment": "Kommentar",
+				"menu.comment_tip": "Kommentar zur Auswahl hinzufügen.",
 				"menu.sort_az": "Sortieren A–Z",
+				"menu.sort_az_tip": "Ausgewählte Zeilen A–Z sortieren.",
 				"menu.code_lang_label": "Sprache",
 				"menu.code_lang_title": "Sprache für Codeblock",
+				"menu.help_tip": "Formatierungs-Hilfe öffnen.",
+				"selection.help.title": "Format-Menü",
+				"slash.menu.title": "Slash-Kommandos",
+				"slash.menu.hint": "(Enter/Tab zum Einfügen, ↑↓ zum Navigieren)",
+				"slash.menu.empty": "Keine Treffer.",
+				"slash.help.title": "Slash-Kommandos",
+				"slash.help.message":
+					"Tippe / im Editor und wähle einen Befehl. Beispiele: /h1 Überschrift, /b fett, /i kursiv, /s durchgestrichen, /quote Zitat, /ul Aufzählung, /ol Nummern, /todo Aufgabe, /done erledigte Aufgabe, /tasks Aufgaben-Template, /code [sprache] Codeblock, /link Link, /hr Trenner, /divider Trenner, /table 3x2 Tabelle, /table row+ Zeile hinzufügen, /table col- Spalte entfernen.",
+				"slash.item.help": "Hilfe",
+				"slash.item.h1": "Überschrift 1",
+				"slash.item.h2": "Überschrift 2",
+				"slash.item.h3": "Überschrift 3",
+				"slash.item.bold": "Fett",
+				"slash.item.italic": "Kursiv",
+				"slash.item.strike": "Durchgestrichen",
+				"slash.item.quote": "Zitat",
+				"slash.item.ul": "Aufzählungsliste",
+				"slash.item.ol": "Nummerierte Liste",
+				"slash.item.todo": "Aufgabenliste",
+				"slash.item.done": "Aufgabe (erledigt)",
+				"slash.item.tasks": "Aufgaben-Template",
+				"slash.item.table": "Tabelle",
+				"slash.item.table_3x2": "Tabelle (3x2)",
+				"slash.item.table_row_add": "Tabelle: Zeile +",
+				"slash.item.table_row_remove": "Tabelle: Zeile -",
+				"slash.item.table_col_add": "Tabelle: Spalte +",
+				"slash.item.table_col_remove": "Tabelle: Spalte -",
+				"slash.item.hr": "Horizontale Linie",
+				"slash.item.divider": "Divider",
+				"slash.item.link": "Link",
+				"slash.item.code": "Codeblock",
+				"slash.item.code_js": "Codeblock (JS)",
+				"slash.item.code_py": "Codeblock (PY)",
 				"presence.one": "{count} Nutzer online",
 				"presence.many": "{count} Nutzer online",
 				"typing.one": "{name} tippt…",
@@ -5236,26 +5320,73 @@
 				"preview.clear_title": "Clear output",
 				"preview.clear": "Clear",
 				"menu.bold": "Bold",
+				"menu.bold_tip": "Make the selected text bold.",
 				"menu.italic": "Italic",
+				"menu.italic_tip": "Italicize the selected text.",
 				"menu.strike": "Strikethrough",
+				"menu.strike_tip": "Strike through the selected text.",
 				"menu.password_hide": "Hide password",
+				"menu.password_hide_tip": "Hide the selected text as a password token.",
 				"menu.password": "PW",
 				"menu.mask_toggle": "Toggle mask",
+				"menu.mask_toggle_tip": "Show or hide masked tokens in the editor.",
 				"menu.mask": "Mask",
 				"menu.blockquote": "Blockquote",
+				"menu.blockquote_tip": "Turn the selection into a quote block.",
 				"menu.bullet": "Bullet list",
+				"menu.bullet_tip": "Turn lines into a bulleted list.",
 				"menu.bullet_label": "• List",
 				"menu.numbered": "Numbered list",
+				"menu.numbered_tip": "Turn lines into a numbered list.",
 				"menu.numbered_label": "1. List",
 				"menu.task": "Task list",
+				"menu.task_tip": "Turn lines into a task list with checkboxes.",
 				"menu.task_label": "☐ Task",
 				"menu.divider": "Divider",
+				"menu.divider_tip": "Insert a divider line.",
 				"menu.code": "Code block",
+				"menu.code_tip": "Wrap the selection in a code block.",
 				"menu.link": "Link",
+				"menu.link_tip": "Convert the selection into a link.",
 				"menu.comment": "Comment",
+				"menu.comment_tip": "Add a comment to the selection.",
 				"menu.sort_az": "Sort A–Z",
+				"menu.sort_az_tip": "Sort selected lines A–Z.",
 				"menu.code_lang_label": "Language",
 				"menu.code_lang_title": "Language for code block",
+				"menu.help_tip": "Open formatting help.",
+				"selection.help.title": "Formatting menu",
+				"slash.menu.title": "Slash commands",
+				"slash.menu.hint": "(Enter/Tab to insert, ↑↓ to navigate)",
+				"slash.menu.empty": "No matches.",
+				"slash.help.title": "Slash commands",
+				"slash.help.message":
+					"Type / in the editor and pick a command. Examples: /h1 heading, /b bold, /i italic, /s strike, /quote blockquote, /ul bullet list, /ol numbered list, /todo task list, /done checked task, /tasks task template, /code [lang] code block, /link link, /hr divider, /divider divider, /table 3x2 table, /table row+ add row, /table col- remove column.",
+				"slash.item.help": "Help",
+				"slash.item.h1": "Heading 1",
+				"slash.item.h2": "Heading 2",
+				"slash.item.h3": "Heading 3",
+				"slash.item.bold": "Bold",
+				"slash.item.italic": "Italic",
+				"slash.item.strike": "Strikethrough",
+				"slash.item.quote": "Blockquote",
+				"slash.item.ul": "Bullet list",
+				"slash.item.ol": "Numbered list",
+				"slash.item.todo": "Task list",
+				"slash.item.done": "Task (checked)",
+				"slash.item.tasks": "Task template",
+				"slash.item.table": "Table",
+				"slash.item.table_3x2": "Table (3x2)",
+				"slash.item.table_row_add": "Table: row +",
+				"slash.item.table_row_remove": "Table: row -",
+				"slash.item.table_col_add": "Table: col +",
+				"slash.item.table_col_remove": "Table: col -",
+				"slash.item.hr": "Horizontal rule",
+				"slash.item.divider": "Divider",
+				"slash.item.link": "Link",
+				"slash.item.code": "Code block",
+				"slash.item.code_js": "Code block (JS)",
+				"slash.item.code_py": "Code block (PY)",
 				"presence.one": "{count} user online",
 				"presence.many": "{count} users online",
 				"typing.one": "{name} is typing…",
