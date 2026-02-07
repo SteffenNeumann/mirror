@@ -1307,6 +1307,7 @@ body[data-theme="monoDark"] .excel-iframe {
 	display: flex;
 	gap: 0.55rem;
 	align-items: flex-start;
+	flex-wrap: wrap;
 	color: var(--accent-text);
 	font-size: 1.1rem;
 }
@@ -1318,7 +1319,7 @@ body[data-theme="monoDark"] .excel-iframe {
 .md-content ul.task-list li *,
 .md-content ol.task-list li *,
 .md-content li.task-list-item * {
-	font-weight: 400;
+	font-weight: 400 !important;
 }
 .md-content ul.task-list li strong,
 .md-content ol.task-list li strong,
@@ -1353,6 +1354,15 @@ body[data-theme="monoDark"] .excel-iframe {
 	text-decoration: line-through;
 	text-decoration-thickness: 2px;
 	text-decoration-color: var(--accent-text-soft);
+}
+.md-content ul.task-list li > .task-closed-at,
+.md-content ol.task-list li > .task-closed-at,
+.md-content li.task-list-item > .task-closed-at {
+	flex-basis: 100%;
+	margin-left: calc(1.2rem + 0.55rem);
+}
+.md-content .task-closed-at {
+	text-decoration: none !important;
 }
 .md-content
 	ul.task-list
