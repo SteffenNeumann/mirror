@@ -1316,7 +1316,8 @@ body[data-theme="monoDark"] .excel-iframe {
 	flex-wrap: nowrap;
 	white-space: nowrap;
 	position: relative;
-	padding-bottom: 1.1rem;
+	padding-bottom: 1.45rem;
+	min-width: 0;
 	color: var(--accent-text);
 	font-size: 1.1rem;
 }
@@ -1326,6 +1327,9 @@ body[data-theme="monoDark"] .excel-iframe {
 	font-weight: 400;
 	flex: 1 1 auto;
 	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	min-width: 0;
 }
 .md-content ul.task-list li *,
 .md-content ol.task-list li *,
@@ -1371,7 +1375,7 @@ body[data-theme="monoDark"] .excel-iframe {
 .md-content li.task-list-item > .task-closed-at {
 	position: absolute;
 	left: calc(2.3rem);
-	top: 1.2rem;
+	top: 1.45rem;
 	margin-left: 0;
 	white-space: nowrap;
 }
