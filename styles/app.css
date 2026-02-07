@@ -1359,9 +1359,10 @@ body[data-theme="monoDark"] .excel-iframe {
 .md-content ol.task-list li > .task-closed-at,
 .md-content li.task-list-item > .task-closed-at {
 	flex-basis: 100%;
-	margin-left: calc(1.2rem + 0.55rem);
+	margin-left: calc(1.2rem + 0.35rem);
 }
 .md-content .task-closed-at {
+	margin-top: 0.1rem;
 	text-decoration: none !important;
 }
 .md-content
