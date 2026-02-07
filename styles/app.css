@@ -2930,6 +2930,12 @@ body[data-theme="bitterLight"] #psSortMenu {
 	border-color: #d8d2cb !important;
 }
 
+body[data-theme="bitterLight"] #slashMenu,
+body[data-theme="bitterLight"] #wikiMenu {
+	background-color: var(--selection-menu-bg) !important;
+	border-color: var(--selection-menu-border) !important;
+}
+
 body[data-theme="bitterLight"] #toggleLinear {
 	color: #0d0c10 !important;
 }
@@ -3365,6 +3371,12 @@ body[data-theme="bitterDark"] #psSortMenu {
 	border-color: #2a2a30 !important;
 }
 
+body[data-theme="bitterDark"] #slashMenu,
+body[data-theme="bitterDark"] #wikiMenu {
+	background-color: var(--selection-menu-bg) !important;
+	border-color: var(--selection-menu-border) !important;
+}
+
 body[data-theme="bitterDark"] #psSortMenu .ps-sort-option {
 	color: #f0e8df !important;
 }
@@ -3691,6 +3703,12 @@ body[data-theme="monoLight"] #psEditorTagsSuggest {
 body[data-theme="monoLight"] #psEditorTagsInput {
 	background-color: #f0f3f6 !important;
 	color: #24292f !important;
+}
+
+body[data-theme="monoLight"] #slashMenu,
+body[data-theme="monoLight"] #wikiMenu {
+	background-color: var(--selection-menu-bg) !important;
+	border-color: var(--selection-menu-border) !important;
 }
 
 body[data-theme="monoLight"] #previewPanel .bg-fuchsia-600\/20 {
