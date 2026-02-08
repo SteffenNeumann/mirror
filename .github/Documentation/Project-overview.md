@@ -110,6 +110,7 @@ Server-Start
 
 > **Wartungshinweis**: Neue Funktionen am Ende der jeweiligen Kategorie einfügen.  
 > Jede Funktion trägt `#tags` für Kategorie- und Querschnittssuche. Zum Finden: `Ctrl+F` → `#tagname`.  
+> **Datei**: Jeder Sektionsheader enthält die Quelldatei (`app.js` / `server.js`).  
 > **Kategorien**: `#core` `#crypto` `#modal` `#share` `#upload` `#tags` `#editor` `#comments` `#wiki` `#slash` `#table` `#mobile` `#i18n` `#theme` `#ai` `#settings` `#backup` `#ps` `#preview` `#runner` `#import` `#favorites` `#tabs` `#pins` `#calendar` `#ws` `#crdt` `#presence` `#linear` `#init`  
 > **Querschnitt**: `#render` `#parse` `#normalize` `#format` `#storage` `#api` `#handler` `#dom` `#debounce` `#security` `#url` `#identity` `#date` `#ui` `#pdf` `#html` `#build` `#sync`
 
@@ -119,7 +120,7 @@ Server-Start
 
 ---
 
-#### 1 · Basis-Helfer & Initialisierung `#core`
+#### 1 · Basis-Helfer & Initialisierung `#core` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -155,7 +156,7 @@ Server-Start
 | `getTextareaCaretCoords` | Cursor-Koordinaten im Textarea | `#cursor` `#dom` | `t` |
 | `positionFloatingMenu` | Floating-Menü positionieren | `#menu` `#dom` | `getTextareaCaretCoords`, `t` |
 
-#### 2 · Verschlüsselung (E2EE) `#crypto`
+#### 2 · Verschlüsselung (E2EE) `#crypto` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -171,7 +172,7 @@ Server-Start
 | `toast` | Benachrichtigungen anzeigen | `#ui` `#notification` | `t` |
 | `loadBuildStamp` | Build-Stamp laden | `#version` | `t` |
 
-#### 3 · Modale Dialoge `#modal`
+#### 3 · Modale Dialoge `#modal` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -189,9 +190,9 @@ Server-Start
 | `modalPrompt` | Eingabedialog | `#dialog` | `openModal` |
 | `showSlashHelp` | Slash-Befehle Hilfe anzeigen | `#dialog` `#help` | `openModal` |
 
-#### 4 · Teilen (Share / Note-Share) `#share`
+#### 4 · Teilen (Share / Note-Share) `#share` — `app.js`
 
-##### 4.1 Room-Share-Modal
+##### 4.1 Room-Share-Modal — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -203,7 +204,7 @@ Server-Start
 | `buildShareHref` | Baut vollständige Share-URL | `#url` `#build` | `buildShareHash` |
 | `updateShareLink` | Aktualisiert Share-Link global | `#url` `#sync` | `buildShareHref`, `updateShareModalLink` |
 
-##### 4.2 Notizen-Share-Modal
+##### 4.2 Notizen-Share-Modal — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -217,7 +218,7 @@ Server-Start
 | `updateNoteShareModal` | Aktualisiert Note-Share-Modal | `#render` `#ui` | `buildNoteShareQrPayload`, `buildNoteShareUrl`, `buildQrUrl`, `isNoteShareModalReady`, `revokeNoteShareShareUrl`, `t` |
 | `openNoteShareModal` | Öffnet Note-Share-Modal | `#ui` `#handler` | `buildNoteSharePayloadFromIds`, `isNoteShareModalReady`, `setNoteShareModalOpen`, `t`, `toast`, `updateNoteShareModal` |
 
-#### 5 · Upload-Modal `#upload`
+#### 5 · Upload-Modal `#upload` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -232,9 +233,9 @@ Server-Start
 | `openUploadModal` | Öffnet Upload-Modal | `#ui` `#handler` | `isUploadModalReady`, `resetUploadModalState`, `setUploadModalOpen`, `t` |
 | `readFileAsDataUrl` | Liest Datei als Data-URL | `#file` `#read` | `t` |
 
-#### 6 · Tag-System & Kategorisierung `#tags`
+#### 6 · Tag-System & Kategorisierung `#tags` — `app.js`
 
-##### 6.1 Tag-Normalisierung & Helfer
+##### 6.1 Tag-Normalisierung & Helfer — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -253,7 +254,7 @@ Server-Start
 | `noteIsPinned` | Prüft ob Notiz gepinnt | `#check` `#pin` | — |
 | `buildPsTagsPayload` | Baut Tags-Payload | `#build` `#api` | `stripManualTagsMarker` |
 
-##### 6.2 Tag-Editor (PS-Sidebar)
+##### 6.2 Tag-Editor (PS-Sidebar) — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -274,7 +275,7 @@ Server-Start
 | `applyPsEditorTagSuggestion` | Tag-Suggestion anwenden | `#handler` `#suggest` | `getPsEditorTagTokenBounds`, `t`, `updatePsEditorTagsFromInput`, `updatePsEditorTagsSuggest` |
 | `syncPsEditingNoteTagsFromState` | Tags vom State synchronisieren | `#sync` `#state` | `normalizeCategoryValue`, `normalizeMonthTag`, `normalizeYearTag`, `splitTagsForEditor`, `syncPsEditorTagsInput`, `t`, `updatePsEditingTagsHint` |
 
-##### 6.3 Tag-Verwaltung (Sections, Context-Menü)
+##### 6.3 Tag-Verwaltung (Sections, Context-Menü) — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -300,7 +301,7 @@ Server-Start
 | `updateEditingNoteTagsLocal` | Lokale Tags der aktiven Notiz aktualisieren | `#sync` `#state` | `applyPersonalSpaceFiltersAndRender`, `buildEditorSystemTags`, `buildPsTagsPayload`, `rebuildPsTagsFromNotes`, `uniqTags` |
 | `schedulePsTagsAutoSave` | Tags-Auto-Save planen | `#debounce` `#save` | `savePersonalSpaceNote`, `t` |
 
-#### 7 · Kommentare `#comments`
+#### 7 · Kommentare `#comments` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -322,7 +323,7 @@ Server-Start
 | `addCommentFromDraft` | Fügt Kommentar aus Draft hinzu | `#handler` `#create` | `clearCommentComposerState`, `getSelectionRange`, `renderCommentList`, `saveCommentsForRoom`, `t`, `toast`, `updateCommentOverlay` |
 | `openCommentFromSelection` | Öffnet Kommentar aus Selektion | `#handler` `#ui` | `getSelectionRange`, `setCommentDraftSelection`, `setCommentPanelOpen`, `setSelectionMenuOpen`, `updateCommentComposerUi` |
 
-#### 8 · Editor-Selektion & Textformatierung `#editor`
+#### 8 · Editor-Selektion & Textformatierung `#editor` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -342,7 +343,7 @@ Server-Start
 | `applySelectionAction` | Selektions-Aktion ausführen | `#handler` | `openCommentFromSelection`, `schedulePsAutoSave`, `scheduleSend`, diverse |
 | `updateSelectionMenu` | Selektions-Menü aktualisieren | `#render` `#menu` | `getSelectionRange`, `positionFloatingMenu`, `setSelectionMenuOpen` |
 
-#### 9 · Wiki-Menü `#wiki`
+#### 9 · Wiki-Menü `#wiki` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -352,7 +353,7 @@ Server-Start
 | `updateWikiMenu` | Wiki-Menü aktualisieren | `#render` `#menu` | `fmtDate`, `getNoteTitle`, `getWikiContext`, `renderWikiMenu`, `setSlashMenuOpen`, `setWikiMenuOpen`, `t` |
 | `handleWikiMenuKey` | Wiki-Menü Tastatur-Handler | `#handler` `#keyboard` | `insertWikiLink`, `renderWikiMenu`, `setWikiMenuOpen`, `t` |
 
-#### 10 · Slash-Menü `#slash`
+#### 10 · Slash-Menü `#slash` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -362,7 +363,7 @@ Server-Start
 | `handleSlashMenuKey` | Slash-Menü Tastatur-Handler | `#handler` `#keyboard` | `getSlashContext`, `insertSlashSnippet`, `renderSlashMenu`, `setSlashMenuOpen`, `t` |
 | `applySlashCommand` | Slash-Befehl ausführen | `#handler` `#command` | `applyTableCommand`, `buildMarkdownTable`, `getLineBounds`, `getSelectedCodeLang`, `replaceTextRange`, `showSlashHelp`, `t`, `toast`, `updateCodeLangOverlay` |
 
-#### 11 · Tabellen-Editor `#table`
+#### 11 · Tabellen-Editor `#table` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -387,7 +388,7 @@ Server-Start
 | `openTableEditorFromCursor` | Tabellen-Editor am Cursor öffnen | `#handler` `#ui` | `getTableContext`, `parseTableFromContext`, `renderTableEditorGrid`, `setTableModalOpen`, `t`, `toast`, `updateTableActiveCellLabel`, `updateTableCalculations` |
 | `updateTableMenuVisibility` | Tabellen-Menü Sichtbarkeit | `#ui` `#state` | `getTableContext`, `t` |
 
-#### 12 · Mobil-Unterstützung `#mobile`
+#### 12 · Mobil-Unterstützung `#mobile` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -400,7 +401,7 @@ Server-Start
 | `shouldStartMobileAutoNote` | Prüft ob Auto-Note starten | `#check` | `isMobileViewport`, `t` |
 | `maybeStartMobileAutoNoteSession` | Startet ggf. Auto-Note-Session | `#handler` `#auto` | `setPreviewVisible`, `shouldStartMobileAutoNote`, `syncMobileFocusState` |
 
-#### 13 · Internationalisierung (i18n) `#i18n`
+#### 13 · Internationalisierung (i18n) `#i18n` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -417,7 +418,7 @@ Server-Start
 | `setUiLanguage` | UI-Sprache setzen | `#state` `#locale` | `applyUiLanguage` |
 | `initUiLanguage` | UI-Sprache initialisieren | `#init` `#locale` | `applyUiLanguage`, `detectUiLanguage` |
 
-#### 14 · Theme & Glow `#theme`
+#### 14 · Theme & Glow `#theme` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -430,9 +431,9 @@ Server-Start
 | `applyTheme` | Theme anwenden | `#dom` `#apply` | `syncThemeListActive`, `updatePreview` |
 | `saveTheme` | Theme speichern | `#storage` `#save` | `applyTheme` |
 
-#### 15 · KI-Assistent & Diktat `#ai`
+#### 15 · KI-Assistent & Diktat `#ai` — `app.js`
 
-##### 15.1 AI-Konfiguration
+##### 15.1 AI-Konfiguration — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -457,7 +458,7 @@ Server-Start
 | `getAiMode` | AI-Modus ermitteln | `#read` | — |
 | `aiAssistFromPreview` | AI-Assist aus Preview | `#api` `#handler` | `api`, `getAiApiConfig`, `getAiMode`, `getAiPrompt`, `getAiUseAnswer`, `getAiUsePreview`, `parseRunnableFromEditor`, `saveAiPrompt`, `setPreviewRunOutput`, `t`, `toast` |
 
-##### 15.2 AI-Diktat
+##### 15.2 AI-Diktat — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -469,7 +470,7 @@ Server-Start
 | `startAiDictation` | Diktat starten | `#speech` `#handler` | `setAiDictationUi`, `t` |
 | `initAiDictation` | Diktat initialisieren | `#init` `#speech` | `getSpeechRecognitionConstructor`, `getUiSpeechLocale`, `setAiDictationUi`, `t`, `toast` |
 
-#### 16 · Einstellungen & FAQ `#settings`
+#### 16 · Einstellungen & FAQ `#settings` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -478,7 +479,7 @@ Server-Start
 | `setActiveSettingsSection` | Aktiven Settings-Abschnitt setzen | `#ui` `#state` | `fetchGoogleCalendarStatus`, `loadTrashManage`, `loadUploadsManage`, `renderCalendarSettings` |
 | `renderFaq` | FAQ rendern | `#render` `#help` | — |
 
-#### 17 · Auto-Backup & Auto-Import `#backup`
+#### 17 · Auto-Backup & Auto-Import `#backup` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -510,9 +511,9 @@ Server-Start
 | `initAutoBackup` | Auto-Backup initialisieren | `#init` | `applyAutoAccessSupportUi`, `loadAutoBackupSettings`, `readFsHandle`, `scheduleAutoBackup`, `updateAutoBackupFolderLabel` |
 | `initAutoImport` | Auto-Import initialisieren | `#init` | `applyAutoAccessSupportUi`, `loadAutoImportSeen`, `loadAutoImportSettings`, `readFsHandle`, `scheduleAutoImport`, `t`, `updateAutoImportFolderLabel` |
 
-#### 18 · Personal Space (Notizen) `#ps`
+#### 18 · Personal Space (Notizen) `#ps` — `app.js`
 
-##### 18.1 PS Meta & YAML
+##### 18.1 PS Meta & YAML — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -535,7 +536,7 @@ Server-Start
 | `updateEditorMetaPadding` | Editor-Meta-Padding setzen | `#dom` `#layout` | `t` |
 | `resetEditorMetaPadding` | Editor-Meta-Padding zurücksetzen | `#dom` `#layout` | `t` |
 
-##### 18.2 PS Notiz-Titel & Suche
+##### 18.2 PS Notiz-Titel & Suche — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -562,7 +563,7 @@ Server-Start
 | `noteMatchesSearch` | Notiz-Suchfilter prüfen | `#filter` `#search` | — |
 | `applyPersonalSpaceFiltersAndRender` | Filter anwenden & rendern | `#render` `#filter` | `ensureNoteUpdatedAt`, `getNoteTitle`, `normalizeSearchQuery`, `noteIsPinned`, `noteMatchesSearch`, `renderPsList`, `renderPsTags`, `t`, `updateEditorMetaYaml` |
 
-##### 18.3 PS Tags-Prefs
+##### 18.3 PS Tags-Prefs — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -572,7 +573,7 @@ Server-Start
 | `loadPsTagPrefs` | Tag-Prefs laden | `#storage` `#load` | `t` |
 | `savePsTagPrefs` | Tag-Prefs speichern | `#storage` `#save` | — |
 
-##### 18.4 Passwort-Maskierung `#password`
+##### 18.4 Passwort-Maskierung `#password` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -594,9 +595,9 @@ Server-Start
 | `syncPasswordMaskScroll` | Mask-Scroll synchronisieren | `#sync` `#dom` | — |
 | `updatePasswordMaskOverlay` | Mask-Overlay aktualisieren | `#render` `#overlay` | `buildEditorMaskHtml`, `hasPasswordTokens`, `syncPasswordMaskScroll`, `updateAttributionOverlay` |
 
-#### 19 · Preview & Rendering `#preview`
+#### 19 · Preview & Rendering `#preview` — `app.js`
 
-##### 19.1 Run-Output
+##### 19.1 Run-Output — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -606,7 +607,7 @@ Server-Start
 | `setPreviewRunOutput` | Run-Output setzen | `#handler` `#render` | `escapeHtml`, `getPreviewRunCombinedText`, `t`, `updateRunOutputSizing`, `updateRunOutputUi` |
 | `parseRunnableFromEditor` | Runnable-Block parsen | `#parse` `#code` | `t` |
 
-##### 19.2 Code-Language & Fenced-Blocks
+##### 19.2 Code-Language & Fenced-Blocks — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -616,7 +617,7 @@ Server-Start
 | `updateCodeLangOverlay` | Code-Lang-Overlay aktualisieren | `#render` `#overlay` | `getFencedCodeOpenAtPos`, `resetEditorMetaPadding`, `updateEditorMetaPadding`, `updateEditorMetaScroll` |
 | `insertCodeBlock` | Code-Block einfügen | `#edit` `#code` | `getSelectedCodeLang`, `nowIso`, `scheduleSend`, `updateCodeLangOverlay`, `updatePasswordMaskOverlay`, `updatePreview` |
 
-##### 19.3 Markdown & Rendering
+##### 19.3 Markdown & Rendering — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -630,7 +631,7 @@ Server-Start
 | `setPreviewVisible` | Preview-Sichtbarkeit setzen | `#ui` `#state` | `ensureMarkdown`, `setFullPreview`, `syncMobileFocusState`, `t`, `toast`, `updatePreview`, `updateRunOutputSizing`, `updateRunOutputUi` |
 | `updatePreview` | Preview aktualisieren | `#render` `#main` | `allTaskCheckboxes`, `applyHljsToHtml`, `applyWikiLinksToMarkdown`, `buildNoteMetaYaml`, `buildToc`, `embedPdfLinks`, `ensureMarkdown`, `ensurePdfJsLoaded`, `escapeHtml`, `findCheckbox`, `findNoteById`, `getNoteHrefTarget`, `getPdfRenderId`, `indexOfCheckbox`, `initImageTools`, `initPdfEmbeds`, `renderPdfPage`, `send`, `setExpanded`, `setPasswordRevealed`, `setPreviewDocument`, `slugify`, `t`, `toElement`, `updatePdfNav`, `wrapImage` |
 
-##### 19.4 Helfer & PDF
+##### 19.4 Helfer & PDF — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -654,7 +655,7 @@ Server-Start
 | `attachPreviewCheckboxWriteback` | Checkbox-Writeback anbinden | `#handler` `#checkbox` | `findCheckbox`, `indexOfCheckbox`, `nowIso`, `t`, `toElement`, `toggleMarkdownTaskAtIndex` |
 | `setPreviewDocument` | Preview-Document setzen | `#handler` `#render` | `attachPreviewCheckboxWriteback`, `t` |
 
-##### 18.4b PS Tags-Verwaltung `#tags`
+##### 18.4b PS Tags-Verwaltung `#tags` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -677,7 +678,7 @@ Server-Start
 | `renderPsTags` | PS-Tags rendern | `#render` `#main` | `buildTagSections`, `loadPsTagSectionState`, `openPsTagContextMenu`, `refreshPersonalSpace`, `savePsTagPrefs`, `savePsTagSectionState`, `t`, `updatePsTagsActiveInfo` |
 | `togglePinnedForNote` | Notiz-Pinned umschalten | `#handler` `#pin` | `api`, `applyPersonalSpaceFiltersAndRender`, `buildPsTagsPayload`, `normalizeCategoryValue`, `normalizeMonthTag`, `normalizeYearTag`, `refreshPersonalSpace`, `splitTagsForEditor`, `stripManualTagsMarker`, `stripPinnedTag`, `syncPsEditorTagsInput`, `t`, `toast`, `updatePsEditingTagsHint` |
 
-##### 18.5 PS Notiz-Navigation
+##### 18.5 PS Notiz-Navigation — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -696,7 +697,7 @@ Server-Start
 | `applyNoteToEditor` | Notiz → Editor | `#handler` `#load` | `applyPersonalSpaceFiltersAndRender`, `isMobileViewport`, `markPsNoteAccessed`, `normalizeCategoryValue`, `normalizeMonthTag`, `normalizeYearTag`, `pushPsNoteHistory`, `renderPsList`, `setPreviewVisible`, `setPsAutoSaveStatus`, `setRoomTabNoteId`, `splitTagsForEditor`, `syncMobileFocusState`, `syncPsEditorTagsInput`, `t`, `updateEditorMetaYaml`, `updatePasswordMaskOverlay`, `updatePreview`, `updatePsEditingTagsHint`, `updateRoomTabTextLocal` |
 | `openNoteFromWikiTarget` | Notiz aus Wiki-Link öffnen | `#handler` `#wiki` | `applyNoteToEditor`, `findNoteById`, `findNoteByTitle`, `t`, `toast` |
 
-##### 18.6 PS Context-Menü & Bulk
+##### 18.6 PS Context-Menü & Bulk — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -715,7 +716,7 @@ Server-Start
 | `applyBulkTagsToNotes` | Bulk-Tags anwenden | `#api` `#bulk` | `api`, `buildPsTagsPayload`, `findNoteById`, `t`, `toast` |
 | `deleteBulkNotes` | Bulk-Notizen löschen | `#api` `#bulk` | `api`, `syncMobileFocusState`, `t`, `toast` |
 
-##### 18.7 PS Tags-Verwaltung (erweitert)
+##### 18.7 PS Tags-Verwaltung (erweitert) — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -738,7 +739,7 @@ Server-Start
 | `renderPsTags` | PS-Tags rendern | `#render` `#main` | `buildTagSections`, `loadPsTagSectionState`, `openPsTagContextMenu`, `refreshPersonalSpace`, `savePsTagPrefs`, `savePsTagSectionState`, `t`, `updatePsTagsActiveInfo` |
 | `togglePinnedForNote` | Pinned für Notiz umschalten | `#handler` `#pin` | `api`, `applyPersonalSpaceFiltersAndRender`, `buildPsTagsPayload`, `normalizeCategoryValue`, `normalizeMonthTag`, `normalizeYearTag`, `refreshPersonalSpace`, `splitTagsForEditor`, `stripManualTagsMarker`, `stripPinnedTag`, `syncPsEditorTagsInput`, `t`, `toast`, `updatePsEditingTagsHint` |
 
-##### 18.8 PS Liste & Save
+##### 18.8 PS Liste & Save — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -747,9 +748,9 @@ Server-Start
 | `savePersonalSpaceNote` | PS-Notiz speichern | `#api` `#save` | `api`, `applyNoteToEditor`, `applyPersonalSpaceFiltersAndRender`, `buildEditorSystemTags`, `buildPsTagsPayload`, `findNoteByText`, `refreshPersonalSpace`, `setPsAutoSaveStatus`, `syncPsEditingNoteTagsFromState`, `t`, `toast`, `uniqTags`, `updateEditorMetaYaml`, `updateRoomTabsForNoteId` |
 | `schedulePsAutoSave` | PS-Auto-Save planen | `#debounce` `#save` | `canAutoSavePsNote`, `savePersonalSpaceNote`, `setPsAutoSaveStatus`, `t` |
 
-#### 19 · Preview & Rendering `#preview`
+#### 19 · Preview & Rendering `#preview` — `app.js`
 
-##### 19.1 Code-Runner-Output
+##### 19.1 Code-Runner-Output — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -758,7 +759,7 @@ Server-Start
 | `updateRunOutputSizing` | Run-Output-Größe anpassen | `#ui` `#resize` | `t` |
 | `setPreviewRunOutput` | Run-Output setzen | `#handler` `#runner` | `escapeHtml`, `getPreviewRunCombinedText`, `t`, `updateRunOutputSizing`, `updateRunOutputUi` |
 
-##### 19.2 Code-Blöcke & Sprache
+##### 19.2 Code-Blöcke & Sprache — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -769,7 +770,7 @@ Server-Start
 | `updateCodeLangOverlay` | Code-Lang-Overlay aktualisieren | `#render` `#overlay` | `getFencedCodeOpenAtPos`, `resetEditorMetaPadding`, `updateEditorMetaPadding`, `updateEditorMetaScroll` |
 | `insertCodeBlock` | Code-Block einfügen | `#edit` `#code` | `getSelectedCodeLang`, `nowIso`, `scheduleSend`, `updateCodeLangOverlay`, `updatePasswordMaskOverlay`, `updatePreview` |
 
-##### 19.3 Markdown & HTML
+##### 19.3 Markdown & HTML — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -783,7 +784,7 @@ Server-Start
 | `setPreviewVisible` | Preview sichtbar setzen | `#ui` `#state` | `ensureMarkdown`, `setFullPreview`, `syncMobileFocusState`, `t`, `toast`, `updatePreview`, `updateRunOutputSizing`, `updateRunOutputUi` |
 | `updatePreview` | Preview aktualisieren (Haupt) | `#render` `#main` | `allTaskCheckboxes`, `applyHljsToHtml`, `applyWikiLinksToMarkdown`, `buildNoteMetaYaml`, `buildToc`, `embedPdfLinks`, `ensureMarkdown`, `ensurePdfJsLoaded`, `escapeHtml`, `findCheckbox`, `findNoteById`, `getNoteHrefTarget`, `getPdfRenderId`, `indexOfCheckbox`, `initImageTools`, `initPdfEmbeds`, `renderPdfPage`, `send`, `setExpanded`, `setPasswordRevealed`, `setPreviewDocument`, `slugify`, `t`, `toElement`, `updatePdfNav`, `wrapImage` |
 
-##### 19.4 Preview-Helfer
+##### 19.4 Preview-Helfer — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -808,7 +809,7 @@ Server-Start
 | `setPreviewDocument` | Preview-Dokument setzen | `#handler` `#render` | `attachPreviewCheckboxWriteback`, `t` |
 | `applyTaskClosedTimestampsToHtml` | Task-Closed-Timestamps anwenden | `#render` `#date` | — |
 
-#### 20 · Code-Runner `#runner`
+#### 20 · Code-Runner `#runner` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -822,7 +823,7 @@ Server-Start
 | `getAiMode` | AI-Modus ermitteln | `#read` `#ai` | — |
 | `aiAssistFromPreview` | AI-Assist aus Preview | `#api` `#ai` | `api`, `getAiApiConfig`, `getAiMode`, `getAiPrompt`, `getAiUseAnswer`, `getAiUsePreview`, `parseRunnableFromEditor`, `saveAiPrompt`, `setPreviewRunOutput`, `t`, `toast` |
 
-#### 21 · Import/Export `#import`
+#### 21 · Import/Export `#import` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -839,7 +840,7 @@ Server-Start
 | `requestPersonalSpaceLink` | PS-Link anfordern | `#api` `#share` | `api`, `modalPrompt`, `t`, `toast` |
 | `randomRoom` | Zufälligen Raum erzeugen | `#build` `#room` | `normalizeRoom`, `t` |
 
-#### 22 · Favoriten `#favorites`
+#### 22 · Favoriten `#favorites` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -857,7 +858,7 @@ Server-Start
 | `updateFavoriteButton` | Favorit-Button aktualisieren | `#ui` `#state` | `findFavoriteIndex` |
 | `updateFavoritesUI` | Favoriten-UI aktualisieren (Haupt) | `#render` `#main` | _massiv – fast alle Module_ |
 
-#### 23 · Room-Tabs `#tabs`
+#### 23 · Room-Tabs `#tabs` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -887,7 +888,7 @@ Server-Start
 | `renderRoomTabs` | Room-Tabs rendern | `#render` `#main` | `escapeAttr`, `escapeHtml`, `loadRoomTabs` |
 | `closeRoomTab` | Room-Tab schließen | `#handler` `#remove` | `api`, `buildShareHash`, `loadRoomTabs`, `normalizeKey`, `normalizeRoom`, `randomKey`, `randomRoom`, `removeRoomTabFromState`, `renderRoomTabs`, `saveRoomTabs` |
 
-#### 24 · Room-Pins (Permanent Links) `#pins`
+#### 24 · Room-Pins (Permanent Links) `#pins` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -909,7 +910,7 @@ Server-Start
 | `isRoomMarkedShared` | Raum als geteilt markiert prüfen | `#check` `#state` | — |
 | `markRoomShared` | Raum als geteilt markieren | `#handler` `#state` | — |
 
-#### 25 · Uploads & Trash-Verwaltung `#uploads`
+#### 25 · Uploads & Trash-Verwaltung `#uploads` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -922,9 +923,9 @@ Server-Start
 | `restoreTrashNote` | Trash-Notiz wiederherstellen | `#api` `#handler` | `api`, `loadTrashManage`, `refreshPersonalSpace`, `t`, `toast` |
 | `deleteUpload` | Upload löschen | `#api` `#handler` | `api`, `loadUploadsManage`, `t`, `toast` |
 
-#### 26 · Kalender `#calendar`
+#### 26 · Kalender `#calendar` — `app.js`
 
-##### 26.1 Quellen & Settings
+##### 26.1 Quellen & Settings — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -940,7 +941,7 @@ Server-Start
 | `syncCalendarSettingsFromServer` | Settings ← Server synchen | `#api` `#sync` | `applyCalendarSettings`, `getLocalCalendarSettings`, `scheduleCalendarSettingsSync` |
 | `renderCalendarSettings` | Settings-UI rendern | `#render` `#ui` | `escapeAttr`, `loadCalendarDefaultView`, `loadCalendarSources`, `renderCalendarGoogleSelect`, `renderCalendarLocalEvents`, `t` |
 
-##### 26.2 Google Calendar
+##### 26.2 Google Calendar — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -954,7 +955,7 @@ Server-Start
 | `saveCalendarGoogleId` | Google-ID speichern | `#save` `#storage` | `renderCalendarSettings`, `scheduleCalendarSettingsSync` |
 | `fetchGoogleCalendarEvents` | Google-Events abrufen | `#api` `#google` | `api`, `parseGoogleDate`, `t` |
 
-##### 26.3 Panel & Darstellung
+##### 26.3 Panel & Darstellung — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -974,7 +975,7 @@ Server-Start
 | `moveCalendarCursor` | Cursor bewegen | `#handler` `#nav` | `renderCalendarPanel` |
 | `renderCalendarPanel` | Panel rendern | `#render` `#main` | `addDays`, `escapeAttr`, `escapeHtml`, `formatCalendarTitle`, `formatDayLabel`, `formatTime`, `getCalendarEvents`, `getIsoWeekNumber`, `loadCalendarSources`, `renderCalendarFreeSlots`, `renderCalendarLegend`, `startOfDay`, `startOfMonth`, `startOfWeek`, `t` |
 
-##### 26.4 Lokale Events & ICS
+##### 26.4 Lokale Events & ICS — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -995,7 +996,7 @@ Server-Start
 | `mergeCalendarEvents` | Events zusammenführen | `#merge` `#state` | — |
 | `getCalendarRange` | Kalender-Range berechnen | `#calc` `#date` | `addDays`, `startOfDay`, `startOfMonth`, `startOfWeek` |
 
-##### 26.5 Rendering & Free-Slots
+##### 26.5 Rendering & Free-Slots — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -1006,7 +1007,7 @@ Server-Start
 | `computeFreeSlotsForDay` | Freie Slots pro Tag berechnen | `#calc` `#render` | `addDays`, `buildWorkWindow`, `mergeIntervals`, `startOfDay` |
 | `renderCalendarFreeSlots` | Free-Slots rendern | `#render` `#ui` | `addDays`, `computeFreeSlotsForDay`, `formatDayLabel`, `formatTime`, `startOfWeek` |
 
-##### 26.6 Event-Modal
+##### 26.6 Event-Modal — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -1016,7 +1017,7 @@ Server-Start
 | `updateCalendarEventTimeState` | Zeitstatus aktualisieren | `#ui` `#state` | — |
 | `buildLocalEventFromModal` | Lokales Event aus Modal bauen | `#build` `#handler` | `addDays`, `createClientId`, `t`, `toast` |
 | `addLocalCalendarEvent` | Lokales Event hinzufügen | `#handler` `#save` | `saveLocalCalendarEvents`, `t`, `toast` |
-#### 27 · Status, Recent Rooms & Share-UI `#status`
+#### 27 · Status, Recent Rooms & Share-UI `#status` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -1032,9 +1033,9 @@ Server-Start
 | `setStatus` | Verbindungs-Status setzen | `#ui` `#state` | — |
 | `setHeaderCollapsed` | Header ein-/ausklappen | `#ui` `#state` | — |
 
-#### 28 · WebSocket & CRDT `#ws` `#crdt`
+#### 28 · WebSocket & CRDT `#ws` `#crdt` — `app.js`
 
-##### 28.1 WS-Verbindung
+##### 28.1 WS-Verbindung — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -1049,7 +1050,7 @@ Server-Start
 | `safeJsonParse` | JSON sicher parsen | `#parse` `#json` | — |
 | `sanitizeLegacySnapshotText` | Legacy-Snapshot bereinigen | `#normalize` `#legacy` | `safeJsonParse` |
 
-##### 28.2 CRDT-Nachrichten
+##### 28.2 CRDT-Nachrichten — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -1061,7 +1062,7 @@ Server-Start
 | `scheduleSend` | Send debounce | `#debounce` `#ws` | `buildSetMessage`, `isCrdtEnabled`, `nowIso`, `sendMessage`, `t` |
 | `applyRemoteText` | Remote-Text anwenden | `#handler` `#sync` | `applySyncedText`, `t` |
 
-##### 28.3 CRDT-Core
+##### 28.3 CRDT-Core — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -1074,7 +1075,7 @@ Server-Start
 | `scheduleCrdtSnapshot` | Snapshot debounce | `#debounce` `#crdt` | `base64EncodeBytes`, `sendCrdtSnapshot`, `t` |
 | `applyPendingCrdtBootstrap` | Pending Bootstrap anwenden | `#handler` `#crdt` | `applyCrdtUpdate`, `setCrdtText`, `t` |
 | `connect` | WS verbinden | `#init` `#ws` | `announceClientId`, `applyCrdtUpdate`, `applyPresenceUpdate`, `applyRemoteText`, `createClientId`, `decryptForRoom`, `destroyCrdt`, `ensureYjsLoaded`, `initCrdt`, `isCrdtAvailable`, `isCrdtEnabled`, `safeJsonParse`, `scheduleCrdtSnapshot`, `sendCurrentState`, `sendMessage`, `setCrdtText`, `setStatus`, `t`, `toast`, `updatePresenceUI`, `upsertPresence`, `wsDisplay`, `wsUrlForRoom` |
-#### 29 · Presence `#presence`
+#### 29 · Presence `#presence` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -1091,14 +1092,14 @@ Server-Start
 | `scheduleTypingStop` | Typing-Stop debounce | `#debounce` `#ws` | `setTyping`, `t` |
 | `scheduleSelectionSend` | Selection-Send debounce | `#debounce` `#ws` | `applyPresenceUpdate`, `sendMessage`, `t` |
 
-#### 30 · Navigation `#nav`
+#### 30 · Navigation `#nav` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
 | `goToRoom` | Zu Raum navigieren | `#handler` `#nav` | `buildShareHash`, `flushRoomTabSync`, `normalizeRoom`, `setCalendarPanelActive` |
 | `goToRoomWithKey` | Zu Raum + Key navigieren | `#handler` `#nav` | `buildShareHash`, `flushRoomTabSync`, `normalizeKey`, `normalizeRoom`, `setCalendarPanelActive` |
 
-#### 31 · Linear-Integration `#linear`
+#### 31 · Linear-Integration `#linear` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -1106,7 +1107,7 @@ Server-Start
 | `syncLinearForNote` | Linear für Notiz synchen | `#api` `#sync` | `api`, `renderLinearTasks`, `t`, `toast` |
 | `toggleLinear` (click) | Linear-Panel umschalten | `#handler` `#ui` | `syncLinearForNote`, `t` |
 
-#### 32 · Synchronisation & Fokus `#sync`
+#### 32 · Synchronisation & Fokus `#sync` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -1115,7 +1116,7 @@ Server-Start
 | `savePersonalSpaceNote` | PS-Notiz speichern | `#api` `#save` | `api`, `applyNoteToEditor`, `applyPersonalSpaceFiltersAndRender`, `buildEditorSystemTags`, `buildPsTagsPayload`, `findNoteByText`, `refreshPersonalSpace`, `setPsAutoSaveStatus`, `syncPsEditingNoteTagsFromState`, `t`, `toast`, `uniqTags`, `updateEditorMetaYaml`, `updateRoomTabsForNoteId` |
 | `schedulePsAutoSave` | PS-Auto-Save debounce | `#debounce` `#save` | `canAutoSavePsNote`, `savePersonalSpaceNote`, `setPsAutoSaveStatus`, `t` |
 
-#### 33 · Initialisierung `#init`
+#### 33 · Initialisierung `#init` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -1126,7 +1127,7 @@ Server-Start
 
 ### server.js — Funktionskatalog
 
-#### S1 · Server-Core & Datenbank `#server` `#db`
+#### S1 · Server-Core & Datenbank `#server` `#db` — `server.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -1138,7 +1139,7 @@ Server-Start
 | `persistRoomState` | Room-State persistieren | `#save` `#db` | `initDb` |
 | `getSigningSecret` | Signing-Secret lesen | `#read` `#security` | `initDb` |
 
-#### S2 · HTTP-Helfer `#http`
+#### S2 · HTTP-Helfer `#http` — `server.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -1152,7 +1153,7 @@ Server-Start
 | `readJson` | JSON-Body lesen | `#read` `#http` | `readBody`, `safeJsonParse` |
 | `readJsonWithLimit` | JSON-Body mit Limit lesen | `#read` `#security` | `readBodyWithLimit`, `safeJsonParse` |
 
-#### S3 · Auth & Session `#auth`
+#### S3 · Auth & Session `#auth` — `server.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -1169,7 +1170,7 @@ Server-Start
 | `getOrigin` | Origin lesen | `#read` `#http` | — |
 | `sendMagicLinkEmail` | Magic-Link-Email senden | `#handler` `#auth` | — |
 
-#### S4 · Uploads `#uploads`
+#### S4 · Uploads `#uploads` — `server.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -1180,7 +1181,7 @@ Server-Start
 | `isAllowedUploadMime` | Upload-MIME prüfen | `#check` `#security` | — |
 | `extForMime` | Extension für MIME | `#read` `#format` | — |
 
-#### S5 · Notes, Tags & Favoriten `#notes` `#tags`
+#### S5 · Notes, Tags & Favoriten `#notes` `#tags` — `server.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -1206,7 +1207,7 @@ Server-Start
 | `listFavorites` | Favoriten auflisten | `#read` `#db` | `initDb` |
 | `listRoomTabs` | Room-Tabs auflisten | `#read` `#db` | `initDb` |
 
-#### S6 · Calendar & Google `#calendar` `#google`
+#### S6 · Calendar & Google `#calendar` `#google` — `server.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -1224,7 +1225,7 @@ Server-Start
 | `refreshGoogleAccessToken` | Google-Token auffrischen | `#api` `#google` | `json` |
 | `getGoogleAccessToken` | Google-Access-Token lesen | `#api` `#google` | `getGoogleTokens`, `refreshGoogleAccessToken`, `saveGoogleTokens` |
 
-#### S7 · WebSocket & Presence `#ws` `#presence`
+#### S7 · WebSocket & Presence `#ws` `#presence` — `server.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
@@ -1238,7 +1239,7 @@ Server-Start
 | `broadcastPresenceState` | Presence broadcasten | `#ws` `#send` | `broadcast`, `buildPresenceList` |
 | `broadcast` | An Room broadcasten | `#ws` `#send` | `getRoomSockets` |
 
-#### S8 · AI / Anthropic `#ai`
+#### S8 · AI / Anthropic `#ai` — `server.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
