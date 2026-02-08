@@ -9615,6 +9615,50 @@
 		syncMobileFocusState();
 	}
 
+	function buildPreviewContentHtml(srcRaw) {
+		const renderer = ensureMarkdown();
+		if (!renderer) return "";
+		const src = applyWikiLinksToMarkdown(String(srcRaw || ""));
+		let bodyHtml = "";
+		const taskScopeKey = buildTaskScopeKey(getActiveRoomTabNoteId());
+		try {
+			bodyHtml = embedPdfLinks(applyHljsToHtml(renderer.render(src)));
+			bodyHtml = applyTaskClosedTimestampsToHtml(
+				bodyHtml,
+				String(srcRaw || ""),
+				taskScopeKey
+			);
+		} catch {
+			bodyHtml = "";
+		}
+		const metaNote = psEditingNoteId ? findNoteById(psEditingNoteId) : null;
+		const metaYaml =
+			psMetaVisible && metaNote ? buildNoteMetaYaml(metaNote) : "";
+		const metaHtml = metaYaml
+			? `<pre class="meta-yaml">${escapeHtml(metaYaml)}</pre>`
+			: "";
+		return `${metaHtml}${bodyHtml}`;
+	}
+
+	function sendPreviewContentUpdate(html) {
+		if (!mdPreview || !previewMsgToken) return false;
+		try {
+			const win = mdPreview.contentWindow || null;
+			if (!win) return false;
+			win.postMessage(
+				{
+					type: "mirror_preview_update",
+					token: previewMsgToken,
+					html: String(html || ""),
+				},
+				"*"
+			);
+			return true;
+		} catch {
+			return false;
+		}
+	}
+
 	function updatePreview() {
 		if (!previewOpen || !mdPreview) return;
 		const isMonoLight = activeTheme === "monoLight";
@@ -9940,10 +9984,6 @@
 		ul.task-list input[type=checkbox]:checked::before,ol.task-list input[type=checkbox]:checked::before,input.task-list-item-checkbox:checked::before{border-color:var(--accent-text);}
 		ul.task-list li > .task-closed-at,ol.task-list li > .task-closed-at,li.task-list-item > .task-closed-at{position:absolute;left:calc(2.3rem);top:1.7rem;margin-left:0;white-space:nowrap;}
 		.task-closed-at{display:block;margin-top:0;font-size:.75rem;line-height:1.2;color:var(--task-closed-text);opacity:.85;text-decoration:none !important;}
-		body.task-sort-animate li.task-list-item{transition:transform 1.8s ease,opacity 1.8s ease;}
-		body.task-sort-animate li.task-list-item.checked{transform:translateY(22px);}
-		body.task-sort-animate li.task-list-item:not(.checked){transform:translateY(-12px);}
-		body.task-sort-fadeout li.task-list-item{opacity:0;transition:opacity .45s ease;}
 		@keyframes task-fade{from{opacity:0;}to{opacity:1;}}
 		.pdf-embed{margin:12px 0;border:1px solid ${previewTableBorder};border-radius:12px;overflow:hidden;background:${previewPreBg};}
 		.pdf-toolbar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px;border-bottom:1px solid ${previewTableBorder};font-size:12px;background:${previewMetaBg};}
@@ -10145,6 +10185,46 @@ ${highlightThemeCss}
 					else li.classList.remove('checked');
 				}
 			}
+			function captureTaskRects(){
+				var map = {};
+				var nodes = document.querySelectorAll('li.task-list-item[data-task-key]');
+				if (!nodes || !nodes.length) return map;
+				for (var i = 0; i < nodes.length; i++) {
+					var el = nodes[i];
+					if (!el || !el.getAttribute) continue;
+					var key = el.getAttribute('data-task-key');
+					if (!key) continue;
+					map[key] = el.getBoundingClientRect();
+				}
+				return map;
+			}
+			function animateTaskReorder(prevRects){
+				if (!prevRects) return;
+				var duration = 2000;
+				var nodes = document.querySelectorAll('li.task-list-item[data-task-key]');
+				if (!nodes || !nodes.length) return;
+				for (var i = 0; i < nodes.length; i++) {
+					var el = nodes[i];
+					if (!el || !el.getAttribute) continue;
+					var key = el.getAttribute('data-task-key');
+					if (!key || !prevRects[key]) continue;
+					var next = el.getBoundingClientRect();
+					var prev = prevRects[key];
+					var dy = prev.top - next.top;
+					if (!dy) continue;
+					el.style.transition = 'none';
+					el.style.transform = 'translateY(' + dy + 'px)';
+					el.getBoundingClientRect();
+					el.style.transition = 'transform ' + duration + 'ms ease';
+					el.style.transform = 'translateY(0)';
+					(function(node){
+						window.setTimeout(function(){
+							node.style.transition = '';
+							node.style.transform = '';
+						}, duration + 60);
+					})(el);
+				}
+			}
 			function indexOfCheckbox(box){
 				if (!box) return null;
 				var all = allTaskCheckboxes();
@@ -10175,7 +10255,7 @@ ${highlightThemeCss}
 					send('mirror_note_open', { target: target });
 				}, true);
 
-				syncTaskCheckedState();
+					syncTaskCheckedState();
 
 					function setPasswordRevealed(field, on){
 						if (!field || !field.classList) return;
@@ -10294,6 +10374,23 @@ ${highlightThemeCss}
 							renderPdfPage(wrap, page);
 						});
 					}
+
+					window.addEventListener('message', function(ev){
+						var data = ev && ev.data ? ev.data : null;
+						if (!data || data.type !== 'mirror_preview_update') return;
+						if (data.token !== TOKEN) return;
+						var content = document.getElementById('content');
+						if (!content) return;
+						var prevRects = captureTaskRects();
+						content.innerHTML = String(data.html || '');
+						syncTaskCheckedState();
+						initImageTools();
+						initPdfEmbeds();
+						buildToc();
+						window.requestAnimationFrame(function(){
+							animateTaskReorder(prevRects);
+						});
+					}, true);
 
 					window.addEventListener('message', function(ev){
 						var data = ev && ev.data ? ev.data : null;
@@ -10482,32 +10579,6 @@ ${highlightThemeCss}
 		maybeAutoSortTasksAfterPreview();
 	}
 
-	function schedulePreviewSortAnimation() {
-		if (!mdPreview) {
-			updatePreview();
-			return;
-		}
-		let doc = null;
-		try {
-			doc = mdPreview.contentDocument || null;
-		} catch {
-			doc = null;
-		}
-		if (!doc || !doc.body || !doc.body.classList) {
-			updatePreview();
-			return;
-		}
-		doc.body.classList.add("task-sort-animate");
-		window.setTimeout(() => {
-			if (doc && doc.body && doc.body.classList) {
-				doc.body.classList.add("task-sort-fadeout");
-			}
-		}, 2200);
-		window.setTimeout(() => {
-			updatePreview();
-		}, 2650);
-	}
-
 	function maybeAutoSortTasksAfterPreview() {
 		if (!taskAutoSortEnabled) {
 			previewTaskEditsPending = false;
@@ -10539,7 +10610,9 @@ ${highlightThemeCss}
 		} else {
 			scheduleSend();
 		}
-		schedulePreviewSortAnimation();
+		const previewHtml = buildPreviewContentHtml(text);
+		const didUpdate = previewHtml && sendPreviewContentUpdate(previewHtml);
+		if (!didUpdate) updatePreview();
 		const noteId = getActiveRoomTabNoteId();
 		if (noteId) updateLocalNoteText(noteId, textarea.value);
 		updateRoomTabTextLocal(room, key, textarea.value);
@@ -10783,13 +10856,15 @@ ${highlightThemeCss}
 			const count = Math.min(items.length, tasks.length);
 			for (let i = 0; i < count; i++) {
 				const task = tasks[i];
-				if (!task || !task.isDone || !task.key) continue;
+				const li = items[i];
+				if (!li || !task || !task.key) continue;
+				li.setAttribute("data-task-key", task.key);
+				if (!task.isDone) continue;
 				const ts = getTaskClosedTimestamp(task.key);
 				if (!ts) continue;
 				const stamp = formatMetaDate(ts);
 				if (!stamp) continue;
-				const li = items[i];
-				if (!li || li.querySelector(".task-closed-at")) continue;
+				if (li.querySelector(".task-closed-at")) continue;
 				const node = document.createElement("span");
 				node.className = "task-closed-at";
 				node.textContent =
@@ -17261,7 +17336,9 @@ self.onmessage = async (e) => {
 		const noteId = getRoomTabNoteIdForRoom(room, key);
 		updateRoomTabTextLocal(room, key, cleaned);
 		if (noteId) updateLocalNoteText(noteId, cleaned);
-		updatePreview();
+		const previewHtml = buildPreviewContentHtml(text);
+		const didUpdate = previewHtml && sendPreviewContentUpdate(previewHtml);
+		if (!didUpdate) updatePreview();
 		updatePasswordMaskOverlay();
 		scheduleRoomTabSync({
 			room,
