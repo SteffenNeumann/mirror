@@ -1,8 +1,15 @@
 # Project overview
 
-Datum: 2026-02-07
+Datum: 2026-02-08
 
 Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische Analyse, keine Laufzeitauflösung).
+
+## Aktuelle Änderungen (2026-02-08)
+
+- CRDT-Sync für Gäste in Permalink-Räumen: `updateCrdtFromTextarea` blockiert nicht mehr durch `shouldSyncRoomContentNow()` – CRDT ist konfliktfrei, daher dürfen alle Clients (auch Gäste ohne aktive PS-Note) Änderungen senden und empfangen. User-Markierungen (`{ author: clientId }`) bleiben erhalten.
+  - Zuständige Funktion: `updateCrdtFromTextarea` ([app.js](app.js#L17471)).
+- PS-Notizenvorschau bei Remote-Sync: Wenn `applySyncedText` CRDT-Änderungen empfängt und eine gebundene Note existiert, wird `schedulePsListRerender()` aufgerufen, damit die PS-Liste sofort die aktualisierte Vorschau anzeigt.
+  - Zuständige Funktion: `applySyncedText` ([app.js](app.js#L17350)).
 
 ## Aktuelle Änderungen (2026-02-07)
 

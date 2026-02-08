@@ -17360,7 +17360,10 @@ self.onmessage = async (e) => {
 		metaRight.textContent = nowIso();
 		const noteId = getRoomTabNoteIdForRoom(room, key);
 		updateRoomTabTextLocal(room, key, cleaned);
-		if (noteId) updateLocalNoteText(noteId, cleaned);
+		if (noteId) {
+			updateLocalNoteText(noteId, cleaned);
+			schedulePsListRerender();
+		}
 		const previewHtml = buildPreviewContentHtml(text);
 		const didUpdate = previewHtml && sendPreviewContentUpdate(previewHtml);
 		if (!didUpdate) updatePreview();
@@ -17467,7 +17470,8 @@ self.onmessage = async (e) => {
 	}
 
 	function updateCrdtFromTextarea() {
-		if (!shouldSyncRoomContentNow()) return;
+		// CRDT is conflict-free – always allow local edits to propagate,
+		// even when a permalink pin exists and the guest has no matching PS note.
 		if (!ytext || !crdtReady) return;
 		const current = ytext.toString();
 		if (crdtLastText !== current) {
