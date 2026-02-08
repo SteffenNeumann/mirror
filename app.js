@@ -18270,6 +18270,28 @@ self.onmessage = async (e) => {
 				if (current.noteId) {
 					removeNoteRoomBindingByRoom(roomName, keyName);
 				}
+				// Clean up room-scope app states so panels don't stay stuck visible
+				const excalRoom = getExcalidrawRoomScope();
+				const excelRoom = getExcelRoomScope();
+				const linearRoom = getLinearRoomScope();
+				if (excalRoom) {
+					excalidrawVisibleByNote.delete(excalRoom);
+					excalidrawOffsetByNote.delete(excalRoom);
+					excalidrawSceneByNote.delete(excalRoom);
+				}
+				if (excelRoom) {
+					excelVisibleByNote.delete(excelRoom);
+					excelOffsetByNote.delete(excelRoom);
+				}
+				if (linearRoom) {
+					linearVisibleByNote.delete(linearRoom);
+					linearOffsetByNote.delete(linearRoom);
+					linearProjectByNote.delete(linearRoom);
+					linearDataByNote.delete(linearRoom);
+				}
+				syncExcalidrawForNote(psEditingNoteId);
+				syncExcelForNote(psEditingNoteId);
+				syncLinearForNote(psEditingNoteId);
 				syncPermanentLinkToggleUi();
 				schedulePsListRerender();
 				toast("Permanent-Link deaktiviert.", "info");
@@ -19320,8 +19342,11 @@ self.onmessage = async (e) => {
 
 	const syncLinearForNote = (noteId) => {
 		const pinnedScope = resolvePinnedAppScope(noteId, "linear");
-		const activeId = pinnedScope || String(noteId || "").trim() || getLinearNoteId();
-		const savedVisible = activeId
+		const resolvedNoteId = String(noteId || "").trim();
+		const activeId = pinnedScope || resolvedNoteId || getLinearNoteId();
+		// If no pin and no note, hide Linear – don't inherit stale room scope visibility
+		const hasPinOrNote = Boolean(pinnedScope || resolvedNoteId || getRoomPinnedEntry(room, key));
+		const savedVisible = hasPinOrNote && activeId
 			? Boolean(linearVisibleByNote.get(activeId))
 			: false;
 		loadLinearOffsetForNote(activeId);
@@ -19345,16 +19370,20 @@ self.onmessage = async (e) => {
 	if (toggleLinearBtn && linearEmbed) {
 		toggleLinearBtn.addEventListener("click", () => {
 			const activeId = getLinearNoteId();
-			if (!linearVisible) {
-				updateLinearProjectSelectOptions(activeId);
-				const current = activeId ? linearProjectByNote.get(activeId) : null;
-				if (!current || !current.projectId) {
-					setLinearVisible(true, { remember: false });
-					toast(t("toast.linear_select_project"), "info");
-					return;
-				}
+			if (linearVisible) {
+				// Always allow hiding
+				setLinearVisible(false);
+				return;
 			}
-			setLinearVisible(!linearVisible);
+			// Opening: check if a project is selected
+			updateLinearProjectSelectOptions(activeId);
+			const current = activeId ? linearProjectByNote.get(activeId) : null;
+			if (!current || !current.projectId) {
+				setLinearVisible(true, { remember: false });
+				toast(t("toast.linear_select_project"), "info");
+				return;
+			}
+			setLinearVisible(true);
 		});
 	}
 
