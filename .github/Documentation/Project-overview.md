@@ -10,6 +10,8 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
   - Zuständige Funktion: `updateCrdtFromTextarea` ([app.js](app.js#L17477)).
 - PS-Notizenvorschau bei Remote-Sync: Wenn `applySyncedText` CRDT-Änderungen empfängt und eine gebundene Note existiert, wird `schedulePsListRerender()` aufgerufen, damit die PS-Liste sofort die aktualisierte Vorschau anzeigt.
   - Zuständige Funktion: `applySyncedText` ([app.js](app.js#L17357)).
+- Room-Tabs: Server-Listenreihenfolge nutzt nun `added_at`, damit die Tab-Position beim Wechsel stabil bleibt.
+  - Zuständige Stelle: `stmtRoomTabsByUser` ([server.js](server.js#L564)).
 - Linear-Panel (toggleLinear) Bugfix: Drei Fehler behoben, die dazu führten, dass sich das Linear-Panel nicht mehr schließen ließ und in der PS nicht aktualisierte:
   1. Permalink-Deaktivierung räumt nun Room-Scope-States auf (`linearVisibleByNote`, `linearOffsetByNote`, `linearProjectByNote`, `linearDataByNote` + Excalidraw/Excel analog), damit Panels nicht „hängenbleiben".
   2. `syncLinearForNote` fällt nicht mehr auf veraltete Room-Scope-Sichtbarkeit zurück, wenn kein Pin und keine Note aktiv ist – stattdessen wird Linear korrekt ausgeblendet.

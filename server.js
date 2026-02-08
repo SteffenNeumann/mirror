@@ -562,7 +562,7 @@ function initDb() {
 		"DELETE FROM room_tabs WHERE user_id = ? AND room = ? AND room_key = ?"
 	);
 	stmtRoomTabsByUser = db.prepare(
-		"SELECT room, room_key, text, last_used, added_at FROM room_tabs WHERE user_id = ? ORDER BY last_used DESC LIMIT 50"
+		"SELECT room, room_key, text, last_used, added_at FROM room_tabs WHERE user_id = ? ORDER BY added_at ASC LIMIT 50"
 	);
 	stmtSharedRoomUpsert = db.prepare(
 		"INSERT INTO shared_rooms(user_id, room, room_key, added_at, updated_at) VALUES(?, ?, ?, ?, ?) ON CONFLICT(user_id, room, room_key) DO UPDATE SET updated_at = excluded.updated_at"
