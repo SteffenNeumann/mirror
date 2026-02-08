@@ -9975,8 +9975,8 @@
 		ul.task-list li label,ol.task-list li label,li.task-list-item label{font-weight:400;flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
 		ul.task-list li *,ol.task-list li *,li.task-list-item *{font-weight:400 !important;}
 		ul.task-list li.task-list-item.checked,ol.task-list li.task-list-item.checked,li.task-list-item.checked{opacity:1;color:inherit;}
-		ul.task-list li.task-list-item.checked label,ol.task-list li.task-list-item.checked label,li.task-list-item.checked label{text-decoration:line-through;text-decoration-thickness:1px;text-decoration-color:var(--accent-strong);}
-		ul.task-list li.task-list-item.checked label *,ol.task-list li.task-list-item.checked label *,li.task-list-item.checked label *{text-decoration:line-through;text-decoration-thickness:1px;text-decoration-color:var(--accent-strong);}
+		ul.task-list li.task-list-item.checked label,ol.task-list li.task-list-item.checked label,li.task-list-item.checked label{text-decoration:line-through;text-decoration-thickness:1.5px;text-decoration-color:var(--accent-strong);}
+		ul.task-list li.task-list-item.checked label *,ol.task-list li.task-list-item.checked label *,li.task-list-item.checked label *{text-decoration:line-through;text-decoration-thickness:1.5px;text-decoration-color:var(--accent-strong);}
 		ul.task-list li.task-list-item.checked input[type=checkbox],ol.task-list li.task-list-item.checked input[type=checkbox],li.task-list-item.checked input[type=checkbox]{opacity:1;}
 		ul.task-list input[type=checkbox],ol.task-list input[type=checkbox],input.task-list-item-checkbox{appearance:none;-webkit-appearance:none;margin-top:.25rem;width:1.2rem;height:1.2rem;flex:0 0 auto;border-radius:.4rem;border:2px solid var(--accent-strong);background:transparent;display:inline-grid;place-content:center;}
 		ul.task-list input[type=checkbox]::before,ol.task-list input[type=checkbox]::before,input.task-list-item-checkbox::before{content:"";width:.5rem;height:.2rem;border-left:2px solid transparent;border-bottom:2px solid transparent;transform:rotate(-45deg);}

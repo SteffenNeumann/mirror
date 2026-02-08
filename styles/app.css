@@ -1367,14 +1367,14 @@ body[data-theme="monoDark"] .excel-iframe {
 .md-content ol.task-list li.task-list-item.checked label,
 .md-content li.task-list-item.checked label {
 	text-decoration: line-through;
-	text-decoration-thickness: 1px;
+	text-decoration-thickness: 1.5px;
 	text-decoration-color: var(--accent-strong);
 }
 .md-content ul.task-list li.task-list-item.checked label *,
 .md-content ol.task-list li.task-list-item.checked label *,
 .md-content li.task-list-item.checked label * {
 	text-decoration: line-through;
-	text-decoration-thickness: 1px;
+	text-decoration-thickness: 1.5px;
 	text-decoration-color: var(--accent-strong);
 }
 .md-content ul.task-list li > .task-closed-at,
