@@ -811,6 +811,19 @@ body[data-theme="monoDark"] .excel-iframe {
 	color: rgba(226, 232, 240, 0.95);
 }
 
+.linear-project-header {
+	font-size: 0.75rem;
+	font-weight: 600;
+	color: rgba(226, 232, 240, 0.85);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	max-width: 220px;
+}
+.linear-project-header.hidden {
+	display: none;
+}
+
 .linear-project-select {
 	min-width: 180px;
 	max-width: 240px;

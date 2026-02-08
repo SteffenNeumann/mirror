@@ -142,6 +142,7 @@
 	const linearProjectSelect = document.getElementById("linearProjectSelect");
 	const linearProjectApplyBtn = document.getElementById("linearProjectApply");
 	const linearRefreshBtn = document.getElementById("linearRefresh");
+	const linearProjectHeader = document.getElementById("linearProjectHeader");
 	const linearStatus = document.getElementById("linearStatus");
 	const linearEmpty = document.getElementById("linearEmpty");
 	const linearTaskList = document.getElementById("linearTaskList");
@@ -2459,7 +2460,11 @@
 	}
 
 	function canSyncCommentsForScope(scopeId) {
-		return Boolean(scopeId) && psState && psState.authed;
+		if (!scopeId) return false;
+		// Room-scoped comments are available for all users (including guests)
+		if (scopeId.startsWith("room:")) return true;
+		// Note-scoped comments require PS auth
+		return Boolean(psState && psState.authed);
 	}
 
 	async function ensureCommentScopeId() {
@@ -17863,6 +17868,8 @@ self.onmessage = async (e) => {
 						text: textVal,
 						updatedAt,
 					});
+					// Mark room as shared so comment scope and guest features work
+					markRoomShared(roomName, keyName);
 				}
 				syncPermanentLinkToggleUi();
 				syncExcalidrawForNote(psEditingNoteId);
@@ -18335,7 +18342,9 @@ self.onmessage = async (e) => {
 				}
 				const linearState = getLinearStateForNote(noteId);
 				if (linearState && linearRoom) {
-					linearVisibleByNote.set(linearRoom, linearState.visible);
+					// Auto-show Linear for guests when a project is shared via permalink
+					const autoShow = Boolean(linearState.projectId);
+					linearVisibleByNote.set(linearRoom, autoShow || linearState.visible);
 					linearOffsetByNote.set(linearRoom, linearState.offset || { x: 0, y: 0 });
 					if (linearState.projectId) {
 						linearProjectByNote.set(linearRoom, {
@@ -19183,6 +19192,16 @@ self.onmessage = async (e) => {
 				} · ${new Date(data.updatedAt).toLocaleString()}`;
 			} else {
 				linearStatus.textContent = project.projectName || "Linear";
+			}
+		}
+		if (linearProjectHeader) {
+			const project = activeId ? linearProjectByNote.get(activeId) : null;
+			if (project && project.projectName) {
+				linearProjectHeader.textContent = project.projectName;
+				linearProjectHeader.classList.remove("hidden");
+			} else {
+				linearProjectHeader.textContent = "";
+				linearProjectHeader.classList.add("hidden");
 			}
 		}
 		if (linearEmpty) {

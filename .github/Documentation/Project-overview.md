@@ -15,6 +15,13 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
   2. `syncLinearForNote` fällt nicht mehr auf veraltete Room-Scope-Sichtbarkeit zurück, wenn kein Pin und keine Note aktiv ist – stattdessen wird Linear korrekt ausgeblendet.
   3. Toggle-Click-Handler: Schließen ist jetzt immer möglich (eigener `if (linearVisible)` Pfad), unabhängig vom Projekt-Auswahlstatus.
   - Zuständige Funktionen: `togglePermanentLink`-Handler ([app.js](app.js#L18257)), `syncLinearForNote` ([app.js](app.js#L19350)), `toggleLinear`-Click ([app.js](app.js#L19374)).
+- Linear-Projekt in geteilten Räumen: Wenn ein Permanent-Link mit einem Linear-Projekt aktiviert wird, erscheint das Projekt automatisch sichtbar für Gäste. Neuer Projekt-Header (`#linearProjectHeader`) zeigt den Projektnamen im Linear-Panel.
+  - Zuständige Stellen: `togglePermanentLink`-Handler ([app.js](app.js#L18343)), `renderLinearTasks` ([app.js](app.js#L19110)), `#linearProjectHeader` ([index.html](index.html#L585)).
+- Raumbezogene Kommentare für Gäste: Gäste in geteilten Räumen können jetzt über `toggleComments`/`commentPanel` kommentieren, ohne Personal-Space-Authentifizierung:
+  1. `room_pin_state`-Handler ruft `markRoomShared()` auf, damit `getCommentScopeId()` für Gäste den Raum-Scope zurückgibt.
+  2. `canSyncCommentsForScope` erlaubt Room-Scope-Kommentare ohne PS-Auth.
+  3. Server: Room-Comment-REST-Endpoints (`/api/rooms/.../comments`) erfordern keine Authentifizierung mehr.
+  - Zuständige Stellen: `room_pin_state`-Handler ([app.js](app.js#L17869)), `canSyncCommentsForScope` ([app.js](app.js#L2462)), Room-Comment-API ([server.js](server.js#L3760)).
 
 ## Aktuelle Änderungen (2026-02-07)
 

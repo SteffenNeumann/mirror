@@ -3758,11 +3758,9 @@ const server = http.createServer(async (req, res) => {
 			}
 		}
 		if (room && (req.method === "GET" || req.method === "PUT")) {
+			// Room-scoped comments are accessible without authentication
+			// so guests in shared rooms can participate in conversations
 			const email = getAuthedEmail(req);
-			if (!email) {
-				json(res, 401, { ok: false, error: "unauthorized" });
-				return;
-			}
 			initDb();
 			const scopeId = `room:${room}${key ? `:${key}` : ""}`;
 			if (req.method === "GET") {
@@ -3779,7 +3777,7 @@ const server = http.createServer(async (req, res) => {
 			}
 			readJson(req)
 				.then((body) => {
-					getOrCreateUserId(email);
+					if (email) getOrCreateUserId(email);
 					if (!Array.isArray(body && body.comments ? body.comments : null)) {
 						json(res, 400, { ok: false, error: "invalid_comments" });
 						return;
