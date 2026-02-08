@@ -10219,19 +10219,38 @@ ${highlightThemeCss}
 				}
 				if (!changed.length) return;
 				window.requestAnimationFrame(function(){
-					for (var i = 0; i < changed.length; i++) {
-						var node = changed[i];
-						if (!node) continue;
-						node.style.transition = 'transform ' + duration + 'ms ease';
-						node.style.transform = 'translateY(0)';
-						(function(el){
-							window.setTimeout(function(){
-								el.style.transition = '';
-								el.style.transform = '';
-							}, duration + 60);
-						})(node);
-					}
+					window.requestAnimationFrame(function(){
+						for (var i = 0; i < changed.length; i++) {
+							var node = changed[i];
+							if (!node) continue;
+							node.style.transition = 'transform ' + duration + 'ms ease';
+							node.style.transform = 'translateY(0)';
+							(function(el){
+								window.setTimeout(function(){
+									el.style.transition = '';
+									el.style.transform = '';
+								}, duration + 60);
+							})(node);
+						}
+					});
 				});
+			}
+			function disableTaskFade(duration){
+				var nodes = document.querySelectorAll('li.task-list-item');
+				if (!nodes || !nodes.length) return;
+				for (var i = 0; i < nodes.length; i++) {
+					var el = nodes[i];
+					if (!el) continue;
+					el.style.animation = 'none';
+				}
+				if (!duration) return;
+				window.setTimeout(function(){
+					for (var i = 0; i < nodes.length; i++) {
+						var el = nodes[i];
+						if (!el) continue;
+						el.style.animation = '';
+					}
+				}, duration);
 			}
 			function indexOfCheckbox(box){
 				if (!box) return null;
@@ -10391,6 +10410,7 @@ ${highlightThemeCss}
 						if (!content) return;
 						var prevRects = captureTaskRects();
 						content.innerHTML = String(data.html || '');
+						disableTaskFade(2100);
 						syncTaskCheckedState();
 						initImageTools();
 						initPdfEmbeds();
