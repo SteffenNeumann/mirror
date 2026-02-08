@@ -139,13 +139,13 @@ Server-Start
 | `fmtDate` | [L1574](app.js#L1574) | Formatiert Datum | `getUiLocale` |
 | `toast` | [L977](app.js#L977) | Zeigt Benachrichtigung an | `t` |
 | `loadBuildStamp` | [L998](app.js#L998) | Lädt Build-Stamp | `t` |
-| `escapeHtml` *(L6446)* | [L6446](app.js#L6446) | HTML-Sonderzeichen escapen | — |
+| `escapeHtml` | [L8765](app.js#L8765) | HTML-Sonderzeichen escapen | — |
 | `escapeHtmlAttr` | [L3986](app.js#L3986) | HTML-Attribute escapen | — |
-| `escapeAttr` | [L10622](app.js#L10622) | Attribut-Escape (Render-Kontext) | `escapeHtml`, diverse |
-| `copyTextToClipboard` | [L6458](app.js#L6458) | Text in Zwischenablage kopieren | `t` |
-| `nowIso` | [L12718](app.js#L12718) | ISO-Zeitstempel erzeugen | `getUiLocale` |
-| `safeJsonParse` | [L12729](app.js#L12729) | Sicheres JSON-Parsen | — |
-| `sanitizeLegacySnapshotText` | [L12737](app.js#L12737) | Legacy-Snapshots bereinigen | `safeJsonParse` |
+| `escapeAttr` | [L14322](app.js#L14322) | Attribut-Escape (Render-Kontext) | `escapeHtml`, diverse |
+| `copyTextToClipboard` | [L8777](app.js#L8777) | Text in Zwischenablage kopieren | `t` |
+| `nowIso` | [L16894](app.js#L16894) | ISO-Zeitstempel erzeugen | `getUiLocale` |
+| `safeJsonParse` | [L16905](app.js#L16905) | Sicheres JSON-Parsen | — |
+| `sanitizeLegacySnapshotText` | [L16913](app.js#L16913) | Legacy-Snapshots bereinigen | `safeJsonParse` |
 | `getLineBounds` | [L2081](app.js#L2081) | Zeilenanfang/-ende im Text | — |
 | `replaceTextRange` | [L2090](app.js#L2090) | Textbereich ersetzen | — |
 | `insertTextAtCursor` | [L2098](app.js#L2098) | Text an Cursor einfügen | — |
@@ -197,8 +197,8 @@ Server-Start
 | `buildQrUrl` | [L1226](app.js#L1226) | Baut QR-Code-URL | `t` |
 | `updateShareModalLink` | [L1231](app.js#L1231) | Aktualisiert Share-Link im Modal | `buildQrUrl`, `buildShareHref`, `isShareModalReady`, `t` |
 | `openShareModal` | [L1255](app.js#L1255) | Öffnet Share-Modal | `isShareModalReady`, `setShareModalOpen`, `t`, `updateShareModalLink` |
-| `buildShareHref` | [L12586](app.js#L12586) | Baut vollständige Share-URL | `buildShareHash` |
-| `updateShareLink` | [L12594](app.js#L12594) | Aktualisiert Share-Link global | `buildShareHref`, `updateShareModalLink` |
+| `buildShareHref` | [L16760](app.js#L16760) | Baut vollständige Share-URL | `buildShareHash` |
+| `updateShareLink` | [L16768](app.js#L16768) | Aktualisiert Share-Link global | `buildShareHref`, `updateShareModalLink` |
 
 ##### 4.2 Notizen-Share-Modal
 
@@ -275,27 +275,27 @@ Server-Start
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `sortTagList` | [L7999](app.js#L7999) | Tag-Liste sortieren | `t` |
-| `buildTagSections` | [L8003](app.js#L8003) | Tag-Sektionen aufbauen | `isMonthTag`, `isYearTag`, `sortTagList`, `t` |
-| `loadPsTagSectionState` | [L8060](app.js#L8060) | Tag-Sektion-Zustand laden | — |
-| `savePsTagSectionState` | [L8071](app.js#L8071) | Tag-Sektion-Zustand speichern | — |
-| `normalizeSingleTag` | [L8082](app.js#L8082) | Einzelnen Tag normalisieren | `normalizeManualTags` |
-| `dedupeRawTags` | [L8087](app.js#L8087) | Raw-Tags entdoppeln | `t` |
-| `updateNotesForTagChange` | [L8101](app.js#L8101) | Notizen bei Tag-Änderung aktualisieren | `api`, `applyPersonalSpaceFiltersAndRender`, `dedupeRawTags`, `rebuildPsTagsFromNotes`, `t`, `toast` |
-| `resetPsTagContextDelete` | [L8171](app.js#L8171) | Tag-Lösch-Dialog zurücksetzen | `t` |
-| `setPsTagContextMenuOpen` | [L8180](app.js#L8180) | Tag-Kontextmenü öffnen/schließen | — |
-| `positionPsTagContextMenu` | [L8186](app.js#L8186) | Tag-Kontextmenü positionieren | `t` |
-| `closePsTagContextMenu` | [L8198](app.js#L8198) | Tag-Kontextmenü schließen | `resetPsTagContextDelete`, `setPsTagContextMenuOpen` |
-| `openPsTagContextMenu` | [L8204](app.js#L8204) | Tag-Kontextmenü öffnen | `closePsContextMenu`, `positionPsTagContextMenu`, `resetPsTagContextDelete`, `setPsTagContextMenuOpen`, `t` |
-| `applyPsTagContextValue` | [L8223](app.js#L8223) | Tag-Kontextwert anwenden | `closePsTagContextMenu`, `normalizeSingleTag`, `t`, `toast`, `updateNotesForTagChange` |
-| `applyPsTagContextInput` | [L8246](app.js#L8246) | Tag-Kontext-Eingabe anwenden | `applyPsTagContextValue` |
-| `confirmPsTagContextDelete` | [L8251](app.js#L8251) | Tag-Löschung bestätigen | `closePsTagContextMenu`, `updateNotesForTagChange` |
-| `updatePsTagsActiveInfo` | [L8258](app.js#L8258) | Aktive Tag-Info aktualisieren | — |
-| `renderPsTags` | [L8271](app.js#L8271) | Tag-Panel rendern | `buildTagSections`, `loadPsTagSectionState`, `openPsTagContextMenu`, `refreshPersonalSpace`, `savePsTagPrefs`, `savePsTagSectionState`, `t`, `updatePsTagsActiveInfo` |
-| `togglePinnedForNote` | [L8384](app.js#L8384) | Pin-Status für Notiz umschalten | `api`, `applyPersonalSpaceFiltersAndRender`, `buildPsTagsPayload`, diverse Tag-Helfer |
-| `rebuildPsTagsFromNotes` | [L8494](app.js#L8494) | Tags aus Notizen neu aufbauen | `t`, `updatePsEditorTagsSuggest` |
-| `updateEditingNoteTagsLocal` | [L8517](app.js#L8517) | Lokale Tags der aktiven Notiz aktualisieren | `applyPersonalSpaceFiltersAndRender`, `buildEditorSystemTags`, `buildPsTagsPayload`, `rebuildPsTagsFromNotes`, `uniqTags` |
-| `schedulePsTagsAutoSave` | [L8539](app.js#L8539) | Tags-Auto-Save planen | `savePersonalSpaceNote`, `t` |
+| `sortTagList` | [L10910](app.js#L10910) | Tag-Liste sortieren | `t` |
+| `buildTagSections` | [L10914](app.js#L10914) | Tag-Sektionen aufbauen | `isMonthTag`, `isYearTag`, `sortTagList`, `t` |
+| `loadPsTagSectionState` | [L10971](app.js#L10971) | Tag-Sektion-Zustand laden | — |
+| `savePsTagSectionState` | [L10982](app.js#L10982) | Tag-Sektion-Zustand speichern | — |
+| `normalizeSingleTag` | [L10993](app.js#L10993) | Einzelnen Tag normalisieren | `normalizeManualTags` |
+| `dedupeRawTags` | [L10998](app.js#L10998) | Raw-Tags entdoppeln | `t` |
+| `updateNotesForTagChange` | [L11012](app.js#L11012) | Notizen bei Tag-Änderung aktualisieren | `api`, `applyPersonalSpaceFiltersAndRender`, `dedupeRawTags`, `rebuildPsTagsFromNotes`, `t`, `toast` |
+| `resetPsTagContextDelete` | [L11082](app.js#L11082) | Tag-Lösch-Dialog zurücksetzen | `t` |
+| `setPsTagContextMenuOpen` | [L11091](app.js#L11091) | Tag-Kontextmenü öffnen/schließen | — |
+| `positionPsTagContextMenu` | [L11097](app.js#L11097) | Tag-Kontextmenü positionieren | `t` |
+| `closePsTagContextMenu` | [L11109](app.js#L11109) | Tag-Kontextmenü schließen | `resetPsTagContextDelete`, `setPsTagContextMenuOpen` |
+| `openPsTagContextMenu` | [L11115](app.js#L11115) | Tag-Kontextmenü öffnen | `closePsContextMenu`, `positionPsTagContextMenu`, `resetPsTagContextDelete`, `setPsTagContextMenuOpen`, `t` |
+| `applyPsTagContextValue` | [L11134](app.js#L11134) | Tag-Kontextwert anwenden | `closePsTagContextMenu`, `normalizeSingleTag`, `t`, `toast`, `updateNotesForTagChange` |
+| `applyPsTagContextInput` | [L11157](app.js#L11157) | Tag-Kontext-Eingabe anwenden | `applyPsTagContextValue` |
+| `confirmPsTagContextDelete` | [L11162](app.js#L11162) | Tag-Löschung bestätigen | `closePsTagContextMenu`, `updateNotesForTagChange` |
+| `updatePsTagsActiveInfo` | [L11169](app.js#L11169) | Aktive Tag-Info aktualisieren | — |
+| `renderPsTags` | [L11182](app.js#L11182) | Tag-Panel rendern | `buildTagSections`, `loadPsTagSectionState`, `openPsTagContextMenu`, `refreshPersonalSpace`, `savePsTagPrefs`, `savePsTagSectionState`, `t`, `updatePsTagsActiveInfo` |
+| `togglePinnedForNote` | [L11295](app.js#L11295) | Pin-Status für Notiz umschalten | `api`, `applyPersonalSpaceFiltersAndRender`, `buildPsTagsPayload`, diverse Tag-Helfer |
+| `rebuildPsTagsFromNotes` | [L11405](app.js#L11405) | Tags aus Notizen neu aufbauen | `t`, `updatePsEditorTagsSuggest` |
+| `updateEditingNoteTagsLocal` | [L11428](app.js#L11428) | Lokale Tags der aktiven Notiz aktualisieren | `applyPersonalSpaceFiltersAndRender`, `buildEditorSystemTags`, `buildPsTagsPayload`, `rebuildPsTagsFromNotes`, `uniqTags` |
+| `schedulePsTagsAutoSave` | [L11450](app.js#L11450) | Tags-Auto-Save planen | `savePersonalSpaceNote`, `t` |
 
 #### 7 · Kommentare `#comments`
 
@@ -436,20 +436,20 @@ Server-Start
 | `loadAiPrompt` | [L5964](app.js#L5964) | AI-Prompt laden | — |
 | `loadAiUsePreview` | [L5973](app.js#L5973) | AI-Use-Preview laden | `setAiUsePreviewUi` |
 | `loadAiUseAnswer` | [L5983](app.js#L5983) | AI-Use-Answer laden | `setAiUseAnswerUi` |
-| `saveAiPrompt` | [L6485](app.js#L6485) | AI-Prompt speichern | — |
-| `saveAiUseAnswer` | [L6492](app.js#L6492) | AI-Use-Answer speichern | — |
-| `saveAiUsePreview` | [L6497](app.js#L6497) | AI-Use-Preview speichern | — |
+| `saveAiPrompt` | [L6457](app.js#L6457) | AI-Prompt speichern | — |
+| `saveAiUseAnswer` | [L6466](app.js#L6466) | AI-Use-Answer speichern | — |
+| `saveAiUsePreview` | [L6475](app.js#L6475) | AI-Use-Preview speichern | — |
 | `loadAiApiConfig` | [L6485](app.js#L6485) | AI-API-Config laden | — |
 | `saveAiApiConfig` | [L6497](app.js#L6497) | AI-API-Config speichern | — |
 | `getAiApiConfig` | [L6510](app.js#L6510) | AI-API-Config lesen | — |
-| `getAiPrompt` | [L7284](app.js#L7284) | AI-Prompt lesen | — |
-| `getAiUsePreview` | [L7293](app.js#L7293) | AI-Use-Preview lesen | — |
-| `getAiUseAnswer` | [L7297](app.js#L7297) | AI-Use-Answer lesen | — |
-| `setAiUsePreviewUi` | [L7301](app.js#L7301) | AI-Use-Preview UI | — |
-| `setAiUseAnswerUi` | [L7317](app.js#L7317) | AI-Use-Answer UI | — |
-| `readAiApiKeyInput` | [L7250](app.js#L7250) | AI-API-Key Input lesen | — |
-| `normalizeAiModelInput` | [L7257](app.js#L7257) | AI-Modell Input normalisieren | — |
-| `applyAiContextMode` | [L7266](app.js#L7266) | AI-Kontextmodus anwenden | `getAiUsePreview` |
+| `getAiPrompt` | [L7687](app.js#L7687) | AI-Prompt lesen | — |
+| `getAiUsePreview` | [L7704](app.js#L7704) | AI-Use-Preview lesen | — |
+| `getAiUseAnswer` | [L7708](app.js#L7708) | AI-Use-Answer lesen | — |
+| `setAiUsePreviewUi` | [L7712](app.js#L7712) | AI-Use-Preview UI | — |
+| `setAiUseAnswerUi` | [L7728](app.js#L7728) | AI-Use-Answer UI | — |
+| `readAiApiKeyInput` | [L7284](app.js#L7284) | AI-API-Key Input lesen | — |
+| `normalizeAiModelInput` | [L7291](app.js#L7291) | AI-Modell Input normalisieren | — |
+| `applyAiContextMode` | [L7300](app.js#L7300) | AI-Kontextmodus anwenden | `getAiUsePreview` |
 | `loadAiStatus` | [L7040](app.js#L7040) | AI-Status laden | `api` |
 | `getAiMode` | [L12552](app.js#L12552) | AI-Modus ermitteln | — |
 | `aiAssistFromPreview` | [L12563](app.js#L12563) | AI-Assist aus Preview | `api`, `getAiApiConfig`, `getAiMode`, `getAiPrompt`, `getAiUseAnswer`, `getAiUsePreview`, `parseRunnableFromEditor`, `saveAiPrompt`, `setPreviewRunOutput`, `t`, `toast` |
@@ -458,13 +458,13 @@ Server-Start
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `getSpeechRecognitionConstructor` | [L7333](app.js#L7333) | Speech-Recognition Konstruktor | — |
-| `setAiDictationUi` | [L7341](app.js#L7341) | Diktat-UI setzen | — |
-| `updateAiDictationValue` | [L7369](app.js#L7369) | Diktat-Wert aktualisieren | — |
-| `onAiDictationResult` | [L7383](app.js#L7383) | Diktat-Ergebnis verarbeiten | `updateAiDictationValue` |
-| `stopAiDictation` | [L7403](app.js#L7403) | Diktat stoppen | `setAiDictationUi` |
-| `startAiDictation` | [L7414](app.js#L7414) | Diktat starten | `setAiDictationUi`, `t` |
-| `initAiDictation` | [L7728](app.js#L7728) | Diktat initialisieren | `getSpeechRecognitionConstructor`, `getUiSpeechLocale`, `setAiDictationUi`, `t`, `toast` |
+| `getSpeechRecognitionConstructor` | [L7311](app.js#L7311) | Speech-Recognition Konstruktor | — |
+| `setAiDictationUi` | [L7319](app.js#L7319) | Diktat-UI setzen | — |
+| `updateAiDictationValue` | [L7348](app.js#L7348) | Diktat-Wert aktualisieren | — |
+| `onAiDictationResult` | [L7569](app.js#L7569) | Diktat-Ergebnis verarbeiten | `updateAiDictationValue` |
+| `stopAiDictation` | [L7589](app.js#L7589) | Diktat stoppen | `setAiDictationUi` |
+| `startAiDictation` | [L7601](app.js#L7601) | Diktat starten | `setAiDictationUi`, `t` |
+| `initAiDictation` | [L7648](app.js#L7648) | Diktat initialisieren | `getSpeechRecognitionConstructor`, `getUiSpeechLocale`, `setAiDictationUi`, `t`, `toast` |
 
 #### 16 · Einstellungen & FAQ `#settings`
 
@@ -488,24 +488,24 @@ Server-Start
 | `readFsHandle` | [L6110](app.js#L6110) | FS-Handle lesen | `openFsHandleDb`, `supportsDirectoryAccess`, `t` |
 | `writeFsHandle` | [L6126](app.js#L6126) | FS-Handle schreiben | `openFsHandleDb`, `supportsDirectoryAccess`, `t` |
 | `ensureDirPermission` | [L6142](app.js#L6142) | Verzeichnis-Berechtigung sichern | — |
-| `updateAutoBackupFolderLabel` | [L6160](app.js#L6160) | Backup-Ordner-Label aktualisieren | — |
-| `updateAutoImportFolderLabel` | [L6167](app.js#L6167) | Import-Ordner-Label aktualisieren | — |
-| `applyAutoAccessSupportUi` | [L6174](app.js#L6174) | Auto-Access-UI anwenden | `supportsDirectoryAccess` |
-| `loadAutoBackupSettings` | [L6188](app.js#L6188) | Backup-Einstellungen laden | `normalizeAutoInterval` |
-| `saveAutoBackupSettings` | [L6207](app.js#L6207) | Backup-Einstellungen speichern | — |
-| `loadAutoImportSettings` | [L6222](app.js#L6222) | Import-Einstellungen laden | `normalizeAutoInterval` |
-| `saveAutoImportSettings` | [L6241](app.js#L6241) | Import-Einstellungen speichern | — |
-| `loadAutoImportSeen` | [L6256](app.js#L6256) | Gesehene Imports laden | — |
-| `saveAutoImportSeen` | [L6270](app.js#L6270) | Gesehene Imports speichern | — |
-| `buildAutoImportKey` | [L6280](app.js#L6280) | Import-Key erzeugen | — |
-| `scheduleAutoBackup` | [L6288](app.js#L6288) | Auto-Backup planen | `autoIntervalToMs`, `runAutoBackup`, `supportsDirectoryAccess`, `t` |
-| `scheduleAutoImport` | [L6299](app.js#L6299) | Auto-Import planen | `autoIntervalToMs`, `runAutoImport`, `supportsDirectoryAccess`, `t` |
-| `runAutoBackup` | [L6310](app.js#L6310) | Auto-Backup ausführen | `ensureDirPermission`, `fetchPersonalSpaceExport`, `setAutoBackupStatus`, `t` |
-| `runAutoImport` | [L6356](app.js#L6356) | Auto-Import ausführen | `buildAutoImportKey`, `ensureDirPermission`, `importPersonalSpaceNotesFromText`, `saveAutoImportSeen`, `setAutoImportStatus`, `t` |
-| `pickAutoBackupFolder` | [L6413](app.js#L6413) | Backup-Ordner wählen | `runAutoBackup`, `setAutoBackupStatus`, `supportsDirectoryAccess`, `updateAutoBackupFolderLabel`, `writeFsHandle` |
-| `pickAutoImportFolder` | [L6427](app.js#L6427) | Import-Ordner wählen | `runAutoImport`, `setAutoImportStatus`, `supportsDirectoryAccess`, `t`, `updateAutoImportFolderLabel`, `writeFsHandle` |
-| `initAutoBackup` | [L6441](app.js#L6441) | Auto-Backup initialisieren | `applyAutoAccessSupportUi`, `loadAutoBackupSettings`, `readFsHandle`, `scheduleAutoBackup`, `updateAutoBackupFolderLabel` |
-| `initAutoImport` | [L6449](app.js#L6449) | Auto-Import initialisieren | `applyAutoAccessSupportUi`, `loadAutoImportSeen`, `loadAutoImportSettings`, `readFsHandle`, `scheduleAutoImport`, `t`, `updateAutoImportFolderLabel` |
+| `updateAutoBackupFolderLabel` | [L6159](app.js#L6159) | Backup-Ordner-Label aktualisieren | — |
+| `updateAutoImportFolderLabel` | [L6166](app.js#L6166) | Import-Ordner-Label aktualisieren | — |
+| `applyAutoAccessSupportUi` | [L6173](app.js#L6173) | Auto-Access-UI anwenden | `supportsDirectoryAccess` |
+| `loadAutoBackupSettings` | [L6187](app.js#L6187) | Backup-Einstellungen laden | `normalizeAutoInterval` |
+| `saveAutoBackupSettings` | [L6206](app.js#L6206) | Backup-Einstellungen speichern | — |
+| `loadAutoImportSettings` | [L6221](app.js#L6221) | Import-Einstellungen laden | `normalizeAutoInterval` |
+| `saveAutoImportSettings` | [L6240](app.js#L6240) | Import-Einstellungen speichern | — |
+| `loadAutoImportSeen` | [L6255](app.js#L6255) | Gesehene Imports laden | — |
+| `saveAutoImportSeen` | [L6269](app.js#L6269) | Gesehene Imports speichern | — |
+| `buildAutoImportKey` | [L6279](app.js#L6279) | Import-Key erzeugen | — |
+| `scheduleAutoBackup` | [L6287](app.js#L6287) | Auto-Backup planen | `autoIntervalToMs`, `runAutoBackup`, `supportsDirectoryAccess`, `t` |
+| `scheduleAutoImport` | [L6298](app.js#L6298) | Auto-Import planen | `autoIntervalToMs`, `runAutoImport`, `supportsDirectoryAccess`, `t` |
+| `runAutoBackup` | [L6309](app.js#L6309) | Auto-Backup ausführen | `ensureDirPermission`, `fetchPersonalSpaceExport`, `setAutoBackupStatus`, `t` |
+| `runAutoImport` | [L6355](app.js#L6355) | Auto-Import ausführen | `buildAutoImportKey`, `ensureDirPermission`, `importPersonalSpaceNotesFromText`, `saveAutoImportSeen`, `setAutoImportStatus`, `t` |
+| `pickAutoBackupFolder` | [L6412](app.js#L6412) | Backup-Ordner wählen | `runAutoBackup`, `setAutoBackupStatus`, `supportsDirectoryAccess`, `updateAutoBackupFolderLabel`, `writeFsHandle` |
+| `pickAutoImportFolder` | [L6426](app.js#L6426) | Import-Ordner wählen | `runAutoImport`, `setAutoImportStatus`, `supportsDirectoryAccess`, `t`, `updateAutoImportFolderLabel`, `writeFsHandle` |
+| `initAutoBackup` | [L6440](app.js#L6440) | Auto-Backup initialisieren | `applyAutoAccessSupportUi`, `loadAutoBackupSettings`, `readFsHandle`, `scheduleAutoBackup`, `updateAutoBackupFolderLabel` |
+| `initAutoImport` | [L6448](app.js#L6448) | Auto-Import initialisieren | `applyAutoAccessSupportUi`, `loadAutoImportSeen`, `loadAutoImportSettings`, `readFsHandle`, `scheduleAutoImport`, `t`, `updateAutoImportFolderLabel` |
 
 #### 18 · Personal Space (Notizen) `#ps`
 
@@ -538,58 +538,58 @@ Server-Start
 |----------|-------|-------|----------------|
 | `cleanNoteTitleLine` | [L8149](app.js#L8149) | Titelzeile bereinigen | — |
 | `getNoteTitleAndExcerpt` | [L8158](app.js#L8158) | Titel+Auszug lesen | `cleanNoteTitleLine`, `t` |
-| `getNoteTitle` | [L8182](app.js#L8182) | Notiz-Titel lesen | `getNoteTitleAndExcerpt`, `t` |
-| `loadPsVisible` | [L8190](app.js#L8190) | PS-Sichtbarkeit laden | — |
-| `savePsVisible` | [L8199](app.js#L8199) | PS-Sichtbarkeit speichern | — |
-| `applyPsVisible` | [L8207](app.js#L8207) | PS-Sichtbarkeit anwenden | — |
-| `normalizeSearchQuery` | [L8237](app.js#L8237) | Suchbegriff normalisieren | — |
-| `loadPsSearchQuery` | [L8243](app.js#L8243) | Suchabfrage laden | — |
-| `normalizePsSortMode` | [L8252](app.js#L8252) | Sort-Modus normalisieren | — |
-| `setPsSortMenuOpen` | [L8267](app.js#L8267) | Sort-Menü öffnen/schließen | — |
-| `syncPsSortMenu` | [L8279](app.js#L8279) | Sort-Menü synchronisieren | — |
-| `loadPsNoteAccessed` | [L8300](app.js#L8300) | Notiz-Zugriffe laden | `t` |
-| `savePsNoteAccessed` | [L8323](app.js#L8323) | Notiz-Zugriffe speichern | `t` |
-| `markPsNoteAccessed` | [L8336](app.js#L8336) | Notiz-Zugriff markieren | `savePsNoteAccessed`, `t` |
-| `loadPsSortMode` | [L8343](app.js#L8343) | Sort-Modus laden | `normalizePsSortMode`, `syncPsSortMenu` |
-| `savePsSortMode` | [L8355](app.js#L8355) | Sort-Modus speichern | `normalizePsSortMode` |
-| `savePsSearchQuery` | [L8364](app.js#L8364) | Suchabfrage speichern | — |
-| `loadPsPinnedOnly` | [L8372](app.js#L8372) | Nur-Pinned laden | `updatePsPinnedToggle` |
-| `savePsPinnedOnly` | [L8381](app.js#L8381) | Nur-Pinned speichern | — |
-| `updatePsPinnedToggle` | [L8389](app.js#L8389) | Pinned-Toggle aktualisieren | — |
-| `noteMatchesSearch` | [L8408](app.js#L8408) | Notiz-Suchfilter prüfen | — |
-| `applyPersonalSpaceFiltersAndRender` | [L8430](app.js#L8430) | Filter anwenden & rendern | `ensureNoteUpdatedAt`, `getNoteTitle`, `normalizeSearchQuery`, `noteIsPinned`, `noteMatchesSearch`, `renderPsList`, `renderPsTags`, `t`, `updateEditorMetaYaml` |
+| `getNoteTitle` | [L8202](app.js#L8202) | Notiz-Titel lesen | `getNoteTitleAndExcerpt`, `t` |
+| `loadPsVisible` | [L8210](app.js#L8210) | PS-Sichtbarkeit laden | — |
+| `savePsVisible` | [L8219](app.js#L8219) | PS-Sichtbarkeit speichern | — |
+| `applyPsVisible` | [L8227](app.js#L8227) | PS-Sichtbarkeit anwenden | — |
+| `normalizeSearchQuery` | [L8257](app.js#L8257) | Suchbegriff normalisieren | — |
+| `loadPsSearchQuery` | [L8351](app.js#L8351) | Suchabfrage laden | — |
+| `normalizePsSortMode` | [L8360](app.js#L8360) | Sort-Modus normalisieren | — |
+| `setPsSortMenuOpen` | [L8375](app.js#L8375) | Sort-Menü öffnen/schließen | — |
+| `syncPsSortMenu` | [L8387](app.js#L8387) | Sort-Menü synchronisieren | — |
+| `loadPsNoteAccessed` | [L8408](app.js#L8408) | Notiz-Zugriffe laden | `t` |
+| `savePsNoteAccessed` | [L8431](app.js#L8431) | Notiz-Zugriffe speichern | `t` |
+| `markPsNoteAccessed` | [L8444](app.js#L8444) | Notiz-Zugriff markieren | `savePsNoteAccessed`, `t` |
+| `loadPsSortMode` | [L8451](app.js#L8451) | Sort-Modus laden | `normalizePsSortMode`, `syncPsSortMenu` |
+| `savePsSortMode` | [L8463](app.js#L8463) | Sort-Modus speichern | `normalizePsSortMode` |
+| `savePsSearchQuery` | [L8472](app.js#L8472) | Suchabfrage speichern | — |
+| `loadPsPinnedOnly` | [L8480](app.js#L8480) | Nur-Pinned laden | `updatePsPinnedToggle` |
+| `savePsPinnedOnly` | [L8498](app.js#L8498) | Nur-Pinned speichern | — |
+| `updatePsPinnedToggle` | [L8514](app.js#L8514) | Pinned-Toggle aktualisieren | — |
+| `noteMatchesSearch` | [L8566](app.js#L8566) | Notiz-Suchfilter prüfen | — |
+| `applyPersonalSpaceFiltersAndRender` | [L8601](app.js#L8601) | Filter anwenden & rendern | `ensureNoteUpdatedAt`, `getNoteTitle`, `normalizeSearchQuery`, `noteIsPinned`, `noteMatchesSearch`, `renderPsList`, `renderPsTags`, `t`, `updateEditorMetaYaml` |
 
 ##### 18.3 PS Tags-Prefs
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `loadPsTagsCollapsed` | [L8498](app.js#L8498) | Tags-Collapsed laden | — |
-| `savePsTagsCollapsed` | [L8506](app.js#L8506) | Tags-Collapsed speichern | — |
-| `applyPsTagsCollapsed` | [L8514](app.js#L8514) | Tags-Collapsed anwenden | — |
-| `loadPsTagPrefs` | [L8536](app.js#L8536) | Tag-Prefs laden | `t` |
-| `savePsTagPrefs` | [L8566](app.js#L8566) | Tag-Prefs speichern | — |
+| `loadPsTagsCollapsed` | [L8678](app.js#L8678) | Tags-Collapsed laden | — |
+| `savePsTagsCollapsed` | [L8686](app.js#L8686) | Tags-Collapsed speichern | — |
+| `applyPsTagsCollapsed` | [L8694](app.js#L8694) | Tags-Collapsed anwenden | — |
+| `loadPsTagPrefs` | [L8719](app.js#L8719) | Tag-Prefs laden | `t` |
+| `savePsTagPrefs` | [L8749](app.js#L8749) | Tag-Prefs speichern | — |
 
 ##### 18.4 Passwort-Maskierung `#password`
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `escapeHtml` | [L6446](app.js#L6446) | HTML escapen | — |
-| `renderPasswordToken` | [L6453](app.js#L6453) | Passwort-Token rendern | `escapeHtml` |
-| `copyTextToClipboard` | [L6458](app.js#L6458) | Text in Zwischenablage | `t` |
-| `togglePasswordField` | [L6483](app.js#L6483) | Passwort-Feld umschalten | — |
-| `loadEditorMaskDisabled` | [L6504](app.js#L6504) | Mask-Disabled laden | — |
-| `saveEditorMaskDisabled` | [L6513](app.js#L6513) | Mask-Disabled speichern | — |
-| `toggleEditorMaskView` | [L6524](app.js#L6524) | Mask-View umschalten | `saveEditorMaskDisabled`, `setEditorMaskToggleUi`, `updatePasswordMaskOverlay` |
-| `setEditorMaskToggleUi` | [L6531](app.js#L6531) | Mask-Toggle-UI setzen | — |
-| `loadCrdtMarksPreference` | [L6549](app.js#L6549) | CRDT-Marks-Pref laden | — |
-| `saveCrdtMarksPreference` | [L6558](app.js#L6558) | CRDT-Marks-Pref speichern | — |
-| `setCrdtMarksToggleUi` | [L6569](app.js#L6569) | CRDT-Marks-Toggle-UI | — |
-| `toggleCrdtMarks` | [L6588](app.js#L6588) | CRDT-Marks umschalten | `saveCrdtMarksPreference`, `setCrdtMarksToggleUi`, `updateAttributionOverlay` |
-| `hasPasswordTokens` | [L6595](app.js#L6595) | Passwort-Tokens prüfen | `t` |
-| `maskPasswordTokens` | [L6599](app.js#L6599) | Passwort-Tokens maskieren | `t` |
-| `buildEditorMaskHtml` | [L6606](app.js#L6606) | Editor-Mask-HTML bauen | `escapeHtml` |
-| `syncPasswordMaskScroll` | [L6630](app.js#L6630) | Mask-Scroll synchronisieren | — |
-| `updatePasswordMaskOverlay` | [L6637](app.js#L6637) | Mask-Overlay aktualisieren | `buildEditorMaskHtml`, `hasPasswordTokens`, `syncPasswordMaskScroll`, `updateAttributionOverlay` |
+| `escapeHtml` | [L8765](app.js#L8765) | HTML escapen | — |
+| `renderPasswordToken` | [L8772](app.js#L8772) | Passwort-Token rendern | `escapeHtml` |
+| `copyTextToClipboard` | [L8777](app.js#L8777) | Text in Zwischenablage | `t` |
+| `togglePasswordField` | [L8802](app.js#L8802) | Passwort-Feld umschalten | — |
+| `loadEditorMaskDisabled` | [L8823](app.js#L8823) | Mask-Disabled laden | — |
+| `saveEditorMaskDisabled` | [L8832](app.js#L8832) | Mask-Disabled speichern | — |
+| `toggleEditorMaskView` | [L8843](app.js#L8843) | Mask-View umschalten | `saveEditorMaskDisabled`, `setEditorMaskToggleUi`, `updatePasswordMaskOverlay` |
+| `setEditorMaskToggleUi` | [L8850](app.js#L8850) | Mask-Toggle-UI setzen | — |
+| `loadCrdtMarksPreference` | [L8868](app.js#L8868) | CRDT-Marks-Pref laden | — |
+| `saveCrdtMarksPreference` | [L8890](app.js#L8890) | CRDT-Marks-Pref speichern | — |
+| `setCrdtMarksToggleUi` | [L8901](app.js#L8901) | CRDT-Marks-Toggle-UI | — |
+| `toggleCrdtMarks` | [L8920](app.js#L8920) | CRDT-Marks umschalten | `saveCrdtMarksPreference`, `setCrdtMarksToggleUi`, `updateAttributionOverlay` |
+| `hasPasswordTokens` | [L8927](app.js#L8927) | Passwort-Tokens prüfen | `t` |
+| `maskPasswordTokens` | [L8931](app.js#L8931) | Passwort-Tokens maskieren | `t` |
+| `buildEditorMaskHtml` | [L8938](app.js#L8938) | Editor-Mask-HTML bauen | `escapeHtml` |
+| `syncPasswordMaskScroll` | [L8962](app.js#L8962) | Mask-Scroll synchronisieren | — |
+| `updatePasswordMaskOverlay` | [L8969](app.js#L8969) | Mask-Overlay aktualisieren | `buildEditorMaskHtml`, `hasPasswordTokens`, `syncPasswordMaskScroll`, `updateAttributionOverlay` |
 
 #### 19 · Preview & Rendering `#preview`
 
@@ -597,82 +597,82 @@ Server-Start
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `getPreviewRunCombinedText` | [L6653](app.js#L6653) | Run-Combined-Text lesen | — |
-| `updateRunOutputUi` | [L6661](app.js#L6661) | Run-Output-UI aktualisieren | — |
-| `updateRunOutputSizing` | [L6703](app.js#L6703) | Run-Output-Sizing | `t` |
-| `setPreviewRunOutput` | [L6754](app.js#L6754) | Run-Output setzen | `escapeHtml`, `getPreviewRunCombinedText`, `t`, `updateRunOutputSizing`, `updateRunOutputUi` |
-| `parseRunnableFromEditor` | [L6781](app.js#L6781) | Runnable-Block parsen | `t` |
+| `getPreviewRunCombinedText` | [L8987](app.js#L8987) | Run-Combined-Text lesen | — |
+| `updateRunOutputUi` | [L8995](app.js#L8995) | Run-Output-UI aktualisieren | — |
+| `updateRunOutputSizing` | [L9045](app.js#L9045) | Run-Output-Sizing | `t` |
+| `setPreviewRunOutput` | [L9096](app.js#L9096) | Run-Output setzen | `escapeHtml`, `getPreviewRunCombinedText`, `t`, `updateRunOutputSizing`, `updateRunOutputUi` |
+| `parseRunnableFromEditor` | [L9123](app.js#L9123) | Runnable-Block parsen | `t` |
 
 ##### 19.2 Code-Language & Fenced-Blocks
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `getSelectedCodeLang` | [L6812](app.js#L6812) | Code-Sprache lesen | — |
-| `getFencedCodeOpenAtPos` | [L6821](app.js#L6821) | Fenced-Code an Position prüfen | *(umfangreiche Abhängigkeiten)* |
-| `setFencedCodeLanguage` | [L6854](app.js#L6854) | Fenced-Code-Sprache setzen | *(umfangreiche Abhängigkeiten)* |
-| `updateCodeLangOverlay` | [L6887](app.js#L6887) | Code-Lang-Overlay aktualisieren | `getFencedCodeOpenAtPos`, `resetEditorMetaPadding`, `updateEditorMetaPadding`, `updateEditorMetaScroll` |
-| `insertCodeBlock` | [L6916](app.js#L6916) | Code-Block einfügen | `getSelectedCodeLang`, `nowIso`, `scheduleSend`, `updateCodeLangOverlay`, `updatePasswordMaskOverlay`, `updatePreview` |
+| `getSelectedCodeLang` | [L9154](app.js#L9154) | Code-Sprache lesen | — |
+| `getFencedCodeOpenAtPos` | [L9163](app.js#L9163) | Fenced-Code an Position prüfen | *(umfangreiche Abhängigkeiten)* |
+| `setFencedCodeLanguage` | [L9196](app.js#L9196) | Fenced-Code-Sprache setzen | *(umfangreiche Abhängigkeiten)* |
+| `updateCodeLangOverlay` | [L9229](app.js#L9229) | Code-Lang-Overlay aktualisieren | `getFencedCodeOpenAtPos`, `resetEditorMetaPadding`, `updateEditorMetaPadding`, `updateEditorMetaScroll` |
+| `insertCodeBlock` | [L9261](app.js#L9261) | Code-Block einfügen | `getSelectedCodeLang`, `nowIso`, `scheduleSend`, `updateCodeLangOverlay`, `updatePasswordMaskOverlay`, `updatePreview` |
 
 ##### 19.3 Markdown & Rendering
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `ensureMarkdown` | [L6943](app.js#L6943) | Markdown-Lib laden | `escapeHtml`, `renderPasswordToken`, `t` |
-| `applyHljsToHtml` | [L7070](app.js#L7070) | Syntax-Highlighting anwenden | `t` |
-| `embedPdfLinks` | [L7090](app.js#L7090) | PDF-Links einbetten | `t` |
-| `buildNoteTitleIndex` | [L7156](app.js#L7156) | Notiz-Titel-Index bauen | `getNoteTitle`, `t` |
-| `applyWikiLinksToMarkdown` | [L7174](app.js#L7174) | Wiki-Links in Markdown | `buildNoteTitleIndex`, `t` |
-| `renderNoteHtml` | [L7188](app.js#L7188) | Notiz → HTML rendern | `ensureMarkdown`, `t`, `toast` |
-| `setFullPreview` | [L7226](app.js#L7226) | Full-Preview setzen | `t`, `updateRunOutputSizing` |
-| `setPreviewVisible` | [L7244](app.js#L7244) | Preview-Sichtbarkeit setzen | `ensureMarkdown`, `setFullPreview`, `syncMobileFocusState`, `t`, `toast`, `updatePreview`, `updateRunOutputSizing`, `updateRunOutputUi` |
-| `updatePreview` | [L7274](app.js#L7274) | Preview aktualisieren | `allTaskCheckboxes`, `applyHljsToHtml`, `applyWikiLinksToMarkdown`, `buildNoteMetaYaml`, `buildToc`, `embedPdfLinks`, `ensureMarkdown`, `ensurePdfJsLoaded`, `escapeHtml`, `findCheckbox`, `findNoteById`, `getNoteHrefTarget`, `getPdfRenderId`, `indexOfCheckbox`, `initImageTools`, `initPdfEmbeds`, `renderPdfPage`, `send`, `setExpanded`, `setPasswordRevealed`, `setPreviewDocument`, `slugify`, `t`, `toElement`, `updatePdfNav`, `wrapImage` |
+| `ensureMarkdown` | [L9288](app.js#L9288) | Markdown-Lib laden | `escapeHtml`, `renderPasswordToken`, `t` |
+| `applyHljsToHtml` | [L9415](app.js#L9415) | Syntax-Highlighting anwenden | `t` |
+| `embedPdfLinks` | [L9435](app.js#L9435) | PDF-Links einbetten | `t` |
+| `buildNoteTitleIndex` | [L9501](app.js#L9501) | Notiz-Titel-Index bauen | `getNoteTitle`, `t` |
+| `applyWikiLinksToMarkdown` | [L9519](app.js#L9519) | Wiki-Links in Markdown | `buildNoteTitleIndex`, `t` |
+| `renderNoteHtml` | [L9533](app.js#L9533) | Notiz → HTML rendern | `ensureMarkdown`, `t`, `toast` |
+| `setFullPreview` | [L9571](app.js#L9571) | Full-Preview setzen | `t`, `updateRunOutputSizing` |
+| `setPreviewVisible` | [L9589](app.js#L9589) | Preview-Sichtbarkeit setzen | `ensureMarkdown`, `setFullPreview`, `syncMobileFocusState`, `t`, `toast`, `updatePreview`, `updateRunOutputSizing`, `updateRunOutputUi` |
+| `updatePreview` | [L9667](app.js#L9667) | Preview aktualisieren | `allTaskCheckboxes`, `applyHljsToHtml`, `applyWikiLinksToMarkdown`, `buildNoteMetaYaml`, `buildToc`, `embedPdfLinks`, `ensureMarkdown`, `ensurePdfJsLoaded`, `escapeHtml`, `findCheckbox`, `findNoteById`, `getNoteHrefTarget`, `getPdfRenderId`, `indexOfCheckbox`, `initImageTools`, `initPdfEmbeds`, `renderPdfPage`, `send`, `setExpanded`, `setPasswordRevealed`, `setPreviewDocument`, `slugify`, `t`, `toElement`, `updatePdfNav`, `wrapImage` |
 
 ##### 19.4 Helfer & PDF
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `send` | [L7522](app.js#L7522) | WS-Nachricht senden (low-level) | — |
-| `slugify` | [L7529](app.js#L7529) | Slug erzeugen | — |
-| `buildToc` | [L7537](app.js#L7537) | Inhaltsverzeichnis bauen | `setExpanded`, `slugify`, `t` |
-| `setExpanded` | [L7583](app.js#L7583) | Expandiert setzen | — |
-| `getNoteHrefTarget` | [L7619](app.js#L7619) | Notiz-Link-Target lesen | — |
-| `toElement` | [L7625](app.js#L7625) | String → DOM-Element | — |
-| `findCheckbox` | [L7631](app.js#L7631) | Checkbox finden | `t`, `toElement` |
-| `allTaskCheckboxes` | [L7648](app.js#L7648) | Alle Task-Checkboxen | — |
-| `indexOfCheckbox` | [L7658](app.js#L7658) | Checkbox-Index | `allTaskCheckboxes` |
-| `setPasswordRevealed` | [L7687](app.js#L7687) | Passwort aufdecken | — |
-| `wrapImage` | [L7719](app.js#L7719) | Bild wrappen | `t` |
-| `initImageTools` | [L7746](app.js#L7746) | Image-Tools initialisieren | `wrapImage` |
-| `getPdfRenderId` | [L7754](app.js#L7754) | PDF-Render-ID lesen | — |
-| `updatePdfNav` | [L7763](app.js#L7763) | PDF-Nav aktualisieren | — |
-| `renderPdfPage` | [L7773](app.js#L7773) | PDF-Seite rendern | `getPdfRenderId`, `send` |
-| `initPdfEmbeds` | [L7783](app.js#L7783) | PDF-Embeds initialisieren | `renderPdfPage`, `t` |
-| `toggleMarkdownTaskAtIndex` | [L7845](app.js#L7845) | Markdown-Task umschalten | `getActiveRoomTabNoteId`, `schedulePsAutoSave`, `scheduleSend`, `t`, `updateLocalNoteText`, `updatePreview` |
-| `attachPreviewCheckboxWriteback` | [L7888](app.js#L7888) | Checkbox-Writeback anbinden | `findCheckbox`, `indexOfCheckbox`, `nowIso`, `t`, `toElement`, `toggleMarkdownTaskAtIndex` |
-| `setPreviewDocument` | [L7961](app.js#L7961) | Preview-Document setzen | `attachPreviewCheckboxWriteback`, `t` |
+| `send` | [L10044](app.js#L10044) | WS-Nachricht senden (low-level) | — |
+| `slugify` | [L10051](app.js#L10051) | Slug erzeugen | — |
+| `buildToc` | [L10059](app.js#L10059) | Inhaltsverzeichnis bauen | `setExpanded`, `slugify`, `t` |
+| `setExpanded` | [L10105](app.js#L10105) | Expandiert setzen | — |
+| `getNoteHrefTarget` | [L10141](app.js#L10141) | Notiz-Link-Target lesen | — |
+| `toElement` | [L10147](app.js#L10147) | String → DOM-Element | — |
+| `findCheckbox` | [L10153](app.js#L10153) | Checkbox finden | `t`, `toElement` |
+| `allTaskCheckboxes` | [L10170](app.js#L10170) | Alle Task-Checkboxen | — |
+| `indexOfCheckbox` | [L10259](app.js#L10259) | Checkbox-Index | `allTaskCheckboxes` |
+| `setPasswordRevealed` | [L10291](app.js#L10291) | Passwort aufdecken | — |
+| `wrapImage` | [L10323](app.js#L10323) | Bild wrappen | `t` |
+| `initImageTools` | [L10350](app.js#L10350) | Image-Tools initialisieren | `wrapImage` |
+| `getPdfRenderId` | [L10358](app.js#L10358) | PDF-Render-ID lesen | — |
+| `updatePdfNav` | [L10367](app.js#L10367) | PDF-Nav aktualisieren | — |
+| `renderPdfPage` | [L10377](app.js#L10377) | PDF-Seite rendern | `getPdfRenderId`, `send` |
+| `initPdfEmbeds` | [L10387](app.js#L10387) | PDF-Embeds initialisieren | `renderPdfPage`, `t` |
+| `toggleMarkdownTaskAtIndex` | [L10465](app.js#L10465) | Markdown-Task umschalten | `getActiveRoomTabNoteId`, `schedulePsAutoSave`, `scheduleSend`, `t`, `updateLocalNoteText`, `updatePreview` |
+| `attachPreviewCheckboxWriteback` | [L10664](app.js#L10664) | Checkbox-Writeback anbinden | `findCheckbox`, `indexOfCheckbox`, `nowIso`, `t`, `toElement`, `toggleMarkdownTaskAtIndex` |
+| `setPreviewDocument` | [L10755](app.js#L10755) | Preview-Document setzen | `attachPreviewCheckboxWriteback`, `t` |
 
 ##### 18.4b PS Tags-Verwaltung `#tags`
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `sortTagList` | [L7999](app.js#L7999) | Tag-Liste sortieren | `t` |
-| `buildTagSections` | [L8003](app.js#L8003) | Tag-Sections bauen | `isMonthTag`, `isYearTag`, `sortTagList`, `t` |
-| `loadPsTagSectionState` | [L8060](app.js#L8060) | Tag-Section-State laden | — |
-| `savePsTagSectionState` | [L8071](app.js#L8071) | Tag-Section-State speichern | — |
-| `normalizeSingleTag` | [L8082](app.js#L8082) | Einzelnen Tag normalisieren | `normalizeManualTags` |
-| `dedupeRawTags` | [L8087](app.js#L8087) | Rohe Tags deduplizieren | `t` |
-| `updateNotesForTagChange` | [L8101](app.js#L8101) | Notizen für Tag-Änderung aktualisieren | `api`, `applyPersonalSpaceFiltersAndRender`, `dedupeRawTags`, `rebuildPsTagsFromNotes`, `t`, `toast` |
-| `resetPsTagContextDelete` | [L8171](app.js#L8171) | Tag-Kontext-Löschen zurücksetzen | `t` |
-| `setPsTagContextMenuOpen` | [L8180](app.js#L8180) | Tag-Kontext-Menü öffnen/schließen | — |
-| `positionPsTagContextMenu` | [L8186](app.js#L8186) | Tag-Kontext-Menü positionieren | `t` |
-| `closePsTagContextMenu` | [L8198](app.js#L8198) | Tag-Kontext-Menü schließen | `resetPsTagContextDelete`, `setPsTagContextMenuOpen` |
-| `openPsTagContextMenu` | [L8204](app.js#L8204) | Tag-Kontext-Menü öffnen | `closePsContextMenu`, `positionPsTagContextMenu`, `resetPsTagContextDelete`, `setPsTagContextMenuOpen`, `t` |
-| `applyPsTagContextValue` | [L8223](app.js#L8223) | Tag-Kontext-Wert anwenden | `closePsTagContextMenu`, `normalizeSingleTag`, `t`, `toast`, `updateNotesForTagChange` |
-| `applyPsTagContextInput` | [L8246](app.js#L8246) | Tag-Kontext-Input anwenden | `applyPsTagContextValue` |
-| `confirmPsTagContextDelete` | [L8251](app.js#L8251) | Tag-Löschen bestätigen | `closePsTagContextMenu`, `updateNotesForTagChange` |
-| `updatePsTagsActiveInfo` | [L8258](app.js#L8258) | Tags-Active-Info aktualisieren | — |
-| `renderPsTags` | [L8271](app.js#L8271) | PS-Tags rendern | `buildTagSections`, `loadPsTagSectionState`, `openPsTagContextMenu`, `refreshPersonalSpace`, `savePsTagPrefs`, `savePsTagSectionState`, `t`, `updatePsTagsActiveInfo` |
-| `togglePinnedForNote` | [L8384](app.js#L8384) | Notiz-Pinned umschalten | `api`, `applyPersonalSpaceFiltersAndRender`, `buildPsTagsPayload`, `normalizeCategoryValue`, `normalizeMonthTag`, `normalizeYearTag`, `refreshPersonalSpace`, `splitTagsForEditor`, `stripManualTagsMarker`, `stripPinnedTag`, `syncPsEditorTagsInput`, `t`, `toast`, `updatePsEditingTagsHint` |
+| `sortTagList` | [L10910](app.js#L10910) | Tag-Liste sortieren | `t` |
+| `buildTagSections` | [L10914](app.js#L10914) | Tag-Sections bauen | `isMonthTag`, `isYearTag`, `sortTagList`, `t` |
+| `loadPsTagSectionState` | [L10971](app.js#L10971) | Tag-Section-State laden | — |
+| `savePsTagSectionState` | [L10982](app.js#L10982) | Tag-Section-State speichern | — |
+| `normalizeSingleTag` | [L10993](app.js#L10993) | Einzelnen Tag normalisieren | `normalizeManualTags` |
+| `dedupeRawTags` | [L10998](app.js#L10998) | Rohe Tags deduplizieren | `t` |
+| `updateNotesForTagChange` | [L11012](app.js#L11012) | Notizen für Tag-Änderung aktualisieren | `api`, `applyPersonalSpaceFiltersAndRender`, `dedupeRawTags`, `rebuildPsTagsFromNotes`, `t`, `toast` |
+| `resetPsTagContextDelete` | [L11082](app.js#L11082) | Tag-Kontext-Löschen zurücksetzen | `t` |
+| `setPsTagContextMenuOpen` | [L11091](app.js#L11091) | Tag-Kontext-Menü öffnen/schließen | — |
+| `positionPsTagContextMenu` | [L11097](app.js#L11097) | Tag-Kontext-Menü positionieren | `t` |
+| `closePsTagContextMenu` | [L11109](app.js#L11109) | Tag-Kontext-Menü schließen | `resetPsTagContextDelete`, `setPsTagContextMenuOpen` |
+| `openPsTagContextMenu` | [L11115](app.js#L11115) | Tag-Kontext-Menü öffnen | `closePsContextMenu`, `positionPsTagContextMenu`, `resetPsTagContextDelete`, `setPsTagContextMenuOpen`, `t` |
+| `applyPsTagContextValue` | [L11134](app.js#L11134) | Tag-Kontext-Wert anwenden | `closePsTagContextMenu`, `normalizeSingleTag`, `t`, `toast`, `updateNotesForTagChange` |
+| `applyPsTagContextInput` | [L11157](app.js#L11157) | Tag-Kontext-Input anwenden | `applyPsTagContextValue` |
+| `confirmPsTagContextDelete` | [L11162](app.js#L11162) | Tag-Löschen bestätigen | `closePsTagContextMenu`, `updateNotesForTagChange` |
+| `updatePsTagsActiveInfo` | [L11169](app.js#L11169) | Tags-Active-Info aktualisieren | — |
+| `renderPsTags` | [L11182](app.js#L11182) | PS-Tags rendern | `buildTagSections`, `loadPsTagSectionState`, `openPsTagContextMenu`, `refreshPersonalSpace`, `savePsTagPrefs`, `savePsTagSectionState`, `t`, `updatePsTagsActiveInfo` |
+| `togglePinnedForNote` | [L11295](app.js#L11295) | Notiz-Pinned umschalten | `api`, `applyPersonalSpaceFiltersAndRender`, `buildPsTagsPayload`, `normalizeCategoryValue`, `normalizeMonthTag`, `normalizeYearTag`, `refreshPersonalSpace`, `splitTagsForEditor`, `stripManualTagsMarker`, `stripPinnedTag`, `syncPsEditorTagsInput`, `t`, `toast`, `updatePsEditingTagsHint` |
 
 ##### 18.5 PS Notiz-Navigation
 
@@ -697,43 +697,43 @@ Server-Start
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `syncPsListHeight` | [L11643](app.js#L11643) | Listen-Höhe synchronisieren | `t` |
-| `setPsContextMenuOpen` | [L11670](app.js#L11670) | Kontext-Menü öffnen/schließen | — |
-| `positionPsContextMenu` | [L11676](app.js#L11676) | Kontext-Menü positionieren | `t` |
-| `openPsContextMenu` | [L11687](app.js#L11687) | Kontext-Menü öffnen | `closePsTagContextMenu`, `positionPsContextMenu`, `setPsContextMenuOpen` |
-| `closePsContextMenu` | [L11702](app.js#L11702) | Kontext-Menü schließen | `setPsContextMenuOpen` |
-| `updatePsBulkBar` | [L11707](app.js#L11707) | Bulk-Bar aktualisieren | `syncPsBulkSelectionToDom` |
-| `syncPsBulkSelectionToDom` | [L11711](app.js#L11711) | Bulk-Selection → DOM | — |
-| `prunePsSelectedNotes` | [L11721](app.js#L11721) | Auswahl bereinigen | `t`, `updatePsBulkBar` |
-| `setPsNoteSelected` | [L11733](app.js#L11733) | Notiz selektieren | `updatePsBulkBar` |
-| `togglePsSelectAll` | [L11741](app.js#L11741) | Alle selektieren/deselektieren | `updatePsBulkBar` |
-| `clearPsSelection` | [L11752](app.js#L11752) | Auswahl löschen | `t`, `updatePsBulkBar` |
-| `getSelectedNoteIds` | [L11757](app.js#L11757) | Selektierte IDs lesen | — |
-| `applyBulkTagsToNotes` | [L11761](app.js#L11761) | Bulk-Tags anwenden | `api`, `buildPsTagsPayload`, `findNoteById`, `t`, `toast` |
-| `deleteBulkNotes` | [L11791](app.js#L11791) | Bulk-Notizen löschen | `api`, `syncMobileFocusState`, `t`, `toast` |
+| `syncPsListHeight` | [L11687](app.js#L11687) | Listen-Höhe synchronisieren | `t` |
+| `setPsContextMenuOpen` | [L11714](app.js#L11714) | Kontext-Menü öffnen/schließen | — |
+| `positionPsContextMenu` | [L11720](app.js#L11720) | Kontext-Menü positionieren | `t` |
+| `openPsContextMenu` | [L11731](app.js#L11731) | Kontext-Menü öffnen | `closePsTagContextMenu`, `positionPsContextMenu`, `setPsContextMenuOpen` |
+| `closePsContextMenu` | [L11746](app.js#L11746) | Kontext-Menü schließen | `setPsContextMenuOpen` |
+| `updatePsBulkBar` | [L11751](app.js#L11751) | Bulk-Bar aktualisieren | `syncPsBulkSelectionToDom` |
+| `syncPsBulkSelectionToDom` | [L11755](app.js#L11755) | Bulk-Selection → DOM | — |
+| `prunePsSelectedNotes` | [L11765](app.js#L11765) | Auswahl bereinigen | `t`, `updatePsBulkBar` |
+| `setPsNoteSelected` | [L11777](app.js#L11777) | Notiz selektieren | `updatePsBulkBar` |
+| `togglePsSelectAll` | [L11785](app.js#L11785) | Alle selektieren/deselektieren | `updatePsBulkBar` |
+| `clearPsSelection` | [L11796](app.js#L11796) | Auswahl löschen | `t`, `updatePsBulkBar` |
+| `getSelectedNoteIds` | [L11801](app.js#L11801) | Selektierte IDs lesen | — |
+| `applyBulkTagsToNotes` | [L11805](app.js#L11805) | Bulk-Tags anwenden | `api`, `buildPsTagsPayload`, `findNoteById`, `t`, `toast` |
+| `deleteBulkNotes` | [L11835](app.js#L11835) | Bulk-Notizen löschen | `api`, `syncMobileFocusState`, `t`, `toast` |
 
 ##### 18.7 PS Tags-Verwaltung (erweitert)
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `sortTagList` | [L8582](app.js#L8582) | Tag-Liste sortieren | `t` |
-| `buildTagSections` | [L8586](app.js#L8586) | Tag-Sektionen bauen | `isMonthTag`, `isYearTag`, `sortTagList`, `t` |
-| `loadPsTagSectionState` | [L8643](app.js#L8643) | Tag-Section-State laden | — |
-| `savePsTagSectionState` | [L8654](app.js#L8654) | Tag-Section-State speichern | — |
-| `normalizeSingleTag` | [L8665](app.js#L8665) | Einzelnen Tag normalisieren | `normalizeManualTags` |
-| `dedupeRawTags` | [L8670](app.js#L8670) | Roh-Tags entdoppeln | `t` |
-| `updateNotesForTagChange` | [L8684](app.js#L8684) | Notizen für Tag-Änderung updaten | `api`, `applyPersonalSpaceFiltersAndRender`, `dedupeRawTags`, `rebuildPsTagsFromNotes`, `t`, `toast` |
-| `resetPsTagContextDelete` | [L8754](app.js#L8754) | Tag-Kontext-Löschen zurücksetzen | `t` |
-| `setPsTagContextMenuOpen` | [L8763](app.js#L8763) | Tag-Kontext-Menü öffnen/schließen | — |
-| `positionPsTagContextMenu` | [L8769](app.js#L8769) | Tag-Kontext-Menü positionieren | `t` |
-| `closePsTagContextMenu` | [L8781](app.js#L8781) | Tag-Kontext-Menü schließen | `resetPsTagContextDelete`, `setPsTagContextMenuOpen` |
-| `openPsTagContextMenu` | [L8787](app.js#L8787) | Tag-Kontext-Menü öffnen | `closePsContextMenu`, `positionPsTagContextMenu`, `resetPsTagContextDelete`, `setPsTagContextMenuOpen`, `t` |
-| `applyPsTagContextValue` | [L8806](app.js#L8806) | Tag-Kontext-Wert anwenden | `closePsTagContextMenu`, `normalizeSingleTag`, `t`, `toast`, `updateNotesForTagChange` |
-| `applyPsTagContextInput` | [L8829](app.js#L8829) | Tag-Kontext-Input anwenden | `applyPsTagContextValue` |
-| `confirmPsTagContextDelete` | [L8834](app.js#L8834) | Tag-Kontext-Löschen bestätigen | `closePsTagContextMenu`, `updateNotesForTagChange` |
-| `updatePsTagsActiveInfo` | [L8841](app.js#L8841) | Tags-Active-Info aktualisieren | — |
-| `renderPsTags` | [L8854](app.js#L8854) | PS-Tags rendern | `buildTagSections`, `loadPsTagSectionState`, `openPsTagContextMenu`, `refreshPersonalSpace`, `savePsTagPrefs`, `savePsTagSectionState`, `t`, `updatePsTagsActiveInfo` |
-| `togglePinnedForNote` | [L8967](app.js#L8967) | Pinned für Notiz umschalten | `api`, `applyPersonalSpaceFiltersAndRender`, `buildPsTagsPayload`, `normalizeCategoryValue`, `normalizeMonthTag`, `normalizeYearTag`, `refreshPersonalSpace`, `splitTagsForEditor`, `stripManualTagsMarker`, `stripPinnedTag`, `syncPsEditorTagsInput`, `t`, `toast`, `updatePsEditingTagsHint` |
+| `sortTagList` | [L10910](app.js#L10910) | Tag-Liste sortieren | `t` |
+| `buildTagSections` | [L10914](app.js#L10914) | Tag-Sektionen bauen | `isMonthTag`, `isYearTag`, `sortTagList`, `t` |
+| `loadPsTagSectionState` | [L10971](app.js#L10971) | Tag-Section-State laden | — |
+| `savePsTagSectionState` | [L10982](app.js#L10982) | Tag-Section-State speichern | — |
+| `normalizeSingleTag` | [L10993](app.js#L10993) | Einzelnen Tag normalisieren | `normalizeManualTags` |
+| `dedupeRawTags` | [L10998](app.js#L10998) | Roh-Tags entdoppeln | `t` |
+| `updateNotesForTagChange` | [L11012](app.js#L11012) | Notizen für Tag-Änderung updaten | `api`, `applyPersonalSpaceFiltersAndRender`, `dedupeRawTags`, `rebuildPsTagsFromNotes`, `t`, `toast` |
+| `resetPsTagContextDelete` | [L11082](app.js#L11082) | Tag-Kontext-Löschen zurücksetzen | `t` |
+| `setPsTagContextMenuOpen` | [L11091](app.js#L11091) | Tag-Kontext-Menü öffnen/schließen | — |
+| `positionPsTagContextMenu` | [L11097](app.js#L11097) | Tag-Kontext-Menü positionieren | `t` |
+| `closePsTagContextMenu` | [L11109](app.js#L11109) | Tag-Kontext-Menü schließen | `resetPsTagContextDelete`, `setPsTagContextMenuOpen` |
+| `openPsTagContextMenu` | [L11115](app.js#L11115) | Tag-Kontext-Menü öffnen | `closePsContextMenu`, `positionPsTagContextMenu`, `resetPsTagContextDelete`, `setPsTagContextMenuOpen`, `t` |
+| `applyPsTagContextValue` | [L11134](app.js#L11134) | Tag-Kontext-Wert anwenden | `closePsTagContextMenu`, `normalizeSingleTag`, `t`, `toast`, `updateNotesForTagChange` |
+| `applyPsTagContextInput` | [L11157](app.js#L11157) | Tag-Kontext-Input anwenden | `applyPsTagContextValue` |
+| `confirmPsTagContextDelete` | [L11162](app.js#L11162) | Tag-Kontext-Löschen bestätigen | `closePsTagContextMenu`, `updateNotesForTagChange` |
+| `updatePsTagsActiveInfo` | [L11169](app.js#L11169) | Tags-Active-Info aktualisieren | — |
+| `renderPsTags` | [L11182](app.js#L11182) | PS-Tags rendern | `buildTagSections`, `loadPsTagSectionState`, `openPsTagContextMenu`, `refreshPersonalSpace`, `savePsTagPrefs`, `savePsTagSectionState`, `t`, `updatePsTagsActiveInfo` |
+| `togglePinnedForNote` | [L11295](app.js#L11295) | Pinned für Notiz umschalten | `api`, `applyPersonalSpaceFiltersAndRender`, `buildPsTagsPayload`, `normalizeCategoryValue`, `normalizeMonthTag`, `normalizeYearTag`, `refreshPersonalSpace`, `splitTagsForEditor`, `stripManualTagsMarker`, `stripPinnedTag`, `syncPsEditorTagsInput`, `t`, `toast`, `updatePsEditingTagsHint` |
 
 ##### 18.8 PS Liste & Save
 
@@ -750,59 +750,59 @@ Server-Start
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `getPreviewRunCombinedText` | [L8582](app.js#L8582) | Run-Ausgabetext lesen | — |
-| `updateRunOutputUi` | [L8590](app.js#L8590) | Run-Output-UI aktualisieren | — |
-| `updateRunOutputSizing` | [L8632](app.js#L8632) | Run-Output-Größe anpassen | `t` |
-| `setPreviewRunOutput` | [L8683](app.js#L8683) | Run-Output setzen | `escapeHtml`, `getPreviewRunCombinedText`, `t`, `updateRunOutputSizing`, `updateRunOutputUi` |
+| `getPreviewRunCombinedText` | [L8987](app.js#L8987) | Run-Ausgabetext lesen | — |
+| `updateRunOutputUi` | [L8995](app.js#L8995) | Run-Output-UI aktualisieren | — |
+| `updateRunOutputSizing` | [L9045](app.js#L9045) | Run-Output-Größe anpassen | `t` |
+| `setPreviewRunOutput` | [L9096](app.js#L9096) | Run-Output setzen | `escapeHtml`, `getPreviewRunCombinedText`, `t`, `updateRunOutputSizing`, `updateRunOutputUi` |
 
 ##### 19.2 Code-Blöcke & Sprache
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `parseRunnableFromEditor` | [L8710](app.js#L8710) | Runnable aus Editor parsen | `t` |
-| `getSelectedCodeLang` | [L8741](app.js#L8741) | Selektierte Code-Sprache lesen | — |
-| `getFencedCodeOpenAtPos` | [L8750](app.js#L8750) | Fenced-Code-Block an Position | _viele interne Deps_ |
-| `setFencedCodeLanguage` | [L8783](app.js#L8783) | Fenced-Code-Sprache setzen | _viele interne Deps_ |
-| `updateCodeLangOverlay` | [L8816](app.js#L8816) | Code-Lang-Overlay aktualisieren | `getFencedCodeOpenAtPos`, `resetEditorMetaPadding`, `updateEditorMetaPadding`, `updateEditorMetaScroll` |
-| `insertCodeBlock` | [L8845](app.js#L8845) | Code-Block einfügen | `getSelectedCodeLang`, `nowIso`, `scheduleSend`, `updateCodeLangOverlay`, `updatePasswordMaskOverlay`, `updatePreview` |
+| `parseRunnableFromEditor` | [L9123](app.js#L9123) | Runnable aus Editor parsen | `t` |
+| `getSelectedCodeLang` | [L9154](app.js#L9154) | Selektierte Code-Sprache lesen | — |
+| `getFencedCodeOpenAtPos` | [L9163](app.js#L9163) | Fenced-Code-Block an Position | _viele interne Deps_ |
+| `setFencedCodeLanguage` | [L9196](app.js#L9196) | Fenced-Code-Sprache setzen | _viele interne Deps_ |
+| `updateCodeLangOverlay` | [L9229](app.js#L9229) | Code-Lang-Overlay aktualisieren | `getFencedCodeOpenAtPos`, `resetEditorMetaPadding`, `updateEditorMetaPadding`, `updateEditorMetaScroll` |
+| `insertCodeBlock` | [L9261](app.js#L9261) | Code-Block einfügen | `getSelectedCodeLang`, `nowIso`, `scheduleSend`, `updateCodeLangOverlay`, `updatePasswordMaskOverlay`, `updatePreview` |
 
 ##### 19.3 Markdown & HTML
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `ensureMarkdown` | [L8872](app.js#L8872) | Markdown-Lib laden | `escapeHtml`, `renderPasswordToken`, `t` |
-| `applyHljsToHtml` | [L8999](app.js#L8999) | Syntax-Highlighting anwenden | `t` |
-| `embedPdfLinks` | [L9019](app.js#L9019) | PDF-Links einbetten | `t` |
-| `buildNoteTitleIndex` | [L9085](app.js#L9085) | Notiz-Titel-Index bauen | `getNoteTitle`, `t` |
-| `applyWikiLinksToMarkdown` | [L9103](app.js#L9103) | Wiki-Links in Markdown | `buildNoteTitleIndex`, `t` |
-| `renderNoteHtml` | [L9117](app.js#L9117) | Notiz-HTML rendern | `ensureMarkdown`, `t`, `toast` |
-| `setFullPreview` | [L9155](app.js#L9155) | Vollbild-Preview setzen | `t`, `updateRunOutputSizing` |
-| `setPreviewVisible` | [L9173](app.js#L9173) | Preview sichtbar setzen | `ensureMarkdown`, `setFullPreview`, `syncMobileFocusState`, `t`, `toast`, `updatePreview`, `updateRunOutputSizing`, `updateRunOutputUi` |
+| `ensureMarkdown` | [L9288](app.js#L9288) | Markdown-Lib laden | `escapeHtml`, `renderPasswordToken`, `t` |
+| `applyHljsToHtml` | [L9415](app.js#L9415) | Syntax-Highlighting anwenden | `t` |
+| `embedPdfLinks` | [L9435](app.js#L9435) | PDF-Links einbetten | `t` |
+| `buildNoteTitleIndex` | [L9501](app.js#L9501) | Notiz-Titel-Index bauen | `getNoteTitle`, `t` |
+| `applyWikiLinksToMarkdown` | [L9519](app.js#L9519) | Wiki-Links in Markdown | `buildNoteTitleIndex`, `t` |
+| `renderNoteHtml` | [L9533](app.js#L9533) | Notiz-HTML rendern | `ensureMarkdown`, `t`, `toast` |
+| `setFullPreview` | [L9571](app.js#L9571) | Vollbild-Preview setzen | `t`, `updateRunOutputSizing` |
+| `setPreviewVisible` | [L9589](app.js#L9589) | Preview sichtbar setzen | `ensureMarkdown`, `setFullPreview`, `syncMobileFocusState`, `t`, `toast`, `updatePreview`, `updateRunOutputSizing`, `updateRunOutputUi` |
 | `updatePreview` | [L9667](app.js#L9667) | Preview aktualisieren (Haupt) | `allTaskCheckboxes`, `applyHljsToHtml`, `applyWikiLinksToMarkdown`, `buildNoteMetaYaml`, `buildToc`, `embedPdfLinks`, `ensureMarkdown`, `ensurePdfJsLoaded`, `escapeHtml`, `findCheckbox`, `findNoteById`, `getNoteHrefTarget`, `getPdfRenderId`, `indexOfCheckbox`, `initImageTools`, `initPdfEmbeds`, `renderPdfPage`, `send`, `setExpanded`, `setPasswordRevealed`, `setPreviewDocument`, `slugify`, `t`, `toElement`, `updatePdfNav`, `wrapImage` |
 
 ##### 19.4 Preview-Helfer
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `send` | [L9915](app.js#L9915) | Send-Helper | — |
-| `slugify` | [L9922](app.js#L9922) | Text → Slug | — |
-| `buildToc` | [L9930](app.js#L9930) | Inhaltsverzeichnis bauen | `setExpanded`, `slugify`, `t` |
-| `setExpanded` | [L9976](app.js#L9976) | Expanded-State setzen | — |
-| `getNoteHrefTarget` | [L10012](app.js#L10012) | Note-Href-Target lesen | — |
-| `toElement` | [L10018](app.js#L10018) | String → DOM-Element | — |
-| `findCheckbox` | [L10024](app.js#L10024) | Checkbox finden | `t`, `toElement` |
-| `allTaskCheckboxes` | [L10041](app.js#L10041) | Alle Task-Checkboxen | — |
-| `indexOfCheckbox` | [L10051](app.js#L10051) | Checkbox-Index | `allTaskCheckboxes` |
-| `setPasswordRevealed` | [L10080](app.js#L10080) | Passwort-Reveal setzen | — |
-| `wrapImage` | [L10112](app.js#L10112) | Bild wrappen | `t` |
-| `initImageTools` | [L10139](app.js#L10139) | Image-Tools initialisieren | `wrapImage` |
-| `getPdfRenderId` | [L10147](app.js#L10147) | PDF-Render-ID lesen | — |
-| `updatePdfNav` | [L10156](app.js#L10156) | PDF-Navigation aktualisieren | — |
-| `renderPdfPage` | [L10166](app.js#L10166) | PDF-Seite rendern | `getPdfRenderId`, `send` |
-| `initPdfEmbeds` | [L10176](app.js#L10176) | PDF-Embeds initialisieren | `renderPdfPage`, `t` |
+| `send` | [L10044](app.js#L10044) | Send-Helper | — |
+| `slugify` | [L10051](app.js#L10051) | Text → Slug | — |
+| `buildToc` | [L10059](app.js#L10059) | Inhaltsverzeichnis bauen | `setExpanded`, `slugify`, `t` |
+| `setExpanded` | [L10105](app.js#L10105) | Expanded-State setzen | — |
+| `getNoteHrefTarget` | [L10141](app.js#L10141) | Note-Href-Target lesen | — |
+| `toElement` | [L10147](app.js#L10147) | String → DOM-Element | — |
+| `findCheckbox` | [L10153](app.js#L10153) | Checkbox finden | `t`, `toElement` |
+| `allTaskCheckboxes` | [L10170](app.js#L10170) | Alle Task-Checkboxen | — |
+| `indexOfCheckbox` | [L10259](app.js#L10259) | Checkbox-Index | `allTaskCheckboxes` |
+| `setPasswordRevealed` | [L10291](app.js#L10291) | Passwort-Reveal setzen | — |
+| `wrapImage` | [L10323](app.js#L10323) | Bild wrappen | `t` |
+| `initImageTools` | [L10350](app.js#L10350) | Image-Tools initialisieren | `wrapImage` |
+| `getPdfRenderId` | [L10358](app.js#L10358) | PDF-Render-ID lesen | — |
+| `updatePdfNav` | [L10367](app.js#L10367) | PDF-Navigation aktualisieren | — |
+| `renderPdfPage` | [L10377](app.js#L10377) | PDF-Seite rendern | `getPdfRenderId`, `send` |
+| `initPdfEmbeds` | [L10387](app.js#L10387) | PDF-Embeds initialisieren | `renderPdfPage`, `t` |
 | `toggleMarkdownTaskAtIndex` | [L10465](app.js#L10465) | Markdown-Task umschalten | `getActiveRoomTabNoteId`, `schedulePsAutoSave`, `scheduleSend`, `t`, `updateLocalNoteText`, `updatePreview` |
-| `attachPreviewCheckboxWriteback` | [L10508](app.js#L10508) | Checkbox-Writeback anhängen | `findCheckbox`, `indexOfCheckbox`, `nowIso`, `t`, `toElement`, `toggleMarkdownTaskAtIndex` |
-| `setPreviewDocument` | [L10581](app.js#L10581) | Preview-Dokument setzen | `attachPreviewCheckboxWriteback`, `t` |
+| `attachPreviewCheckboxWriteback` | [L10664](app.js#L10664) | Checkbox-Writeback anhängen | `findCheckbox`, `indexOfCheckbox`, `nowIso`, `t`, `toElement`, `toggleMarkdownTaskAtIndex` |
+| `setPreviewDocument` | [L10755](app.js#L10755) | Preview-Dokument setzen | `attachPreviewCheckboxWriteback`, `t` |
 | `applyTaskClosedTimestampsToHtml` | [L10878](app.js#L10878) | Task-Closed-Timestamps anwenden | — |
 
 #### 20 · Code-Runner `#runner`
@@ -823,22 +823,18 @@ Server-Start
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `refreshPersonalSpace` | [L12684](app.js#L12684) | Personal Space neu laden | `api`, `applyPersonalSpaceFiltersAndRender`, `clearPsSelection`, `dedupeFavorites`, `ensureNoteUpdatedAt`, `maybeStartMobileAutoNoteSession`, `renderRoomTabs`, `setPsAutoSaveStatus`, `setPsEditorTagsVisible`, `syncCalendarSettingsFromServer`, `syncLocalRoomTabsToServer`, `syncPsEditingNoteTagsFromState`, `syncPsEditorTagsInput`, `t`, `updateEditorMetaYaml`, `updateFavoritesUI`, `updatePsNoteNavButtons`, `updatePsPinnedToggle` |
-| `downloadJson` | [L12750](app.js#L12750) | JSON herunterladen | `t`, `toast` |
-| `ymd` | [L12767](app.js#L12767) | Datum → YYYY-MM-DD | `t` |
-| `fetchPersonalSpaceExport` | [L12779](app.js#L12779) | PS-Export abrufen | `api` |
-| `exportPersonalSpaceNotes` | [L12787](app.js#L12787) | PS-Notizen exportieren | `downloadJson`, `fetchPersonalSpaceExport`, `t`, `toast`, `ymd` |
-| `importPersonalSpaceNotes` | [L12806](app.js#L12806) | PS-Notizen importieren | `api`, `refreshPersonalSpace`, `t`, `toast` |
-| `chunkTextIntoNotes` | [L12833](app.js#L12833) | Text in Notizen aufteilen | `chunkBigText`, `splitByHeadings`, `splitByHr`, `splitOffFrontMatter`, `t` |
-| `splitOffFrontMatter` | [L12845](app.js#L12845) | Frontmatter abtrennen | `t` |
-| `splitByHr` | [L12864](app.js#L12864) | Am HR aufteilen | `t` |
-| `splitByHeadings` | [L12890](app.js#L12890) | An Überschriften aufteilen | `t` |
-| `chunkBigText` | [L12910](app.js#L12910) | Großen Text chunken | — |
-| `importPersonalSpaceNotesFromText` | [L12957](app.js#L12957) | PS-Notizen aus Text importieren | `importPersonalSpaceNotes`, `t`, `toast` |
-| `importPersonalSpaceFile` | [L12979](app.js#L12979) | PS-Datei importieren | `chunkTextIntoNotes`, `importPersonalSpaceNotes`, `importPersonalSpaceNotesFromText`, `t`, `toast` |
-| `startNotesImport` | [L13006](app.js#L13006) | Notiz-Import starten | `t`, `toast` |
-| `requestPersonalSpaceLink` | [L13023](app.js#L13023) | PS-Link anfordern | `api`, `modalPrompt`, `t`, `toast` |
-| `randomRoom` | [L13069](app.js#L13069) | Zufälligen Raum erzeugen | `normalizeRoom`, `t` |
+| `refreshPersonalSpace` | [L12671](app.js#L12671) | Personal Space neu laden | `api`, `applyPersonalSpaceFiltersAndRender`, `clearPsSelection`, `dedupeFavorites`, `ensureNoteUpdatedAt`, `maybeStartMobileAutoNoteSession`, `renderRoomTabs`, `setPsAutoSaveStatus`, `setPsEditorTagsVisible`, `syncCalendarSettingsFromServer`, `syncLocalRoomTabsToServer`, `syncPsEditingNoteTagsFromState`, `syncPsEditorTagsInput`, `t`, `updateEditorMetaYaml`, `updateFavoritesUI`, `updatePsNoteNavButtons`, `updatePsPinnedToggle` |
+| `downloadJson` | [L12766](app.js#L12766) | JSON herunterladen | `t`, `toast` |
+| `ymd` | [L12783](app.js#L12783) | Datum → YYYY-MM-DD | `t` |
+| `fetchPersonalSpaceExport` | [L12795](app.js#L12795) | PS-Export abrufen | `api` |
+| `exportPersonalSpaceNotes` | [L12803](app.js#L12803) | PS-Notizen exportieren | `downloadJson`, `fetchPersonalSpaceExport`, `t`, `toast`, `ymd` |
+| `importPersonalSpaceNotes` | [L12822](app.js#L12822) | PS-Notizen importieren | `api`, `refreshPersonalSpace`, `t`, `toast` |
+| `chunkTextIntoNotes` | [L12849](app.js#L12849) | Text in Notizen aufteilen | — |
+| `importPersonalSpaceNotesFromText` | [L12862](app.js#L12862) | PS-Notizen aus Text importieren | `importPersonalSpaceNotes`, `t`, `toast` |
+| `importPersonalSpaceFile` | [L12884](app.js#L12884) | PS-Datei importieren | `chunkTextIntoNotes`, `importPersonalSpaceNotes`, `importPersonalSpaceNotesFromText`, `t`, `toast` |
+| `startNotesImport` | [L12911](app.js#L12911) | Notiz-Import starten | `t`, `toast` |
+| `requestPersonalSpaceLink` | [L12928](app.js#L12928) | PS-Link anfordern | `api`, `modalPrompt`, `t`, `toast` |
+| `randomRoom` | [L12974](app.js#L12974) | Zufälligen Raum erzeugen | `normalizeRoom`, `t` |
 
 #### 22 · Favoriten `#favorites`
 
@@ -929,94 +925,94 @@ Server-Start
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `normalizeCalendarSource` | [L10969](app.js#L10969) | Kalender-Quelle normalisieren | `createClientId` |
-| `loadCalendarSources` | [L10979](app.js#L10979) | Quellen laden | — |
-| `saveCalendarSources` | [L10990](app.js#L10990) | Quellen speichern | `scheduleCalendarSettingsSync` |
-| `loadCalendarDefaultView` | [L11004](app.js#L11004) | Standard-Ansicht laden | — |
-| `saveCalendarDefaultView` | [L11013](app.js#L11013) | Standard-Ansicht speichern | `renderCalendarPanel`, `scheduleCalendarSettingsSync`, `updateCalendarViewButtons` |
-| `getLocalCalendarSettings` | [L11030](app.js#L11030) | Lokale Kalender-Einstellungen lesen | `loadCalendarDefaultView`, `loadCalendarGoogleId`, `loadCalendarSources`, `loadLocalCalendarEventsRaw` |
-| `applyCalendarSettings` | [L11039](app.js#L11039) | Kalender-Einstellungen anwenden | `renderCalendarPanel`, `renderCalendarSettings`, `saveCalendarDefaultView`, `saveCalendarGoogleId`, `saveCalendarSources`, `saveLocalCalendarEvents`, `scheduleCalendarRefresh` |
-| `syncCalendarSettingsToServer` | [L11072](app.js#L11072) | Settings → Server synchen | `api` |
-| `scheduleCalendarSettingsSync` | [L11087](app.js#L11087) | Settings-Sync debounce | `getLocalCalendarSettings`, `syncCalendarSettingsToServer`, `t` |
-| `syncCalendarSettingsFromServer` | [L11115](app.js#L11115) | Settings ← Server synchen | `applyCalendarSettings`, `getLocalCalendarSettings`, `scheduleCalendarSettingsSync` |
-| `renderCalendarSettings` | [L11139](app.js#L11139) | Settings-UI rendern | `escapeAttr`, `loadCalendarDefaultView`, `loadCalendarSources`, `renderCalendarGoogleSelect`, `renderCalendarLocalEvents`, `t` |
+| `normalizeCalendarSource` | [L14814](app.js#L14814) | Kalender-Quelle normalisieren | `createClientId` |
+| `loadCalendarSources` | [L14824](app.js#L14824) | Quellen laden | — |
+| `saveCalendarSources` | [L14835](app.js#L14835) | Quellen speichern | `scheduleCalendarSettingsSync` |
+| `loadCalendarDefaultView` | [L14849](app.js#L14849) | Standard-Ansicht laden | — |
+| `saveCalendarDefaultView` | [L14858](app.js#L14858) | Standard-Ansicht speichern | `renderCalendarPanel`, `scheduleCalendarSettingsSync`, `updateCalendarViewButtons` |
+| `getLocalCalendarSettings` | [L14875](app.js#L14875) | Lokale Kalender-Einstellungen lesen | `loadCalendarDefaultView`, `loadCalendarGoogleId`, `loadCalendarSources`, `loadLocalCalendarEventsRaw` |
+| `applyCalendarSettings` | [L14885](app.js#L14885) | Kalender-Einstellungen anwenden | `renderCalendarPanel`, `renderCalendarSettings`, `saveCalendarDefaultView`, `saveCalendarGoogleId`, `saveCalendarSources`, `saveLocalCalendarEvents`, `scheduleCalendarRefresh` |
+| `syncCalendarSettingsToServer` | [L14937](app.js#L14937) | Settings → Server synchen | `api` |
+| `scheduleCalendarSettingsSync` | [L14952](app.js#L14952) | Settings-Sync debounce | `getLocalCalendarSettings`, `syncCalendarSettingsToServer`, `t` |
+| `syncCalendarSettingsFromServer` | [L14980](app.js#L14980) | Settings ← Server synchen | `applyCalendarSettings`, `getLocalCalendarSettings`, `scheduleCalendarSettingsSync` |
+| `renderCalendarSettings` | [L15004](app.js#L15004) | Settings-UI rendern | `escapeAttr`, `loadCalendarDefaultView`, `loadCalendarSources`, `renderCalendarGoogleSelect`, `renderCalendarLocalEvents`, `t` |
 
 ##### 26.2 Google Calendar
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `renderCalendarGoogleSelect` | [L11201](app.js#L11201) | Google-Kalender-Auswahl rendern | `escapeAttr`, `escapeHtml`, `loadCalendarGoogleId` |
-| `setGoogleCalendarUi` | [L11276](app.js#L11276) | Google-UI setzen | `renderCalendarGoogleSelect`, `t` |
-| `fetchGoogleCalendarList` | [L11303](app.js#L11303) | Google-Kalender-Liste abrufen | `api`, `renderCalendarGoogleSelect`, `t` |
-| `fetchGoogleCalendarStatus` | [L11317](app.js#L11317) | Google-Status prüfen | `api`, `fetchGoogleCalendarList`, `saveCalendarGoogleId`, `setGoogleCalendarUi`, `t` |
-| `createGoogleCalendarEvent` | [L11353](app.js#L11353) | Google-Event erstellen | `api`, `formatDateInputValue`, `t` |
-| `deleteGoogleCalendarEvent` | [L11373](app.js#L11373) | Google-Event löschen | `api`, `t` |
-| `loadCalendarGoogleId` | [L11621](app.js#L11621) | Google-ID laden | — |
-| `saveCalendarGoogleId` | [L11632](app.js#L11632) | Google-ID speichern | `renderCalendarSettings`, `scheduleCalendarSettingsSync` |
-| `fetchGoogleCalendarEvents` | [L11798](app.js#L11798) | Google-Events abrufen | `api`, `parseGoogleDate`, `t` |
+| `renderCalendarGoogleSelect` | [L15067](app.js#L15067) | Google-Kalender-Auswahl rendern | `escapeAttr`, `escapeHtml`, `loadCalendarGoogleId` |
+| `setGoogleCalendarUi` | [L15190](app.js#L15190) | Google-UI setzen | `renderCalendarGoogleSelect`, `t` |
+| `fetchGoogleCalendarList` | [L15238](app.js#L15238) | Google-Kalender-Liste abrufen | `api`, `renderCalendarGoogleSelect`, `t` |
+| `fetchGoogleCalendarStatus` | [L15266](app.js#L15266) | Google-Status prüfen | `api`, `fetchGoogleCalendarList`, `saveCalendarGoogleId`, `setGoogleCalendarUi`, `t` |
+| `createGoogleCalendarEvent` | [L15338](app.js#L15338) | Google-Event erstellen | `api`, `formatDateInputValue`, `t` |
+| `deleteGoogleCalendarEvent` | [L15378](app.js#L15378) | Google-Event löschen | `api`, `t` |
+| `loadCalendarGoogleId` | [L15642](app.js#L15642) | Google-ID laden | — |
+| `saveCalendarGoogleId` | [L15653](app.js#L15653) | Google-ID speichern | `renderCalendarSettings`, `scheduleCalendarSettingsSync` |
+| `fetchGoogleCalendarEvents` | [L15882](app.js#L15882) | Google-Events abrufen | `api`, `parseGoogleDate`, `t` |
 
 ##### 26.3 Panel & Darstellung
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `setCalendarPanelActive` | [L11384](app.js#L11384) | Panel aktivieren | `applyCalendarFreeSlotsVisibility`, `fetchGoogleCalendarStatus`, `loadCalendarDefaultView`, `refreshCalendarEvents`, `renderCalendarPanel`, `renderRoomTabs`, `updateCalendarViewButtons` |
-| `setCalendarSidebarCollapsed` | [L11403](app.js#L11403) | Sidebar ein-/ausklappen | — |
-| `startOfDay` | [L11430](app.js#L11430) | Tagesanfang berechnen | — |
-| `addDays` | [L11434](app.js#L11434) | Tage addieren | — |
-| `startOfWeek` | [L11440](app.js#L11440) | Wochenanfang berechnen | `startOfDay` |
-| `startOfMonth` | [L11447](app.js#L11447) | Monatsanfang berechnen | — |
-| `formatTime` | [L11451](app.js#L11451) | Zeit formatieren | `getUiLocale` |
-| `formatDayLabel` | [L11458](app.js#L11458) | Tageslabel formatieren | `getUiLocale` |
-| `formatCalendarTitle` | [L11466](app.js#L11466) | Kalender-Titel formatieren | `addDays`, `getUiLocale`, `startOfWeek` |
-| `getIsoWeekNumber` | [L11494](app.js#L11494) | ISO-Wochennummer berechnen | — |
-| `updateCalendarViewButtons` | [L11897](app.js#L11897) | View-Buttons aktualisieren | — |
-| `getCalendarEvents` | [L11908](app.js#L11908) | Events lesen | — |
-| `renderCalendarLegend` | [L11924](app.js#L11924) | Legende rendern | `escapeAttr`, `escapeHtml`, `loadCalendarSources` |
-| `moveCalendarCursor` | [L11982](app.js#L11982) | Cursor bewegen | `renderCalendarPanel` |
-| `renderCalendarPanel` | [L12120](app.js#L12120) | Panel rendern | `addDays`, `escapeAttr`, `escapeHtml`, `formatCalendarTitle`, `formatDayLabel`, `formatTime`, `getCalendarEvents`, `getIsoWeekNumber`, `loadCalendarSources`, `renderCalendarFreeSlots`, `renderCalendarLegend`, `startOfDay`, `startOfMonth`, `startOfWeek`, `t` |
+| `setCalendarPanelActive` | [L15400](app.js#L15400) | Panel aktivieren | `applyCalendarFreeSlotsVisibility`, `fetchGoogleCalendarStatus`, `loadCalendarDefaultView`, `refreshCalendarEvents`, `renderCalendarPanel`, `renderRoomTabs`, `updateCalendarViewButtons` |
+| `setCalendarSidebarCollapsed` | [L15420](app.js#L15420) | Sidebar ein-/ausklappen | — |
+| `startOfDay` | [L15447](app.js#L15447) | Tagesanfang berechnen | — |
+| `addDays` | [L15451](app.js#L15451) | Tage addieren | — |
+| `startOfWeek` | [L15457](app.js#L15457) | Wochenanfang berechnen | `startOfDay` |
+| `startOfMonth` | [L15464](app.js#L15464) | Monatsanfang berechnen | — |
+| `formatTime` | [L15468](app.js#L15468) | Zeit formatieren | `getUiLocale` |
+| `formatDayLabel` | [L15472](app.js#L15472) | Tageslabel formatieren | `getUiLocale` |
+| `formatCalendarTitle` | [L15481](app.js#L15481) | Kalender-Titel formatieren | `addDays`, `getUiLocale`, `startOfWeek` |
+| `getIsoWeekNumber` | [L15504](app.js#L15504) | ISO-Wochennummer berechnen | — |
+| `updateCalendarViewButtons` | [L16025](app.js#L16025) | View-Buttons aktualisieren | — |
+| `getCalendarEvents` | [L16036](app.js#L16036) | Events lesen | — |
+| `renderCalendarLegend` | [L16052](app.js#L16052) | Legende rendern | `escapeAttr`, `escapeHtml`, `loadCalendarSources` |
+| `moveCalendarCursor` | [L16125](app.js#L16125) | Cursor bewegen | `renderCalendarPanel` |
+| `renderCalendarPanel` | [L16263](app.js#L16263) | Panel rendern | `addDays`, `escapeAttr`, `escapeHtml`, `formatCalendarTitle`, `formatDayLabel`, `formatTime`, `getCalendarEvents`, `getIsoWeekNumber`, `loadCalendarSources`, `renderCalendarFreeSlots`, `renderCalendarLegend`, `startOfDay`, `startOfMonth`, `startOfWeek`, `t` |
 
 ##### 26.4 Lokale Events & ICS
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `renderCalendarLocalEvents` | [L11227](app.js#L11227) | Lokale Events rendern | `escapeAttr`, `escapeHtml`, `formatTime`, `getUiLocale`, `t` |
-| `loadCalendarFreeSlotsVisible` | [L11502](app.js#L11502) | Free-Slots-Sichtbarkeit laden | — |
-| `saveCalendarFreeSlotsVisible` | [L11511](app.js#L11511) | Free-Slots-Sichtbarkeit speichern | `applyCalendarFreeSlotsVisibility` |
-| `applyCalendarFreeSlotsVisibility` | [L11524](app.js#L11524) | Free-Slots-Sichtbarkeit anwenden | — |
-| `parseLocalEventDate` | [L11551](app.js#L11551) | Lokales Event-Datum parsen | — |
-| `normalizeLocalCalendarEvent` | [L11558](app.js#L11558) | Lokales Event normalisieren | `createClientId`, `parseLocalEventDate` |
-| `serializeLocalCalendarEvent` | [L11571](app.js#L11571) | Lokales Event serialisieren | — |
-| `loadLocalCalendarEventsRaw` | [L11583](app.js#L11583) | Rohe lokale Events laden | — |
-| `loadLocalCalendarEvents` | [L11593](app.js#L11593) | Lokale Events laden | `loadLocalCalendarEventsRaw` |
-| `saveLocalCalendarEvents` | [L11599](app.js#L11599) | Lokale Events speichern | `renderCalendarPanel`, `renderCalendarSettings`, `scheduleCalendarSettingsSync` |
-| `parseIcsDate` | [L11651](app.js#L11651) | ICS-Datum parsen | `t` |
-| `parseGoogleDate` | [L11674](app.js#L11674) | Google-Datum parsen | `t` |
-| `unfoldIcsLines` | [L11686](app.js#L11686) | ICS-Zeilen entfalten | `t` |
-| `parseIcsEvents` | [L11703](app.js#L11703) | ICS-Events parsen | `addDays`, `createClientId`, `parseIcsDate`, `t`, `unfoldIcsLines` |
-| `mergeCalendarEvents` | [L11766](app.js#L11766) | Events zusammenführen | — |
-| `getCalendarRange` | [L11784](app.js#L11784) | Kalender-Range berechnen | `addDays`, `startOfDay`, `startOfMonth`, `startOfWeek` |
+| `renderCalendarLocalEvents` | [L15116](app.js#L15116) | Lokale Events rendern | `escapeAttr`, `escapeHtml`, `formatTime`, `getUiLocale`, `t` |
+| `loadCalendarFreeSlotsVisible` | [L15512](app.js#L15512) | Free-Slots-Sichtbarkeit laden | — |
+| `saveCalendarFreeSlotsVisible` | [L15521](app.js#L15521) | Free-Slots-Sichtbarkeit speichern | `applyCalendarFreeSlotsVisibility` |
+| `applyCalendarFreeSlotsVisibility` | [L15534](app.js#L15534) | Free-Slots-Sichtbarkeit anwenden | — |
+| `parseLocalEventDate` | [L15561](app.js#L15561) | Lokales Event-Datum parsen | — |
+| `normalizeLocalCalendarEvent` | [L15568](app.js#L15568) | Lokales Event normalisieren | `createClientId`, `parseLocalEventDate` |
+| `serializeLocalCalendarEvent` | [L15591](app.js#L15591) | Lokales Event serialisieren | — |
+| `loadLocalCalendarEventsRaw` | [L15604](app.js#L15604) | Rohe lokale Events laden | — |
+| `loadLocalCalendarEvents` | [L15614](app.js#L15614) | Lokale Events laden | `loadLocalCalendarEventsRaw` |
+| `saveLocalCalendarEvents` | [L15620](app.js#L15620) | Lokale Events speichern | `renderCalendarPanel`, `renderCalendarSettings`, `scheduleCalendarSettingsSync` |
+| `parseIcsDate` | [L15722](app.js#L15722) | ICS-Datum parsen | `t` |
+| `parseGoogleDate` | [L15745](app.js#L15745) | Google-Datum parsen | `t` |
+| `unfoldIcsLines` | [L15770](app.js#L15770) | ICS-Zeilen entfalten | `t` |
+| `parseIcsEvents` | [L15787](app.js#L15787) | ICS-Events parsen | `addDays`, `createClientId`, `parseIcsDate`, `t`, `unfoldIcsLines` |
+| `mergeCalendarEvents` | [L15850](app.js#L15850) | Events zusammenführen | — |
+| `getCalendarRange` | [L15868](app.js#L15868) | Kalender-Range berechnen | `addDays`, `startOfDay`, `startOfMonth`, `startOfWeek` |
 
 ##### 26.5 Rendering & Free-Slots
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `refreshCalendarEvents` | [L11833](app.js#L11833) | Events aktualisieren | `fetchGoogleCalendarEvents`, `getCalendarRange`, `loadCalendarSources`, `mergeCalendarEvents`, `parseIcsEvents`, `renderCalendarPanel`, `t` |
-| `scheduleCalendarRefresh` | [L11889](app.js#L11889) | Refresh debounce | `refreshCalendarEvents`, `t` |
-| `buildWorkWindow` | [L11999](app.js#L11999) | Arbeitszeitfenster bauen | — |
-| `mergeIntervals` | [L12019](app.js#L12019) | Intervalle zusammenführen | `t` |
-| `computeFreeSlotsForDay` | [L12037](app.js#L12037) | Freie Slots pro Tag berechnen | `addDays`, `buildWorkWindow`, `mergeIntervals`, `startOfDay` |
-| `renderCalendarFreeSlots` | [L12071](app.js#L12071) | Free-Slots rendern | `addDays`, `computeFreeSlotsForDay`, `formatDayLabel`, `formatTime`, `startOfWeek` |
+| `refreshCalendarEvents` | [L15952](app.js#L15952) | Events aktualisieren | `fetchGoogleCalendarEvents`, `getCalendarRange`, `loadCalendarSources`, `mergeCalendarEvents`, `parseIcsEvents`, `renderCalendarPanel`, `t` |
+| `scheduleCalendarRefresh` | [L16017](app.js#L16017) | Refresh debounce | `refreshCalendarEvents`, `t` |
+| `buildWorkWindow` | [L16142](app.js#L16142) | Arbeitszeitfenster bauen | — |
+| `mergeIntervals` | [L16162](app.js#L16162) | Intervalle zusammenführen | `t` |
+| `computeFreeSlotsForDay` | [L16180](app.js#L16180) | Freie Slots pro Tag berechnen | `addDays`, `buildWorkWindow`, `mergeIntervals`, `startOfDay` |
+| `renderCalendarFreeSlots` | [L16214](app.js#L16214) | Free-Slots rendern | `addDays`, `computeFreeSlotsForDay`, `formatDayLabel`, `formatTime`, `startOfWeek` |
 
 ##### 26.6 Event-Modal
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `formatDateInputValue` | [L12303](app.js#L12303) | Datumswert formatieren | `t` |
-| `openCalendarEventModal` | [L12308](app.js#L12308) | Event-Modal öffnen | `formatDateInputValue`, `t`, `updateCalendarEventTimeState` |
-| `closeCalendarEventModal` | [L12332](app.js#L12332) | Event-Modal schließen | — |
-| `updateCalendarEventTimeState` | [L12339](app.js#L12339) | Zeitstatus aktualisieren | — |
-| `buildLocalEventFromModal` | [L12345](app.js#L12345) | Lokales Event aus Modal bauen | `addDays`, `createClientId`, `t`, `toast` |
-| `addLocalCalendarEvent` | [L12398](app.js#L12398) | Lokales Event hinzufügen | `saveLocalCalendarEvents`, `t`, `toast` |
+| `formatDateInputValue` | [L16446](app.js#L16446) | Datumswert formatieren | `t` |
+| `openCalendarEventModal` | [L16451](app.js#L16451) | Event-Modal öffnen | `formatDateInputValue`, `t`, `updateCalendarEventTimeState` |
+| `closeCalendarEventModal` | [L16475](app.js#L16475) | Event-Modal schließen | — |
+| `updateCalendarEventTimeState` | [L16482](app.js#L16482) | Zeitstatus aktualisieren | — |
+| `buildLocalEventFromModal` | [L16488](app.js#L16488) | Lokales Event aus Modal bauen | `addDays`, `createClientId`, `t`, `toast` |
+| `addLocalCalendarEvent` | [L16542](app.js#L16542) | Lokales Event hinzufügen | `saveLocalCalendarEvents`, `t`, `toast` |
 #### 27 · Status, Recent Rooms & Share-UI `#status`
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
@@ -1057,10 +1053,10 @@ Server-Start
 | `sendMessage` | [L16935](app.js#L16935) | WS-Nachricht senden | `send` |
 | `sendCrdtUpdate` | [L16940](app.js#L16940) | CRDT-Update senden | `encryptForRoom`, `isE2eeActive`, `sendMessage` |
 | `sendCrdtSnapshot` | [L16963](app.js#L16963) | CRDT-Snapshot senden | `encryptForRoom`, `isE2eeActive`, `sendMessage` |
-| `buildSetMessage` | [L17384](app.js#L17384) | Set-Nachricht bauen | `encryptForRoom` |
-| `sendCurrentState` | [L17400](app.js#L17400) | Aktuellen State senden | `buildSetMessage`, `sendMessage` |
-| `scheduleSend` | [L17412](app.js#L17412) | Send debounce | `buildSetMessage`, `isCrdtEnabled`, `nowIso`, `sendMessage`, `t` |
-| `applyRemoteText` | [L17433](app.js#L17433) | Remote-Text anwenden | `applySyncedText`, `t` |
+| `buildSetMessage` | [L17531](app.js#L17531) | Set-Nachricht bauen | `encryptForRoom` |
+| `sendCurrentState` | [L17547](app.js#L17547) | Aktuellen State senden | `buildSetMessage`, `sendMessage` |
+| `scheduleSend` | [L17559](app.js#L17559) | Send debounce | `buildSetMessage`, `isCrdtEnabled`, `nowIso`, `sendMessage`, `t` |
+| `applyRemoteText` | [L17581](app.js#L17581) | Remote-Text anwenden | `applySyncedText`, `t` |
 
 ##### 28.3 CRDT-Core
 
@@ -1068,29 +1064,29 @@ Server-Start
 |----------|-------|-------|----------------|
 | `applySyncedText` | [L17357](app.js#L17357) | Synced-Text anwenden | `getActiveRoomTabNoteId`, `nowIso`, `resolveRoomTabSnapshotText`, `sanitizeLegacySnapshotText`, `scheduleRoomTabSync`, `t`, `updatePasswordMaskOverlay`, `updatePreview`, `updateRoomTabTextLocal` |
 | `initCrdt` | [L17388](app.js#L17388) | CRDT initialisieren | `applyPendingCrdtBootstrap`, `applySyncedText`, `base64EncodeBytes`, `isCrdtAvailable`, `scheduleCrdtSnapshot`, `sendCrdtUpdate`, `t`, `updateAttributionOverlay` |
-| `destroyCrdt` | [L17421](app.js#L17421) | CRDT zerstören | `t`, `updateAttributionOverlay` |
-| `applyCrdtUpdate` | [L17442](app.js#L17442) | CRDT-Update anwenden | `base64DecodeBytes`, `updateAttributionOverlay` |
-| `setCrdtText` | [L17457](app.js#L17457) | CRDT-Text setzen | `applySyncedText`, `sanitizeLegacySnapshotText`, `scheduleCrdtSnapshot`, `t`, `updateAttributionOverlay` |
+| `destroyCrdt` | [L17419](app.js#L17419) | CRDT zerstören | `t`, `updateAttributionOverlay` |
+| `applyCrdtUpdate` | [L17440](app.js#L17440) | CRDT-Update anwenden | `base64DecodeBytes`, `updateAttributionOverlay` |
+| `setCrdtText` | [L17455](app.js#L17455) | CRDT-Text setzen | `applySyncedText`, `sanitizeLegacySnapshotText`, `scheduleCrdtSnapshot`, `t`, `updateAttributionOverlay` |
 | `updateCrdtFromTextarea` | [L17477](app.js#L17477) | CRDT ← Textarea | `t`, `updateAttributionOverlay` |
 | `scheduleCrdtSnapshot` | [L17517](app.js#L17517) | Snapshot debounce | `base64EncodeBytes`, `sendCrdtSnapshot`, `t` |
-| `applyPendingCrdtBootstrap` | [L17329](app.js#L17329) | Pending Bootstrap anwenden | `applyCrdtUpdate`, `setCrdtText`, `t` |
+| `applyPendingCrdtBootstrap` | [L17318](app.js#L17318) | Pending Bootstrap anwenden | `applyCrdtUpdate`, `setCrdtText`, `t` |
 | `connect` | [L17593](app.js#L17593) | WS verbinden | `announceClientId`, `applyCrdtUpdate`, `applyPresenceUpdate`, `applyRemoteText`, `createClientId`, `decryptForRoom`, `destroyCrdt`, `ensureYjsLoaded`, `initCrdt`, `isCrdtAvailable`, `isCrdtEnabled`, `safeJsonParse`, `scheduleCrdtSnapshot`, `sendCurrentState`, `sendMessage`, `setCrdtText`, `setStatus`, `t`, `toast`, `updatePresenceUI`, `upsertPresence`, `wsDisplay`, `wsUrlForRoom` |
 #### 29 · Presence `#presence`
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
 | `updatePresenceUI` | [L16999](app.js#L16999) | Presence-UI aktualisieren | `formatUi`, `t`, `updateAttributionOverlay` |
-| `upsertPresence` | [L17061](app.js#L17061) | Presence einfügen/aktualisieren | `t`, `updatePresenceUI` |
-| `applyPresenceUpdate` | [L17067](app.js#L17067) | Presence-Update anwenden | `t`, `updatePresenceUI` |
-| `getAuthorMeta` | [L17075](app.js#L17075) | Autor-Meta lesen | `t` |
-| `parseHexColor` | [L17082](app.js#L17082) | Hex-Farbe parsen | `t` |
-| `colorToRgba` | [L17103](app.js#L17103) | Farbe → RGBA | `parseHexColor` |
-| `syncAttributionOverlayScroll` | [L17109](app.js#L17109) | Attribution-Overlay-Scroll synchen | — |
-| `buildAttributionHtml` | [L17116](app.js#L17116) | Attribution-HTML bauen | `colorToRgba`, `escapeHtml`, `getAuthorMeta` |
-| `updateAttributionOverlay` | [L17138](app.js#L17138) | Attribution-Overlay aktualisieren | `buildAttributionHtml`, `syncAttributionOverlayScroll` |
-| `setTyping` | [L17195](app.js#L17195) | Typing-Status setzen | `applyPresenceUpdate`, `sendMessage` |
-| `scheduleTypingStop` | [L17203](app.js#L17203) | Typing-Stop debounce | `setTyping`, `t` |
-| `scheduleSelectionSend` | [L17208](app.js#L17208) | Selection-Send debounce | `applyPresenceUpdate`, `sendMessage`, `t` |
+| `upsertPresence` | [L17106](app.js#L17106) | Presence einfügen/aktualisieren | `t`, `updatePresenceUI` |
+| `applyPresenceUpdate` | [L17112](app.js#L17112) | Presence-Update anwenden | `t`, `updatePresenceUI` |
+| `getAuthorMeta` | [L17120](app.js#L17120) | Autor-Meta lesen | `t` |
+| `parseHexColor` | [L17127](app.js#L17127) | Hex-Farbe parsen | `t` |
+| `colorToRgba` | [L17148](app.js#L17148) | Farbe → RGBA | `parseHexColor` |
+| `syncAttributionOverlayScroll` | [L17170](app.js#L17170) | Attribution-Overlay-Scroll synchen | — |
+| `buildAttributionHtml` | [L17184](app.js#L17184) | Attribution-HTML bauen | `colorToRgba`, `escapeHtml`, `getAuthorMeta` |
+| `updateAttributionOverlay` | [L17211](app.js#L17211) | Attribution-Overlay aktualisieren | `buildAttributionHtml`, `syncAttributionOverlayScroll` |
+| `setTyping` | [L17331](app.js#L17331) | Typing-Status setzen | `applyPresenceUpdate`, `sendMessage` |
+| `scheduleTypingStop` | [L17339](app.js#L17339) | Typing-Stop debounce | `setTyping`, `t` |
+| `scheduleSelectionSend` | [L17344](app.js#L17344) | Selection-Send debounce | `applyPresenceUpdate`, `sendMessage`, `t` |
 
 #### 30 · Navigation `#nav`
 
@@ -1131,124 +1127,124 @@ Server-Start
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `getClientIp` | [L105](server.js#L105) | Client-IP lesen | — |
-| `checkAiRateLimit` | [L113](server.js#L113) | AI-Rate-Limit prüfen | — |
-| `ensureDbDir` | [L128](server.js#L128) | DB-Verzeichnis sicherstellen | — |
-| `initDb` | [L136](server.js#L136) | DB initialisieren | `ensureDbDir` |
-| `loadPersistedRoomState` | [L383](server.js#L383) | Room-State laden | `initDb` |
-| `persistRoomState` | [L397](server.js#L397) | Room-State persistieren | `initDb` |
-| `getSigningSecret` | [L416](server.js#L416) | Signing-Secret lesen | `initDb` |
+| `getClientIp` | [L140](server.js#L140) | Client-IP lesen | — |
+| `checkAiRateLimit` | [L148](server.js#L148) | AI-Rate-Limit prüfen | — |
+| `ensureDbDir` | [L163](server.js#L163) | DB-Verzeichnis sicherstellen | — |
+| `initDb` | [L171](server.js#L171) | DB initialisieren | `ensureDbDir` |
+| `loadPersistedRoomState` | [L608](server.js#L608) | Room-State laden | `initDb` |
+| `persistRoomState` | [L633](server.js#L633) | Room-State persistieren | `initDb` |
+| `getSigningSecret` | [L652](server.js#L652) | Signing-Secret lesen | `initDb` |
 
 #### S2 · HTTP-Helfer `#http`
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `mimeTypeForPath` | [L429](server.js#L429) | MIME-Type ermitteln | — |
-| `safeJsonParse` | [L443](server.js#L443) | JSON sicher parsen | — |
-| `json` | [L451](server.js#L451) | JSON-Response senden | — |
-| `text` | [L460](server.js#L460) | Text-Response senden | — |
-| `redirect` | [L468](server.js#L468) | Redirect senden | — |
-| `readBody` | [L547](server.js#L547) | Body lesen | — |
-| `readBodyWithLimit` | [L566](server.js#L566) | Body mit Limit lesen | — |
-| `readJson` | [L586](server.js#L586) | JSON-Body lesen | `readBody`, `safeJsonParse` |
-| `readJsonWithLimit` | [L592](server.js#L592) | JSON-Body mit Limit lesen | `readBodyWithLimit`, `safeJsonParse` |
+| `mimeTypeForPath` | [L665](server.js#L665) | MIME-Type ermitteln | — |
+| `safeJsonParse` | [L679](server.js#L679) | JSON sicher parsen | — |
+| `json` | [L687](server.js#L687) | JSON-Response senden | — |
+| `text` | [L696](server.js#L696) | Text-Response senden | — |
+| `redirect` | [L704](server.js#L704) | Redirect senden | — |
+| `readBody` | [L783](server.js#L783) | Body lesen | — |
+| `readBodyWithLimit` | [L802](server.js#L802) | Body mit Limit lesen | — |
+| `readJson` | [L822](server.js#L822) | JSON-Body lesen | `readBody`, `safeJsonParse` |
+| `readJsonWithLimit` | [L828](server.js#L828) | JSON-Body mit Limit lesen | `readBodyWithLimit`, `safeJsonParse` |
 
 #### S3 · Auth & Session `#auth`
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `parseCookies` | [L478](server.js#L478) | Cookies parsen | — |
-| `cookieOptions` | [L492](server.js#L492) | Cookie-Optionen bauen | — |
-| `sign` | [L498](server.js#L498) | HMAC signieren | `getSigningSecret` |
-| `makeSessionCookie` | [L505](server.js#L505) | Session-Cookie erstellen | `cookieOptions`, `sign` |
-| `clearSessionCookie` | [L514](server.js#L514) | Session-Cookie löschen | — |
-| `getAuthedEmail` | [L520](server.js#L520) | Auth-Email lesen | `parseCookies`, `sign` |
-| `normalizeEmail` | [L538](server.js#L538) | Email normalisieren | — |
-| `saveLoginToken` | [L1233](server.js#L1233) | Login-Token speichern | `initDb` |
-| `getLoginToken` | [L1238](server.js#L1238) | Login-Token lesen | `initDb` |
-| `deleteLoginToken` | [L1243](server.js#L1243) | Login-Token löschen | `initDb` |
-| `getOrigin` | [L1248](server.js#L1248) | Origin lesen | — |
-| `sendMagicLinkEmail` | [L1261](server.js#L1261) | Magic-Link-Email senden | — |
+| `parseCookies` | [L714](server.js#L714) | Cookies parsen | — |
+| `cookieOptions` | [L728](server.js#L728) | Cookie-Optionen bauen | — |
+| `sign` | [L734](server.js#L734) | HMAC signieren | `getSigningSecret` |
+| `makeSessionCookie` | [L741](server.js#L741) | Session-Cookie erstellen | `cookieOptions`, `sign` |
+| `clearSessionCookie` | [L750](server.js#L750) | Session-Cookie löschen | — |
+| `getAuthedEmail` | [L756](server.js#L756) | Auth-Email lesen | `parseCookies`, `sign` |
+| `normalizeEmail` | [L774](server.js#L774) | Email normalisieren | — |
+| `saveLoginToken` | [L1799](server.js#L1799) | Login-Token speichern | `initDb` |
+| `getLoginToken` | [L1804](server.js#L1804) | Login-Token lesen | `initDb` |
+| `deleteLoginToken` | [L1809](server.js#L1809) | Login-Token löschen | `initDb` |
+| `getOrigin` | [L1814](server.js#L1814) | Origin lesen | — |
+| `sendMagicLinkEmail` | [L1827](server.js#L1827) | Magic-Link-Email senden | — |
 
 #### S4 · Uploads `#uploads`
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `ensureUploadsDir` | [L598](server.js#L598) | Upload-Verzeichnis sicherstellen | — |
-| `cleanupUploads` | [L606](server.js#L606) | Uploads aufräumen | `ensureUploadsDir` |
-| `sanitizeFilename` | [L635](server.js#L635) | Dateiname bereinigen | — |
-| `decodeDataUrl` | [L646](server.js#L646) | Data-URL dekodieren | — |
-| `isAllowedUploadMime` | [L662](server.js#L662) | Upload-MIME prüfen | — |
-| `extForMime` | [L667](server.js#L667) | Extension für MIME | — |
+| `ensureUploadsDir` | [L834](server.js#L834) | Upload-Verzeichnis sicherstellen | — |
+| `cleanupUploads` | [L842](server.js#L842) | Uploads aufräumen | `ensureUploadsDir` |
+| `sanitizeFilename` | [L871](server.js#L871) | Dateiname bereinigen | — |
+| `decodeDataUrl` | [L882](server.js#L882) | Data-URL dekodieren | — |
+| `isAllowedUploadMime` | [L898](server.js#L898) | Upload-MIME prüfen | — |
+| `extForMime` | [L903](server.js#L903) | Extension für MIME | — |
 
 #### S5 · Notes, Tags & Favoriten `#notes` `#tags`
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `uniq` | [L678](server.js#L678) | Duplikate entfernen | — |
-| `extractHashtags` | [L682](server.js#L682) | Hashtags extrahieren | — |
-| `classifyText` | [L690](server.js#L690) | Text klassifizieren | `applyDateTags`, `computeNoteContentHash`, `extractHashtags`, `getDateTagsForTs`, `getOrCreateUserId`, `initDb`, `isMonthTag`, `isValidNoteId`, `isYearTag`, `listNotes`, `mergeManualTags`, `normalizeImportTags`, `normalizeNoteTextForHash`, `parseTagsJson`, `splitManualOverrideTags`, `uniq` |
-| `parseTagsJson` | [L780](server.js#L780) | Tags-JSON parsen | — |
-| `normalizeImportTags` | [L789](server.js#L789) | Import-Tags normalisieren | `uniq` |
-| `isYearTag` | [L842](server.js#L842) | Jahres-Tag prüfen | — |
-| `isMonthTag` | [L846](server.js#L846) | Monats-Tag prüfen | — |
-| `getDateTagsForTs` | [L852](server.js#L852) | Datums-Tags für Timestamp | — |
-| `applyDateTags` | [L864](server.js#L864) | Datums-Tags anwenden | `getDateTagsForTs`, `isMonthTag`, `isYearTag`, `uniq` |
-| `splitManualOverrideTags` | [L877](server.js#L877) | Manuelle Override-Tags splitten | `normalizeImportTags` |
-| `mergeManualTags` | [L886](server.js#L886) | Manuelle Tags mergen | `classifyText`, `extractHashtags`, `normalizeImportTags`, `uniq` |
-| `isValidNoteId` | [L915](server.js#L915) | Notiz-ID validieren | — |
-| `normalizeNoteTextForHash` | [L919](server.js#L919) | Notiz-Text für Hash normalisieren | — |
-| `computeNoteContentHash` | [L925](server.js#L925) | Notiz-Content-Hash berechnen | `normalizeNoteTextForHash` |
-| `getOrCreateUserId` | [L931](server.js#L931) | User-ID erstellen/lesen | `initDb` |
-| `listNotes` | [L940](server.js#L940) | Notizen auflisten | `initDb`, `parseTagsJson` |
-| `purgeExpiredTrash` | [L969](server.js#L969) | Abgelaufenen Trash löschen | `initDb` |
-| `listTrashNotes` | [L976](server.js#L976) | Trash-Notizen auflisten | `initDb`, `parseTagsJson` |
-| `listTags` | [L992](server.js#L992) | Tags auflisten | `initDb`, `parseTagsJson`, `uniq` |
-| `listFavorites` | [L1005](server.js#L1005) | Favoriten auflisten | `initDb` |
-| `listRoomTabs` | [L1015](server.js#L1015) | Room-Tabs auflisten | `initDb` |
+| `uniq` | [L914](server.js#L914) | Duplikate entfernen | — |
+| `extractHashtags` | [L918](server.js#L918) | Hashtags extrahieren | — |
+| `classifyText` | [L926](server.js#L926) | Text klassifizieren | `applyDateTags`, `computeNoteContentHash`, `extractHashtags`, `getDateTagsForTs`, `getOrCreateUserId`, `initDb`, `isMonthTag`, `isValidNoteId`, `isYearTag`, `listNotes`, `mergeManualTags`, `normalizeImportTags`, `normalizeNoteTextForHash`, `parseTagsJson`, `splitManualOverrideTags`, `uniq` |
+| `parseTagsJson` | [L1014](server.js#L1014) | Tags-JSON parsen | — |
+| `normalizeImportTags` | [L1098](server.js#L1098) | Import-Tags normalisieren | `uniq` |
+| `isYearTag` | [L1151](server.js#L1151) | Jahres-Tag prüfen | — |
+| `isMonthTag` | [L1155](server.js#L1155) | Monats-Tag prüfen | — |
+| `getDateTagsForTs` | [L1161](server.js#L1161) | Datums-Tags für Timestamp | — |
+| `applyDateTags` | [L1173](server.js#L1173) | Datums-Tags anwenden | `getDateTagsForTs`, `isMonthTag`, `isYearTag`, `uniq` |
+| `splitManualOverrideTags` | [L1186](server.js#L1186) | Manuelle Override-Tags splitten | `normalizeImportTags` |
+| `mergeManualTags` | [L1195](server.js#L1195) | Manuelle Tags mergen | `classifyText`, `extractHashtags`, `normalizeImportTags`, `uniq` |
+| `isValidNoteId` | [L1223](server.js#L1223) | Notiz-ID validieren | — |
+| `normalizeNoteTextForHash` | [L1227](server.js#L1227) | Notiz-Text für Hash normalisieren | — |
+| `computeNoteContentHash` | [L1233](server.js#L1233) | Notiz-Content-Hash berechnen | `normalizeNoteTextForHash` |
+| `getOrCreateUserId` | [L1239](server.js#L1239) | User-ID erstellen/lesen | `initDb` |
+| `listNotes` | [L1248](server.js#L1248) | Notizen auflisten | `initDb`, `parseTagsJson` |
+| `purgeExpiredTrash` | [L1277](server.js#L1277) | Abgelaufenen Trash löschen | `initDb` |
+| `listTrashNotes` | [L1284](server.js#L1284) | Trash-Notizen auflisten | `initDb`, `parseTagsJson` |
+| `listTags` | [L1300](server.js#L1300) | Tags auflisten | `initDb`, `parseTagsJson`, `uniq` |
+| `listFavorites` | [L1313](server.js#L1313) | Favoriten auflisten | `initDb` |
+| `listRoomTabs` | [L1324](server.js#L1324) | Room-Tabs auflisten | `initDb` |
 
 #### S6 · Calendar & Google `#calendar` `#google`
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `sanitizeCalendarSettings` | [L1026](server.js#L1026) | Kalender-Settings bereinigen | — |
-| `parseCalendarJson` | [L1094](server.js#L1094) | Kalender-JSON parsen | `sanitizeCalendarSettings` |
-| `getUserSettings` | [L1105](server.js#L1105) | User-Settings lesen | `initDb`, `parseCalendarJson` |
-| `upsertUserSettings` | [L1118](server.js#L1118) | User-Settings schreiben | `initDb`, `sanitizeCalendarSettings` |
-| `googleConfigured` | [L1130](server.js#L1130) | Google konfiguriert? | — |
-| `makeGoogleState` | [L1138](server.js#L1138) | Google-State erstellen | `sign` |
-| `parseGoogleState` | [L1147](server.js#L1147) | Google-State parsen | `sign` |
-| `getGoogleTokens` | [L1162](server.js#L1162) | Google-Tokens lesen | `initDb` |
-| `saveGoogleTokens` | [L1167](server.js#L1167) | Google-Tokens speichern | `initDb` |
-| `deleteGoogleTokens` | [L1181](server.js#L1181) | Google-Tokens löschen | `initDb` |
-| `getGoogleCalendarIdForUser` | [L1186](server.js#L1186) | Google-Kalender-ID lesen | `getUserSettings` |
-| `refreshGoogleAccessToken` | [L1193](server.js#L1193) | Google-Token auffrischen | `json` |
-| `getGoogleAccessToken` | [L1216](server.js#L1216) | Google-Access-Token lesen | `getGoogleTokens`, `refreshGoogleAccessToken`, `saveGoogleTokens` |
+| `sanitizeCalendarSettings` | [L1357](server.js#L1357) | Kalender-Settings bereinigen | — |
+| `parseCalendarJson` | [L1439](server.js#L1439) | Kalender-JSON parsen | `sanitizeCalendarSettings` |
+| `getUserSettings` | [L1502](server.js#L1502) | User-Settings lesen | `initDb`, `parseCalendarJson` |
+| `upsertUserSettings` | [L1526](server.js#L1526) | User-Settings schreiben | `initDb`, `sanitizeCalendarSettings` |
+| `googleConfigured` | [L1586](server.js#L1586) | Google konfiguriert? | — |
+| `makeGoogleState` | [L1603](server.js#L1603) | Google-State erstellen | `sign` |
+| `parseGoogleState` | [L1612](server.js#L1612) | Google-State parsen | `sign` |
+| `getGoogleTokens` | [L1651](server.js#L1651) | Google-Tokens lesen | `initDb` |
+| `saveGoogleTokens` | [L1656](server.js#L1656) | Google-Tokens speichern | `initDb` |
+| `deleteGoogleTokens` | [L1670](server.js#L1670) | Google-Tokens löschen | `initDb` |
+| `getGoogleCalendarIdForUser` | [L1699](server.js#L1699) | Google-Kalender-ID lesen | `getUserSettings` |
+| `refreshGoogleAccessToken` | [L1713](server.js#L1713) | Google-Token auffrischen | `json` |
+| `getGoogleAccessToken` | [L1736](server.js#L1736) | Google-Access-Token lesen | `getGoogleTokens`, `refreshGoogleAccessToken`, `saveGoogleTokens` |
 
 #### S7 · WebSocket & Presence `#ws` `#presence`
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `clampRoom` | [L1301](server.js#L1301) | Room-Name begrenzen | — |
-| `clampKey` | [L1308](server.js#L1308) | Key begrenzen | — |
-| `roomKey` | [L1315](server.js#L1315) | Room-Key bauen | — |
-| `getRoomSockets` | [L1334](server.js#L1334) | Room-Sockets lesen | — |
-| `getRoomPresence` | [L1343](server.js#L1343) | Room-Presence lesen | — |
-| `buildPresenceList` | [L1352](server.js#L1352) | Presence-Liste bauen | `getRoomPresence` |
-| `sendPresenceState` | [L1356](server.js#L1356) | Presence-State senden | `buildPresenceList` |
-| `broadcastPresenceState` | [L1365](server.js#L1365) | Presence broadcasten | `broadcast`, `buildPresenceList` |
-| `broadcast` | [L1370](server.js#L1370) | An Room broadcasten | `getRoomSockets` |
+| `clampRoom` | [L1867](server.js#L1867) | Room-Name begrenzen | — |
+| `clampKey` | [L1874](server.js#L1874) | Key begrenzen | — |
+| `roomKey` | [L1881](server.js#L1881) | Room-Key bauen | — |
+| `getRoomSockets` | [L1915](server.js#L1915) | Room-Sockets lesen | — |
+| `getRoomPresence` | [L1924](server.js#L1924) | Room-Presence lesen | — |
+| `buildPresenceList` | [L1989](server.js#L1989) | Presence-Liste bauen | `getRoomPresence` |
+| `sendPresenceState` | [L1993](server.js#L1993) | Presence-State senden | `buildPresenceList` |
+| `broadcastPresenceState` | [L2002](server.js#L2002) | Presence broadcasten | `broadcast`, `buildPresenceList` |
+| `broadcast` | [L2007](server.js#L2007) | An Room broadcasten | `getRoomSockets` |
 
 #### S8 · AI / Anthropic `#ai`
 
 | Funktion | Zeile | Zweck | Abhängigkeiten |
 |----------|-------|-------|----------------|
-| `formatInputForUserPrompt` | [L2935](server.js#L2935) | Input für User-Prompt formatieren | — |
-| `buildUserPrompt` | [L2949](server.js#L2949) | User-Prompt bauen | `formatInputForUserPrompt` |
-| `callAnthropic` | [L2971](server.js#L2971) | Anthropic API aufrufen | `safeJsonParse`, `text` |
-| `runWithModelFallback` | [L3001](server.js#L3001) | Mit Model-Fallback ausführen | `callAnthropic` |
-| `extractText` | [L3030](server.js#L3030) | Text extrahieren | — |
-| `shouldRetryRunOutput` | [L3039](server.js#L3039) | Run-Output Retry prüfen | — |
-| `extractFencedCodeBlocks` | [L3055](server.js#L3055) | Fenced-Code-Blöcke extrahieren | — |
-| `coerceRunModeText` | [L3067](server.js#L3067) | Run-Mode-Text umwandeln | `extractFencedCodeBlocks` |
-| `chunkText` | [L3102](server.js#L3102) | Text in Chunks teilen | — |
+| `formatInputForUserPrompt` | [L4381](server.js#L4381) | Input für User-Prompt formatieren | — |
+| `buildUserPrompt` | [L4395](server.js#L4395) | User-Prompt bauen | `formatInputForUserPrompt` |
+| `callAnthropic` | [L4417](server.js#L4417) | Anthropic API aufrufen | `safeJsonParse`, `text` |
+| `runWithModelFallback` | [L4447](server.js#L4447) | Mit Model-Fallback ausführen | `callAnthropic` |
+| `extractText` | [L4476](server.js#L4476) | Text extrahieren | — |
+| `shouldRetryRunOutput` | [L4485](server.js#L4485) | Run-Output Retry prüfen | — |
+| `extractFencedCodeBlocks` | [L4501](server.js#L4501) | Fenced-Code-Blöcke extrahieren | — |
+| `coerceRunModeText` | [L4513](server.js#L4513) | Run-Mode-Text umwandeln | `extractFencedCodeBlocks` |
+| `chunkText` | [L4548](server.js#L4548) | Text in Chunks teilen | — |
