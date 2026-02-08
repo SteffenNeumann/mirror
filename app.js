@@ -10203,6 +10203,7 @@ ${highlightThemeCss}
 				var duration = 2000;
 				var nodes = document.querySelectorAll('li.task-list-item[data-task-key]');
 				if (!nodes || !nodes.length) return;
+				var changed = [];
 				for (var i = 0; i < nodes.length; i++) {
 					var el = nodes[i];
 					if (!el || !el.getAttribute) continue;
@@ -10214,16 +10215,23 @@ ${highlightThemeCss}
 					if (!dy) continue;
 					el.style.transition = 'none';
 					el.style.transform = 'translateY(' + dy + 'px)';
-					el.getBoundingClientRect();
-					el.style.transition = 'transform ' + duration + 'ms ease';
-					el.style.transform = 'translateY(0)';
-					(function(node){
-						window.setTimeout(function(){
-							node.style.transition = '';
-							node.style.transform = '';
-						}, duration + 60);
-					})(el);
+					changed.push(el);
 				}
+				if (!changed.length) return;
+				window.requestAnimationFrame(function(){
+					for (var i = 0; i < changed.length; i++) {
+						var node = changed[i];
+						if (!node) continue;
+						node.style.transition = 'transform ' + duration + 'ms ease';
+						node.style.transform = 'translateY(0)';
+						(function(el){
+							window.setTimeout(function(){
+								el.style.transition = '';
+								el.style.transform = '';
+							}, duration + 60);
+						})(node);
+					}
+				});
 			}
 			function indexOfCheckbox(box){
 				if (!box) return null;
@@ -10387,9 +10395,7 @@ ${highlightThemeCss}
 						initImageTools();
 						initPdfEmbeds();
 						buildToc();
-						window.requestAnimationFrame(function(){
-							animateTaskReorder(prevRects);
-						});
+						animateTaskReorder(prevRects);
 					}, true);
 
 					window.addEventListener('message', function(ev){
