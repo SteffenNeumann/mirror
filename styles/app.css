@@ -1355,8 +1355,8 @@ body[data-theme="monoDark"] .excel-iframe {
 .md-content ul.task-list li.task-list-item.checked,
 .md-content ol.task-list li.task-list-item.checked,
 .md-content li.task-list-item.checked {
-	opacity: 0.8;
-	color: var(--accent-text-soft);
+	opacity: 1;
+	color: inherit;
 }
 .md-content ul.task-list li.task-list-item.checked *,
 .md-content ol.task-list li.task-list-item.checked *,
@@ -1367,15 +1367,15 @@ body[data-theme="monoDark"] .excel-iframe {
 .md-content ol.task-list li.task-list-item.checked label,
 .md-content li.task-list-item.checked label {
 	text-decoration: line-through;
-	text-decoration-thickness: 2px;
-	text-decoration-color: var(--accent-text-soft);
+	text-decoration-thickness: 1px;
+	text-decoration-color: var(--accent-strong);
 }
 .md-content ul.task-list li.task-list-item.checked label *,
 .md-content ol.task-list li.task-list-item.checked label *,
 .md-content li.task-list-item.checked label * {
 	text-decoration: line-through;
-	text-decoration-thickness: 2px;
-	text-decoration-color: var(--accent-text-soft);
+	text-decoration-thickness: 1px;
+	text-decoration-color: var(--accent-strong);
 }
 .md-content ul.task-list li > .task-closed-at,
 .md-content ol.task-list li > .task-closed-at,
