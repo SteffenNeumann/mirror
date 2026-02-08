@@ -10204,7 +10204,7 @@ ${highlightThemeCss}
 			}
 			function animateTaskReorder(prevRects){
 				if (!prevRects) return;
-				var duration = 2000;
+				var duration = 1200;
 				var nodes = document.querySelectorAll('li.task-list-item[data-task-key]');
 				if (!nodes || !nodes.length) return;
 				var changed = [];
