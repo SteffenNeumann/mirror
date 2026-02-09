@@ -2497,13 +2497,18 @@
 	}
 
 	function getCommentScopeId() {
-		const noteId = getCommentNoteId();
-		if (noteId) return `note:${noteId}`;
 		const nextRoom = normalizeRoom(room);
 		const nextKey = normalizeKey(key);
 		const shared = isRoomMarkedShared(room, key);
-		if (nextRoom && (nextKey || shared)) {
+		// Shared rooms always use room scope so all participants
+		// (owner and visitors) see the same comments
+		if (shared && nextRoom) {
 			return `room:${nextRoom}${nextKey ? `:${nextKey}` : ""}`;
+		}
+		const noteId = getCommentNoteId();
+		if (noteId) return `note:${noteId}`;
+		if (nextRoom && nextKey) {
+			return `room:${nextRoom}:${nextKey}`;
 		}
 		return "";
 	}
@@ -2600,11 +2605,23 @@
 
 	async function loadCommentsForRoom() {
 		const { scopeId, apiUrl } = getCommentScopeRequestInfo();
+		const scopeChanged = commentActiveNoteId !== scopeId;
 		commentActiveNoteId = scopeId;
-		commentItems = [];
-		renderCommentList();
-		updateCommentOverlay();
-		if (!canSyncCommentsForScope(scopeId) || !apiUrl) return;
+		// Only clear immediately when switching to a different scope
+		// to avoid badge flickering to 0 on same-scope reload
+		if (scopeChanged) {
+			commentItems = [];
+			renderCommentList();
+			updateCommentOverlay();
+		}
+		if (!canSyncCommentsForScope(scopeId) || !apiUrl) {
+			if (!scopeChanged) {
+				commentItems = [];
+				renderCommentList();
+				updateCommentOverlay();
+			}
+			return;
+		}
 		const token = ++commentLoadToken;
 		try {
 			const res = await api(apiUrl);
