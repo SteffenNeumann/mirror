@@ -20574,6 +20574,21 @@ self.onmessage = async (e) => {
 			closePsEditorTagsSuggest();
 		});
 	}
+	function attachPsTagPreviewHover(el) {
+		if (!el || !el.addEventListener) return;
+		const handler = () => {
+			ensurePsEditingDateTagsInitialized();
+			updatePsEditingTagsHint();
+		};
+		el.addEventListener("mouseenter", handler);
+		el.addEventListener("focus", handler, true);
+	}
+	attachPsTagPreviewHover(psEditorTagsBar);
+	attachPsTagPreviewHover(psEditorTagsInput);
+	attachPsTagPreviewHover(psEditorYearTag);
+	attachPsTagPreviewHover(psEditorMonthTag);
+	attachPsTagPreviewHover(psEditorCategoryTag);
+	attachPsTagPreviewHover(psEditorSubcategoryTag);
 	if (psEditorYearTag) {
 		psEditorYearTag.addEventListener("input", () => {
 			updatePsEditorTagMetaFromInputs();
