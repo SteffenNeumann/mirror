@@ -19087,13 +19087,22 @@ self.onmessage = async (e) => {
 			: [];
 		const current = activeId ? linearProjectByNote.get(activeId) : null;
 		let selectedId = current && current.projectId ? current.projectId : "";
-		if (selectedId && !enabledSet.has(selectedId)) {
-			selectedId = "";
-			if (activeId) linearProjectByNote.delete(activeId);
-		}
+		// If the selected project was received via sync (shared room) but is not
+		// in the local enabled set, keep it and add it as an option so guests
+		// can see the shared project.
+		const sharedProjectOption =
+			selectedId && !enabledSet.has(selectedId) && current
+				? { id: current.projectId, name: current.projectName || current.projectId }
+				: null;
+		const projectOptions = sharedProjectOption
+			? [
+					sharedProjectOption,
+					...allowedProjects.filter((p) => p.id !== sharedProjectOption.id),
+			  ]
+			: allowedProjects;
 		const options = [
 			{ id: "", name: t("linear.embed.select_placeholder") },
-			...allowedProjects.map((p) => ({ id: p.id, name: p.name })),
+			...projectOptions.map((p) => ({ id: p.id, name: p.name })),
 		];
 		linearProjectSelect.innerHTML = options
 			.map((opt) => {
