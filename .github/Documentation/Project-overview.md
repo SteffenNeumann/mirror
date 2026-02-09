@@ -1,6 +1,6 @@
 # Project overview
 
-Datum: 2026-02-08
+Datum: 2026-02-09
 
 Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische Analyse, keine Laufzeitauflösung).
 
@@ -133,7 +133,7 @@ Server-Start
 7) Personal Space (Notizen, Tags, Auto-Save)
 - Zweck: Notizen laden/filtern, Tags, Auto-Save, Tabs/History.
 - Umsetzung: `refreshPersonalSpace`, `applyPersonalSpaceFiltersAndRender`, `savePersonalSpaceNote`, `updateRoomTabsForNoteId`.
-- Hinweis: Notizen werden per `filterRealNotes` auf gültige IDs geprüft und nach ID entdoppelt (neuestes `updatedAt`/`createdAt` bleibt); Tag-Änderungen aktualisieren bestehende Notizen statt neue anzulegen.
+- Hinweis: Notizen werden per `filterRealNotes` auf gültige IDs geprüft und nach ID entdoppelt (neuestes `updatedAt`/`createdAt` bleibt); Tag-Änderungen aktualisieren bestehende Notizen statt neue anzulegen. Zusätzlich verhindert `psSaveNoteInFlight`-Mutex parallele manuelle Saves, `findNoteByText` erkennt inhaltlich identische Notizen vor dem Erstellen, und der Server blockiert Duplikate per `contentHash`-UNIQUE-Constraint (inkl. leerer Notizen).
 
 8) Settings/Tools (Uploads, Kalender, AI)
 - Zweck: Uploads/Trash/Calendar/AI-Einstellungen verwalten.
