@@ -6,6 +6,12 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
 
 ## Aktuelle Änderungen (2026-02-09)
 
+- **Duplikat-Notizen-Schutz**: Drei Maßnahmen gegen doppelte Notizen (gleicher Inhalt, verschiedene IDs):
+  1. **Client-Mutex für manuelle Saves**: `psSaveNoteInFlight`-Flag verhindert, dass parallele manuelle `savePersonalSpaceNote`-Aufrufe gleichzeitig neue Notizen erstellen. Auto-Save (`auto:true`) ist nicht betroffen. Bei Fehler wird der Mutex im `catch`-Block freigegeben.
+  2. **Server: Hash-Schutz für leere Notizen**: `computeNoteContentHash("")` gibt jetzt einen stabilen Hash (`sha256("__EMPTY_NOTE__")`) statt `""` zurück. Damit greift der `contentHash`-UNIQUE-Check auch für leere Notizen und verhindert mehrfache Empty-Notes pro User.
+  3. **Mobile Note-Close: AutoSave-Reset**: `noteCloseMobile`-Handler ruft jetzt `resetPsAutoSaveState()` und leert `psAutoSaveLastSavedNoteId`/`psAutoSaveLastSavedText` nach `clearPsEditingNoteState()` auf, damit kein Timer mit veralteter ID weiterschreibt.
+  - Zuständige Funktionen: `savePersonalSpaceNote` ([app.js](app.js#L20950)), `computeNoteContentHash` ([server.js](server.js#L1233)), `noteCloseMobile`-Handler ([app.js](app.js#L21665)).
+
 - **Shared-Room App-Sync (Excalidraw, Excel, Linear)**: Drei Ursachen behoben, die dazu führten, dass iframes in geteilten Räumen nicht synchron geöffnet/geschlossen und positioniert wurden:
   1. Server sendet `room_pin_state` jetzt **vor** den App-States (`excalidraw_state`, `excel_state`, `linear_state`), damit Clients den Pin kennen bevor sie App-State verarbeiten. Zusätzlich wird `room_pin_state` auch gesendet wenn kein Pin existiert aber >1 Socket verbunden ist (mit `shared: true` Flag).
   2. `room_pin_state`-Handler ruft `syncExcalidrawForNote(noteId)` etc. mit der noteId aus der Nachricht statt `psEditingNoteId` auf, damit Guests den korrekten Room-Scope auflösen.

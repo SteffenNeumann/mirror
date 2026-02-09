@@ -1232,7 +1232,7 @@ function normalizeNoteTextForHash(text) {
 
 function computeNoteContentHash(text) {
 	const normalized = normalizeNoteTextForHash(text);
-	if (!normalized) return "";
+	if (!normalized) return crypto.createHash("sha256").update("__EMPTY_NOTE__").digest("hex");
 	return crypto.createHash("sha256").update(normalized).digest("hex");
 }
 

@@ -4583,6 +4583,7 @@
 	let psAutoSaveQueuedText = "";
 	let psAutoSaveQueuedNoteId = "";
 	let psAutoSaveQueuedTags = null;
+	let psSaveNoteInFlight = false;
 	let psListRerenderTimer = 0;
 	let previewOpen = false;
 	let fullPreview = false;
@@ -20960,6 +20961,9 @@ self.onmessage = async (e) => {
 				toast("Please enable Personal Space first (sign in).", "error");
 			return false;
 		}
+		if (!auto && psSaveNoteInFlight) return false;
+		if (!auto) psSaveNoteInFlight = true;
+		try {
 		const tagsPayload = buildCurrentPsTagsPayload();
 		if (auto) setPsAutoSaveStatus("Speichern…");
 		else if (psHint)
@@ -21021,7 +21025,7 @@ self.onmessage = async (e) => {
 			else setPsAutoSaveStatus("Gespeichert");
 			if (psHint) setPsHintText(auto ? "" : "Saved.");
 			if (!auto) toast("Personal Space: saved.", "success");
-			if (!auto) await refreshPersonalSpace();
+			if (!auto) { psSaveNoteInFlight = false; await refreshPersonalSpace(); }
 			return true;
 		}
 
@@ -21051,8 +21055,12 @@ self.onmessage = async (e) => {
 		else setPsAutoSaveStatus("Gespeichert");
 		if (psHint) setPsHintText(auto ? "" : "Updated.");
 		if (!auto) toast("Personal Space: saved.", "success");
-		if (!auto) await refreshPersonalSpace();
+		if (!auto) { psSaveNoteInFlight = false; await refreshPersonalSpace(); }
 		return true;
+		} catch (e) {
+			psSaveNoteInFlight = false;
+			throw e;
+		}
 	}
 
 	async function savePersonalSpaceNoteSnapshot(noteId, text, tagsPayload) {
@@ -21661,6 +21669,9 @@ self.onmessage = async (e) => {
 	if (noteCloseMobile) {
 		noteCloseMobile.addEventListener("click", () => {
 			clearPsEditingNoteState();
+			resetPsAutoSaveState();
+			psAutoSaveLastSavedNoteId = "";
+			psAutoSaveLastSavedText = "";
 			if (psMainHint) psMainHint.classList.add("hidden");
 			mobilePsOpen = mobileNoteReturn === "ps";
 			mobileNoteReturn = "editor";
