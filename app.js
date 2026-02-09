@@ -20355,7 +20355,9 @@ self.onmessage = async (e) => {
 		lastLocalText = "";
 		roomLabel.textContent = room;
 		updateShareLink();
+		syncExcalidrawForNote("");
 		syncExcelForNote("");
+		syncLinearForNote("");
 		roomInput.value = room;
 		saveRecentRoom(room);
 		renderRecentRooms();
