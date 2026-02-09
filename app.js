@@ -11634,6 +11634,7 @@ ${highlightThemeCss}
 		psEditingNoteDateInitialized = false;
 		ensurePsEditingDateTagsInitialized();
 		syncPsEditorTagsInput(true);
+		if (!(opts && opts.skipText)) {
 			textarea.value = String(note.text || "");
 			try {
 				textarea.focus();
