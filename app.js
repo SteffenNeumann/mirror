@@ -1797,9 +1797,6 @@
 			}
 			manual.push(s);
 		}
-		const fallback = getDateTagsForTs(createdAt || Date.now());
-		if (!year) year = fallback.year;
-		if (!month) month = fallback.month;
 		if (!category && derivedCategory) category = derivedCategory;
 		if (!subcategory && derivedSubcategory) subcategory = derivedSubcategory;
 		return { year, month, category, subcategory, manual };
@@ -1847,9 +1844,6 @@
 		psEditingNoteSubcategory = normalizeCategoryValue(
 			psEditorSubcategoryTag ? psEditorSubcategoryTag.value : ""
 		);
-		const defaults = getDateTagsForTs(getEditingNoteCreatedAt());
-		if (!psEditingNoteYearTag) psEditingNoteYearTag = defaults.year;
-		if (!psEditingNoteMonthTag) psEditingNoteMonthTag = defaults.month;
 		syncPsEditorTagMetaInputs();
 		updatePsEditingTagsHint();
 		updateEditingNoteTagsLocal(psEditingNoteTags);
@@ -11033,6 +11027,7 @@ ${highlightThemeCss}
 		const next = nextTag ? String(nextTag) : "";
 		if (!target) return;
 		let updatedCount = 0;
+		let touchedCurrentNote = false;
 		for (const note of notes) {
 			const rawTags = Array.isArray(note && note.tags) ? note.tags : [];
 			if (!rawTags.includes(target)) continue;
@@ -11065,6 +11060,9 @@ ${highlightThemeCss}
 							: n
 					);
 					updatedCount += 1;
+					if (psEditingNoteId && String(saved.id) === String(psEditingNoteId)) {
+						touchedCurrentNote = true;
+					}
 				}
 			} catch (e) {
 				const msg = e && e.message ? String(e.message) : "Error";
@@ -11087,6 +11085,9 @@ ${highlightThemeCss}
 			}
 			rebuildPsTagsFromNotes();
 			applyPersonalSpaceFiltersAndRender();
+			if (touchedCurrentNote) {
+				syncPsEditingNoteTagsFromState();
+			}
 			toast(`Updated ${updatedCount} note${updatedCount === 1 ? "" : "s"}.`, "success");
 		} else {
 			toast("No notes updated.", "info");
