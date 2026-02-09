@@ -20609,7 +20609,10 @@ self.onmessage = async (e) => {
 		psEditorTagsInput.addEventListener("blur", () => {
 			if (psEditorTagsSyncing) return;
 			syncPsEditorTagsInput();
-			closePsEditorTagsSuggest();
+			// Delay close so mousedown/click on suggest items can fire first
+			setTimeout(() => {
+				if (!psEditorTagsSuggestTarget) closePsEditorTagsSuggest();
+			}, 150);
 		});
 	}
 	function attachPsTagPreviewHover(el) {
