@@ -20583,6 +20583,8 @@ self.onmessage = async (e) => {
 	function attachPsTagPreviewHover(el) {
 		if (!el || !el.addEventListener) return;
 		const handler = () => {
+			// Sync meta inputs before rendering hint so hover reflects current values
+			updatePsEditorTagMetaFromInputs();
 			ensurePsEditingDateTagsInitialized();
 			updatePsEditingTagsHint();
 		};
