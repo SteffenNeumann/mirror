@@ -2501,10 +2501,13 @@
 		const nextRoom = normalizeRoom(room);
 		const nextKey = normalizeKey(key);
 		const shared = isRoomMarkedShared(room, key);
-		// Shared rooms always use room scope so all participants
-		// (owner and visitors) see the same comments
+		// Shared rooms use room scope so all participants see the same comments.
+		// When a note is pinned, append note ID to bind comments to that note.
 		if (shared && nextRoom) {
-			return `room:${nextRoom}${nextKey ? `:${nextKey}` : ""}`;
+			const pinned = getRoomPinnedEntry(nextRoom, nextKey);
+			const pinnedNoteId = pinned && pinned.noteId ? String(pinned.noteId || "").trim() : "";
+			const base = `room:${nextRoom}${nextKey ? `:${nextKey}` : ""}`;
+			return pinnedNoteId ? `${base}:n:${pinnedNoteId}` : base;
 		}
 		const noteId = getCommentNoteId();
 		if (noteId) return `note:${noteId}`;
@@ -2518,15 +2521,23 @@
 		const scopeId = getCommentScopeId();
 		if (!scopeId) return { scopeId: "", apiUrl: "" };
 		if (scopeId.startsWith("room:")) {
+			// Extract room, key, and optional noteId from scope
+			// Format: room:ROOM[:KEY][:n:NOTEID]
 			const raw = scopeId.slice(5);
-			const parts = raw.split(":");
+			const noteMarker = raw.indexOf(":n:");
+			const noteIdPart = noteMarker >= 0 ? raw.slice(noteMarker + 3) : "";
+			const roomKeyPart = noteMarker >= 0 ? raw.slice(0, noteMarker) : raw;
+			const parts = roomKeyPart.split(":");
 			const scopeRoom = parts[0] || "";
 			const scopeKey = parts.slice(1).join(":");
 			if (!scopeRoom) return { scopeId: "", apiUrl: "" };
 			const base = `/api/rooms/${encodeURIComponent(scopeRoom)}`;
-			const apiUrl = scopeKey
+			let apiUrl = scopeKey
 				? `${base}/${encodeURIComponent(scopeKey)}/comments`
 				: `${base}/comments`;
+			if (noteIdPart) {
+				apiUrl += `?noteId=${encodeURIComponent(noteIdPart)}`;
+			}
 			return { scopeId, apiUrl };
 		}
 		if (scopeId.startsWith("note:")) {
@@ -17995,6 +18006,7 @@ self.onmessage = async (e) => {
 				syncExcalidrawForNote(psEditingNoteId);
 				syncExcelForNote(psEditingNoteId);
 				syncLinearForNote(psEditingNoteId);
+				void loadCommentsForRoom();
 				return;
 			}
 
@@ -18422,6 +18434,7 @@ self.onmessage = async (e) => {
 				syncLinearForNote(psEditingNoteId);
 				syncPermanentLinkToggleUi();
 				schedulePsListRerender();
+				void loadCommentsForRoom();
 				toast("Permanent-Link deaktiviert.", "info");
 				return;
 			}
@@ -18492,6 +18505,7 @@ self.onmessage = async (e) => {
 			});
 			syncPermanentLinkToggleUi();
 			schedulePsListRerender();
+			void loadCommentsForRoom();
 			toast("Permanent-Link aktiviert.", "success");
 		});
 	}

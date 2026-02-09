@@ -17,6 +17,8 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
   2. `loadCommentsForRoom` wartet auf laufende `commentSavePromise` bevor es den Server abfragt, damit kein veralteter State geladen wird.
   3. WebSocket `comment_update`-Handler ignoriert jetzt eigene Nachrichten (`msg.clientId === clientId`), damit der lokale State nicht durch die eigene Broadcast-Nachricht überschrieben wird.
   - Zuständige Funktionen: `scheduleCommentSave` ([app.js](app.js#L2645)), `persistCommentsForScope` ([app.js](app.js#L2655)), `loadCommentsForRoom` ([app.js](app.js#L2606)), WS-Handler `comment_update` ([app.js](app.js#L18010)).
+- Kommentare an gepinnte Notiz gebunden: In geteilten Räumen mit Permanent-Link wird die `pinnedNoteId` an den Kommentar-Scope angehängt (`room:room:key:n:noteId`). Damit sind Kommentare, Counter und Overlay eindeutig der gepinnten Notiz zugeordnet. Bei Notiz-Wechsel (Pin ändern/entfernen) wird `loadCommentsForRoom()` aufgerufen, um Badge und Liste zu aktualisieren. Server-API akzeptiert optionalen `?noteId=`-Parameter für den erweiterten Scope.
+  - Zuständige Funktionen: `getCommentScopeId` ([app.js](app.js#L2501)), `getCommentScopeRequestInfo` ([app.js](app.js#L2521)), `room_pin_state`-Handler ([app.js](app.js#L17986)), `togglePermanentLink`-Handler ([app.js](app.js#L18398)), Room-Comment-API ([server.js](server.js#L3760)).
 
 ## Aktuelle Änderungen (2026-02-08)
 

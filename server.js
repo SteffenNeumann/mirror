@@ -3762,7 +3762,9 @@ const server = http.createServer(async (req, res) => {
 			// so guests in shared rooms can participate in conversations
 			const email = getAuthedEmail(req);
 			initDb();
-			const scopeId = `room:${room}${key ? `:${key}` : ""}`;
+			const noteIdParam = String(url.searchParams.get("noteId") || "").trim().slice(0, 80);
+			const baseScopeId = `room:${room}${key ? `:${key}` : ""}`;
+			const scopeId = noteIdParam ? `${baseScopeId}:n:${noteIdParam}` : baseScopeId;
 			if (req.method === "GET") {
 				const row = stmtNoteCommentsGetByScope.get(scopeId);
 				const comments = row ? parseCommentsJson(row.comments_json) : [];
