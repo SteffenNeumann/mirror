@@ -4,6 +4,13 @@ Datum: 2026-02-08
 
 Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische Analyse, keine Laufzeitauflösung).
 
+## Aktuelle Änderungen (2026-02-09)
+
+- Kommentar-Scope in geteilten Räumen: `getCommentScopeId()` priorisiert nun `room:` Scope wenn `isRoomMarkedShared()` true ist, bevor `note:` geprüft wird. Vorher sahen Eigentümer (mit PS-Note) und Besucher (ohne PS) unterschiedliche Scopes (`note:xxx` vs. `room:roomName`), weshalb Kommentare füreinander unsichtbar waren und der Counter (`commentCountBadge`) keine fremden Kommentare zählte. WebSocket `comment_update`-Nachrichten wurden wegen Scope-Mismatch ignoriert.
+  - Zuständige Funktion: `getCommentScopeId` ([app.js](app.js#L2499)).
+- Comment-Badge-Flicker bei Tab-Wechsel: `loadCommentsForRoom()` leert `commentItems` nur noch bei echtem Scope-Wechsel (`commentActiveNoteId !== scopeId`). Bei Reload desselben Scopes bleibt der alte Badge-Wert bis der Fetch abschließt, anstatt kurz auf 0 zu springen.
+  - Zuständige Funktion: `loadCommentsForRoom` ([app.js](app.js#L2606)).
+
 ## Aktuelle Änderungen (2026-02-08)
 
 - CRDT-Sync für Gäste in Permalink-Räumen: `updateCrdtFromTextarea` blockiert nicht mehr durch `shouldSyncRoomContentNow()` – CRDT ist konfliktfrei, daher dürfen alle Clients (auch Gäste ohne aktive PS-Note) Änderungen senden und empfangen. User-Markierungen (`{ author: clientId }`) bleiben erhalten.
