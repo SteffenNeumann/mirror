@@ -1942,6 +1942,7 @@
 	let psEditorTagsSuggestItems = [];
 	let psEditorTagsSuggestIndex = -1;
 	let psEditorTagsSuggestTarget = null; // null = psEditorTagsInput, or reference to category/subcategory input
+	let psEditorTagsSuggestClicking = false; // true while mousedown on suggest item
 
 	function getPsEditorTagTokenBounds(inputEl) {
 		const value = String(inputEl && inputEl.value ? inputEl.value : "");
@@ -20626,6 +20627,7 @@ self.onmessage = async (e) => {
 		});
 		psEditorTagsInput.addEventListener("blur", () => {
 			if (psEditorTagsSyncing) return;
+			if (psEditorTagsSuggestClicking) return;
 			syncPsEditorTagsInput();
 			closePsEditorTagsSuggest();
 		});
@@ -20699,8 +20701,10 @@ self.onmessage = async (e) => {
 			if (!(target instanceof HTMLElement)) return;
 			if (!target.closest("[data-tag]")) return;
 			ev.preventDefault();
+			psEditorTagsSuggestClicking = true;
 		});
 		psEditorTagsSuggest.addEventListener("click", (ev) => {
+			psEditorTagsSuggestClicking = false;
 			const target = ev.target;
 			if (!(target instanceof HTMLElement)) return;
 			const btn = target.closest("[data-tag]");
