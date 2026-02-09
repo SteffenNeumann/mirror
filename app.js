@@ -20608,11 +20608,15 @@ self.onmessage = async (e) => {
 		});
 		psEditorTagsInput.addEventListener("blur", () => {
 			if (psEditorTagsSyncing) return;
-			syncPsEditorTagsInput();
-			// Delay close so mousedown/click on suggest items can fire first
-			setTimeout(() => {
-				if (!psEditorTagsSuggestTarget) closePsEditorTagsSuggest();
-			}, 150);
+			// Delay close and sync so mousedown/click on suggest items can fire first
+			if (psEditorTagsSuggestOpen) {
+				setTimeout(() => {
+					syncPsEditorTagsInput();
+					if (!psEditorTagsSuggestTarget) closePsEditorTagsSuggest();
+				}, 200);
+			} else {
+				syncPsEditorTagsInput();
+			}
 		});
 	}
 	function attachPsTagPreviewHover(el) {
