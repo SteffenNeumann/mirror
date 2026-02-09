@@ -1821,6 +1821,14 @@
 		return createdAt || Date.now();
 	}
 
+	function ensurePsEditingDateTagsInitialized() {
+		if (psEditingNoteDateInitialized) return;
+		const defaults = getDateTagsForTs(getEditingNoteCreatedAt());
+		if (!psEditingNoteYearTag) psEditingNoteYearTag = defaults.year;
+		if (!psEditingNoteMonthTag) psEditingNoteMonthTag = defaults.month;
+		psEditingNoteDateInitialized = true;
+	}
+
 	function syncPsEditorTagMetaInputs() {
 		if (psEditorYearTag) psEditorYearTag.value = psEditingNoteYearTag || "";
 		if (psEditorMonthTag)
@@ -1844,6 +1852,7 @@
 		psEditingNoteSubcategory = normalizeCategoryValue(
 			psEditorSubcategoryTag ? psEditorSubcategoryTag.value : ""
 		);
+		psEditingNoteDateInitialized = true;
 		syncPsEditorTagMetaInputs();
 		updatePsEditingTagsHint();
 		updateEditingNoteTagsLocal(psEditingNoteTags);
@@ -2082,6 +2091,8 @@
 		psEditingNoteMonthTag = normalizeMonthTag(split.month);
 		psEditingNoteCategory = normalizeCategoryValue(split.category);
 		psEditingNoteSubcategory = normalizeCategoryValue(split.subcategory);
+		psEditingNoteDateInitialized = false;
+		ensurePsEditingDateTagsInitialized();
 		updatePsEditingTagsHint();
 		syncPsEditorTagsInput();
 	}
@@ -4460,6 +4471,7 @@
 	let psEditingNoteMonthTag = "";
 	let psEditingNoteCategory = "";
 	let psEditingNoteSubcategory = "";
+	let psEditingNoteDateInitialized = false;
 	let psEditingNoteTagsOverridden = false;
 	let psEditingNotePinned = false;
 	let psSortMode = "updated";
@@ -11519,6 +11531,7 @@ ${highlightThemeCss}
 		psEditingNoteMonthTag = defaults.month;
 		psEditingNoteCategory = "";
 		psEditingNoteSubcategory = "";
+		psEditingNoteDateInitialized = true;
 		psEditingNoteTagsOverridden = false;
 		psEditingNotePinned = false;
 		syncPsEditorTagsInput(true);
@@ -11569,6 +11582,8 @@ ${highlightThemeCss}
 		psEditingNoteMonthTag = normalizeMonthTag(split.month);
 		psEditingNoteCategory = normalizeCategoryValue(split.category);
 		psEditingNoteSubcategory = normalizeCategoryValue(split.subcategory);
+		psEditingNoteDateInitialized = false;
+		ensurePsEditingDateTagsInitialized();
 		syncPsEditorTagsInput(true);
 		updatePsEditingTagsHint();
 		psAutoSaveLastSavedNoteId = psEditingNoteId;
@@ -11610,6 +11625,8 @@ ${highlightThemeCss}
 		psEditingNoteMonthTag = normalizeMonthTag(split.month);
 		psEditingNoteCategory = normalizeCategoryValue(split.category);
 		psEditingNoteSubcategory = normalizeCategoryValue(split.subcategory);
+		psEditingNoteDateInitialized = false;
+		ensurePsEditingDateTagsInitialized();
 		syncPsEditorTagsInput(true);
 		if (!(opts && opts.skipText)) {
 			textarea.value = String(note.text || "");
