@@ -20608,15 +20608,27 @@ self.onmessage = async (e) => {
 			updatePsEditorTagMetaFromInputs();
 		});
 	}
+	function openPsTagsSuggestFromMeta(ev) {
+		if (!psEditorTagsInput || !psEditorTagsSuggest) return;
+		if (ev) ev.preventDefault();
+		try {
+			psEditorTagsInput.focus({ preventScroll: true });
+		} catch {
+			// ignore focus errors
+		}
+		updatePsEditorTagsSuggest(true);
+	}
 	if (psEditorCategoryTag) {
 		psEditorCategoryTag.addEventListener("input", () => {
 			updatePsEditorTagMetaFromInputs();
 		});
+		psEditorCategoryTag.addEventListener("mousedown", openPsTagsSuggestFromMeta);
 	}
 	if (psEditorSubcategoryTag) {
 		psEditorSubcategoryTag.addEventListener("input", () => {
 			updatePsEditorTagMetaFromInputs();
 		});
+		psEditorSubcategoryTag.addEventListener("mousedown", openPsTagsSuggestFromMeta);
 	}
 	if (psEditorTagsSuggest) {
 		psEditorTagsSuggest.addEventListener("mousedown", (ev) => {
