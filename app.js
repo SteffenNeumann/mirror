@@ -2088,16 +2088,18 @@
 
 	function applyPsEditorTagSuggestion(tag) {
 		if (psEditorTagsSuggestTarget) {
-			// Apply to category/subcategory field
-			psEditorTagsSuggestTarget.value = String(tag || "");
-			updatePsEditorTagMetaFromInputs();
+			const el = psEditorTagsSuggestTarget;
 			closePsEditorTagsSuggest();
+			el.value = String(tag || "");
+			updatePsEditorTagMetaFromInputs();
+			el.focus();
 			return;
 		}
 		if (!psEditorTagsInput) return;
 		const { value, start, end } = getPsEditorTagTokenBounds(psEditorTagsInput);
 		const nextValue =
 			value.slice(0, start) + String(tag || "") + value.slice(end);
+		closePsEditorTagsSuggest();
 		psEditorTagsInput.value = nextValue;
 		const caret = start + String(tag || "").length;
 		try {
@@ -2106,6 +2108,7 @@
 			// ignore
 		}
 		updatePsEditorTagsFromInput();
+		psEditorTagsInput.focus();
 		updatePsEditorTagsSuggest(true);
 	}
 
@@ -20608,15 +20611,8 @@ self.onmessage = async (e) => {
 		});
 		psEditorTagsInput.addEventListener("blur", () => {
 			if (psEditorTagsSyncing) return;
-			// Delay close and sync so mousedown/click on suggest items can fire first
-			if (psEditorTagsSuggestOpen) {
-				setTimeout(() => {
-					syncPsEditorTagsInput();
-					if (!psEditorTagsSuggestTarget) closePsEditorTagsSuggest();
-				}, 200);
-			} else {
-				syncPsEditorTagsInput();
-			}
+			syncPsEditorTagsInput();
+			closePsEditorTagsSuggest();
 		});
 	}
 	function attachPsTagPreviewHover(el) {
@@ -20667,9 +20663,7 @@ self.onmessage = async (e) => {
 			openPsMetaTagSuggest(psEditorCategoryTag, "cat:");
 		});
 		psEditorCategoryTag.addEventListener("blur", () => {
-			if (psEditorTagsSuggestTarget === psEditorCategoryTag) {
-				setTimeout(() => closePsEditorTagsSuggest(), 150);
-			}
+			closePsEditorTagsSuggest();
 		});
 	}
 	if (psEditorSubcategoryTag) {
@@ -20681,9 +20675,7 @@ self.onmessage = async (e) => {
 			openPsMetaTagSuggest(psEditorSubcategoryTag, "sub:");
 		});
 		psEditorSubcategoryTag.addEventListener("blur", () => {
-			if (psEditorTagsSuggestTarget === psEditorSubcategoryTag) {
-				setTimeout(() => closePsEditorTagsSuggest(), 150);
-			}
+			closePsEditorTagsSuggest();
 		});
 	}
 	if (psEditorTagsSuggest) {
