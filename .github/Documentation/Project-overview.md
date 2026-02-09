@@ -10,6 +10,13 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
   - Zuständige Funktion: `getCommentScopeId` ([app.js](app.js#L2499)).
 - Comment-Badge-Flicker bei Tab-Wechsel: `loadCommentsForRoom()` leert `commentItems` nur noch bei echtem Scope-Wechsel (`commentActiveNoteId !== scopeId`). Bei Reload desselben Scopes bleibt der alte Badge-Wert bis der Fetch abschließt, anstatt kurz auf 0 zu springen.
   - Zuständige Funktion: `loadCommentsForRoom` ([app.js](app.js#L2606)).
+- Kommentar-Markierungsfarbe pro User: `buildCommentOverlayHtml` setzt jetzt inline `background`/`box-shadow` basierend auf `author.color` des jeweiligen Kommentars. Damit sind Markierungen verschiedener User visuell unterscheidbar. Ohne `author.color` greift der CSS-Fallback (Fuchsia).
+  - Zuständige Funktion: `buildCommentOverlayHtml` ([app.js](app.js#L2708)).
+- Erster Kommentar verschwindet in geteilten Räumen: Drei Race Conditions behoben:
+  1. `scheduleCommentSave` persistiert jetzt sofort statt mit 400ms Delay, damit der Server-State aktuell ist bevor ein paralleles `loadCommentsForRoom` den lokalen State überschreibt.
+  2. `loadCommentsForRoom` wartet auf laufende `commentSavePromise` bevor es den Server abfragt, damit kein veralteter State geladen wird.
+  3. WebSocket `comment_update`-Handler ignoriert jetzt eigene Nachrichten (`msg.clientId === clientId`), damit der lokale State nicht durch die eigene Broadcast-Nachricht überschrieben wird.
+  - Zuständige Funktionen: `scheduleCommentSave` ([app.js](app.js#L2645)), `persistCommentsForScope` ([app.js](app.js#L2655)), `loadCommentsForRoom` ([app.js](app.js#L2606)), WS-Handler `comment_update` ([app.js](app.js#L18010)).
 
 ## Aktuelle Änderungen (2026-02-08)
 

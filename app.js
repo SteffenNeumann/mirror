@@ -2265,6 +2265,7 @@
 	let commentSelectedId = "";
 	let commentItems = [];
 	let commentSaveTimer = null;
+	let commentSavePromise = null;
 	let commentSaveNoteId = "";
 	let commentLoadToken = 0;
 	let commentActiveNoteId = "";
@@ -2622,6 +2623,10 @@
 			}
 			return;
 		}
+		// Wait for any in-flight comment save to finish before loading
+		if (commentSavePromise) {
+			try { await commentSavePromise; } catch { /* ignore */ }
+		}
 		const token = ++commentLoadToken;
 		try {
 			const res = await api(apiUrl);
@@ -2642,11 +2647,9 @@
 		if (!canSyncCommentsForScope(scopeId)) return;
 		commentSaveNoteId = scopeId;
 		if (commentSaveTimer) window.clearTimeout(commentSaveTimer);
-		commentSaveTimer = window.setTimeout(() => {
-			const currentScopeId = getCommentScopeId();
-			if (currentScopeId !== scopeId) return;
-			void persistCommentsForScope(scopeId);
-		}, 400);
+		// Persist immediately to avoid race with loadCommentsForRoom
+		// overwriting local state before the save completes
+		void persistCommentsForScope(scopeId);
 	}
 
 	async function persistCommentsForScope(scopeId) {
@@ -2654,32 +2657,39 @@
 		if (!canSyncCommentsForScope(scopeId)) return;
 		if (!apiUrl || resolvedScopeId !== scopeId) return;
 		const payload = commentItems.slice(0, 200);
-		try {
-			const res = await api(apiUrl, {
-				method: "PUT",
-				body: JSON.stringify({ comments: payload }),
-			});
-			if (getCommentScopeId() !== scopeId) return;
-			const updatedAt = Number(res && res.updatedAt ? res.updatedAt : 0) || 0;
-			if (scopeId.startsWith("note:")) {
-				const noteId = scopeId.slice(5);
-				if (noteId) {
-					if (payload.length > 0) psCommentedNoteIds.add(noteId);
-					else psCommentedNoteIds.delete(noteId);
-					if (psCommentsOnly) applyPersonalSpaceFiltersAndRender();
+		const p = (async () => {
+			try {
+				const res = await api(apiUrl, {
+					method: "PUT",
+					body: JSON.stringify({ comments: payload }),
+				});
+				if (getCommentScopeId() !== scopeId) return;
+				const updatedAt = Number(res && res.updatedAt ? res.updatedAt : 0) || 0;
+				if (scopeId.startsWith("note:")) {
+					const noteId = scopeId.slice(5);
+					if (noteId) {
+						if (payload.length > 0) psCommentedNoteIds.add(noteId);
+						else psCommentedNoteIds.delete(noteId);
+						if (psCommentsOnly) applyPersonalSpaceFiltersAndRender();
+					}
 				}
+				sendMessage({
+					type: "comment_update",
+					room,
+					clientId,
+					scopeId,
+					comments: payload,
+					updatedAt,
+				});
+			} catch {
+				// ignore
 			}
-			sendMessage({
-				type: "comment_update",
-				room,
-				clientId,
-				scopeId,
-				comments: payload,
-				updatedAt,
-			});
-		} catch {
-			// ignore
-		}
+		})();
+		commentSavePromise = p;
+		p.finally(() => {
+			if (commentSavePromise === p) commentSavePromise = null;
+		});
+		return p;
 	}
 
 	function saveCommentsForRoom() {
@@ -2711,7 +2721,9 @@
 			.map((entry) => {
 				const normalized = normalizeCommentSelection(entry, value);
 				if (!normalized) return null;
-				return { id: entry.id, ...normalized };
+				const authorColor = entry.author && entry.author.color
+					? String(entry.author.color) : "";
+				return { id: entry.id, authorColor, ...normalized };
 			})
 			.filter(Boolean)
 			.sort((a, b) => a.start - b.start);
@@ -2722,9 +2734,12 @@
 		for (const range of ranges) {
 			if (range.start < lastEnd) continue;
 			out += escapeHtml(value.slice(cursor, range.start));
+			const colorStyle = range.authorColor
+				? ` style="background:${escapeHtmlAttr(range.authorColor)}33;box-shadow:inset 0 0 0 1px ${escapeHtmlAttr(range.authorColor)}73"`
+				: "";
 			out += `<span class="comment-span" data-comment-id="${escapeHtmlAttr(
 				range.id
-			)}">${escapeHtml(value.slice(range.start, range.end))}</span>`;
+			)}"${colorStyle}>${escapeHtml(value.slice(range.start, range.end))}</span>`;
 			cursor = range.end;
 			lastEnd = range.end;
 		}
@@ -18008,6 +18023,7 @@ self.onmessage = async (e) => {
 			}
 
 			if (msg.type === "comment_update") {
+				if (msg.clientId && msg.clientId === clientId) return;
 				const scopeId = String(msg.scopeId || "").trim();
 				if (!scopeId || scopeId !== getCommentScopeId()) return;
 				commentItems = normalizeCommentItems(
