@@ -17850,6 +17850,19 @@ self.onmessage = async (e) => {
 					});
 				}
 				updatePresenceUI();
+				// When other users are present (excluding self), mark as shared
+				// so comment scope and app state resolve to room scope
+				const othersPresent = Array.from(presenceState.keys()).some(
+					(id) => id !== clientId
+				);
+				if (othersPresent) {
+					const roomName = normalizeRoom(room);
+					const keyName = normalizeKey(key);
+					if (roomName && !isRoomMarkedShared(roomName, keyName)) {
+						markRoomShared(roomName, keyName);
+						void loadCommentsForRoom();
+					}
+				}
 				return;
 			}
 
@@ -17999,13 +18012,18 @@ self.onmessage = async (e) => {
 						text: textVal,
 						updatedAt,
 					});
-					// Mark room as shared so comment scope and guest features work
+				}
+				// Always mark room as shared when we receive pin state (even empty)
+				// so comment scope and guest features work for all participants
+				if (msg.shared || noteId || textVal) {
 					markRoomShared(roomName, keyName);
 				}
 				syncPermanentLinkToggleUi();
-				syncExcalidrawForNote(psEditingNoteId);
-				syncExcelForNote(psEditingNoteId);
-				syncLinearForNote(psEditingNoteId);
+				// Use noteId from pin message, not local psEditingNoteId,
+				// so guests resolve the correct room scope for apps
+				syncExcalidrawForNote(noteId || "");
+				syncExcelForNote(noteId || "");
+				syncLinearForNote(noteId || "");
 				void loadCommentsForRoom();
 				return;
 			}
@@ -18542,6 +18560,9 @@ self.onmessage = async (e) => {
 	const getExcalidrawNoteId = () => {
 		const pinned = getRoomPinnedEntry(room, key);
 		if (pinned) return getExcalidrawRoomScope();
+		// In shared rooms, always use room scope so all participants
+		// resolve the same noteId for app state sync
+		if (isRoomMarkedShared(room, key)) return getExcalidrawRoomScope();
 		const noteId = String(psEditingNoteId || "").trim();
 		if (noteId) return noteId;
 		return getExcalidrawRoomScope();
@@ -18557,6 +18578,7 @@ self.onmessage = async (e) => {
 	const getExcelNoteId = () => {
 		const pinned = getRoomPinnedEntry(room, key);
 		if (pinned) return getExcelRoomScope();
+		if (isRoomMarkedShared(room, key)) return getExcelRoomScope();
 		const noteId = String(psEditingNoteId || "").trim();
 		if (noteId) return noteId;
 		return getExcelRoomScope();
@@ -18572,6 +18594,7 @@ self.onmessage = async (e) => {
 	const getLinearNoteId = () => {
 		const pinned = getRoomPinnedEntry(room, key);
 		if (pinned) return getLinearRoomScope();
+		if (isRoomMarkedShared(room, key)) return getLinearRoomScope();
 		const noteId = String(psEditingNoteId || "").trim();
 		if (noteId) return noteId;
 		return getLinearRoomScope();

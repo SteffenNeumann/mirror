@@ -4821,6 +4821,29 @@ wss.on("connection", (ws, req) => {
 		ws.send(JSON.stringify(payload));
 	}
 
+	// Send room_pin_state BEFORE app states so the client knows the
+	// pinned note before processing excalidraw/excel/linear state.
+	// Also send a shared indicator when >1 socket is connected so
+	// guests can mark the room as shared even without a permanent link.
+	const sharedPin = getRoomSharedPin(rk, room, key);
+	const roomSocketCount = getRoomSockets(rk).size;
+	if (sharedPin || roomSocketCount > 1) {
+		try {
+			ws.send(
+				JSON.stringify({
+					type: "room_pin_state",
+					room,
+					noteId: sharedPin ? (sharedPin.noteId || "") : "",
+					text: sharedPin ? (sharedPin.text || "") : "",
+					updatedAt: sharedPin ? (Number(sharedPin.updatedAt) || 0) : 0,
+					shared: true,
+				})
+			);
+		} catch {
+			// ignore
+		}
+	}
+
 	const initialExcal = roomExcalidrawState.get(rk);
 	if (initialExcal && initialExcal.size > 0) {
 		const items = Array.from(initialExcal.entries()).map(([noteId, state]) => ({
@@ -4902,23 +4925,6 @@ wss.on("connection", (ws, req) => {
 			} catch {
 				// ignore
 			}
-		}
-	}
-
-	const sharedPin = getRoomSharedPin(rk, room, key);
-	if (sharedPin) {
-		try {
-			ws.send(
-				JSON.stringify({
-					type: "room_pin_state",
-					room,
-					noteId: sharedPin.noteId || "",
-					text: sharedPin.text || "",
-					updatedAt: Number(sharedPin.updatedAt) || 0,
-				})
-			);
-		} catch {
-			// ignore
 		}
 	}
 

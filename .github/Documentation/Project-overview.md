@@ -6,6 +6,16 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
 
 ## Aktuelle Änderungen (2026-02-09)
 
+- **Shared-Room App-Sync (Excalidraw, Excel, Linear)**: Drei Ursachen behoben, die dazu führten, dass iframes in geteilten Räumen nicht synchron geöffnet/geschlossen und positioniert wurden:
+  1. Server sendet `room_pin_state` jetzt **vor** den App-States (`excalidraw_state`, `excel_state`, `linear_state`), damit Clients den Pin kennen bevor sie App-State verarbeiten. Zusätzlich wird `room_pin_state` auch gesendet wenn kein Pin existiert aber >1 Socket verbunden ist (mit `shared: true` Flag).
+  2. `room_pin_state`-Handler ruft `syncExcalidrawForNote(noteId)` etc. mit der noteId aus der Nachricht statt `psEditingNoteId` auf, damit Guests den korrekten Room-Scope auflösen.
+  3. `getExcalidrawNoteId()`, `getExcelNoteId()`, `getLinearNoteId()` verwenden in shared Rooms (`isRoomMarkedShared()`) immer den Room-Scope statt auf `psEditingNoteId` zurückzufallen. Damit senden und empfangen Owner und Guest denselben noteId-Key.
+  - Zuständige Funktionen: `getExcalidrawNoteId`, `getExcelNoteId`, `getLinearNoteId` ([app.js](app.js#L18542)), `room_pin_state`-Handler ([app.js](app.js#L17999)), Server Initial-State ([server.js](server.js#L4823)).
+- **Shared-Room Kommentar-Sync (Markierung + Counter)**: Zwei Ursachen behoben, die dazu führten, dass Textmarkierungen und `commentCountBadge` beim Owner nicht angezeigt wurden obwohl der Client sie sah:
+  1. `room_pin_state`-Handler ruft `markRoomShared()` jetzt immer auf wenn `shared`-Flag oder Pin vorhanden ist (nicht nur bei aktivem Permanent-Link). Damit kennen beide Seiten den Shared-Status.
+  2. `presence_state`-Handler markiert den Room als shared wenn andere User anwesend sind (`presenceState` enthält fremde clientIds). Damit wird auch ohne Permanent-Link der Room-Scope für Kommentare verwendet und `comment_update`-WebSocket-Nachrichten nicht mehr wegen Scope-Mismatch verworfen.
+  - Zuständige Funktionen: `room_pin_state`-Handler ([app.js](app.js#L17999)), `presence_state`-Handler ([app.js](app.js#L17838)), `getCommentScopeId` ([app.js](app.js#L2500)).
+
 - Kommentar-Scope in geteilten Räumen: `getCommentScopeId()` priorisiert nun `room:` Scope wenn `isRoomMarkedShared()` true ist, bevor `note:` geprüft wird. Vorher sahen Eigentümer (mit PS-Note) und Besucher (ohne PS) unterschiedliche Scopes (`note:xxx` vs. `room:roomName`), weshalb Kommentare füreinander unsichtbar waren und der Counter (`commentCountBadge`) keine fremden Kommentare zählte. WebSocket `comment_update`-Nachrichten wurden wegen Scope-Mismatch ignoriert.
   - Zuständige Funktion: `getCommentScopeId` ([app.js](app.js#L2499)).
 - Comment-Badge-Flicker bei Tab-Wechsel: `loadCommentsForRoom()` leert `commentItems` nur noch bei echtem Scope-Wechsel (`commentActiveNoteId !== scopeId`). Bei Reload desselben Scopes bleibt der alte Badge-Wert bis der Fetch abschließt, anstatt kurz auf 0 zu springen.
