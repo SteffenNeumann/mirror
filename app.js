@@ -1865,7 +1865,21 @@
 
 	function updatePsEditingTagsHint() {
 		if (!psHint) return;
-		const t = formatTagsForHint(psEditingNoteTags);
+		const manualTags = Array.isArray(psEditingNoteTags)
+			? psEditingNoteTags
+			: [];
+		const systemTags = buildEditorSystemTags();
+		const combined = [];
+		const seen = new Set();
+		for (const tag of [...manualTags, ...systemTags]) {
+			const s = String(tag || "").trim();
+			if (!s) continue;
+			const key = s.toLowerCase();
+			if (seen.has(key)) continue;
+			seen.add(key);
+			combined.push(s);
+		}
+		const t = formatTagsForHint(combined);
 		if (!t) {
 			const existing = String(psHint.textContent || "").trim();
 			if (!existing) return;
