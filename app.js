@@ -1941,6 +1941,7 @@
 	let psEditorTagsSuggestOpen = false;
 	let psEditorTagsSuggestItems = [];
 	let psEditorTagsSuggestIndex = -1;
+	let psEditorTagsSuggestTarget = null; // null = psEditorTagsInput, or reference to category/subcategory input
 
 	function getPsEditorTagTokenBounds(inputEl) {
 		const value = String(inputEl && inputEl.value ? inputEl.value : "");
@@ -1984,11 +1985,35 @@
 		return items;
 	}
 
+	function buildPsMetaTagSuggestItems(targetEl, tagPrefix) {
+		if (!targetEl) return [];
+		const tags = Array.isArray(psState && psState.tags) ? psState.tags : [];
+		if (!tags.length) return [];
+		const currentVal = String(targetEl.value || "").trim().toLowerCase();
+		const seen = new Set();
+		const items = [];
+		for (const t of tags) {
+			const raw = String(t || "").trim();
+			if (!raw.startsWith(tagPrefix)) continue;
+			const val = raw.slice(tagPrefix.length);
+			if (!val) continue;
+			const lower = val.toLowerCase();
+			if (seen.has(lower)) continue;
+			seen.add(lower);
+			if (lower === currentVal) continue;
+			if (currentVal && !lower.startsWith(currentVal)) continue;
+			items.push(val);
+			if (items.length >= 8) break;
+		}
+		return items;
+	}
+
 	function closePsEditorTagsSuggest() {
 		if (!psEditorTagsSuggest) return;
 		psEditorTagsSuggestOpen = false;
 		psEditorTagsSuggestItems = [];
 		psEditorTagsSuggestIndex = -1;
+		psEditorTagsSuggestTarget = null;
 		psEditorTagsSuggest.classList.add("hidden");
 		psEditorTagsSuggest.innerHTML = "";
 	}
@@ -2062,6 +2087,13 @@
 	}
 
 	function applyPsEditorTagSuggestion(tag) {
+		if (psEditorTagsSuggestTarget) {
+			// Apply to category/subcategory field
+			psEditorTagsSuggestTarget.value = String(tag || "");
+			updatePsEditorTagMetaFromInputs();
+			closePsEditorTagsSuggest();
+			return;
+		}
 		if (!psEditorTagsInput) return;
 		const { value, start, end } = getPsEditorTagTokenBounds(psEditorTagsInput);
 		const nextValue =
@@ -20608,27 +20640,44 @@ self.onmessage = async (e) => {
 			updatePsEditorTagMetaFromInputs();
 		});
 	}
-	function openPsTagsSuggestFromMeta(ev) {
-		if (!psEditorTagsInput || !psEditorTagsSuggest) return;
-		if (ev) ev.preventDefault();
-		try {
-			psEditorTagsInput.focus({ preventScroll: true });
-		} catch {
-			// ignore focus errors
+	function openPsMetaTagSuggest(targetEl, tagPrefix) {
+		if (!targetEl || !psEditorTagsSuggest) return;
+		if (!psState || !psState.authed) return;
+		psEditorTagsSuggestTarget = targetEl;
+		const items = buildPsMetaTagSuggestItems(targetEl, tagPrefix);
+		if (!items.length) {
+			closePsEditorTagsSuggest();
+			return;
 		}
-		updatePsEditorTagsSuggest(true);
+		renderPsEditorTagsSuggest(items, 0);
 	}
 	if (psEditorCategoryTag) {
 		psEditorCategoryTag.addEventListener("input", () => {
 			updatePsEditorTagMetaFromInputs();
+			openPsMetaTagSuggest(psEditorCategoryTag, "cat:");
 		});
-		psEditorCategoryTag.addEventListener("mousedown", openPsTagsSuggestFromMeta);
+		psEditorCategoryTag.addEventListener("focus", () => {
+			openPsMetaTagSuggest(psEditorCategoryTag, "cat:");
+		});
+		psEditorCategoryTag.addEventListener("blur", () => {
+			if (psEditorTagsSuggestTarget === psEditorCategoryTag) {
+				setTimeout(() => closePsEditorTagsSuggest(), 150);
+			}
+		});
 	}
 	if (psEditorSubcategoryTag) {
 		psEditorSubcategoryTag.addEventListener("input", () => {
 			updatePsEditorTagMetaFromInputs();
+			openPsMetaTagSuggest(psEditorSubcategoryTag, "sub:");
 		});
-		psEditorSubcategoryTag.addEventListener("mousedown", openPsTagsSuggestFromMeta);
+		psEditorSubcategoryTag.addEventListener("focus", () => {
+			openPsMetaTagSuggest(psEditorSubcategoryTag, "sub:");
+		});
+		psEditorSubcategoryTag.addEventListener("blur", () => {
+			if (psEditorTagsSuggestTarget === psEditorSubcategoryTag) {
+				setTimeout(() => closePsEditorTagsSuggest(), 150);
+			}
+		});
 	}
 	if (psEditorTagsSuggest) {
 		psEditorTagsSuggest.addEventListener("mousedown", (ev) => {
