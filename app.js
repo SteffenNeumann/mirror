@@ -2016,6 +2016,20 @@
 		psEditorTagsSuggestTarget = null;
 		psEditorTagsSuggest.classList.add("hidden");
 		psEditorTagsSuggest.innerHTML = "";
+		psEditorTagsSuggest.style.left = "";
+		psEditorTagsSuggest.style.width = "";
+	}
+
+	function positionPsEditorTagsSuggest() {
+		if (!psEditorTagsSuggest || !psEditorTagsBar) return;
+		const callerEl = psEditorTagsSuggestTarget || psEditorTagsInput;
+		if (!callerEl) return;
+		const barRect = psEditorTagsBar.getBoundingClientRect();
+		const elRect = callerEl.getBoundingClientRect();
+		const left = elRect.left - barRect.left;
+		const width = Math.max(elRect.width, 140);
+		psEditorTagsSuggest.style.left = left + "px";
+		psEditorTagsSuggest.style.width = width + "px";
 	}
 
 	function renderPsEditorTagsSuggest(items, activeIndex) {
@@ -2041,6 +2055,7 @@
 			})
 			.join("");
 		psEditorTagsSuggest.classList.remove("hidden");
+		positionPsEditorTagsSuggest();
 	}
 
 	function updatePsEditorTagsSuggest(forceOpen) {
