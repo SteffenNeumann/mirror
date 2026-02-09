@@ -5463,6 +5463,25 @@ wss.on("connection", (ws, req) => {
 						: { type: "set", room, text: cur.text, ts: cur.ts };
 				ws.send(JSON.stringify(payload));
 			}
+			// Send room_pin_state BEFORE app states (same order as initial connect)
+			const sharedPin = getRoomSharedPin(rk, room, key);
+			const reqSocketCount = getRoomSockets(rk).size;
+			if (sharedPin || reqSocketCount > 1) {
+				try {
+					ws.send(
+						JSON.stringify({
+							type: "room_pin_state",
+							room,
+							noteId: sharedPin ? (sharedPin.noteId || "") : "",
+							text: sharedPin ? (sharedPin.text || "") : "",
+							updatedAt: sharedPin ? (Number(sharedPin.updatedAt) || 0) : 0,
+							shared: true,
+						})
+					);
+				} catch {
+					// ignore
+				}
+			}
 			const excal = roomExcalidrawState.get(rk);
 			if (excal && excal.size > 0) {
 				const items = Array.from(excal.entries()).map(([noteId, state]) => ({
@@ -5542,22 +5561,6 @@ wss.on("connection", (ws, req) => {
 					} catch {
 						// ignore
 					}
-				}
-			}
-			const sharedPin = getRoomSharedPin(rk, room, key);
-			if (sharedPin) {
-				try {
-					ws.send(
-						JSON.stringify({
-							type: "room_pin_state",
-							room,
-							noteId: sharedPin.noteId || "",
-							text: sharedPin.text || "",
-							updatedAt: Number(sharedPin.updatedAt) || 0,
-						})
-					);
-				} catch {
-					// ignore
 				}
 			}
 			return;
