@@ -1866,6 +1866,12 @@
 		return arr.map((t) => `#${t}`).join(" ");
 	}
 
+	function setPsHintText(text) {
+		if (!psHint) return;
+		const msg = String(text || "").slice(0, 200);
+		psHint.textContent = msg;
+	}
+
 	function updatePsEditingTagsHint() {
 		if (!psHint) return;
 		const manualTags = Array.isArray(psEditingNoteTags)
@@ -1890,20 +1896,20 @@
 				.replace(/\s*·\s*Tags:\s*[^·]+$/i, "")
 				.replace(/^Tags:\s*.*$/i, "")
 				.trim();
-			if (cleaned !== existing) psHint.textContent = cleaned;
+			if (cleaned !== existing) setPsHintText(cleaned);
 			return;
 		}
 		const tagPart = `Tags: ${t}`;
 		const existing = String(psHint.textContent || "").trim();
 		if (!existing) {
-			psHint.textContent = tagPart;
+			setPsHintText(tagPart);
 			return;
 		}
 		if (/\bTags:\b/i.test(existing)) {
-			psHint.textContent = tagPart;
+			setPsHintText(tagPart);
 			return;
 		}
-		psHint.textContent = `${existing} · ${tagPart}`;
+		setPsHintText(`${existing} · ${tagPart}`);
 	}
 
 	let psEditorTagsSyncing = false;
@@ -11628,14 +11634,13 @@ ${highlightThemeCss}
 		psEditingNoteDateInitialized = false;
 		ensurePsEditingDateTagsInitialized();
 		syncPsEditorTagsInput(true);
-		if (!(opts && opts.skipText)) {
 			textarea.value = String(note.text || "");
 			try {
 				textarea.focus();
 			} catch {
 				// ignore
 			}
-			if (psHint) psHint.textContent = "Editing: editor text updated.";
+			if (psHint) setPsHintText("Editing: editor text updated.");
 		}
 		updatePsEditingTagsHint();
 		if (psMainHint) {
@@ -12717,7 +12722,7 @@ self.onmessage = async (e) => {
 				roomPins: [],
 				sharedRooms: [],
 			};
-			if (psHint) psHint.textContent = "";
+			if (psHint) setPsHintText("");
 		}
 		psState.favorites = Array.isArray(psState.favorites)
 			? dedupeFavorites(psState.favorites)
@@ -20519,7 +20524,7 @@ self.onmessage = async (e) => {
 				textarea.focus();
 			}
 			if (psMainHint) psMainHint.classList.add("hidden");
-			if (psHint) psHint.textContent = "New note.";
+				if (psHint) setPsHintText("New note.");
 			metaLeft.textContent = "Bereit.";
 			metaRight.textContent = "";
 			updatePreview();
@@ -20581,6 +20586,7 @@ self.onmessage = async (e) => {
 			updatePsEditingTagsHint();
 		};
 		el.addEventListener("mouseenter", handler);
+		el.addEventListener("mouseover", handler);
 		el.addEventListener("focus", handler, true);
 	}
 	attachPsTagPreviewHover(psEditorTagsBar);
@@ -20811,7 +20817,7 @@ self.onmessage = async (e) => {
 		const tagsPayload = buildCurrentPsTagsPayload();
 		if (auto) setPsAutoSaveStatus("Speichern…");
 		else if (psHint)
-			psHint.textContent = psEditingNoteId ? "Updating…" : "Saving…";
+			setPsHintText(psEditingNoteId ? "Updating…" : "Saving…");
 		let targetNoteId = String(psEditingNoteId || "").trim();
 		let targetNoteKind = psEditingNoteKind;
 		if (!targetNoteId && !allowEmpty) {
@@ -20867,7 +20873,7 @@ self.onmessage = async (e) => {
 			updateRoomTabsForNoteId(psEditingNoteId, rawText);
 			if (auto) setPsAutoSaveStatus("Automatisch gespeichert");
 			else setPsAutoSaveStatus("Gespeichert");
-			if (psHint) psHint.textContent = auto ? "" : "Saved.";
+			if (psHint) setPsHintText(auto ? "" : "Saved.");
 			if (!auto) toast("Personal Space: saved.", "success");
 			if (!auto) await refreshPersonalSpace();
 			return true;
@@ -20897,7 +20903,7 @@ self.onmessage = async (e) => {
 		updateRoomTabsForNoteId(targetNoteId, rawText);
 		if (auto) setPsAutoSaveStatus("Automatisch gespeichert");
 		else setPsAutoSaveStatus("Gespeichert");
-		if (psHint) psHint.textContent = auto ? "" : "Updated.";
+		if (psHint) setPsHintText(auto ? "" : "Updated.");
 		if (!auto) toast("Personal Space: saved.", "success");
 		if (!auto) await refreshPersonalSpace();
 		return true;
@@ -21028,7 +21034,7 @@ self.onmessage = async (e) => {
 			try {
 				await savePersonalSpaceNote(text, { auto: false });
 			} catch (e) {
-				if (psHint) psHint.textContent = "Not saved (sign in?).";
+				if (psHint) setPsHintText("Not saved (sign in?).");
 				setPsAutoSaveStatus("");
 				const msg = e && e.message ? String(e.message) : "Error";
 				toast(`Save failed: ${msg}`, "error");
