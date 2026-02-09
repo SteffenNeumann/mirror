@@ -1942,7 +1942,6 @@
 	let psEditorTagsSuggestItems = [];
 	let psEditorTagsSuggestIndex = -1;
 	let psEditorTagsSuggestTarget = null; // null = psEditorTagsInput, or reference to category/subcategory input
-	let psEditorTagsSuggestClicking = false; // true while mousedown on suggest item
 
 	function getPsEditorTagTokenBounds(inputEl) {
 		const value = String(inputEl && inputEl.value ? inputEl.value : "");
@@ -20627,22 +20626,12 @@ self.onmessage = async (e) => {
 		});
 		psEditorTagsInput.addEventListener("blur", () => {
 			if (psEditorTagsSyncing) return;
-			if (psEditorTagsSuggestClicking) return;
 			syncPsEditorTagsInput();
 			closePsEditorTagsSuggest();
 		});
 	}
 	function attachPsTagPreviewHover(el) {
-		if (!el || !el.addEventListener) return;
-		const handler = () => {
-			// Sync meta inputs before rendering hint so hover reflects current values
-			updatePsEditorTagMetaFromInputs();
-			ensurePsEditingDateTagsInitialized();
-			updatePsEditingTagsHint();
-		};
-		el.addEventListener("mouseenter", handler);
-		el.addEventListener("mouseover", handler);
-		el.addEventListener("focus", handler, true);
+		// no-op: removed to prevent psHint flashing on every mouseover
 	}
 	attachPsTagPreviewHover(psEditorTagsBar);
 	attachPsTagPreviewHover(psEditorTagsInput);
@@ -20699,16 +20688,10 @@ self.onmessage = async (e) => {
 		psEditorTagsSuggest.addEventListener("mousedown", (ev) => {
 			const target = ev.target;
 			if (!(target instanceof HTMLElement)) return;
-			if (!target.closest("[data-tag]")) return;
-			ev.preventDefault();
-			psEditorTagsSuggestClicking = true;
-		});
-		psEditorTagsSuggest.addEventListener("click", (ev) => {
-			psEditorTagsSuggestClicking = false;
-			const target = ev.target;
-			if (!(target instanceof HTMLElement)) return;
 			const btn = target.closest("[data-tag]");
 			if (!btn) return;
+			ev.preventDefault();
+			ev.stopPropagation();
 			const tag = String(btn.getAttribute("data-tag") || "");
 			if (!tag) return;
 			applyPsEditorTagSuggestion(tag);
