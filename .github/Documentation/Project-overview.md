@@ -142,6 +142,7 @@ Server-Start
 6) Kommentare/Markierungen
 - Zweck: Kommentare verwalten, Overlay/Panel synchronisieren.
 - Umsetzung: `loadCommentsForRoom`, `renderCommentList`, `updateCommentOverlay`, `addCommentFromDraft`.
+- Hinweis: Textmarkierungen (Highlights) sind per `noteId` an die jeweilige Notiz gebunden. `buildCommentOverlayHtml` zeigt Markierungen nur für die aktuell angezeigte Notiz an, damit Highlights bei Note-Wechsel nicht auf andere Notizen „wandern". `getCommentSelectionNoteId` ermittelt die korrekte Note-ID (Pin > PS-Note).
 
 7) Personal Space (Notizen, Tags, Auto-Save)
 - Zweck: Notizen laden/filtern, Tags, Auto-Save, Tabs/History.
@@ -353,11 +354,12 @@ Server-Start
 |----------|-------|------|----------------|
 | `formatCommentTime` | Kommentar-Zeit formatieren | `#format` `#date` | — |
 | `getCommentScopeId` | Ermittelt Scope-ID (Raum/Note) | `#scope` `#room` | — |
+| `getCommentSelectionNoteId` | Ermittelt Note-ID für Markierungszuordnung (Pin > PS-Note) | `#scope` `#identity` | `getCommentNoteId`, `getRoomPinnedEntry`, `normalizeRoom`, `normalizeKey` |
 | `canSyncCommentsForScope` | Prüft ob Kommentar-Sync erlaubt | `#check` `#security` | — |
 | `loadCommentsForRoom` | Lädt Kommentare für Raum | `#api` `#load` | `getCommentScopeId`, `renderCommentList`, `t`, `updateCommentOverlay` |
 | `saveCommentsForRoom` | Speichert Kommentare | `#api` `#save` | `getCommentScopeId` |
 | `normalizeCommentSelection` | Normalisiert Kommentar-Selektion | `#normalize` | — |
-| `buildCommentOverlayHtml` | Baut Kommentar-Overlay-HTML | `#build` `#html` | `escapeHtml`, `escapeHtmlAttr`, `normalizeCommentSelection`, `t` |
+| `buildCommentOverlayHtml` | Baut Kommentar-Overlay-HTML; filtert Markierungen nach `noteId` | `#build` `#html` | `escapeHtml`, `escapeHtmlAttr`, `getCommentSelectionNoteId`, `normalizeCommentSelection`, `t` |
 | `syncCommentOverlayScroll` | Synchronisiert Overlay-Scroll | `#sync` `#dom` | — |
 | `updateCommentOverlay` | Aktualisiert Kommentar-Overlay | `#render` `#overlay` | `buildCommentOverlayHtml`, `syncCommentOverlayScroll` |
 | `setCommentPanelOpen` | Setzt Panel offen/geschlossen | `#ui` `#state` | `updateCommentOverlay` |
@@ -366,7 +368,7 @@ Server-Start
 | `setCommentComposerState` | Setzt Composer-State | `#state` | — |
 | `clearCommentComposerState` | Löscht Composer-State | `#reset` `#state` | `setCommentDraftSelection`, `updateCommentComposerUi` |
 | `renderCommentList` | Rendert Kommentar-Liste | `#render` `#panel` | `applyUiTranslations`, `clearCommentComposerState`, `formatCommentTime`, `normalizeCommentSelection`, `saveCommentsForRoom`, `setCommentComposerState`, `setCommentPanelOpen`, `t`, `updateCommentOverlay`, `updateSelectionMenu` |
-| `addCommentFromDraft` | Fügt Kommentar aus Draft hinzu | `#handler` `#create` | `clearCommentComposerState`, `getSelectionRange`, `renderCommentList`, `saveCommentsForRoom`, `t`, `toast`, `updateCommentOverlay` |
+| `addCommentFromDraft` | Fügt Kommentar aus Draft hinzu; speichert `noteId` | `#handler` `#create` | `clearCommentComposerState`, `getCommentSelectionNoteId`, `getSelectionRange`, `renderCommentList`, `saveCommentsForRoom`, `t`, `toast`, `updateCommentOverlay` |
 | `openCommentFromSelection` | Öffnet Kommentar aus Selektion | `#handler` `#ui` | `getSelectionRange`, `setCommentDraftSelection`, `setCommentPanelOpen`, `setSelectionMenuOpen`, `updateCommentComposerUi` |
 
 #### 8 · Editor-Selektion & Textformatierung `#editor` — `app.js`
