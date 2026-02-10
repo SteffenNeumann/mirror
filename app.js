@@ -18641,7 +18641,9 @@ self.onmessage = async (e) => {
 			el.className = "tab-tooltip-layer";
 			const box = document.createElement("div");
 			box.className = "tab-tooltip-layer__box";
-			box.style.maxWidth = "260px";
+			box.style.maxWidth = "360px";
+			box.style.minWidth = "280px";
+			box.style.padding = "8px 12px";
 			box.textContent = t("permalink.info.message");
 			const arrow = document.createElement("div");
 			arrow.className = "tab-tooltip-layer__arrow";
