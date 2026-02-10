@@ -4692,6 +4692,7 @@
 	const PS_AUTO_IMPORT_SEEN_KEY = "mirror_ps_auto_import_seen_v1";
 	const PS_MANUAL_TAGS_MARKER = "__manual_tags__";
 	const PS_PINNED_TAG = "pinned";
+	const PS_QUERY_RESULT_KEY = "mirror_ps_query_result_collapsed";
 	const AI_PROMPT_KEY = "mirror_ai_prompt";
 	const AI_USE_PREVIEW_KEY = "mirror_ai_use_preview";
 	const AI_USE_ANSWER_KEY = "mirror_ai_use_answer";
@@ -5027,8 +5028,11 @@
 				"ps.notes": "Notizen",
 				"ps.pinned_only": "Nur angepinnte",
 				"ps.comments_only": "Nur mit Kommentaren",
-				"ps.search": "Suche...",
+				"ps.search": "Suche… (tag: task: has: kind: pinned:)",
 				"ps.sort": "Sortierung",
+				"query.open": "offen",
+				"query.done": "erledigt",
+				"query.from_notes": "aus {n} Notizen",
 				"ps.sort_by": "Sortieren nach",
 				"ps.sort.modified": "Geändert",
 				"ps.sort.created": "Erstellt",
@@ -5435,8 +5439,11 @@
 				"ps.notes": "Notes",
 				"ps.pinned_only": "Pinned only",
 				"ps.comments_only": "With comments",
-				"ps.search": "Search...",
+				"ps.search": "Search… (tag: task: has: kind: pinned:)",
 				"ps.sort": "Sort",
+				"query.open": "open",
+				"query.done": "done",
+				"query.from_notes": "from {n} notes",
 				"ps.sort_by": "Sort by",
 				"ps.sort.modified": "Modified",
 				"ps.sort.created": "Created",
@@ -8423,6 +8430,74 @@
 			.toLowerCase();
 	}
 
+	/* ── Query Engine ──────────────────────────────────────── */
+
+	function parseQueryTokens(raw) {
+		const src = String(raw || "").trim().toLowerCase();
+		if (!src) return { structured: [], plain: [] };
+		const structured = [];
+		const plain = [];
+		const regex = /"([^"]+)"|([^\s]+)/g;
+		let m;
+		while ((m = regex.exec(src))) {
+			const v = (m[1] || m[2] || "").trim();
+			if (!v) continue;
+			if (v.startsWith("tag:")) {
+				const tag = v.slice(4).replace(/^#/, "").trim();
+				if (tag) structured.push({ type: "tag", value: tag });
+			} else if (v === "task:open") {
+				structured.push({ type: "taskOpen" });
+			} else if (v === "task:done" || v === "task:closed") {
+				structured.push({ type: "taskDone" });
+			} else if (v === "has:task" || v === "has:tasks") {
+				structured.push({ type: "hasTask" });
+			} else if (v.startsWith("kind:")) {
+				structured.push({ type: "kind", value: v.slice(5).trim() });
+			} else if (v.startsWith("created:>")) {
+				structured.push({ type: "createdAfter", value: v.slice(9).trim() });
+			} else if (v.startsWith("created:<")) {
+				structured.push({ type: "createdBefore", value: v.slice(9).trim() });
+			} else if (v.startsWith("updated:>")) {
+				structured.push({ type: "updatedAfter", value: v.slice(9).trim() });
+			} else if (v.startsWith("updated:<")) {
+				structured.push({ type: "updatedBefore", value: v.slice(9).trim() });
+			} else if (v === "pinned:yes" || v === "pinned:true") {
+				structured.push({ type: "pinned", value: true });
+			} else if (v === "pinned:no" || v === "pinned:false") {
+				structured.push({ type: "pinned", value: false });
+			} else {
+				plain.push(v);
+			}
+		}
+		return { structured, plain };
+	}
+
+	function extractNoteTasks(text) {
+		const lines = String(text || "").split("\n");
+		const open = [];
+		const done = [];
+		for (const line of lines) {
+			const m = line.match(/^\s*-\s\[([ xX])\]\s+(.+)/);
+			if (m) {
+				const label = m[2].trim();
+				if (m[1] === " ") open.push(label);
+				else done.push(label);
+			}
+		}
+		return { open, done, total: open.length + done.length };
+	}
+
+	function parseDatePrefix(val) {
+		if (!val) return 0;
+		const d = new Date(val);
+		return Number.isFinite(d.getTime()) ? d.getTime() : 0;
+	}
+
+	function isQueryMode(raw) {
+		const q = String(raw || "").trim().toLowerCase();
+		return /(?:^|\s)(?:tag:|task:|has:|kind:|created:|updated:|pinned:)/.test(q);
+	}
+
 	function colognePhonetic(raw) {
 		const input = String(raw || "")
 			.toLowerCase()
@@ -8761,6 +8836,136 @@
 		});
 	}
 
+	function noteMatchesStructuredQuery(note, structured) {
+		if (!structured || structured.length === 0) return true;
+		const text = String(note && note.text ? note.text : "");
+		const tags = Array.isArray(note && note.tags) ? note.tags : [];
+		const tagsLower = tags.map((t) => String(t || "").toLowerCase());
+		const kind = String(note && note.kind ? note.kind : "").toLowerCase();
+		const createdAt = Number(note && note.createdAt ? note.createdAt : 0);
+		const updatedAt = Number(note && note.updatedAt ? note.updatedAt : createdAt);
+		let tasks = null;
+		const getTasks = () => {
+			if (!tasks) tasks = extractNoteTasks(text);
+			return tasks;
+		};
+		return structured.every((tok) => {
+			switch (tok.type) {
+				case "tag":
+					return tagsLower.includes(tok.value);
+				case "taskOpen":
+					return getTasks().open.length > 0;
+				case "taskDone":
+					return getTasks().done.length > 0;
+				case "hasTask":
+					return getTasks().total > 0;
+				case "kind":
+					return kind === tok.value || (!kind && tok.value === "note");
+				case "createdAfter": {
+					const ts = parseDatePrefix(tok.value);
+					return ts ? createdAt >= ts : true;
+				}
+				case "createdBefore": {
+					const ts = parseDatePrefix(tok.value);
+					return ts ? createdAt < ts : true;
+				}
+				case "updatedAfter": {
+					const ts = parseDatePrefix(tok.value);
+					return ts ? updatedAt >= ts : true;
+				}
+				case "updatedBefore": {
+					const ts = parseDatePrefix(tok.value);
+					return ts ? updatedAt < ts : true;
+				}
+				case "pinned":
+					return tok.value ? noteIsPinned(note) : !noteIsPinned(note);
+				default:
+					return true;
+			}
+		});
+	}
+
+	function renderQueryResults(notes, parsed, hasStructured) {
+		const panel = document.getElementById("psQueryResults");
+		if (!panel) return;
+		const hasTaskQuery = parsed.structured.some(
+			(t) => t.type === "taskOpen" || t.type === "taskDone" || t.type === "hasTask"
+		);
+		if (!hasStructured || !hasTaskQuery || notes.length === 0) {
+			panel.classList.add("hidden");
+			panel.innerHTML = "";
+			return;
+		}
+		const wantOpen = parsed.structured.some((t) => t.type === "taskOpen");
+		const wantDone = parsed.structured.some((t) => t.type === "taskDone");
+		const showBoth = !wantOpen && !wantDone;
+		const items = [];
+		for (const note of notes) {
+			const text = String(note && note.text ? note.text : "");
+			const tasks = extractNoteTasks(text);
+			const title = getNoteTitle(text);
+			const noteId = String(note && note.id ? note.id : "");
+			if (wantOpen || showBoth) {
+				for (const t of tasks.open) {
+					items.push({ label: t, done: false, noteTitle: title, noteId });
+				}
+			}
+			if (wantDone || showBoth) {
+				for (const t of tasks.done) {
+					items.push({ label: t, done: true, noteTitle: title, noteId });
+				}
+			}
+		}
+		if (items.length === 0) {
+			panel.classList.add("hidden");
+			panel.innerHTML = "";
+			return;
+		}
+		const openCount = items.filter((i) => !i.done).length;
+		const doneCount = items.filter((i) => i.done).length;
+		const tagTokens = parsed.structured.filter((t) => t.type === "tag").map((t) => "#" + t.value);
+		const tagLabel = tagTokens.length ? tagTokens.join(", ") : "";
+		const headerParts = [];
+		if (openCount > 0) headerParts.push(`${openCount} ` + t("query.open"));
+		if (doneCount > 0) headerParts.push(`${doneCount} ` + t("query.done"));
+		const countLabel = headerParts.join(", ");
+		const fromLabel = t("query.from_notes").replace("{n}", String(notes.length));
+		let html = '<div class="ps-query-header">';
+		html += '<div class="ps-query-header-row">';
+		html += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ps-query-icon"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>';
+		html += '<span class="ps-query-summary">' + countLabel;
+		if (tagLabel) html += ' <span class="ps-query-tag">' + escapeHtml(tagLabel) + '</span>';
+		html += ' <span class="ps-query-from">' + escapeHtml(fromLabel) + '</span>';
+		html += '</span>';
+		html += '</div></div>';
+		html += '<ul class="ps-query-list">';
+		for (const item of items) {
+			const cls = item.done ? 'ps-query-item done' : 'ps-query-item';
+			const check = item.done
+				? '<svg viewBox="0 0 16 16" class="ps-query-check done"><rect x="1" y="1" width="14" height="14" rx="3" fill="currentColor" opacity="0.15" stroke="currentColor" stroke-width="1.5"/><path d="M4.5 8l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+				: '<svg viewBox="0 0 16 16" class="ps-query-check"><rect x="1" y="1" width="14" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
+			html += '<li class="' + cls + '" data-query-note-id="' + escapeHtml(item.noteId) + '">';
+			html += check;
+			html += '<span class="ps-query-label">' + escapeHtml(item.label) + '</span>';
+			html += '<span class="ps-query-note-ref" title="' + escapeHtml(item.noteTitle) + '">' + escapeHtml(item.noteTitle) + '</span>';
+			html += '</li>';
+		}
+		html += '</ul>';
+		panel.innerHTML = html;
+		panel.classList.remove("hidden");
+		panel.querySelectorAll("[data-query-note-id]").forEach((el) => {
+			el.addEventListener("click", () => {
+				const noteId = el.getAttribute("data-query-note-id") || "";
+				if (!noteId) return;
+				const note = findNoteById(noteId);
+				if (note) {
+					const allNotes = filterRealNotes(psState && psState.notes ? psState.notes : []);
+					applyNoteToEditor(note, allNotes);
+				}
+			});
+		});
+	}
+
 	function applyPersonalSpaceFiltersAndRender() {
 		if (!psState || !psState.authed) return;
 		const allNotes = filterRealNotes(psState.notes);
@@ -8819,9 +9024,13 @@
 			}
 		}
 		const q = normalizeSearchQuery(psSearchQuery);
-		if (q) {
-			const tokens = q.split(/\s+/).filter(Boolean).slice(0, 8);
-			notes = notes.filter((n) => noteMatchesSearch(n, tokens));
+		const parsed = parseQueryTokens(q);
+		const hasStructured = parsed.structured.length > 0;
+		if (hasStructured) {
+			notes = notes.filter((n) => noteMatchesStructuredQuery(n, parsed.structured));
+		}
+		if (parsed.plain.length > 0) {
+			notes = notes.filter((n) => noteMatchesSearch(n, parsed.plain));
 		}
 		if (psCount) {
 			const total = allNotes.length;
@@ -8832,6 +9041,7 @@
 		}
 		renderPsTags(psState.tags || []);
 		renderPsList(notes);
+		renderQueryResults(notes, parsed, hasStructured);
 		requestAnimationFrame(() => {
 			syncPsListHeight();
 		});

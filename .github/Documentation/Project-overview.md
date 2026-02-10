@@ -6,6 +6,15 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
 
 ## Aktuelle Änderungen (2026-02-10)
 
+- **Query-Engine für Personal-Space-Notizen** `#ps` `#search` `#filter` `#query`: Erweiterte Suchsyntax im PS-Suchfeld ermöglicht strukturierte Abfragen über alle Notizen. Nutzer können Tasks, Tags, Datumsbereiche, Notiztypen und Pin-Status filtern und erhalten ein aggregiertes Ergebnis-Panel mit allen passenden Tasks.
+  - **Query-Parser** (`parseQueryTokens`): Zerlegt Sucheingabe in strukturierte Operatoren (`tag:`, `task:open`, `task:done`, `has:task`, `kind:`, `created:>`, `updated:<`, `pinned:`) und Freitext-Tokens. Unterstützt exakte Phrasen mit Anführungszeichen.
+  - **Task-Extraktor** (`extractNoteTasks`): Extrahiert Markdown-Checkboxen (`- [ ]` / `- [x]`) mit Labeltext aus Notizen.
+  - **Strukturierte Suche** (`noteMatchesStructuredQuery`): Filtert Notizen anhand der Query-Operatoren – lazy Task-Parsing für Performance.
+  - **Query-Result-Panel** (`renderQueryResults`): Aggregiert Tasks über alle gefilterten Notizen in einem glasmorphen Panel (`#psQueryResults`) oberhalb der Notizliste. Zeigt offene/erledigte Zähler, Tag-Badges und Quellnotiz-Referenz. Klick auf einen Task öffnet die zugehörige Notiz im Editor.
+  - **i18n**: `query.open`, `query.done`, `query.from_notes` in DE + EN. Search-Placeholder zeigt verfügbare Operatoren.
+  - Zuständige Funktionen: `parseQueryTokens` ([app.js](app.js#L8435)), `extractNoteTasks` ([app.js](app.js#L8477)), `parseDatePrefix` ([app.js](app.js#L8491)), `isQueryMode` ([app.js](app.js#L8497)), `noteMatchesStructuredQuery` ([app.js](app.js#L8838)), `renderQueryResults` ([app.js](app.js#L8888)), `applyPersonalSpaceFiltersAndRender` ([app.js](app.js#L8966)).
+  - Zuständige Dateien: `app.js`, `index.html` (Panel-HTML), `styles/app.css` (Query-Panel CSS).
+
 - **Link-Symbol nach Shared-Room-Löschung entfernt** `#tabs` `#share` `#ws`: Wenn ein geteilter Raum über die Settings-Verwaltung entfernt wurde (`removeSharedRoom` / `clearSharedRooms`), konnte das Link-Symbol (🔗 `room-tab-link-badge`) im Tab sofort wieder erscheinen, weil WebSocket-Handler (`presence_state`, `room_pin_state`) den Raum automatisch als geteilt neu markierten. Fix: Neue `manuallyUnsharedRooms`-Set speichert explizit un-geteilte Räume. `markRoomShared` ignoriert automatisches Re-Marking für diese Räume. Beim Raumwechsel wird der Guard aufgehoben, damit ein erneuter Besuch frisch startet. Explizites Teilen (`markCurrentRoomShared`) löscht den Guard.
   - Zuständige Funktionen: `markRoomShared`, `removeSharedRoom`, `clearSharedRooms`, `markCurrentRoomShared`, hashchange-Handler (alle in `app.js`).
 
@@ -160,10 +169,11 @@ Server-Start
 - Umsetzung: `loadCommentsForRoom`, `renderCommentList`, `updateCommentOverlay`, `addCommentFromDraft`.
 - Hinweis: Raum-Kommentare (ohne Textmarkierung) sind immer sichtbar. Textmarkierung-Kommentare sind per `noteId` an die jeweilige Notiz gebunden und werden nur angezeigt (Counter, Liste, Overlay), wenn die zugehörige Notiz aktiv ist. `getVisibleCommentItems()` filtert zentral für alle drei Ausgaben.
 
-7) Personal Space (Notizen, Tags, Auto-Save)
-- Zweck: Notizen laden/filtern, Tags, Auto-Save, Tabs/History.
-- Umsetzung: `refreshPersonalSpace`, `applyPersonalSpaceFiltersAndRender`, `savePersonalSpaceNote`, `updateRoomTabsForNoteId`.
+7) Personal Space (Notizen, Tags, Auto-Save, Query-Engine)
+- Zweck: Notizen laden/filtern, Tags, Auto-Save, Tabs/History. Strukturierte Abfragen über alle Notizen via Query-Engine.
+- Umsetzung: `refreshPersonalSpace`, `applyPersonalSpaceFiltersAndRender`, `savePersonalSpaceNote`, `updateRoomTabsForNoteId`, `parseQueryTokens`, `noteMatchesStructuredQuery`, `renderQueryResults`.
 - Hinweis: Notizen werden per `filterRealNotes` auf gültige IDs geprüft und nach ID entdoppelt (neuestes `updatedAt`/`createdAt` bleibt); Tag-Änderungen aktualisieren bestehende Notizen statt neue anzulegen. Zusätzlich verhindert `psSaveNoteInFlight`-Mutex parallele manuelle Saves, `findNoteByText` erkennt inhaltlich identische Notizen vor dem Erstellen, und der Server blockiert Duplikate per `contentHash`-UNIQUE-Constraint (inkl. leerer Notizen).
+- Query-Engine: Das PS-Suchfeld unterstützt strukturierte Operatoren (`tag:`, `task:open`, `task:done`, `has:task`, `kind:`, `created:>`, `updated:<`, `pinned:`). Bei Task-Queries (`task:open`/`task:done`/`has:task`) wird ein aggregiertes Ergebnis-Panel über der Notizliste eingeblendet.
 
 8) Settings/Tools (Uploads, Kalender, AI)
 - Zweck: Uploads/Trash/Calendar/AI-Einstellungen verwalten.
@@ -174,7 +184,7 @@ Server-Start
 > **Wartungshinweis**: Neue Funktionen am Ende der jeweiligen Kategorie einfügen.  
 > Jede Funktion trägt `#tags` für Kategorie- und Querschnittssuche. Zum Finden: `Ctrl+F` → `#tagname`.  
 > **Datei**: Jeder Sektionsheader enthält die Quelldatei (`app.js` / `server.js`).  
-> **Kategorien**: `#core` `#crypto` `#modal` `#share` `#upload` `#tags` `#editor` `#comments` `#wiki` `#slash` `#table` `#mobile` `#i18n` `#theme` `#ai` `#settings` `#backup` `#ps` `#preview` `#runner` `#import` `#favorites` `#tabs` `#pins` `#calendar` `#ws` `#crdt` `#presence` `#linear` `#init`  
+> **Kategorien**: `#core` `#crypto` `#modal` `#share` `#upload` `#tags` `#editor` `#comments` `#wiki` `#slash` `#table` `#mobile` `#i18n` `#theme` `#ai` `#settings` `#backup` `#ps` `#preview` `#runner` `#import` `#favorites` `#tabs` `#pins` `#calendar` `#ws` `#crdt` `#presence` `#linear` `#init` `#query`  
 > **Querschnitt**: `#render` `#parse` `#normalize` `#format` `#storage` `#api` `#handler` `#dom` `#debounce` `#security` `#url` `#identity` `#date` `#ui` `#pdf` `#html` `#build` `#sync`
 
 ---
@@ -625,8 +635,14 @@ Server-Start
 | `loadPsPinnedOnly` | Nur-Pinned laden | `#storage` `#load` | `updatePsPinnedToggle` |
 | `savePsPinnedOnly` | Nur-Pinned speichern | `#storage` `#save` | — |
 | `updatePsPinnedToggle` | Pinned-Toggle aktualisieren | `#ui` `#render` | — |
-| `noteMatchesSearch` | Notiz-Suchfilter prüfen | `#filter` `#search` | — |
-| `applyPersonalSpaceFiltersAndRender` | Filter anwenden & rendern | `#render` `#filter` | `ensureNoteUpdatedAt`, `getNoteTitle`, `normalizeSearchQuery`, `noteIsPinned`, `noteMatchesSearch`, `renderPsList`, `renderPsTags`, `t`, `updateEditorMetaYaml` |
+| `noteMatchesSearch` | Notiz-Suchfilter prüfen (Freitext + Phonetik) | `#filter` `#search` | `colognePhonetic` |
+| `parseQueryTokens` | Query-String in strukturierte Operatoren + Freitext zerlegen | `#parse` `#query` `#search` | — |
+| `extractNoteTasks` | Markdown-Tasks (`- [ ]`/`- [x]`) aus Text extrahieren | `#parse` `#query` `#task` | — |
+| `parseDatePrefix` | Datumswert für Query-Datumsfilter parsen | `#parse` `#date` `#query` | — |
+| `isQueryMode` | Prüft ob Sucheingabe Query-Operatoren enthält | `#parse` `#query` | — |
+| `noteMatchesStructuredQuery` | Notiz gegen strukturierte Query-Token filtern | `#filter` `#query` | `extractNoteTasks`, `noteIsPinned`, `parseDatePrefix` |
+| `renderQueryResults` | Aggregiertes Task-Ergebnis-Panel rendern | `#render` `#query` `#ui` | `applyNoteToEditor`, `escapeHtml`, `extractNoteTasks`, `filterRealNotes`, `findNoteById`, `getNoteTitle`, `t` |
+| `applyPersonalSpaceFiltersAndRender` | Filter anwenden & rendern | `#render` `#filter` | `ensureNoteUpdatedAt`, `getNoteTitle`, `normalizeSearchQuery`, `noteIsPinned`, `noteMatchesSearch`, `noteMatchesStructuredQuery`, `parseQueryTokens`, `renderPsList`, `renderPsTags`, `renderQueryResults`, `t`, `updateEditorMetaYaml` |
 
 ##### 18.3 PS Tags-Prefs — `app.js`
 
