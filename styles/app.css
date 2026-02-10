@@ -300,7 +300,7 @@ body.glow-disabled .bg-glow {
 
 .ps-search-help-btn {
 	position: absolute;
-	right: 4px;
+	right: 26px;
 	top: 50%;
 	transform: translateY(-50%);
 	display: flex;
@@ -317,6 +317,37 @@ body.glow-disabled .bg-glow {
 	transition: opacity 0.2s ease, color 0.15s ease, background 0.15s ease;
 	z-index: 2;
 	padding: 0;
+}
+
+/* ── Sort Button (inline inside search) ──── */
+
+.ps-sort-inline-btn {
+	position: absolute;
+	right: 4px;
+	top: 50%;
+	transform: translateY(-50%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	border-radius: 6px;
+	border: none;
+	background: transparent;
+	color: rgba(148, 163, 184, 0.5);
+	cursor: pointer;
+	transition: color 0.15s ease, background 0.15s ease;
+	z-index: 2;
+	padding: 0;
+}
+
+.ps-sort-inline-btn:hover {
+	color: var(--accent-text, rgba(226, 232, 240, 0.9));
+	background: var(--accent-bg-soft, rgba(255, 255, 255, 0.06));
+}
+
+.ps-sort-inline-btn:active {
+	color: #fff;
 }
 
 /* show on parent hover or input focus */

@@ -198,14 +198,14 @@
 											<path d="M21 15a4 4 0 0 1-4 4H7l-4 3v-3a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4h14a4 4 0 0 1 4 4z" />
 										</svg>
 									</button>
-									<div class="relative flex flex-1 items-center gap-2">
+									<div class="relative flex flex-1 items-center">
 										<div class="relative flex-1 min-w-0">
 											<input
 												id="psSearch"
 												type="search"
 												placeholder="Search..."
 												data-i18n-placeholder="ps.search"
-												class="w-full min-w-0 rounded-lg border border-white/10 bg-slate-950/30 px-2.5 py-1.5 pr-7 text-xs text-slate-200 shadow-soft backdrop-blur transition placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
+												class="w-full min-w-0 rounded-lg border border-white/10 bg-slate-950/30 px-2.5 py-1.5 pr-14 text-xs text-slate-200 shadow-soft backdrop-blur transition placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
 											<button
 												id="psSearchHelp"
 												type="button"
@@ -213,6 +213,63 @@
 												aria-label="Search help">
 												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
 											</button>
+											<button
+												id="psSortMenuBtn"
+												type="button"
+												class="ps-sort-inline-btn"
+												title="Sortierung"
+												aria-label="Sortierung"
+												data-i18n-title="ps.sort"
+												data-i18n-aria="ps.sort"
+												aria-expanded="false">
+												<svg
+													viewBox="0 0 24 24"
+													fill="none"
+													stroke="currentColor"
+													stroke-width="1.5"
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													class="h-3.5 w-3.5">
+													<path d="M3 6h18M6 12h12M9 18h6" />
+												</svg>
+											</button>
+											<div
+												id="psSortMenu"
+												class="absolute right-0 top-10 z-30 hidden w-48 overflow-hidden rounded-xl border border-white/10 bg-slate-950/80 shadow-soft backdrop-blur">
+												<div class="border-b border-white/10 px-3 py-2 text-[11px] text-slate-300">
+													<span data-i18n="ps.sort_by">Sort by</span>
+												</div>
+												<div class="flex flex-col gap-1 p-1 text-xs">
+													<button
+														type="button"
+														data-sort="updated"
+														class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
+														<span data-i18n="ps.sort.modified">Modified</span>
+														<span class="ps-sort-check text-fuchsia-200">✓</span>
+													</button>
+													<button
+														type="button"
+														data-sort="created"
+														class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
+														<span data-i18n="ps.sort.created">Created</span>
+														<span class="ps-sort-check text-fuchsia-200">✓</span>
+													</button>
+													<button
+														type="button"
+														data-sort="accessed"
+														class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
+														<span data-i18n="ps.sort.accessed">Accessed</span>
+														<span class="ps-sort-check text-fuchsia-200">✓</span>
+													</button>
+													<button
+														type="button"
+														data-sort="text"
+														class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
+														<span data-i18n="ps.sort.text">Text</span>
+														<span class="ps-sort-check text-fuchsia-200">✓</span>
+													</button>
+												</div>
+											</div>
 										</div>
 										<button
 											id="psSaveQuery"
@@ -225,63 +282,6 @@
 											data-i18n-aria="ps.save_query">
 											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
 										</button>
-										<button
-											id="psSortMenuBtn"
-											type="button"
-											class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-transparent text-slate-400 transition hover:text-slate-200 active:text-white"
-											title="Sortierung"
-											aria-label="Sortierung"
-											data-i18n-title="ps.sort"
-											data-i18n-aria="ps.sort"
-											aria-expanded="false">
-											<svg
-												viewBox="0 0 24 24"
-												fill="none"
-												stroke="currentColor"
-												stroke-width="1.5"
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												class="h-4 w-4">
-												<path d="M3 6h18M6 12h12M9 18h6" />
-											</svg>
-										</button>
-										<div
-											id="psSortMenu"
-											class="absolute right-0 top-10 z-30 hidden w-48 overflow-hidden rounded-xl border border-white/10 bg-slate-950/80 shadow-soft backdrop-blur">
-											<div class="border-b border-white/10 px-3 py-2 text-[11px] text-slate-300">
-												<span data-i18n="ps.sort_by">Sort by</span>
-											</div>
-											<div class="flex flex-col gap-1 p-1 text-xs">
-												<button
-													type="button"
-													data-sort="updated"
-													class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
-													<span data-i18n="ps.sort.modified">Modified</span>
-													<span class="ps-sort-check text-fuchsia-200">✓</span>
-												</button>
-												<button
-													type="button"
-													data-sort="created"
-													class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
-													<span data-i18n="ps.sort.created">Created</span>
-													<span class="ps-sort-check text-fuchsia-200">✓</span>
-												</button>
-												<button
-													type="button"
-													data-sort="accessed"
-													class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
-													<span data-i18n="ps.sort.accessed">Accessed</span>
-													<span class="ps-sort-check text-fuchsia-200">✓</span>
-												</button>
-												<button
-													type="button"
-													data-sort="text"
-													class="ps-sort-option flex items-center justify-between rounded-lg px-2.5 py-2 text-left text-slate-200 transition hover:bg-white/5">
-													<span data-i18n="ps.sort.text">Text</span>
-													<span class="ps-sort-check text-fuchsia-200">✓</span>
-												</button>
-											</div>
-										</div>
 									</div>
 								</div>
 							</div>
