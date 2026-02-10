@@ -296,6 +296,52 @@ body.glow-disabled .bg-glow {
 	overflow-x: hidden;
 }
 
+/* ── Search Help Button ───────────────────── */
+
+.ps-search-help-btn {
+	position: absolute;
+	right: 4px;
+	top: 50%;
+	transform: translateY(-50%);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	border: none;
+	background: transparent;
+	color: var(--calendar-tooltip-text, rgba(148, 163, 184, 0.5));
+	cursor: pointer;
+	opacity: 0;
+	transition: opacity 0.2s ease, color 0.15s ease, background 0.15s ease;
+	z-index: 2;
+	padding: 0;
+}
+
+/* show on parent hover or input focus */
+.ps-search-help-btn:hover,
+.ps-search-help-btn:focus-visible {
+	opacity: 1;
+	color: var(--calendar-tooltip-text, rgba(217, 70, 239, 0.8));
+	background: rgba(217, 70, 239, 0.08);
+}
+
+*:hover > .ps-search-help-btn,
+*:focus-within > .ps-search-help-btn {
+	opacity: 0.5;
+}
+
+*:hover > .ps-search-help-btn:hover,
+*:focus-within > .ps-search-help-btn:hover {
+	opacity: 1;
+}
+
+.ps-search-help-tooltip {
+	font-size: 11px;
+	line-height: 1.55;
+}
+
 /* ── Query Results Panel ──────────────────── */
 
 #psQueryResults {

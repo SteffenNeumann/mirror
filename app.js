@@ -5033,6 +5033,7 @@
 				"query.open": "offen",
 				"query.done": "erledigt",
 				"query.from_notes": "aus {n} Notizen",
+				"search.help": "🔍 Kölner Phonetik – findet ähnlich klingende Wörter automatisch (z.B. \"Meier\" findet auch \"Meyer\", \"Maier\").\n\n⚡ Query-Operatoren:\n• tag:name – Notizen mit Tag filtern\n• task:open – offene Aufgaben anzeigen\n• task:done – erledigte Aufgaben\n• has:task – Notizen mit Aufgaben\n• kind:note – nach Art filtern\n• pinned:yes / pinned:no\n• created:>2026-01-01\n• updated:<2026-02-01\n\nKombinierbar: task:open tag:projektA",
 				"ps.sort_by": "Sortieren nach",
 				"ps.sort.modified": "Geändert",
 				"ps.sort.created": "Erstellt",
@@ -5444,6 +5445,7 @@
 				"query.open": "open",
 				"query.done": "done",
 				"query.from_notes": "from {n} notes",
+				"search.help": "🔍 Cologne Phonetics – automatically finds similar-sounding words (e.g. \"Meyer\" also finds \"Meier\", \"Mayer\").\n\n⚡ Query operators:\n• tag:name – filter notes by tag\n• task:open – show open tasks\n• task:done – completed tasks\n• has:task – notes with tasks\n• kind:note – filter by type\n• pinned:yes / pinned:no\n• created:>2026-01-01\n• updated:<2026-02-01\n\nCombine freely: task:open tag:projectA",
 				"ps.sort_by": "Sort by",
 				"ps.sort.modified": "Modified",
 				"ps.sort.created": "Created",
@@ -21704,6 +21706,65 @@ self.onmessage = async (e) => {
 			psSearchDebounceTimer = window.setTimeout(() => {
 				savePsSearchQuery();
 			}, 150);
+		});
+	}
+
+	/* ── Search-Help tooltip (? icon) ── */
+	const psSearchHelpBtn = document.getElementById("psSearchHelp");
+	if (psSearchHelpBtn) {
+		let searchHelpTimer = null;
+		let searchHelpEl = null;
+		function showSearchHelp() {
+			hideSearchHelp();
+			const el = document.createElement("div");
+			el.className = "tab-tooltip-layer";
+			const box = document.createElement("div");
+			box.className = "tab-tooltip-layer__box ps-search-help-tooltip";
+			box.style.maxWidth = "340px";
+			box.style.minWidth = "260px";
+			box.style.padding = "10px 14px";
+			box.style.whiteSpace = "pre-line";
+			box.textContent = t("search.help");
+			const arrow = document.createElement("div");
+			arrow.className = "tab-tooltip-layer__arrow";
+			el.appendChild(box);
+			el.appendChild(arrow);
+			document.body.appendChild(el);
+			searchHelpEl = el;
+			const rect = psSearchHelpBtn.getBoundingClientRect();
+			const left = rect.left + rect.width / 2;
+			el.style.left = `${left}px`;
+			el.style.top = "0px";
+			requestAnimationFrame(() => {
+				if (!searchHelpEl) return;
+				const bw = box.offsetWidth || 0;
+				const h = box.offsetHeight || 0;
+				const top = rect.top - h - 10;
+				const vw = window.innerWidth;
+				const margin = 8;
+				let finalLeft = left;
+				const halfW = bw / 2;
+				if (finalLeft + halfW > vw - margin) finalLeft = vw - margin - halfW;
+				if (finalLeft - halfW < margin) finalLeft = margin + halfW;
+				el.style.left = `${finalLeft}px`;
+				el.style.top = `${top}px`;
+				const arrowOffset = left - finalLeft;
+				arrow.style.left = `calc(50% + ${arrowOffset}px)`;
+				el.classList.add("is-visible");
+			});
+		}
+		function hideSearchHelp() {
+			if (searchHelpTimer) { clearTimeout(searchHelpTimer); searchHelpTimer = null; }
+			if (searchHelpEl) { searchHelpEl.remove(); searchHelpEl = null; }
+		}
+		psSearchHelpBtn.addEventListener("mouseenter", () => {
+			searchHelpTimer = setTimeout(showSearchHelp, 350);
+		});
+		psSearchHelpBtn.addEventListener("mouseleave", hideSearchHelp);
+		psSearchHelpBtn.addEventListener("click", (ev) => {
+			ev.preventDefault();
+			ev.stopPropagation();
+			if (searchHelpEl) { hideSearchHelp(); } else { showSearchHelp(); }
 		});
 	}
 	if (psList) {
