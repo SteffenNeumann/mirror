@@ -2976,8 +2976,7 @@ body[data-theme="bitterLight"] {
 	--calendar-tooltip-bg: #f7f6f4;
 	--calendar-tooltip-border: rgba(255, 35, 1, 0.24);
 	--calendar-tooltip-text: #0d0c10;
-	--calendar-tooltip-shadow: 0 12px 28px rgba(13, 12, 16, 0.12),
-		inset 0 0 0 1px rgba(255, 35, 1, 0.06);
+	--calendar-tooltip-shadow: none;
 	--selection-menu-bg: #f7f6f4;
 	--selection-menu-border: #d8d2cb;
 }
@@ -3026,7 +3025,7 @@ body[data-theme="bitterLight"] .hover\:bg-fuchsia-500\/25:hover {
 body[data-theme="bitterLight"] .ps-note-item.ps-note-active {
 	background-color: transparent !important;
 	border-color: rgba(255, 35, 1, 0.45) !important;
-	box-shadow: 0 6px 14px rgba(255, 35, 1, 0.12);
+	box-shadow: none;
 }
 
 body[data-theme="bitterLight"] #psNewNote,
@@ -3095,7 +3094,7 @@ body[data-theme="bitterLight"] #shareModal [data-role="shareModalBackdrop"] {
 body[data-theme="bitterLight"] #shareModal [role="dialog"] {
 	background-color: #fff9f4 !important;
 	border-color: #d8d2cb !important;
-	box-shadow: 0 10px 24px rgba(13, 12, 16, 0.16) !important;
+	box-shadow: none !important;
 }
 
 body[data-theme="bitterLight"] #shareModal .border-white\/10 {
@@ -3200,7 +3199,7 @@ body[data-theme="bitterLight"] .comment-reply-badge {
 }
 
 body[data-theme="bitterLight"] .shadow-soft {
-	box-shadow: 0 6px 14px rgba(13, 12, 16, 0.12);
+	box-shadow: none;
 }
 
 body[data-theme="bitterLight"] #previewPanel {
@@ -3221,7 +3220,7 @@ body[data-theme="bitterLight"] #psEditorTagsBar,
 body[data-theme="bitterLight"] #psEditorTagsBar > div {
 	background: rgba(247, 246, 244, 0.8) !important;
 	border-color: rgba(216, 210, 203, 0.7) !important;
-	box-shadow: 0 3px 8px rgba(13, 12, 16, 0.12) !important;
+	box-shadow: none !important;
 }
 
 body[data-theme="bitterLight"] #psEditorTagsBar input,
@@ -3233,7 +3232,7 @@ body[data-theme="bitterLight"] #psEditorTagsBar select {
 body[data-theme="bitterLight"] #commentPanel {
 	background: rgba(247, 246, 244, 0.8) !important;
 	border-color: rgba(216, 210, 203, 0.7) !important;
-	box-shadow: 0 4px 12px rgba(13, 12, 16, 0.12) !important;
+	box-shadow: none !important;
 }
 
 body[data-theme="bitterLight"] #psSortMenu {
@@ -3270,7 +3269,7 @@ body[data-theme="bitterLight"] .ps-note-link-badge {
 body[data-theme="bitterLight"] #linearEmbed {
 	background: rgba(247, 246, 244, 0.85) !important;
 	border-color: rgba(216, 210, 203, 0.7) !important;
-	box-shadow: 0 6px 14px rgba(13, 12, 16, 0.12) !important;
+	box-shadow: none !important;
 }
 
 body[data-theme="bitterLight"] .linear-task-item {
@@ -3306,7 +3305,7 @@ body[data-theme="bitterLight"] .linear-project-header {
 	color: #5b21b6;
 	background: rgba(91, 33, 182, 0.08);
 	border-color: rgba(91, 33, 182, 0.18);
-	box-shadow: 0 0 6px rgba(91, 33, 182, 0.05);
+	box-shadow: none;
 }
 body[data-theme="bitterLight"] .linear-project-header::before {
 	background: #5b21b6;
