@@ -6,6 +6,15 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
 
 ## Aktuelle Änderungen (2026-02-10)
 
+- **Permanent-Link Deaktivierung repariert**: `clearRoomPinnedEntry` löschte den Pin nur aus lokalen und Server-Pins, aber nicht aus den Shared-Pins (per WebSocket empfangene Einträge). Da `loadRoomPinnedEntries()` alle drei Quellen merged (shared + local + server), blieb der Pin in der Shared-Quelle erhalten und die UI zeigte „aktiv" obwohl der Toast „deaktiviert" meldete. Fix: `clearRoomPinnedEntry` ruft jetzt `clearSharedRoomPinnedEntry` auf, damit alle drei Quellen konsistent bereinigt werden.
+  - Zuständige Funktion: `clearRoomPinnedEntry` ([app.js](app.js#L13802)).
+
+- **Permanent-Link Info-Modal (Tooltip)**: Rechtsklick (Contextmenu) auf den Permanent-Link-Button öffnet ein Info-Modal, das Zweck und Anwendung beschreibt. Design folgt dem bestehenden `openModal`-Pattern (gleicher Stil wie Slash-Help und Selection-Help).
+  - Zuständige Stelle: `togglePermanentLinkBtn` contextmenu-Handler ([app.js](app.js#L18602)).
+
+- **Permanent-Link i18n**: Toast-Meldungen, Button-Labels und Info-Modal sind jetzt vollständig über `UI_STRINGS` (de/en) lokalisiert. HTML-Button trägt `data-i18n-title` und `data-i18n-aria` für automatische Sprachumschaltung.
+  - Zuständige Strings: `editor.permalink`, `editor.permalink_active`, `toast.permalink_activated`, `toast.permalink_deactivated`, `permalink.info.title`, `permalink.info.message`.
+
 - **Kommentar-Textmarkierung an Note-ID gebunden**: Textmarkierungen (Highlights) im Editor werden jetzt eindeutig der Note-ID zugeordnet. Jeder Kommentar speichert die `noteId` der Notiz, auf der er erstellt wurde. `buildCommentOverlayHtml` zeigt Highlights nur an, wenn die `noteId` des Kommentars mit der aktuell angezeigten Notiz übereinstimmt. Damit „wandern" Markierungen nicht mehr auf andere Notizen, wenn diese denselben Comment-Scope teilen (z. B. in geteilten Räumen ohne Per-Note-Pin). Legacy-Kommentare ohne `noteId` werden weiterhin immer angezeigt.
   - Zuständige Funktionen: `getCommentSelectionNoteId` ([app.js](app.js#L2500)), `normalizeCommentItems` ([app.js](app.js#L2595)), `buildCommentOverlayHtml` ([app.js](app.js#L2740)), `addCommentFromDraft` ([app.js](app.js#L3125)).
 

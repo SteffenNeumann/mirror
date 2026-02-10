@@ -5399,6 +5399,12 @@
 				"linear.status.no_key": "Kein API-Key gesetzt.",
 				"linear.status.loading": "Linear lädt…",
 				"linear.status.failed": "Linear nicht erreichbar.",
+				"editor.permalink": "Permanent-Link",
+				"editor.permalink_active": "Permanent-Link aktiv",
+				"toast.permalink_activated": "Permanent-Link aktiviert.",
+				"toast.permalink_deactivated": "Permanent-Link deaktiviert.",
+				"permalink.info.title": "Permanent-Link",
+				"permalink.info.message": "Pinnt den aktuellen Inhalt (Notiz oder Text) dauerhaft an diesen Raum-Tab. Gäste sehen automatisch den gepinnten Inhalt, wenn sie den Raum betreten. Erneut klicken, um den Pin zu entfernen. Eingebettete Apps (Excalidraw, Excel, Linear) werden mitgeteilt.",
 			},
 			en: {
 				"ps.title": "Personal Space",
@@ -5792,6 +5798,12 @@
 				"linear.status.no_key": "No API key set.",
 				"linear.status.loading": "Loading Linear…",
 				"linear.status.failed": "Linear unavailable.",
+				"editor.permalink": "Permanent Link",
+				"editor.permalink_active": "Permanent Link active",
+				"toast.permalink_activated": "Permanent Link activated.",
+				"toast.permalink_deactivated": "Permanent Link deactivated.",
+				"permalink.info.title": "Permanent Link",
+				"permalink.info.message": "Pins the current content (note or text) permanently to this room tab. Guests automatically see the pinned content when they enter the room. Click again to remove the pin. Embedded apps (Excalidraw, Excel, Linear) are shared as well.",
 			},
 		};
 
@@ -13791,6 +13803,8 @@ self.onmessage = async (e) => {
 		const nextRoom = normalizeRoom(roomName);
 		const nextKey = normalizeKey(keyName);
 		if (!nextRoom) return;
+		// Also clear shared pin so loadRoomPinnedEntries() merges don't resurrect it
+		clearSharedRoomPinnedEntry(nextRoom, nextKey);
 		const list = loadRoomPinnedEntries().filter(
 			(e) => !(e.room === nextRoom && e.key === nextKey)
 		);
@@ -13842,7 +13856,7 @@ self.onmessage = async (e) => {
 		if (!togglePermanentLinkBtn) return;
 		const pinned = getRoomPinnedEntry(room, key);
 		const active = Boolean(pinned);
-		const label = active ? "Permanent-Link aktiv" : "Permanent-Link";
+		const label = active ? t("editor.permalink_active") : t("editor.permalink");
 		togglePermanentLinkBtn.setAttribute("aria-pressed", active ? "true" : "false");
 		togglePermanentLinkBtn.setAttribute("title", label);
 		togglePermanentLinkBtn.setAttribute("aria-label", label);
@@ -18512,7 +18526,7 @@ self.onmessage = async (e) => {
 				syncPermanentLinkToggleUi();
 				schedulePsListRerender();
 				void loadCommentsForRoom();
-				toast("Permanent-Link deaktiviert.", "info");
+				toast(t("toast.permalink_deactivated"), "info");
 				return;
 			}
 			const noteId = String(psEditingNoteId || "").trim();
@@ -18583,7 +18597,17 @@ self.onmessage = async (e) => {
 			syncPermanentLinkToggleUi();
 			schedulePsListRerender();
 			void loadCommentsForRoom();
-			toast("Permanent-Link aktiviert.", "success");
+			toast(t("toast.permalink_activated"), "success");
+		});
+		togglePermanentLinkBtn.addEventListener("contextmenu", (ev) => {
+			ev.preventDefault();
+			void openModal({
+				title: t("permalink.info.title"),
+				message: t("permalink.info.message"),
+				okText: t("modal.ok"),
+				cancelText: t("modal.close"),
+				backdropClose: true,
+			});
 		});
 	}
 
