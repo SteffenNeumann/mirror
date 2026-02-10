@@ -6,6 +6,9 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
 
 ## Aktuelle Änderungen (2026-02-10)
 
+- **Kommentar-Textmarkierung an Note-ID gebunden**: Textmarkierungen (Highlights) im Editor werden jetzt eindeutig der Note-ID zugeordnet. Jeder Kommentar speichert die `noteId` der Notiz, auf der er erstellt wurde. `buildCommentOverlayHtml` zeigt Highlights nur an, wenn die `noteId` des Kommentars mit der aktuell angezeigten Notiz übereinstimmt. Damit „wandern" Markierungen nicht mehr auf andere Notizen, wenn diese denselben Comment-Scope teilen (z. B. in geteilten Räumen ohne Per-Note-Pin). Legacy-Kommentare ohne `noteId` werden weiterhin immer angezeigt.
+  - Zuständige Funktionen: `getCommentSelectionNoteId` ([app.js](app.js#L2500)), `normalizeCommentItems` ([app.js](app.js#L2595)), `buildCommentOverlayHtml` ([app.js](app.js#L2740)), `addCommentFromDraft` ([app.js](app.js#L3125)).
+
 - **Linear-Projekt für Gäste in geteilten Räumen**: Zwei Fehler behoben, die dazu führten, dass Gäste (ohne eigenen API-Key) beim Auswählen oder Aktualisieren eines via WebSocket geteilten Linear-Projekts den Fehler „API-Key fehlt" erhielten:
   1. **Apply-Button**: Sucht das Projekt jetzt zusätzlich in `linearProjectByNote` (via WebSocket empfangene Shared-Projekte), wenn es nicht in der lokalen `linearProjects`-Liste vorhanden ist. Gäste ohne API-Key rendern Tasks aus dem Cache (`linearDataByNote`) statt die Linear-API direkt aufzurufen.
   2. **Refresh-Button**: Gäste ohne API-Key senden per WebSocket `request_state` an den Server, um den gepufferten Linear-State (Projekt + Tasks) erneut zu empfangen, statt die Linear-API aufzurufen.
