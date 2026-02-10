@@ -2497,6 +2497,17 @@
 		return psEditingNoteId ? String(psEditingNoteId || "") : "";
 	}
 
+	/** Returns the note ID that the current editor content belongs to.
+	 *  Used to bind comment text-selections to a specific note so
+	 *  highlights don't leak across notes that share the same comment scope. */
+	function getCommentSelectionNoteId() {
+		const nextRoom = normalizeRoom(room);
+		const nextKey = normalizeKey(key);
+		const pinned = getRoomPinnedEntry(nextRoom, nextKey);
+		const pinnedNoteId = pinned && pinned.noteId ? String(pinned.noteId || "").trim() : "";
+		return pinnedNoteId || getCommentNoteId();
+	}
+
 	function getCommentScopeId() {
 		const nextRoom = normalizeRoom(room);
 		const nextKey = normalizeKey(key);
@@ -2609,6 +2620,7 @@
 					parentId,
 					selection: normalizedSelection,
 					author,
+					noteId: String(item.noteId || "").trim(),
 				};
 			})
 			.filter(Boolean)
@@ -2728,8 +2740,12 @@
 
 	function buildCommentOverlayHtml(value) {
 		if (!value) return "";
+		const activeNoteId = getCommentSelectionNoteId();
 		const ranges = commentItems
 			.map((entry) => {
+				// Skip highlights for comments that belong to a different note.
+				// entry.noteId is empty for legacy comments → always show.
+				if (entry.noteId && activeNoteId && entry.noteId !== activeNoteId) return null;
 				const normalized = normalizeCommentSelection(entry, value);
 				if (!normalized) return null;
 				const authorColor = entry.author && entry.author.color
@@ -3142,6 +3158,7 @@
 					text,
 					updatedAt: Date.now(),
 					selection: resolvedSelection,
+					noteId: getCommentSelectionNoteId(),
 				};
 			}
 			clearCommentComposerState();
@@ -3159,6 +3176,7 @@
 			selection: resolvedSelection,
 			parentId: commentReplyToId || "",
 			author: identity,
+			noteId: getCommentSelectionNoteId(),
 		};
 		if (commentReplyToId) {
 			const idx = commentItems.findIndex(
