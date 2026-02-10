@@ -5033,7 +5033,7 @@
 				"query.open": "offen",
 				"query.done": "erledigt",
 				"query.from_notes": "aus {n} Notizen",
-				"search.help": "🔍 Kölner Phonetik – findet ähnlich klingende Wörter automatisch (z.B. \"Meier\" findet auch \"Meyer\", \"Maier\").\n\n⚡ Query-Operatoren:\n• tag:name – Notizen mit Tag filtern\n• task:open – offene Aufgaben anzeigen\n• task:done – erledigte Aufgaben\n• has:task – Notizen mit Aufgaben\n• kind:note – nach Art filtern\n• pinned:yes / pinned:no\n• created:>2026-01-01\n• updated:<2026-02-01\n\nKombinierbar: task:open tag:projektA",
+				"search.help": "⚡ Query-Operatoren:\n• tag:name – Notizen mit Tag filtern\n• task:open – offene Aufgaben anzeigen\n• task:done – erledigte Aufgaben\n• has:task – Notizen mit Aufgaben\n• kind:note – nach Art filtern\n• pinned:yes / pinned:no\n• created:>2026-01-01\n• updated:<2026-02-01\n\nKombinierbar: task:open tag:projektA",
 				"ps.sort_by": "Sortieren nach",
 				"ps.sort.modified": "Geändert",
 				"ps.sort.created": "Erstellt",
@@ -5445,7 +5445,7 @@
 				"query.open": "open",
 				"query.done": "done",
 				"query.from_notes": "from {n} notes",
-				"search.help": "🔍 Cologne Phonetics – automatically finds similar-sounding words (e.g. \"Meyer\" also finds \"Meier\", \"Mayer\").\n\n⚡ Query operators:\n• tag:name – filter notes by tag\n• task:open – show open tasks\n• task:done – completed tasks\n• has:task – notes with tasks\n• kind:note – filter by type\n• pinned:yes / pinned:no\n• created:>2026-01-01\n• updated:<2026-02-01\n\nCombine freely: task:open tag:projectA",
+				"search.help": "⚡ Query operators:\n• tag:name – filter notes by tag\n• task:open – show open tasks\n• task:done – completed tasks\n• has:task – notes with tasks\n• kind:note – filter by type\n• pinned:yes / pinned:no\n• created:>2026-01-01\n• updated:<2026-02-01\n\nCombine freely: task:open tag:projectA",
 				"ps.sort_by": "Sort by",
 				"ps.sort.modified": "Modified",
 				"ps.sort.created": "Created",
@@ -8846,6 +8846,41 @@
 		});
 	}
 
+	function noteSearchRelevance(note, tokens) {
+		if (!tokens || tokens.length === 0) return 0;
+		const text = String(note && note.text ? note.text : "").toLowerCase();
+		const tags = Array.isArray(note && note.tags) ? note.tags : [];
+		const tagsLower = tags.map((t) => String(t || "").toLowerCase());
+		const hay = `${text}\n${tagsLower.join(" ")}`;
+		let score = 0;
+		for (const tokRaw of tokens) {
+			let tok = String(tokRaw || "").trim().toLowerCase();
+			if (!tok) continue;
+			if (tok.startsWith("#")) tok = tok.slice(1);
+			if (tok.startsWith("tag:")) { if (tagsLower.includes(tok.slice(4).trim())) score += 10; continue; }
+			/* exact substring match – count occurrences */
+			let idx = 0; let exactHits = 0;
+			while ((idx = hay.indexOf(tok, idx)) !== -1) { exactHits++; idx += tok.length; }
+			if (exactHits > 0) {
+				score += 10 + exactHits;
+				/* title match bonus */
+				const firstLine = text.split("\n")[0] || "";
+				if (firstLine.includes(tok)) score += 5;
+			} else {
+				/* phonetic-only match = lower score */
+				const phon = colognePhonetic(tok);
+				if (phon) {
+					const words = text.split(/[^a-z0-9äöüß]+/i).filter(Boolean);
+					let phonHits = 0;
+					for (const w of words) { if (colognePhonetic(w) === phon) phonHits++; }
+					for (const tl of tagsLower) { if (colognePhonetic(tl) === phon) phonHits++; }
+					if (phonHits > 0) score += 2 + phonHits;
+				}
+			}
+		}
+		return score;
+	}
+
 	function noteMatchesStructuredQuery(note, structured) {
 		if (!structured || structured.length === 0) return true;
 		const text = String(note && note.text ? note.text : "");
@@ -9041,6 +9076,9 @@
 		}
 		if (parsed.plain.length > 0) {
 			notes = notes.filter((n) => noteMatchesSearch(n, parsed.plain));
+			/* sort by relevance: exact matches first, phonetic-only lower */
+			const plain = parsed.plain;
+			notes.sort((a, b) => noteSearchRelevance(b, plain) - noteSearchRelevance(a, plain));
 		}
 		if (psCount) {
 			const total = allNotes.length;
