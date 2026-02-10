@@ -498,20 +498,6 @@ body.code-lang-active #clearMirror {
 	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
 		"Liberation Mono", "Courier New", monospace;
 }
-#mirror.pw-mask-enabled {
-	color: transparent;
-	caret-color: rgb(226 232 240);
-}
-#mirror.pw-mask-enabled::selection {
-	background: rgba(217, 70, 239, 0.35);
-}
-#mirror.pw-mask-enabled::-moz-selection {
-	background: rgba(217, 70, 239, 0.35);
-}
-#mirrorMask {
-	white-space: pre-wrap;
-	word-break: break-word;
-}
 #attributionOverlay {
 	z-index: 5;
 }
@@ -678,7 +664,6 @@ body.code-lang-active #clearMirror {
 }
 @media (min-width: 1024px) {
 	#editorPreviewGrid.comment-panel-open #mirror,
-	#editorPreviewGrid.comment-panel-open #mirrorMask,
 	#editorPreviewGrid.comment-panel-open #attributionOverlay,
 	#editorPreviewGrid.comment-panel-open #commentOverlay {
 		padding-right: 0;
@@ -1253,15 +1238,6 @@ body[data-theme="monoDark"] .excel-iframe {
 	box-decoration-break: clone;
 	-webkit-box-decoration-break: clone;
 }
-#mirrorMaskContent {
-	min-height: 100%;
-	transform: translate(0, 0);
-	will-change: transform;
-}
-#mirrorMaskContent .pw-editor-token {
-	filter: blur(6px);
-	opacity: 0.7;
-}
 .md-content .pw-field {
 	display: inline-flex;
 	align-items: center;
@@ -1272,23 +1248,30 @@ body[data-theme="monoDark"] .excel-iframe {
 	background: rgba(15, 23, 42, 0.6);
 	font-size: 0.85em;
 	line-height: 1.2;
+	position: relative;
 }
 .md-content .pw-mask {
+	position: absolute;
+	left: 0.45rem;
+	pointer-events: none;
 	letter-spacing: 0.18em;
 	font-weight: 600;
 	color: rgba(226, 232, 240, 0.9);
+	white-space: nowrap;
 }
 .md-content .pw-value {
-	display: none;
 	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
 		"Liberation Mono", "Courier New", monospace;
-	color: rgba(226, 232, 240, 0.95);
+	color: transparent;
+	-webkit-user-select: text;
+	user-select: text;
+	cursor: text;
 }
 .md-content .pw-field.pw-revealed .pw-mask {
 	display: none;
 }
 .md-content .pw-field.pw-revealed .pw-value {
-	display: inline;
+	color: rgba(226, 232, 240, 0.95);
 }
 .md-content .pw-toggle,
 .md-content .pw-copy {
@@ -2409,7 +2392,6 @@ body[data-theme="coffeeLight"] .md-content .pw-mask {
 	color: #5b4436;
 }
 
-body[data-theme="coffeeLight"] #mirror.pw-mask-enabled,
 body[data-theme="coffeeLight"] #mirror.attribution-active {
 	caret-color: #3b2a21;
 }
@@ -3234,7 +3216,6 @@ body[data-theme="bitterLight"] .md-content .pw-mask {
 	color: #2a292f;
 }
 
-body[data-theme="bitterLight"] #mirror.pw-mask-enabled,
 body[data-theme="bitterLight"] #mirror.attribution-active {
 	caret-color: #0d0c10;
 }
@@ -3584,7 +3565,6 @@ body[data-theme="bitterDark"] .md-content .pw-mask {
 	color: #c0b5ad;
 }
 
-body[data-theme="coffeeDark"] #mirror.pw-mask-enabled,
 body[data-theme="coffeeDark"] #mirror.attribution-active {
 	color: transparent !important;
 	caret-color: #e8d9cc;
@@ -4191,7 +4171,6 @@ body[data-theme="monoLight"] .md-content .pw-mask {
 	color: #57606a;
 }
 
-body[data-theme="monoLight"] #mirror.pw-mask-enabled,
 body[data-theme="monoLight"] #mirror.attribution-active {
 	color: transparent !important;
 	caret-color: #24292f;
@@ -4469,7 +4448,6 @@ body[data-theme="monoDark"] .md-content .pw-mask {
 	color: #8b949e;
 }
 
-body[data-theme="monoDark"] #mirror.pw-mask-enabled,
 body[data-theme="monoDark"] #mirror.attribution-active {
 	color: transparent !important;
 	caret-color: #c9d1d9;

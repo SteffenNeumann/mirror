@@ -121,8 +121,6 @@
 	const wikiMenu = document.getElementById("wikiMenu");
 	const wikiMenuList = document.getElementById("wikiMenuList");
 	const selectionMenu = document.getElementById("selectionMenu");
-	const mirrorMask = document.getElementById("mirrorMask");
-	const mirrorMaskContent = document.getElementById("mirrorMaskContent");
 	const attributionOverlay = document.getElementById("attributionOverlay");
 	const attributionOverlayContent = document.getElementById(
 		"attributionOverlayContent"
@@ -2202,7 +2200,6 @@
 		"menu.italic_tip",
 		"menu.strike_tip",
 		"menu.password_hide_tip",
-		"menu.mask_toggle_tip",
 		"menu.blockquote_tip",
 		"menu.bullet_tip",
 		"menu.numbered_tip",
@@ -2284,10 +2281,8 @@
 	let psTagContextMenuTag = "";
 	let psTagContextDeleteArmed = false;
 	let psTagContextDeleteTimer = null;
-	let editorMaskDisabled = false;
 	let crdtMarksEnabled = true;
 	let crdtMarksStyle = "underline";
-	const EDITOR_MASK_DISABLED_KEY = "mirror_mask_disabled";
 	const CRDT_MARKS_DISABLED_KEY = "mirror_crdt_marks_disabled";
 	const CRDT_MARKS_STYLE_KEY = "mirror_crdt_marks_style";
 	const aiChatHistoryByContext = new Map();
@@ -3493,11 +3488,7 @@
 					// ignore
 				}
 				break;
-			case "masktoggle":
-				toggleEditorMaskView();
-				schedulePsAutoSave();
-				scheduleSend();
-				return;
+
 			case "quote":
 				togglePrefixSelectionLines(textarea, "> ", "quote");
 				break;
@@ -3581,7 +3572,6 @@
 			}
 		}
 		updatePreview();
-		updatePasswordMaskOverlay();
 		updateCommentOverlay();
 		updateSlashMenu();
 		updateWikiMenu();
@@ -4373,7 +4363,6 @@
 			// ignore
 		}
 		updatePreview();
-		updatePasswordMaskOverlay();
 		scheduleSend();
 		return true;
 	}
@@ -5121,9 +5110,6 @@
 				"menu.password_hide": "Passwort verstecken",
 				"menu.password_hide_tip": "Markierten Text als Passwort-Token verstecken.",
 				"menu.password": "PW",
-				"menu.mask_toggle": "Maskierung an/aus",
-				"menu.mask_toggle_tip": "Maskierte Tokens im Editor ein-/ausblenden.",
-				"menu.mask": "Mask",
 				"menu.blockquote": "Zitat",
 				"menu.blockquote_tip": "Auswahl in ein Zitat (Blockquote) umwandeln.",
 				"menu.bullet": "Liste (Aufzählung)",
@@ -5532,9 +5518,6 @@
 				"menu.password_hide": "Hide password",
 				"menu.password_hide_tip": "Hide the selected text as a password token.",
 				"menu.password": "PW",
-				"menu.mask_toggle": "Toggle mask",
-				"menu.mask_toggle_tip": "Show or hide masked tokens in the editor.",
-				"menu.mask": "Mask",
 				"menu.blockquote": "Blockquote",
 				"menu.blockquote_tip": "Turn the selection into a quote block.",
 				"menu.bullet": "Bullet list",
@@ -7404,8 +7387,8 @@
 				a: "Room tabs help you jump between rooms quickly. The multiuser presence list and typing indicator keep you aware of activity in shared rooms.",
 			},
 			{
-				q: "Multiuser display & password mask",
-				a: "The presence list shows who is online. Use the selection menu actions to hide password-like tokens or toggle masking on/off when sharing screens.",
+				q: "Multiuser display & password",
+				a: "The presence list shows who is online. Use the PW button in the selection menu to hide password-like tokens. In the preview, passwords are masked but can be selected and copied as plain text.",
 			},
 			{
 				q: "Preview",
@@ -8303,7 +8286,6 @@
 		);
 		const next = psMetaBasePaddingTop + height + 4;
 		textarea.style.paddingTop = `${Math.round(next)}px`;
-		if (mirrorMask) mirrorMask.style.paddingTop = `${Math.round(next)}px`;
 		if (attributionOverlay)
 			attributionOverlay.style.paddingTop = `${Math.round(next)}px`;
 		if (commentOverlay)
@@ -8321,8 +8303,6 @@
 			}
 		}
 		textarea.style.paddingTop = `${Math.round(psMetaBasePaddingTop)}px`;
-		if (mirrorMask)
-			mirrorMask.style.paddingTop = `${Math.round(psMetaBasePaddingTop)}px`;
 		if (attributionOverlay)
 			attributionOverlay.style.paddingTop = `${Math.round(psMetaBasePaddingTop)}px`;
 		if (commentOverlay)
@@ -8954,7 +8934,9 @@
 
 	function renderPasswordToken(raw) {
 		const value = String(raw || "");
-		return escapeHtml(value);
+		const escaped = escapeHtml(value);
+		const dots = "•".repeat(Math.max(4, value.length));
+		return `<span class="pw-field" data-pw="${escaped}"><span class="pw-mask" aria-hidden="true">${dots}</span><span class="pw-value">${escaped}</span><button type="button" class="pw-toggle" title="Anzeigen" aria-label="Passwort anzeigen">👁</button><button type="button" class="pw-copy" title="Kopieren" aria-label="Passwort kopieren">📋</button></span>`;
 	}
 
 	async function copyTextToClipboard(value) {
@@ -9001,51 +8983,6 @@
 			toggleBtn.textContent = next ? "🙈" : "👁";
 		}
 		return next;
-	}
-
-	function loadEditorMaskDisabled() {
-		try {
-			const raw = String(localStorage.getItem(EDITOR_MASK_DISABLED_KEY) || "");
-			editorMaskDisabled = raw === "1";
-		} catch {
-			editorMaskDisabled = false;
-		}
-	}
-
-	function saveEditorMaskDisabled() {
-		try {
-			localStorage.setItem(
-				EDITOR_MASK_DISABLED_KEY,
-				editorMaskDisabled ? "1" : "0"
-			);
-		} catch {
-			// ignore
-		}
-	}
-
-	function toggleEditorMaskView() {
-		editorMaskDisabled = !editorMaskDisabled;
-		saveEditorMaskDisabled();
-		setEditorMaskToggleUi();
-		updatePasswordMaskOverlay();
-	}
-
-	function setEditorMaskToggleUi() {
-		const enabled = !editorMaskDisabled;
-		if (selectionMenu) {
-			const btn = selectionMenu.querySelector(
-				'[data-selection-action="masktoggle"]'
-			);
-			if (btn) {
-				btn.setAttribute("aria-pressed", enabled ? "true" : "false");
-				btn.textContent = enabled ? "Unmask" : "Mask";
-				btn.setAttribute("title", enabled ? "Maskierung aus" : "Maskierung an");
-				btn.setAttribute(
-					"aria-label",
-					enabled ? "Maskierung aus" : "Maskierung an"
-				);
-			}
-		}
 	}
 
 	function loadCrdtMarksPreference() {
@@ -9105,66 +9042,6 @@
 		saveCrdtMarksPreference();
 		setCrdtMarksToggleUi();
 		updateAttributionOverlay();
-	}
-
-	function hasPasswordTokens(text) {
-		return /\|\|[^\n]+?\|\|/.test(String(text || ""));
-	}
-
-	function maskPasswordTokens(text) {
-		return String(text || "").replace(/\|\|[^\n]+?\|\|/g, (m) => {
-			const len = Math.max(4, String(m || "").length);
-			return "•".repeat(len);
-		});
-	}
-
-	function buildEditorMaskHtml(text) {
-		const src = String(text || "");
-		if (!src) return "";
-		let out = "";
-		let last = 0;
-		const re = /\|\|[^\n]+?\|\|/g;
-		let match;
-		while ((match = re.exec(src))) {
-			const start = match.index;
-			const end = start + match[0].length;
-			if (start > last) {
-				out += escapeHtml(src.slice(last, start));
-			}
-			out += `<span class="pw-editor-token">${escapeHtml(
-				src.slice(start, end)
-			)}</span>`;
-			last = end;
-		}
-		if (last < src.length) {
-			out += escapeHtml(src.slice(last));
-		}
-		return out;
-	}
-
-	function syncPasswordMaskScroll() {
-		if (!mirrorMaskContent || !textarea) return;
-		const x = Number(textarea.scrollLeft || 0);
-		const y = Number(textarea.scrollTop || 0);
-		mirrorMaskContent.style.transform = `translate(${-x}px, ${-y}px)`;
-	}
-
-	function updatePasswordMaskOverlay() {
-		if (!textarea || !mirrorMask || !mirrorMaskContent) return;
-		const value = String(textarea.value || "");
-		const enabled = hasPasswordTokens(value) && !editorMaskDisabled;
-		mirrorMask.classList.toggle("hidden", !enabled);
-		textarea.classList.toggle("pw-mask-enabled", enabled);
-		if (!enabled) {
-			mirrorMaskContent.textContent = "";
-			updateAttributionOverlay();
-			updateCursorOverlay();
-			return;
-		}
-		mirrorMaskContent.innerHTML = buildEditorMaskHtml(value);
-		syncPasswordMaskScroll();
-		updateAttributionOverlay();
-		updateCursorOverlay();
 	}
 
 	function getPreviewRunCombinedText(state) {
@@ -9404,7 +9281,6 @@
 			// ignore
 		}
 		updatePreview();
-		updatePasswordMaskOverlay();
 		scheduleSend();
 		return true;
 	}
@@ -9463,7 +9339,6 @@
 		metaLeft.textContent = "Inserted code block.";
 		metaRight.textContent = nowIso();
 		updatePreview();
-		updatePasswordMaskOverlay();
 		updateCodeLangOverlay();
 		scheduleSend();
 	}
@@ -10139,11 +10014,11 @@
 	pre{overflow:auto;border:1px solid ${previewPreBorder};border-radius:12px;padding:12px;background:${previewPreBg};color:${previewPreText};}
     code{background:${previewCodeBg};padding:.15em .35em;border-radius:.35em;}
     pre code{background:transparent;padding:0;}
-		.pw-field{display:inline-flex;align-items:center;gap:.35rem;padding:.1rem .45rem;border-radius:999px;border:1px solid ${previewFieldBorder};background:${previewFieldBg};font-size:.85em;line-height:1.2;}
-		.pw-mask{letter-spacing:.18em;font-weight:600;color:${previewFieldText};}
-		.pw-value{display:none;font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;color:${previewValueText};}
+		.pw-field{display:inline-flex;align-items:center;gap:.35rem;padding:.1rem .45rem;border-radius:999px;border:1px solid ${previewFieldBorder};background:${previewFieldBg};font-size:.85em;line-height:1.2;position:relative;}
+		.pw-mask{position:absolute;left:.45rem;pointer-events:none;letter-spacing:.18em;font-weight:600;color:${previewFieldText};white-space:nowrap;}
+		.pw-value{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;color:transparent;-webkit-user-select:text;user-select:text;cursor:text;}
 		.pw-field.pw-revealed .pw-mask{display:none;}
-		.pw-field.pw-revealed .pw-value{display:inline;}
+		.pw-field.pw-revealed .pw-value{color:${previewValueText};}
 		.pw-toggle,.pw-copy{display:inline-flex;align-items:center;justify-content:center;height:1.4rem;min-width:1.4rem;padding:0 .35rem;border-radius:999px;border:1px solid ${previewFieldBorder};background:${previewCodeBg};color:${previewFieldText};font-size:.75rem;line-height:1;cursor:pointer;}
 		.pw-toggle:hover,.pw-copy:hover{background:${previewPreBg};}
 		.meta-yaml{margin:0 0 12px 0;font-size:11px;line-height:1.4;color:${previewMetaText};background:${previewMetaBg};border:1px solid ${previewMetaBorder};border-radius:10px;padding:8px 10px;white-space:pre-wrap;}
@@ -11838,7 +11713,6 @@ ${highlightThemeCss}
 		}
 		if (!(opts && opts.skipText)) {
 			updatePreview();
-			updatePasswordMaskOverlay();
 		}
 		updateEditorMetaYaml();
 		void loadCommentsForRoom();
@@ -17480,17 +17354,6 @@ self.onmessage = async (e) => {
 			}
 			return;
 		}
-		const maskVisible =
-			mirrorMask && !mirrorMask.classList.contains("hidden");
-		if (maskVisible) {
-			attributionOverlay.classList.add("hidden");
-			attributionOverlay.classList.remove("is-underline");
-			if (textarea && textarea.classList) {
-				textarea.classList.remove("attribution-active");
-				textarea.classList.remove("attribution-underline");
-			}
-			return;
-		}
 		const html = buildAttributionHtml();
 		if (!html) {
 			attributionOverlay.classList.add("hidden");
@@ -17516,13 +17379,6 @@ self.onmessage = async (e) => {
 	function updateCursorOverlay() {
 		ensureCursorOverlayLayer();
 		if (!cursorOverlay || !cursorOverlayContent || !textarea) return;
-		const maskVisible =
-			mirrorMask && !mirrorMask.classList.contains("hidden");
-		if (maskVisible) {
-			cursorOverlay.classList.add("hidden");
-			cursorOverlayContent.textContent = "";
-			return;
-		}
 		const users = Array.from(presenceState.values()).filter((user) => {
 			if (!user || user.clientId === clientId) return false;
 			return (
@@ -17621,7 +17477,6 @@ self.onmessage = async (e) => {
 		const previewHtml = buildPreviewContentHtml(text);
 		const didUpdate = previewHtml && sendPreviewContentUpdate(previewHtml);
 		if (!didUpdate) updatePreview();
-		updatePasswordMaskOverlay();
 		scheduleRoomTabSync({
 			room,
 			key,
@@ -20153,7 +20008,6 @@ self.onmessage = async (e) => {
 			});
 		}
 		updatePreview();
-		updatePasswordMaskOverlay();
 		updateCommentOverlay();
 		updateSlashMenu();
 		updateWikiMenu();
@@ -20170,14 +20024,12 @@ self.onmessage = async (e) => {
 		updateCodeLangOverlay();
 		updateTableMenuVisibility();
 		updateSelectionMenu();
-		updatePasswordMaskOverlay();
 		scheduleSelectionSend();
 	});
 
 	textarea.addEventListener("focus", () => {
 		updateCodeLangOverlay();
 		updateTableMenuVisibility();
-		updatePasswordMaskOverlay();
 		scheduleSelectionSend();
 	});
 
@@ -20189,7 +20041,6 @@ self.onmessage = async (e) => {
 		updateSlashMenu();
 		updateSelectionMenu();
 		updateEditorMetaScroll();
-		syncPasswordMaskScroll();
 		syncAttributionOverlayScroll();
 		syncCommentOverlayScroll();
 		syncCursorOverlayScroll();
@@ -20200,7 +20051,6 @@ self.onmessage = async (e) => {
 		updateTableMenuVisibility();
 		updateWikiMenu();
 		updateSelectionMenu();
-		updatePasswordMaskOverlay();
 		scheduleSelectionSend();
 	});
 
@@ -20420,7 +20270,6 @@ self.onmessage = async (e) => {
 				if (textarea) {
 					insertTextAtCursor(textarea, markdown);
 					updatePreview();
-					updatePasswordMaskOverlay();
 					scheduleSend();
 					schedulePsAutoSave();
 				}
@@ -20558,7 +20407,6 @@ self.onmessage = async (e) => {
 		if (document.activeElement !== textarea) return;
 		updateTableMenuVisibility();
 		updateSelectionMenu();
-		updatePasswordMaskOverlay();
 		scheduleSelectionSend();
 	});
 
@@ -20685,7 +20533,6 @@ self.onmessage = async (e) => {
 			metaLeft.textContent = note ? "Room geladen (Note)." : "Room geladen (lokal).";
 			metaRight.textContent = "";
 			updatePreview();
-			updatePasswordMaskOverlay();
 			updateCodeLangOverlay();
 			updateTableMenuVisibility();
 			updateSelectionMenu();
@@ -20767,12 +20614,9 @@ self.onmessage = async (e) => {
 	loadLinearApiConfig();
 	loadLinearProjectsFromStorage();
 	syncLinearForNote(getLinearNoteId());
-	loadEditorMaskDisabled();
-	setEditorMaskToggleUi();
 	loadCrdtMarksStyle();
 	loadCrdtMarksPreference();
 	setCrdtMarksToggleUi();
-	updatePasswordMaskOverlay();
 	syncPermanentLinkToggleUi();
 
 	// Personal Space wiring
@@ -20855,7 +20699,6 @@ self.onmessage = async (e) => {
 			metaLeft.textContent = "Bereit.";
 			metaRight.textContent = "";
 			updatePreview();
-			updatePasswordMaskOverlay();
 			syncMobileFocusState();
 		});
 	}
@@ -21119,7 +20962,6 @@ self.onmessage = async (e) => {
 				metaLeft.textContent = "Cleared.";
 				metaRight.textContent = nowIso();
 				updatePreview();
-				updatePasswordMaskOverlay();
 				scheduleSend();
 			})();
 		});
@@ -21472,7 +21314,6 @@ self.onmessage = async (e) => {
 			if (metaLeft) metaLeft.textContent = "AI output replaced editor.";
 			if (metaRight) metaRight.textContent = nowIso();
 			updatePreview();
-			updatePasswordMaskOverlay();
 			scheduleSend();
 			toast("AI output applied (replaced).", "success");
 		});
@@ -21496,7 +21337,6 @@ self.onmessage = async (e) => {
 			if (metaLeft) metaLeft.textContent = "AI output appended to editor.";
 			if (metaRight) metaRight.textContent = nowIso();
 			updatePreview();
-			updatePasswordMaskOverlay();
 			scheduleSend();
 			toast("AI output applied (appended).", "success");
 		});
