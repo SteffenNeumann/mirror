@@ -19647,9 +19647,17 @@ self.onmessage = async (e) => {
 				toast(t("toast.linear_select_project"), "info");
 				return;
 			}
-			const project = Array.isArray(linearProjects)
+			let project = Array.isArray(linearProjects)
 				? linearProjects.find((p) => String(p.id || "") === selected)
 				: null;
+			// Shared-room guest: project may not be in local list but was
+			// received via WebSocket (linearProjectByNote).
+			if (!project && activeId) {
+				const shared = linearProjectByNote.get(activeId);
+				if (shared && String(shared.projectId || "") === selected) {
+					project = { id: shared.projectId, name: shared.projectName || shared.projectId };
+				}
+			}
 			if (!project) {
 				toast(t("toast.linear_projects_failed"), "error");
 				return;
@@ -19659,6 +19667,12 @@ self.onmessage = async (e) => {
 				projectName: project.name,
 			});
 			setLinearVisible(true);
+			// Guest without API key: render from cached shared data instead
+			// of calling Linear API directly.
+			if (!linearApiKey && !readLinearApiKeyInput()) {
+				renderLinearTasks(activeId);
+				return;
+			}
 			void fetchLinearTasksForProject(activeId, project.id);
 		});
 	}
@@ -19669,6 +19683,14 @@ self.onmessage = async (e) => {
 			const current = activeId ? linearProjectByNote.get(activeId) : null;
 			if (!current || !current.projectId) {
 				toast(t("toast.linear_select_project"), "info");
+				return;
+			}
+			// Guest without API key: request fresh state from server buffer
+			// via WebSocket instead of calling Linear API directly.
+			if (!linearApiKey && !readLinearApiKeyInput()) {
+				if (ws && ws.readyState === WebSocket.OPEN) {
+					sendMessage({ type: "request_state", room, clientId, ts: Date.now() });
+				}
 				return;
 			}
 			void fetchLinearTasksForProject(activeId, current.projectId);
