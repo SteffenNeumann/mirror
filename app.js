@@ -2732,6 +2732,9 @@
 			if (idx >= 0) {
 				start = idx;
 				end = idx + text.length;
+			} else {
+				// Selection text not found in current content → no highlight
+				return null;
 			}
 		}
 		if (end <= start) return null;
@@ -2741,20 +2744,28 @@
 	/**
 	 * Returns comment items visible for the current note context.
 	 * - Comments WITHOUT text-selection (room-level) are always visible.
-	 * - Comments WITH text-selection are only visible when the note they
-	 *   were created on is currently displayed (matched by noteId).
+	 * - Comments WITH text-selection + noteId are only visible when
+	 *   that note is currently displayed.
+	 * - Legacy comments WITH text-selection but WITHOUT noteId are only
+	 *   visible when their selection text exists in the current editor content.
 	 */
 	function getVisibleCommentItems() {
 		const activeNoteId = getCommentSelectionNoteId();
+		const editorText = textarea ? String(textarea.value || "") : "";
 		return commentItems.filter((entry) => {
 			if (!entry) return false;
 			// No text-selection → room-level comment, always visible
 			if (!entry.selection) return true;
-			// Has selection but no noteId (legacy) → always visible
-			if (!entry.noteId) return true;
-			// Has selection + noteId → only visible when that note is active
-			if (!activeNoteId) return true;
-			return entry.noteId === activeNoteId;
+			// Has noteId → only visible when that note is active
+			if (entry.noteId) {
+				if (!activeNoteId) return true;
+				return entry.noteId === activeNoteId;
+			}
+			// Legacy (no noteId): only show if selection text exists in current editor
+			const selText = entry.selection && entry.selection.text
+				? String(entry.selection.text || "").trim() : "";
+			if (!selText) return true;
+			return editorText.includes(selText);
 		});
 	}
 
