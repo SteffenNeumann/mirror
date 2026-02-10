@@ -18657,9 +18657,21 @@ self.onmessage = async (e) => {
 			el.style.top = "0px";
 			requestAnimationFrame(() => {
 				if (!permalinkTooltipEl) return;
+				const bw = box.offsetWidth || 0;
 				const h = box.offsetHeight || 0;
 				const top = rect.top - h - 10;
+				// Clamp horizontally so tooltip stays within viewport
+				const vw = window.innerWidth;
+				const margin = 8;
+				let finalLeft = left;
+				const halfW = bw / 2;
+				if (finalLeft + halfW > vw - margin) finalLeft = vw - margin - halfW;
+				if (finalLeft - halfW < margin) finalLeft = margin + halfW;
+				el.style.left = `${finalLeft}px`;
 				el.style.top = `${top}px`;
+				// Shift arrow to point at the button center
+				const arrowOffset = left - finalLeft;
+				arrow.style.left = `calc(50% + ${arrowOffset}px)`;
 				el.classList.add("is-visible");
 			});
 		}
