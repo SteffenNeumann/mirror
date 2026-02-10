@@ -1247,7 +1247,9 @@
 
 	function markCurrentRoomShared() {
 		if (!room) return false;
-		const marked = markRoomShared(room, key);
+		const roomKey = `${normalizeRoom(room)}:${normalizeKey(key)}`;
+		manuallyUnsharedRooms.delete(roomKey);
+		const marked = markRoomShared(room, key, { manual: true });
 		if (marked) renderRoomTabs();
 		return marked;
 	}
@@ -13536,12 +13538,16 @@ self.onmessage = async (e) => {
 		);
 	}
 
-	function markRoomShared(roomName, keyName) {
+	function markRoomShared(roomName, keyName, options) {
 		const nextRoom = normalizeRoom(roomName);
 		const nextKey = normalizeKey(keyName);
 		if (!nextRoom) return false;
-		const list = loadSharedRooms();
 		const keyId = `${nextRoom}:${nextKey}`;
+		// Skip automatic (WebSocket-driven) re-marking if user explicitly un-shared
+		if (!(options && options.manual) && manuallyUnsharedRooms.has(keyId)) {
+			return false;
+		}
+		const list = loadSharedRooms();
 		const filtered = list.filter((r) => `${r.room}:${r.key}` !== keyId);
 		filtered.push({ room: nextRoom, key: nextKey, updatedAt: Date.now() });
 		saveSharedRooms(filtered);
@@ -13603,6 +13609,7 @@ self.onmessage = async (e) => {
 		const list = loadSharedRooms();
 		const keyId = `${nextRoom}:${nextKey}`;
 		const filtered = list.filter((r) => `${r.room}:${r.key}` !== keyId);
+		manuallyUnsharedRooms.add(keyId);
 		saveSharedRooms(filtered);
 		if (psState && psState.authed) {
 			api("/api/shared-rooms", {
@@ -13618,6 +13625,10 @@ self.onmessage = async (e) => {
 	}
 
 	async function clearSharedRooms() {
+		// Prevent WebSocket auto-re-marking for all currently shared rooms
+		for (const r of loadSharedRooms()) {
+			manuallyUnsharedRooms.add(`${r.room}:${r.key}`);
+		}
 		saveSharedRooms([]);
 		if (psState && psState.authed) {
 			try {
@@ -14263,6 +14274,9 @@ self.onmessage = async (e) => {
 	let roomTabsSyncedFromLocal = false;
 	let sharedRoomsSyncedFromLocal = false;
 	let roomPinsSyncedFromLocal = false;
+
+	/** Rooms the user explicitly un-shared; prevents WebSocket auto-re-marking. */
+	const manuallyUnsharedRooms = new Set();
 
 	async function syncSharedRoomToServer(payload) {
 		if (!psState || !psState.authed) return;
@@ -20597,6 +20611,8 @@ self.onmessage = async (e) => {
 		if (!suppressRestore && canSyncPrev) {
 			flushRoomTabSync();
 		}
+		// Clear manual-unshare guard for old room so re-visiting works fresh
+		manuallyUnsharedRooms.delete(`${normalizeRoom(room)}:${normalizeKey(key)}`);
 		room = nextRoom;
 		key = nextKey;
 		resetE2eeKeyCache();

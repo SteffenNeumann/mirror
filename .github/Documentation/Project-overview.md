@@ -6,6 +6,9 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
 
 ## Aktuelle Änderungen (2026-02-10)
 
+- **Link-Symbol nach Shared-Room-Löschung entfernt**: Wenn ein geteilter Raum über die Settings-Verwaltung entfernt wurde (`removeSharedRoom` / `clearSharedRooms`), konnte das Link-Symbol (🔗 `room-tab-link-badge`) im Tab sofort wieder erscheinen, weil WebSocket-Handler (`presence_state`, `room_pin_state`) den Raum automatisch als geteilt neu markierten. Fix: Neue `manuallyUnsharedRooms`-Set speichert explizit un-geteilte Räume. `markRoomShared` ignoriert automatisches Re-Marking für diese Räume. Beim Raumwechsel wird der Guard aufgehoben, damit ein erneuter Besuch frisch startet. Explizites Teilen (`markCurrentRoomShared`) löscht den Guard.
+  - Zuständige Funktionen: `markRoomShared` ([app.js](app.js#L13541)), `removeSharedRoom` ([app.js](app.js#L13604)), `clearSharedRooms` ([app.js](app.js#L13625)), `markCurrentRoomShared` ([app.js](app.js#L1249)), hashchange-Handler ([app.js](app.js#L20613)).
+
 - **Permanent-Link Deaktivierung repariert**: `clearRoomPinnedEntry` löschte den Pin nur aus lokalen und Server-Pins, aber nicht aus den Shared-Pins (per WebSocket empfangene Einträge). Da `loadRoomPinnedEntries()` alle drei Quellen merged (shared + local + server), blieb der Pin in der Shared-Quelle erhalten und die UI zeigte „aktiv" obwohl der Toast „deaktiviert" meldete. Fix: `clearRoomPinnedEntry` ruft jetzt `clearSharedRoomPinnedEntry` auf, damit alle drei Quellen konsistent bereinigt werden.
   - Zuständige Funktion: `clearRoomPinnedEntry` ([app.js](app.js#L13802)).
 
@@ -970,8 +973,10 @@ Server-Start
 | `removeRoomPinFromState` | Room-Pin aus State entfernen | `#state` `#remove` | `normalizeKey`, `normalizeRoom` |
 | `syncRoomPinToServer` | Room-Pin → Server synchen | `#api` `#sync` | `api`, `normalizeKey`, `normalizeRoom`, `upsertRoomPinInState` |
 | `syncLocalRoomPinsToServer` | Lokale Room-Pins → Server | `#api` `#sync` | `loadLocalRoomPinnedEntries`, `normalizeRoomPinnedEntry`, `syncRoomPinToServer` |
-| `isRoomMarkedShared` | Raum als geteilt markiert prüfen | `#check` `#state` | — |
-| `markRoomShared` | Raum als geteilt markieren | `#handler` `#state` | — |
+| `isRoomMarkedShared` | Raum als geteilt markiert prüfen | `#check` `#state` | `loadSharedRooms`, `normalizeKey`, `normalizeRoom` |
+| `markRoomShared` | Raum als geteilt markieren (auto/manual) | `#handler` `#state` | `loadSharedRooms`, `normalizeKey`, `normalizeRoom`, `saveSharedRooms`, `syncSharedRoomToServer`, `renderSharedRoomsManager`, `ensureFavoriteForSharedRoom`, `manuallyUnsharedRooms` |
+| `removeSharedRoom` | Geteilten Raum entfernen + Auto-Re-Mark blockieren | `#handler` `#remove` | `loadSharedRooms`, `normalizeKey`, `normalizeRoom`, `saveSharedRooms`, `api`, `renderRoomTabs`, `renderSharedRoomsManager`, `manuallyUnsharedRooms` |
+| `clearSharedRooms` | Alle geteilten Räume entfernen + Auto-Re-Mark blockieren | `#handler` `#remove` | `loadSharedRooms`, `saveSharedRooms`, `api`, `renderRoomTabs`, `renderSharedRoomsManager`, `manuallyUnsharedRooms` |
 
 #### 25 · Uploads & Trash-Verwaltung `#uploads` — `app.js`
 
