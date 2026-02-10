@@ -18601,14 +18601,43 @@ self.onmessage = async (e) => {
 		});
 		togglePermanentLinkBtn.addEventListener("contextmenu", (ev) => {
 			ev.preventDefault();
-			void openModal({
-				title: t("permalink.info.title"),
-				message: t("permalink.info.message"),
-				okText: t("modal.ok"),
-				cancelText: t("modal.close"),
-				backdropClose: true,
-			});
 		});
+		let permalinkTooltipTimer = null;
+		let permalinkTooltipEl = null;
+		function showPermalinkTooltip() {
+			hidePermalinkTooltip();
+			const el = document.createElement("div");
+			el.className = "tab-tooltip-layer";
+			const box = document.createElement("div");
+			box.className = "tab-tooltip-layer__box";
+			box.style.maxWidth = "260px";
+			box.textContent = t("permalink.info.message");
+			const arrow = document.createElement("div");
+			arrow.className = "tab-tooltip-layer__arrow";
+			el.appendChild(box);
+			el.appendChild(arrow);
+			document.body.appendChild(el);
+			permalinkTooltipEl = el;
+			const rect = togglePermanentLinkBtn.getBoundingClientRect();
+			const left = rect.left + rect.width / 2;
+			el.style.left = `${left}px`;
+			el.style.top = "0px";
+			requestAnimationFrame(() => {
+				if (!permalinkTooltipEl) return;
+				const h = box.offsetHeight || 0;
+				const top = rect.top - h - 10;
+				el.style.top = `${top}px`;
+				el.classList.add("is-visible");
+			});
+		}
+		function hidePermalinkTooltip() {
+			if (permalinkTooltipTimer) { clearTimeout(permalinkTooltipTimer); permalinkTooltipTimer = null; }
+			if (permalinkTooltipEl) { permalinkTooltipEl.remove(); permalinkTooltipEl = null; }
+		}
+		togglePermanentLinkBtn.addEventListener("mouseenter", () => {
+			permalinkTooltipTimer = setTimeout(showPermalinkTooltip, 500);
+		});
+		togglePermanentLinkBtn.addEventListener("mouseleave", hidePermalinkTooltip);
 	}
 
 	let excalidrawVisible = false;

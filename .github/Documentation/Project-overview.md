@@ -9,8 +9,8 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
 - **Permanent-Link Deaktivierung repariert**: `clearRoomPinnedEntry` löschte den Pin nur aus lokalen und Server-Pins, aber nicht aus den Shared-Pins (per WebSocket empfangene Einträge). Da `loadRoomPinnedEntries()` alle drei Quellen merged (shared + local + server), blieb der Pin in der Shared-Quelle erhalten und die UI zeigte „aktiv" obwohl der Toast „deaktiviert" meldete. Fix: `clearRoomPinnedEntry` ruft jetzt `clearSharedRoomPinnedEntry` auf, damit alle drei Quellen konsistent bereinigt werden.
   - Zuständige Funktion: `clearRoomPinnedEntry` ([app.js](app.js#L13802)).
 
-- **Permanent-Link Info-Modal (Tooltip)**: Rechtsklick (Contextmenu) auf den Permanent-Link-Button öffnet ein Info-Modal, das Zweck und Anwendung beschreibt. Design folgt dem bestehenden `openModal`-Pattern (gleicher Stil wie Slash-Help und Selection-Help).
-  - Zuständige Stelle: `togglePermanentLinkBtn` contextmenu-Handler ([app.js](app.js#L18602)).
+- **Permanent-Link Info-Tooltip (Hover)**: Hover über den Permanent-Link-Button blendet nach 500ms ein kleines Tooltip-Fenster ein (gleicher Stil wie Kalender-Tagestermine, `tab-tooltip-layer`). Beim Verlassen verschwindet es sofort. Rechtsklick wird unterdrückt (kein Kontextmenü).
+  - Zuständige Stelle: `togglePermanentLinkBtn` mouseenter/mouseleave-Handler ([app.js](app.js#L18607)).
 
 - **Permanent-Link i18n**: Toast-Meldungen, Button-Labels und Info-Modal sind jetzt vollständig über `UI_STRINGS` (de/en) lokalisiert. HTML-Button trägt `data-i18n-title` und `data-i18n-aria` für automatische Sprachumschaltung.
   - Zuständige Strings: `editor.permalink`, `editor.permalink_active`, `toast.permalink_activated`, `toast.permalink_deactivated`, `permalink.info.title`, `permalink.info.message`.
