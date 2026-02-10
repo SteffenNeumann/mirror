@@ -2738,14 +2738,31 @@
 		return { start, end, text: text || value.slice(start, end) };
 	}
 
+	/**
+	 * Returns comment items visible for the current note context.
+	 * - Comments WITHOUT text-selection (room-level) are always visible.
+	 * - Comments WITH text-selection are only visible when the note they
+	 *   were created on is currently displayed (matched by noteId).
+	 */
+	function getVisibleCommentItems() {
+		const activeNoteId = getCommentSelectionNoteId();
+		return commentItems.filter((entry) => {
+			if (!entry) return false;
+			// No text-selection → room-level comment, always visible
+			if (!entry.selection) return true;
+			// Has selection but no noteId (legacy) → always visible
+			if (!entry.noteId) return true;
+			// Has selection + noteId → only visible when that note is active
+			if (!activeNoteId) return true;
+			return entry.noteId === activeNoteId;
+		});
+	}
+
 	function buildCommentOverlayHtml(value) {
 		if (!value) return "";
-		const activeNoteId = getCommentSelectionNoteId();
-		const ranges = commentItems
+		const visible = getVisibleCommentItems();
+		const ranges = visible
 			.map((entry) => {
-				// Skip highlights for comments that belong to a different note.
-				// entry.noteId is empty for legacy comments → always show.
-				if (entry.noteId && activeNoteId && entry.noteId !== activeNoteId) return null;
 				const normalized = normalizeCommentSelection(entry, value);
 				if (!normalized) return null;
 				const authorColor = entry.author && entry.author.color
@@ -2934,21 +2951,24 @@
 	function renderCommentList() {
 		if (!commentList) return;
 		commentList.innerHTML = "";
+		// Filter: room-level comments always visible; text-marked comments
+		// only when their noteId matches the currently displayed note.
+		const visibleItems = getVisibleCommentItems();
 		if (
 			commentSelectedId &&
-			!commentItems.some((it) => String(it && it.id ? it.id : "") === commentSelectedId)
+			!visibleItems.some((it) => String(it && it.id ? it.id : "") === commentSelectedId)
 		) {
 			commentSelectedId = "";
 		}
 		if (commentEmpty) {
-			commentEmpty.classList.toggle("hidden", commentItems.length > 0);
+			commentEmpty.classList.toggle("hidden", visibleItems.length > 0);
 		}
 		if (commentCountBadge) {
-			const count = commentItems.length;
+			const count = visibleItems.length;
 			commentCountBadge.textContent = String(count);
 			commentCountBadge.classList.toggle("hidden", count === 0);
 		}
-		const orderedComments = commentItems
+		const orderedComments = visibleItems
 			.slice()
 			.sort(
 				(a, b) =>
