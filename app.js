@@ -13492,7 +13492,47 @@ self.onmessage = async (e) => {
 			});
 		}
 		renderSharedRoomsManager();
+		// Auto-save shared room as favorite so the user can always find it again
+		ensureFavoriteForSharedRoom(nextRoom, nextKey);
 		return filtered.length !== list.length;
+	}
+
+	/**
+	 * Ensures a shared room is saved as a favorite automatically.
+	 * This guarantees the user can always return to a shared room,
+	 * even after closing the browser or clearing tabs.
+	 */
+	function ensureFavoriteForSharedRoom(roomName, keyName) {
+		const favs = loadFavorites();
+		const alreadyFav = favs.some(
+			(f) => f.room === roomName && f.key === keyName
+		);
+		if (alreadyFav) return;
+		const textSnapshot = String(
+			textarea && textarea.value ? textarea.value : ""
+		);
+		const entry = normalizeFavoriteEntry({
+			room: roomName,
+			key: keyName,
+			addedAt: Date.now(),
+			text: textSnapshot,
+		});
+		if (!entry) return;
+		const next = dedupeFavorites([entry, ...favs]).slice(0, 20);
+		saveFavorites(next);
+		if (psState && psState.authed) {
+			api("/api/favorites", {
+				method: "POST",
+				body: JSON.stringify({
+					room: roomName,
+					key: keyName,
+					text: textSnapshot,
+				}),
+			}).catch(() => {
+				// ignore – favorite will sync on next PS refresh
+			});
+		}
+		updateFavoritesUI();
 	}
 
 	function removeSharedRoom(roomName, keyName) {

@@ -10,3 +10,4 @@ data/
 *.sqlite-shm
 *.db
 .github/copilot-instructions.md
+.smoke-test.cjs

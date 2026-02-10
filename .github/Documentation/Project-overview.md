@@ -1,8 +1,13 @@
 # Project overview
 
-Datum: 2026-02-09
+Datum: 2026-02-10
 
 Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische Analyse, keine Laufzeitauflösung).
+
+## Aktuelle Änderungen (2026-02-10)
+
+- **Auto-Favorit für geteilte Räume**: Wenn ein Raum als geteilt markiert wird (`markRoomShared`), wird er automatisch als Favorit gespeichert. Damit kann der Nutzer einen geteilten Raum jederzeit wiederfinden – auch nach dem Schließen des Browsers oder dem Entfernen aus den Tabs. Die neue Funktion `ensureFavoriteForSharedRoom` prüft, ob der Raum bereits ein Favorit ist, und fügt ihn andernfalls hinzu (inkl. Server-Sync bei PS-Auth).
+  - Zuständige Funktionen: `markRoomShared` ([app.js](app.js#L13478)), `ensureFavoriteForSharedRoom` ([app.js](app.js#L13498)).
 
 ## Aktuelle Änderungen (2026-02-09)
 
@@ -889,6 +894,7 @@ Server-Start
 | `updateFavoriteText` | Favorit-Text aktualisieren | `#api` `#handler` | `api`, `dedupeFavorites`, `loadFavorites`, `normalizeKey`, `normalizeRoom`, `saveFavorites`, `updateFavoritesUI` |
 | `removeFavorite` | Favorit entfernen | `#api` `#handler` | `api`, `dedupeFavorites`, `loadFavorites`, `normalizeKey`, `normalizeRoom`, `saveFavorites`, `updateFavoritesUI` |
 | `updateFavoriteButton` | Favorit-Button aktualisieren | `#ui` `#state` | `findFavoriteIndex` |
+| `ensureFavoriteForSharedRoom` | Geteilten Raum automatisch als Favorit speichern | `#auto` `#share` `#handler` | `loadFavorites`, `normalizeFavoriteEntry`, `dedupeFavorites`, `saveFavorites`, `api`, `updateFavoritesUI` |
 | `updateFavoritesUI` | Favoriten-UI aktualisieren (Haupt) | `#render` `#main` | _massiv – fast alle Module_ |
 
 #### 23 · Room-Tabs `#tabs` — `app.js`
