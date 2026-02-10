@@ -95,6 +95,9 @@ let stmtNoteCommentsGetByScope;
 let stmtNoteCommentsUpsert;
 let stmtNoteCommentsDeleteByScope;
 let stmtNoteCommentsByUser;
+let stmtSavedQueryList;
+let stmtSavedQueryInsert;
+let stmtSavedQueryDelete;
 let stmtTrashInsert;
 let stmtTrashGetByIdUser;
 let stmtTrashDeleteByIdUser;
@@ -451,6 +454,18 @@ function initDb() {
 		"CREATE UNIQUE INDEX IF NOT EXISTS idx_notes_user_hash ON notes(user_id, content_hash) WHERE content_hash IS NOT NULL AND content_hash <> ''"
 	);
 
+	db.exec(`
+		CREATE TABLE IF NOT EXISTS saved_queries (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER NOT NULL,
+			label TEXT NOT NULL,
+			query TEXT NOT NULL,
+			created_at INTEGER NOT NULL,
+			FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+		);
+		CREATE INDEX IF NOT EXISTS idx_saved_queries_user ON saved_queries(user_id, created_at ASC);
+	`);
+
 	stmtUserGet = db.prepare("SELECT id, email FROM users WHERE email = ?");
 	stmtUserInsert = db.prepare(
 		"INSERT INTO users(email, created_at) VALUES(?, ?) ON CONFLICT(email) DO NOTHING"
@@ -492,6 +507,15 @@ function initDb() {
 	);
 	stmtNoteCommentsByUser = db.prepare(
 		"SELECT n.id as note_id FROM notes n JOIN notes_comments nc ON nc.scope_id = 'note:' || n.id WHERE n.user_id = ?"
+	);
+	stmtSavedQueryList = db.prepare(
+		"SELECT id, label, query, created_at FROM saved_queries WHERE user_id = ? ORDER BY created_at ASC LIMIT 50"
+	);
+	stmtSavedQueryInsert = db.prepare(
+		"INSERT INTO saved_queries(user_id, label, query, created_at) VALUES(?, ?, ?, ?)"
+	);
+	stmtSavedQueryDelete = db.prepare(
+		"DELETE FROM saved_queries WHERE id = ? AND user_id = ?"
 	);
 	stmtTrashInsert = db.prepare(
 		"INSERT INTO notes_trash(id, user_id, text, kind, content_hash, tags_json, created_at, updated_at, deleted_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, id) DO UPDATE SET text = excluded.text, kind = excluded.kind, content_hash = excluded.content_hash, tags_json = excluded.tags_json, created_at = excluded.created_at, updated_at = excluded.updated_at, deleted_at = excluded.deleted_at"
@@ -3139,6 +3163,50 @@ const server = http.createServer(async (req, res) => {
 				}
 				json(res, 400, { ok: false, error: "invalid_json" });
 			});
+		return;
+	}
+
+	/* ── Saved Queries API ── */
+
+	if (url.pathname === "/api/saved-queries" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) { json(res, 401, { ok: false, error: "unauthorized" }); return; }
+		const userId = getOrCreateUserId(email);
+		const rows = stmtSavedQueryList.all(userId);
+		json(res, 200, { ok: true, queries: rows });
+		return;
+	}
+
+	if (url.pathname === "/api/saved-queries" && req.method === "POST") {
+		const email = getAuthedEmail(req);
+		if (!email) { json(res, 401, { ok: false, error: "unauthorized" }); return; }
+		readJson(req)
+			.then((body) => {
+				const userId = getOrCreateUserId(email);
+				const label = String(body && body.label ? body.label : "").trim().slice(0, 100);
+				const query = String(body && body.query ? body.query : "").trim().slice(0, 500);
+				if (!query) { json(res, 400, { ok: false, error: "empty_query" }); return; }
+				const lbl = label || (query.length > 28 ? query.slice(0, 26) + "…" : query);
+				const now = Date.now();
+				const info = stmtSavedQueryInsert.run(userId, lbl, query, now);
+				json(res, 200, { ok: true, id: Number(info.lastInsertRowid), label: lbl, query, created_at: now });
+			})
+			.catch((e) => {
+				if (String(e && e.message) === "body_too_large") { json(res, 413, { ok: false, error: "body_too_large" }); return; }
+				json(res, 400, { ok: false, error: "invalid_json" });
+			});
+		return;
+	}
+
+	if (url.pathname.startsWith("/api/saved-queries/") && req.method === "DELETE") {
+		const email = getAuthedEmail(req);
+		if (!email) { json(res, 401, { ok: false, error: "unauthorized" }); return; }
+		const userId = getOrCreateUserId(email);
+		const idStr = url.pathname.replace("/api/saved-queries/", "");
+		const qid = parseInt(idStr, 10);
+		if (!Number.isFinite(qid)) { json(res, 400, { ok: false, error: "invalid_id" }); return; }
+		stmtSavedQueryDelete.run(qid, userId);
+		json(res, 200, { ok: true });
 		return;
 	}
 

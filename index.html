@@ -215,6 +215,17 @@
 											</button>
 										</div>
 										<button
+											id="psSaveQuery"
+											type="button"
+											class="ps-save-query-btn"
+											style="display:none"
+											title="Save query"
+											aria-label="Save query"
+											data-i18n-title="ps.save_query"
+											data-i18n-aria="ps.save_query">
+											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+										</button>
+										<button
 											id="psSortMenuBtn"
 											type="button"
 											class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
@@ -276,6 +287,9 @@
 									</div>
 								</div>
 							</div>
+							<div
+								id="psSavedQueries"
+								class="hidden mt-1.5 flex flex-wrap gap-1.5"></div>
 							<div
 								id="psQueryResults"
 								class="hidden mt-2 rounded-xl overflow-hidden"></div>

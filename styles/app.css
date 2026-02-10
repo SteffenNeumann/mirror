@@ -337,6 +337,69 @@ body.glow-disabled .bg-glow {
 	opacity: 1;
 }
 
+/* ── Save Query Button ───────────────────── */
+
+.ps-save-query-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 0.5rem;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: transparent;
+	color: var(--accent-text-soft, rgba(148, 163, 184, 0.6));
+	cursor: pointer;
+	transition: color 0.15s ease, background 0.15s ease;
+	flex-shrink: 0;
+}
+.ps-save-query-btn:hover {
+	color: var(--accent-text, rgba(226, 232, 240, 0.9));
+	background: rgba(255, 255, 255, 0.05);
+}
+.ps-save-query-btn:active {
+	background: rgba(255, 255, 255, 0.1);
+}
+
+/* ── Saved Query Chips ───────────────────── */
+
+.ps-saved-query-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 3px 8px;
+	border-radius: 9999px;
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	background: var(--accent-bg-soft, rgba(255, 255, 255, 0.05));
+	color: var(--accent-text-soft, rgba(148, 163, 184, 0.8));
+	font-size: 11px;
+	line-height: 1.3;
+	cursor: pointer;
+	transition: background 0.15s ease, color 0.15s ease;
+	max-width: 180px;
+	white-space: nowrap;
+	overflow: hidden;
+}
+.ps-saved-query-chip:hover {
+	background: var(--accent-bg-soft, rgba(255, 255, 255, 0.08));
+	color: var(--accent-text, rgba(226, 232, 240, 0.95));
+}
+.ps-saved-query-chip > span:first-child {
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.ps-saved-query-del {
+	opacity: 0.4;
+	font-size: 13px;
+	line-height: 1;
+	cursor: pointer;
+	transition: opacity 0.15s ease;
+	flex-shrink: 0;
+}
+.ps-saved-query-del:hover {
+	opacity: 1;
+}
+
 /* ── Search Help Tooltip (right-positioned, solid bg) ── */
 
 .ps-search-help-layer {

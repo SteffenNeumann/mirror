@@ -5030,10 +5030,11 @@
 				"ps.comments_only": "Nur mit Kommentaren",
 				"ps.search": "Suche… (tag: task: has: kind: pinned:)",
 				"ps.sort": "Sortierung",
+				"ps.save_query": "Query speichern",
 				"query.open": "offen",
 				"query.done": "erledigt",
 				"query.from_notes": "aus {n} Notizen",
-				"search.help": "⚡ Query-Operatoren:\n• tag:name – Notizen mit Tag filtern\n• task:open – offene Aufgaben anzeigen\n• task:done – erledigte Aufgaben\n• has:task – Notizen mit Aufgaben\n• kind:note – nach Art filtern\n• pinned:yes / pinned:no\n• created:>2026-01-01\n• updated:<2026-02-01\n\nKombinierbar: task:open tag:projektA",
+				"search.help": "⚡ Query-Operatoren:\n• tag:name – Notizen mit Tag filtern\n• task:open – offene Aufgaben anzeigen\n• task:done – erledigte Aufgaben\n• has:task – Notizen mit Aufgaben\n• has:comment – Notizen mit Kommentaren\n• kind:note – nach Art filtern\n• pinned:yes / pinned:no\n• created:>2026-01-01\n• updated:<2026-02-01\n\nKombinierbar: task:open tag:projektA",
 				"ps.sort_by": "Sortieren nach",
 				"ps.sort.modified": "Geändert",
 				"ps.sort.created": "Erstellt",
@@ -5442,10 +5443,11 @@
 				"ps.comments_only": "With comments",
 				"ps.search": "Search… (tag: task: has: kind: pinned:)",
 				"ps.sort": "Sort",
+				"ps.save_query": "Save query",
 				"query.open": "open",
 				"query.done": "done",
 				"query.from_notes": "from {n} notes",
-				"search.help": "⚡ Query operators:\n• tag:name – filter notes by tag\n• task:open – show open tasks\n• task:done – completed tasks\n• has:task – notes with tasks\n• kind:note – filter by type\n• pinned:yes / pinned:no\n• created:>2026-01-01\n• updated:<2026-02-01\n\nCombine freely: task:open tag:projectA",
+				"search.help": "⚡ Query operators:\n• tag:name – filter notes by tag\n• task:open – show open tasks\n• task:done – completed tasks\n• has:task – notes with tasks\n• has:comment – notes with comments\n• kind:note – filter by type\n• pinned:yes / pinned:no\n• created:>2026-01-01\n• updated:<2026-02-01\n\nCombine freely: task:open tag:projectA",
 				"ps.sort_by": "Sort by",
 				"ps.sort.modified": "Modified",
 				"ps.sort.created": "Created",
@@ -8461,6 +8463,8 @@
 				structured.push({ type: "taskDone" });
 			} else if (v === "has:task" || v === "has:tasks") {
 				structured.push({ type: "hasTask" });
+			} else if (v === "has:comment" || v === "has:comments") {
+				structured.push({ type: "hasComment" });
 			} else if (v.startsWith("kind:")) {
 				structured.push({ type: "kind", value: v.slice(5).trim() });
 			} else if (v.startsWith("created:>")) {
@@ -8725,6 +8729,76 @@
 		}
 	}
 
+	/* ── Saved Queries (server-backed) ── */
+	let psSavedQueries = [];
+
+	async function loadPsSavedQueries() {
+		try {
+			const res = await api("/api/saved-queries");
+			psSavedQueries = Array.isArray(res.queries) ? res.queries : [];
+		} catch {
+			psSavedQueries = [];
+		}
+		renderSavedQueryChips();
+	}
+
+	async function addSavedQuery(query) {
+		const q = String(query || "").trim();
+		if (!q) return;
+		if (psSavedQueries.some((s) => s.query === q)) return;
+		try {
+			const res = await api("/api/saved-queries", {
+				method: "POST",
+				body: JSON.stringify({ query: q }),
+			});
+			if (res.ok) {
+				psSavedQueries.push({ id: res.id, label: res.label, query: res.query, created_at: res.created_at });
+				renderSavedQueryChips();
+			}
+		} catch { /* ignore */ }
+	}
+
+	async function removeSavedQuery(idx) {
+		const sq = psSavedQueries[idx];
+		if (!sq) return;
+		psSavedQueries.splice(idx, 1);
+		renderSavedQueryChips();
+		try {
+			await api(`/api/saved-queries/${encodeURIComponent(sq.id)}`, { method: "DELETE" });
+		} catch { /* ignore */ }
+	}
+
+	function applySavedQuery(query) {
+		if (psSearchInput) psSearchInput.value = query;
+		psSearchQuery = query;
+		savePsSearchQuery();
+		applyPersonalSpaceFiltersAndRender();
+	}
+
+	function renderSavedQueryChips() {
+		const wrap = document.getElementById("psSavedQueries");
+		if (!wrap) return;
+		if (psSavedQueries.length === 0) { wrap.classList.add("hidden"); wrap.innerHTML = ""; return; }
+		wrap.classList.remove("hidden");
+		wrap.innerHTML = "";
+		psSavedQueries.forEach((sq, i) => {
+			const chip = document.createElement("button");
+			chip.type = "button";
+			chip.className = "ps-saved-query-chip";
+			chip.title = sq.query;
+			const txt = document.createElement("span");
+			txt.textContent = sq.label;
+			chip.appendChild(txt);
+			const del = document.createElement("span");
+			del.className = "ps-saved-query-del";
+			del.textContent = "×";
+			del.addEventListener("click", (ev) => { ev.stopPropagation(); removeSavedQuery(i); });
+			chip.appendChild(del);
+			chip.addEventListener("click", () => applySavedQuery(sq.query));
+			wrap.appendChild(chip);
+		});
+	}
+
 	function loadPsPinnedOnly() {
 		try {
 			psPinnedOnly = localStorage.getItem(PS_PINNED_ONLY_KEY) === "1";
@@ -8904,6 +8978,8 @@
 					return getTasks().done.length > 0;
 				case "hasTask":
 					return getTasks().total > 0;
+				case "hasComment":
+					return psCommentedNoteIds.has(String(note && note.id ? note.id : ""));
 				case "kind":
 					return kind === tok.value || (!kind && tok.value === "note");
 				case "createdAfter": {
@@ -20883,6 +20959,7 @@ self.onmessage = async (e) => {
 	loadPsSearchQuery();
 	loadPsPinnedOnly();
 	loadPsCommentsOnly();
+	loadPsSavedQueries();
 	loadPsNoteAccessed();
 	loadPsSortMode();
 	loadPsMetaVisible();
@@ -21811,6 +21888,25 @@ self.onmessage = async (e) => {
 			if (searchHelpEl) { hideSearchHelp(); } else { showSearchHelp(); }
 		});
 	}
+
+	/* ── Save Query Button ── */
+	const psSaveQueryBtn = document.getElementById("psSaveQuery");
+	if (psSaveQueryBtn) {
+		psSaveQueryBtn.addEventListener("click", () => {
+			const q = String(psSearchInput ? psSearchInput.value : "").trim();
+			if (q) addSavedQuery(q);
+		});
+	}
+	if (psSearchInput) {
+		const updateSaveBtn = () => {
+			if (!psSaveQueryBtn) return;
+			const q = String(psSearchInput.value || "").trim();
+			psSaveQueryBtn.style.display = q ? "" : "none";
+		};
+		psSearchInput.addEventListener("input", updateSaveBtn);
+		updateSaveBtn();
+	}
+
 	if (psList) {
 		psList.addEventListener("click", async (ev) => {
 			const target = ev && ev.target ? ev.target : null;
