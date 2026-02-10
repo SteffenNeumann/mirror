@@ -15,8 +15,12 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
 - **Permanent-Link i18n**: Toast-Meldungen, Button-Labels und Info-Modal sind jetzt vollständig über `UI_STRINGS` (de/en) lokalisiert. HTML-Button trägt `data-i18n-title` und `data-i18n-aria` für automatische Sprachumschaltung.
   - Zuständige Strings: `editor.permalink`, `editor.permalink_active`, `toast.permalink_activated`, `toast.permalink_deactivated`, `permalink.info.title`, `permalink.info.message`.
 
-- **Kommentar-Textmarkierung an Note-ID gebunden**: Textmarkierungen (Highlights) im Editor werden jetzt eindeutig der Note-ID zugeordnet. Jeder Kommentar speichert die `noteId` der Notiz, auf der er erstellt wurde. `buildCommentOverlayHtml` zeigt Highlights nur an, wenn die `noteId` des Kommentars mit der aktuell angezeigten Notiz übereinstimmt. Damit „wandern" Markierungen nicht mehr auf andere Notizen, wenn diese denselben Comment-Scope teilen (z. B. in geteilten Räumen ohne Per-Note-Pin). Legacy-Kommentare ohne `noteId` werden weiterhin immer angezeigt.
-  - Zuständige Funktionen: `getCommentSelectionNoteId` ([app.js](app.js#L2500)), `normalizeCommentItems` ([app.js](app.js#L2595)), `buildCommentOverlayHtml` ([app.js](app.js#L2740)), `addCommentFromDraft` ([app.js](app.js#L3125)).
+- **Kommentar-Textmarkierung an Note-ID gebunden**: Textmarkierungen (Highlights) im Editor werden jetzt eindeutig der Note-ID zugeordnet. Jeder Kommentar speichert die `noteId` der Notiz, auf der er erstellt wurde. Neue zentrale Filterfunktion `getVisibleCommentItems()` unterscheidet zwei Kommentartypen:
+  - **Raum-Kommentare** (ohne Textmarkierung): immer sichtbar im Raum – Counter, Liste, Overlay.
+  - **Textmarkierung-Kommentare** (mit `selection` + `noteId`): nur sichtbar wenn die zugehörige Notiz aktiv ist – sonst weder im Counter noch in der Kommentarliste noch als Highlight im Editor.
+  - Legacy-Kommentare (mit `selection`, ohne `noteId`) werden weiterhin immer angezeigt.
+  - `renderCommentList` (Counter + Liste), `buildCommentOverlayHtml` (Highlights) und `updateCommentOverlay` nutzen alle `getVisibleCommentItems()` als zentrale Quelle.
+  - Zuständige Funktionen: `getVisibleCommentItems` ([app.js](app.js#L2741)), `getCommentSelectionNoteId` ([app.js](app.js#L2500)), `normalizeCommentItems` ([app.js](app.js#L2595)), `buildCommentOverlayHtml` ([app.js](app.js#L2760)), `renderCommentList` ([app.js](app.js#L2951)), `addCommentFromDraft` ([app.js](app.js#L3125)).
 
 - **Linear-Projekt für Gäste in geteilten Räumen**: Zwei Fehler behoben, die dazu führten, dass Gäste (ohne eigenen API-Key) beim Auswählen oder Aktualisieren eines via WebSocket geteilten Linear-Projekts den Fehler „API-Key fehlt" erhielten:
   1. **Apply-Button**: Sucht das Projekt jetzt zusätzlich in `linearProjectByNote` (via WebSocket empfangene Shared-Projekte), wenn es nicht in der lokalen `linearProjects`-Liste vorhanden ist. Gäste ohne API-Key rendern Tasks aus dem Cache (`linearDataByNote`) statt die Linear-API direkt aufzurufen.
@@ -151,7 +155,7 @@ Server-Start
 6) Kommentare/Markierungen
 - Zweck: Kommentare verwalten, Overlay/Panel synchronisieren.
 - Umsetzung: `loadCommentsForRoom`, `renderCommentList`, `updateCommentOverlay`, `addCommentFromDraft`.
-- Hinweis: Textmarkierungen (Highlights) sind per `noteId` an die jeweilige Notiz gebunden. `buildCommentOverlayHtml` zeigt Markierungen nur für die aktuell angezeigte Notiz an, damit Highlights bei Note-Wechsel nicht auf andere Notizen „wandern". `getCommentSelectionNoteId` ermittelt die korrekte Note-ID (Pin > PS-Note).
+- Hinweis: Raum-Kommentare (ohne Textmarkierung) sind immer sichtbar. Textmarkierung-Kommentare sind per `noteId` an die jeweilige Notiz gebunden und werden nur angezeigt (Counter, Liste, Overlay), wenn die zugehörige Notiz aktiv ist. `getVisibleCommentItems()` filtert zentral für alle drei Ausgaben.
 
 7) Personal Space (Notizen, Tags, Auto-Save)
 - Zweck: Notizen laden/filtern, Tags, Auto-Save, Tabs/History.
@@ -364,11 +368,12 @@ Server-Start
 | `formatCommentTime` | Kommentar-Zeit formatieren | `#format` `#date` | — |
 | `getCommentScopeId` | Ermittelt Scope-ID (Raum/Note) | `#scope` `#room` | — |
 | `getCommentSelectionNoteId` | Ermittelt Note-ID für Markierungszuordnung (Pin > PS-Note) | `#scope` `#identity` | `getCommentNoteId`, `getRoomPinnedEntry`, `normalizeRoom`, `normalizeKey` |
+| `getVisibleCommentItems` | Filtert Kommentare: Raum-Kommentare immer, Textmarkierungen nur bei passender `noteId` | `#filter` `#scope` | `getCommentSelectionNoteId` |
 | `canSyncCommentsForScope` | Prüft ob Kommentar-Sync erlaubt | `#check` `#security` | — |
 | `loadCommentsForRoom` | Lädt Kommentare für Raum | `#api` `#load` | `getCommentScopeId`, `renderCommentList`, `t`, `updateCommentOverlay` |
 | `saveCommentsForRoom` | Speichert Kommentare | `#api` `#save` | `getCommentScopeId` |
 | `normalizeCommentSelection` | Normalisiert Kommentar-Selektion | `#normalize` | — |
-| `buildCommentOverlayHtml` | Baut Kommentar-Overlay-HTML; filtert Markierungen nach `noteId` | `#build` `#html` | `escapeHtml`, `escapeHtmlAttr`, `getCommentSelectionNoteId`, `normalizeCommentSelection`, `t` |
+| `buildCommentOverlayHtml` | Baut Kommentar-Overlay-HTML aus sichtbaren Kommentaren | `#build` `#html` | `escapeHtml`, `escapeHtmlAttr`, `getVisibleCommentItems`, `normalizeCommentSelection`, `t` |
 | `syncCommentOverlayScroll` | Synchronisiert Overlay-Scroll | `#sync` `#dom` | — |
 | `updateCommentOverlay` | Aktualisiert Kommentar-Overlay | `#render` `#overlay` | `buildCommentOverlayHtml`, `syncCommentOverlayScroll` |
 | `setCommentPanelOpen` | Setzt Panel offen/geschlossen | `#ui` `#state` | `updateCommentOverlay` |
@@ -376,7 +381,7 @@ Server-Start
 | `updateCommentComposerUi` | Aktualisiert Composer-UI | `#render` `#ui` | `applyUiTranslations` |
 | `setCommentComposerState` | Setzt Composer-State | `#state` | — |
 | `clearCommentComposerState` | Löscht Composer-State | `#reset` `#state` | `setCommentDraftSelection`, `updateCommentComposerUi` |
-| `renderCommentList` | Rendert Kommentar-Liste | `#render` `#panel` | `applyUiTranslations`, `clearCommentComposerState`, `formatCommentTime`, `normalizeCommentSelection`, `saveCommentsForRoom`, `setCommentComposerState`, `setCommentPanelOpen`, `t`, `updateCommentOverlay`, `updateSelectionMenu` |
+| `renderCommentList` | Rendert sichtbare Kommentare (gefiltert via `getVisibleCommentItems`) | `#render` `#panel` | `applyUiTranslations`, `clearCommentComposerState`, `formatCommentTime`, `getVisibleCommentItems`, `normalizeCommentSelection`, `saveCommentsForRoom`, `setCommentComposerState`, `setCommentPanelOpen`, `t`, `updateCommentOverlay`, `updateSelectionMenu` |
 | `addCommentFromDraft` | Fügt Kommentar aus Draft hinzu; speichert `noteId` | `#handler` `#create` | `clearCommentComposerState`, `getCommentSelectionNoteId`, `getSelectionRange`, `renderCommentList`, `saveCommentsForRoom`, `t`, `toast`, `updateCommentOverlay` |
 | `openCommentFromSelection` | Öffnet Kommentar aus Selektion | `#handler` `#ui` | `getSelectionRange`, `setCommentDraftSelection`, `setCommentPanelOpen`, `setSelectionMenuOpen`, `updateCommentComposerUi` |
 
