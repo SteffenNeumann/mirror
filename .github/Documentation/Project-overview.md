@@ -9,7 +9,7 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
 - **Linear-Projekt für Gäste in geteilten Räumen**: Zwei Fehler behoben, die dazu führten, dass Gäste (ohne eigenen API-Key) beim Auswählen oder Aktualisieren eines via WebSocket geteilten Linear-Projekts den Fehler „API-Key fehlt" erhielten:
   1. **Apply-Button**: Sucht das Projekt jetzt zusätzlich in `linearProjectByNote` (via WebSocket empfangene Shared-Projekte), wenn es nicht in der lokalen `linearProjects`-Liste vorhanden ist. Gäste ohne API-Key rendern Tasks aus dem Cache (`linearDataByNote`) statt die Linear-API direkt aufzurufen.
   2. **Refresh-Button**: Gäste ohne API-Key senden per WebSocket `request_state` an den Server, um den gepufferten Linear-State (Projekt + Tasks) erneut zu empfangen, statt die Linear-API aufzurufen.
-  - Zuständige Stellen: `linearProjectApplyBtn`-Handler ([app.js](app.js#L19640)), `linearRefreshBtn`-Handler ([app.js](app.js#L19681)).
+  - Zuständige Stellen: `linearProjectApplyBtn`-Handler ([app.js](app.js#L19640)), `linearRefreshBtn`-Handler ([app.js](app.js#L19680)).
 
 - **Auto-Favorit für geteilte Räume**: Wenn ein Raum als geteilt markiert wird (`markRoomShared`), wird er automatisch als Favorit gespeichert. Damit kann der Nutzer einen geteilten Raum jederzeit wiederfinden – auch nach dem Schließen des Browsers oder dem Entfernen aus den Tabs. Die neue Funktion `ensureFavoriteForSharedRoom` prüft, ob der Raum bereits ein Favorit ist, und fügt ihn andernfalls hinzu (inkl. Server-Sync bei PS-Auth).
   - Zuständige Funktionen: `markRoomShared` ([app.js](app.js#L13478)), `ensureFavoriteForSharedRoom` ([app.js](app.js#L13498)).
@@ -1147,9 +1147,19 @@ Server-Start
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
-| `renderLinearTasks` | Linear-Tasks rendern | `#render` `#ui` | `escapeHtml`, `t` |
-| `syncLinearForNote` | Linear für Notiz synchen | `#api` `#sync` | `api`, `renderLinearTasks`, `t`, `toast` |
-| `toggleLinear` (click) | Linear-Panel umschalten | `#handler` `#ui` | `syncLinearForNote`, `t` |
+| `readLinearApiKeyInput` | Liest API-Key aus Input-Feld | `#read` `#settings` | — |
+| `fetchLinearProjectsFromApi` | Projekte von Linear-API laden | `#api` `#load` | `linearRequest`, `readLinearApiKeyInput`, `t`, `toast` |
+| `fetchLinearTasksForProject` | Tasks eines Projekts von API laden | `#api` `#load` | `linearRequest`, `readLinearApiKeyInput`, `sendLinearDataForNote`, `renderLinearTasks`, `t`, `toast` |
+| `updateLinearProjectSelectOptions` | Projekt-Dropdown aktualisieren | `#render` `#ui` | `linearProjectByNote`, `linearProjects`, `t` |
+| `renderLinearTasks` | Linear-Tasks als Kanban rendern | `#render` `#ui` | `getLinearDataForNote`, `getLinearStatusColor`, `linearProjectByNote`, `t` |
+| `renderLinearStats` | Linear-Statistik rendern | `#render` `#ui` | `getLinearDataForNote`, `linearProjectByNote` |
+| `setLinearProjectForNote` | Projekt einer Notiz zuweisen | `#state` `#sync` | `linearProjectByNote`, `sendLinearStateForNote`, `updateLinearProjectSelectOptions` |
+| `syncLinearForNote` | Linear für Notiz synchen | `#sync` `#state` | `loadLinearOffsetForNote`, `setLinearVisible`, `updateLinearProjectSelectOptions`, `renderLinearTasks`, `sendLinearStateForNote`, `sendLinearDataForNote` |
+| `sendLinearStateForNote` | Linear-State per WS senden | `#ws` `#sync` | `getLinearStateForNote`, `sendMessage` |
+| `sendLinearDataForNote` | Linear-Daten per WS senden | `#ws` `#sync` | `getLinearDataForNote`, `sendMessage` |
+| `linearProjectApplyBtn` (click) | Projekt auswählen und laden | `#handler` `#ui` | `linearProjectByNote`, `readLinearApiKeyInput`, `fetchLinearTasksForProject`, `renderLinearTasks`, `setLinearProjectForNote`, `t`, `toast` |
+| `linearRefreshBtn` (click) | Projekt-Tasks aktualisieren | `#handler` `#ui` | `linearProjectByNote`, `readLinearApiKeyInput`, `fetchLinearTasksForProject`, `sendMessage`, `t`, `toast` |
+| `toggleLinear` (click) | Linear-Panel umschalten | `#handler` `#ui` | `setLinearVisible`, `updateLinearProjectSelectOptions`, `t`, `toast` |
 
 #### 32 · Synchronisation & Fokus `#sync` — `app.js`
 
