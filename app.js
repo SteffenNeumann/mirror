@@ -7137,6 +7137,14 @@
 				"--calendar-tooltip-text",
 				colors.accentText || "rgba(226, 232, 240, 0.95)"
 			);
+			/* solid panel bg per theme (no opacity) */
+			const solidBgs = {
+				fuchsia: "#0f0a1a", cyan: "#0a1018", emerald: "#0a1510", violet: "#0d0a18",
+				coffeeDark: "#1c1614", coffeeLight: "#f3ebe2",
+				bitterDark: "#131216", bitterLight: "#efecea",
+				monoDark: "#161b22", monoLight: "#eef1f5"
+			};
+			root.style.setProperty("--panel-solid-bg", solidBgs[next] || "#0f0a1a");
 		}
 		try {
 			document.body.setAttribute("data-theme", next);
@@ -21717,39 +21725,37 @@ self.onmessage = async (e) => {
 		function showSearchHelp() {
 			hideSearchHelp();
 			const el = document.createElement("div");
-			el.className = "tab-tooltip-layer";
+			el.className = "ps-search-help-layer";
 			const box = document.createElement("div");
-			box.className = "tab-tooltip-layer__box ps-search-help-tooltip";
-			box.style.maxWidth = "340px";
-			box.style.minWidth = "260px";
-			box.style.padding = "10px 14px";
-			box.style.whiteSpace = "pre-line";
+			box.className = "ps-search-help-box";
 			box.textContent = t("search.help");
 			const arrow = document.createElement("div");
-			arrow.className = "tab-tooltip-layer__arrow";
-			el.appendChild(box);
+			arrow.className = "ps-search-help-arrow";
 			el.appendChild(arrow);
+			el.appendChild(box);
 			document.body.appendChild(el);
 			searchHelpEl = el;
-			const rect = psSearchHelpBtn.getBoundingClientRect();
-			const left = rect.left + rect.width / 2;
-			el.style.left = `${left}px`;
-			el.style.top = "0px";
 			requestAnimationFrame(() => {
 				if (!searchHelpEl) return;
+				const searchInput = document.getElementById("psSearch");
+				const anchor = searchInput ? searchInput.parentElement : psSearchHelpBtn;
+				const rect = anchor.getBoundingClientRect();
 				const bw = box.offsetWidth || 0;
-				const h = box.offsetHeight || 0;
-				const top = rect.top - h - 10;
+				const bh = box.offsetHeight || 0;
+				const gap = 8;
+				let posLeft = rect.right + gap;
+				let posTop = rect.top + rect.height / 2 - bh / 2;
+				/* clamp to viewport */
 				const vw = window.innerWidth;
-				const margin = 8;
-				let finalLeft = left;
-				const halfW = bw / 2;
-				if (finalLeft + halfW > vw - margin) finalLeft = vw - margin - halfW;
-				if (finalLeft - halfW < margin) finalLeft = margin + halfW;
-				el.style.left = `${finalLeft}px`;
-				el.style.top = `${top}px`;
-				const arrowOffset = left - finalLeft;
-				arrow.style.left = `calc(50% + ${arrowOffset}px)`;
+				const vh = window.innerHeight;
+				if (posLeft + bw + 8 > vw) posLeft = rect.left - bw - gap;
+				if (posTop < 8) posTop = 8;
+				if (posTop + bh + 8 > vh) posTop = vh - bh - 8;
+				el.style.left = `${posLeft}px`;
+				el.style.top = `${posTop}px`;
+				/* position arrow on the left edge, vertically centered on the anchor */
+				const arrowTop = rect.top + rect.height / 2 - posTop;
+				arrow.style.top = `${arrowTop}px`;
 				el.classList.add("is-visible");
 			});
 		}
