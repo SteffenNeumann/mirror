@@ -132,35 +132,26 @@
 		? excalidrawEmbed.querySelector("iframe")
 		: null;
 	const excalidrawDragHandle = document.getElementById("excalidrawDragHandle");
-		const parsed = parseQueryTokens(q);
-		const hasStructured = parsed.structured.length > 0;
-		const needsCommentQuery =
-			parsed.structured.some((t) => t.type === "hasComment") ||
-			parsed.plain.some((tokRaw) => {
-				const tok = String(tokRaw || "")
-					.trim()
-					.toLowerCase();
-				return tok === "has:comment" || tok === "has:comments" || tok === "commented";
-			});
-		if (needsCommentQuery && !psCommentIndexLoaded) {
-			const promise = loadPsCommentIndex();
-			if (promise && typeof promise.finally === "function") {
-				promise.finally(() => {
-					applyPersonalSpaceFiltersAndRender();
-				});
-			}
-			return;
-		}
-		if (needsCommentQuery && psCommentIndexLoading) return;
-		if (hasStructured) {
-			notes = notes.filter((n) => noteMatchesStructuredQuery(n, parsed.structured));
-		}
-		if (parsed.plain.length > 0) {
-			notes = notes.filter((n) => noteMatchesSearch(n, parsed.plain));
-			/* sort by relevance: exact matches first, phonetic-only lower */
-			const plain = parsed.plain;
-			notes.sort((a, b) => noteSearchRelevance(b, plain) - noteSearchRelevance(a, plain));
-		}
+	const excelEmbed = document.getElementById("excelEmbed");
+	const excelFrame = excelEmbed ? excelEmbed.querySelector("iframe") : null;
+	const excelDragHandle = document.getElementById("excelDragHandle");
+	const linearEmbed = document.getElementById("linearEmbed");
+	const linearDragHandle = document.getElementById("linearDragHandle");
+	const linearProjectSelect = document.getElementById("linearProjectSelect");
+	const linearProjectApplyBtn = document.getElementById("linearProjectApply");
+	const linearRefreshBtn = document.getElementById("linearRefresh");
+	const linearProjectHeader = document.getElementById("linearProjectHeader");
+	const linearStatus = document.getElementById("linearStatus");
+	const linearEmpty = document.getElementById("linearEmpty");
+	const linearTaskList = document.getElementById("linearTaskList");
+	const linearStatsPanel = document.getElementById("linearStatsPanel");
+	const linearViewBoardBtn = document.getElementById("linearViewBoard");
+	const linearViewStatsBtn = document.getElementById("linearViewStats");
+	const EXCALIDRAW_SCENE_MAX_BYTES = 200000;
+	const EXCALIDRAW_EMPTY_SCENE =
+		"{" +
+		"\"elements\":[]," +
+		"\"appState\":{}," +
 		"\"files\":{}" +
 		"}";
 	let cursorOverlay = null;
