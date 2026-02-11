@@ -2269,9 +2269,7 @@
 	let commentLoadToken = 0;
 	let commentActiveNoteId = "";
 	let psCommentedNoteIds = new Set();
-	let psCommentIndexServerIds = new Set();
 	let psCommentIndexLoaded = false;
-	let psCommentIndexLoading = false;
 	let psCommentIndexPromise = null;
 	let psTagsAutoSaveTimer = null;
 	let psNoteHistory = [];
@@ -8876,29 +8874,24 @@
 	}
 
 	async function loadPsCommentIndex() {
-		if (psCommentIndexLoading && psCommentIndexPromise) {
-			return psCommentIndexPromise;
-		}
-		psCommentIndexLoading = true;
-		psCommentIndexLoaded = false;
+		if (psCommentIndexPromise) return psCommentIndexPromise;
 		psCommentIndexPromise = (async () => {
-			psCommentIndexServerIds = new Set();
-			psCommentedNoteIds = new Set();
 			try {
-				if (!psState || !psState.authed) return;
+				if (!psState || !psState.authed) {
+					psCommentedNoteIds = new Set();
+					return;
+				}
 				const res = await api("/api/notes/comments-index");
 				const ids = Array.isArray(res && res.noteIds) ? res.noteIds : [];
-				const serverSet = new Set(
+				psCommentedNoteIds = new Set(
 					ids.map((id) => String(id || "").trim()).filter(Boolean)
 				);
-				psCommentIndexServerIds = serverSet;
-				psCommentedNoteIds = new Set(serverSet);
-			} catch {
-				psCommentIndexServerIds = new Set();
+				console.log("[has:comment] loaded", psCommentedNoteIds.size, "note IDs from server");
+			} catch (e) {
+				console.warn("[has:comment] failed to load comment index:", e);
 				psCommentedNoteIds = new Set();
 			} finally {
 				psCommentIndexLoaded = true;
-				psCommentIndexLoading = false;
 				psCommentIndexPromise = null;
 			}
 		})();
@@ -8933,7 +8926,7 @@
 				tok === "commented"
 			) {
 				if (!noteId) return false;
-				return psCommentIndexServerIds.has(noteId);
+				return psCommentedNoteIds.has(noteId);
 			}
 			if (tok.startsWith("#")) tok = tok.slice(1);
 			if (tok.startsWith("tag:")) {
@@ -9008,7 +9001,7 @@
 				case "hasTask":
 					return getTasks().total > 0;
 				case "hasComment":
-					return psCommentIndexServerIds.has(String(note && note.id ? note.id : ""));
+					return psCommentedNoteIds.has(String(note && note.id ? note.id : ""));
 				case "kind":
 					return kind === tok.value || (!kind && tok.value === "note");
 				case "createdAfter": {
@@ -9185,17 +9178,13 @@
 				return tok === "has:comment" || tok === "has:comments" || tok === "commented";
 			});
 		if (needsCommentQuery) {
-			if (psCommentIndexLoaded) {
-				/* use cached index, force reload for next query */
-				psCommentIndexLoaded = false;
-			} else {
-				if (!psCommentIndexLoading) {
-					loadPsCommentIndex().then(() => {
-						applyPersonalSpaceFiltersAndRender();
-					});
-				}
+			if (!psCommentIndexLoaded) {
+				loadPsCommentIndex().then(() => {
+					applyPersonalSpaceFiltersAndRender();
+				});
 				return;
 			}
+			psCommentIndexLoaded = false;
 		}
 		if (hasStructured) {
 			notes = notes.filter((n) => noteMatchesStructuredQuery(n, parsed.structured));

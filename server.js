@@ -4128,10 +4128,11 @@ const server = http.createServer(async (req, res) => {
 		}
 		const userId = getOrCreateUserId(email);
 		initDb();
-		const noteIds = stmtNoteCommentsByUser
-			.all(userId)
+		const rows = stmtNoteCommentsByUser.all(userId);
+		const noteIds = rows
 			.map((row) => String(row && row.note_id ? row.note_id : "").trim())
 			.filter(Boolean);
+		console.log(`[comments-index] user=${userId} rows=${rows.length} noteIds=${noteIds.length}`);
 		json(res, 200, { ok: true, noteIds });
 		return;
 	}
