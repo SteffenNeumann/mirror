@@ -2269,6 +2269,7 @@
 	let commentLoadToken = 0;
 	let commentActiveNoteId = "";
 	let psCommentedNoteIds = new Set();
+	let psCommentIndexServerIds = new Set();
 	let psCommentIndexLoaded = false;
 	let psCommentIndexLoading = false;
 	let psCommentIndexPromise = null;
@@ -8881,15 +8882,19 @@
 		psCommentIndexLoading = true;
 		psCommentIndexLoaded = false;
 		psCommentIndexPromise = (async () => {
+			psCommentIndexServerIds = new Set();
 			psCommentedNoteIds = new Set();
 			try {
 				if (!psState || !psState.authed) return;
 				const res = await api("/api/notes/comments-index");
 				const ids = Array.isArray(res && res.noteIds) ? res.noteIds : [];
-				psCommentedNoteIds = new Set(
+				const serverSet = new Set(
 					ids.map((id) => String(id || "").trim()).filter(Boolean)
 				);
+				psCommentIndexServerIds = serverSet;
+				psCommentedNoteIds = new Set(serverSet);
 			} catch {
+				psCommentIndexServerIds = new Set();
 				psCommentedNoteIds = new Set();
 			} finally {
 				psCommentIndexLoaded = true;
@@ -8928,7 +8933,7 @@
 				tok === "commented"
 			) {
 				if (!noteId) return false;
-				return psCommentedNoteIds.has(noteId);
+				return psCommentIndexServerIds.has(noteId);
 			}
 			if (tok.startsWith("#")) tok = tok.slice(1);
 			if (tok.startsWith("tag:")) {
@@ -9003,7 +9008,7 @@
 				case "hasTask":
 					return getTasks().total > 0;
 				case "hasComment":
-					return psCommentedNoteIds.has(String(note && note.id ? note.id : ""));
+					return psCommentIndexServerIds.has(String(note && note.id ? note.id : ""));
 				case "kind":
 					return kind === tok.value || (!kind && tok.value === "note");
 				case "createdAfter": {
