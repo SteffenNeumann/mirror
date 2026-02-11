@@ -132,26 +132,35 @@
 		? excalidrawEmbed.querySelector("iframe")
 		: null;
 	const excalidrawDragHandle = document.getElementById("excalidrawDragHandle");
-	const excelEmbed = document.getElementById("excelEmbed");
-	const excelFrame = excelEmbed ? excelEmbed.querySelector("iframe") : null;
-	const excelDragHandle = document.getElementById("excelDragHandle");
-	const linearEmbed = document.getElementById("linearEmbed");
-	const linearDragHandle = document.getElementById("linearDragHandle");
-	const linearProjectSelect = document.getElementById("linearProjectSelect");
-	const linearProjectApplyBtn = document.getElementById("linearProjectApply");
-	const linearRefreshBtn = document.getElementById("linearRefresh");
-	const linearProjectHeader = document.getElementById("linearProjectHeader");
-	const linearStatus = document.getElementById("linearStatus");
-	const linearEmpty = document.getElementById("linearEmpty");
-	const linearTaskList = document.getElementById("linearTaskList");
-	const linearStatsPanel = document.getElementById("linearStatsPanel");
-	const linearViewBoardBtn = document.getElementById("linearViewBoard");
-	const linearViewStatsBtn = document.getElementById("linearViewStats");
-	const EXCALIDRAW_SCENE_MAX_BYTES = 200000;
-	const EXCALIDRAW_EMPTY_SCENE =
-		"{" +
-		"\"elements\":[]," +
-		"\"appState\":{}," +
+		const parsed = parseQueryTokens(q);
+		const hasStructured = parsed.structured.length > 0;
+		const needsCommentQuery =
+			parsed.structured.some((t) => t.type === "hasComment") ||
+			parsed.plain.some((tokRaw) => {
+				const tok = String(tokRaw || "")
+					.trim()
+					.toLowerCase();
+				return tok === "has:comment" || tok === "has:comments" || tok === "commented";
+			});
+		if (needsCommentQuery && !psCommentIndexLoaded) {
+			const promise = loadPsCommentIndex();
+			if (promise && typeof promise.finally === "function") {
+				promise.finally(() => {
+					applyPersonalSpaceFiltersAndRender();
+				});
+			}
+			return;
+		}
+		if (needsCommentQuery && psCommentIndexLoading) return;
+		if (hasStructured) {
+			notes = notes.filter((n) => noteMatchesStructuredQuery(n, parsed.structured));
+		}
+		if (parsed.plain.length > 0) {
+			notes = notes.filter((n) => noteMatchesSearch(n, parsed.plain));
+			/* sort by relevance: exact matches first, phonetic-only lower */
+			const plain = parsed.plain;
+			notes.sort((a, b) => noteSearchRelevance(b, plain) - noteSearchRelevance(a, plain));
+		}
 		"\"files\":{}" +
 		"}";
 	let cursorOverlay = null;
@@ -2269,6 +2278,9 @@
 	let commentLoadToken = 0;
 	let commentActiveNoteId = "";
 	let psCommentedNoteIds = new Set();
+	let psCommentIndexLoaded = false;
+	let psCommentIndexLoading = false;
+	let psCommentIndexPromise = null;
 	let psTagsAutoSaveTimer = null;
 	let psNoteHistory = [];
 	let psNoteHistoryIndex = -1;
@@ -8872,21 +8884,34 @@
 	}
 
 	async function loadPsCommentIndex() {
-		psCommentedNoteIds = new Set();
-		if (!psState || !psState.authed) return;
-		try {
-			const res = await api("/api/notes/comments-index");
-			const ids = Array.isArray(res && res.noteIds) ? res.noteIds : [];
-			psCommentedNoteIds = new Set(
-				ids.map((id) => String(id || "").trim()).filter(Boolean)
-			);
-		} catch {
-			psCommentedNoteIds = new Set();
+		if (psCommentIndexLoading && psCommentIndexPromise) {
+			return psCommentIndexPromise;
 		}
+		psCommentIndexLoading = true;
+		psCommentIndexLoaded = false;
+		psCommentIndexPromise = (async () => {
+			psCommentedNoteIds = new Set();
+			try {
+				if (!psState || !psState.authed) return;
+				const res = await api("/api/notes/comments-index");
+				const ids = Array.isArray(res && res.noteIds) ? res.noteIds : [];
+				psCommentedNoteIds = new Set(
+					ids.map((id) => String(id || "").trim()).filter(Boolean)
+				);
+			} catch {
+				psCommentedNoteIds = new Set();
+			} finally {
+				psCommentIndexLoaded = true;
+				psCommentIndexLoading = false;
+				psCommentIndexPromise = null;
+			}
+		})();
+		return psCommentIndexPromise;
 	}
 
 	function noteMatchesSearch(note, tokens) {
 		if (!tokens || tokens.length === 0) return true;
+		const noteId = String(note && note.id ? note.id : "").trim();
 		const text = String(note && note.text ? note.text : "").toLowerCase();
 		const tags = Array.isArray(note && note.tags) ? note.tags : [];
 		const tagsLower = tags.map((t) => String(t || "").toLowerCase());
@@ -8906,6 +8931,14 @@
 				.trim()
 				.toLowerCase();
 			if (!tok) return true;
+			if (
+				tok === "has:comment" ||
+				tok === "has:comments" ||
+				tok === "commented"
+			) {
+				if (!noteId) return false;
+				return psCommentedNoteIds.has(noteId);
+			}
 			if (tok.startsWith("#")) tok = tok.slice(1);
 			if (tok.startsWith("tag:")) {
 				const want = tok.slice(4).trim();
@@ -9147,6 +9180,24 @@
 		const q = normalizeSearchQuery(psSearchQuery);
 		const parsed = parseQueryTokens(q);
 		const hasStructured = parsed.structured.length > 0;
+		const needsCommentQuery =
+			parsed.structured.some((t) => t.type === "hasComment") ||
+			parsed.plain.some((tokRaw) => {
+				const tok = String(tokRaw || "")
+					.trim()
+					.toLowerCase();
+				return tok === "has:comment" || tok === "has:comments" || tok === "commented";
+			});
+		if (needsCommentQuery && !psCommentIndexLoaded) {
+			const promise = loadPsCommentIndex();
+			if (promise && typeof promise.finally === "function") {
+				promise.finally(() => {
+					applyPersonalSpaceFiltersAndRender();
+				});
+			}
+			return;
+		}
+		if (needsCommentQuery && psCommentIndexLoading) return;
 		if (hasStructured) {
 			notes = notes.filter((n) => noteMatchesStructuredQuery(n, parsed.structured));
 		}
@@ -22103,9 +22154,7 @@ self.onmessage = async (e) => {
 			psCommentsOnly = !psCommentsOnly;
 			savePsCommentsOnly();
 			updatePsCommentsToggle();
-			if (psCommentsOnly && psCommentedNoteIds.size === 0) {
-				await loadPsCommentIndex();
-			}
+			if (psCommentsOnly && !psCommentIndexLoaded) await loadPsCommentIndex();
 			applyPersonalSpaceFiltersAndRender();
 		});
 	}
