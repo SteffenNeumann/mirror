@@ -4769,3 +4769,25 @@ body[data-theme="monoDark"] #settingsGlowToggle {
 #togglePersonalSpace[aria-pressed="true"] {
 	background-color: transparent !important;
 }
+
+/* ── Modal Theme Sync ── all modal backgrounds match main theme bg ── */
+body[data-theme] #tableModal > [data-role="tableModalBackdrop"],
+body[data-theme] #settingsBackdrop,
+body[data-theme] #modalRoot > [data-role="modalBackdrop"],
+body[data-theme] #calendarEventModal > [data-role="calendarEventBackdrop"],
+body[data-theme] #uploadModal > [data-role="uploadModalBackdrop"],
+body[data-theme] #shareModal > [data-role="shareModalBackdrop"],
+body[data-theme] #noteShareModal > [data-role="noteShareModalBackdrop"] {
+	background-color: var(--modal-backdrop, rgba(2, 6, 23, 0.7)) !important;
+}
+
+body[data-theme] #tableModal [role="dialog"],
+body[data-theme] #settingsPanel,
+body[data-theme] #modalRoot [role="dialog"],
+body[data-theme] #calendarEventModal [role="dialog"],
+body[data-theme] #uploadModal [role="dialog"],
+body[data-theme] #shareModal [role="dialog"],
+body[data-theme] #noteShareModal [role="dialog"] {
+	background-color: var(--panel-solid-bg, #0f0a1a) !important;
+	border-color: var(--modal-border, rgba(255, 255, 255, 0.1)) !important;
+}

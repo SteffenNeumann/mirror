@@ -7158,6 +7158,23 @@
 				monoDark: "#161b22", monoLight: "#eef1f5"
 			};
 			root.style.setProperty("--panel-solid-bg", solidBgs[next] || "#0f0a1a");
+			/* modal theming – backdrop & border per theme */
+			const modalBackdrops = {
+				fuchsia: "rgba(15,10,26,0.6)", cyan: "rgba(10,16,24,0.6)",
+				emerald: "rgba(10,21,16,0.6)", violet: "rgba(13,10,24,0.6)",
+				coffeeDark: "rgba(16,12,10,0.6)", coffeeLight: "rgba(68,45,30,0.2)",
+				bitterDark: "rgba(13,12,16,0.6)", bitterLight: "rgba(21,21,24,0.2)",
+				monoDark: "rgba(22,27,34,0.6)", monoLight: "rgba(27,31,36,0.22)"
+			};
+			const modalBorders = {
+				fuchsia: "rgba(255,255,255,0.1)", cyan: "rgba(255,255,255,0.1)",
+				emerald: "rgba(255,255,255,0.1)", violet: "rgba(255,255,255,0.1)",
+				coffeeDark: "#35261e", coffeeLight: "#d9c7bc",
+				bitterDark: "#2a2a30", bitterLight: "#d8d2cb",
+				monoDark: "rgba(48,54,61,0.9)", monoLight: "#d0d7de"
+			};
+			root.style.setProperty("--modal-backdrop", modalBackdrops[next] || "rgba(2,6,23,0.7)");
+			root.style.setProperty("--modal-border", modalBorders[next] || "rgba(255,255,255,0.1)");
 		}
 		try {
 			document.body.setAttribute("data-theme", next);
