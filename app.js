@@ -9180,17 +9180,16 @@
 				return tok === "has:comment" || tok === "has:comments" || tok === "commented";
 			});
 		if (needsCommentQuery) {
-			if (!psCommentIndexLoaded || psCommentIndexLoading) {
-				if (!psCommentIndexLoading) {
-					const promise = loadPsCommentIndex();
-					if (promise && typeof promise.finally === "function") {
-						promise.finally(() => {
-							applyPersonalSpaceFiltersAndRender();
-						});
-					}
+			if (!psCommentIndexLoading) {
+				psCommentIndexLoaded = false;
+				const promise = loadPsCommentIndex();
+				if (promise && typeof promise.finally === "function") {
+					promise.finally(() => {
+						applyPersonalSpaceFiltersAndRender();
+					});
 				}
-				return;
 			}
+			if (!psCommentIndexLoaded) return;
 		}
 		if (hasStructured) {
 			notes = notes.filter((n) => noteMatchesStructuredQuery(n, parsed.structured));
