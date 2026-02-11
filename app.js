@@ -2687,8 +2687,10 @@
 				});
 				if (getCommentScopeId() !== scopeId) return;
 				const updatedAt = Number(res && res.updatedAt ? res.updatedAt : 0) || 0;
+				console.log("[comment-save] scopeId:", scopeId, "payload.length:", payload.length);
 				if (scopeId.startsWith("note:")) {
 					const noteId = scopeId.slice(5);
+					console.log("[comment-save] noteId:", noteId, "adding to psCommentedNoteIds:", payload.length > 0);
 					if (noteId) {
 						if (payload.length > 0) psCommentedNoteIds.add(noteId);
 						else psCommentedNoteIds.delete(noteId);
@@ -9174,6 +9176,25 @@
 		const parsed = parseQueryTokens(q);
 		const hasStructured = parsed.structured.length > 0;
 		if (parsed.structured.some((t) => t.type === "hasComment")) {
+			// Force fresh reload every time has:comment is queried
+			psCommentIndexPromise = null;
+			psCommentIndexLoaded = false;
+			loadPsCommentIndex().then(() => {
+				console.log("[has:comment] RELOADED psCommentedNoteIds:", Array.from(psCommentedNoteIds));
+				// Check if Set changed – if so, re-filter the already-rendered list
+				const currentIds = Array.from(psCommentedNoteIds).sort().join(',');
+				if (currentIds !== (window._lastCommentIds || '')) {
+					window._lastCommentIds = currentIds;
+					// Avoid infinite loop: only re-render once
+					const refiltered = notes.filter((n) => psCommentedNoteIds.has(String(n && n.id ? n.id : "").trim()));
+					console.log("[has:comment] re-filtered:", refiltered.length, "notes");
+					renderPsList(refiltered);
+					if (psCount) {
+						const total = filterRealNotes(psState.notes).length;
+						psCount.textContent = `${refiltered.length}/${total}`;
+					}
+				}
+			});
 			console.log("[has:comment] psCommentedNoteIds:", Array.from(psCommentedNoteIds));
 			console.log("[has:comment] all note IDs:", notes.map((n) => ({ id: n.id, title: getNoteTitle(n.text) })));
 		}
