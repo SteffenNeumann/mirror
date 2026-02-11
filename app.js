@@ -9179,11 +9179,18 @@
 					.toLowerCase();
 				return tok === "has:comment" || tok === "has:comments" || tok === "commented";
 			});
-		if (needsCommentQuery && !psCommentIndexLoaded) {
-			loadPsCommentIndex().then(() => {
-				applyPersonalSpaceFiltersAndRender();
-			});
-			return;
+		if (needsCommentQuery) {
+			if (psCommentIndexLoaded) {
+				/* use cached index, force reload for next query */
+				psCommentIndexLoaded = false;
+			} else {
+				if (!psCommentIndexLoading) {
+					loadPsCommentIndex().then(() => {
+						applyPersonalSpaceFiltersAndRender();
+					});
+				}
+				return;
+			}
 		}
 		if (hasStructured) {
 			notes = notes.filter((n) => noteMatchesStructuredQuery(n, parsed.structured));
