@@ -8886,7 +8886,7 @@
 				psCommentedNoteIds = new Set(
 					ids.map((id) => String(id || "").trim()).filter(Boolean)
 				);
-				console.log("[has:comment] loaded", psCommentedNoteIds.size, "note IDs from server");
+				console.log("[has:comment] loaded", psCommentedNoteIds.size, "note IDs from server:", Array.from(psCommentedNoteIds));
 			} catch (e) {
 				console.warn("[has:comment] failed to load comment index:", e);
 				psCommentedNoteIds = new Set();
@@ -9001,7 +9001,7 @@
 				case "hasTask":
 					return getTasks().total > 0;
 				case "hasComment":
-					return psCommentedNoteIds.has(String(note && note.id ? note.id : ""));
+					return psCommentedNoteIds.has(String(note && note.id ? note.id : "").trim());
 				case "kind":
 					return kind === tok.value || (!kind && tok.value === "note");
 				case "createdAfter": {
@@ -9169,6 +9169,10 @@
 		const q = normalizeSearchQuery(psSearchQuery);
 		const parsed = parseQueryTokens(q);
 		const hasStructured = parsed.structured.length > 0;
+		if (parsed.structured.some((t) => t.type === "hasComment")) {
+			console.log("[has:comment] psCommentedNoteIds:", Array.from(psCommentedNoteIds));
+			console.log("[has:comment] all note IDs:", notes.map((n) => ({ id: n.id, title: getNoteTitle(n.text) })));
+		}
 		if (hasStructured) {
 			notes = notes.filter((n) => noteMatchesStructuredQuery(n, parsed.structured));
 		}

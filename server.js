@@ -506,7 +506,7 @@ function initDb() {
 		"DELETE FROM notes_comments WHERE scope_id = ?"
 	);
 	stmtNoteCommentsByUser = db.prepare(
-		"SELECT n.id as note_id FROM notes n JOIN notes_comments nc ON nc.scope_id = 'note:' || n.id WHERE n.user_id = ? AND nc.comments_json IS NOT NULL AND nc.comments_json != '' AND nc.comments_json != '[]'"
+		"SELECT n.id as note_id, nc.comments_json FROM notes n JOIN notes_comments nc ON nc.scope_id = 'note:' || n.id WHERE n.user_id = ? AND nc.comments_json IS NOT NULL AND nc.comments_json != ''"
 	);
 	stmtSavedQueryList = db.prepare(
 		"SELECT id, label, query, created_at FROM saved_queries WHERE user_id = ? ORDER BY created_at ASC LIMIT 50"
@@ -4129,10 +4129,14 @@ const server = http.createServer(async (req, res) => {
 		const userId = getOrCreateUserId(email);
 		initDb();
 		const rows = stmtNoteCommentsByUser.all(userId);
-		const noteIds = rows
-			.map((row) => String(row && row.note_id ? row.note_id : "").trim())
-			.filter(Boolean);
-		console.log(`[comments-index] user=${userId} rows=${rows.length} noteIds=${noteIds.length}`);
+		const noteIds = [];
+		for (const row of rows) {
+			const noteId = String(row && row.note_id ? row.note_id : "").trim();
+			if (!noteId) continue;
+			const valid = sanitizeCommentItems(parseCommentsJson(row.comments_json));
+			if (valid.length > 0) noteIds.push(noteId);
+		}
+		console.log(`[comments-index] user=${userId} rows=${rows.length} valid=${noteIds.length}`);
 		json(res, 200, { ok: true, noteIds });
 		return;
 	}
