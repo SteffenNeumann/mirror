@@ -2141,7 +2141,8 @@ const server = http.createServer(async (req, res) => {
 				let detail = "";
 				try { detail = await apiRes.text(); } catch {}
 				console.error(`[google] GET calendars failed: ${apiRes.status} ${detail.slice(0, 500)}`);
-				json(res, 502, { ok: false, error: "google_api_error", status: apiRes.status, message: detail.slice(0, 200) });
+				const proxyStatus = apiRes.status >= 400 && apiRes.status < 500 ? apiRes.status : 502;
+				json(res, proxyStatus, { ok: false, error: "google_api_error", status: apiRes.status, message: detail.slice(0, 200) });
 				return;
 			}
 			const data = await apiRes.json();
@@ -2324,7 +2325,8 @@ const server = http.createServer(async (req, res) => {
 				let detail = "";
 				try { detail = await apiRes.text(); } catch {}
 				console.error(`[google] POST events failed: ${apiRes.status} ${detail.slice(0, 500)}`);
-				json(res, 502, { ok: false, error: "google_api_error", status: apiRes.status, message: detail.slice(0, 200) });
+				const proxyStatus = apiRes.status >= 400 && apiRes.status < 500 ? apiRes.status : 502;
+				json(res, proxyStatus, { ok: false, error: "google_api_error", status: apiRes.status, message: detail.slice(0, 200) });
 				return;
 			}
 			const data = await apiRes.json();
@@ -2381,7 +2383,8 @@ const server = http.createServer(async (req, res) => {
 				let detail = "";
 				try { detail = await apiRes.text(); } catch {}
 				console.error(`[google] GET events failed: ${apiRes.status} ${detail.slice(0, 500)}`);
-				json(res, 502, { ok: false, error: "google_api_error", status: apiRes.status, message: detail.slice(0, 200) });
+				const proxyStatus = apiRes.status >= 400 && apiRes.status < 500 ? apiRes.status : 502;
+				json(res, proxyStatus, { ok: false, error: "google_api_error", status: apiRes.status, message: detail.slice(0, 200) });
 				return;
 			}
 			const data = await apiRes.json();
@@ -2448,7 +2451,8 @@ const server = http.createServer(async (req, res) => {
 				let detail = "";
 				try { detail = await apiRes.text(); } catch {}
 				console.error(`[google] DELETE event failed: ${apiRes.status} ${detail.slice(0, 500)}`);
-				json(res, 502, { ok: false, error: "google_api_error" });
+				const proxyStatus = apiRes.status >= 400 && apiRes.status < 500 ? apiRes.status : 502;
+				json(res, proxyStatus, { ok: false, error: "google_api_error", status: apiRes.status, message: detail.slice(0, 200) });
 				return;
 			}
 			json(res, 200, { ok: true });
@@ -2561,7 +2565,8 @@ const server = http.createServer(async (req, res) => {
 				let detail = "";
 				try { detail = await apiRes.text(); } catch {}
 				console.error(`[outlook] GET calendars failed: ${apiRes.status} ${detail.slice(0, 500)}`);
-				json(res, 502, { ok: false, error: "outlook_api_error", status: apiRes.status, message: detail.slice(0, 200) });
+				const proxyStatus = apiRes.status >= 400 && apiRes.status < 500 ? apiRes.status : 502;
+				json(res, proxyStatus, { ok: false, error: "outlook_api_error", status: apiRes.status, message: detail.slice(0, 200) });
 				return;
 			}
 			const data = await apiRes.json();
@@ -2756,7 +2761,8 @@ const server = http.createServer(async (req, res) => {
 				let detail = "";
 				try { detail = await apiRes.text(); } catch {}
 				console.error(`[outlook] POST events failed: ${apiRes.status} ${detail.slice(0, 500)}`);
-				json(res, 502, { ok: false, error: "outlook_api_error", status: apiRes.status, message: detail.slice(0, 200) });
+				const proxyStatus = apiRes.status >= 400 && apiRes.status < 500 ? apiRes.status : 502;
+				json(res, proxyStatus, { ok: false, error: "outlook_api_error", status: apiRes.status, message: detail.slice(0, 200) });
 				return;
 			}
 			const data = await apiRes.json();
@@ -2808,7 +2814,8 @@ const server = http.createServer(async (req, res) => {
 				let detail = "";
 				try { detail = await apiRes.text(); } catch {}
 				console.error(`[outlook] GET events failed: ${apiRes.status} ${detail.slice(0, 500)}`);
-				json(res, 502, { ok: false, error: "outlook_api_error", status: apiRes.status, message: detail.slice(0, 200) });
+				const proxyStatus = apiRes.status >= 400 && apiRes.status < 500 ? apiRes.status : 502;
+				json(res, proxyStatus, { ok: false, error: "outlook_api_error", status: apiRes.status, message: detail.slice(0, 200) });
 				return;
 			}
 			const data = await apiRes.json();
@@ -2876,7 +2883,8 @@ const server = http.createServer(async (req, res) => {
 				let detail = "";
 				try { detail = await apiRes.text(); } catch {}
 				console.error(`[outlook] DELETE event failed: ${apiRes.status} ${detail.slice(0, 500)}`);
-				json(res, 502, { ok: false, error: "outlook_api_error" });
+				const proxyStatus = apiRes.status >= 400 && apiRes.status < 500 ? apiRes.status : 502;
+				json(res, proxyStatus, { ok: false, error: "outlook_api_error", status: apiRes.status, message: detail.slice(0, 200) });
 				return;
 			}
 			json(res, 200, { ok: true });

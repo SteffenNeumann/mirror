@@ -1582,7 +1582,11 @@
 				return data;
 			} catch (err) {
 				lastErr = err;
-				if (attempt < maxRetries && (!err || !err.message || !err.message.startsWith("HTTP "))) {
+				if (attempt < maxRetries && err && err.message && /^HTTP 502\b/.test(err.message)) {
+					console.warn(`[api] 502 error on ${path}, retry ${attempt + 1}/${maxRetries}`);
+					continue;
+				}
+				if (attempt < maxRetries && (!err || !err.message)) {
 					console.warn(`[api] network error on ${path}, retry ${attempt + 1}/${maxRetries}`);
 					continue;
 				}
@@ -22501,8 +22505,9 @@ self.onmessage = async (e) => {
 						if (res && res.eventId) {
 							evt.googleEventId = String(res.eventId || "");
 						}
-					} catch {
-						toast("Google Sync fehlgeschlagen.", "error");
+					} catch (err) {
+						const msg = err && err.message ? err.message : "";
+						toast("Google Sync fehlgeschlagen" + (msg ? ": " + msg : "."), "error");
 					}
 				}
 			}
@@ -22515,8 +22520,9 @@ self.onmessage = async (e) => {
 						if (res && res.eventId) {
 							evt.outlookEventId = String(res.eventId || "");
 						}
-					} catch {
-						toast("Outlook Sync fehlgeschlagen.", "error");
+					} catch (err) {
+						const msg = err && err.message ? err.message : "";
+						toast("Outlook Sync fehlgeschlagen" + (msg ? ": " + msg : "."), "error");
 					}
 				}
 			}
