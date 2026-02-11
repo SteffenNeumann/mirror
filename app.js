@@ -9169,23 +9169,6 @@
 		const q = normalizeSearchQuery(psSearchQuery);
 		const parsed = parseQueryTokens(q);
 		const hasStructured = parsed.structured.length > 0;
-		const needsCommentQuery =
-			parsed.structured.some((t) => t.type === "hasComment") ||
-			parsed.plain.some((tokRaw) => {
-				const tok = String(tokRaw || "")
-					.trim()
-					.toLowerCase();
-				return tok === "has:comment" || tok === "has:comments" || tok === "commented";
-			});
-		if (needsCommentQuery) {
-			if (!psCommentIndexLoaded) {
-				loadPsCommentIndex().then(() => {
-					applyPersonalSpaceFiltersAndRender();
-				});
-				return;
-			}
-			psCommentIndexLoaded = false;
-		}
 		if (hasStructured) {
 			notes = notes.filter((n) => noteMatchesStructuredQuery(n, parsed.structured));
 		}
