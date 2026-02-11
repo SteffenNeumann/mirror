@@ -1548,27 +1548,48 @@
 		});
 	}
 
-	async function api(path, opts) {
-		const res = await fetch(path, {
-			credentials: "same-origin",
-			headers: { "Content-Type": "application/json" },
-			...opts,
-		});
-		const text = await res.text();
-		const data = safeJsonParse(text);
-		if (!res.ok) {
-			const msg = data
-				? data.error
-					? data.message
-						? `${data.error}: ${data.message}`
-						: String(data.error)
-					: data.message
-					? String(data.message)
-					: `HTTP ${res.status}`
-				: `HTTP ${res.status}`;
-			throw new Error(msg);
+	async function api(path, opts, _retries) {
+		const maxRetries = typeof _retries === "number" ? _retries : 2;
+		let lastErr = null;
+		for (let attempt = 0; attempt <= maxRetries; attempt++) {
+			if (attempt > 0) {
+				await new Promise((r) => setTimeout(r, 800 * attempt));
+			}
+			try {
+				const res = await fetch(path, {
+					credentials: "same-origin",
+					headers: { "Content-Type": "application/json" },
+					...opts,
+				});
+				const text = await res.text();
+				const data = safeJsonParse(text);
+				if (res.status === 502 && attempt < maxRetries) {
+					console.warn(`[api] 502 on ${path}, retry ${attempt + 1}/${maxRetries}`);
+					continue;
+				}
+				if (!res.ok) {
+					const msg = data
+						? data.error
+							? data.message
+								? `${data.error}: ${data.message}`
+								: String(data.error)
+							: data.message
+							? String(data.message)
+							: `HTTP ${res.status}`
+						: `HTTP ${res.status}`;
+					throw new Error(msg);
+				}
+				return data;
+			} catch (err) {
+				lastErr = err;
+				if (attempt < maxRetries && (!err || !err.message || !err.message.startsWith("HTTP "))) {
+					console.warn(`[api] network error on ${path}, retry ${attempt + 1}/${maxRetries}`);
+					continue;
+				}
+				throw err;
+			}
 		}
-		return data;
+		throw lastErr || new Error("api_failed");
 	}
 
 	function fmtDate(ts) {

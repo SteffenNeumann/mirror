@@ -2138,7 +2138,10 @@ const server = http.createServer(async (req, res) => {
 				}
 			);
 			if (!apiRes.ok) {
-				json(res, 502, { ok: false, error: "google_api_error" });
+				let detail = "";
+				try { detail = await apiRes.text(); } catch {}
+				console.error(`[google] GET calendars failed: ${apiRes.status} ${detail.slice(0, 500)}`);
+				json(res, 502, { ok: false, error: "google_api_error", status: apiRes.status, message: detail.slice(0, 200) });
 				return;
 			}
 			const data = await apiRes.json();
@@ -2152,7 +2155,8 @@ const server = http.createServer(async (req, res) => {
 				: [];
 			json(res, 200, { ok: true, calendars });
 			return;
-		} catch {
+		} catch (err) {
+			console.error(`[google] GET calendars exception:`, err && err.message ? err.message : err);
 			json(res, 500, { ok: false, error: "google_api_failed" });
 			return;
 		}
@@ -2317,13 +2321,17 @@ const server = http.createServer(async (req, res) => {
 				}
 			);
 			if (!apiRes.ok) {
-				json(res, 502, { ok: false, error: "google_api_error" });
+				let detail = "";
+				try { detail = await apiRes.text(); } catch {}
+				console.error(`[google] POST events failed: ${apiRes.status} ${detail.slice(0, 500)}`);
+				json(res, 502, { ok: false, error: "google_api_error", status: apiRes.status, message: detail.slice(0, 200) });
 				return;
 			}
 			const data = await apiRes.json();
 			json(res, 200, { ok: true, eventId: data && data.id ? data.id : "" });
 			return;
-		} catch {
+		} catch (err) {
+			console.error(`[google] POST events exception:`, err && err.message ? err.message : err);
 			json(res, 500, { ok: false, error: "google_api_failed" });
 			return;
 		}
@@ -2370,7 +2378,10 @@ const server = http.createServer(async (req, res) => {
 				}
 			);
 			if (!apiRes.ok) {
-				json(res, 502, { ok: false, error: "google_api_error" });
+				let detail = "";
+				try { detail = await apiRes.text(); } catch {}
+				console.error(`[google] GET events failed: ${apiRes.status} ${detail.slice(0, 500)}`);
+				json(res, 502, { ok: false, error: "google_api_error", status: apiRes.status, message: detail.slice(0, 200) });
 				return;
 			}
 			const data = await apiRes.json();
@@ -2385,7 +2396,8 @@ const server = http.createServer(async (req, res) => {
 			}));
 			json(res, 200, { ok: true, events });
 			return;
-		} catch {
+		} catch (err) {
+			console.error(`[google] GET events exception:`, err && err.message ? err.message : err);
 			json(res, 500, { ok: false, error: "google_api_failed" });
 			return;
 		}
@@ -2433,12 +2445,16 @@ const server = http.createServer(async (req, res) => {
 				}
 			);
 			if (!apiRes.ok && apiRes.status !== 204) {
+				let detail = "";
+				try { detail = await apiRes.text(); } catch {}
+				console.error(`[google] DELETE event failed: ${apiRes.status} ${detail.slice(0, 500)}`);
 				json(res, 502, { ok: false, error: "google_api_error" });
 				return;
 			}
 			json(res, 200, { ok: true });
 			return;
-		} catch {
+		} catch (err) {
+			console.error(`[google] DELETE event exception:`, err && err.message ? err.message : err);
 			json(res, 500, { ok: false, error: "google_api_failed" });
 			return;
 		}
@@ -2542,7 +2558,10 @@ const server = http.createServer(async (req, res) => {
 				},
 			});
 			if (!apiRes.ok) {
-				json(res, 502, { ok: false, error: "outlook_api_error" });
+				let detail = "";
+				try { detail = await apiRes.text(); } catch {}
+				console.error(`[outlook] GET calendars failed: ${apiRes.status} ${detail.slice(0, 500)}`);
+				json(res, 502, { ok: false, error: "outlook_api_error", status: apiRes.status, message: detail.slice(0, 200) });
 				return;
 			}
 			const data = await apiRes.json();
@@ -2555,7 +2574,8 @@ const server = http.createServer(async (req, res) => {
 				: [];
 			json(res, 200, { ok: true, calendars });
 			return;
-		} catch {
+		} catch (err) {
+			console.error(`[outlook] GET calendars exception:`, err && err.message ? err.message : err);
 			json(res, 500, { ok: false, error: "outlook_api_failed" });
 			return;
 		}
@@ -2733,13 +2753,17 @@ const server = http.createServer(async (req, res) => {
 				body: JSON.stringify(payload),
 			});
 			if (!apiRes.ok) {
-				json(res, 502, { ok: false, error: "outlook_api_error" });
+				let detail = "";
+				try { detail = await apiRes.text(); } catch {}
+				console.error(`[outlook] POST events failed: ${apiRes.status} ${detail.slice(0, 500)}`);
+				json(res, 502, { ok: false, error: "outlook_api_error", status: apiRes.status, message: detail.slice(0, 200) });
 				return;
 			}
 			const data = await apiRes.json();
 			json(res, 200, { ok: true, eventId: data && data.id ? data.id : "" });
 			return;
-		} catch {
+		} catch (err) {
+			console.error(`[outlook] POST events exception:`, err && err.message ? err.message : err);
 			json(res, 500, { ok: false, error: "outlook_api_failed" });
 			return;
 		}
@@ -2781,7 +2805,10 @@ const server = http.createServer(async (req, res) => {
 				}
 			);
 			if (!apiRes.ok) {
-				json(res, 502, { ok: false, error: "outlook_api_error" });
+				let detail = "";
+				try { detail = await apiRes.text(); } catch {}
+				console.error(`[outlook] GET events failed: ${apiRes.status} ${detail.slice(0, 500)}`);
+				json(res, 502, { ok: false, error: "outlook_api_error", status: apiRes.status, message: detail.slice(0, 200) });
 				return;
 			}
 			const data = await apiRes.json();
@@ -2800,7 +2827,8 @@ const server = http.createServer(async (req, res) => {
 			}));
 			json(res, 200, { ok: true, events });
 			return;
-		} catch {
+		} catch (err) {
+			console.error(`[outlook] GET events exception:`, err && err.message ? err.message : err);
 			json(res, 500, { ok: false, error: "outlook_api_failed" });
 			return;
 		}
@@ -2845,12 +2873,16 @@ const server = http.createServer(async (req, res) => {
 				}
 			);
 			if (!apiRes.ok && apiRes.status !== 204) {
+				let detail = "";
+				try { detail = await apiRes.text(); } catch {}
+				console.error(`[outlook] DELETE event failed: ${apiRes.status} ${detail.slice(0, 500)}`);
 				json(res, 502, { ok: false, error: "outlook_api_error" });
 				return;
 			}
 			json(res, 200, { ok: true });
 			return;
-		} catch {
+		} catch (err) {
+			console.error(`[outlook] DELETE event exception:`, err && err.message ? err.message : err);
 			json(res, 500, { ok: false, error: "outlook_api_failed" });
 			return;
 		}
