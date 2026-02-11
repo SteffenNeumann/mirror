@@ -9000,8 +9000,12 @@
 					return getTasks().done.length > 0;
 				case "hasTask":
 					return getTasks().total > 0;
-				case "hasComment":
-					return psCommentedNoteIds.has(String(note && note.id ? note.id : "").trim());
+				case "hasComment": {
+					const nid = String(note && note.id ? note.id : "").trim();
+					const match = psCommentedNoteIds.has(nid);
+					console.log("[has:comment] check note", nid, "type:", typeof (note && note.id), "raw:", note && note.id, "→", match, "| Set:", Array.from(psCommentedNoteIds));
+					return match;
+				}
 				case "kind":
 					return kind === tok.value || (!kind && tok.value === "note");
 				case "createdAfter": {
