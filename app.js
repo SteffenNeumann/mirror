@@ -9179,17 +9179,11 @@
 					.toLowerCase();
 				return tok === "has:comment" || tok === "has:comments" || tok === "commented";
 			});
-		if (needsCommentQuery) {
-			if (!psCommentIndexLoading) {
-				psCommentIndexLoaded = false;
-				const promise = loadPsCommentIndex();
-				if (promise && typeof promise.finally === "function") {
-					promise.finally(() => {
-						applyPersonalSpaceFiltersAndRender();
-					});
-				}
-			}
-			if (!psCommentIndexLoaded) return;
+		if (needsCommentQuery && !psCommentIndexLoaded) {
+			loadPsCommentIndex().then(() => {
+				applyPersonalSpaceFiltersAndRender();
+			});
+			return;
 		}
 		if (hasStructured) {
 			notes = notes.filter((n) => noteMatchesStructuredQuery(n, parsed.structured));
