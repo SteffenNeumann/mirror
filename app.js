@@ -2545,8 +2545,10 @@
 			let apiUrl = scopeKey
 				? `${base}/${encodeURIComponent(scopeKey)}/comments`
 				: `${base}/comments`;
-			if (noteIdPart) {
-				apiUrl += `?noteId=${encodeURIComponent(noteIdPart)}`;
+			// Always send noteId when editing a PS note so server can track for has:comment
+			const effectiveNoteId = noteIdPart || String(psEditingNoteId || "").trim();
+			if (effectiveNoteId) {
+				apiUrl += `?noteId=${encodeURIComponent(effectiveNoteId)}`;
 			}
 			return { scopeId, apiUrl };
 		}
@@ -2687,13 +2689,19 @@
 				});
 				if (getCommentScopeId() !== scopeId) return;
 				const updatedAt = Number(res && res.updatedAt ? res.updatedAt : 0) || 0;
-				console.log("[comment-save] scopeId:", scopeId, "payload.length:", payload.length);
 				if (scopeId.startsWith("note:")) {
 					const noteId = scopeId.slice(5);
-					console.log("[comment-save] noteId:", noteId, "adding to psCommentedNoteIds:", payload.length > 0);
 					if (noteId) {
 						if (payload.length > 0) psCommentedNoteIds.add(noteId);
 						else psCommentedNoteIds.delete(noteId);
+						if (psCommentsOnly) applyPersonalSpaceFiltersAndRender();
+					}
+				} else if (scopeId.startsWith("room:")) {
+					// Room-scoped comments: also track the currently editing PS note
+					const editNoteId = String(psEditingNoteId || "").trim();
+					if (editNoteId) {
+						if (payload.length > 0) psCommentedNoteIds.add(editNoteId);
+						else psCommentedNoteIds.delete(editNoteId);
 						if (psCommentsOnly) applyPersonalSpaceFiltersAndRender();
 					}
 				}
@@ -8888,7 +8896,6 @@
 				psCommentedNoteIds = new Set(
 					ids.map((id) => String(id || "").trim()).filter(Boolean)
 				);
-				console.log("[has:comment] loaded", psCommentedNoteIds.size, "note IDs from server:", Array.from(psCommentedNoteIds));
 			} catch (e) {
 				console.warn("[has:comment] failed to load comment index:", e);
 				psCommentedNoteIds = new Set();
@@ -9002,12 +9009,8 @@
 					return getTasks().done.length > 0;
 				case "hasTask":
 					return getTasks().total > 0;
-				case "hasComment": {
-					const nid = String(note && note.id ? note.id : "").trim();
-					const match = psCommentedNoteIds.has(nid);
-					console.log("[has:comment] check note", nid, "type:", typeof (note && note.id), "raw:", note && note.id, "→", match, "| Set:", Array.from(psCommentedNoteIds));
-					return match;
-				}
+				case "hasComment":
+					return psCommentedNoteIds.has(String(note && note.id ? note.id : "").trim());
 				case "kind":
 					return kind === tok.value || (!kind && tok.value === "note");
 				case "createdAfter": {
@@ -9180,14 +9183,11 @@
 			psCommentIndexPromise = null;
 			psCommentIndexLoaded = false;
 			loadPsCommentIndex().then(() => {
-				console.log("[has:comment] RELOADED psCommentedNoteIds:", Array.from(psCommentedNoteIds));
 				// Check if Set changed – if so, re-filter the already-rendered list
 				const currentIds = Array.from(psCommentedNoteIds).sort().join(',');
 				if (currentIds !== (window._lastCommentIds || '')) {
 					window._lastCommentIds = currentIds;
-					// Avoid infinite loop: only re-render once
 					const refiltered = notes.filter((n) => psCommentedNoteIds.has(String(n && n.id ? n.id : "").trim()));
-					console.log("[has:comment] re-filtered:", refiltered.length, "notes");
 					renderPsList(refiltered);
 					if (psCount) {
 						const total = filterRealNotes(psState.notes).length;
@@ -9195,8 +9195,6 @@
 					}
 				}
 			});
-			console.log("[has:comment] psCommentedNoteIds:", Array.from(psCommentedNoteIds));
-			console.log("[has:comment] all note IDs:", notes.map((n) => ({ id: n.id, title: getNoteTitle(n.text) })));
 		}
 		if (hasStructured) {
 			notes = notes.filter((n) => noteMatchesStructuredQuery(n, parsed.structured));
@@ -18448,6 +18446,13 @@ self.onmessage = async (e) => {
 					if (noteId) {
 						if (commentItems.length > 0) psCommentedNoteIds.add(noteId);
 						else psCommentedNoteIds.delete(noteId);
+						if (psCommentsOnly) applyPersonalSpaceFiltersAndRender();
+					}
+				} else if (scopeId.startsWith("room:")) {
+					const editNoteId = String(psEditingNoteId || "").trim();
+					if (editNoteId) {
+						if (commentItems.length > 0) psCommentedNoteIds.add(editNoteId);
+						else psCommentedNoteIds.delete(editNoteId);
 						if (psCommentsOnly) applyPersonalSpaceFiltersAndRender();
 					}
 				}

@@ -3863,6 +3863,22 @@ const server = http.createServer(async (req, res) => {
 					} else {
 						stmtNoteCommentsDeleteByScope.run(scopeId);
 					}
+					// Also mark note:NOTEID so has:comment index finds room-scoped comments
+					if (noteIdParam && email) {
+						const userId = getOrCreateUserId(email);
+						const noteOwned = stmtNoteGetByIdUser.get(noteIdParam, userId);
+						if (noteOwned) {
+							const noteScope = `note:${noteIdParam}`;
+							if (comments.length > 0) {
+								const existing = stmtNoteCommentsGetByScope.get(noteScope);
+								if (!existing) {
+									stmtNoteCommentsUpsert.run(noteScope, JSON.stringify(comments), updatedAt);
+								}
+							} else {
+								stmtNoteCommentsDeleteByScope.run(noteScope);
+							}
+						}
+					}
 					json(res, 200, {
 						ok: true,
 						room,
@@ -4133,17 +4149,8 @@ const server = http.createServer(async (req, res) => {
 		for (const row of rows) {
 			const noteId = String(row && row.note_id ? row.note_id : "").trim();
 			if (!noteId) continue;
-			const parsed = parseCommentsJson(row.comments_json);
-			const valid = sanitizeCommentItems(parsed);
-			console.log(`[comments-index] row note_id=${noteId} raw_len=${(row.comments_json||'').length} parsed=${parsed.length} valid=${valid.length} raw_preview=${String(row.comments_json||'').slice(0,120)}`);
+			const valid = sanitizeCommentItems(parseCommentsJson(row.comments_json));
 			if (valid.length > 0) noteIds.push(noteId);
-		}
-		// Also check all note: scope entries in notes_comments
-		try {
-			const allScopes = db.prepare("SELECT scope_id, length(comments_json) as len FROM notes_comments WHERE scope_id LIKE 'note:%'").all();
-			console.log(`[comments-index] user=${userId} rows=${rows.length} valid=${noteIds.length} all_note_scopes=${JSON.stringify(allScopes)}`);
-		} catch(e) {
-			console.log(`[comments-index] user=${userId} rows=${rows.length} valid=${noteIds.length}`);
 		}
 		json(res, 200, { ok: true, noteIds });
 		return;
