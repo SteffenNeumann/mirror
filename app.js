@@ -9179,16 +9179,19 @@
 					.toLowerCase();
 				return tok === "has:comment" || tok === "has:comments" || tok === "commented";
 			});
-		if (needsCommentQuery && !psCommentIndexLoaded) {
-			const promise = loadPsCommentIndex();
-			if (promise && typeof promise.finally === "function") {
-				promise.finally(() => {
-					applyPersonalSpaceFiltersAndRender();
-				});
+		if (needsCommentQuery) {
+			if (!psCommentIndexLoaded || psCommentIndexLoading) {
+				if (!psCommentIndexLoading) {
+					const promise = loadPsCommentIndex();
+					if (promise && typeof promise.finally === "function") {
+						promise.finally(() => {
+							applyPersonalSpaceFiltersAndRender();
+						});
+					}
+				}
+				return;
 			}
-			return;
 		}
-		if (needsCommentQuery && psCommentIndexLoading) return;
 		if (hasStructured) {
 			notes = notes.filter((n) => noteMatchesStructuredQuery(n, parsed.structured));
 		}

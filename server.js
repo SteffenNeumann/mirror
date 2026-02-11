@@ -506,7 +506,7 @@ function initDb() {
 		"DELETE FROM notes_comments WHERE scope_id = ?"
 	);
 	stmtNoteCommentsByUser = db.prepare(
-		"SELECT n.id as note_id FROM notes n JOIN notes_comments nc ON nc.scope_id = 'note:' || n.id WHERE n.user_id = ?"
+		"SELECT n.id as note_id FROM notes n JOIN notes_comments nc ON nc.scope_id = 'note:' || n.id WHERE n.user_id = ? AND nc.comments_json IS NOT NULL AND nc.comments_json != '' AND nc.comments_json != '[]'"
 	);
 	stmtSavedQueryList = db.prepare(
 		"SELECT id, label, query, created_at FROM saved_queries WHERE user_id = ? ORDER BY created_at ASC LIMIT 50"
