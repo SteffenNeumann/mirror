@@ -2694,17 +2694,16 @@
 					if (noteId) {
 						if (payload.length > 0) psCommentedNoteIds.add(noteId);
 						else psCommentedNoteIds.delete(noteId);
-						if (psCommentsOnly) applyPersonalSpaceFiltersAndRender();
 					}
 				} else if (scopeId.startsWith("room:")) {
-					// Room-scoped comments: also track the currently editing PS note
 					const editNoteId = String(psEditingNoteId || "").trim();
 					if (editNoteId) {
 						if (payload.length > 0) psCommentedNoteIds.add(editNoteId);
 						else psCommentedNoteIds.delete(editNoteId);
-						if (psCommentsOnly) applyPersonalSpaceFiltersAndRender();
 					}
 				}
+				const hasCommentFilter = psCommentsOnly || String(psSearchQuery || "").toLowerCase().includes("has:comment");
+				if (hasCommentFilter) applyPersonalSpaceFiltersAndRender();
 				sendMessage({
 					type: "comment_update",
 					room,
@@ -18446,16 +18445,16 @@ self.onmessage = async (e) => {
 					if (noteId) {
 						if (commentItems.length > 0) psCommentedNoteIds.add(noteId);
 						else psCommentedNoteIds.delete(noteId);
-						if (psCommentsOnly) applyPersonalSpaceFiltersAndRender();
 					}
 				} else if (scopeId.startsWith("room:")) {
 					const editNoteId = String(psEditingNoteId || "").trim();
 					if (editNoteId) {
 						if (commentItems.length > 0) psCommentedNoteIds.add(editNoteId);
 						else psCommentedNoteIds.delete(editNoteId);
-						if (psCommentsOnly) applyPersonalSpaceFiltersAndRender();
 					}
 				}
+				const hasCommentFilter = psCommentsOnly || String(psSearchQuery || "").toLowerCase().includes("has:comment");
+				if (hasCommentFilter) applyPersonalSpaceFiltersAndRender();
 				commentActiveNoteId = scopeId;
 				renderCommentList();
 				updateCommentOverlay();
