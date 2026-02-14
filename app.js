@@ -8518,6 +8518,7 @@
 
 	async function flushPendingPsAutoSave() {
 		if (!canAutoSavePsNote()) return;
+		if (psAutoSaveInFlight) return;
 		const currentNoteId = String(psEditingNoteId || "").trim();
 		if (!currentNoteId) return;
 		const currentText = String(textarea && textarea.value ? textarea.value : "");
@@ -22113,6 +22114,12 @@ self.onmessage = async (e) => {
 					psState.notes = psState.notes.filter(
 						(n) => String(n && n.id ? n.id : "") !== targetId
 					);
+				}
+				// Clear any queued auto-save for the deleted note
+				if (String(psAutoSaveQueuedNoteId || "") === targetId) {
+					psAutoSaveQueuedNoteId = "";
+					psAutoSaveQueuedText = "";
+					psAutoSaveQueuedTags = null;
 				}
 				if (String(psEditingNoteId || "").trim() === targetId) {
 					// Try to find the surviving note by title
