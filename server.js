@@ -85,6 +85,7 @@ let stmtNoteInsert;
 let stmtNoteGetByIdUser;
 let stmtNoteGetById;
 let stmtNoteGetByHashUser;
+let stmtNoteGetByTitleHashUser;
 let stmtNoteUpdate;
 let stmtNoteDelete;
 let stmtNotesDeleteAll;
@@ -454,6 +455,18 @@ function initDb() {
 		"CREATE UNIQUE INDEX IF NOT EXISTS idx_notes_user_hash ON notes(user_id, content_hash) WHERE content_hash IS NOT NULL AND content_hash <> ''"
 	);
 
+	const hasTitleHash = noteCols.some((c) => String(c && c.name) === "title_hash");
+	if (!hasTitleHash) {
+		try {
+			db.exec("ALTER TABLE notes ADD COLUMN title_hash TEXT");
+		} catch {
+			// ignore
+		}
+	}
+	db.exec(
+		"CREATE INDEX IF NOT EXISTS idx_notes_user_title_hash ON notes(user_id, title_hash) WHERE title_hash IS NOT NULL AND title_hash <> ''"
+	);
+
 	db.exec(`
 		CREATE TABLE IF NOT EXISTS saved_queries (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -471,7 +484,7 @@ function initDb() {
 		"INSERT INTO users(email, created_at) VALUES(?, ?) ON CONFLICT(email) DO NOTHING"
 	);
 	stmtNoteInsert = db.prepare(
-		"INSERT INTO notes(id, user_id, text, kind, content_hash, tags_json, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?)"
+		"INSERT INTO notes(id, user_id, text, kind, content_hash, title_hash, tags_json, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)"
 	);
 	stmtNoteGetByIdUser = db.prepare(
 		"SELECT id, text, kind, content_hash, tags_json, created_at, updated_at FROM notes WHERE id = ? AND user_id = ?"
@@ -482,8 +495,11 @@ function initDb() {
 	stmtNoteGetByHashUser = db.prepare(
 		"SELECT id, text, kind, tags_json, created_at, updated_at FROM notes WHERE user_id = ? AND content_hash = ? LIMIT 1"
 	);
+	stmtNoteGetByTitleHashUser = db.prepare(
+		"SELECT id, text, kind, tags_json, created_at, updated_at FROM notes WHERE user_id = ? AND title_hash = ? LIMIT 1"
+	);
 	stmtNoteUpdate = db.prepare(
-		"UPDATE notes SET text = ?, kind = ?, content_hash = ?, tags_json = ?, updated_at = ? WHERE id = ? AND user_id = ?"
+		"UPDATE notes SET text = ?, kind = ?, content_hash = ?, title_hash = ?, tags_json = ?, updated_at = ? WHERE id = ? AND user_id = ?"
 	);
 	stmtNoteDelete = db.prepare("DELETE FROM notes WHERE id = ? AND user_id = ?");
 	stmtNotesDeleteAll = db.prepare("DELETE FROM notes WHERE user_id = ?");
@@ -1258,6 +1274,28 @@ function computeNoteContentHash(text) {
 	const normalized = normalizeNoteTextForHash(text);
 	if (!normalized) return crypto.createHash("sha256").update("__EMPTY_NOTE__").digest("hex");
 	return crypto.createHash("sha256").update(normalized).digest("hex");
+}
+
+function extractNoteFirstLine(text) {
+	const lines = String(text || "").split("\n");
+	for (const line of lines) {
+		const trimmed = line.replace(/\r$/, "").trim();
+		if (!trimmed) continue;
+		return trimmed
+			.replace(/^#+\s*/, "")
+			.replace(/^[-*+]\s+/, "")
+			.replace(/^\d+[.)]\s+/, "")
+			.trim()
+			.toLowerCase()
+			.slice(0, 200);
+	}
+	return "";
+}
+
+function computeNoteTitleHash(text) {
+	const firstLine = extractNoteFirstLine(text);
+	if (!firstLine) return "";
+	return crypto.createHash("sha256").update(firstLine).digest("hex");
 }
 
 function getOrCreateUserId(email) {
@@ -3718,6 +3756,28 @@ const server = http.createServer(async (req, res) => {
 						return;
 					}
 				}
+				const titleHash = computeNoteTitleHash(textFinal);
+				if (titleHash) {
+					const byTitle = stmtNoteGetByTitleHashUser.get(userId, titleHash);
+					if (byTitle) {
+						json(res, 200, {
+							ok: true,
+							note: {
+								id: byTitle.id,
+								text: byTitle.text,
+								kind: byTitle.kind,
+								tags: parseTagsJson(byTitle.tags_json),
+								createdAt: byTitle.created_at,
+								updatedAt:
+									typeof byTitle.updated_at === "number" &&
+									Number.isFinite(byTitle.updated_at)
+										? byTitle.updated_at
+										: byTitle.created_at,
+							},
+						});
+						return;
+					}
+				}
 				const createdAt = Date.now();
 				const updatedAt = Date.now();
 				if (!override) tags = applyDateTags(tags, createdAt);
@@ -3736,6 +3796,7 @@ const server = http.createServer(async (req, res) => {
 						note.text,
 						note.kind,
 						contentHash,
+						titleHash,
 						JSON.stringify(note.tags),
 						note.createdAt,
 						note.updatedAt
@@ -4001,10 +4062,12 @@ const server = http.createServer(async (req, res) => {
 						}
 					}
 					const updatedAt = Date.now();
+					const titleHash = computeNoteTitleHash(nextText);
 					stmtNoteUpdate.run(
 						nextText,
 						kind,
 						contentHash,
+						titleHash,
 						JSON.stringify(tags),
 						updatedAt,
 						noteId,
@@ -4122,6 +4185,7 @@ const server = http.createServer(async (req, res) => {
 					textVal,
 					String(trashed.kind || "note"),
 					contentHash,
+					computeNoteTitleHash(textVal),
 					JSON.stringify(tags),
 					createdAt,
 					updatedAt
@@ -4302,6 +4366,7 @@ const server = http.createServer(async (req, res) => {
 								textVal,
 								kind,
 								contentHash,
+								computeNoteTitleHash(textVal),
 								JSON.stringify(tagsFinal),
 								updatedAt,
 								noteId,
@@ -4329,6 +4394,7 @@ const server = http.createServer(async (req, res) => {
 							textVal,
 							kind,
 							contentHash,
+							computeNoteTitleHash(textVal),
 							JSON.stringify(tagsFinal),
 							createdAt,
 							updatedAt

@@ -12007,6 +12007,17 @@ ${highlightThemeCss}
 			);
 			if (noteText === target) return note;
 		}
+		const targetTitle = getNoteTitle(target);
+		if (!targetTitle || targetTitle === "Untitled") return null;
+		const titleLower = targetTitle.toLowerCase();
+		const titleMatches = [];
+		for (const note of sorted) {
+			const noteTitle = getNoteTitle(note && note.text ? note.text : "");
+			if (String(noteTitle || "").toLowerCase() === titleLower) {
+				titleMatches.push(note);
+			}
+		}
+		if (titleMatches.length === 1) return titleMatches[0];
 		return null;
 	}
 
@@ -21607,7 +21618,11 @@ self.onmessage = async (e) => {
 		}
 		const text = String(textarea && textarea.value ? textarea.value : "");
 		if (!text.trim()) return;
-		const noteId = String(psEditingNoteId || "").trim();
+		let noteId = String(psEditingNoteId || "").trim();
+		if (!noteId) {
+			syncPsEditingNoteFromEditorText(text);
+			noteId = String(psEditingNoteId || "").trim();
+		}
 		if (!noteId) return;
 		const tagsPayload = buildCurrentPsTagsPayload();
 		if (psAutoSaveLastSavedNoteId !== psEditingNoteId) {

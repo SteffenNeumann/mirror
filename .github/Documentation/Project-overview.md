@@ -1,8 +1,17 @@
 # Project overview
 
-Datum: 2026-02-10
+Datum: 2026-02-14
 
 Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische Analyse, keine Laufzeitauflösung).
+
+## Aktuelle Änderungen (2026-02-14)
+
+- **Duplikat-Notizen-Schutz erweitert (Header-Vergleich)**: Ergänzt den bestehenden Volltext-Hash-Schutz um einen Header-basierten Duplikat-Check auf Client- und Server-Seite:
+  1. **Client `findNoteByText` Header-Fallback**: Wenn kein exakter Volltextmatch gefunden wird, sucht die Funktion nach Notizen mit identischem Titel (erste nicht-leere Zeile, normalisiert). Nur bei genau einem Treffer wird die existierende Note zurückgegeben — verhindert Duplikate bei kleinen Textänderungen (Whitespace, Zeilenumbruch).
+  2. **Client `schedulePsAutoSave` Sync-Recovery**: Wenn `psEditingNoteId` leer ist, wird `syncPsEditingNoteFromEditorText` aufgerufen bevor Auto-Save übersprungen wird. Damit wird ein verlorener ID-Bezug (z.B. durch Tab-Wechsel/CRDT-Sync) über den Header wiederhergestellt.
+  3. **Server `title_hash`-Spalte**: Neue Spalte `title_hash` in der `notes`-Tabelle mit Index. Wird bei POST (Create), PUT (Update), Restore und Import gesetzt.
+  4. **Server POST `/api/notes` Title-Hash-Check**: Nach dem contentHash-Check wird als Fallback per `stmtNoteGetByTitleHashUser` geprüft, ob bereits eine Note mit gleichem Header existiert. Bei Treffer wird die existierende Note zurückgegeben statt eine neue zu erstellen.
+  - Zuständige Funktionen: `findNoteByText` ([app.js](app.js#L11997)), `schedulePsAutoSave` ([app.js](app.js#L21614)), `extractNoteFirstLine`/`computeNoteTitleHash` ([server.js](server.js#L1262)), POST `/api/notes` ([server.js](server.js#L3692)).
 
 ## Aktuelle Änderungen (2026-02-10)
 
@@ -172,7 +181,7 @@ Server-Start
 7) Personal Space (Notizen, Tags, Auto-Save, Query-Engine)
 - Zweck: Notizen laden/filtern, Tags, Auto-Save, Tabs/History. Strukturierte Abfragen über alle Notizen via Query-Engine.
 - Umsetzung: `refreshPersonalSpace`, `applyPersonalSpaceFiltersAndRender`, `savePersonalSpaceNote`, `updateRoomTabsForNoteId`, `parseQueryTokens`, `noteMatchesStructuredQuery`, `renderQueryResults`.
-- Hinweis: Notizen werden per `filterRealNotes` auf gültige IDs geprüft und nach ID entdoppelt (neuestes `updatedAt`/`createdAt` bleibt); Tag-Änderungen aktualisieren bestehende Notizen statt neue anzulegen. Zusätzlich verhindert `psSaveNoteInFlight`-Mutex parallele manuelle Saves, `findNoteByText` erkennt inhaltlich identische Notizen vor dem Erstellen, und der Server blockiert Duplikate per `contentHash`-UNIQUE-Constraint (inkl. leerer Notizen).
+- Hinweis: Notizen werden per `filterRealNotes` auf gültige IDs geprüft und nach ID entdoppelt (neuestes `updatedAt`/`createdAt` bleibt); Tag-Änderungen aktualisieren bestehende Notizen statt neue anzulegen. Zusätzlich verhindert `psSaveNoteInFlight`-Mutex parallele manuelle Saves, `findNoteByText` erkennt inhaltlich identische Notizen (Volltext + Header-Fallback) vor dem Erstellen, `schedulePsAutoSave` stellt verlorene Note-IDs per Header-Sync wieder her, und der Server blockiert Duplikate per `contentHash`- und `title_hash`-Prüfung.
 - Query-Engine: Das PS-Suchfeld unterstützt strukturierte Operatoren (`tag:`, `task:open`, `task:done`, `has:task`, `kind:`, `created:>`, `updated:<`, `pinned:`). Bei Task-Queries (`task:open`/`task:done`/`has:task`) wird ein aggregiertes Ergebnis-Panel über der Notizliste eingeblendet.
 
 8) Settings/Tools (Uploads, Kalender, AI)
