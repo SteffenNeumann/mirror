@@ -22024,6 +22024,19 @@ self.onmessage = async (e) => {
 		return true;
 		} catch (e) {
 			psSaveNoteInFlight = false;
+			const errMsg = e && e.message ? String(e.message) : "";
+			const is404 = errMsg.includes("404") || errMsg.includes("not_found");
+			if (is404) {
+				// Note was deleted server-side — try to re-create via POST
+				console.warn("[saveNote] note not found, will create new:", targetNoteId);
+				psEditingNoteId = "";
+				psEditingNoteKind = "";
+				try {
+					return await savePersonalSpaceNote(rawText, { auto, allowEmpty });
+				} catch {
+					return false;
+				}
+			}
 			// Network error fallback: save offline if the API call failed
 			try {
 				const tagsPayloadFb = buildCurrentPsTagsPayload();
@@ -22091,6 +22104,35 @@ self.onmessage = async (e) => {
 			updateRoomTabsForNoteId(targetId, rawText);
 			return true;
 		} catch (err) {
+			const errMsg = err && err.message ? String(err.message) : "";
+			const is404 = errMsg.includes("404") || errMsg.includes("not_found");
+			if (is404) {
+				// Note was deleted server-side (e.g. auto-dedup) — remove from local state
+				console.warn("[saveSnapshot] note not found, removing:", targetId);
+				if (psState && Array.isArray(psState.notes)) {
+					psState.notes = psState.notes.filter(
+						(n) => String(n && n.id ? n.id : "") !== targetId
+					);
+				}
+				if (String(psEditingNoteId || "").trim() === targetId) {
+					// Try to find the surviving note by title
+					const survivingNote = findNoteByText(rawText);
+					if (survivingNote && survivingNote.id) {
+						psEditingNoteId = String(survivingNote.id);
+						psAutoSaveLastSavedNoteId = psEditingNoteId;
+						psAutoSaveLastSavedText = rawText;
+						setPsAutoSaveStatus("Note zugeordnet");
+						applyPersonalSpaceFiltersAndRender();
+						return true;
+					}
+					psEditingNoteId = "";
+					psAutoSaveLastSavedNoteId = "";
+					psAutoSaveLastSavedText = "";
+					setPsAutoSaveStatus("");
+				}
+				applyPersonalSpaceFiltersAndRender();
+				return false;
+			}
 			// Network error fallback: save offline if the API call failed
 			try {
 				await offlineSaveNote(targetId, rawText, Array.isArray(tagsPayload) ? tagsPayload : []);
