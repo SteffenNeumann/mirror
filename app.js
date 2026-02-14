@@ -12166,11 +12166,7 @@ ${highlightThemeCss}
 		}
 		updateEditorMetaYaml();
 		void loadCommentsForRoom();
-		if (notesForList && psSortMode !== "accessed") {
-			renderPsList(notesForList);
-		} else {
-			applyPersonalSpaceFiltersAndRender();
-		}
+		applyPersonalSpaceFiltersAndRender();
 		if (isMobileViewport()) {
 			mobileNoteReturn = notesForList ? "ps" : "editor";
 			mobilePsOpen = false;
@@ -12533,9 +12529,9 @@ ${highlightThemeCss}
 					goToRoomWithKey(existingTab.room, existingTab.key);
 					return;
 				}
-				const note = findNoteById(id) || byId.get(id);
+				const note = findNoteById(id);
 				if (!note) return;
-				applyNoteToEditor(note, items);
+				applyNoteToEditor(note);
 			});
 
 			row.addEventListener("contextmenu", (ev) => {
