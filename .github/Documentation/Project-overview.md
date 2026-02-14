@@ -6,6 +6,18 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
 
 ## Aktuelle Änderungen (2026-02-14)
 
+- **Offline-Modus (PWA + IndexedDB)** `#offline` `#pwa` `#sync` `#ps`: Vollständiger Offline-Support für die App — Notizen können ohne Serververbindung erstellt, bearbeitet und gelesen werden. Änderungen werden bei Reconnect automatisch synchronisiert.
+  1. **Service Worker** (`sw.js`): Stale-While-Revalidate-Strategie für alle statischen Assets (HTML, JS, CSS, Vendor-Dateien). Pre-cacht kritische Ressourcen bei Installation. API-/Upload-/WebSocket-Requests werden nicht gecacht.
+  2. **PWA Manifest** (`manifest.json`): Web-App-Manifest für Standalone-Installation auf Desktop und Mobile. `display: standalone`, dunkles Farbschema.
+  3. **IndexedDB Offline-Store**: Drei Object-Stores: `notes` (lokaler Notizen-Spiegel), `pendingOps` (Sync-Queue), `meta` (Email etc.). Notizen werden bei jedem `refreshPersonalSpace` in IndexedDB gespiegelt.
+  4. **Offline-fähiges `savePersonalSpaceNote`**: Bei `navigator.onLine === false` wird die Notiz in IndexedDB gespeichert und eine `create`/`update`-Operation in die Sync-Queue eingereiht. AutoSave-Status zeigt „Offline gespeichert".
+  5. **Offline-fähiges `savePersonalSpaceNoteSnapshot`**: Gleiche Logik für Snapshot-Saves (Auto-Save-Timer).
+  6. **Offline-fähiges `refreshPersonalSpace`**: Bei Offline wird auf IndexedDB-Cache zurückgegriffen (Email + Notizen). Bei Online werden Notizen in IndexedDB gespiegelt.
+  7. **Sync-Queue (`replayOfflineOps`)**: Bei `online`-Event und WebSocket-Reconnect werden ausstehende Operationen sequentiell zum Server gesendet. Temp-IDs (`offline_*`) werden durch Server-IDs ersetzt. Bei Erfolg wird die Queue geleert und ein Toast angezeigt.
+  8. **i18n**: `offline.now_offline`, `offline.back_online`, `offline.synced`, `offline.saved_locally` in DE + EN.
+  - Zuständige Dateien: `sw.js` (neu), `manifest.json` (neu), `app.js` (Offline-Store, Save-/Load-Anpassungen, Sync-Queue, i18n), `index.html` (Manifest-Link, SW-Registration), `server.js` (JSON-MIME-Type).
+  - Zuständige Funktionen: `openOfflineDb`, `offlinePutNote`, `offlinePutNotes`, `offlineGetAllNotes`, `offlineDeleteNote`, `offlineEnqueueOp`, `offlineGetAllOps`, `offlineClearOps`, `offlineSaveMeta`, `offlineLoadMeta`, `offlineSaveNote`, `replayOfflineOps`, `isAppOffline` (alle [app.js](app.js#L6371)).
+
 - **Duplikat-Notizen-Schutz erweitert (Header-Vergleich)**: Ergänzt den bestehenden Volltext-Hash-Schutz um einen Header-basierten Duplikat-Check auf Client- und Server-Seite:
   1. **Client `findNoteByText` Header-Fallback**: Wenn kein exakter Volltextmatch gefunden wird, sucht die Funktion nach Notizen mit identischem Titel (erste nicht-leere Zeile, normalisiert). Nur bei genau einem Treffer wird die existierende Note zurückgegeben — verhindert Duplikate bei kleinen Textänderungen (Whitespace, Zeilenumbruch).
   2. **Client `schedulePsAutoSave` Sync-Recovery**: Wenn `psEditingNoteId` leer ist, wird `syncPsEditingNoteFromEditorText` aufgerufen bevor Auto-Save übersprungen wird. Damit wird ein verlorener ID-Bezug (z.B. durch Tab-Wechsel/CRDT-Sync) über den Header wiederhergestellt.

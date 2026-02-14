@@ -5474,6 +5474,10 @@
 				"toast.permalink_deactivated": "Permanent-Link deaktiviert.",
 				"permalink.info.title": "Permanent-Link",
 				"permalink.info.message": "Pinnt den aktuellen Inhalt (Notiz oder Text) dauerhaft an diesen Raum-Tab. Gäste sehen automatisch den gepinnten Inhalt, wenn sie den Raum betreten. Erneut klicken, um den Pin zu entfernen. Eingebettete Apps (Excalidraw, Excel, Linear) werden mitgeteilt.",
+				"offline.now_offline": "Du bist offline. Änderungen werden lokal gespeichert.",
+				"offline.back_online": "Wieder online — synchronisiere…",
+				"offline.synced": "Offline-Änderungen synchronisiert.",
+				"offline.saved_locally": "Offline gespeichert.",
 			},
 			en: {
 				"ps.title": "Personal Space",
@@ -5883,6 +5887,10 @@
 				"toast.permalink_deactivated": "Permanent Link deactivated.",
 				"permalink.info.title": "Permanent Link",
 				"permalink.info.message": "Pins the current content (note or text) permanently to this room tab. Guests automatically see the pinned content when they enter the room. Click again to remove the pin. Embedded apps (Excalidraw, Excel, Linear) are shared as well.",
+				"offline.now_offline": "You are offline. Changes are saved locally.",
+				"offline.back_online": "Back online — syncing…",
+				"offline.synced": "Offline changes synced.",
+				"offline.saved_locally": "Saved offline.",
 			},
 		};
 
@@ -6367,6 +6375,272 @@
 			return false;
 		}
 	}
+
+	// ─── Offline Store (IndexedDB) ───────────────────────────────────
+	const OFFLINE_DB_NAME = "mirror_offline_v1";
+	const OFFLINE_DB_VERSION = 1;
+	const OFFLINE_STORE_NOTES = "notes";
+	const OFFLINE_STORE_OPS = "pendingOps";
+	const OFFLINE_STORE_META = "meta";
+	let offlineDb = null;
+
+	function openOfflineDb() {
+		if (offlineDb) return Promise.resolve(offlineDb);
+		return new Promise((resolve, reject) => {
+			if (!window.indexedDB) { reject(new Error("IndexedDB unavailable")); return; }
+			const req = window.indexedDB.open(OFFLINE_DB_NAME, OFFLINE_DB_VERSION);
+			req.onupgradeneeded = () => {
+				const db = req.result;
+				if (!db.objectStoreNames.contains(OFFLINE_STORE_NOTES)) {
+					db.createObjectStore(OFFLINE_STORE_NOTES, { keyPath: "id" });
+				}
+				if (!db.objectStoreNames.contains(OFFLINE_STORE_OPS)) {
+					db.createObjectStore(OFFLINE_STORE_OPS, { keyPath: "opId", autoIncrement: true });
+				}
+				if (!db.objectStoreNames.contains(OFFLINE_STORE_META)) {
+					db.createObjectStore(OFFLINE_STORE_META);
+				}
+			};
+			req.onsuccess = () => { offlineDb = req.result; resolve(offlineDb); };
+			req.onerror = () => reject(req.error || new Error("OfflineDB open failed"));
+		});
+	}
+
+	async function offlinePutNote(note) {
+		if (!note || !note.id) return;
+		try {
+			const db = await openOfflineDb();
+			const tx = db.transaction(OFFLINE_STORE_NOTES, "readwrite");
+			tx.objectStore(OFFLINE_STORE_NOTES).put({
+				id: String(note.id),
+				text: String(note.text || ""),
+				tags: Array.isArray(note.tags) ? note.tags : [],
+				kind: String(note.kind || ""),
+				createdAt: Number(note.createdAt || Date.now()),
+				updatedAt: Number(note.updatedAt || Date.now()),
+				deletedAt: note.deletedAt || null,
+				dirty: note.dirty || false,
+			});
+			await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+		} catch (e) { console.warn("[offline] putNote failed:", e); }
+	}
+
+	async function offlinePutNotes(notes) {
+		if (!Array.isArray(notes) || !notes.length) return;
+		try {
+			const db = await openOfflineDb();
+			const tx = db.transaction(OFFLINE_STORE_NOTES, "readwrite");
+			const store = tx.objectStore(OFFLINE_STORE_NOTES);
+			for (const n of notes) {
+				if (!n || !n.id) continue;
+				store.put({
+					id: String(n.id),
+					text: String(n.text || ""),
+					tags: Array.isArray(n.tags) ? n.tags : [],
+					kind: String(n.kind || ""),
+					createdAt: Number(n.createdAt || Date.now()),
+					updatedAt: Number(n.updatedAt || Date.now()),
+					deletedAt: n.deletedAt || null,
+					dirty: false,
+				});
+			}
+			await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+		} catch (e) { console.warn("[offline] putNotes failed:", e); }
+	}
+
+	async function offlineGetAllNotes() {
+		try {
+			const db = await openOfflineDb();
+			return await new Promise((resolve) => {
+				const tx = db.transaction(OFFLINE_STORE_NOTES, "readonly");
+				const req = tx.objectStore(OFFLINE_STORE_NOTES).getAll();
+				req.onsuccess = () => resolve(req.result || []);
+				req.onerror = () => resolve([]);
+			});
+		} catch { return []; }
+	}
+
+	async function offlineDeleteNote(noteId) {
+		try {
+			const db = await openOfflineDb();
+			const tx = db.transaction(OFFLINE_STORE_NOTES, "readwrite");
+			tx.objectStore(OFFLINE_STORE_NOTES).delete(String(noteId));
+			await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+		} catch (e) { console.warn("[offline] deleteNote failed:", e); }
+	}
+
+	// --- Pending Operations Queue ---
+	async function offlineEnqueueOp(op) {
+		try {
+			const db = await openOfflineDb();
+			const tx = db.transaction(OFFLINE_STORE_OPS, "readwrite");
+			tx.objectStore(OFFLINE_STORE_OPS).add({
+				...op,
+				ts: Date.now(),
+			});
+			await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+		} catch (e) { console.warn("[offline] enqueueOp failed:", e); }
+	}
+
+	async function offlineGetAllOps() {
+		try {
+			const db = await openOfflineDb();
+			return await new Promise((resolve) => {
+				const tx = db.transaction(OFFLINE_STORE_OPS, "readonly");
+				const req = tx.objectStore(OFFLINE_STORE_OPS).getAll();
+				req.onsuccess = () => resolve(req.result || []);
+				req.onerror = () => resolve([]);
+			});
+		} catch { return []; }
+	}
+
+	async function offlineClearOps() {
+		try {
+			const db = await openOfflineDb();
+			const tx = db.transaction(OFFLINE_STORE_OPS, "readwrite");
+			tx.objectStore(OFFLINE_STORE_OPS).clear();
+			await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+		} catch (e) { console.warn("[offline] clearOps failed:", e); }
+	}
+
+	async function offlineSaveMeta(key, value) {
+		try {
+			const db = await openOfflineDb();
+			const tx = db.transaction(OFFLINE_STORE_META, "readwrite");
+			tx.objectStore(OFFLINE_STORE_META).put(value, key);
+			await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+		} catch (e) { console.warn("[offline] saveMeta failed:", e); }
+	}
+
+	async function offlineLoadMeta(key) {
+		try {
+			const db = await openOfflineDb();
+			return await new Promise((resolve) => {
+				const tx = db.transaction(OFFLINE_STORE_META, "readonly");
+				const req = tx.objectStore(OFFLINE_STORE_META).get(key);
+				req.onsuccess = () => resolve(req.result !== undefined ? req.result : null);
+				req.onerror = () => resolve(null);
+			});
+		} catch { return null; }
+	}
+
+	// --- Offline save: store note locally + enqueue sync op ---
+	async function offlineSaveNote(noteId, text, tagsPayload) {
+		const id = String(noteId || "").trim();
+		if (!id) {
+			// Offline create: generate temp ID
+			const tempId = "offline_" + crypto.randomUUID();
+			const note = {
+				id: tempId,
+				text: String(text || ""),
+				tags: Array.isArray(tagsPayload) ? tagsPayload : [],
+				kind: "",
+				createdAt: Date.now(),
+				updatedAt: Date.now(),
+				dirty: true,
+			};
+			await offlinePutNote(note);
+			await offlineEnqueueOp({ type: "create", tempId, text: note.text, tags: note.tags });
+			return note;
+		}
+		// Offline update
+		const allNotes = await offlineGetAllNotes();
+		const existing = allNotes.find((n) => n.id === id);
+		const note = {
+			id,
+			text: String(text || ""),
+			tags: Array.isArray(tagsPayload) ? tagsPayload : (existing ? existing.tags : []),
+			kind: existing ? existing.kind : "",
+			createdAt: existing ? existing.createdAt : Date.now(),
+			updatedAt: Date.now(),
+			dirty: true,
+		};
+		await offlinePutNote(note);
+		await offlineEnqueueOp({ type: "update", noteId: id, text: note.text, tags: note.tags });
+		return note;
+	}
+
+	// --- Sync Queue Replay: push pending ops to server ---
+	let offlineSyncInFlight = false;
+	async function replayOfflineOps() {
+		if (offlineSyncInFlight) return;
+		if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+		offlineSyncInFlight = true;
+		try {
+			const ops = await offlineGetAllOps();
+			if (!ops.length) return;
+			let anyFailed = false;
+			for (const op of ops) {
+				try {
+					if (op.type === "create") {
+						const res = await api("/api/notes", {
+							method: "POST",
+							body: JSON.stringify({ text: op.text, tags: op.tags || [] }),
+						});
+						const saved = res && res.note ? res.note : null;
+						if (saved && saved.id) {
+							// Replace temp note in IndexedDB with server note
+							await offlineDeleteNote(op.tempId);
+							await offlinePutNote({
+								id: String(saved.id),
+								text: String(saved.text || op.text),
+								tags: Array.isArray(saved.tags) ? saved.tags : op.tags,
+								kind: String(saved.kind || ""),
+								createdAt: Number(saved.createdAt || Date.now()),
+								updatedAt: Number(saved.updatedAt || Date.now()),
+								dirty: false,
+							});
+							// Update in-memory psEditingNoteId if it matches tempId
+							if (psEditingNoteId === op.tempId) {
+								psEditingNoteId = String(saved.id);
+								psAutoSaveLastSavedNoteId = psEditingNoteId;
+							}
+						}
+					} else if (op.type === "update") {
+						await api(`/api/notes/${encodeURIComponent(op.noteId)}`, {
+							method: "PUT",
+							body: JSON.stringify({ text: op.text, tags: op.tags || [] }),
+						});
+						// Mark clean in IndexedDB
+						const allN = await offlineGetAllNotes();
+						const n = allN.find((x) => x.id === op.noteId);
+						if (n) { n.dirty = false; await offlinePutNote(n); }
+					} else if (op.type === "delete") {
+						await api(`/api/notes/${encodeURIComponent(op.noteId)}`, {
+							method: "DELETE",
+						});
+						await offlineDeleteNote(op.noteId);
+					}
+				} catch (e) {
+					console.warn("[offline] replay op failed:", op, e);
+					anyFailed = true;
+					break; // Stop at first failure, retry later
+				}
+			}
+			if (!anyFailed) {
+				await offlineClearOps();
+				toast(t("offline.synced") || "Offline changes synced.", "success");
+				void refreshPersonalSpace();
+			}
+		} finally {
+			offlineSyncInFlight = false;
+		}
+	}
+
+	// --- Online/Offline event listeners ---
+	function isAppOffline() {
+		return typeof navigator !== "undefined" && navigator.onLine === false;
+	}
+
+	window.addEventListener("online", () => {
+		toast(t("offline.back_online") || "Back online — syncing…", "success");
+		void replayOfflineOps();
+	});
+
+	window.addEventListener("offline", () => {
+		toast(t("offline.now_offline") || "You are offline. Changes are saved locally.", "info");
+	});
+	// ─── End Offline Store ───────────────────────────────────────────
 
 	async function ensureDirPermission(handle, write) {
 		if (!handle || !handle.queryPermission) return false;
@@ -13253,21 +13527,54 @@ self.onmessage = async (e) => {
 	async function refreshPersonalSpace() {
 		if (!psUnauthed || !psAuthed) return;
 
+		const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+
 		try {
+			if (isOffline) throw new Error("offline");
 			const me = await api("/api/personal-space/me");
 			psState = me;
 		} catch (e) {
-			psState = {
-				authed: false,
-				email: "",
-				tags: [],
-				notes: [],
-				favorites: [],
-				roomTabs: [],
-				roomPins: [],
-				sharedRooms: [],
-			};
+			// Offline fallback: load notes from IndexedDB
+			if (isOffline || (e && e.message === "offline")) {
+				try {
+					const cachedNotes = await offlineGetAllNotes();
+					const cachedEmail = await offlineLoadMeta("email");
+					if (cachedNotes.length || cachedEmail) {
+						psState = {
+							authed: true,
+							email: cachedEmail || "",
+							tags: [],
+							notes: cachedNotes.filter((n) => !n.deletedAt),
+							favorites: Array.isArray(psState && psState.favorites) ? psState.favorites : [],
+							roomTabs: Array.isArray(psState && psState.roomTabs) ? psState.roomTabs : [],
+							roomPins: Array.isArray(psState && psState.roomPins) ? psState.roomPins : [],
+							sharedRooms: Array.isArray(psState && psState.sharedRooms) ? psState.sharedRooms : [],
+						};
+					} else {
+						psState = { authed: false, email: "", tags: [], notes: [], favorites: [], roomTabs: [], roomPins: [], sharedRooms: [] };
+					}
+				} catch {
+					psState = { authed: false, email: "", tags: [], notes: [], favorites: [], roomTabs: [], roomPins: [], sharedRooms: [] };
+				}
+			} else {
+				psState = {
+					authed: false,
+					email: "",
+					tags: [],
+					notes: [],
+					favorites: [],
+					roomTabs: [],
+					roomPins: [],
+					sharedRooms: [],
+				};
+			}
 			if (psHint) setPsHintText("");
+		}
+
+		// Mirror notes to IndexedDB when online
+		if (!isOffline && psState.authed && Array.isArray(psState.notes) && psState.notes.length) {
+			void offlinePutNotes(psState.notes);
+			void offlineSaveMeta("email", psState.email || "");
 		}
 		psState.favorites = Array.isArray(psState.favorites)
 			? dedupeFavorites(psState.favorites)
@@ -18246,6 +18553,8 @@ self.onmessage = async (e) => {
 			if (mySeq !== connectionSeq) return;
 			setStatus("online", "Online");
 			metaLeft.textContent = "Online. Waiting for updates…";
+			// Replay any offline-queued operations
+			void replayOfflineOps();
 			const mode = isCrdtAvailable() ? "crdt" : "lww";
 			sendMessage({
 				type: "hello",
@@ -21509,9 +21818,33 @@ self.onmessage = async (e) => {
 		const allowEmpty = Boolean(opts && opts.allowEmpty);
 		const rawText = String(text || "");
 		if (!allowEmpty && !rawText.trim()) return false;
-		if (auto && typeof navigator !== "undefined" && navigator.onLine === false) {
-			setPsAutoSaveStatus("Offline");
-			return false;
+		// --- Offline: save locally + enqueue ---
+		if (typeof navigator !== "undefined" && navigator.onLine === false) {
+			try {
+				const tagsPayload = buildCurrentPsTagsPayload();
+				const saved = await offlineSaveNote(psEditingNoteId, rawText, tagsPayload);
+				if (saved && saved.id) {
+					if (!psEditingNoteId || psEditingNoteId !== saved.id) {
+						psEditingNoteId = saved.id;
+					}
+					// Update local psState.notes for UI
+					if (psState && psState.notes) {
+						const idx = psState.notes.findIndex((n) => String(n && n.id ? n.id : "") === saved.id);
+						if (idx >= 0) psState.notes[idx] = saved;
+						else psState.notes.unshift(saved);
+						applyPersonalSpaceFiltersAndRender();
+					}
+				}
+				if (auto) setPsAutoSaveStatus("Offline gespeichert");
+				else { setPsAutoSaveStatus("Offline gespeichert"); toast(t("offline.saved_locally") || "Saved offline.", "info"); }
+				psAutoSaveLastSavedNoteId = psEditingNoteId;
+				psAutoSaveLastSavedText = rawText;
+				return true;
+			} catch (e) {
+				console.warn("[offline] save failed:", e);
+				if (auto) setPsAutoSaveStatus("Offline-Speichern fehlgeschlagen");
+				return false;
+			}
 		}
 		if (!psState || !psState.authed) {
 			if (!auto)
@@ -21625,11 +21958,23 @@ self.onmessage = async (e) => {
 		const rawText = String(text || "");
 		if (!targetId) return false;
 		if (!rawText.trim()) return false;
+		// --- Offline: save locally + enqueue ---
 		if (typeof navigator !== "undefined" && navigator.onLine === false) {
-			if (String(psEditingNoteId || "").trim() === targetId) {
-				setPsAutoSaveStatus("Offline");
+			try {
+				await offlineSaveNote(targetId, rawText, Array.isArray(tagsPayload) ? tagsPayload : []);
+				if (String(psEditingNoteId || "").trim() === targetId) {
+					psAutoSaveLastSavedNoteId = targetId;
+					psAutoSaveLastSavedText = rawText;
+					setPsAutoSaveStatus("Offline gespeichert");
+				}
+				return true;
+			} catch (e) {
+				console.warn("[offline] snapshot save failed:", e);
+				if (String(psEditingNoteId || "").trim() === targetId) {
+					setPsAutoSaveStatus("Offline-Speichern fehlgeschlagen");
+				}
+				return false;
 			}
-			return false;
 		}
 		if (!psState || !psState.authed) return false;
 		try {
