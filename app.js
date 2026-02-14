@@ -8563,6 +8563,7 @@
 			if (nextUpdated >= prevUpdated) byId.set(id, note);
 		}
 		const idDeduped = Array.from(byId.values());
+		const activeId = String(psEditingNoteId || "").trim();
 		const byTitle = new Map();
 		for (const note of idDeduped) {
 			const title = getNoteTitle(note && note.text ? note.text : "");
@@ -8571,6 +8572,15 @@
 			const prev = byTitle.get(key);
 			if (!prev) {
 				byTitle.set(key, note);
+				continue;
+			}
+			const noteId = String(note.id || "");
+			const prevId = String(prev.id || "");
+			if (activeId && noteId === activeId) {
+				byTitle.set(key, note);
+				continue;
+			}
+			if (activeId && prevId === activeId) {
 				continue;
 			}
 			const prevUpdated = Number(prev.updatedAt || prev.createdAt || 0);
@@ -21421,7 +21431,7 @@ self.onmessage = async (e) => {
 			updateTableMenuVisibility();
 			updateSelectionMenu();
 			void loadCommentsForRoom();
-			if (!note) {
+			if (!note && !resolvedNoteId) {
 				const linked = syncPsEditingNoteFromEditorText(nextText, {
 					clear: true,
 					updateList: true,
@@ -21429,6 +21439,9 @@ self.onmessage = async (e) => {
 				if (linked && psEditingNoteId && !pinned) {
 					setRoomTabNoteId(room, key, psEditingNoteId);
 				}
+			}
+			if (resolvedNoteId && psEditingNoteId) {
+				applyPersonalSpaceFiltersAndRender();
 			}
 		}
 		if (!key) toast("Public room (no key).", "info");
