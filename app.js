@@ -6620,7 +6620,20 @@
 			if (!anyFailed) {
 				await offlineClearOps();
 				toast(t("offline.synced") || "Offline changes synced.", "success");
-				void refreshPersonalSpace();
+				await refreshPersonalSpace();
+				// Restore textarea + CRDT to correct server text after replay
+				const editId = String(psEditingNoteId || "").trim();
+				if (editId && psState && Array.isArray(psState.notes)) {
+					const srvNote = psState.notes.find((n) => String(n && n.id ? n.id : "") === editId);
+					if (srvNote) {
+						textarea.value = String(srvNote.text || "");
+						lastLocalText = textarea.value;
+						psAutoSaveLastSavedText = textarea.value;
+						psAutoSaveLastSavedNoteId = editId;
+						if (typeof updateCrdtFromTextarea === "function") updateCrdtFromTextarea();
+						if (typeof scheduleCrdtSnapshot === "function") scheduleCrdtSnapshot();
+					}
+				}
 			}
 		} finally {
 			offlineSyncInFlight = false;
@@ -18320,6 +18333,8 @@ self.onmessage = async (e) => {
 	}
 
 	function applySyncedText(text, label, lastUsedTs) {
+		// Block CRDT text overwrites while offline ops are being replayed
+		if (offlineSyncInFlight) return;
 		suppressSend = true;
 		const cleaned = sanitizeLegacySnapshotText(text);
 		textarea.value = String(cleaned ?? "");
@@ -21838,6 +21853,7 @@ self.onmessage = async (e) => {
 	}
 
 	function canAutoSavePsNote() {
+		if (offlineSyncInFlight) return false;
 		return Boolean(psState && psState.authed && textarea);
 	}
 
@@ -21989,7 +22005,18 @@ self.onmessage = async (e) => {
 		return true;
 		} catch (e) {
 			psSaveNoteInFlight = false;
-			throw e;
+			// Network error fallback: save offline if the API call failed
+			try {
+				const tagsPayloadFb = buildCurrentPsTagsPayload();
+				await offlineSaveNote(psEditingNoteId, rawText, tagsPayloadFb);
+				if (auto) setPsAutoSaveStatus("Offline gespeichert");
+				else { setPsAutoSaveStatus("Offline gespeichert"); toast(t("offline.saved_locally") || "Saved offline.", "info"); }
+				psAutoSaveLastSavedNoteId = psEditingNoteId;
+				psAutoSaveLastSavedText = rawText;
+				return true;
+			} catch {
+				throw e;
+			}
 		}
 	}
 
@@ -22044,11 +22071,22 @@ self.onmessage = async (e) => {
 			}
 			updateRoomTabsForNoteId(targetId, rawText);
 			return true;
-		} catch {
-			if (String(psEditingNoteId || "").trim() === targetId) {
-				setPsAutoSaveStatus("Speichern fehlgeschlagen");
+		} catch (err) {
+			// Network error fallback: save offline if the API call failed
+			try {
+				await offlineSaveNote(targetId, rawText, Array.isArray(tagsPayload) ? tagsPayload : []);
+				if (String(psEditingNoteId || "").trim() === targetId) {
+					psAutoSaveLastSavedNoteId = targetId;
+					psAutoSaveLastSavedText = rawText;
+					setPsAutoSaveStatus("Offline gespeichert");
+				}
+				return true;
+			} catch {
+				if (String(psEditingNoteId || "").trim() === targetId) {
+					setPsAutoSaveStatus("Speichern fehlgeschlagen");
+				}
+				return false;
 			}
-			return false;
 		}
 	}
 
