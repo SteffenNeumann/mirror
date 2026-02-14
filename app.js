@@ -6614,8 +6614,9 @@
 				} catch (e) {
 					const msg = e && e.message ? String(e.message) : "";
 					const is404 = msg.includes("404") || msg.includes("not_found");
-					if (is404) {
-						console.warn("[offline] replay op skipped (note deleted):", op.noteId || op.tempId);
+					const is409 = msg.includes("409") || msg.includes("duplicate");
+					if (is404 || is409) {
+						console.warn("[offline] replay op skipped (" + (is404 ? "deleted" : "duplicate") + "):", op.noteId || op.tempId);
 						continue;
 					}
 					console.warn("[offline] replay op failed:", op, e);
