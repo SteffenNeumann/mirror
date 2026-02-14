@@ -8549,7 +8549,47 @@
 			const nextUpdated = Number(note.updatedAt || note.createdAt || 0);
 			if (nextUpdated >= prevUpdated) byId.set(id, note);
 		}
-		return Array.from(byId.values());
+		const idDeduped = Array.from(byId.values());
+		const byTitle = new Map();
+		for (const note of idDeduped) {
+			const title = getNoteTitle(note && note.text ? note.text : "");
+			if (!title || title === "Untitled") continue;
+			const key = title.toLowerCase();
+			const prev = byTitle.get(key);
+			if (!prev) {
+				byTitle.set(key, note);
+				continue;
+			}
+			const prevUpdated = Number(prev.updatedAt || prev.createdAt || 0);
+			const nextUpdated = Number(note.updatedAt || note.createdAt || 0);
+			const prevTags = Array.isArray(prev.tags) ? prev.tags : [];
+			const nextTags = Array.isArray(note.tags) ? note.tags : [];
+			const prevPinned = prevTags.some((t) => String(t || "") === PS_PINNED_TAG);
+			const nextPinned = nextTags.some((t) => String(t || "") === PS_PINNED_TAG);
+			if (nextPinned && !prevPinned) {
+				byTitle.set(key, note);
+			} else if (!nextPinned && prevPinned) {
+				// keep prev (pinned)
+			} else if (nextUpdated >= prevUpdated) {
+				byTitle.set(key, note);
+			}
+		}
+		const keepIds = new Set();
+		for (const note of byTitle.values()) {
+			keepIds.add(String(note.id || ""));
+		}
+		const result = [];
+		for (const note of idDeduped) {
+			const title = getNoteTitle(note && note.text ? note.text : "");
+			if (!title || title === "Untitled") {
+				result.push(note);
+				continue;
+			}
+			if (keepIds.has(String(note.id || ""))) {
+				result.push(note);
+			}
+		}
+		return result;
 	}
 
 	function formatMetaDate(ts) {
@@ -12328,7 +12368,7 @@ ${highlightThemeCss}
 		if (!target) return null;
 		const sorted = notes
 			.slice()
-			.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+			.sort((a, b) => (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0));
 		for (const note of sorted) {
 			const noteText = normalizeNoteTextForCompare(
 				note && note.text ? note.text : ""
@@ -12345,7 +12385,7 @@ ${highlightThemeCss}
 				titleMatches.push(note);
 			}
 		}
-		if (titleMatches.length === 1) return titleMatches[0];
+		if (titleMatches.length >= 1) return titleMatches[0];
 		return null;
 	}
 

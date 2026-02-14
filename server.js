@@ -551,6 +551,66 @@ function initDb() {
 		"CREATE INDEX IF NOT EXISTS idx_notes_user_title_hash ON notes(user_id, title_hash) WHERE title_hash IS NOT NULL AND title_hash <> ''"
 	);
 
+	// Backfill title_hash for existing notes that have NULL title_hash
+	try {
+		const nullHashRows = db.prepare(
+			"SELECT id, text FROM notes WHERE title_hash IS NULL OR title_hash = ''"
+		).all();
+		if (nullHashRows.length > 0) {
+			const updateStmt = db.prepare("UPDATE notes SET title_hash = ? WHERE id = ?");
+			const backfillTx = db.transaction(() => {
+				for (const row of nullHashRows) {
+					const th = computeNoteTitleHash(String(row.text || ""));
+					if (th) updateStmt.run(th, row.id);
+				}
+			});
+			backfillTx();
+			console.log(`[initDb] Backfilled title_hash for ${nullHashRows.length} notes`);
+		}
+	} catch (e) {
+		console.warn("[initDb] title_hash backfill error:", e);
+	}
+
+	// Auto-dedup: remove duplicate notes with same user_id + title_hash + content_hash
+	try {
+		const dupeRows = db.prepare(`
+			SELECT n.id, n.user_id, n.title_hash, n.content_hash, n.text, n.tags_json, n.created_at, n.updated_at
+			FROM notes n
+			WHERE n.title_hash IS NOT NULL AND n.title_hash <> ''
+			ORDER BY n.user_id, n.title_hash, n.updated_at DESC
+		`).all();
+		const seen = new Map();
+		const toDelete = [];
+		for (const row of dupeRows) {
+			const key = `${row.user_id}::${row.title_hash}`;
+			if (!seen.has(key)) {
+				seen.set(key, row);
+			} else {
+				// Same user + same title: duplicate → keep the first (newest by updated_at), trash the rest
+				toDelete.push(row);
+			}
+		}
+		if (toDelete.length > 0) {
+			const trashInsert = db.prepare(
+				"INSERT OR IGNORE INTO notes_trash(id, user_id, text, kind, content_hash, tags_json, created_at, updated_at, deleted_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)"
+			);
+			const deleteStmt = db.prepare("DELETE FROM notes WHERE id = ?");
+			const dedupTx = db.transaction(() => {
+				const now = Date.now();
+				for (const row of toDelete) {
+					try {
+						trashInsert.run(row.id, row.user_id, row.text, "", row.content_hash || "", row.tags_json || "[]", row.created_at, row.updated_at, now);
+					} catch { /* ignore trash insert errors */ }
+					deleteStmt.run(row.id);
+				}
+			});
+			dedupTx();
+			console.log(`[initDb] Auto-dedup: moved ${toDelete.length} duplicate notes to trash`);
+		}
+	} catch (e) {
+		console.warn("[initDb] auto-dedup error:", e);
+	}
+
 	db.exec(`
 		CREATE TABLE IF NOT EXISTS saved_queries (
 			id INTEGER PRIMARY KEY AUTOINCREMENT,
