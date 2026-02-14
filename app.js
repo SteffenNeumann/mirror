@@ -6612,6 +6612,12 @@
 						await offlineDeleteNote(op.noteId);
 					}
 				} catch (e) {
+					const msg = e && e.message ? String(e.message) : "";
+					const is404 = msg.includes("404") || msg.includes("not_found");
+					if (is404) {
+						console.warn("[offline] replay op skipped (note deleted):", op.noteId || op.tempId);
+						continue;
+					}
 					console.warn("[offline] replay op failed:", op, e);
 					anyFailed = true;
 					break; // Stop at first failure, retry later
