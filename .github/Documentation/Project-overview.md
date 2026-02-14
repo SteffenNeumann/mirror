@@ -152,15 +152,23 @@ App-Start
   |                                 |-> connect()
   |                                 |-> savePersonalSpaceNote()
   +--> initStartupTasks() ----> Background/Startflüsse
-                                    |-> initUiLanguage()
-                                    |-> initAutoBackup()/initAutoImport()
-                                    |-> initAiDictation()
-                                    |-> refreshPersonalSpace()
-                                    |-> loadCommentsForRoom()
+  |                                 |-> initUiLanguage()
+  |                                 |-> initAutoBackup()/initAutoImport()
+  |                                 |-> initAiDictation()
+  |                                 |-> refreshPersonalSpace()
+  |                                 |-> loadCommentsForRoom()
+  |
+  +--> Service Worker (sw.js)  ----> Asset-Cache (Stale-While-Revalidate)
+  +--> IndexedDB (Offline-Store) --> notes / pendingOps / meta
+
+Online ──> savePersonalSpaceNote() ──> API + offlinePutNotes() (Spiegel)
+Offline ─> savePersonalSpaceNote() ──> offlineSaveNote() + offlineEnqueueOp()
+Reconnect ─> replayOfflineOps() ──> API Replay + offlineClearOps()
 
 Server-Start
   |-> HTTP Server (API, Uploads) -> initDb() -> SQLite
   |-> WebSocketServer -> persistRoomState()/loadPersistedRoomState()
+  |-> Static Files (sw.js, manifest.json, ...)
 ````
 
 ## Chronologischer Ablauf (App öffnet → Nutzeraktionen)
@@ -200,12 +208,17 @@ Server-Start
 - Zweck: Uploads/Trash/Calendar/AI-Einstellungen verwalten.
 - Umsetzung: `loadUploadsManage`, `loadTrashManage`, `renderCalendarPanel`, `aiAssistFromPreview`.
 
+9) Offline-Modus (PWA, IndexedDB, Sync-Queue)
+- Zweck: App offline nutzbar machen — Assets aus Service-Worker-Cache laden, Notizen lokal in IndexedDB lesen/schreiben, Änderungen bei Reconnect synchronisieren.
+- Umsetzung: `sw.js` (Service Worker), `manifest.json` (PWA-Manifest), `openOfflineDb`, `offlineSaveNote`, `offlinePutNotes`, `offlineGetAllNotes`, `offlineEnqueueOp`, `replayOfflineOps`, `isAppOffline`.
+- Hinweis: Bei Offline werden `savePersonalSpaceNote` und `savePersonalSpaceNoteSnapshot` lokal statt über API gespeichert. `refreshPersonalSpace` fällt auf IndexedDB-Cache zurück. Bei erneutem Online-Ereignis (`window.online`) und WebSocket-Reconnect werden ausstehende Operationen (Create/Update/Delete) sequentiell zum Server gesendet. Temporäre IDs (`offline_*`) werden durch Server-IDs ersetzt.
+
 ## Funktionskatalog (kategorisiert nach Funktionsbereichen)
 
 > **Wartungshinweis**: Neue Funktionen am Ende der jeweiligen Kategorie einfügen.  
 > Jede Funktion trägt `#tags` für Kategorie- und Querschnittssuche. Zum Finden: `Ctrl+F` → `#tagname`.  
 > **Datei**: Jeder Sektionsheader enthält die Quelldatei (`app.js` / `server.js`).  
-> **Kategorien**: `#core` `#crypto` `#modal` `#share` `#upload` `#tags` `#editor` `#comments` `#wiki` `#slash` `#table` `#mobile` `#i18n` `#theme` `#ai` `#settings` `#backup` `#ps` `#preview` `#runner` `#import` `#favorites` `#tabs` `#pins` `#calendar` `#ws` `#crdt` `#presence` `#linear` `#init` `#query`  
+> **Kategorien**: `#core` `#crypto` `#modal` `#share` `#upload` `#tags` `#editor` `#comments` `#wiki` `#slash` `#table` `#mobile` `#i18n` `#theme` `#ai` `#settings` `#backup` `#ps` `#preview` `#runner` `#import` `#favorites` `#tabs` `#pins` `#calendar` `#ws` `#crdt` `#presence` `#linear` `#init` `#query` `#offline`  
 > **Querschnitt**: `#render` `#parse` `#normalize` `#format` `#storage` `#api` `#handler` `#dom` `#debounce` `#security` `#url` `#identity` `#date` `#ui` `#pdf` `#html` `#build` `#sync`
 
 ---
@@ -1237,6 +1250,31 @@ Server-Start
 |----------|-------|------|----------------|
 | `initUiEventListeners` | UI-Event-Listener initialisieren | `#init` `#handler` | *(umfangreiche Abhängigkeiten — bindet alle UI-Events)* |
 | `initStartupTasks` | Startup-Tasks ausführen | `#init` `#main` | `applyAiContextMode`, `initAiDictation`, `initAutoBackup`, `initAutoImport`, `initUiLanguage`, `loadAiPrompt`, `loadAiUseAnswer`, `loadAiUsePreview`, `loadCommentsForRoom`, `loadMobileAutoNoteSeconds`, `refreshPersonalSpace`, `setCommentDraftSelection`, `syncMobileFocusState`, `t`, `updateTableMenuVisibility` |
+
+#### 34 · Offline-Modus (PWA + IndexedDB + Sync-Queue) `#offline` — `app.js`
+
+| Funktion | Zweck | Tags | Abhängigkeiten |
+|----------|-------|------|----------------|
+| `openOfflineDb` | IndexedDB-Offline-Datenbank öffnen/erstellen | `#storage` `#init` | — |
+| `offlinePutNote` | Einzelne Notiz in IndexedDB speichern | `#storage` `#save` | `openOfflineDb` |
+| `offlinePutNotes` | Notiz-Array in IndexedDB spiegeln (Batch) | `#storage` `#save` | `openOfflineDb` |
+| `offlineGetAllNotes` | Alle Notizen aus IndexedDB laden | `#storage` `#load` | `openOfflineDb` |
+| `offlineDeleteNote` | Notiz aus IndexedDB löschen | `#storage` `#delete` | `openOfflineDb` |
+| `offlineEnqueueOp` | Pending-Operation in Sync-Queue einreihen | `#sync` `#save` | `openOfflineDb` |
+| `offlineGetAllOps` | Alle Pending-Operationen aus Queue lesen | `#sync` `#load` | `openOfflineDb` |
+| `offlineClearOps` | Sync-Queue leeren | `#sync` `#delete` | `openOfflineDb` |
+| `offlineSaveMeta` | Meta-Datum in IndexedDB speichern (z.B. Email) | `#storage` `#save` | `openOfflineDb` |
+| `offlineLoadMeta` | Meta-Datum aus IndexedDB laden | `#storage` `#load` | `openOfflineDb` |
+| `offlineSaveNote` | Notiz offline speichern + Op in Queue einreihen | `#offline` `#save` | `offlinePutNote`, `offlineEnqueueOp`, `offlineGetAllNotes` |
+| `replayOfflineOps` | Sync-Queue bei Reconnect abspielen (Create/Update/Delete) | `#offline` `#sync` | `api`, `offlineGetAllOps`, `offlineClearOps`, `offlineDeleteNote`, `offlinePutNote`, `refreshPersonalSpace`, `t`, `toast` |
+| `isAppOffline` | Prüft ob App offline ist (`navigator.onLine`) | `#offline` `#check` | — |
+
+##### Zugehörige Dateien (nicht in `app.js`)
+
+| Datei | Zweck | Tags |
+|-------|-------|------|
+| `sw.js` | Service Worker — Pre-Cache + Stale-While-Revalidate für statische Assets | `#offline` `#cache` |
+| `manifest.json` | PWA Web-App-Manifest — Standalone-Installation, Icons, Theme | `#offline` `#pwa` |
 
 ---
 
