@@ -22042,16 +22042,33 @@ self.onmessage = async (e) => {
 			psSaveNoteInFlight = false;
 			const errMsg = e && e.message ? String(e.message) : "";
 			const is404 = errMsg.includes("404") || errMsg.includes("not_found");
-			if (is404) {
-				// Note was deleted server-side — try to re-create via POST
-				console.warn("[saveNote] note not found, will create new:", targetNoteId);
-				psEditingNoteId = "";
-				psEditingNoteKind = "";
-				try {
-					return await savePersonalSpaceNote(rawText, { auto, allowEmpty });
-				} catch {
-					return false;
+			const is409 = errMsg.includes("409") || errMsg.includes("duplicate");
+			if (is404 || is409) {
+				// 404: Note deleted; 409: content already in another note — find it
+				console.warn("[saveNote] " + (is404 ? "not found" : "duplicate") + ":", psEditingNoteId);
+				const existing = findNoteByText(rawText);
+				if (existing && existing.id && String(existing.id) !== String(psEditingNoteId || "")) {
+					psEditingNoteId = String(existing.id);
+					psEditingNoteKind = String(existing.kind || "");
+					psAutoSaveLastSavedNoteId = psEditingNoteId;
+					psAutoSaveLastSavedText = rawText;
+					setPsAutoSaveStatus("Note zugeordnet");
+					applyPersonalSpaceFiltersAndRender();
+					return true;
 				}
+				if (is404) {
+					psEditingNoteId = "";
+					psEditingNoteKind = "";
+					try {
+						return await savePersonalSpaceNote(rawText, { auto, allowEmpty });
+					} catch {
+						return false;
+					}
+				}
+				// 409 with no local match — content is saved, just accept
+				psAutoSaveLastSavedText = rawText;
+				setPsAutoSaveStatus("Gespeichert");
+				return true;
 			}
 			// Network error fallback: save offline if the API call failed
 			try {
@@ -22122,9 +22139,10 @@ self.onmessage = async (e) => {
 		} catch (err) {
 			const errMsg = err && err.message ? String(err.message) : "";
 			const is404 = errMsg.includes("404") || errMsg.includes("not_found");
-			if (is404) {
-				// Note was deleted server-side (e.g. auto-dedup) — remove from local state
-				console.warn("[saveSnapshot] note not found, removing:", targetId);
+			const is409 = errMsg.includes("409") || errMsg.includes("duplicate");
+			if (is404 || is409) {
+				// 404: Note deleted server-side; 409: content already exists in another note
+				console.warn("[saveSnapshot] " + (is404 ? "not found" : "duplicate") + ", resolving:", targetId);
 				if (psState && Array.isArray(psState.notes)) {
 					psState.notes = psState.notes.filter(
 						(n) => String(n && n.id ? n.id : "") !== targetId
