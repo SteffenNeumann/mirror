@@ -2564,8 +2564,15 @@
 									<input
 										id="aiApiModel"
 										type="text"
-										placeholder="claude-3-5-sonnet-20241022"
+										list="aiApiModelList"
+										placeholder="claude-sonnet-4-20250514"
 										class="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/30 px-3 py-2 text-sm text-slate-100 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
+									<datalist id="aiApiModelList">
+										<option value="claude-sonnet-4-20250514">Claude Sonnet 4 (aktuell)</option>
+										<option value="claude-3-5-sonnet-latest">Claude 3.5 Sonnet (latest alias)</option>
+										<option value="claude-3-5-haiku-latest">Claude 3.5 Haiku (latest alias)</option>
+										<option value="claude-3-opus-latest">Claude 3 Opus (latest alias)</option>
+									</datalist>
 								</div>
 								<div class="flex items-end gap-2">
 									<button

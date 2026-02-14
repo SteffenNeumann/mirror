@@ -41,9 +41,93 @@ const UPLOAD_RETENTION_HOURS = Math.max(
 );
 
 const ANTHROPIC_API_KEY = String(process.env.ANTHROPIC_API_KEY || "").trim();
-const ANTHROPIC_MODEL = String(
-	process.env.ANTHROPIC_MODEL || "claude-3-5-sonnet-20241022"
+const ANTHROPIC_MODEL_OVERRIDE = String(
+	process.env.ANTHROPIC_MODEL || ""
 ).trim();
+const ANTHROPIC_MODEL_FALLBACK = "claude-sonnet-4-20250514";
+let ANTHROPIC_MODEL = ANTHROPIC_MODEL_OVERRIDE || ANTHROPIC_MODEL_FALLBACK;
+
+// --- Dynamic model discovery via Anthropic Models API ---
+const AI_MODEL_REFRESH_MS = 6 * 60 * 60 * 1000; // 6 hours
+let aiLatestModelCache = { model: "", models: [], fetchedAt: 0 };
+
+/** Model family preference (higher = better). */
+const MODEL_FAMILY_RANK = {
+	"claude-opus-4": 100,
+	"claude-sonnet-4": 90,
+	"claude-3-7-sonnet": 80,
+	"claude-3-5-sonnet": 70,
+	"claude-3-opus": 60,
+	"claude-3-sonnet": 50,
+	"claude-3-5-haiku": 40,
+	"claude-3-haiku": 30,
+};
+
+function rankModel(id) {
+	for (const [family, rank] of Object.entries(MODEL_FAMILY_RANK)) {
+		if (id.startsWith(family)) return rank;
+	}
+	return 0;
+}
+
+async function fetchLatestAnthropicModel(apiKey) {
+	if (!apiKey) return null;
+	try {
+		const controller = new AbortController();
+		const timer = setTimeout(() => controller.abort(), 10000);
+		const r = await fetch("https://api.anthropic.com/v1/models", {
+			method: "GET",
+			headers: {
+				"x-api-key": apiKey,
+				"anthropic-version": "2023-06-01",
+			},
+			signal: controller.signal,
+		});
+		clearTimeout(timer);
+		if (!r.ok) {
+			console.warn(`[ai] models API returned ${r.status}`);
+			return null;
+		}
+		const data = await r.json();
+		const models = Array.isArray(data && data.data) ? data.data : [];
+		// Filter for chat-capable models, sort by family rank then by created_at desc
+		const chatModels = models
+			.filter((m) => m && m.id && m.type === "model")
+			.map((m) => ({ id: m.id, rank: rankModel(m.id), created: m.created_at || "" }))
+			.sort((a, b) => b.rank - a.rank || b.created.localeCompare(a.created));
+		if (!chatModels.length) return null;
+		const best = chatModels[0].id;
+		const topModels = chatModels.slice(0, 5).map((m) => m.id);
+		console.log(`[ai] latest model: ${best} (from ${models.length} available)`);
+		return { model: best, models: topModels };
+	} catch (e) {
+		console.warn(`[ai] models API error: ${e && e.message ? e.message : e}`);
+		return null;
+	}
+}
+
+async function refreshLatestModel() {
+	const apiKey = ANTHROPIC_API_KEY;
+	if (!apiKey) return;
+	const result = await fetchLatestAnthropicModel(apiKey);
+	if (result && result.model) {
+		aiLatestModelCache = { model: result.model, models: result.models, fetchedAt: Date.now() };
+		if (!ANTHROPIC_MODEL_OVERRIDE) {
+			ANTHROPIC_MODEL = result.model;
+		}
+	}
+}
+
+function getLatestModelInfo() {
+	return {
+		activeModel: ANTHROPIC_MODEL,
+		latestModel: aiLatestModelCache.model || ANTHROPIC_MODEL,
+		topModels: aiLatestModelCache.models,
+		fetchedAt: aiLatestModelCache.fetchedAt,
+		override: ANTHROPIC_MODEL_OVERRIDE || "",
+	};
+}
+
 const LINEAR_KEY_SECRET = String(
 	process.env.MIRROR_LINEAR_KEY_SECRET || ""
 ).trim();
@@ -4441,11 +4525,16 @@ const server = http.createServer(async (req, res) => {
 			json(res, 401, { ok: false, error: "unauthorized" });
 			return;
 		}
+		const info = getLatestModelInfo();
 		json(res, 200, {
 			ok: true,
 			provider: "anthropic",
 			configured: Boolean(ANTHROPIC_API_KEY),
-			model: ANTHROPIC_MODEL,
+			model: info.activeModel,
+			latestModel: info.latestModel,
+			topModels: info.topModels,
+			modelFetchedAt: info.fetchedAt || null,
+			override: info.override || "",
 		});
 		return;
 	}
@@ -4632,12 +4721,13 @@ const server = http.createServer(async (req, res) => {
 						return { r, data };
 					}
 
+					const dynamicTop = aiLatestModelCache.models.length
+						? aiLatestModelCache.models
+						: [ANTHROPIC_MODEL_FALLBACK, "claude-3-5-sonnet-latest", "claude-3-5-haiku-latest"];
 					const candidates = uniq([
 						modelOverride,
 						ANTHROPIC_MODEL,
-						"claude-3-5-sonnet-20241022",
-						"claude-3-5-sonnet-20240620",
-						"claude-3-5-haiku-20241022",
+						...dynamicTop,
 					]);
 
 					async function runWithModelFallback(userPrompt) {
@@ -5782,7 +5872,12 @@ wss.on("connection", (ws, req) => {
 	});
 });
 
-server.listen(PORT, HOST, () => {
+server.listen(PORT, HOST, async () => {
 	console.log(`Mirror server running on http://${HOST}:${PORT}`);
 	console.log(`WebSocket endpoint: ws://${HOST}:${PORT}/ws?room=<room>`);
+	// Fetch latest Anthropic model on startup
+	await refreshLatestModel();
+	console.log(`[ai] active model: ${ANTHROPIC_MODEL}`);
+	// Refresh periodically
+	setInterval(() => refreshLatestModel(), AI_MODEL_REFRESH_MS);
 });

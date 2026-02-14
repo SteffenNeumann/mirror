@@ -5394,6 +5394,14 @@
 				"settings.ai.model_label": "Modell (optional)",
 				"settings.ai.save": "Speichern",
 				"settings.ai.clear": "Löschen",
+				"settings.ai.status_local_key": "Lokaler API-Key aktiv.",
+				"settings.ai.status_server_key": "Server-Key aktiv.",
+				"settings.ai.status_not_configured": "AI nicht konfiguriert.",
+				"settings.ai.status_unavailable": "AI-Status nicht verfügbar.",
+				"settings.ai.status_model": "Modell",
+				"settings.ai.status_last_used": "Zuletzt verwendet",
+				"settings.ai.status_latest": "Neuestes verfügbar",
+				"settings.ai.status_checked": "Geprüft",
 				"settings.faq.title": "FAQ",
 				"settings.faq.desc": "Schnelle Antworten und Tipps.",
 				"settings.faq.search_label": "FAQ durchsuchen",
@@ -5795,6 +5803,14 @@
 				"settings.ai.model_label": "Model (optional)",
 				"settings.ai.save": "Save",
 				"settings.ai.clear": "Clear",
+				"settings.ai.status_local_key": "Local API key active.",
+				"settings.ai.status_server_key": "Server key active.",
+				"settings.ai.status_not_configured": "AI not configured.",
+				"settings.ai.status_unavailable": "AI status unavailable.",
+				"settings.ai.status_model": "Model",
+				"settings.ai.status_last_used": "Last used",
+				"settings.ai.status_latest": "Latest available",
+				"settings.ai.status_checked": "Checked",
 				"settings.faq.title": "FAQ",
 				"settings.faq.desc": "Quick answers and tips.",
 				"settings.faq.search_label": "Search FAQ",
@@ -7278,20 +7294,58 @@
 	async function loadAiStatus() {
 		if (!aiApiStatus) return;
 		const localKey = String(aiApiKey || "").trim();
-		if (localKey) {
-			aiApiStatus.textContent = "Local API key set (will be used).";
-			return;
-		}
 		try {
 			const res = await api("/api/ai/status");
 			const configured = Boolean(res && res.configured);
-			const model = res && res.model ? String(res.model) : "";
-			aiApiStatus.textContent = configured
-				? `Server key active${model ? ` (${model})` : ""}.`
-				: "Server key not configured.";
+			const serverModel = res && res.model ? String(res.model) : "";
+			const latestModel = res && res.latestModel ? String(res.latestModel) : "";
+			const fetchedAt = res && res.modelFetchedAt ? new Date(res.modelFetchedAt).toLocaleString() : "";
+			const localModel = String(aiApiModel || "").trim();
+			const effectiveModel = localModel || serverModel;
+			let parts = [];
+			if (localKey) {
+				parts.push(t("settings.ai.status_local_key"));
+			} else if (configured) {
+				parts.push(t("settings.ai.status_server_key"));
+			} else {
+				aiApiStatus.textContent = t("settings.ai.status_not_configured");
+				return;
+			}
+			if (effectiveModel) {
+				parts.push(`${t("settings.ai.status_model")}: ${effectiveModel}`);
+			}
+			if (latestModel && latestModel !== effectiveModel) {
+				parts.push(`${t("settings.ai.status_latest")}: ${latestModel}`);
+			}
+			if (fetchedAt) {
+				parts.push(`${t("settings.ai.status_checked")}: ${fetchedAt}`);
+			}
+			aiApiStatus.textContent = parts.join(" · ");
+			// Update datalist with top models from server
+			const topModels = Array.isArray(res && res.topModels) ? res.topModels : [];
+			const datalist = document.getElementById("aiApiModelList");
+			if (datalist && topModels.length) {
+				datalist.innerHTML = "";
+				for (const m of topModels) {
+					const opt = document.createElement("option");
+					opt.value = m;
+					datalist.appendChild(opt);
+				}
+			}
 		} catch {
-			aiApiStatus.textContent = "AI status not available.";
+			aiApiStatus.textContent = t("settings.ai.status_unavailable");
 		}
+	}
+
+	function updateAiStatusWithModel(model) {
+		if (!aiApiStatus || !model) return;
+		const current = aiApiStatus.textContent || "";
+		const modelPrefix = t("settings.ai.status_model") + ": ";
+		const lastUsedPrefix = t("settings.ai.status_last_used") + ": ";
+		let base = current;
+		const lastUsedIdx = base.indexOf(" · " + lastUsedPrefix);
+		if (lastUsedIdx >= 0) base = base.slice(0, lastUsedIdx);
+		aiApiStatus.textContent = base + " · " + lastUsedPrefix + model;
 	}
 
 	const FAQ_ITEMS = {
@@ -13171,12 +13225,14 @@ self.onmessage = async (e) => {
 				body: JSON.stringify(body),
 			});
 			const aiText = String(res && res.text ? res.text : "");
+			const usedModel = res && res.model ? String(res.model) : "";
 			setPreviewRunOutput({
 				status: "AI",
 				output: aiText,
 				error: "",
 				source: "ai",
 			});
+			if (usedModel) updateAiStatusWithModel(usedModel);
 			if (promptForChat) addAiChatEntry("user", promptForChat, chatContextKey);
 			if (aiText) addAiChatEntry("ai", aiText, chatContextKey);
 			if (aiText) clearAiPromptAfterResponse(promptForChat);
