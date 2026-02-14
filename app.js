@@ -8533,6 +8533,10 @@
 		psAutoSaveQueuedText = "";
 		psAutoSaveQueuedNoteId = "";
 		psAutoSaveQueuedTags = null;
+		// Don't try to save a note that doesn't exist locally (deleted by server dedup)
+		if (!findNoteById(queuedNoteId)) {
+			return;
+		}
 		psAutoSaveInFlight = true;
 		try {
 			await savePersonalSpaceNoteSnapshot(queuedNoteId, queuedText, queuedTags);
@@ -21424,6 +21428,16 @@ self.onmessage = async (e) => {
 						const refreshed = findNoteById(resolvedNoteId);
 						if (refreshed) {
 							applyNoteToEditor(refreshed, null, { skipHistory: true });
+						} else {
+							// Note no longer exists on server — clear stale reference
+							if (String(psEditingNoteId || "") === resolvedNoteId) {
+								psEditingNoteId = "";
+								psAutoSaveLastSavedNoteId = "";
+								psAutoSaveLastSavedText = "";
+								setPsAutoSaveStatus("");
+							}
+							setRoomTabNoteId(targetRoom, targetKey, "");
+							applyPersonalSpaceFiltersAndRender();
 						}
 					});
 				} else {
@@ -22120,6 +22134,11 @@ self.onmessage = async (e) => {
 					psAutoSaveQueuedNoteId = "";
 					psAutoSaveQueuedText = "";
 					psAutoSaveQueuedTags = null;
+				}
+				// Clear room tab association for the deleted note
+				const staleTab = findRoomTabByNoteId(targetId);
+				if (staleTab) {
+					setRoomTabNoteId(staleTab.room, staleTab.key, "");
 				}
 				if (String(psEditingNoteId || "").trim() === targetId) {
 					// Try to find the surviving note by title
