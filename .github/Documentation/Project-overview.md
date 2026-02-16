@@ -1,8 +1,19 @@
 # Project overview
 
-Datum: 2026-02-14
+Datum: 2026-02-16
 
 Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische Analyse, keine Laufzeitauflösung).
+
+## Aktuelle Änderungen (2026-02-16)
+
+- **AI-Bildgenerierung via FLUX.2 (Black Forest Labs)** `#ai` `#image` `#flux`: Neuer AI-Modus „Bild generieren" in der bestehenden AI-Section. Nutzer gibt einen Text-Prompt ein und erhält ein KI-generiertes Bild direkt im AI-Output-Bereich.
+  1. **Server-Endpoint `/api/ai/image`** (`server.js`): Neuer POST-Endpoint mit Authentifizierung, Rate-Limiting und asynchronem Submit/Poll/Download-Pattern gegen die BFL API (`https://api.bfl.ai/v1/{model}`). Da BFL-Delivery-URLs kein CORS unterstützen, wird das Bild serverseitig heruntergeladen und als Base64-Data-URI an den Client zurückgegeben.
+  2. **AI-Modus `image`** (`index.html`): Neue `<option value="image">` im `#aiMode`-Select mit 🎨-Icon.
+  3. **Frontend-Logic** (`app.js`): `getAiMode()` akzeptiert `"image"`. Neuer Branch in `aiAssistFromPreview()` sendet Prompt an `/api/ai/image`, rendert das zurückgegebene Bild mit Download-Button im `#runOutput`-Bereich, trägt Generierung in Chat-History ein.
+  4. **Konfiguration**: Env-Variablen `BFL_API_KEY` (erforderlich), `BFL_MODEL` (Standard: `flux-2-pro`), `BFL_IMAGE_TIMEOUT_MS` (Standard: 120000ms). Unterstützte Modelle: `flux-2-pro`, `flux-2-max`, `flux-2-flex`, `flux-2-klein-4b`, `flux-2-klein-9b`, `flux-pro-1.1-ultra` u.a.
+  5. **i18n**: `preview.ai_mode.image` in DE („🎨 Bild generieren") und EN („🎨 Generate image").
+  - Zuständige Dateien: `server.js` (Endpoint, BFL-Integration), `app.js` (Frontend-Logic, i18n), `index.html` (Select-Option).
+  - Zuständige Funktionen: `aiAssistFromPreview` ([app.js](app.js#L13529)), `getAiMode` ([app.js](app.js#L13518)), `/api/ai/image`-Handler ([server.js](server.js#L4635)).
 
 ## Aktuelle Änderungen (2026-02-14)
 
@@ -204,9 +215,10 @@ Server-Start
 - Hinweis: Notizen werden per `filterRealNotes` auf gültige IDs geprüft und nach ID entdoppelt (neuestes `updatedAt`/`createdAt` bleibt); Tag-Änderungen aktualisieren bestehende Notizen statt neue anzulegen. Zusätzlich verhindert `psSaveNoteInFlight`-Mutex parallele manuelle Saves, `findNoteByText` erkennt inhaltlich identische Notizen (Volltext + Header-Fallback) vor dem Erstellen, `schedulePsAutoSave` stellt verlorene Note-IDs per Header-Sync wieder her, und der Server blockiert Duplikate per `contentHash`- und `title_hash`-Prüfung.
 - Query-Engine: Das PS-Suchfeld unterstützt strukturierte Operatoren (`tag:`, `task:open`, `task:done`, `has:task`, `kind:`, `created:>`, `updated:<`, `pinned:`). Bei Task-Queries (`task:open`/`task:done`/`has:task`) wird ein aggregiertes Ergebnis-Panel über der Notizliste eingeblendet.
 
-8) Settings/Tools (Uploads, Kalender, AI)
-- Zweck: Uploads/Trash/Calendar/AI-Einstellungen verwalten.
+8) Settings/Tools (Uploads, Kalender, AI, Bildgenerierung)
+- Zweck: Uploads/Trash/Calendar/AI-Einstellungen verwalten; KI-gestützte Bildgenerierung.
 - Umsetzung: `loadUploadsManage`, `loadTrashManage`, `renderCalendarPanel`, `aiAssistFromPreview`.
+- Hinweis: AI-Modus `image` nutzt FLUX.2 (BFL API) statt Anthropic Claude. Prompt → Server `/api/ai/image` → BFL Submit/Poll → Bild-Download → Base64-Data-URI → Rendering im `#runOutput` mit Download-Button. Konfiguration via `BFL_API_KEY`/`BFL_MODEL`/`BFL_IMAGE_TIMEOUT_MS`.
 
 9) Offline-Modus (PWA, IndexedDB, Sync-Queue)
 - Zweck: App offline nutzbar machen — Assets aus Service-Worker-Cache laden, Notizen lokal in IndexedDB lesen/schreiben, Änderungen bei Reconnect synchronisieren.
@@ -218,7 +230,7 @@ Server-Start
 > **Wartungshinweis**: Neue Funktionen am Ende der jeweiligen Kategorie einfügen.  
 > Jede Funktion trägt `#tags` für Kategorie- und Querschnittssuche. Zum Finden: `Ctrl+F` → `#tagname`.  
 > **Datei**: Jeder Sektionsheader enthält die Quelldatei (`app.js` / `server.js`).  
-> **Kategorien**: `#core` `#crypto` `#modal` `#share` `#upload` `#tags` `#editor` `#comments` `#wiki` `#slash` `#table` `#mobile` `#i18n` `#theme` `#ai` `#settings` `#backup` `#ps` `#preview` `#runner` `#import` `#favorites` `#tabs` `#pins` `#calendar` `#ws` `#crdt` `#presence` `#linear` `#init` `#query` `#offline`  
+> **Kategorien**: `#core` `#crypto` `#modal` `#share` `#upload` `#tags` `#editor` `#comments` `#wiki` `#slash` `#table` `#mobile` `#i18n` `#theme` `#ai` `#image` `#flux` `#settings` `#backup` `#ps` `#preview` `#runner` `#import` `#favorites` `#tabs` `#pins` `#calendar` `#ws` `#crdt` `#presence` `#linear` `#init` `#query` `#offline`  
 > **Querschnitt**: `#render` `#parse` `#normalize` `#format` `#storage` `#api` `#handler` `#dom` `#debounce` `#security` `#url` `#identity` `#date` `#ui` `#pdf` `#html` `#build` `#sync`
 
 ---
@@ -564,8 +576,8 @@ Server-Start
 | `normalizeAiModelInput` | AI-Modell Input normalisieren | `#normalize` | — |
 | `applyAiContextMode` | AI-Kontextmodus anwenden | `#apply` `#ui` | `getAiUsePreview` |
 | `loadAiStatus` | AI-Status laden | `#api` `#load` | `api` |
-| `getAiMode` | AI-Modus ermitteln | `#read` | — |
-| `aiAssistFromPreview` | AI-Assist aus Preview | `#api` `#handler` | `api`, `getAiApiConfig`, `getAiMode`, `getAiPrompt`, `getAiUseAnswer`, `getAiUsePreview`, `parseRunnableFromEditor`, `saveAiPrompt`, `setPreviewRunOutput`, `t`, `toast` |
+| `getAiMode` | AI-Modus ermitteln (explain/fix/improve/run/summarize/image) | `#read` | — |
+| `aiAssistFromPreview` | AI-Assist aus Preview (Text via Anthropic, Bild via FLUX.2) | `#api` `#handler` | `api`, `addAiChatEntry`, `clearAiPromptAfterResponse`, `escapeHtml`, `getAiApiConfig`, `getAiChatContextKey`, `getAiMode`, `getAiPrompt`, `getAiUseAnswer`, `getAiUsePreview`, `parseRunnableFromEditor`, `saveAiPrompt`, `setPreviewRunOutput`, `setRunOutputProcessing`, `t`, `toast`, `updateRunOutputSizing`, `updateRunOutputUi` |
 
 ##### 15.2 AI-Diktat — `app.js`
 
@@ -1405,3 +1417,19 @@ Server-Start
 | `extractFencedCodeBlocks` | Fenced-Code-Blöcke extrahieren | `#parse` `#code` | — |
 | `coerceRunModeText` | Run-Mode-Text umwandeln | `#format` `#ai` | `extractFencedCodeBlocks` |
 | `chunkText` | Text in Chunks teilen | `#parse` `#format` | — |
+
+#### S9 · AI / FLUX.2 Bildgenerierung `#ai` `#image` `#flux` — `server.js`
+
+| Funktion / Handler | Zweck | Tags | Abhängigkeiten |
+|--------------------|-------|------|----------------|
+| `POST /api/ai/image` | Bildgenerierung via FLUX.2 (BFL API) | `#api` `#ai` `#image` | `getAuthedEmail`, `getClientIp`, `checkAiRateLimit`, `readJson`, `json` |
+
+**Ablauf**: Authentifizierung → Rate-Limit → JSON lesen → BFL API Submit (`POST https://api.bfl.ai/v1/{model}`) → Polling (`GET polling_url`, alle 1.5s) → Status `Ready` → Bild-Download → Base64-Konvertierung → JSON-Response `{ ok, imageDataUri, model, prompt, width, height }`.
+
+**Konfiguration** (Env-Variablen):
+| Variable | Standard | Beschreibung |
+|----------|----------|------|
+| `BFL_API_KEY` | — | BFL API-Key (erforderlich für serverseitige Bildgenerierung) |
+| `BFL_MODEL` | `flux-2-pro` | FLUX-Modell für Bildgenerierung |
+| `BFL_IMAGE_TIMEOUT_MS` | `120000` | Timeout für den gesamten Submit/Poll/Download-Zyklus |
+| `BFL_POLL_INTERVAL_MS` | `1500` | Polling-Intervall (Konstante) |
