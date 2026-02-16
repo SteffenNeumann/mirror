@@ -10616,8 +10616,8 @@
 			const fallbackDoc = `<!doctype html><html lang="en"><head><meta charset="utf-8" />
 				<meta name="viewport" content="width=device-width, initial-scale=1" />
 				<style>:root{color-scheme:${fallbackColorScheme};--scrollbar-thumb:${fallbackScrollThumb};--scrollbar-thumb-hover:${fallbackScrollThumbHover};}body{margin:0;padding:16px;font:14px/1.55 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,Noto Sans,sans-serif;background:${fallbackBg};color:${fallbackText};overflow-x:hidden;scrollbar-gutter:stable;}a{color:${fallbackLink};}*{scrollbar-width:thin;scrollbar-color:transparent transparent;}*::-webkit-scrollbar{width:10px;height:10px;}*::-webkit-scrollbar-track{background:transparent;}*::-webkit-scrollbar-thumb{background-color:transparent;border-radius:999px;border:2px solid transparent;transition:background-color 90ms ease,border-color 90ms ease;}body.scrollbar-active{scrollbar-color:var(--scrollbar-thumb) transparent;}body.scrollbar-active *::-webkit-scrollbar-thumb{background-color:var(--scrollbar-thumb);border-color:${fallbackScrollBorder};}body.scrollbar-active *::-webkit-scrollbar-thumb:hover{background-color:var(--scrollbar-thumb-hover);}</style>
-				<script>(function(){var body=document.body;var hideTimer=null;function show(){body.classList.add('scrollbar-active');if(hideTimer)clearTimeout(hideTimer);hideTimer=setTimeout(function(){body.classList.remove('scrollbar-active');},800);}['scroll','wheel','touchmove'].forEach(function(evt){window.addEventListener(evt,show,{passive:true});});window.addEventListener('keydown',function(e){if(e && (e.key==='PageDown'||e.key==='PageUp'||e.key==='End'||e.key==='Home')){show();}});})();</script>
-				</head><body><!--ts:${stamp}--><strong>Markdown preview unavailable.</strong><div style="margin-top:8px;color:#94a3b8">Reload the page or check for CDN blocking (AdBlock / corporate proxy).</div></body></html>`;
+				</head><body>
+				<script>(function(){var body=document.body;if(!body)return;var hideTimer=null;function show(){body.classList.add('scrollbar-active');if(hideTimer)clearTimeout(hideTimer);hideTimer=setTimeout(function(){body.classList.remove('scrollbar-active');},800);}['scroll','wheel','touchmove'].forEach(function(evt){window.addEventListener(evt,show,{passive:true});});window.addEventListener('keydown',function(e){if(e && (e.key==='PageDown'||e.key==='PageUp'||e.key==='End'||e.key==='Home')){show();}});})();</script><!--ts:${stamp}--><strong>Markdown preview unavailable.</strong><div style="margin-top:8px;color:#94a3b8">Reload the page or check for CDN blocking (AdBlock / corporate proxy).</div></body></html>`;
 			setPreviewDocument(fallbackDoc);
 			return;
 		}
@@ -10930,9 +10930,9 @@
 		@media (max-width: 900px){.toc-float{right:10px;top:10px;width:180px;max-height:55vh;}}
 ${highlightThemeCss}
   </style>
-	<script>(function(){var body=document.body;var hideTimer=null;function show(){body.classList.add('scrollbar-active');if(hideTimer)clearTimeout(hideTimer);hideTimer=setTimeout(function(){body.classList.remove('scrollbar-active');},800);}['scroll','wheel','touchmove'].forEach(function(evt){window.addEventListener(evt,show,{passive:true});});window.addEventListener('keydown',function(e){if(e && (e.key==='PageDown'||e.key==='PageUp'||e.key==='End'||e.key==='Home')){show();}});}());</script>
 </head>
 <body>
+	<script>(function(){var body=document.body;if(!body)return;var hideTimer=null;function show(){body.classList.add('scrollbar-active');if(hideTimer)clearTimeout(hideTimer);hideTimer=setTimeout(function(){body.classList.remove('scrollbar-active');},800);}['scroll','wheel','touchmove'].forEach(function(evt){window.addEventListener(evt,show,{passive:true});});window.addEventListener('keydown',function(e){if(e && (e.key==='PageDown'||e.key==='PageUp'||e.key==='End'||e.key==='Home')){show();}});}());</script>
 	<div id="tocFloat" class="toc-float" aria-hidden="true">
 		<div class="toc-header">
 			<span class="toc-title" title="Inhaltsverzeichnis" aria-label="Inhaltsverzeichnis" role="img">
