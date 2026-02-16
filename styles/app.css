@@ -2486,8 +2486,7 @@ body[data-theme="coffeeLight"] {
 	--calendar-tooltip-bg: #f8f1e9;
 	--calendar-tooltip-border: rgba(176, 112, 73, 0.35);
 	--calendar-tooltip-text: #3b2a21;
-	--calendar-tooltip-shadow: 0 12px 28px rgba(68, 45, 30, 0.16),
-		inset 0 0 0 1px rgba(176, 112, 73, 0.14);
+	--calendar-tooltip-shadow: none;
 	--selection-menu-bg: #fffaf4;
 	--selection-menu-border: #d9c7bc;
 }
@@ -2561,7 +2560,7 @@ body[data-theme="coffeeLight"] #shareModal [data-role="shareModalBackdrop"] {
 body[data-theme="coffeeLight"] #shareModal [role="dialog"] {
 	background-color: #fffaf4 !important;
 	border-color: #d9c7bc !important;
-	box-shadow: 0 10px 24px rgba(68, 45, 30, 0.18) !important;
+	box-shadow: none !important;
 }
 
 body[data-theme="coffeeLight"] #shareModal .border-white\/10 {
@@ -2632,7 +2631,7 @@ body[data-theme="coffeeLight"] .ps-note-pin.bg-fuchsia-500\/20 {
 body[data-theme="coffeeLight"] .ps-note-item.ps-note-active {
 	background-color: transparent !important;
 	border-color: rgba(176, 112, 73, 0.45) !important;
-	box-shadow: 0 6px 14px rgba(176, 112, 73, 0.12);
+	box-shadow: none;
 }
 
 body[data-theme="coffeeLight"] #psNewNote,
@@ -2702,7 +2701,7 @@ body[data-theme="coffeeLight"] .comment-reply-badge {
 }
 
 body[data-theme="coffeeLight"] .shadow-soft {
-	box-shadow: 0 6px 14px rgba(68, 45, 30, 0.12);
+	box-shadow: none;
 }
 
 body[data-theme="coffeeLight"] #previewPanel {
@@ -2723,7 +2722,7 @@ body[data-theme="coffeeLight"] #psEditorTagsBar,
 body[data-theme="coffeeLight"] #psEditorTagsBar > div {
 	background: rgba(255, 250, 244, 0.76) !important;
 	border-color: rgba(217, 199, 188, 0.7) !important;
-	box-shadow: 0 3px 8px rgba(68, 45, 30, 0.14) !important;
+	box-shadow: none !important;
 }
 
 body[data-theme="coffeeLight"] #psEditorTagsBar input,
@@ -2735,7 +2734,7 @@ body[data-theme="coffeeLight"] #psEditorTagsBar select {
 body[data-theme="coffeeLight"] #commentPanel {
 	background: rgba(255, 250, 244, 0.76) !important;
 	border-color: rgba(217, 199, 188, 0.7) !important;
-	box-shadow: 0 4px 12px rgba(68, 45, 30, 0.14) !important;
+	box-shadow: none !important;
 }
 
 body[data-theme="coffeeLight"] #psSortMenu {
@@ -2762,7 +2761,7 @@ body[data-theme="coffeeLight"] .ps-note-link-badge {
 body[data-theme="coffeeLight"] #linearEmbed {
 	background: rgba(255, 250, 244, 0.82) !important;
 	border-color: rgba(217, 199, 188, 0.7) !important;
-	box-shadow: 0 6px 14px rgba(68, 45, 30, 0.12) !important;
+	box-shadow: none !important;
 }
 
 body[data-theme="coffeeLight"] .linear-task-item {
@@ -2798,7 +2797,7 @@ body[data-theme="coffeeLight"] .linear-project-header {
 	color: #8c5a3a;
 	background: rgba(140, 90, 58, 0.10);
 	border-color: rgba(140, 90, 58, 0.22);
-	box-shadow: 0 0 6px rgba(140, 90, 58, 0.06);
+	box-shadow: none;
 }
 body[data-theme="coffeeLight"] .linear-project-header::before {
 	background: #8c5a3a;
@@ -4210,8 +4209,7 @@ body[data-theme="monoLight"] {
 	--calendar-tooltip-bg: #ffffff;
 	--calendar-tooltip-border: rgba(27, 31, 36, 0.18);
 	--calendar-tooltip-text: #24292f;
-	--calendar-tooltip-shadow: 0 12px 28px rgba(15, 23, 42, 0.15),
-		inset 0 0 0 1px rgba(27, 31, 36, 0.06);
+	--calendar-tooltip-shadow: none;
 	--selection-menu-bg: #f6f8fa;
 	--selection-menu-border: #d0d7de;
 }
@@ -4318,7 +4316,7 @@ body[data-theme="monoLight"] #shareModal [data-role="shareModalBackdrop"] {
 body[data-theme="monoLight"] #shareModal [role="dialog"] {
 	background-color: #ffffff !important;
 	border-color: #d0d7de !important;
-	box-shadow: 0 10px 24px rgba(15, 23, 42, 0.12) !important;
+	box-shadow: none !important;
 }
 
 body[data-theme="monoLight"] #shareModal .border-white\/10 {
@@ -4395,7 +4393,7 @@ body[data-theme="monoLight"] .ps-note-pin.bg-fuchsia-500\/20 {
 body[data-theme="monoLight"] .ps-note-item.ps-note-active {
 	background-color: transparent !important;
 	border-color: rgba(9, 105, 218, 0.45) !important;
-	box-shadow: 0 6px 14px rgba(9, 105, 218, 0.12);
+	box-shadow: none;
 }
 
 body[data-theme="monoLight"] #psNewNote,
@@ -4512,7 +4510,7 @@ body[data-theme="monoLight"] .comment-reply-badge {
 }
 
 body[data-theme="monoLight"] .shadow-soft {
-	box-shadow: 0 6px 14px rgba(27, 31, 36, 0.08);
+	box-shadow: none;
 }
 
 body[data-theme="monoLight"] #previewPanel {
@@ -4533,7 +4531,7 @@ body[data-theme="monoLight"] #psEditorTagsBar,
 body[data-theme="monoLight"] #psEditorTagsBar > div {
 	background: rgba(255, 255, 255, 0.7) !important;
 	border-color: rgba(208, 215, 222, 0.6) !important;
-	box-shadow: 0 3px 8px rgba(15, 23, 42, 0.12) !important;
+	box-shadow: none !important;
 }
 
 body[data-theme="monoLight"] #psEditorTagsBar input,
@@ -4545,7 +4543,7 @@ body[data-theme="monoLight"] #psEditorTagsBar select {
 body[data-theme="monoLight"] #commentPanel {
 	background: rgba(255, 255, 255, 0.7) !important;
 	border-color: rgba(208, 215, 222, 0.6) !important;
-	box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12) !important;
+	box-shadow: none !important;
 }
 
 body[data-theme="monoLight"] #psSortMenu {
@@ -4572,7 +4570,7 @@ body[data-theme="monoLight"] .ps-note-link-badge {
 body[data-theme="monoLight"] #linearEmbed {
 	background: rgba(255, 255, 255, 0.8) !important;
 	border-color: rgba(208, 215, 222, 0.6) !important;
-	box-shadow: 0 6px 14px rgba(27, 31, 36, 0.08) !important;
+	box-shadow: none !important;
 }
 
 body[data-theme="monoLight"] .linear-task-item {
@@ -4608,7 +4606,7 @@ body[data-theme="monoLight"] .linear-project-header {
 	color: #6f42c1;
 	background: rgba(111, 66, 193, 0.08);
 	border-color: rgba(111, 66, 193, 0.18);
-	box-shadow: 0 0 6px rgba(111, 66, 193, 0.05);
+	box-shadow: none;
 }
 body[data-theme="monoLight"] .linear-project-header::before {
 	background: #6f42c1;
