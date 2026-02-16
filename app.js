@@ -9409,25 +9409,54 @@
 		const tags = Array.isArray(note && note.tags) ? note.tags : [];
 		const tagsLower = tags.map((t) => String(t || "").toLowerCase());
 		const hay = `${text}\n${tagsLower.join(" ")}`;
+		const firstLine = (text.split("\n")[0] || "").trim();
+		const words = text.split(/[^a-z0-9äöüß]+/i).filter(Boolean);
+		const titleWords = firstLine.split(/[^a-z0-9äöüß]+/i).filter(Boolean);
 		let score = 0;
 		for (const tokRaw of tokens) {
 			let tok = String(tokRaw || "").trim().toLowerCase();
 			if (!tok) continue;
 			if (tok.startsWith("#")) tok = tok.slice(1);
+			if (!tok) continue;
 			if (tok.startsWith("tag:")) { if (tagsLower.includes(tok.slice(4).trim())) score += 10; continue; }
-			/* exact substring match – count occurrences */
+
+			/* ── exact whole-word match (highest value) ── */
+			const hasExactWord = words.some((w) => w === tok);
+			const hasExactTitleWord = titleWords.some((w) => w === tok);
+			const hasExactTag = tagsLower.some((t) => t === tok);
+
+			/* ── title is exactly the search term ── */
+			if (firstLine === tok) score += 100;
+
+			/* ── exact word in title ── */
+			if (hasExactTitleWord) score += 50;
+
+			/* ── exact tag match ── */
+			if (hasExactTag) score += 40;
+
+			/* ── title contains substring ── */
+			if (!hasExactTitleWord && firstLine.includes(tok)) score += 30;
+
+			/* ── exact word anywhere in body ── */
+			if (hasExactWord && !hasExactTitleWord) score += 20;
+
+			/* ── substring match – count occurrences ── */
 			let idx = 0; let exactHits = 0;
 			while ((idx = hay.indexOf(tok, idx)) !== -1) { exactHits++; idx += tok.length; }
 			if (exactHits > 0) {
-				score += 10 + exactHits;
-				/* title match bonus */
-				const firstLine = text.split("\n")[0] || "";
-				if (firstLine.includes(tok)) score += 5;
-			} else {
-				/* phonetic-only match = lower score */
+				score += 10 + Math.min(exactHits, 20);
+			}
+
+			/* ── shorter notes with match = more focused = higher rank ── */
+			if (exactHits > 0 && text.length > 0) {
+				const density = (exactHits * tok.length) / text.length;
+				score += Math.round(density * 30);
+			}
+
+			/* ── phonetic-only match = lowest score tier ── */
+			if (exactHits === 0) {
 				const phon = colognePhonetic(tok);
 				if (phon) {
-					const words = text.split(/[^a-z0-9äöüß]+/i).filter(Boolean);
 					let phonHits = 0;
 					for (const w of words) { if (colognePhonetic(w) === phon) phonHits++; }
 					for (const tl of tagsLower) { if (colognePhonetic(tl) === phon) phonHits++; }
