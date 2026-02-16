@@ -5389,6 +5389,7 @@
 				"settings.integrations.bfl.key_label": "BFL API-Key",
 				"settings.integrations.bfl.save": "Speichern",
 				"settings.integrations.bfl.clear": "Löschen",
+				"settings.integrations.bfl.api_link": "→ API-Key erstellen auf api.bfl.ai",
 				"settings.trash.title": "Papierkorb",
 				"settings.trash.desc":
 					"Gelöschte Notizen bleiben 30 Tage erhalten und können wiederhergestellt werden.",
@@ -5826,6 +5827,7 @@
 				"settings.integrations.bfl.key_label": "BFL API key",
 				"settings.integrations.bfl.save": "Save",
 				"settings.integrations.bfl.clear": "Clear",
+				"settings.integrations.bfl.api_link": "→ Create API key at api.bfl.ai",
 				"settings.trash.title": "Trash",
 				"settings.trash.desc": "Deleted notes are kept for 30 days and can be restored.",
 				"settings.trash.refresh": "Refresh",
