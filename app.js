@@ -8753,6 +8753,8 @@
 			} catch {
 				psMetaBasePaddingTop = 0;
 			}
+			// Ensure minimum base padding (Tailwind pt-20 = 80px, mobile ≥ 42px)
+			if (psMetaBasePaddingTop < 42) psMetaBasePaddingTop = 42;
 		}
 		const rect = psMetaYaml.getBoundingClientRect();
 		const height = Math.max(
@@ -8762,11 +8764,12 @@
 			psMetaYaml.scrollHeight || 0
 		);
 		const next = psMetaBasePaddingTop + height + 4;
-		textarea.style.paddingTop = `${Math.round(next)}px`;
+		const val = `${Math.round(next)}px`;
+		textarea.style.setProperty('padding-top', val, 'important');
 		if (attributionOverlay)
-			attributionOverlay.style.paddingTop = `${Math.round(next)}px`;
+			attributionOverlay.style.setProperty('padding-top', val, 'important');
 		if (commentOverlay)
-			commentOverlay.style.paddingTop = `${Math.round(next)}px`;
+			commentOverlay.style.setProperty('padding-top', val, 'important');
 	}
 
 	function resetEditorMetaPadding() {
@@ -8778,12 +8781,15 @@
 			} catch {
 				psMetaBasePaddingTop = 0;
 			}
+			// Ensure minimum base padding (Tailwind pt-20 = 80px, mobile ≥ 42px)
+			if (psMetaBasePaddingTop < 42) psMetaBasePaddingTop = 42;
 		}
-		textarea.style.paddingTop = `${Math.round(psMetaBasePaddingTop)}px`;
+		// Remove the JS override so CSS rules (incl. !important) take effect again
+		textarea.style.removeProperty('padding-top');
 		if (attributionOverlay)
-			attributionOverlay.style.paddingTop = `${Math.round(psMetaBasePaddingTop)}px`;
+			attributionOverlay.style.removeProperty('padding-top');
 		if (commentOverlay)
-			commentOverlay.style.paddingTop = `${Math.round(psMetaBasePaddingTop)}px`;
+			commentOverlay.style.removeProperty('padding-top');
 	}
 
 	function cleanNoteTitleLine(line) {
