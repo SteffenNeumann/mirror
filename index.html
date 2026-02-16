@@ -9,35 +9,37 @@
 		<meta name="apple-mobile-web-app-capable" content="yes" />
 		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 
-		<!-- Tailwind (CDN) -->
-		<script src="https://cdn.tailwindcss.com"></script>
+		<!-- Critical inline styles for instant first paint -->
+		<style>
+			body{margin:0;background:#020617;color:#f1f5f9;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Inter,Arial,"Noto Sans",sans-serif;-webkit-font-smoothing:antialiased}
+			.bg-glow{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+			#mainGrid{display:grid;height:100%;width:100%}
+		</style>
+
+		<!-- Preload critical assets -->
+		<link rel="preload" href="/styles/app.css" as="style" />
+		<link rel="preload" href="/app.js?v=2026-02-14-05" as="script" />
+		<link rel="preload" href="/vendor/yjs.bundle.js" as="script" />
+
+		<!-- DNS prefetch for CDNs -->
+		<link rel="dns-prefetch" href="https://cdn.tailwindcss.com" />
+		<link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
+
+		<!-- Tailwind (CDN) - loaded async to not block first paint -->
 		<script>
-			tailwind.config = {
-				theme: {
-					extend: {
-						fontFamily: {
-							sans: [
-								"ui-sans-serif",
-								"system-ui",
-								"-apple-system",
-								"Segoe UI",
-								"Roboto",
-								"Inter",
-								"Arial",
-								"Noto Sans",
-								"sans-serif",
-							],
-						},
-						boxShadow: {
-							soft: "0 10px 30px rgba(0,0,0,.25)",
-						},
-					},
-				},
-			};
+			(function(){
+				var s=document.createElement('script');
+				s.src='https://cdn.tailwindcss.com';
+				s.onload=function(){
+					tailwind.config={theme:{extend:{fontFamily:{sans:["ui-sans-serif","system-ui","-apple-system","Segoe UI","Roboto","Inter","Arial","Noto Sans","sans-serif"]},boxShadow:{soft:"0 10px 30px rgba(0,0,0,.25)"}}}};
+				};
+				document.head.appendChild(s);
+			})();
 		</script>
 		<link
 			rel="stylesheet"
-			href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css" />
+			href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css"
+			media="print" onload="this.media='all'" />
 		<link rel="stylesheet" href="/styles/app.css" />
 	</head>
 	<body class="min-h-screen bg-slate-950 text-slate-100 antialiased">
@@ -3184,11 +3186,11 @@
 		</div>
 
 		<!-- Markdown Preview libs (client-side, no build step) -->
-		<script src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
-		<script src="https://cdn.jsdelivr.net/npm/markdown-it-task-lists@2.1.1/dist/markdown-it-task-lists.min.js"></script>
-		<script src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
-		<script src="/vendor/yjs.bundle.js"></script>
-		<script src="/app.js?v=2026-02-14-05"></script>
+		<script defer src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
+		<script defer src="https://cdn.jsdelivr.net/npm/markdown-it-task-lists@2.1.1/dist/markdown-it-task-lists.min.js"></script>
+		<script defer src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
+		<script defer src="/vendor/yjs.bundle.js"></script>
+		<script defer src="/app.js?v=2026-02-14-05"></script>
 		<script>
 			if ("serviceWorker" in navigator) {
 				navigator.serviceWorker.register("/sw.js").catch(function (e) {

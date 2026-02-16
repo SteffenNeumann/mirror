@@ -1,4 +1,5 @@
 import http from "node:http";
+import { createGzip, gzipSync } from "node:zlib";
 import {
 	mkdirSync,
 	readFileSync,
@@ -11,6 +12,48 @@ import { dirname, extname, join } from "node:path";
 import crypto from "node:crypto";
 import { WebSocketServer } from "ws";
 import Database from "better-sqlite3";
+
+// ── Gzip compression cache for static assets ──
+const gzipCache = new Map();
+const GZIP_CACHE_MAX_AGE_MS = 5 * 60 * 1000; // 5 min
+
+function isCompressible(mimeType) {
+	const m = String(mimeType || "").toLowerCase();
+	return (
+		m.startsWith("text/") ||
+		m.includes("javascript") ||
+		m.includes("json") ||
+		m.includes("xml") ||
+		m.includes("svg")
+	);
+}
+
+function acceptsGzip(req) {
+	const ae = String(req.headers["accept-encoding"] || "");
+	return ae.includes("gzip");
+}
+
+function getGzipped(key, buf) {
+	const cached = gzipCache.get(key);
+	if (cached && Date.now() - cached.time < GZIP_CACHE_MAX_AGE_MS) return cached.data;
+	const compressed = gzipSync(buf, { level: 6 });
+	gzipCache.set(key, { data: compressed, time: Date.now() });
+	return compressed;
+}
+
+function sendCompressed(req, res, statusCode, buf, headers, cacheKey) {
+	const mime = headers["Content-Type"] || "";
+	if (acceptsGzip(req) && isCompressible(mime) && buf.length > 860) {
+		const compressed = getGzipped(cacheKey || mime + buf.length, buf);
+		headers["Content-Encoding"] = "gzip";
+		headers["Vary"] = "Accept-Encoding";
+		res.writeHead(statusCode, headers);
+		res.end(compressed);
+	} else {
+		res.writeHead(statusCode, headers);
+		res.end(buf);
+	}
+}
 
 const PORT = Number(process.env.PORT || 8000);
 const HOST = process.env.HOST || "0.0.0.0";
@@ -5074,11 +5117,10 @@ const server = http.createServer(async (req, res) => {
 	if (url.pathname === "/" || url.pathname === "/index.html") {
 		try {
 			const html = readFileSync(INDEX_PATH);
-			res.writeHead(200, {
+			sendCompressed(req, res, 200, html, {
 				"Content-Type": "text/html; charset=utf-8",
-				"Cache-Control": "no-store",
-			});
-			res.end(html);
+				"Cache-Control": "no-cache",
+			}, "index.html");
 		} catch {
 			res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
 			res.end("index.html not found");
@@ -5108,15 +5150,22 @@ const server = http.createServer(async (req, res) => {
 		}
 		if (!stat || !stat.isFile()) throw new Error("not a file");
 		const buf = readFileSync(targetPath);
+		const mime = mimeTypeForPath(targetPath);
+		// Immutable cache for versioned/vendor assets, short cache for others
+		const hasVersion = url.search && url.search.includes("v=");
+		const isVendor = relPath.startsWith("vendor/");
+		const isSw = relPath === "sw.js";
+		let cacheControl = "public, max-age=300"; // 5 min default
+		if (hasVersion || isVendor) cacheControl = "public, max-age=31536000, immutable";
+		if (isSw) cacheControl = "no-cache";
 		const headers = {
-			"Content-Type": mimeTypeForPath(targetPath),
-			"Cache-Control": "no-store",
+			"Content-Type": mime,
+			"Cache-Control": cacheControl,
 		};
 		if (relPath.startsWith("vendor/pdfjs/")) {
 			headers["Access-Control-Allow-Origin"] = "*";
 		}
-		res.writeHead(200, headers);
-		res.end(buf);
+		sendCompressed(req, res, 200, buf, headers, relPath);
 	} catch {
 		res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
 		res.end("Not found");

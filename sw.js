@@ -1,5 +1,5 @@
 // Mirror Service Worker — Offline-First Cache + Offline Notes Sync Queue
-const CACHE_NAME = "mirror-v1";
+const CACHE_NAME = "mirror-v2";
 const PRECACHE_URLS = [
 	"/",
 	"/index.html",
@@ -9,6 +9,15 @@ const PRECACHE_URLS = [
 	"/vendor/yjs-init.js",
 	"/excalidraw-embed.html",
 	"/manifest.json",
+];
+
+// CDN assets to cache on first use (stale-while-revalidate)
+const CDN_CACHE_URLS = [
+	"https://cdn.tailwindcss.com",
+	"https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js",
+	"https://cdn.jsdelivr.net/npm/markdown-it-task-lists@2.1.1/dist/markdown-it-task-lists.min.js",
+	"https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js",
+	"https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css",
 ];
 
 // --- Install: pre-cache critical assets ---
@@ -53,18 +62,22 @@ self.addEventListener("fetch", (event) => {
 	// Upload files: network-only
 	if (url.pathname.startsWith("/uploads/")) return;
 
-	// Static assets: stale-while-revalidate
+	// CDN assets: cache-first (stale-while-revalidate)
+	const isCdn = url.origin !== self.location.origin;
+
 	event.respondWith(
 		caches.open(CACHE_NAME).then((cache) =>
 			cache.match(event.request).then((cachedResponse) => {
 				const fetchPromise = fetch(event.request)
 					.then((networkResponse) => {
-						// Only cache same-origin successful responses
-						if (
-							networkResponse.ok &&
-							url.origin === self.location.origin
-						) {
-							cache.put(event.request, networkResponse.clone());
+						// Cache same-origin + CDN successful responses
+						if (networkResponse.ok) {
+							const shouldCache =
+								url.origin === self.location.origin ||
+								CDN_CACHE_URLS.some((u) => event.request.url.startsWith(u));
+							if (shouldCache) {
+								cache.put(event.request, networkResponse.clone());
+							}
 						}
 						return networkResponse;
 					})
