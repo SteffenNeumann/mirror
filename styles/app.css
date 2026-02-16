@@ -1751,6 +1751,19 @@ body.preview-only #editorPreviewGrid {
 body.preview-only #editorPreviewGrid > div:first-child {
 	display: none !important;
 }
+
+/* ── AI Conversation collapsible (all viewports) ── */
+#aiConversationHeader {
+	cursor: pointer;
+	user-select: none;
+}
+#aiConversationBody.ai-collapsed {
+	display: none !important;
+}
+#aiConversationChevron.ai-collapsed {
+	transform: rotate(-90deg);
+}
+
 @media (max-width: 1023px) {
 	.mobile-only {
 		display: inline-flex !important;
@@ -1874,15 +1887,9 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		backdrop-filter: blur(8px);
 	}
 
-	/* ── AI Conversation collapsible on mobile ── */
+	/* ── AI Conversation: mobile layout ── */
 	#aiConversationSection {
 		position: relative;
-	}
-	#aiConversationBody.ai-collapsed {
-		display: none !important;
-	}
-	#aiConversationChevron.ai-collapsed {
-		transform: rotate(-90deg);
 	}
 
 	/* ── Preview panel centered on mobile ── */
