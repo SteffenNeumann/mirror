@@ -10976,7 +10976,7 @@ ${highlightThemeCss}
 				if (!toc || !list || !toggle) return;
 				list.innerHTML = '';
 				var headings = document.querySelectorAll('#content h1, #content h2, #content h3, #content h4');
-				if (!headings || !headings.length) {
+				if (!headings || headings.length < 2) {
 					toc.style.display = 'none';
 					toc.setAttribute('aria-hidden', 'true');
 					return;
