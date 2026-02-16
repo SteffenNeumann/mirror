@@ -21736,6 +21736,11 @@ self.onmessage = async (e) => {
 	window.addEventListener("visibilitychange", () => {
 		if (document.visibilityState !== "visible") return;
 		refreshSyncOnFocus();
+		/* ── Mobile: re-check inactivity on resume ── */
+		if (isMobileViewport() && mobileAutoNoteSeconds > 0) {
+			mobileAutoNoteChecked = false;
+			maybeStartMobileAutoNoteSession();
+		}
 	});
 	window.addEventListener("focus", () => {
 		refreshSyncOnFocus();
