@@ -5456,6 +5456,15 @@
 				"toast.bfl_key_failed": "BFL API-Key konnte nicht gespeichert werden.",
 				"bfl.status.key_set": "✓ BFL API-Key hinterlegt.",
 				"bfl.status.no_key": "Kein BFL API-Key hinterlegt.",
+				"ai.image.download": "Download",
+				"ai.image.save_upload": "In Uploads speichern",
+				"ai.image.insert_mirror": "In Mirror einfügen",
+				"ai.image.uploading": "Wird hochgeladen…",
+				"ai.image.saved": "Gespeichert",
+				"ai.image.inserted": "Eingefügt",
+				"toast.ai_image_uploaded": "Bild in Uploads gespeichert.",
+				"toast.ai_image_upload_failed": "Upload fehlgeschlagen",
+				"toast.ai_image_inserted": "Bild in Mirror eingefügt.",
 				"toast.linear_projects_loaded": "Linear-Projekte geladen.",
 				"toast.linear_projects_failed": "Linear-Projekte konnten nicht geladen werden.",
 				"toast.linear_tasks_failed": "Linear-Aufgaben konnten nicht geladen werden.",
@@ -5881,6 +5890,15 @@
 				"toast.bfl_key_failed": "BFL API key could not be saved.",
 				"bfl.status.key_set": "✓ BFL API key configured.",
 				"bfl.status.no_key": "No BFL API key configured.",
+				"ai.image.download": "Download",
+				"ai.image.save_upload": "Save to Uploads",
+				"ai.image.insert_mirror": "Insert in Mirror",
+				"ai.image.uploading": "Uploading…",
+				"ai.image.saved": "Saved",
+				"ai.image.inserted": "Inserted",
+				"toast.ai_image_uploaded": "Image saved to uploads.",
+				"toast.ai_image_upload_failed": "Upload failed",
+				"toast.ai_image_inserted": "Image inserted into Mirror.",
 				"toast.linear_projects_loaded": "Linear projects loaded.",
 				"toast.linear_projects_failed": "Linear projects could not be loaded.",
 				"toast.linear_tasks_failed": "Linear tasks could not be loaded.",
@@ -10077,7 +10095,8 @@
 			return;
 		}
 
-		const basePx = 160; // roughly Tailwind max-h-40
+		const isAiImage = previewRunState && previewRunState.source === "ai-image";
+		const basePx = isAiImage ? 480 : 160;
 		let contentPx = 0;
 		try {
 			contentPx = Math.ceil(runOutputEl.scrollHeight || 0);
@@ -10100,8 +10119,10 @@
 			panelPx = 0;
 		}
 		const winPx = Math.max(0, Math.floor(window.innerHeight || 0));
+		const fraction = isAiImage ? 0.85 : 0.65;
+		const fractionWin = isAiImage ? 0.85 : 0.7;
 		const budgetPx = Math.floor(
-			Math.min((panelPx || winPx) * 0.65, winPx * 0.7 || 520)
+			Math.min((panelPx || winPx) * fraction, winPx * fractionWin || 520)
 		);
 		const maxPx = Math.max(basePx, budgetPx || 520);
 		const targetPx = Math.max(basePx, Math.min(maxPx, contentPx));
@@ -13669,14 +13690,26 @@ self.onmessage = async (e) => {
 				};
 				if (runStatusEl) runStatusEl.textContent = previewRunState.status;
 				if (runOutputEl) {
+					const imgId = "ai-gen-img-" + Date.now();
 					runOutputEl.innerHTML =
-						'<div style="text-align:center;padding:8px 0">' +
-						'<img src="' + dataUri + '" alt="' + escapeHtml(imgPrompt).replace(/"/g, '&quot;') + '" ' +
-						'style="max-width:100%;max-height:512px;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.4)" />' +
+						'<div style="text-align:center;padding:12px 0">' +
+						'<img id="' + imgId + '" src="' + dataUri + '" alt="' + escapeHtml(imgPrompt).replace(/"/g, '&quot;') + '" ' +
+						'style="max-width:100%;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.4)" />' +
 						'<div style="margin-top:8px;font-size:11px;color:#94a3b8">' + escapeHtml(usedModel) + ' · ' + escapeHtml(imgPrompt).slice(0, 120) + '</div>' +
+						'<div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:10px">' +
 						'<a href="' + dataUri + '" download="flux-image.jpg" ' +
-						'style="display:inline-block;margin-top:8px;padding:4px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#e2e8f0;font-size:12px;text-decoration:none;cursor:pointer" ' +
-						'>⬇ Download</a>' +
+						'style="display:inline-flex;align-items:center;gap:4px;padding:5px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#e2e8f0;font-size:12px;text-decoration:none;cursor:pointer;transition:background .15s" ' +
+						'onmouseover="this.style.background=\'rgba(255,255,255,.15)\'" onmouseout="this.style.background=\'rgba(255,255,255,.08)\'"' +
+						'>⬇ ' + t("ai.image.download") + '</a>' +
+						'<button type="button" data-ai-img-action="upload" ' +
+						'style="display:inline-flex;align-items:center;gap:4px;padding:5px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#e2e8f0;font-size:12px;cursor:pointer;transition:background .15s" ' +
+						'onmouseover="this.style.background=\'rgba(255,255,255,.15)\'" onmouseout="this.style.background=\'rgba(255,255,255,.08)\'"' +
+						'>📁 ' + t("ai.image.save_upload") + '</button>' +
+						'<button type="button" data-ai-img-action="insert" ' +
+						'style="display:inline-flex;align-items:center;gap:4px;padding:5px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(232,121,249,.15);color:#e2e8f0;font-size:12px;cursor:pointer;transition:background .15s" ' +
+						'onmouseover="this.style.background=\'rgba(232,121,249,.25)\'" onmouseout="this.style.background=\'rgba(232,121,249,.15)\'"' +
+						'>✏️ ' + t("ai.image.insert_mirror") + '</button>' +
+						'</div>' +
 						'</div>';
 				}
 				updateRunOutputUi();
@@ -22561,6 +22594,91 @@ self.onmessage = async (e) => {
 	if (clearRunOutputBtn) {
 		clearRunOutputBtn.addEventListener("click", () => {
 			setPreviewRunOutput({ status: "", output: "", error: "", source: "" });
+		});
+	}
+	if (runOutputEl) {
+		runOutputEl.addEventListener("click", async (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLElement)) return;
+			const btn = target.closest("[data-ai-img-action]");
+			if (!btn) return;
+			const action = String(btn.getAttribute("data-ai-img-action") || "");
+			const dataUri = previewRunState && previewRunState.imageDataUri ? String(previewRunState.imageDataUri) : "";
+			if (!dataUri) return;
+			const prompt = previewRunState && previewRunState.output ? String(previewRunState.output) : "flux-image";
+			const safeName = prompt.replace(/[^a-z0-9äöü ]/gi, "").trim().replace(/\s+/g, "-").slice(0, 40) || "flux-image";
+
+			if (action === "upload") {
+				btn.disabled = true;
+				btn.textContent = "⏳ " + t("ai.image.uploading");
+				try {
+					const res = await api("/api/uploads", {
+						method: "POST",
+						body: JSON.stringify({
+							filename: safeName + ".jpg",
+							dataUrl: dataUri,
+							type: "image/jpeg",
+							size: Math.round(dataUri.length * 0.75),
+						}),
+					});
+					const url = String(res && res.url ? res.url : "");
+					if (!url) throw new Error("invalid_response");
+					previewRunState._uploadedUrl = url;
+					btn.textContent = "✅ " + t("ai.image.saved");
+					btn.disabled = true;
+					toast(t("toast.ai_image_uploaded"), "success");
+				} catch (e) {
+					const msg = e && e.message ? String(e.message) : "Upload failed";
+					btn.textContent = "📁 " + t("ai.image.save_upload");
+					btn.disabled = false;
+					toast(t("toast.ai_image_upload_failed") + ": " + msg, "error");
+				}
+				return;
+			}
+
+			if (action === "insert") {
+				let url = previewRunState && previewRunState._uploadedUrl ? String(previewRunState._uploadedUrl) : "";
+				if (!url) {
+					btn.disabled = true;
+					btn.textContent = "⏳ " + t("ai.image.uploading");
+					try {
+						const res = await api("/api/uploads", {
+							method: "POST",
+							body: JSON.stringify({
+								filename: safeName + ".jpg",
+								dataUrl: dataUri,
+								type: "image/jpeg",
+								size: Math.round(dataUri.length * 0.75),
+							}),
+						});
+						url = String(res && res.url ? res.url : "");
+						if (!url) throw new Error("invalid_response");
+						previewRunState._uploadedUrl = url;
+						const uploadBtn = runOutputEl.querySelector("[data-ai-img-action='upload']");
+						if (uploadBtn) {
+							uploadBtn.textContent = "✅ " + t("ai.image.saved");
+							uploadBtn.disabled = true;
+						}
+					} catch (e) {
+						const msg = e && e.message ? String(e.message) : "Upload failed";
+						btn.textContent = "✏️ " + t("ai.image.insert_mirror");
+						btn.disabled = false;
+						toast(t("toast.ai_image_upload_failed") + ": " + msg, "error");
+						return;
+					}
+				}
+				if (textarea && url) {
+					const markdown = "\n![" + safeName + "](" + url + ")\n";
+					insertTextAtCursor(textarea, markdown);
+					updatePreview();
+					scheduleSend();
+					schedulePsAutoSave();
+					toast(t("toast.ai_image_inserted"), "success");
+				}
+				btn.textContent = "✅ " + t("ai.image.inserted");
+				btn.disabled = true;
+				return;
+			}
 		});
 	}
 	if (applyOutputReplaceBtn) {

@@ -6,6 +6,13 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
 
 ## Aktuelle Änderungen (2026-02-16)
 
+- **AI-Bild: Upload, Mirror-Einfügen, vergrößerter Ausgabebereich** `#ai` `#image` `#upload` `#ux`: Generierte FLUX.2-Bilder können jetzt in Uploads gespeichert, in den Mirror-Editor eingefügt und heruntergeladen werden. Der Ausgabebereich ist deutlich größer.
+  1. **3 Aktions-Buttons** (`app.js`): ⬇ Download, 📁 In Uploads speichern (`/api/uploads` POST), ✏️ In Mirror einfügen (Auto-Upload → `![image](url)` via `insertTextAtCursor`).
+  2. **Vergrößerter Output** (`app.js`, `app.css`): `updateRunOutputSizing` nutzt für `ai-image` Quelle Base 480px und 85% Budget statt 160px/65%. Mobile CSS: `#runOutput:has(img)` bekommt `max-height: 70vh`. Bild-`max-height` Limit (512px) entfernt.
+  3. **Upload-Workflow**: „In Mirror einfügen" führt automatisch erst den Upload durch (falls noch nicht erfolgt), dann wird das Markdown-Bild in die Textarea eingefügt.
+  4. **i18n**: 9 neue Strings für DE/EN (Download, Upload, Insert, Status-Feedback).
+  - Zuständige Dateien: `app.js` (Buttons, Event-Handler, Sizing), `app.css` (Mobile-Override).
+
 - **BFL API-Key verschlüsselt pro Benutzer** `#ai` `#image` `#security` `#encryption`: BFL (FLUX.2) API-Key wird jetzt wie der Linear API-Key pro User verschlüsselt auf dem Server gespeichert (AES-256-GCM). Jeder Benutzer hinterlegt seinen eigenen Key in Einstellungen → Integrationen.
   1. **DB-Migration** (`server.js`): Neue Spalten `bfl_api_key_ciphertext`, `bfl_api_key_iv`, `bfl_api_key_tag` in `user_settings`.
   2. **Server-Funktionen** (`server.js`): `getUserBflApiKey(userId)` / `saveUserBflApiKey(userId, apiKey)` — nutzt dieselben `encryptLinearApiKey`/`decryptLinearApiKey`-Funktionen (gleicher Cipher-Key via `MIRROR_LINEAR_KEY_SECRET`).

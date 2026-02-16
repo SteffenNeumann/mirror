@@ -1946,6 +1946,9 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		max-height: 120px;
 		font-size: 11px;
 	}
+	#runOutput:has(img) {
+		max-height: 70vh;
+	}
 
 	/* Editor panel full-width on mobile */
 	body.mobile-editor-open #editorPanel,
