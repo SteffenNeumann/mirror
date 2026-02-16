@@ -1850,14 +1850,14 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		padding: 0;
 		align-items: stretch;
 		justify-content: stretch;
-		z-index: 120;
+		z-index: 201;
 	}
 	#settingsPanel {
 		width: 100vw;
 		height: 100vh;
 		max-height: none;
 		border-radius: 0;
-		z-index: 121;
+		z-index: 202;
 	}
 	#settingsNav {
 		position: sticky;
@@ -1872,6 +1872,123 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		z-index: 2;
 		background: rgba(2, 6, 23, 0.85);
 		backdrop-filter: blur(8px);
+	}
+
+	/* ── AI Conversation collapsible on mobile ── */
+	#aiConversationSection {
+		position: relative;
+	}
+	#aiConversationBody.ai-collapsed {
+		display: none !important;
+	}
+	#aiConversationChevron.ai-collapsed {
+		transform: rotate(-90deg);
+	}
+
+	/* ── Preview panel centered on mobile ── */
+	body.mobile-preview-open #previewPanel {
+		display: flex;
+		flex-direction: column;
+		align-items: stretch;
+		justify-content: center;
+		padding: 0;
+	}
+	body.mobile-preview-open #previewPanel > .flex.h-full {
+		max-height: 100%;
+		height: 100%;
+	}
+
+	/* ── Mobile phone: general improvements ── */
+	body {
+		padding: 4px;
+	}
+	main.relative {
+		margin: 0;
+		width: 100%;
+		height: 100%;
+	}
+	#mainGrid {
+		gap: 2px;
+	}
+
+	/* Ensure preview iframe fills space */
+	body.mobile-preview-open #mdPreview {
+		flex: 1 1 0;
+		min-height: 0;
+		width: 100%;
+	}
+
+	/* AI section on mobile: more compact */
+	#aiConversationSection {
+		padding: 8px 10px;
+	}
+	#aiPromptWrap textarea {
+		min-height: 64px;
+		font-size: 14px;
+	}
+	#aiModeWrap {
+		min-width: 0 !important;
+		width: 100%;
+	}
+	#aiModeWrap select {
+		width: 100%;
+	}
+
+	/* Ensure run output doesn't overflow on mobile */
+	#runOutput {
+		max-height: 120px;
+		font-size: 11px;
+	}
+
+	/* Editor panel full-width on mobile */
+	body.mobile-editor-open #editorPanel,
+	body.mobile-note-open #editorPanel {
+		overflow: hidden;
+	}
+
+	/* Better spacing on mobile for preview controls */
+	body.mobile-preview-open .flex.flex-wrap.items-center.gap-2.pr-12 {
+		padding-right: 0;
+		flex-direction: column;
+		align-items: stretch;
+	}
+}
+
+/* ── Tablet orientation change: re-adapt layout ── */
+@media (min-width: 768px) and (max-width: 1023px) {
+	body {
+		padding: 8px;
+	}
+	main.relative {
+		margin: 0;
+		width: 100%;
+		height: 100%;
+	}
+	#mainGrid {
+		gap: 6px;
+	}
+}
+
+@media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
+	#mainGrid {
+		grid-template-columns: 1fr !important;
+		grid-template-rows: auto 1fr;
+	}
+	#psPanel {
+		max-height: 35vh;
+		overflow-y: auto;
+	}
+	#editorPreviewGrid {
+		grid-template-columns: 1fr !important;
+	}
+}
+
+@media (min-width: 768px) and (max-width: 1023px) and (orientation: landscape) {
+	#mainGrid {
+		grid-template-columns: 300px 1fr !important;
+	}
+	#editorPreviewGrid {
+		grid-template-columns: 1fr !important;
 	}
 }
 
@@ -1970,6 +2087,58 @@ body.preview-only #editorPreviewGrid > div:first-child {
 @media (max-width: 640px) {
 	#calendarGrid.calendar-grid-month {
 		overflow: auto;
+	}
+
+	/* ── Small phone improvements ── */
+	body {
+		padding: 2px;
+	}
+	#previewPanel {
+		border-radius: 0;
+	}
+	body.mobile-preview-open #previewPanel {
+		border-radius: 0;
+		inset: 0;
+		width: 100vw;
+		width: 100dvw;
+		height: 100vh;
+		height: 100dvh;
+	}
+
+	/* AI section: stack controls vertically on small phones */
+	#aiConversationSection .flex.flex-wrap.items-center.gap-2.pr-12 {
+		flex-direction: column;
+		align-items: stretch;
+		padding-right: 0;
+		gap: 6px;
+	}
+	#aiUsePreviewBtn {
+		width: 100%;
+		justify-content: center;
+	}
+	#aiModeWrap {
+		min-width: 0 !important;
+		width: 100% !important;
+	}
+
+	/* Prompt area: more touch-friendly */
+	#aiPromptWrap textarea {
+		min-height: 56px;
+		font-size: 16px; /* prevent iOS zoom */
+	}
+	#aiAssist {
+		min-height: 44px;
+		min-width: 44px;
+	}
+
+	/* PS panel: prevent overflow */
+	body.mobile-ps-open #psPanel {
+		padding: 8px;
+	}
+
+	/* Modal inputs on phone: prevent zoom */
+	#modalInput {
+		font-size: 16px;
 	}
 }
 

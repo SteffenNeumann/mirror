@@ -22402,6 +22402,34 @@ self.onmessage = async (e) => {
 		syncPsListHeight();
 		syncMobileFocusState();
 	});
+
+	/* ── AI Conversation collapsible toggle (mobile) ── */
+	const aiConversationHeader = document.getElementById("aiConversationHeader");
+	const aiConversationBody = document.getElementById("aiConversationBody");
+	const aiConversationChevron = document.getElementById("aiConversationChevron");
+	if (aiConversationHeader && aiConversationBody) {
+		aiConversationHeader.addEventListener("click", () => {
+			const isCollapsed = aiConversationBody.classList.toggle("ai-collapsed");
+			if (aiConversationChevron) aiConversationChevron.classList.toggle("ai-collapsed", isCollapsed);
+			aiConversationHeader.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
+		});
+	}
+
+	/* ── Tablet orientation change: force layout re-sync ── */
+	if (window.matchMedia) {
+		const orientationMq = window.matchMedia("(orientation: portrait)");
+		const onOrientationChange = () => {
+			syncMobileFocusState();
+			syncPsListHeight();
+			updateRunOutputSizing();
+		};
+		if (orientationMq.addEventListener) {
+			orientationMq.addEventListener("change", onOrientationChange);
+		} else if (orientationMq.addListener) {
+			orientationMq.addListener(onOrientationChange);
+		}
+	}
+
 	window.addEventListener("pagehide", () => {
 		recordMobileLastActive();
 	});

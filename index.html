@@ -1314,9 +1314,15 @@
 										sandbox="allow-popups allow-popups-to-escape-sandbox allow-scripts allow-downloads allow-top-navigation-by-user-activation allow-same-origin"
 										referrerpolicy="no-referrer"></iframe>
 									<div
+										id="aiConversationSection"
 										class="border-t border-white/10 bg-slate-950/20 px-3 py-3">
 										<div
-											class="flex items-center justify-between gap-2 text-[11px] text-slate-300">
+											id="aiConversationHeader"
+											class="flex items-center justify-between gap-2 text-[11px] text-slate-300 cursor-pointer select-none"
+											role="button"
+											aria-expanded="true"
+											aria-controls="aiConversationBody"
+											title="AI Conversation ein-/ausklappen">
 											<div class="flex items-center gap-2">
 												<span
 													class="inline-flex h-5 w-5 items-center justify-center rounded-md bg-fuchsia-600/20 text-fuchsia-300">
@@ -1336,8 +1342,11 @@
 													>Ask Claude</span
 												>
 											</div>
+											<svg id="aiConversationChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 transition-transform duration-200">
+												<path d="M6 9l6 6 6-6" />
+											</svg>
 										</div>
-										<div class="mt-2 flex flex-col gap-2">
+										<div id="aiConversationBody" class="mt-2 flex flex-col gap-2">
 											<div class="flex flex-wrap items-center gap-2 pr-12">
 												<button
 													id="aiUsePreviewBtn"
@@ -1683,7 +1692,7 @@
 		<!-- App Modals (prompt/confirm replacement) -->
 		<div
 			id="tableModal"
-			class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+			class="fixed inset-0 z-[200] hidden items-center justify-center p-4"
 			aria-hidden="true">
 			<div
 				data-role="tableModalBackdrop"
@@ -1840,7 +1849,7 @@
 
 		<div
 			id="settingsRoot"
-			class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+			class="fixed inset-0 z-[200] hidden items-center justify-center p-4"
 			aria-hidden="true">
 			<div
 				id="settingsBackdrop"
@@ -2644,11 +2653,11 @@
 
 			<div
 				id="toastRoot"
-				style="position: fixed; right: 16px; bottom: 16px; z-index: 60; display: flex; flex-direction: column; gap: 8px; max-width: 320px; pointer-events: none;"></div>
+				style="position: fixed; right: 16px; bottom: 16px; z-index: 210; display: flex; flex-direction: column; gap: 8px; max-width: 320px; pointer-events: none;"></div>
 
 		<div
 			id="modalRoot"
-			class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+			class="fixed inset-0 z-[200] hidden items-center justify-center p-4"
 			aria-hidden="true">
 			<div
 				data-role="modalBackdrop"
@@ -2705,7 +2714,7 @@
 
 		<div
 			id="calendarEventModal"
-			class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+			class="fixed inset-0 z-[200] hidden items-center justify-center p-4"
 			aria-hidden="true">
 			<div
 				data-role="calendarEventBackdrop"
@@ -2834,7 +2843,7 @@
 
 		<div
 			id="uploadModal"
-			class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+			class="fixed inset-0 z-[200] hidden items-center justify-center p-4"
 			aria-hidden="true">
 			<div
 				data-role="uploadModalBackdrop"
@@ -2905,7 +2914,7 @@
 
 		<div
 			id="shareModal"
-			class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+			class="fixed inset-0 z-[200] hidden items-center justify-center p-4"
 			aria-hidden="true">
 			<div
 				data-role="shareModalBackdrop"
@@ -3010,7 +3019,7 @@
 
 		<div
 			id="noteShareModal"
-			class="fixed inset-0 z-50 hidden items-center justify-center p-4"
+			class="fixed inset-0 z-[200] hidden items-center justify-center p-4"
 			aria-hidden="true">
 			<div
 				data-role="noteShareModalBackdrop"
