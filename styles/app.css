@@ -1946,6 +1946,67 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		overflow: hidden;
 	}
 
+	/* ── Fix: Tags bar & meta overlapping textarea on mobile ── */
+	#mirror {
+		padding-top: 48px !important;
+	}
+	#attributionOverlay,
+	#commentOverlay {
+		padding-top: 48px !important;
+	}
+
+	/* Tags bar: compact single-row on mobile */
+	#psEditorTagsBar {
+		left: 44px !important;
+		right: 44px !important;
+		top: 2px !important;
+	}
+	#psEditorTagsBar .flex {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		height: 36px;
+		gap: 4px;
+	}
+	#psEditorTagsBar input,
+	#psEditorTagsBar select {
+		height: 24px;
+		font-size: 10px;
+		min-width: 0;
+		flex-shrink: 1;
+	}
+	#psEditorTagsBar .text-slate-400 {
+		display: none; /* hide "Tags:" label on mobile */
+	}
+
+	/* Meta toggle & clear button: smaller on mobile */
+	#psMetaToggle,
+	#clearMirror {
+		height: 36px !important;
+		width: 36px !important;
+	}
+
+	/* Meta YAML overlay: don't exceed content area */
+	#psMetaYaml {
+		top: 40px !important;
+		max-height: 30vh;
+		overflow-y: auto;
+	}
+	#psMetaYamlInline {
+		max-height: 32px;
+		overflow: hidden;
+	}
+
+	/* Code language selector: compact */
+	#codeLangWrap {
+		top: 2px !important;
+	}
+	#codeLangWrap select {
+		height: 36px;
+		width: 120px;
+		font-size: 12px;
+	}
+
 	/* Better spacing on mobile for preview controls */
 	body.mobile-preview-open .flex.flex-wrap.items-center.gap-2.pr-12 {
 		padding-right: 0;
@@ -2139,6 +2200,33 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	/* Modal inputs on phone: prevent zoom */
 	#modalInput {
 		font-size: 16px;
+	}
+
+	/* ── Small phone: even more compact editor toolbar ── */
+	#mirror {
+		padding-top: 42px !important;
+	}
+	#attributionOverlay,
+	#commentOverlay {
+		padding-top: 42px !important;
+	}
+	#psEditorTagsBar {
+		left: 40px !important;
+		right: 40px !important;
+	}
+	#psEditorTagsBar .flex {
+		height: 32px;
+		padding: 0 4px;
+	}
+	#psMetaToggle,
+	#clearMirror {
+		height: 32px !important;
+		width: 32px !important;
+	}
+	#psMetaToggle svg,
+	#clearMirror svg {
+		height: 14px;
+		width: 14px;
 	}
 }
 
