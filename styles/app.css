@@ -2035,6 +2035,40 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	#mainGrid {
 		gap: 6px;
 	}
+
+	/* ── Fix: Restore desktop-like padding so content is not hidden behind toolbar ── */
+	#mirror {
+		padding-top: 80px !important;
+	}
+	#attributionOverlay,
+	#commentOverlay {
+		padding-top: 80px !important;
+	}
+
+	/* Tags bar: restore desktop positioning on tablet */
+	#psEditorTagsBar {
+		left: 48px !important;
+		right: 48px !important;
+		top: 2px !important;
+	}
+	#psEditorTagsBar .flex {
+		flex-wrap: nowrap;
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+		height: 36px;
+	}
+
+	/* Meta toggle & clear button: restore desktop size on tablet */
+	#psMetaToggle,
+	#clearMirror {
+		height: 36px !important;
+		width: 36px !important;
+	}
+
+	/* Meta YAML overlay: proper top offset on tablet */
+	#psMetaYaml {
+		top: 44px !important;
+	}
 }
 
 @media (min-width: 768px) and (max-width: 1023px) and (orientation: portrait) {
