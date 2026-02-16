@@ -90,6 +90,12 @@ const ANTHROPIC_MODEL_OVERRIDE = String(
 const ANTHROPIC_MODEL_FALLBACK = "claude-sonnet-4-20250514";
 let ANTHROPIC_MODEL = ANTHROPIC_MODEL_OVERRIDE || ANTHROPIC_MODEL_FALLBACK;
 
+// --- FLUX.2 Image Generation (Black Forest Labs) ---
+const BFL_API_KEY = String(process.env.BFL_API_KEY || "").trim();
+const BFL_MODEL = String(process.env.BFL_MODEL || "flux-2-pro").trim();
+const BFL_IMAGE_TIMEOUT_MS = Number(process.env.BFL_IMAGE_TIMEOUT_MS || 120000);
+const BFL_POLL_INTERVAL_MS = 1500;
+
 // --- Dynamic model discovery via Anthropic Models API ---
 const AI_MODEL_REFRESH_MS = 6 * 60 * 60 * 1000; // 6 hours
 let aiLatestModelCache = { model: "", models: [], fetchedAt: 0 };
@@ -4649,6 +4655,159 @@ const server = http.createServer(async (req, res) => {
 			modelFetchedAt: info.fetchedAt || null,
 			override: info.override || "",
 		});
+		return;
+	}
+
+	// --- API: AI Image Generation (FLUX.2 via BFL) ---
+	if (url.pathname === "/api/ai/image" && req.method === "POST") {
+		const reqId = crypto.randomBytes(6).toString("hex");
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		const ip = getClientIp(req);
+		const rl = checkAiRateLimit(ip);
+		if (!rl.ok) {
+			res.writeHead(429, {
+				"Content-Type": "application/json; charset=utf-8",
+				"Cache-Control": "no-store",
+				"Retry-After": String(Math.ceil((rl.retryAfterMs || 0) / 1000) || 1),
+			});
+			res.end(JSON.stringify({ ok: false, error: "rate_limited" }));
+			return;
+		}
+
+		readJson(req)
+			.then(async (body) => {
+				const apiKeyRaw = String(body && body.apiKey ? body.apiKey : "").trim();
+				const effectiveApiKey = apiKeyRaw || BFL_API_KEY;
+				if (!effectiveApiKey) {
+					json(res, 503, { ok: false, error: "image_ai_not_configured", message: "No BFL API key configured. Set BFL_API_KEY or provide apiKey." });
+					return;
+				}
+				const prompt = String(body && body.prompt ? body.prompt : "").trim();
+				if (!prompt) {
+					json(res, 400, { ok: false, error: "empty", message: "Prompt is required." });
+					return;
+				}
+				const width = Math.min(2048, Math.max(256, Number(body && body.width ? body.width : 1024) || 1024));
+				const height = Math.min(2048, Math.max(256, Number(body && body.height ? body.height : 1024) || 1024));
+				const model = String(body && body.model ? body.model : "").trim() || BFL_MODEL;
+
+				try {
+					// Step 1: Submit generation request
+					const submitController = new AbortController();
+					const submitTimer = setTimeout(() => submitController.abort(), 15000);
+					const submitRes = await fetch(`https://api.bfl.ai/v1/${encodeURIComponent(model)}`, {
+						method: "POST",
+						headers: {
+							"accept": "application/json",
+							"x-key": effectiveApiKey,
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({ prompt, width, height }),
+						signal: submitController.signal,
+					});
+					clearTimeout(submitTimer);
+					const submitData = await submitRes.json();
+					if (!submitRes.ok) {
+						const errMsg = (submitData && submitData.detail) || (submitData && submitData.message) || `BFL API HTTP ${submitRes.status}`;
+						console.warn("[ai/image] submit error", { reqId, status: submitRes.status, errMsg });
+						json(res, 502, { ok: false, error: "image_submit_failed", message: String(errMsg), reqId });
+						return;
+					}
+					const pollingUrl = String(submitData.polling_url || "");
+					const requestId = String(submitData.id || "");
+					if (!pollingUrl) {
+						json(res, 502, { ok: false, error: "image_no_polling_url", message: "No polling URL returned.", reqId });
+						return;
+					}
+
+					// Step 2: Poll for result
+					const deadline = Date.now() + BFL_IMAGE_TIMEOUT_MS;
+					let imageUrl = "";
+					while (Date.now() < deadline) {
+						await new Promise((r) => setTimeout(r, BFL_POLL_INTERVAL_MS));
+						const pollController = new AbortController();
+						const pollTimer = setTimeout(() => pollController.abort(), 10000);
+						try {
+							const pollRes = await fetch(pollingUrl, {
+								method: "GET",
+								headers: {
+									"accept": "application/json",
+									"x-key": effectiveApiKey,
+								},
+								signal: pollController.signal,
+							});
+							clearTimeout(pollTimer);
+							const pollData = await pollRes.json();
+							const status = String(pollData && pollData.status ? pollData.status : "");
+							if (status === "Ready") {
+								imageUrl = String(pollData.result && pollData.result.sample ? pollData.result.sample : "");
+								break;
+							}
+							if (status === "Error" || status === "Failed") {
+								const errDetail = JSON.stringify(pollData);
+								console.warn("[ai/image] generation failed", { reqId, pollData });
+								json(res, 502, { ok: false, error: "image_generation_failed", message: `Generation failed: ${errDetail}`, reqId });
+								return;
+							}
+							// status is "Pending" or "Processing" – continue polling
+						} catch (pollErr) {
+							clearTimeout(pollTimer);
+							// Transient poll error – retry
+							console.warn("[ai/image] poll error (retrying)", { reqId, err: pollErr && pollErr.message });
+						}
+					}
+
+					if (!imageUrl) {
+						json(res, 504, { ok: false, error: "image_timeout", message: "Image generation timed out.", reqId });
+						return;
+					}
+
+					// Step 3: Download image and return as base64 (BFL delivery URLs have no CORS)
+					const dlController = new AbortController();
+					const dlTimer = setTimeout(() => dlController.abort(), 30000);
+					try {
+						const dlRes = await fetch(imageUrl, { signal: dlController.signal });
+						clearTimeout(dlTimer);
+						if (!dlRes.ok) {
+							json(res, 502, { ok: false, error: "image_download_failed", message: `Failed to download image: HTTP ${dlRes.status}`, reqId });
+							return;
+						}
+						const contentType = String(dlRes.headers.get("content-type") || "image/jpeg");
+						const arrayBuf = await dlRes.arrayBuffer();
+						const base64 = Buffer.from(arrayBuf).toString("base64");
+						const dataUri = `data:${contentType};base64,${base64}`;
+
+						json(res, 200, {
+							ok: true,
+							imageDataUri: dataUri,
+							model,
+							prompt,
+							width,
+							height,
+							reqId,
+						});
+					} catch (dlErr) {
+						clearTimeout(dlTimer);
+						console.warn("[ai/image] download error", { reqId, err: dlErr && dlErr.message });
+						json(res, 502, { ok: false, error: "image_download_failed", message: dlErr && dlErr.message ? String(dlErr.message) : "download_error", reqId });
+					}
+				} catch (e) {
+					const msg = e && e.name === "AbortError" ? "timeout" : e && e.message ? String(e.message) : "image_error";
+					console.warn("[ai/image] exception", { reqId, msg, ip, email });
+					json(res, 502, { ok: false, error: "image_failed", message: msg, reqId });
+				}
+			})
+			.catch((e) => {
+				if (String(e && e.message) === "body_too_large") {
+					json(res, 413, { ok: false, error: "body_too_large" });
+					return;
+				}
+				json(res, 400, { ok: false, error: "invalid_json" });
+			});
 		return;
 	}
 

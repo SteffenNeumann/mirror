@@ -5128,6 +5128,7 @@
 				"preview.ai_mode.improve": "Verbessern",
 				"preview.ai_mode.run": "Code ausführen",
 				"preview.ai_mode.summarize": "Zusammenfassen",
+				"preview.ai_mode.image": "🎨 Bild generieren",
 				"preview.ask": "Fragen",
 				"preview.prompt_clear": "Prompt leeren",
 				"preview.dictate": "Diktat starten",
@@ -5553,6 +5554,7 @@
 				"preview.ai_mode.improve": "Improve",
 				"preview.ai_mode.run": "Run code",
 				"preview.ai_mode.summarize": "Summarize",
+				"preview.ai_mode.image": "🎨 Generate image",
 				"preview.ask": "Ask",
 				"preview.prompt_clear": "Clear prompt",
 				"preview.dictate": "Start dictation",
@@ -13521,13 +13523,91 @@ self.onmessage = async (e) => {
 		)
 			.trim()
 			.toLowerCase();
-		if (v === "fix" || v === "improve" || v === "run" || v === "summarize")
+		if (v === "fix" || v === "improve" || v === "run" || v === "summarize" || v === "image")
 			return v;
 		return "explain";
 	}
 
 	async function aiAssistFromPreview() {
 		const mode = getAiMode();
+
+		// --- Image generation mode (FLUX.2) ---
+		if (mode === "image") {
+			const imgPrompt = String(getAiPrompt() || "").trim();
+			if (!imgPrompt) {
+				setPreviewRunOutput({ status: "", output: "", error: "", source: "" });
+				toast("Bitte einen Bild-Prompt eingeben.", "info");
+				return;
+			}
+			saveAiPrompt(imgPrompt);
+			const chatContextKey = getAiChatContextKey();
+			setRunOutputProcessing(true);
+			setPreviewRunOutput({
+				status: "🎨 Bild wird generiert…",
+				output: "",
+				error: "",
+				source: "ai",
+			});
+			try {
+				const body = { prompt: imgPrompt };
+				const aiConfig = getAiApiConfig();
+				if (aiConfig.apiKey) body.bflApiKey = aiConfig.apiKey;
+				const imgRes = await api("/api/ai/image", {
+					method: "POST",
+					body: JSON.stringify(body),
+				});
+				const dataUri = String(imgRes && imgRes.imageDataUri ? imgRes.imageDataUri : "");
+				const usedModel = imgRes && imgRes.model ? String(imgRes.model) : "FLUX.2";
+				if (!dataUri) {
+					setPreviewRunOutput({
+						status: "AI error",
+						output: "",
+						error: "No image returned.",
+						source: "ai",
+					});
+					toast("Image generation returned no image.", "error");
+					return;
+				}
+				// Render image in output area
+				previewRunState = {
+					status: "AI (" + usedModel + ")",
+					output: imgPrompt,
+					error: "",
+					source: "ai-image",
+					imageDataUri: dataUri,
+				};
+				if (runStatusEl) runStatusEl.textContent = previewRunState.status;
+				if (runOutputEl) {
+					runOutputEl.innerHTML =
+						'<div style="text-align:center;padding:8px 0">' +
+						'<img src="' + dataUri + '" alt="' + escapeHtml(imgPrompt).replace(/"/g, '&quot;') + '" ' +
+						'style="max-width:100%;max-height:512px;border-radius:12px;box-shadow:0 4px 24px rgba(0,0,0,.4)" />' +
+						'<div style="margin-top:8px;font-size:11px;color:#94a3b8">' + escapeHtml(usedModel) + ' · ' + escapeHtml(imgPrompt).slice(0, 120) + '</div>' +
+						'<a href="' + dataUri + '" download="flux-image.jpg" ' +
+						'style="display:inline-block;margin-top:8px;padding:4px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.08);color:#e2e8f0;font-size:12px;text-decoration:none;cursor:pointer" ' +
+						'>⬇ Download</a>' +
+						'</div>';
+				}
+				updateRunOutputUi();
+				updateRunOutputSizing();
+				addAiChatEntry("user", "🎨 " + imgPrompt, chatContextKey);
+				addAiChatEntry("ai", "[Bild generiert: " + imgPrompt.slice(0, 80) + "]", chatContextKey);
+				clearAiPromptAfterResponse(imgPrompt);
+			} catch (e) {
+				const msg = e && e.message ? String(e.message) : "Error";
+				setPreviewRunOutput({
+					status: "AI error",
+					output: "",
+					error: msg,
+					source: "ai",
+				});
+				toast("Image generation failed: " + msg, "error");
+			} finally {
+				setRunOutputProcessing(false);
+			}
+			return;
+		}
+
 		const parsed = parseRunnableFromEditor();
 		const editorText = String(textarea && textarea.value ? textarea.value : "");
 		const lang = String(parsed && parsed.lang ? parsed.lang : "")
