@@ -264,6 +264,7 @@ let stmtSharedRoomsDeleteAll;
 let stmtUserSettingsGet;
 let stmtUserSettingsUpsert;
 let stmtUserLinearKeyUpsert;
+let stmtUserBflKeyUpsert;
 let stmtGoogleTokenGet;
 let stmtGoogleTokenUpsert;
 let stmtGoogleTokenDelete;
@@ -572,6 +573,37 @@ function initDb() {
 		}
 	}
 
+	const hasBflCiphertext = settingsCols.some(
+		(c) => String(c && c.name) === "bfl_api_key_ciphertext"
+	);
+	const hasBflIv = settingsCols.some(
+		(c) => String(c && c.name) === "bfl_api_key_iv"
+	);
+	const hasBflTag = settingsCols.some(
+		(c) => String(c && c.name) === "bfl_api_key_tag"
+	);
+	if (!hasBflCiphertext) {
+		try {
+			db.exec("ALTER TABLE user_settings ADD COLUMN bfl_api_key_ciphertext TEXT");
+		} catch {
+			// ignore
+		}
+	}
+	if (!hasBflIv) {
+		try {
+			db.exec("ALTER TABLE user_settings ADD COLUMN bfl_api_key_iv TEXT");
+		} catch {
+			// ignore
+		}
+	}
+	if (!hasBflTag) {
+		try {
+			db.exec("ALTER TABLE user_settings ADD COLUMN bfl_api_key_tag TEXT");
+		} catch {
+			// ignore
+		}
+	}
+
 	const favoriteCols = db.prepare("PRAGMA table_info(room_favorites)").all();
 	const hasIsStartup = favoriteCols.some(
 		(c) => String(c && c.name) === "is_startup"
@@ -810,13 +842,16 @@ function initDb() {
 		"DELETE FROM shared_rooms WHERE user_id = ?"
 	);
 	stmtUserSettingsGet = db.prepare(
-		"SELECT calendar_json, linear_api_key_ciphertext, linear_api_key_iv, linear_api_key_tag, updated_at FROM user_settings WHERE user_id = ?"
+		"SELECT calendar_json, linear_api_key_ciphertext, linear_api_key_iv, linear_api_key_tag, bfl_api_key_ciphertext, bfl_api_key_iv, bfl_api_key_tag, updated_at FROM user_settings WHERE user_id = ?"
 	);
 	stmtUserSettingsUpsert = db.prepare(
 		"INSERT INTO user_settings(user_id, calendar_json, updated_at) VALUES(?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET calendar_json = excluded.calendar_json, updated_at = excluded.updated_at"
 	);
 	stmtUserLinearKeyUpsert = db.prepare(
 		"INSERT INTO user_settings(user_id, calendar_json, linear_api_key_ciphertext, linear_api_key_iv, linear_api_key_tag, updated_at) VALUES(?, ?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET linear_api_key_ciphertext = excluded.linear_api_key_ciphertext, linear_api_key_iv = excluded.linear_api_key_iv, linear_api_key_tag = excluded.linear_api_key_tag, updated_at = excluded.updated_at"
+	);
+	stmtUserBflKeyUpsert = db.prepare(
+		"INSERT INTO user_settings(user_id, calendar_json, bfl_api_key_ciphertext, bfl_api_key_iv, bfl_api_key_tag, updated_at) VALUES(?, ?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET bfl_api_key_ciphertext = excluded.bfl_api_key_ciphertext, bfl_api_key_iv = excluded.bfl_api_key_iv, bfl_api_key_tag = excluded.bfl_api_key_tag, updated_at = excluded.updated_at"
 	);
 	stmtGoogleTokenGet = db.prepare(
 		"SELECT access_token, refresh_token, expires_at, scope, token_type, updated_at FROM google_calendar_tokens WHERE user_id = ?"
@@ -1766,6 +1801,11 @@ function getUserSettings(userId) {
 			row.linear_api_key_iv &&
 			row.linear_api_key_tag
 	);
+	const bflApiKeySet = Boolean(
+		row.bfl_api_key_ciphertext &&
+			row.bfl_api_key_iv &&
+			row.bfl_api_key_tag
+	);
 	return {
 		calendar:
 			calendar ||
@@ -1778,6 +1818,7 @@ function getUserSettings(userId) {
 			},
 		updatedAt: Number(row.updated_at) || 0,
 		linearApiKeySet,
+		bflApiKeySet,
 	};
 }
 
@@ -1831,6 +1872,48 @@ function saveUserLinearApiKey(userId, apiKey) {
 	const encrypted = encryptLinearApiKey(nextKey);
 	if (!encrypted.ok) return encrypted;
 	stmtUserLinearKeyUpsert.run(
+		userId,
+		calendarJson,
+		String(encrypted.ciphertext || ""),
+		String(encrypted.iv || ""),
+		String(encrypted.tag || ""),
+		now
+	);
+	return { ok: true };
+}
+
+function getUserBflApiKey(userId) {
+	const row = getUserSettingsRow(userId);
+	if (!row) return { ok: true, key: "" };
+	const ciphertext = String(row.bfl_api_key_ciphertext || "");
+	const iv = String(row.bfl_api_key_iv || "");
+	const tag = String(row.bfl_api_key_tag || "");
+	if (!ciphertext || !iv || !tag) return { ok: true, key: "" };
+	const decrypted = decryptLinearApiKey(ciphertext, iv, tag);
+	if (!decrypted.ok) return { ok: false, error: decrypted.error };
+	return { ok: true, key: String(decrypted.value || "") };
+}
+
+function saveUserBflApiKey(userId, apiKey) {
+	const nextKey = String(apiKey || "").trim();
+	const now = Date.now();
+	const row = getUserSettingsRow(userId);
+	const calendarJson = row && row.calendar_json
+		? String(row.calendar_json)
+		: JSON.stringify({
+			sources: [],
+			defaultView: "month",
+			localEvents: [],
+			googleCalendarId: "primary",
+			outlookCalendarId: "primary",
+		});
+	if (!nextKey) {
+		stmtUserBflKeyUpsert.run(userId, calendarJson, "", "", "", now);
+		return { ok: true };
+	}
+	const encrypted = encryptLinearApiKey(nextKey);
+	if (!encrypted.ok) return encrypted;
+	stmtUserBflKeyUpsert.run(
 		userId,
 		calendarJson,
 		String(encrypted.ciphertext || ""),
@@ -3531,6 +3614,53 @@ const server = http.createServer(async (req, res) => {
 		return;
 	}
 
+	if (url.pathname === "/api/bfl-key" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const keyRes = getUserBflApiKey(userId);
+		if (!keyRes.ok) {
+			json(res, 500, { ok: false, error: keyRes.error || "bfl_key_read_failed" });
+			return;
+		}
+		const key = String(keyRes.key || "").trim();
+		json(res, 200, { ok: true, apiKey: key, configured: Boolean(key) });
+		return;
+	}
+
+	if (url.pathname === "/api/bfl-key" && req.method === "POST") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		readJson(req)
+			.then((body) => {
+				const userId = getOrCreateUserId(email);
+				const apiKey = String(body && body.apiKey ? body.apiKey : "").trim();
+				const saveRes = saveUserBflApiKey(userId, apiKey);
+				if (!saveRes.ok) {
+					json(res, 500, {
+						ok: false,
+						error: saveRes.error || "bfl_key_save_failed",
+					});
+					return;
+				}
+				json(res, 200, { ok: true });
+			})
+			.catch((e) => {
+				if (String(e && e.message) === "body_too_large") {
+					json(res, 413, { ok: false, error: "body_too_large" });
+					return;
+				}
+				json(res, 400, { ok: false, error: "invalid_json" });
+			});
+		return;
+	}
+
 	if (url.pathname === "/api/room-tabs" && req.method === "GET") {
 		const email = getAuthedEmail(req);
 		if (!email) {
@@ -4681,7 +4811,13 @@ const server = http.createServer(async (req, res) => {
 		readJson(req)
 			.then(async (body) => {
 				const apiKeyRaw = String(body && body.apiKey ? body.apiKey : "").trim();
-				const effectiveApiKey = apiKeyRaw || BFL_API_KEY;
+				let effectiveApiKey = apiKeyRaw;
+				if (!effectiveApiKey) {
+					const userId = getOrCreateUserId(email);
+					const userKeyRes = getUserBflApiKey(userId);
+					if (userKeyRes.ok && userKeyRes.key) effectiveApiKey = userKeyRes.key;
+				}
+				if (!effectiveApiKey) effectiveApiKey = BFL_API_KEY;
 				if (!effectiveApiKey) {
 					json(res, 503, { ok: false, error: "image_ai_not_configured", message: "No BFL API key configured. Set BFL_API_KEY or provide apiKey." });
 					return;

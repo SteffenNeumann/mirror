@@ -303,6 +303,10 @@
 	const linearProjectsList = document.getElementById("linearProjectsList");
 	const linearProjectsEmpty = document.getElementById("linearProjectsEmpty");
 	const linearApiStatus = document.getElementById("linearApiStatus");
+	const bflApiKeyInput = document.getElementById("bflApiKey");
+	const bflApiSaveBtn = document.getElementById("bflApiSave");
+	const bflApiClearBtn = document.getElementById("bflApiClear");
+	const bflApiStatus = document.getElementById("bflApiStatus");
 	const faqSearchInput = document.getElementById("faqSearch");
 	const faqList = document.getElementById("faqList");
 	const favoritesManageList = document.getElementById("favoritesManageList");
@@ -4755,6 +4759,7 @@
 	let aiApiKey = "";
 	let aiApiModel = "";
 	let linearApiKey = "";
+	let bflApiKey = "";
 	let linearProjects = [];
 	let linearEnabledProjectIds = new Set();
 	let aiDictationAvailable = false;
@@ -5378,6 +5383,12 @@
 				"settings.integrations.linear.projects.desc":
 					"Wähle die Projekte, die im Raum geteilt werden dürfen.",
 				"settings.integrations.linear.projects.empty": "Keine Projekte geladen.",
+				"settings.integrations.bfl.title": "FLUX.2 (BFL)",
+				"settings.integrations.bfl.desc":
+					"BFL API-Key verschlüsselt im Personal Space speichern für AI-Bildgenerierung.",
+				"settings.integrations.bfl.key_label": "BFL API-Key",
+				"settings.integrations.bfl.save": "Speichern",
+				"settings.integrations.bfl.clear": "Löschen",
 				"settings.trash.title": "Papierkorb",
 				"settings.trash.desc":
 					"Gelöschte Notizen bleiben 30 Tage erhalten und können wiederhergestellt werden.",
@@ -5440,6 +5451,11 @@
 				"toast.linear_saved": "Linear-Einstellungen gespeichert.",
 				"toast.linear_cleared": "Linear-Einstellungen gelöscht.",
 				"toast.linear_key_failed": "Linear-API-Key konnte nicht gespeichert werden.",
+				"toast.bfl_saved": "BFL API-Key gespeichert.",
+				"toast.bfl_cleared": "BFL API-Key gelöscht.",
+				"toast.bfl_key_failed": "BFL API-Key konnte nicht gespeichert werden.",
+				"bfl.status.key_set": "✓ BFL API-Key hinterlegt.",
+				"bfl.status.no_key": "Kein BFL API-Key hinterlegt.",
 				"toast.linear_projects_loaded": "Linear-Projekte geladen.",
 				"toast.linear_projects_failed": "Linear-Projekte konnten nicht geladen werden.",
 				"toast.linear_tasks_failed": "Linear-Aufgaben konnten nicht geladen werden.",
@@ -5795,6 +5811,12 @@
 				"settings.integrations.linear.projects.desc":
 					"Select which projects can be shared in rooms.",
 				"settings.integrations.linear.projects.empty": "No projects loaded.",
+				"settings.integrations.bfl.title": "FLUX.2 (BFL)",
+				"settings.integrations.bfl.desc":
+					"Store BFL API key encrypted in Personal Space for AI image generation.",
+				"settings.integrations.bfl.key_label": "BFL API key",
+				"settings.integrations.bfl.save": "Save",
+				"settings.integrations.bfl.clear": "Clear",
 				"settings.trash.title": "Trash",
 				"settings.trash.desc": "Deleted notes are kept for 30 days and can be restored.",
 				"settings.trash.refresh": "Refresh",
@@ -5854,6 +5876,11 @@
 				"toast.linear_saved": "Linear settings saved.",
 				"toast.linear_cleared": "Linear settings cleared.",
 				"toast.linear_key_failed": "Linear API key could not be saved.",
+				"toast.bfl_saved": "BFL API key saved.",
+				"toast.bfl_cleared": "BFL API key cleared.",
+				"toast.bfl_key_failed": "BFL API key could not be saved.",
+				"bfl.status.key_set": "✓ BFL API key configured.",
+				"bfl.status.no_key": "No BFL API key configured.",
 				"toast.linear_projects_loaded": "Linear projects loaded.",
 				"toast.linear_projects_failed": "Linear projects could not be loaded.",
 				"toast.linear_tasks_failed": "Linear tasks could not be loaded.",
@@ -7132,6 +7159,72 @@
 			if (linearApiKeyInput) linearApiKeyInput.value = "";
 			updateLinearApiStatus();
 		}
+	}
+
+	async function saveBflApiKeyToServer(nextKey, opts) {
+		const apiKey = String(nextKey || "").trim();
+		if (!psState || !psState.authed) {
+			if (!(opts && opts.silent)) {
+				toast("Please enable Personal Space first (sign in).", "error");
+			}
+			return false;
+		}
+		try {
+			await api("/api/bfl-key", {
+				method: "POST",
+				body: JSON.stringify({ apiKey }),
+			});
+			bflApiKey = apiKey;
+			if (bflApiKeyInput) {
+				bflApiKeyInput.value = apiKey ? "••••••••" : "";
+			}
+			updateBflApiStatus();
+			if (!(opts && opts.silent)) {
+				toast(
+					apiKey ? t("toast.bfl_saved") : t("toast.bfl_cleared"),
+					"success"
+				);
+			}
+			return true;
+		} catch {
+			if (!(opts && opts.silent)) {
+				toast(t("toast.bfl_key_failed"), "error");
+			}
+			return false;
+		}
+	}
+
+	async function syncBflApiKeyFromServer() {
+		if (!psState || !psState.authed) {
+			bflApiKey = "";
+			if (bflApiKeyInput) bflApiKeyInput.value = "";
+			updateBflApiStatus();
+			return;
+		}
+		try {
+			const res = await api("/api/bfl-key");
+			const serverKey = String(res && res.apiKey ? res.apiKey : "").trim();
+			bflApiKey = serverKey;
+			if (bflApiKeyInput) bflApiKeyInput.value = serverKey ? "••••••••" : "";
+			updateBflApiStatus();
+		} catch {
+			updateBflApiStatus();
+		}
+	}
+
+	function readBflApiKeyInput() {
+		if (!bflApiKeyInput) return bflApiKey;
+		const raw = String(bflApiKeyInput.value || "").trim();
+		if (!raw || raw === "••••••••") return bflApiKey;
+		return raw;
+	}
+
+	function updateBflApiStatus() {
+		if (!bflApiStatus) return;
+		const keySet = Boolean(String(bflApiKey || "").trim());
+		bflApiStatus.textContent = keySet
+			? t("bfl.status.key_set")
+			: t("bfl.status.no_key");
 	}
 
 	function readLinearApiKeyInput() {
@@ -13550,8 +13643,6 @@ self.onmessage = async (e) => {
 			});
 			try {
 				const body = { prompt: imgPrompt };
-				const aiConfig = getAiApiConfig();
-				if (aiConfig.apiKey) body.bflApiKey = aiConfig.apiKey;
 				const imgRes = await api("/api/ai/image", {
 					method: "POST",
 					body: JSON.stringify(body),
@@ -13796,6 +13887,9 @@ self.onmessage = async (e) => {
 			linearApiKey = "";
 			if (linearApiKeyInput) linearApiKeyInput.value = "";
 			updateLinearApiStatus();
+			bflApiKey = "";
+			if (bflApiKeyInput) bflApiKeyInput.value = "";
+			updateBflApiStatus();
 			clearPsSelection();
 			setPsEditorTagsVisible(false);
 			updatePsPinnedToggle();
@@ -13815,6 +13909,7 @@ self.onmessage = async (e) => {
 		if (psUserUnauthed) psUserUnauthed.classList.add("hidden");
 		setPsEditorTagsVisible(true);
 		await syncLinearApiKeyFromServer();
+		await syncBflApiKeyFromServer();
 		syncCalendarSettingsFromServer();
 		const serverRoomPins = Array.isArray(psState.roomPins)
 			? psState.roomPins
@@ -23477,6 +23572,23 @@ self.onmessage = async (e) => {
 		linearApiClearBtn.addEventListener("click", async () => {
 			await saveLinearApiKeyToServer("");
 			if (linearApiKeyInput) linearApiKeyInput.value = "";
+		});
+	}
+	if (bflApiKeyInput) {
+		bflApiKeyInput.addEventListener("focus", () => {
+			if (bflApiKeyInput.value === "••••••••") bflApiKeyInput.value = "";
+		});
+	}
+	if (bflApiSaveBtn) {
+		bflApiSaveBtn.addEventListener("click", async () => {
+			const nextKey = readBflApiKeyInput();
+			await saveBflApiKeyToServer(nextKey);
+		});
+	}
+	if (bflApiClearBtn) {
+		bflApiClearBtn.addEventListener("click", async () => {
+			await saveBflApiKeyToServer("");
+			if (bflApiKeyInput) bflApiKeyInput.value = "";
 		});
 	}
 	if (linearLoadProjectsBtn) {

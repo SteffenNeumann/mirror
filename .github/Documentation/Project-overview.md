@@ -6,6 +6,15 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
 
 ## Aktuelle Änderungen (2026-02-16)
 
+- **BFL API-Key verschlüsselt pro Benutzer** `#ai` `#image` `#security` `#encryption`: BFL (FLUX.2) API-Key wird jetzt wie der Linear API-Key pro User verschlüsselt auf dem Server gespeichert (AES-256-GCM). Jeder Benutzer hinterlegt seinen eigenen Key in Einstellungen → Integrationen.
+  1. **DB-Migration** (`server.js`): Neue Spalten `bfl_api_key_ciphertext`, `bfl_api_key_iv`, `bfl_api_key_tag` in `user_settings`.
+  2. **Server-Funktionen** (`server.js`): `getUserBflApiKey(userId)` / `saveUserBflApiKey(userId, apiKey)` — nutzt dieselben `encryptLinearApiKey`/`decryptLinearApiKey`-Funktionen (gleicher Cipher-Key via `MIRROR_LINEAR_KEY_SECRET`).
+  3. **API-Endpoints** (`server.js`): `GET /api/bfl-key` (liest entschlüsselten Key), `POST /api/bfl-key` (speichert verschlüsselt).
+  4. **Key-Fallback** in `/api/ai/image`: Request-Body `apiKey` → User-DB-Key → Env `BFL_API_KEY`.
+  5. **Frontend** (`index.html`, `app.js`): Neuer BFL-Key-Bereich in Einstellungen → Integrationen (nach Linear) mit Input, Speichern/Löschen-Buttons, Status-Anzeige. Funktionen: `saveBflApiKeyToServer`, `syncBflApiKeyFromServer`, `readBflApiKeyInput`, `updateBflApiStatus`. i18n DE/EN.
+  6. **Image-Request bereinigt**: Frontend sendet keinen API-Key mehr im Request-Body, Server liest den Key selbst aus der DB.
+  - Zuständige Dateien: `server.js`, `app.js`, `index.html`.
+
 - **AI-Bildgenerierung via FLUX.2 (Black Forest Labs)** `#ai` `#image` `#flux`: Neuer AI-Modus „Bild generieren" in der bestehenden AI-Section. Nutzer gibt einen Text-Prompt ein und erhält ein KI-generiertes Bild direkt im AI-Output-Bereich.
   1. **Server-Endpoint `/api/ai/image`** (`server.js`): Neuer POST-Endpoint mit Authentifizierung, Rate-Limiting und asynchronem Submit/Poll/Download-Pattern gegen die BFL API (`https://api.bfl.ai/v1/{model}`). Da BFL-Delivery-URLs kein CORS unterstützen, wird das Bild serverseitig heruntergeladen und als Base64-Data-URI an den Client zurückgegeben.
   2. **AI-Modus `image`** (`index.html`): Neue `<option value="image">` im `#aiMode`-Select mit 🎨-Icon.
@@ -1422,7 +1431,13 @@ Server-Start
 
 | Funktion / Handler | Zweck | Tags | Abhängigkeiten |
 |--------------------|-------|------|----------------|
-| `POST /api/ai/image` | Bildgenerierung via FLUX.2 (BFL API) | `#api` `#ai` `#image` | `getAuthedEmail`, `getClientIp`, `checkAiRateLimit`, `readJson`, `json` |
+| `POST /api/ai/image` | Bildgenerierung via FLUX.2 (BFL API) | `#api` `#ai` `#image` | `getAuthedEmail`, `getOrCreateUserId`, `getUserBflApiKey`, `getClientIp`, `checkAiRateLimit`, `readJson`, `json` |
+| `GET /api/bfl-key` | BFL API-Key (entschlüsselt) lesen | `#api` `#encryption` | `getAuthedEmail`, `getOrCreateUserId`, `getUserBflApiKey` |
+| `POST /api/bfl-key` | BFL API-Key verschlüsselt speichern | `#api` `#encryption` | `getAuthedEmail`, `getOrCreateUserId`, `saveUserBflApiKey`, `readJson` |
+| `getUserBflApiKey(userId)` | BFL-Key aus DB entschlüsseln | `#encryption` `#db` | `getUserSettingsRow`, `decryptLinearApiKey` |
+| `saveUserBflApiKey(userId, apiKey)` | BFL-Key verschlüsselt in DB speichern | `#encryption` `#db` | `getUserSettingsRow`, `encryptLinearApiKey`, `stmtUserBflKeyUpsert` |
+
+**Key-Fallback** in `/api/ai/image`: 1) Request-Body `apiKey` → 2) User-DB-Key (`getUserBflApiKey`) → 3) Env `BFL_API_KEY`.
 
 **Ablauf**: Authentifizierung → Rate-Limit → JSON lesen → BFL API Submit (`POST https://api.bfl.ai/v1/{model}`) → Polling (`GET polling_url`, alle 1.5s) → Status `Ready` → Bild-Download → Base64-Konvertierung → JSON-Response `{ ok, imageDataUri, model, prompt, width, height }`.
 
