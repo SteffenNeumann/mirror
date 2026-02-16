@@ -1175,23 +1175,24 @@ function classifyText(text) {
 
 	tags.push(kind);
 	if (fenceLang && kind === "code") tags.push(`lang-${fenceLang}`);
+	// Limit: max 1 auxiliary auto-tag per field
 	if (isJson) tags.push("json");
-	if (hasStacktrace) tags.push("stacktrace");
-	// Grobe Sprach-Erkennung (Regex, heuristisch)
-	if (kind === "code") {
+	else if (hasStacktrace) tags.push("stacktrace");
+	else if (hasMarkdown && kind !== "code") tags.push("markdown");
+	// Grobe Sprach-Erkennung: max 1 Sprach-Tag (1 auto-tag pro Feld)
+	if (kind === "code" && !fenceLang) {
 		if (/\b(def\s+\w+\(|import\s+\w+|print\()\b/.test(t)) tags.push("python");
-		if (/\b(const|let|var|=>|console\.)\b/.test(t)) tags.push("javascript");
-		if (/\b(public\s+class|System\.out\.println|import\s+java\.)\b/.test(t))
+		else if (/\b(const|let|var|=>|console\.)\b/.test(t)) tags.push("javascript");
+		else if (/\b(public\s+class|System\.out\.println|import\s+java\.)\b/.test(t))
 			tags.push("java");
-		if (
+		else if (
 			/\bSELECT\b[\s\S]*\bFROM\b/i.test(t) ||
 			/\bINSERT\b[\s\S]*\bINTO\b/i.test(t)
 		)
 			tags.push("sql");
-		if (/(^|\n)\s*[A-Za-z0-9_-]+:\s*\S+/.test(t) && hasManyLines)
+		else if (/(^|\n)\s*[A-Za-z0-9_-]+:\s*\S+/.test(t) && hasManyLines)
 			tags.push("yaml");
 	}
-	if (hasMarkdown && kind !== "code") tags.push("markdown");
 	tags.push(...extractHashtags(t));
 
 	return { kind, tags: uniq(tags) };
@@ -4184,18 +4185,25 @@ const server = http.createServer(async (req, res) => {
 					const contentHash = computeNoteContentHash(nextText);
 					let tags;
 					let override = false;
+					const existingTags = parseTagsJson(existing.tags_json);
 					if (hasTags) {
 						const split = splitManualOverrideTags(
 							body && body.tags ? body.tags : []
 						);
 						override = split.override;
-						tags = override
-							? uniq([...split.tags, MANUAL_TAGS_MARKER])
-							: mergeManualTags(nextText, split.tags).tags;
+						if (override) {
+							// Manual override: keep user tags, no auto-tag recomputation
+							tags = uniq([...split.tags, MANUAL_TAGS_MARKER]);
+						} else {
+							// Update without override: preserve existing tags, don't re-classify
+							// Auto-tags are only assigned once at creation (inhibit on update)
+							tags = existingTags.length ? existingTags : mergeManualTags(nextText, split.tags).tags;
+						}
 					} else if (hasText) {
-						tags = derived.tags;
+						// Text changed without explicit tags: preserve existing tags if available
+						tags = existingTags.length ? existingTags : derived.tags;
 					} else {
-						tags = parseTagsJson(existing.tags_json);
+						tags = existingTags;
 					}
 					if (!override) {
 						tags = applyDateTags(tags, existing.created_at);

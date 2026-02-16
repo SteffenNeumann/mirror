@@ -1877,6 +1877,8 @@
 		psEditingNoteSubcategory = normalizeCategoryValue(
 			psEditorSubcategoryTag ? psEditorSubcategoryTag.value : ""
 		);
+		// Inhibit auto-tag reassignment when user manually edits any psEditorTagsBar field
+		psEditingNoteTagsOverridden = true;
 		psEditingNoteDateInitialized = true;
 		syncPsEditorTagMetaInputs();
 		updatePsEditingTagsHint();
