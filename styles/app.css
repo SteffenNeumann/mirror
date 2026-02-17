@@ -2744,7 +2744,7 @@ body[data-theme="coffeeLight"] .shadow-soft {
 }
 
 body[data-theme="coffeeLight"] #previewPanel {
-	background-color: #fffaf4 !important;
+	background-color: #f2e6dc !important;
 	border-color: #d9c7bc !important;
 }
 
@@ -3577,7 +3577,7 @@ body[data-theme="bitterLight"] .shadow-soft {
 }
 
 body[data-theme="bitterLight"] #previewPanel {
-	background-color: #fff9f4 !important;
+	background-color: #f0eeeb !important;
 	border-color: #d8d2cb !important;
 }
 
@@ -4566,7 +4566,7 @@ body[data-theme="monoLight"] .shadow-soft {
 }
 
 body[data-theme="monoLight"] #previewPanel {
-	background-color: #ffffff !important;
+	background-color: #f6f8fa !important;
 	border-color: #d0d7de !important;
 }
 
