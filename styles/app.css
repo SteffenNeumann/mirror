@@ -306,6 +306,7 @@ body.glow-disabled .bg-glow {
 #psList .ps-note-item .ps-note-actions button:not(.bg-fuchsia-500\/20),
 #psList .ps-note-item .ps-note-actions button:not(.bg-fuchsia-500\/20):hover {
 	background-color: transparent !important;
+	background: transparent !important;
 }
 
 /* ── Search Help Button ───────────────────── */
