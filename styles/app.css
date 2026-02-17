@@ -296,6 +296,12 @@ body.glow-disabled .bg-glow {
 	overflow-x: hidden;
 }
 
+/* TEMP: notes without own background – inherit psList bg */
+#psList .ps-note-item,
+#psList .ps-note-item:hover {
+	background-color: transparent !important;
+}
+
 /* ── Search Help Button ───────────────────── */
 
 .ps-search-help-btn {
