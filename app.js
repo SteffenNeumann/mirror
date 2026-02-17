@@ -13013,11 +13013,9 @@ ${highlightThemeCss}
 					</span>`
 					: "";
 				return `
-					<div data-note-id="${id}" class="group ps-note-item relative cursor-pointer rounded-xl border ${
-					active
-						? "ps-note-active border-fuchsia-400/40 bg-fuchsia-500/10"
-						: "border-white/10 bg-slate-950/25 hover:bg-slate-950/35"
-				} p-3${selected ? " ring-2 ring-fuchsia-400/30" : ""}">
+					<div data-note-id="${id}" class="group ps-note-item relative cursor-pointer ${
+					active ? "ps-note-active" : ""
+				} px-3 py-3${selected ? " ring-2 ring-fuchsia-400/30 rounded-lg" : ""}">
 						<div class="flex items-center justify-between gap-2">
 							<div class="text-xs text-slate-400">${fmtDate(n.createdAt)}</div>
 							<div class="ps-note-actions flex items-center gap-2">

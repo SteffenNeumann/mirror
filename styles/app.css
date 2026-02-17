@@ -296,10 +296,22 @@ body.glow-disabled .bg-glow {
 	overflow-x: hidden;
 }
 
-/* TEMP: notes without own background – inherit psList bg */
-#psList .ps-note-item,
-#psList .ps-note-item:hover {
+/* ── Clean note dividers ───────────────── */
+#psList .ps-note-item {
 	background-color: transparent !important;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+	transition: background-color 0.15s ease;
+	border-radius: 0;
+}
+#psList .ps-note-item:last-child {
+	border-bottom: none;
+}
+#psList .ps-note-item:hover {
+	background-color: rgba(255, 255, 255, 0.03) !important;
+}
+#psList .ps-note-item.ps-note-active {
+	background-color: rgba(217, 70, 239, 0.06) !important;
+	border-bottom-color: rgba(217, 70, 239, 0.12);
 }
 
 /* ── Search Help Button ───────────────────── */
@@ -2638,9 +2650,16 @@ body[data-theme="coffeeLight"] .ps-note-pin.bg-fuchsia-500\/20 {
 }
 
 body[data-theme="coffeeLight"] .ps-note-item.ps-note-active {
-	background-color: transparent !important;
-	border-color: rgba(176, 112, 73, 0.45) !important;
+	background-color: rgba(176, 112, 73, 0.06) !important;
+	border-color: transparent !important;
+	border-bottom-color: rgba(176, 112, 73, 0.15) !important;
 	box-shadow: none;
+}
+body[data-theme="coffeeLight"] #psList .ps-note-item {
+	border-bottom-color: rgba(0, 0, 0, 0.07);
+}
+body[data-theme="coffeeLight"] #psList .ps-note-item:hover {
+	background-color: rgba(176, 112, 73, 0.04) !important;
 }
 
 body[data-theme="coffeeLight"] #psNewNote,
@@ -3090,10 +3109,17 @@ body[data-theme="coffeeDark"] .text-fuchsia-300 {
 }
 
 body[data-theme="coffeeDark"] .ps-note-item.ps-note-active {
-	background-color: transparent !important;
-	border-color: rgba(201, 155, 119, 0.55) !important;
+	background-color: rgba(201, 155, 119, 0.06) !important;
+	border-color: transparent !important;
+	border-bottom-color: rgba(201, 155, 119, 0.15) !important;
 	box-shadow: none;
 	color: var(--coffee-accent) !important;
+}
+body[data-theme="coffeeDark"] #psList .ps-note-item {
+	border-bottom-color: rgba(201, 155, 119, 0.08);
+}
+body[data-theme="coffeeDark"] #psList .ps-note-item:hover {
+	background-color: rgba(201, 155, 119, 0.04) !important;
 }
 
 body[data-theme="coffeeDark"] .ps-note-item.ps-note-active .ps-note-excerpt,
@@ -3360,9 +3386,16 @@ body[data-theme="bitterLight"] .hover\:bg-fuchsia-500\/25:hover {
 }
 
 body[data-theme="bitterLight"] .ps-note-item.ps-note-active {
-	background-color: transparent !important;
-	border-color: rgba(255, 35, 1, 0.45) !important;
+	background-color: rgba(255, 35, 1, 0.04) !important;
+	border-color: transparent !important;
+	border-bottom-color: rgba(255, 35, 1, 0.12) !important;
 	box-shadow: none;
+}
+body[data-theme="bitterLight"] #psList .ps-note-item {
+	border-bottom-color: rgba(0, 0, 0, 0.07);
+}
+body[data-theme="bitterLight"] #psList .ps-note-item:hover {
+	background-color: rgba(255, 35, 1, 0.03) !important;
 }
 
 body[data-theme="bitterLight"] #psNewNote,
@@ -3944,9 +3977,16 @@ body[data-theme="bitterDark"] #shareModal [role="dialog"] {
 }
 
 body[data-theme="bitterDark"] .ps-note-item.ps-note-active {
-	background-color: transparent !important;
-	border-color: rgba(255, 35, 1, 0.48) !important;
+	background-color: rgba(255, 35, 1, 0.05) !important;
+	border-color: transparent !important;
+	border-bottom-color: rgba(255, 35, 1, 0.12) !important;
 	box-shadow: none;
+}
+body[data-theme="bitterDark"] #psList .ps-note-item {
+	border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+body[data-theme="bitterDark"] #psList .ps-note-item:hover {
+	background-color: rgba(255, 35, 1, 0.03) !important;
 }
 
 body[data-theme="bitterDark"] .ps-note-item .ps-note-actions button {
@@ -4400,9 +4440,16 @@ body[data-theme="monoLight"] .ps-note-pin.bg-fuchsia-500\/20 {
 }
 
 body[data-theme="monoLight"] .ps-note-item.ps-note-active {
-	background-color: transparent !important;
-	border-color: rgba(9, 105, 218, 0.45) !important;
+	background-color: rgba(9, 105, 218, 0.05) !important;
+	border-color: transparent !important;
+	border-bottom-color: rgba(9, 105, 218, 0.12) !important;
 	box-shadow: none;
+}
+body[data-theme="monoLight"] #psList .ps-note-item {
+	border-bottom-color: rgba(0, 0, 0, 0.07);
+}
+body[data-theme="monoLight"] #psList .ps-note-item:hover {
+	background-color: rgba(9, 105, 218, 0.03) !important;
 }
 
 body[data-theme="monoLight"] #psNewNote,
@@ -4875,9 +4922,16 @@ body[data-theme="monoDark"] .bg-slate-950\/80 {
 }
 
 body[data-theme="monoDark"] .ps-note-item.ps-note-active {
-	background-color: transparent !important;
-	border-color: rgba(88, 166, 255, 0.45) !important;
-	box-shadow: 0 6px 14px rgba(88, 166, 255, 0.12);
+	background-color: rgba(88, 166, 255, 0.05) !important;
+	border-color: transparent !important;
+	border-bottom-color: rgba(88, 166, 255, 0.12) !important;
+	box-shadow: none;
+}
+body[data-theme="monoDark"] #psList .ps-note-item {
+	border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+body[data-theme="monoDark"] #psList .ps-note-item:hover {
+	background-color: rgba(88, 166, 255, 0.03) !important;
 }
 
 body[data-theme="monoDark"] #psNewNote,
