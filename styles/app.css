@@ -303,7 +303,8 @@ body.glow-disabled .bg-glow {
 }
 
 /* TEMP: note action buttons (pin/share/delete) transparent unless hovered or active note */
-#psList .ps-note-item:not(.ps-note-active) .ps-note-actions button {
+#psList .ps-note-item:not(.ps-note-active) .ps-note-actions button,
+#psList .ps-note-item:not(.ps-note-active) .ps-note-actions button:hover {
 	background-color: transparent !important;
 }
 
