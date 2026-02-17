@@ -813,12 +813,10 @@ body.code-lang-active #clearMirror {
 	flex-wrap: wrap;
 	gap: 6px;
 	padding: 8px 16px;
-	background: rgba(30, 30, 40, 0.92);
-	-webkit-backdrop-filter: blur(12px);
-	backdrop-filter: blur(12px);
+	background: var(--editor-bg, inherit);
 	border-radius: 0 0 8px 8px;
-	border-top: 1px solid rgba(255, 255, 255, 0.06);
-	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+	border-top: 1px solid rgba(255, 255, 255, 0.08);
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 	visibility: hidden;
 	opacity: 0;
 	transition: opacity 0.15s ease, transform 0.15s ease;
@@ -2685,8 +2683,8 @@ body[data-theme="coffeeLight"] .ps-note-pin.bg-fuchsia-500\/20 {
 body[data-theme="coffeeLight"] #psList .ps-note-item.ps-note-active {
 	background-color: #f2e6dc !important;
 	border-left-color: transparent !important;
-	border-right: 2px solid rgba(176, 112, 73, 0.55) !important;
-	box-shadow: inset -3px 0 8px -4px rgba(176, 112, 73, 0.15);
+	border-right: none !important;
+	box-shadow: none;
 }
 body[data-theme="coffeeLight"] #psList .ps-note-item {
 	border-bottom-color: rgba(0, 0, 0, 0.07);
@@ -3141,8 +3139,8 @@ body[data-theme="coffeeDark"] .text-fuchsia-300 {
 body[data-theme="coffeeDark"] .ps-note-item.ps-note-active {
 	background-color: #1c1614 !important;
 	border-left-color: transparent !important;
-	border-right: 2px solid rgba(201, 155, 119, 0.55) !important;
-	box-shadow: inset -3px 0 8px -4px rgba(201, 155, 119, 0.15);
+	border-right: none !important;
+	box-shadow: none;
 	color: var(--coffee-accent) !important;
 }
 body[data-theme="coffeeDark"] #psList .ps-note-item {
@@ -3414,8 +3412,8 @@ body[data-theme="bitterLight"] .hover\:bg-fuchsia-500\/25:hover {
 body[data-theme="bitterLight"] #psList .ps-note-item.ps-note-active {
 	background-color: #f0eeeb !important;
 	border-left-color: transparent !important;
-	border-right: 2px solid rgba(255, 35, 1, 0.55) !important;
-	box-shadow: inset -3px 0 8px -4px rgba(255, 35, 1, 0.12);
+	border-right: none !important;
+	box-shadow: none;
 }
 body[data-theme="bitterLight"] #psList .ps-note-item {
 	border-bottom-color: rgba(0, 0, 0, 0.07);
@@ -4002,8 +4000,8 @@ body[data-theme="bitterDark"] #shareModal [role="dialog"] {
 body[data-theme="bitterDark"] .ps-note-item.ps-note-active {
 	background-color: #0d0c10 !important;
 	border-left-color: transparent !important;
-	border-right: 2px solid rgba(255, 35, 1, 0.55) !important;
-	box-shadow: inset -3px 0 8px -4px rgba(255, 35, 1, 0.12);
+	border-right: none !important;
+	box-shadow: none;
 }
 body[data-theme="bitterDark"] #psList .ps-note-item {
 	border-bottom-color: rgba(255, 255, 255, 0.06);
@@ -4460,8 +4458,8 @@ body[data-theme="monoLight"] .ps-note-pin.bg-fuchsia-500\/20 {
 body[data-theme="monoLight"] #psList .ps-note-item.ps-note-active {
 	background-color: #f6f8fa !important;
 	border-left-color: transparent !important;
-	border-right: 2px solid rgba(9, 105, 218, 0.55) !important;
-	box-shadow: inset -3px 0 8px -4px rgba(9, 105, 218, 0.12);
+	border-right: none !important;
+	box-shadow: none;
 }
 body[data-theme="monoLight"] #psList .ps-note-item {
 	border-bottom-color: rgba(0, 0, 0, 0.07);
@@ -4939,8 +4937,8 @@ body[data-theme="monoDark"] .bg-slate-950\/80 {
 body[data-theme="monoDark"] .ps-note-item.ps-note-active {
 	background-color: #0d1117 !important;
 	border-left-color: transparent !important;
-	border-right: 2px solid rgba(88, 166, 255, 0.55) !important;
-	box-shadow: inset -3px 0 8px -4px rgba(88, 166, 255, 0.12);
+	border-right: none !important;
+	box-shadow: none;
 }
 body[data-theme="monoDark"] #psList .ps-note-item {
 	border-bottom-color: rgba(255, 255, 255, 0.06);
