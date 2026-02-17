@@ -793,7 +793,8 @@ body.code-lang-active #clearMirror {
 	opacity: 0;
 	transition: opacity 0.15s ease;
 }
-#psList .ps-note-item:hover .ps-note-meta {
+#psList .ps-note-item:hover .ps-note-meta,
+#psList .ps-note-item.ps-note-active .ps-note-meta {
 	visibility: visible;
 	opacity: 1;
 }
