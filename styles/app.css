@@ -2650,7 +2650,7 @@ body[data-theme="coffeeLight"] .ps-note-pin.bg-fuchsia-500\/20 {
 }
 
 body[data-theme="coffeeLight"] .ps-note-item.ps-note-active {
-	background-color: #efe3d5 !important;
+	background-color: #f2e6dc !important;
 	border-left-color: transparent !important;
 	border-right: 2px solid rgba(176, 112, 73, 0.55) !important;
 	box-shadow: inset -3px 0 8px -4px rgba(176, 112, 73, 0.15);
@@ -3106,7 +3106,7 @@ body[data-theme="coffeeDark"] .text-fuchsia-300 {
 }
 
 body[data-theme="coffeeDark"] .ps-note-item.ps-note-active {
-	background-color: #211712 !important;
+	background-color: #1c1614 !important;
 	border-left-color: transparent !important;
 	border-right: 2px solid rgba(201, 155, 119, 0.55) !important;
 	box-shadow: inset -3px 0 8px -4px rgba(201, 155, 119, 0.15);
@@ -3379,7 +3379,7 @@ body[data-theme="bitterLight"] .hover\:bg-fuchsia-500\/25:hover {
 }
 
 body[data-theme="bitterLight"] .ps-note-item.ps-note-active {
-	background-color: #eceae6 !important;
+	background-color: #f0eeeb !important;
 	border-left-color: transparent !important;
 	border-right: 2px solid rgba(255, 35, 1, 0.55) !important;
 	box-shadow: inset -3px 0 8px -4px rgba(255, 35, 1, 0.12);
@@ -3967,7 +3967,7 @@ body[data-theme="bitterDark"] #shareModal [role="dialog"] {
 }
 
 body[data-theme="bitterDark"] .ps-note-item.ps-note-active {
-	background-color: #151518 !important;
+	background-color: #0d0c10 !important;
 	border-left-color: transparent !important;
 	border-right: 2px solid rgba(255, 35, 1, 0.55) !important;
 	box-shadow: inset -3px 0 8px -4px rgba(255, 35, 1, 0.12);
@@ -4425,7 +4425,7 @@ body[data-theme="monoLight"] .ps-note-pin.bg-fuchsia-500\/20 {
 }
 
 body[data-theme="monoLight"] .ps-note-item.ps-note-active {
-	background-color: #f0f3f6 !important;
+	background-color: #f6f8fa !important;
 	border-left-color: transparent !important;
 	border-right: 2px solid rgba(9, 105, 218, 0.55) !important;
 	box-shadow: inset -3px 0 8px -4px rgba(9, 105, 218, 0.12);
@@ -4904,7 +4904,7 @@ body[data-theme="monoDark"] .bg-slate-950\/80 {
 }
 
 body[data-theme="monoDark"] .ps-note-item.ps-note-active {
-	background-color: #161b22 !important;
+	background-color: #0d1117 !important;
 	border-left-color: transparent !important;
 	border-right: 2px solid rgba(88, 166, 255, 0.55) !important;
 	box-shadow: inset -3px 0 8px -4px rgba(88, 166, 255, 0.12);
