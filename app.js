@@ -4666,6 +4666,7 @@
 	let psAutoSaveQueuedNoteId = "";
 	let psAutoSaveQueuedTags = null;
 	let psSaveNoteInFlight = false;
+	let psPinToggleInFlight = new Set();
 	let psListRerenderTimer = 0;
 	let previewOpen = false;
 	let fullPreview = false;
@@ -12373,7 +12374,12 @@ ${highlightThemeCss}
 		}
 		const id = String(note.id || "");
 		if (!id) return;
-		const rawTags = Array.isArray(note.tags) ? note.tags : [];
+		// Prevent concurrent toggle for the same note (rapid double-click)
+		if (psPinToggleInFlight.has(id)) return;
+		psPinToggleInFlight.add(id);
+		// Always re-read from psState for fresh tag state
+		const fresh = findNoteById(id) || note;
+		const rawTags = Array.isArray(fresh.tags) ? fresh.tags : [];
 		const hasManual = rawTags.some(
 			(t) => String(t || "") === PS_MANUAL_TAGS_MARKER
 		);
@@ -12428,6 +12434,8 @@ ${highlightThemeCss}
 				return;
 			}
 			toast(`Pin failed: ${msg}`, "error");
+		} finally {
+			psPinToggleInFlight.delete(id);
 		}
 	}
 
@@ -13125,15 +13133,35 @@ ${highlightThemeCss}
 						await api(`/api/notes/${encodeURIComponent(id)}`, {
 							method: "DELETE",
 						});
+						if (psState && Array.isArray(psState.notes)) {
+							psState.notes = psState.notes.filter(
+								(n) => String(n && n.id ? n.id : "") !== id
+							);
+						}
 						if (psEditingNoteId === id) {
 							psEditingNoteId = "";
 							if (psMainHint) psMainHint.classList.add("hidden");
 							syncMobileFocusState();
 						}
 						removeNoteRoomBindingByNoteId(id);
+						applyPersonalSpaceFiltersAndRender();
 						toast("Notiz im Papierkorb abgelegt.", "success");
 						await refreshPersonalSpace();
-					} catch {
+					} catch (e) {
+						const msg = e && e.message ? String(e.message) : "";
+						const notFound = msg.includes("not_found") || msg.includes("404");
+						if (notFound) {
+							if (psState && Array.isArray(psState.notes)) {
+								psState.notes = psState.notes.filter(
+									(n) => String(n && n.id ? n.id : "") !== id
+								);
+							}
+							removeNoteRoomBindingByNoteId(id);
+							applyPersonalSpaceFiltersAndRender();
+							await refreshPersonalSpace();
+							toast("Notiz war bereits gelöscht.", "info");
+							return;
+						}
 						toast("Löschen fehlgeschlagen.", "error");
 					}
 				});
@@ -22966,62 +22994,9 @@ self.onmessage = async (e) => {
 		updateSaveBtn();
 	}
 
-	if (psList) {
-		psList.addEventListener("click", async (ev) => {
-			const target = ev && ev.target ? ev.target : null;
-			if (!(target instanceof HTMLElement)) return;
-			const pinBtn = target.closest('[data-action="pin"]');
-			const delBtn = target.closest('[data-action="delete"]');
-			if (!pinBtn && !delBtn) return;
-			const row = (pinBtn || delBtn).closest("[data-note-id]");
-			if (!row) return;
-			ev.preventDefault();
-			ev.stopPropagation();
-			const id = row.getAttribute("data-note-id") || "";
-			if (!id) return;
-			if (pinBtn) {
-				const note = findNoteById(id);
-				if (!note) return;
-				await togglePinnedForNote(note);
-				return;
-			}
-			try {
-				await api(`/api/notes/${encodeURIComponent(id)}`, {
-					method: "DELETE",
-				});
-				if (psState && Array.isArray(psState.notes)) {
-					psState.notes = psState.notes.filter(
-						(n) => String(n && n.id ? n.id : "") !== id
-					);
-				}
-				removeNoteRoomBindingByNoteId(id);
-				applyPersonalSpaceFiltersAndRender();
-				if (psEditingNoteId === id) {
-					psEditingNoteId = "";
-					if (psMainHint) psMainHint.classList.add("hidden");
-					syncMobileFocusState();
-				}
-				toast("Notiz im Papierkorb abgelegt.", "success");
-				await refreshPersonalSpace();
-			} catch (e) {
-				const msg = e && e.message ? String(e.message) : "";
-				const notFound = msg.includes("not_found") || msg.includes("404");
-				if (notFound) {
-					if (psState && Array.isArray(psState.notes)) {
-						psState.notes = psState.notes.filter(
-							(n) => String(n && n.id ? n.id : "") !== id
-						);
-					}
-					removeNoteRoomBindingByNoteId(id);
-					applyPersonalSpaceFiltersAndRender();
-					await refreshPersonalSpace();
-					toast("Notiz war bereits gelöscht.", "info");
-					return;
-				}
-				toast("Löschen fehlgeschlagen.", "error");
-			}
-		});
-	}
+	/* Delegated pin/delete handler removed – per-row handlers in renderPsList
+	   already handle these actions with stopPropagation, making the delegated
+	   listener unreachable (dead code). */
 	if (psContextMenu || psTagContextMenu) {
 		document.addEventListener("click", (ev) => {
 			if (!psContextMenuOpen && !psTagContextMenuOpen) return;
