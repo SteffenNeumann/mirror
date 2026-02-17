@@ -13030,7 +13030,7 @@ ${highlightThemeCss}
 								</button>
 							</div>
 						</div>
-						<div class="flex items-center justify-between mt-0.5 w-full">
+						<div class="flex items-center justify-between mt-0.5 w-full ps-note-meta">
 							${chips ? `<div class="flex gap-1 overflow-hidden ps-note-tags flex-1 min-w-0">${chips}</div>` : '<div class="flex-1"></div>'}
 							<span class="text-[10px] text-slate-400 flex-shrink-0 ml-2">${fmtDate(n.createdAt)}</span>
 						</div>

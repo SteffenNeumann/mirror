@@ -788,17 +788,19 @@ body.code-lang-active #clearMirror {
 	pointer-events: auto;
 	transform: none;
 }
-#psList .ps-note-tags {
-	display: flex;
-	flex-wrap: nowrap;
-	overflow: hidden;
+#psList .ps-note-meta {
 	visibility: hidden;
 	opacity: 0;
 	transition: opacity 0.15s ease;
 }
-#psList .ps-note-item:hover .ps-note-tags {
+#psList .ps-note-item:hover .ps-note-meta {
 	visibility: visible;
 	opacity: 1;
+}
+#psList .ps-note-tags {
+	display: flex;
+	flex-wrap: nowrap;
+	overflow: hidden;
 }
 .md-content a {
 	color: rgb(96 165 250);
