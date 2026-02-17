@@ -5019,7 +5019,7 @@
 			label: "Mono Light",
 			top: "#f6f8fa",
 			bottom: "#f6f8fa",
-			previewBg: "#f6f8fa",
+			previewBg: "#ffffff",
 			accentBgSoft: "rgba(9, 105, 218, 0.08)",
 			accentBg: "rgba(9, 105, 218, 0.12)",
 			accentBgHover: "rgba(9, 105, 218, 0.16)",

@@ -2945,7 +2945,7 @@ body[data-theme="coffeeLight"] .active\:bg-white\/20:active {
 body[data-theme="coffeeLight"] input,
 body[data-theme="coffeeLight"] select,
 body[data-theme="coffeeLight"] textarea {
-	background-color: #fffaf4;
+	background-color: #fffaf4 !important;
 	color: #3b2a21;
 	border-color: #d9c7bc;
 }
@@ -3775,7 +3775,7 @@ body[data-theme="bitterLight"] .active\:bg-white\/20:active {
 body[data-theme="bitterLight"] input,
 body[data-theme="bitterLight"] select,
 body[data-theme="bitterLight"] textarea {
-	background-color: #fff9f4;
+	background-color: #fff9f4 !important;
 	color: #0d0c10;
 	border-color: #d8d2cb;
 }
@@ -4767,7 +4767,7 @@ body[data-theme="monoLight"] .active\:bg-white\/20:active {
 body[data-theme="monoLight"] input,
 body[data-theme="monoLight"] select,
 body[data-theme="monoLight"] textarea {
-	background-color: #ffffff;
+	background-color: #ffffff !important;
 	color: #24292f;
 	border-color: #d0d7de;
 }
