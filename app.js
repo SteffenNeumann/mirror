@@ -12996,7 +12996,7 @@ ${highlightThemeCss}
 				const chips = showTags
 					.map(
 						(t) =>
-							`<span class="rounded-full border border-white/10 bg-white/5 px-1.5 py-0 text-[9px] text-slate-300">#${t}</span>`
+							`<span class="rounded-full border border-white/10 bg-white/5 px-2 py-0 text-[9px] text-slate-300">#${t}</span>`
 					)
 					.join("");
 				const info = getNoteTitleAndExcerpt(n && n.text ? n.text : "");
@@ -13017,10 +13017,10 @@ ${highlightThemeCss}
 				return `
 					<div data-note-id="${id}" class="group ps-note-item relative cursor-pointer ${
 					active ? "ps-note-active" : ""
-				} px-3${selected ? " ring-2 ring-fuchsia-400/30 rounded-lg" : ""}">
-						<div class="flex items-center justify-between gap-2 w-full">
+				} px-4${selected ? " ring-2 ring-fuchsia-400/30 rounded-lg" : ""}">
+						<div class="flex items-center justify-between gap-4 w-full">
 							<div class="truncate text-sm font-semibold text-slate-100 flex-1 min-w-0">${titleHtml}</div>
-							<div class="ps-note-actions flex items-center gap-1.5 flex-shrink-0">
+							<div class="ps-note-actions flex items-center gap-2 flex-shrink-0">
 								<button type="button" data-action="pin" class="ps-note-pin inline-flex rounded-md p-1 transition ${pinned ? "text-fuchsia-300" : "text-slate-400 hover:text-slate-200"}" title="Pin" aria-label="Pin">
 									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16" /><path d="M4 4h12l-2 5 2 5H4" /></svg>
 								</button>
@@ -13032,9 +13032,9 @@ ${highlightThemeCss}
 								</button>
 							</div>
 						</div>
-						<div class="flex items-center justify-between mt-0.5 w-full ps-note-meta">
-							${chips ? `<div class="flex gap-1 overflow-hidden ps-note-tags flex-1 min-w-0">${chips}</div>` : '<div class="flex-1"></div>'}
-							<span class="text-[10px] text-slate-400 flex-shrink-0 ml-2">${fmtDate(n.createdAt)}</span>
+						<div class="flex items-center justify-between mt-2 w-full ps-note-meta">
+							${chips ? `<div class="flex gap-2 overflow-hidden ps-note-tags flex-1 min-w-0">${chips}</div>` : '<div class="flex-1"></div>'}
+							<span class="text-[10px] text-slate-400 flex-shrink-0 ml-4">${fmtDate(n.createdAt)}</span>
 						</div>
 						${linkedBadge}
 					</div>
