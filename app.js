@@ -13015,10 +13015,19 @@ ${highlightThemeCss}
 				return `
 					<div data-note-id="${id}" class="group ps-note-item relative cursor-pointer ${
 					active ? "ps-note-active" : ""
-				} px-3 py-3${selected ? " ring-2 ring-fuchsia-400/30 rounded-lg" : ""}">
-						<div class="flex items-center justify-between gap-2">
-							<div class="text-xs text-slate-400">${fmtDate(n.createdAt)}</div>
-							<div class="ps-note-actions flex items-center gap-2">
+				} px-3${selected ? " ring-2 ring-fuchsia-400/30 rounded-lg" : ""}">
+						<div class="flex items-center justify-between gap-2 w-full">
+							<div class="flex-1 min-w-0 overflow-hidden">
+								<div class="flex items-center gap-1.5">
+									${pinned ? '<svg viewBox="0 0 24 24" class="h-3.5 w-3.5 text-fuchsia-300 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16" /><path d="M4 4h12l-2 5 2 5H4" /></svg>' : ''}
+									<div class="truncate text-sm font-semibold text-slate-100">${titleHtml}</div>
+								</div>
+								<div class="flex items-center gap-2 mt-0.5">
+									<span class="text-[10px] text-slate-400 flex-shrink-0">${fmtDate(n.createdAt)}</span>
+									${chips ? `<div class="flex gap-1 overflow-hidden ps-note-tags">${chips}</div>` : ""}
+								</div>
+							</div>
+							<div class="ps-note-actions flex items-center gap-2 flex-shrink-0">
 								<button
 									type="button"
 									data-action="pin"
@@ -13064,15 +13073,6 @@ ${highlightThemeCss}
 								</button>
 							</div>
 						</div>
-						<div class="mt-2">
-							<div class="truncate text-sm font-semibold text-slate-100">${titleHtml}</div>
-							${
-								excerptHtml
-									? `<div class="ps-note-excerpt mt-1 text-xs text-slate-300">${excerptHtml}</div>`
-									: ""
-							}
-						</div>
-						${chips ? `<div class="mt-2 flex flex-wrap gap-1 ps-note-tags">${chips}</div>` : ""}
 						${linkedBadge}
 					</div>
 				`;

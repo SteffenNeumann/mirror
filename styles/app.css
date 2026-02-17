@@ -302,6 +302,12 @@ body.glow-disabled .bg-glow {
 	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 	transition: background-color 0.15s ease;
 	border-radius: 0;
+	height: 4.5rem;
+	min-height: 4.5rem;
+	max-height: 4.5rem;
+	overflow: hidden;
+	display: flex;
+	align-items: center;
 }
 #psList .ps-note-item:last-child {
 	border-bottom: none;
@@ -765,13 +771,7 @@ body.code-lang-active #clearMirror {
 	transform: none !important;
 }
 .ps-note-excerpt {
-	white-space: pre-wrap;
-	overflow-wrap: anywhere;
-	word-break: break-word;
-	display: -webkit-box;
-	-webkit-line-clamp: 3;
-	-webkit-box-orient: vertical;
-	overflow: hidden;
+	display: none;
 }
 .ps-note-actions {
 	opacity: 0;
@@ -787,16 +787,11 @@ body.code-lang-active #clearMirror {
 }
 #psList .ps-note-tags {
 	display: flex;
-	min-height: 24px;
-	visibility: hidden;
-	opacity: 0;
-	pointer-events: none;
-	transition: opacity 0.15s ease;
+	flex-wrap: nowrap;
+	overflow: hidden;
 }
 #psList .ps-note-item:hover .ps-note-tags {
-	visibility: visible;
 	opacity: 1;
-	pointer-events: auto;
 }
 .md-content a {
 	color: rgb(96 165 250);
