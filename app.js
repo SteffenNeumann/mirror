@@ -13154,7 +13154,8 @@ ${highlightThemeCss}
 					ev.preventDefault();
 					ev.stopPropagation();
 					const id = row.getAttribute("data-note-id") || "";
-					const note = byId.get(id);
+					if (!id) return;
+					const note = findNoteById(id) || byId.get(id);
 					if (!note) return;
 					await togglePinnedForNote(note);
 				});
