@@ -302,13 +302,10 @@ body.glow-disabled .bg-glow {
 	background-color: transparent !important;
 }
 
-/* TEMP: note action buttons transparent everywhere; only pinned pin keeps its bg */
-#psList .ps-note-item .ps-note-actions button,
-#psList .ps-note-item .ps-note-actions button:hover {
+/* TEMP: note action buttons transparent everywhere; only pinned pin keeps its theme bg */
+#psList .ps-note-item .ps-note-actions button:not(.bg-fuchsia-500\/20),
+#psList .ps-note-item .ps-note-actions button:not(.bg-fuchsia-500\/20):hover {
 	background-color: transparent !important;
-}
-#psList .ps-note-item .ps-note-actions button.ps-note-pin.bg-fuchsia-500\/20 {
-	background-color: rgba(217, 70, 239, 0.2) !important;
 }
 
 /* ── Search Help Button ───────────────────── */
