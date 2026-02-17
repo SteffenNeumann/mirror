@@ -307,7 +307,8 @@ body.glow-disabled .bg-glow {
 	max-height: 4.5rem;
 	overflow: hidden;
 	display: flex;
-	align-items: center;
+	flex-direction: column;
+	justify-content: center;
 }
 #psList .ps-note-item:last-child {
 	border-bottom: none;
