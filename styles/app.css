@@ -789,8 +789,12 @@ body.code-lang-active #clearMirror {
 	display: flex;
 	flex-wrap: nowrap;
 	overflow: hidden;
+	visibility: hidden;
+	opacity: 0;
+	transition: opacity 0.15s ease;
 }
 #psList .ps-note-item:hover .ps-note-tags {
+	visibility: visible;
 	opacity: 1;
 }
 .md-content a {

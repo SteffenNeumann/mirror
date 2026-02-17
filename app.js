@@ -13016,29 +13016,26 @@ ${highlightThemeCss}
 					<div data-note-id="${id}" class="group ps-note-item relative cursor-pointer ${
 					active ? "ps-note-active" : ""
 				} px-3${selected ? " ring-2 ring-fuchsia-400/30 rounded-lg" : ""}">
-						<div class="flex items-center justify-between gap-2 w-full">
+						<div class="flex items-center justify-between gap-3 w-full">
 							<div class="flex-1 min-w-0 overflow-hidden">
-								<div class="flex items-center gap-1.5">
-									${pinned ? '<svg viewBox="0 0 24 24" class="h-3.5 w-3.5 text-fuchsia-300 flex-shrink-0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16" /><path d="M4 4h12l-2 5 2 5H4" /></svg>' : ''}
-									<div class="truncate text-sm font-semibold text-slate-100">${titleHtml}</div>
-								</div>
+								<div class="truncate text-sm font-semibold text-slate-100">${titleHtml}</div>
 								<div class="flex items-center gap-2 mt-0.5">
 									<span class="text-[10px] text-slate-400 flex-shrink-0">${fmtDate(n.createdAt)}</span>
 									${chips ? `<div class="flex gap-1 overflow-hidden ps-note-tags">${chips}</div>` : ""}
 								</div>
 							</div>
-							<div class="ps-note-actions flex items-center gap-2 flex-shrink-0">
+							<div class="ps-note-actions flex items-center gap-1 flex-shrink-0">
 								<button
 									type="button"
 									data-action="pin"
-									class="ps-note-pin inline-flex rounded-md border border-white/10 p-1.5 shadow-soft backdrop-blur transition ${
+									class="ps-note-pin inline-flex rounded-md p-1 transition ${
 										pinned
-											? "bg-fuchsia-500/20 text-fuchsia-100"
-											: "text-slate-200"
+											? "text-fuchsia-300"
+											: "text-slate-400 hover:text-slate-200"
 									}"
 									title="Pin"
 									aria-label="Pin">
-									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+									<svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 										<path d="M4 4v16" />
 										<path d="M4 4h12l-2 5 2 5H4" />
 									</svg>
@@ -13046,10 +13043,10 @@ ${highlightThemeCss}
 								<button
 									type="button"
 									data-action="share"
-									class="ps-note-share inline-flex rounded-md border border-white/10 p-1.5 text-slate-200 shadow-soft backdrop-blur transition"
+									class="ps-note-share inline-flex rounded-md p-1 text-slate-400 hover:text-slate-200 transition"
 									title="Teilen"
 									aria-label="Teilen">
-									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+									<svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 										<circle cx="18" cy="5" r="3" />
 										<circle cx="6" cy="12" r="3" />
 										<circle cx="18" cy="19" r="3" />
@@ -13060,10 +13057,10 @@ ${highlightThemeCss}
 								<button
 									type="button"
 									data-action="delete"
-									class="ps-note-delete inline-flex rounded-md border border-white/10 p-1.5 text-slate-200 shadow-soft backdrop-blur transition"
+									class="ps-note-delete inline-flex rounded-md p-1 text-slate-400 hover:text-red-400 transition"
 									title="Delete"
 									aria-label="Delete">
-									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+									<svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
 										<path d="M3 6h18" />
 										<path d="M8 6V4h8v2" />
 										<path d="M19 6l-1 14H6L5 6" />
