@@ -294,6 +294,8 @@ body.glow-disabled .bg-glow {
 
 #psList {
 	overflow-x: hidden;
+	width: 100%;
+	box-sizing: border-box;
 }
 
 /* ── Clean note dividers ───────────────── */
