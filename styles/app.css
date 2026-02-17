@@ -322,8 +322,6 @@ body.glow-disabled .bg-glow {
 }
 #psList .ps-note-item.ps-note-active {
 	background-color: rgba(255, 255, 255, 0.05) !important;
-	border-right: 2px solid var(--accent-border-strong, rgba(217, 70, 239, 0.5));
-	box-shadow: inset -3px 0 8px -4px var(--accent-bg, rgba(217, 70, 239, 0.15));
 	border-radius: 8px;
 }
 
@@ -802,16 +800,33 @@ body.code-lang-active #clearMirror {
 	opacity: 1;
 }
 #psList .ps-note-tags {
+	position: absolute;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	transform: translateY(100%);
+	z-index: 10;
 	display: flex;
-	flex-wrap: nowrap;
-	overflow: hidden;
+	flex-wrap: wrap;
+	gap: 6px;
+	padding: 8px 16px;
+	background: rgba(30, 30, 40, 0.92);
+	-webkit-backdrop-filter: blur(12px);
+	backdrop-filter: blur(12px);
+	border-radius: 0 0 8px 8px;
+	border-top: 1px solid rgba(255, 255, 255, 0.06);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 	visibility: hidden;
 	opacity: 0;
-	transition: opacity 0.15s ease;
+	transition: opacity 0.15s ease, transform 0.15s ease;
+	transform: translateY(calc(100% - 4px));
+	pointer-events: none;
 }
 #psList .ps-note-item:hover .ps-note-tags {
 	visibility: visible;
 	opacity: 1;
+	transform: translateY(100%);
+	pointer-events: auto;
 }
 .md-content a {
 	color: rgb(96 165 250);

@@ -13032,10 +13032,10 @@ ${highlightThemeCss}
 								</button>
 							</div>
 						</div>
-						<div class="flex items-center justify-between mt-2 w-full ps-note-meta">
-							${chips ? `<div class="flex gap-2 overflow-hidden ps-note-tags flex-1 min-w-0">${chips}</div>` : '<div class="flex-1"></div>'}
-							<span class="text-[10px] text-slate-400 flex-shrink-0 ml-4">${fmtDate(n.createdAt)}</span>
+						<div class="flex items-center justify-end mt-2 w-full ps-note-meta">
+							<span class="text-[10px] text-slate-400 flex-shrink-0">${fmtDate(n.createdAt)}</span>
 						</div>
+						${chips ? `<div class="ps-note-tags">${chips}</div>` : ''}
 						${linkedBadge}
 					</div>
 				`;
