@@ -2649,7 +2649,7 @@ body[data-theme="coffeeLight"] .ps-note-pin.bg-fuchsia-500\/20 {
 	color: #b07049 !important;
 }
 
-body[data-theme="coffeeLight"] .ps-note-item.ps-note-active {
+body[data-theme="coffeeLight"] #psList .ps-note-item.ps-note-active {
 	background-color: #f2e6dc !important;
 	border-left-color: transparent !important;
 	border-right: 2px solid rgba(176, 112, 73, 0.55) !important;
@@ -3378,7 +3378,7 @@ body[data-theme="bitterLight"] .hover\:bg-fuchsia-500\/25:hover {
 	color: #0d0c10 !important;
 }
 
-body[data-theme="bitterLight"] .ps-note-item.ps-note-active {
+body[data-theme="bitterLight"] #psList .ps-note-item.ps-note-active {
 	background-color: #f0eeeb !important;
 	border-left-color: transparent !important;
 	border-right: 2px solid rgba(255, 35, 1, 0.55) !important;
@@ -4424,7 +4424,7 @@ body[data-theme="monoLight"] .ps-note-pin.bg-fuchsia-500\/20 {
 	color: #0969da !important;
 }
 
-body[data-theme="monoLight"] .ps-note-item.ps-note-active {
+body[data-theme="monoLight"] #psList .ps-note-item.ps-note-active {
 	background-color: #f6f8fa !important;
 	border-left-color: transparent !important;
 	border-right: 2px solid rgba(9, 105, 218, 0.55) !important;
