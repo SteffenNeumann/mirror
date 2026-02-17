@@ -13018,7 +13018,7 @@ ${highlightThemeCss}
 									class="ps-note-pin inline-flex rounded-md border border-white/10 p-1.5 shadow-soft backdrop-blur transition ${
 										pinned
 											? "bg-fuchsia-500/20 text-fuchsia-100"
-											: "bg-slate-950/60 text-slate-200 hover:bg-slate-950/80"
+											: "text-slate-200"
 									}"
 									title="Pin"
 									aria-label="Pin">
@@ -13030,7 +13030,7 @@ ${highlightThemeCss}
 								<button
 									type="button"
 									data-action="share"
-									class="ps-note-share inline-flex rounded-md border border-white/10 bg-slate-950/60 p-1.5 text-slate-200 shadow-soft backdrop-blur transition hover:bg-slate-950/80"
+									class="ps-note-share inline-flex rounded-md border border-white/10 p-1.5 text-slate-200 shadow-soft backdrop-blur transition"
 									title="Teilen"
 									aria-label="Teilen">
 									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -13044,7 +13044,7 @@ ${highlightThemeCss}
 								<button
 									type="button"
 									data-action="delete"
-									class="ps-note-delete inline-flex rounded-md border border-white/10 bg-slate-950/60 p-1.5 text-slate-200 shadow-soft backdrop-blur transition hover:bg-slate-950/80"
+									class="ps-note-delete inline-flex rounded-md border border-white/10 p-1.5 text-slate-200 shadow-soft backdrop-blur transition"
 									title="Delete"
 									aria-label="Delete">
 									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
