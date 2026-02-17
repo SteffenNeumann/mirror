@@ -307,12 +307,13 @@ body.glow-disabled .bg-glow {
 	height: 5rem;
 	min-height: 5rem;
 	max-height: 5rem;
-	overflow: hidden;
+	overflow: visible;
 	display: flex;
 	flex-direction: column;
 	justify-content: center;
 	padding-top: 0.5rem;
 	padding-bottom: 0.5rem;
+	position: relative;
 }
 #psList .ps-note-item:last-child {
 	border-bottom: none;
@@ -323,6 +324,8 @@ body.glow-disabled .bg-glow {
 #psList .ps-note-item.ps-note-active {
 	background-color: rgba(255, 255, 255, 0.05) !important;
 	border-radius: 8px;
+	border-right: none;
+	box-shadow: none;
 }
 
 /* ── Search Help Button ───────────────────── */
