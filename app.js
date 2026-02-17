@@ -12103,12 +12103,13 @@ ${highlightThemeCss}
 			}
 			if (!replaced) continue;
 			const finalTags = dedupeRawTags(nextTags);
+			const tagsPayload = buildPsTagsPayload(finalTags, true);
 			try {
 				const res = await api(`/api/notes/${encodeURIComponent(note.id)}`, {
 					method: "PUT",
 					body: JSON.stringify({
 						text: String(note.text || ""),
-						tags: finalTags,
+						tags: tagsPayload,
 					}),
 				});
 				const saved = res && res.note ? res.note : null;
