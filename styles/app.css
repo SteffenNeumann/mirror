@@ -237,9 +237,7 @@ body.glow-disabled .bg-glow {
 #togglePermanentLink:hover,
 #toggleBlockArrange:hover,
 #copyMirror:hover {
-	border-color: var(--accent-border-strong) !important;
-	background: rgba(255, 255, 255, 0.15) !important;
-	transform: translateY(-1px);
+	border-color: var(--accent-strong) !important;
 }
 
 #toggleExcalidraw[aria-pressed="true"],
