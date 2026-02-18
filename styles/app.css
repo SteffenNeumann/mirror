@@ -315,7 +315,7 @@ body.glow-disabled .bg-glow {
 	position: relative;
 }
 #psList .ps-note-item:hover {
-	max-height: 10rem;
+	max-height: 5rem;
 }
 #psList .ps-note-item:last-child {
 	border-bottom: none;
@@ -328,6 +328,11 @@ body.glow-disabled .bg-glow {
 	border-radius: 8px;
 	border-right: none;
 	box-shadow: none;
+	border-bottom: none;
+	border-top: none;
+}
+#psList .ps-note-item:has(+ .ps-note-active) {
+	border-bottom: none;
 }
 
 /* ── Search Help Button ───────────────────── */
@@ -816,9 +821,9 @@ body.code-lang-active #clearMirror {
 	overflow: hidden;
 }
 #psList .ps-note-item:hover .ps-note-tags {
-	visibility: visible;
-	opacity: 1;
-	max-height: 4rem;
+	visibility: hidden;
+	opacity: 0;
+	max-height: 0;
 }
 .md-content a {
 	color: rgb(96 165 250);
