@@ -10990,16 +10990,16 @@
 		const previewPreBorder = previewPreColors.preBorder;
 		const previewPreText = previewPreColors.preText;
 		const previewCodeBg = previewPreColors.codeBg;
-		const previewFieldBg = isMonoLight
+		const previewFieldBg = isLightSyntax
 			? "rgba(15,23,42,.06)"
 			: "rgba(15,23,42,.6)";
-		const previewFieldBorder = isMonoLight
+		const previewFieldBorder = isLightSyntax
 			? "rgba(15,23,42,.12)"
 			: "rgba(255,255,255,.12)";
-		const previewFieldText = isMonoLight
+		const previewFieldText = isLightSyntax
 			? "rgba(15,23,42,.9)"
 			: "rgba(226,232,240,.9)";
-		const previewValueText = isMonoLight
+		const previewValueText = isLightSyntax
 			? "rgba(15,23,42,.95)"
 			: "rgba(226,232,240,.95)";
 		const previewMetaBg =
@@ -11523,7 +11523,7 @@ ${highlightThemeCss}
 						else field.classList.remove('pw-revealed');
 						var toggleBtn = field.querySelector ? field.querySelector('.pw-toggle') : null;
 						if (toggleBtn) {
-							toggleBtn.textContent = on ? '🙈' : '👁';
+							toggleBtn.textContent = on ? '○' : '◉';
 							toggleBtn.setAttribute('aria-label', on ? 'Passwort verbergen' : 'Passwort anzeigen');
 							toggleBtn.setAttribute('title', on ? 'Verbergen' : 'Anzeigen');
 						}
