@@ -231,13 +231,14 @@ body.glow-disabled .bg-glow {
 	transition: all 0.15s ease;
 }
 
+#copyMirror:hover,
+#toggleBlockArrange:hover,
+#togglePermanentLink:hover,
 #toggleExcalidraw:hover,
 #toggleExcel:hover,
-#toggleLinear:hover,
-#togglePermanentLink:hover,
-#toggleBlockArrange:hover,
-#copyMirror:hover {
+#toggleLinear:hover {
 	border-color: var(--accent-strong) !important;
+	transform: translateY(-1px);
 }
 
 #toggleExcalidraw[aria-pressed="true"],
