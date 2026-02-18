@@ -887,10 +887,23 @@ body.glow-disabled .bg-glow {
 	color: var(--accent-text-soft, rgba(148, 163, 184, 0.5));
 }
 
-/* Theme-specific tags bar adjustments (pills use CSS vars automatically) */
+/* Theme-specific tags bar adjustments */
+/* Light themes: darker text for readability */
 body[data-theme="coffeeLight"] .ps-tags-bar-inner {
 	background: rgba(255, 250, 244, 0.85);
 	border-color: rgba(217, 199, 188, 0.5);
+}
+body[data-theme="coffeeLight"] .ps-tag-pill-year {
+	color: #0e7490;
+}
+body[data-theme="coffeeLight"] .ps-tag-pill-month {
+	color: #6d28d9;
+}
+body[data-theme="coffeeLight"] .ps-tag-pill-category {
+	color: #c2410c;
+}
+body[data-theme="coffeeLight"] .ps-tag-pill-subcategory {
+	color: #4d7c0f;
 }
 body[data-theme="coffeeLight"] .ps-tags-input {
 	color: #3b2a21;
@@ -903,6 +916,18 @@ body[data-theme="bitterLight"] .ps-tags-bar-inner {
 	background: rgba(247, 246, 244, 0.9);
 	border-color: rgba(216, 210, 203, 0.5);
 }
+body[data-theme="bitterLight"] .ps-tag-pill-year {
+	color: #0e7490;
+}
+body[data-theme="bitterLight"] .ps-tag-pill-month {
+	color: #6d28d9;
+}
+body[data-theme="bitterLight"] .ps-tag-pill-category {
+	color: #c2410c;
+}
+body[data-theme="bitterLight"] .ps-tag-pill-subcategory {
+	color: #4d7c0f;
+}
 body[data-theme="bitterLight"] .ps-tags-input {
 	color: #0d0c10;
 }
@@ -913,6 +938,18 @@ body[data-theme="bitterLight"] .ps-tags-input::placeholder {
 body[data-theme="monoLight"] .ps-tags-bar-inner {
 	background: rgba(255, 255, 255, 0.9);
 	border-color: rgba(208, 215, 222, 0.6);
+}
+body[data-theme="monoLight"] .ps-tag-pill-year {
+	color: #0e7490;
+}
+body[data-theme="monoLight"] .ps-tag-pill-month {
+	color: #6d28d9;
+}
+body[data-theme="monoLight"] .ps-tag-pill-category {
+	color: #c2410c;
+}
+body[data-theme="monoLight"] .ps-tag-pill-subcategory {
+	color: #4d7c0f;
 }
 body[data-theme="monoLight"] .ps-tags-input {
 	color: #24292f;
