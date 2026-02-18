@@ -337,6 +337,17 @@ body.glow-disabled .bg-glow {
 	#psList .ps-note-item {
 		border-bottom-color: rgba(255, 255, 255, 0.015);
 	}
+	/* Ensure note meta is visible on mobile */
+	#psList .ps-note-meta {
+		visibility: visible !important;
+		opacity: 1 !important;
+		display: flex !important;
+	}
+	.ps-note-tags-inline {
+		display: inline !important;
+		visibility: visible !important;
+		opacity: 1 !important;
+	}
 }
 
 /* ── Search Help Button ───────────────────── */
