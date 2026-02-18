@@ -1613,6 +1613,19 @@
 		}
 	}
 
+	function fmtShortDate(ts) {
+		try {
+			const date = new Date(ts);
+			if (Number.isNaN(date.getTime())) return "";
+			const dd = String(date.getDate()).padStart(2, "0");
+			const mm = String(date.getMonth() + 1).padStart(2, "0");
+			const yy = String(date.getFullYear()).slice(-2);
+			return `${dd}.${mm}.${yy}`;
+		} catch {
+			return "";
+		}
+	}
+
 	function formatDatePart(date) {
 		if (!date || Number.isNaN(date.getTime())) return "";
 		if (dateFormat === "dmy") {
@@ -13160,13 +13173,7 @@ ${highlightThemeCss}
 				const pinned = rawTags.some((t) => String(t || "") === PS_PINNED_TAG);
 				const linked = id && linkedNoteIds.has(id);
 				const tags = stripPinnedTag(stripManualTagsMarker(rawTags));
-				const showTags = tags.length > 6 ? tags.slice(-6) : tags;
-				const chips = showTags
-					.map(
-						(t) =>
-							`<span class="rounded-full border border-white/10 bg-white/5 px-2 py-0 text-[9px] text-slate-300">#${t}</span>`
-					)
-					.join("");
+				const tagsText = tags.map((t) => `#${t}`).join(" ");
 				const info = getNoteTitleAndExcerpt(n && n.text ? n.text : "");
 				const titleHtml = escapeHtml(info.title);
 				const previewLines = getNotePreviewLines(n && n.text ? n.text : "", 3);
@@ -13200,9 +13207,9 @@ ${highlightThemeCss}
 								</button>
 							</div>
 						</div>
-						<div class="flex items-center justify-between mt-2 w-full ps-note-meta">
-							${chips ? `<div class="ps-note-tags">${chips}</div>` : '<div class="flex-1"></div>'}
-							<span class="text-[10px] text-slate-400 flex-shrink-0 ml-4">${fmtDate(n.createdAt)}</span>
+						<div class="flex items-center gap-2 mt-1 w-full ps-note-meta min-w-0">
+							<span class="text-[10px] text-slate-400 flex-shrink-0">${fmtShortDate(n.updatedAt || n.createdAt)}</span>
+							${tagsText ? `<span class="ps-note-tags-inline text-[10px] text-slate-400 truncate min-w-0">${escapeHtml(tagsText)}</span>` : ''}
 						</div>
 						${linkedBadge}
 					</div>
