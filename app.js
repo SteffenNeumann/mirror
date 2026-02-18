@@ -1944,6 +1944,7 @@
 	}
 
 	let psEditorTagsSyncing = false;
+	const psEditorTagsPills = document.getElementById("psEditorTagsPills");
 
 	function formatTagsForEditor(tags) {
 		const arr = Array.isArray(tags) ? tags : [];
@@ -1955,6 +1956,134 @@
 		psEditorTagsBar.classList.toggle("hidden", !visible);
 	}
 
+	function createPillRemoveIcon() {
+		const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+		svg.setAttribute("viewBox", "0 0 16 16");
+		svg.setAttribute("fill", "currentColor");
+		const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+		path.setAttribute("d", "M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z");
+		svg.appendChild(path);
+		return svg;
+	}
+
+	function renderPsEditorTagsPills() {
+		if (!psEditorTagsPills) return;
+		psEditorTagsPills.innerHTML = "";
+
+		// Year pill
+		if (psEditingNoteYearTag) {
+			const pill = document.createElement("span");
+			pill.className = "ps-tag-pill ps-tag-pill-year";
+			pill.innerHTML = `<span>${escapeHtml(psEditingNoteYearTag)}</span>`;
+			const rm = document.createElement("span");
+			rm.className = "ps-tag-pill-remove";
+			rm.appendChild(createPillRemoveIcon());
+			rm.addEventListener("click", (e) => {
+				e.stopPropagation();
+				psEditingNoteYearTag = "";
+				psEditingNoteTagsOverridden = true;
+				syncPsEditorTagMetaInputs();
+				renderPsEditorTagsPills();
+				updatePsEditingTagsHint();
+				schedulePsTagsAutoSave();
+				updateEditorMetaYaml();
+			});
+			pill.appendChild(rm);
+			psEditorTagsPills.appendChild(pill);
+		}
+
+		// Month pill
+		if (psEditingNoteMonthTag) {
+			const pill = document.createElement("span");
+			pill.className = "ps-tag-pill ps-tag-pill-month";
+			pill.innerHTML = `<span>${escapeHtml(psEditingNoteMonthTag.charAt(0).toUpperCase() + psEditingNoteMonthTag.slice(1))}</span>`;
+			const rm = document.createElement("span");
+			rm.className = "ps-tag-pill-remove";
+			rm.appendChild(createPillRemoveIcon());
+			rm.addEventListener("click", (e) => {
+				e.stopPropagation();
+				psEditingNoteMonthTag = "";
+				psEditingNoteTagsOverridden = true;
+				syncPsEditorTagMetaInputs();
+				renderPsEditorTagsPills();
+				updatePsEditingTagsHint();
+				schedulePsTagsAutoSave();
+				updateEditorMetaYaml();
+			});
+			pill.appendChild(rm);
+			psEditorTagsPills.appendChild(pill);
+		}
+
+		// Category pill
+		if (psEditingNoteCategory) {
+			const pill = document.createElement("span");
+			pill.className = "ps-tag-pill ps-tag-pill-category";
+			pill.innerHTML = `<span>${escapeHtml(psEditingNoteCategory)}</span>`;
+			const rm = document.createElement("span");
+			rm.className = "ps-tag-pill-remove";
+			rm.appendChild(createPillRemoveIcon());
+			rm.addEventListener("click", (e) => {
+				e.stopPropagation();
+				psEditingNoteCategory = "";
+				psEditingNoteTagsOverridden = true;
+				syncPsEditorTagMetaInputs();
+				renderPsEditorTagsPills();
+				updatePsEditingTagsHint();
+				schedulePsTagsAutoSave();
+				updateEditorMetaYaml();
+			});
+			pill.appendChild(rm);
+			psEditorTagsPills.appendChild(pill);
+		}
+
+		// Subcategory pill
+		if (psEditingNoteSubcategory) {
+			const pill = document.createElement("span");
+			pill.className = "ps-tag-pill ps-tag-pill-subcategory";
+			pill.innerHTML = `<span>${escapeHtml(psEditingNoteSubcategory)}</span>`;
+			const rm = document.createElement("span");
+			rm.className = "ps-tag-pill-remove";
+			rm.appendChild(createPillRemoveIcon());
+			rm.addEventListener("click", (e) => {
+				e.stopPropagation();
+				psEditingNoteSubcategory = "";
+				psEditingNoteTagsOverridden = true;
+				syncPsEditorTagMetaInputs();
+				renderPsEditorTagsPills();
+				updatePsEditingTagsHint();
+				schedulePsTagsAutoSave();
+				updateEditorMetaYaml();
+			});
+			pill.appendChild(rm);
+			psEditorTagsPills.appendChild(pill);
+		}
+
+		// Manual tags as pills
+		const manualTags = Array.isArray(psEditingNoteTags) ? psEditingNoteTags : [];
+		for (const tag of manualTags) {
+			const s = String(tag || "").trim();
+			if (!s) continue;
+			const pill = document.createElement("span");
+			pill.className = "ps-tag-pill ps-tag-pill-tag";
+			pill.innerHTML = `<span>#${escapeHtml(s)}</span>`;
+			const rm = document.createElement("span");
+			rm.className = "ps-tag-pill-remove";
+			rm.appendChild(createPillRemoveIcon());
+			rm.addEventListener("click", (e) => {
+				e.stopPropagation();
+				psEditingNoteTags = psEditingNoteTags.filter(t => t.toLowerCase() !== s.toLowerCase());
+				psEditingNoteTagsOverridden = true;
+				renderPsEditorTagsPills();
+				updatePsEditingTagsHint();
+				updateEditingNoteTagsLocal(psEditingNoteTags);
+				schedulePsTagsAutoSave();
+				updateEditorMetaYaml();
+			});
+			pill.appendChild(rm);
+			psEditorTagsPills.appendChild(pill);
+		}
+	}
+
 	function syncPsEditorTagsInput(force) {
 		if (!psEditorTagsInput) return;
 		try {
@@ -1964,9 +2093,10 @@
 			// ignore
 		}
 		psEditorTagsSyncing = true;
-		psEditorTagsInput.value = formatTagsForEditor(psEditingNoteTags);
+		psEditorTagsInput.value = ""; // Clear input since tags are now shown as pills
 		psEditorTagsSyncing = false;
 		syncPsEditorTagMetaInputs();
+		renderPsEditorTagsPills();
 	}
 
 	let psEditorTagsSuggestOpen = false;
@@ -2120,16 +2250,44 @@
 		renderPsEditorTagsSuggest(items, nextIndex);
 	}
 
+	function addTagFromInput() {
+		if (!psEditorTagsInput) return false;
+		const inputVal = String(psEditorTagsInput.value || "").trim().replace(/^#/, "");
+		if (!inputVal) return false;
+		
+		// Check if it's a special tag type
+		if (isYearTag(inputVal) && !psEditingNoteYearTag) {
+			psEditingNoteYearTag = inputVal;
+		} else if (isMonthTag(inputVal) && !psEditingNoteMonthTag) {
+			psEditingNoteMonthTag = normalizeMonthTag(inputVal);
+		} else if (inputVal.startsWith("cat:")) {
+			psEditingNoteCategory = normalizeCategoryValue(inputVal.slice(4));
+		} else if (inputVal.startsWith("sub:")) {
+			psEditingNoteSubcategory = normalizeCategoryValue(inputVal.slice(4));
+		} else {
+			// Add as manual tag if not already present
+			const normalized = inputVal.toLowerCase().replace(/\s+/g, "-").slice(0, 48);
+			if (normalized && !psEditingNoteTags.some(t => t.toLowerCase() === normalized)) {
+				psEditingNoteTags = [...psEditingNoteTags, normalized];
+			}
+		}
+		
+		psEditingNoteTagsOverridden = true;
+		psEditorTagsInput.value = "";
+		syncPsEditorTagMetaInputs();
+		renderPsEditorTagsPills();
+		updatePsEditingTagsHint();
+		updateEditingNoteTagsLocal(psEditingNoteTags);
+		schedulePsTagsAutoSave();
+		updateEditorMetaYaml();
+		return true;
+	}
+
 	function updatePsEditorTagsFromInput() {
 		if (!psEditorTagsInput) return;
 		if (psEditorTagsSyncing) return;
-		const nextTags = normalizeManualTags(psEditorTagsInput.value);
-		psEditingNoteTags = nextTags;
-		psEditingNoteTagsOverridden = true;
-		updatePsEditingTagsHint();
-		updateEditingNoteTagsLocal(nextTags);
-		schedulePsTagsAutoSave();
-		updateEditorMetaYaml();
+		// For pill-based design, we don't update tags on every input
+		// Tags are added when user presses Enter or selects from suggestions
 	}
 
 	function applyPsEditorTagSuggestion(tag) {
@@ -2138,22 +2296,24 @@
 			closePsEditorTagsSuggest();
 			el.value = String(tag || "");
 			updatePsEditorTagMetaFromInputs();
+			renderPsEditorTagsPills();
 			el.focus();
 			return;
 		}
 		if (!psEditorTagsInput) return;
-		const { value, start, end } = getPsEditorTagTokenBounds(psEditorTagsInput);
-		const nextValue =
-			value.slice(0, start) + String(tag || "") + value.slice(end);
-		closePsEditorTagsSuggest();
-		psEditorTagsInput.value = nextValue;
-		const caret = start + String(tag || "").length;
-		try {
-			psEditorTagsInput.setSelectionRange(caret, caret);
-		} catch {
-			// ignore
+		// Add the tag as a pill
+		const normalized = String(tag || "").toLowerCase().replace(/\s+/g, "-").slice(0, 48);
+		if (normalized && !psEditingNoteTags.some(t => t.toLowerCase() === normalized)) {
+			psEditingNoteTags = [...psEditingNoteTags, normalized];
 		}
-		updatePsEditorTagsFromInput();
+		closePsEditorTagsSuggest();
+		psEditorTagsInput.value = "";
+		psEditingNoteTagsOverridden = true;
+		renderPsEditorTagsPills();
+		updatePsEditingTagsHint();
+		updateEditingNoteTagsLocal(psEditingNoteTags);
+		schedulePsTagsAutoSave();
+		updateEditorMetaYaml();
 		psEditorTagsInput.focus();
 		updatePsEditorTagsSuggest(true);
 	}
@@ -21867,48 +22027,73 @@ self.onmessage = async (e) => {
 	}
 	if (psEditorTagsInput) {
 		psEditorTagsInput.addEventListener("input", () => {
-			updatePsEditorTagsFromInput();
 			updatePsEditorTagsSuggest(true);
 		});
 		psEditorTagsInput.addEventListener("focus", () => {
 			updatePsEditorTagsSuggest(true);
 		});
 		psEditorTagsInput.addEventListener("keydown", (ev) => {
-			if (!psEditorTagsSuggestOpen) return;
-			if (!psEditorTagsSuggestItems.length) return;
-			if (ev.key === "ArrowDown") {
-				ev.preventDefault();
-				const next = Math.min(
-					psEditorTagsSuggestItems.length - 1,
-					psEditorTagsSuggestIndex + 1
-				);
-				psEditorTagsSuggestIndex = next;
-				renderPsEditorTagsSuggest(psEditorTagsSuggestItems, next);
-				return;
-			}
-			if (ev.key === "ArrowUp") {
-				ev.preventDefault();
-				const next = Math.max(0, psEditorTagsSuggestIndex - 1);
-				psEditorTagsSuggestIndex = next;
-				renderPsEditorTagsSuggest(psEditorTagsSuggestItems, next);
-				return;
-			}
-			if (ev.key === "Enter" || ev.key === "Tab") {
-				const item = psEditorTagsSuggestItems[psEditorTagsSuggestIndex];
-				if (item) {
+			// Handle suggestions navigation
+			if (psEditorTagsSuggestOpen && psEditorTagsSuggestItems.length) {
+				if (ev.key === "ArrowDown") {
 					ev.preventDefault();
-					applyPsEditorTagSuggestion(item);
+					const next = Math.min(
+						psEditorTagsSuggestItems.length - 1,
+						psEditorTagsSuggestIndex + 1
+					);
+					psEditorTagsSuggestIndex = next;
+					renderPsEditorTagsSuggest(psEditorTagsSuggestItems, next);
+					return;
 				}
+				if (ev.key === "ArrowUp") {
+					ev.preventDefault();
+					const next = Math.max(0, psEditorTagsSuggestIndex - 1);
+					psEditorTagsSuggestIndex = next;
+					renderPsEditorTagsSuggest(psEditorTagsSuggestItems, next);
+					return;
+				}
+				if (ev.key === "Tab") {
+					const item = psEditorTagsSuggestItems[psEditorTagsSuggestIndex];
+					if (item) {
+						ev.preventDefault();
+						applyPsEditorTagSuggestion(item);
+					}
+					return;
+				}
+				if (ev.key === "Enter") {
+					const item = psEditorTagsSuggestItems[psEditorTagsSuggestIndex];
+					if (item) {
+						ev.preventDefault();
+						applyPsEditorTagSuggestion(item);
+						return;
+					}
+				}
+				if (ev.key === "Escape") {
+					ev.preventDefault();
+					closePsEditorTagsSuggest();
+					return;
+				}
+			}
+			// Add tag on Enter when no suggestion selected
+			if (ev.key === "Enter") {
+				ev.preventDefault();
+				addTagFromInput();
 				return;
 			}
-			if (ev.key === "Escape") {
-				ev.preventDefault();
-				closePsEditorTagsSuggest();
+			// Add tag on comma or space (common tag separators)
+			if (ev.key === "," || ev.key === " ") {
+				const val = String(psEditorTagsInput.value || "").trim();
+				if (val) {
+					ev.preventDefault();
+					addTagFromInput();
+				}
 			}
 		});
 		psEditorTagsInput.addEventListener("blur", () => {
 			if (psEditorTagsSyncing) return;
-			syncPsEditorTagsInput();
+			// Add any remaining input as a tag on blur
+			const val = String(psEditorTagsInput.value || "").trim();
+			if (val) addTagFromInput();
 			closePsEditorTagsSuggest();
 		});
 	}
