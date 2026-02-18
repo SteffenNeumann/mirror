@@ -200,7 +200,6 @@ body.glow-disabled .bg-glow {
 #toggleComments,
 #psMetaToggle,
 #clearMirror,
-#copyMirror,
 #psEditorTagsBar,
 #psEditorTagsBar > div {
 	background: rgba(2, 6, 23, 0.75) !important;
