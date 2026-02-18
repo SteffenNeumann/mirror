@@ -1065,6 +1065,30 @@
 														0
 													</span>
 											</button>
+											<button
+												id="toggleBlockArrange"
+												type="button"
+												class="absolute bottom-2 left-12 z-10 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150 transition hover:bg-white/10 active:bg-white/15"
+												title="Blöcke anordnen"
+												aria-label="Blöcke anordnen"
+												data-i18n-title="arrange.toggle"
+												data-i18n-aria="arrange.toggle"
+												aria-pressed="false">
+												<svg
+													viewBox="0 0 24 24"
+													fill="none"
+													stroke="currentColor"
+													stroke-width="2"
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													class="h-4 w-4">
+													<rect x="3" y="3" width="7" height="7" rx="1" />
+													<rect x="14" y="3" width="7" height="7" rx="1" />
+													<rect x="3" y="14" width="7" height="7" rx="1" />
+													<path d="M14 17h7" />
+													<path d="M17.5 14v6" />
+												</svg>
+											</button>
 											<div
 												id="commentPanel"
 												class="absolute right-2 top-20 bottom-2 hidden flex w-[min(92vw,420px)] flex-col overflow-hidden rounded-xl border border-white/10 bg-slate-950/90 shadow-soft backdrop-blur">
@@ -1152,6 +1176,54 @@
 															</span>
 														</button>
 													</div>
+												</div>
+											</div>
+											<div
+												id="blockArrangeOverlay"
+												class="block-arrange-overlay hidden"
+												aria-hidden="true">
+												<div class="block-arrange-header">
+													<div class="block-arrange-title" data-i18n="arrange.title">Blöcke anordnen</div>
+													<div class="block-arrange-toolbar">
+														<label class="block-arrange-outline-label">
+															<input type="checkbox" id="blockArrangeOutline" />
+															<span data-i18n="arrange.outline">Nur Überschriften</span>
+														</label>
+														<button
+															id="blockArrangeUndo"
+															type="button"
+															class="block-arrange-btn"
+															disabled
+															data-i18n="arrange.undo">Rückgängig</button>
+													</div>
+													<button
+														id="blockArrangeClose"
+														type="button"
+														class="block-arrange-close"
+														title="Schließen"
+														aria-label="Schließen"
+														data-i18n-title="arrange.close"
+														data-i18n-aria="arrange.close">
+														<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+															<path d="M18 6L6 18" />
+															<path d="M6 6l12 12" />
+														</svg>
+													</button>
+												</div>
+												<div class="block-arrange-hint" data-i18n="arrange.hint">Ziehen zum Verschieben · Alt+↑↓ mit Tastatur</div>
+												<div id="blockArrangeList" class="block-arrange-list"></div>
+												<div id="blockArrangeEmpty" class="block-arrange-empty hidden" data-i18n="arrange.empty">Keine Blöcke gefunden.</div>
+												<div class="block-arrange-footer">
+													<button
+														id="blockArrangeCancel"
+														type="button"
+														class="block-arrange-btn"
+														data-i18n="arrange.cancel">Abbrechen</button>
+													<button
+														id="blockArrangeApply"
+														type="button"
+														class="block-arrange-btn block-arrange-btn-primary"
+														data-i18n="arrange.apply">Übernehmen</button>
 												</div>
 											</div>
 								</div>

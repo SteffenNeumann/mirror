@@ -5342,6 +5342,16 @@
 				"comments.reply_action": "Antwort senden",
 				"comments.edit_action": "Kommentar bearbeiten",
 				"comments.delete_action": "Kommentar löschen",
+				"arrange.toggle": "Blöcke anordnen",
+				"arrange.title": "Blöcke anordnen",
+				"arrange.close": "Schließen",
+				"arrange.apply": "Übernehmen",
+				"arrange.cancel": "Abbrechen",
+				"arrange.undo": "Rückgängig",
+				"arrange.outline": "Nur Überschriften",
+				"arrange.hint": "Ziehen zum Verschieben · Alt+↑↓ mit Tastatur",
+				"arrange.empty": "Keine Blöcke gefunden.",
+				"arrange.unsaved": "Änderungen verwerfen?",
 				"editor.nav_back": "Zurück",
 				"editor.nav_forward": "Vorwärts",
 				"editor.preview": "Vorschau",
@@ -5789,6 +5799,16 @@
 				"comments.reply_action": "Send reply",
 				"comments.edit_action": "Edit comment",
 				"comments.delete_action": "Delete comment",
+				"arrange.toggle": "Arrange blocks",
+				"arrange.title": "Arrange Blocks",
+				"arrange.close": "Close",
+				"arrange.apply": "Apply",
+				"arrange.cancel": "Cancel",
+				"arrange.undo": "Undo",
+				"arrange.outline": "Headings only",
+				"arrange.hint": "Drag to move · Alt+↑↓ with keyboard",
+				"arrange.empty": "No blocks found.",
+				"arrange.unsaved": "Discard changes?",
 				"editor.nav_back": "Back",
 				"editor.nav_forward": "Forward",
 				"editor.preview": "Preview",
@@ -23974,6 +23994,516 @@ self.onmessage = async (e) => {
 		// ignore
 	}
 
+	/* ════════════════════════════════════════════════════════════════════════════════
+	   BLOCK ARRANGE MODE
+	   ════════════════════════════════════════════════════════════════════════════════ */
+
+	const blockArrangeOverlay = document.getElementById("blockArrangeOverlay");
+	const blockArrangeList = document.getElementById("blockArrangeList");
+	const blockArrangeEmpty = document.getElementById("blockArrangeEmpty");
+	const toggleBlockArrangeBtn = document.getElementById("toggleBlockArrange");
+	const blockArrangeCloseBtn = document.getElementById("blockArrangeClose");
+	const blockArrangeCancelBtn = document.getElementById("blockArrangeCancel");
+	const blockArrangeApplyBtn = document.getElementById("blockArrangeApply");
+	const blockArrangeUndoBtn = document.getElementById("blockArrangeUndo");
+	const blockArrangeOutlineChk = document.getElementById("blockArrangeOutline");
+
+	let blockArrangeOpen = false;
+	let blockArrangeBlocks = [];
+	let blockArrangeHistory = [];
+	let blockArrangeSelectedIdx = -1;
+	let blockArrangeOutlineOnly = false;
+
+	/**
+	 * Parse markdown text into blocks
+	 */
+	function parseMarkdownBlocks(text) {
+		const lines = text.split("\n");
+		const blocks = [];
+		let i = 0;
+
+		while (i < lines.length) {
+			const line = lines[i];
+			const trimmed = line.trim();
+
+			// Skip empty lines
+			if (!trimmed) {
+				i++;
+				continue;
+			}
+
+			// Headings
+			const headingMatch = trimmed.match(/^(#{1,6})\s+(.*)/);
+			if (headingMatch) {
+				const level = headingMatch[1].length;
+				blocks.push({
+					type: `h${level}`,
+					content: line,
+					preview: headingMatch[2].trim(),
+					startLine: i,
+					endLine: i,
+					level: level
+				});
+				i++;
+				continue;
+			}
+
+			// Fenced code blocks
+			if (trimmed.startsWith("```")) {
+				const startLine = i;
+				const codeLines = [line];
+				const lang = trimmed.slice(3).trim();
+				i++;
+				while (i < lines.length && !lines[i].trim().startsWith("```")) {
+					codeLines.push(lines[i]);
+					i++;
+				}
+				if (i < lines.length) {
+					codeLines.push(lines[i]);
+					i++;
+				}
+				blocks.push({
+					type: "code",
+					content: codeLines.join("\n"),
+					preview: lang ? `[${lang}] ${codeLines.length - 2} lines` : `${codeLines.length - 2} lines`,
+					startLine: startLine,
+					endLine: i - 1
+				});
+				continue;
+			}
+
+			// Tables (starts with |)
+			if (trimmed.startsWith("|")) {
+				const startLine = i;
+				const tableLines = [line];
+				i++;
+				while (i < lines.length && lines[i].trim().startsWith("|")) {
+					tableLines.push(lines[i]);
+					i++;
+				}
+				const cols = (tableLines[0].match(/\|/g) || []).length - 1;
+				const rows = tableLines.length;
+				blocks.push({
+					type: "table",
+					content: tableLines.join("\n"),
+					preview: `${rows}×${cols} table`,
+					startLine: startLine,
+					endLine: i - 1
+				});
+				continue;
+			}
+
+			// Blockquotes
+			if (trimmed.startsWith(">")) {
+				const startLine = i;
+				const quoteLines = [line];
+				i++;
+				while (i < lines.length && lines[i].trim().startsWith(">")) {
+					quoteLines.push(lines[i]);
+					i++;
+				}
+				const preview = quoteLines[0].replace(/^>\s*/, "").slice(0, 60);
+				blocks.push({
+					type: "quote",
+					content: quoteLines.join("\n"),
+					preview: preview,
+					startLine: startLine,
+					endLine: i - 1
+				});
+				continue;
+			}
+
+			// Horizontal rules
+			if (/^(---+|\*\*\*+|___+)$/.test(trimmed)) {
+				blocks.push({
+					type: "hr",
+					content: line,
+					preview: "───────",
+					startLine: i,
+					endLine: i
+				});
+				i++;
+				continue;
+			}
+
+			// Lists (unordered, ordered, task)
+			if (/^[-*+]\s|^\d+\.\s|^- \[[ x]\]/i.test(trimmed)) {
+				const startLine = i;
+				const listLines = [line];
+				i++;
+				while (i < lines.length) {
+					const nextTrimmed = lines[i].trim();
+					const isListItem = /^[-*+]\s|^\d+\.\s|^- \[[ x]\]/i.test(nextTrimmed);
+					const isIndented = lines[i].startsWith("  ") || lines[i].startsWith("\t");
+					if (!nextTrimmed || isListItem || isIndented) {
+						if (!nextTrimmed) {
+							// Check if next non-empty line is still a list
+							let j = i + 1;
+							while (j < lines.length && !lines[j].trim()) j++;
+							if (j < lines.length && /^[-*+]\s|^\d+\.\s|^- \[[ x]\]/i.test(lines[j].trim())) {
+								listLines.push(lines[i]);
+								i++;
+								continue;
+							}
+							break;
+						}
+						listLines.push(lines[i]);
+						i++;
+					} else {
+						break;
+					}
+				}
+				const itemCount = listLines.filter(l => /^[-*+]\s|^\d+\.\s|^- \[[ x]\]/i.test(l.trim())).length;
+				const firstItem = listLines[0].replace(/^[-*+]\s|^\d+\.\s|^- \[[ x]\]\s*/i, "").slice(0, 50);
+				blocks.push({
+					type: "list",
+					content: listLines.join("\n"),
+					preview: `${itemCount} items: ${firstItem}`,
+					startLine: startLine,
+					endLine: i - 1
+				});
+				continue;
+			}
+
+			// Paragraph (default)
+			const startLine = i;
+			const paraLines = [line];
+			i++;
+			while (i < lines.length) {
+				const nextTrimmed = lines[i].trim();
+				if (!nextTrimmed) break;
+				if (/^#{1,6}\s|^```|^\||^>|^---+$|^\*\*\*+$|^___+$|^[-*+]\s|^\d+\.\s|^- \[[ x]\]/i.test(nextTrimmed)) break;
+				paraLines.push(lines[i]);
+				i++;
+			}
+			blocks.push({
+				type: "paragraph",
+				content: paraLines.join("\n"),
+				preview: paraLines.join(" ").slice(0, 80),
+				startLine: startLine,
+				endLine: i - 1
+			});
+		}
+
+		return blocks;
+	}
+
+	/**
+	 * Convert blocks back to markdown text
+	 */
+	function blocksToMarkdown(blocks) {
+		return blocks.map(b => b.content).join("\n\n");
+	}
+
+	/**
+	 * Render block items in the list
+	 */
+	function renderBlockArrangeItems() {
+		if (!blockArrangeList) return;
+
+		const displayBlocks = blockArrangeOutlineOnly
+			? blockArrangeBlocks.filter(b => /^h[1-6]$/.test(b.type))
+			: blockArrangeBlocks;
+
+		if (!displayBlocks.length) {
+			blockArrangeList.innerHTML = "";
+			if (blockArrangeEmpty) blockArrangeEmpty.classList.remove("hidden");
+			return;
+		}
+
+		if (blockArrangeEmpty) blockArrangeEmpty.classList.add("hidden");
+
+		const badgeLabels = {
+			h1: "H1", h2: "H2", h3: "H3", h4: "H4", h5: "H5", h6: "H6",
+			code: "Code", list: "List", table: "Table", quote: "Quote", hr: "HR", paragraph: "P"
+		};
+
+		blockArrangeList.innerHTML = displayBlocks.map((block, idx) => {
+			const actualIdx = blockArrangeOutlineOnly
+				? blockArrangeBlocks.indexOf(block)
+				: idx;
+			const selected = actualIdx === blockArrangeSelectedIdx ? "selected" : "";
+			const preview = escapeHtml(block.preview || block.content.slice(0, 60));
+			const badge = badgeLabels[block.type] || block.type.toUpperCase();
+			const indent = block.level ? `padding-left: ${(block.level - 1) * 1.25}rem;` : "";
+
+			return `
+				<div class="block-arrange-item ${selected}"
+					 data-idx="${actualIdx}"
+					 draggable="true"
+					 tabindex="0"
+					 style="${indent}">
+					<span class="block-arrange-handle">
+						<svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+							<circle cx="5" cy="4" r="1.5"/><circle cx="11" cy="4" r="1.5"/>
+							<circle cx="5" cy="8" r="1.5"/><circle cx="11" cy="8" r="1.5"/>
+							<circle cx="5" cy="12" r="1.5"/><circle cx="11" cy="12" r="1.5"/>
+						</svg>
+					</span>
+					<span class="block-arrange-badge" data-type="${block.type}">${badge}</span>
+					<span class="block-arrange-preview">${preview}</span>
+				</div>
+			`;
+		}).join("");
+
+		// Re-attach drag handlers
+		blockArrangeList.querySelectorAll(".block-arrange-item").forEach(item => {
+			item.addEventListener("dragstart", handleBlockDragStart);
+			item.addEventListener("dragend", handleBlockDragEnd);
+			item.addEventListener("dragover", handleBlockDragOver);
+			item.addEventListener("dragleave", handleBlockDragLeave);
+			item.addEventListener("drop", handleBlockDrop);
+			item.addEventListener("click", handleBlockClick);
+			item.addEventListener("keydown", handleBlockKeydown);
+		});
+	}
+
+	let draggedBlockIdx = -1;
+
+	function handleBlockDragStart(e) {
+		const item = e.currentTarget;
+		draggedBlockIdx = parseInt(item.dataset.idx, 10);
+		item.classList.add("dragging");
+		e.dataTransfer.effectAllowed = "move";
+		e.dataTransfer.setData("text/plain", draggedBlockIdx.toString());
+	}
+
+	function handleBlockDragEnd(e) {
+		e.currentTarget.classList.remove("dragging");
+		blockArrangeList.querySelectorAll(".block-arrange-item").forEach(el => {
+			el.classList.remove("drag-over");
+		});
+		draggedBlockIdx = -1;
+	}
+
+	function handleBlockDragOver(e) {
+		e.preventDefault();
+		e.dataTransfer.dropEffect = "move";
+		const item = e.currentTarget;
+		const targetIdx = parseInt(item.dataset.idx, 10);
+		if (targetIdx !== draggedBlockIdx) {
+			item.classList.add("drag-over");
+		}
+	}
+
+	function handleBlockDragLeave(e) {
+		e.currentTarget.classList.remove("drag-over");
+	}
+
+	function handleBlockDrop(e) {
+		e.preventDefault();
+		const item = e.currentTarget;
+		item.classList.remove("drag-over");
+		const targetIdx = parseInt(item.dataset.idx, 10);
+		if (draggedBlockIdx === -1 || draggedBlockIdx === targetIdx) return;
+
+		moveBlock(draggedBlockIdx, targetIdx);
+		draggedBlockIdx = -1;
+	}
+
+	function handleBlockClick(e) {
+		const item = e.currentTarget;
+		const idx = parseInt(item.dataset.idx, 10);
+		blockArrangeSelectedIdx = idx;
+		renderBlockArrangeItems();
+		item.focus();
+	}
+
+	function handleBlockKeydown(e) {
+		const item = e.currentTarget;
+		const idx = parseInt(item.dataset.idx, 10);
+
+		if (e.altKey && e.key === "ArrowUp") {
+			e.preventDefault();
+			if (idx > 0) moveBlock(idx, idx - 1);
+		} else if (e.altKey && e.key === "ArrowDown") {
+			e.preventDefault();
+			if (idx < blockArrangeBlocks.length - 1) moveBlock(idx, idx + 1);
+		} else if (e.key === "ArrowUp") {
+			e.preventDefault();
+			const prev = blockArrangeList.querySelector(`[data-idx="${idx - 1}"]`);
+			if (prev) {
+				blockArrangeSelectedIdx = idx - 1;
+				renderBlockArrangeItems();
+				prev.focus();
+			}
+		} else if (e.key === "ArrowDown") {
+			e.preventDefault();
+			const next = blockArrangeList.querySelector(`[data-idx="${idx + 1}"]`);
+			if (next) {
+				blockArrangeSelectedIdx = idx + 1;
+				renderBlockArrangeItems();
+				next.focus();
+			}
+		}
+	}
+
+	function moveBlock(fromIdx, toIdx) {
+		// Save history for undo
+		blockArrangeHistory.push(blockArrangeBlocks.map(b => ({ ...b })));
+		if (blockArrangeUndoBtn) blockArrangeUndoBtn.disabled = false;
+
+		// Perform move
+		const [block] = blockArrangeBlocks.splice(fromIdx, 1);
+		blockArrangeBlocks.splice(toIdx, 0, block);
+
+		// Update selection
+		blockArrangeSelectedIdx = toIdx;
+
+		// Re-render with animation hint
+		renderBlockArrangeItems();
+
+		// Focus moved item
+		setTimeout(() => {
+			const movedEl = blockArrangeList.querySelector(`[data-idx="${toIdx}"]`);
+			if (movedEl) movedEl.focus();
+		}, 50);
+	}
+
+	function undoBlockArrange() {
+		if (!blockArrangeHistory.length) return;
+		blockArrangeBlocks = blockArrangeHistory.pop();
+		if (blockArrangeUndoBtn) {
+			blockArrangeUndoBtn.disabled = blockArrangeHistory.length === 0;
+		}
+		renderBlockArrangeItems();
+	}
+
+	function openBlockArrange() {
+		if (!textarea || !blockArrangeOverlay) return;
+
+		const text = textarea.value || "";
+		blockArrangeBlocks = parseMarkdownBlocks(text);
+		blockArrangeHistory = [];
+		blockArrangeSelectedIdx = -1;
+
+		if (blockArrangeUndoBtn) blockArrangeUndoBtn.disabled = true;
+
+		renderBlockArrangeItems();
+
+		blockArrangeOverlay.setAttribute("aria-hidden", "false");
+		blockArrangeOpen = true;
+
+		// Update translations
+		const titleEl = blockArrangeOverlay.querySelector(".block-arrange-title");
+		if (titleEl) titleEl.textContent = t("arrange.title");
+
+		const hintEl = blockArrangeOverlay.querySelector(".block-arrange-hint");
+		if (hintEl) hintEl.innerHTML = t("arrange.hint");
+
+		const emptyEl = blockArrangeOverlay.querySelector("#blockArrangeEmpty span");
+		if (emptyEl) emptyEl.textContent = t("arrange.empty");
+
+		if (blockArrangeApplyBtn) blockArrangeApplyBtn.textContent = t("arrange.apply");
+		if (blockArrangeCancelBtn) blockArrangeCancelBtn.textContent = t("arrange.cancel");
+		if (blockArrangeUndoBtn) {
+			const undoSpan = blockArrangeUndoBtn.querySelector("span");
+			if (undoSpan) undoSpan.textContent = t("arrange.undo");
+		}
+
+		const outlineLabel = blockArrangeOverlay.querySelector("#blockArrangeOutline + span");
+		if (outlineLabel) outlineLabel.textContent = t("arrange.outline");
+
+		// Focus first item or list
+		setTimeout(() => {
+			const firstItem = blockArrangeList.querySelector(".block-arrange-item");
+			if (firstItem) firstItem.focus();
+			else blockArrangeList.focus();
+		}, 100);
+	}
+
+	function closeBlockArrange(apply = false) {
+		if (!blockArrangeOverlay) return;
+
+		if (apply && textarea && blockArrangeBlocks.length) {
+			const newText = blocksToMarkdown(blockArrangeBlocks);
+			textarea.value = newText;
+			textarea.dispatchEvent(new Event("input", { bubbles: true }));
+		}
+
+		blockArrangeOverlay.setAttribute("aria-hidden", "true");
+		blockArrangeOpen = false;
+		blockArrangeBlocks = [];
+		blockArrangeHistory = [];
+		blockArrangeSelectedIdx = -1;
+
+		textarea.focus();
+	}
+
+	function initBlockArrange() {
+		if (toggleBlockArrangeBtn) {
+			toggleBlockArrangeBtn.addEventListener("click", () => {
+				openBlockArrange();
+			});
+			toggleBlockArrangeBtn.title = t("arrange.toggle");
+		}
+
+		if (blockArrangeCloseBtn) {
+			blockArrangeCloseBtn.addEventListener("click", () => {
+				closeBlockArrange(false);
+			});
+		}
+
+		if (blockArrangeCancelBtn) {
+			blockArrangeCancelBtn.addEventListener("click", () => {
+				closeBlockArrange(false);
+			});
+		}
+
+		if (blockArrangeApplyBtn) {
+			blockArrangeApplyBtn.addEventListener("click", () => {
+				closeBlockArrange(true);
+			});
+		}
+
+		if (blockArrangeUndoBtn) {
+			blockArrangeUndoBtn.addEventListener("click", () => {
+				undoBlockArrange();
+			});
+		}
+
+		if (blockArrangeOutlineChk) {
+			blockArrangeOutlineChk.addEventListener("change", () => {
+				blockArrangeOutlineOnly = blockArrangeOutlineChk.checked;
+				renderBlockArrangeItems();
+			});
+		}
+
+		// Global keyboard shortcut: Cmd/Ctrl+Shift+A
+		window.addEventListener("keydown", (e) => {
+			if ((e.metaKey || e.ctrlKey) && e.shiftKey && e.key.toLowerCase() === "a") {
+				e.preventDefault();
+				if (blockArrangeOpen) {
+					closeBlockArrange(false);
+				} else {
+					openBlockArrange();
+				}
+			}
+
+			// Escape to close
+			if (e.key === "Escape" && blockArrangeOpen) {
+				e.preventDefault();
+				closeBlockArrange(false);
+			}
+
+			// Cmd/Ctrl+Z for undo in arrange mode
+			if (blockArrangeOpen && (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "z" && !e.shiftKey) {
+				e.preventDefault();
+				undoBlockArrange();
+			}
+		});
+
+		// Click outside list to deselect
+		if (blockArrangeOverlay) {
+			blockArrangeOverlay.addEventListener("click", (e) => {
+				if (e.target === blockArrangeOverlay || e.target.classList.contains("block-arrange-list")) {
+					blockArrangeSelectedIdx = -1;
+					renderBlockArrangeItems();
+				}
+			});
+		}
+	}
+
 	function initStartupTasks() {
 		setupScrollbarReveal();
 	initUiLanguage();
@@ -23991,6 +24521,7 @@ self.onmessage = async (e) => {
 	void loadCommentsForRoom();
 	updateTableMenuVisibility();
 	syncMobileFocusState();
+	initBlockArrange();
 	}
 	initStartupTasks();
 })();
