@@ -821,15 +821,15 @@ body.glow-disabled .bg-glow {
 	font-weight: 400;
 	margin-right: -2px;
 }
-/* All tags use subtle theme-based colors */
+/* All tags use theme accent colors */
 .ps-tag-pill-year,
 .ps-tag-pill-month,
 .ps-tag-pill-category,
 .ps-tag-pill-subcategory,
 .ps-tag-pill-tag {
-	background: var(--accent-bg-soft, rgba(148, 163, 184, 0.08));
-	border-color: var(--accent-border, rgba(148, 163, 184, 0.15));
-	color: var(--accent-text-soft, rgba(226, 232, 240, 0.85));
+	background: var(--accent-bg-soft);
+	border-color: var(--accent-border);
+	color: var(--accent-text-soft);
 }
 .ps-tag-pill-remove {
 	display: inline-flex;
@@ -871,16 +871,7 @@ body.glow-disabled .bg-glow {
 	color: var(--accent-text-soft, rgba(148, 163, 184, 0.5));
 }
 
-/* Light theme pill adjustments - subtle unified colors */
-body[data-theme="coffeeLight"] .ps-tag-pill-year,
-body[data-theme="coffeeLight"] .ps-tag-pill-month,
-body[data-theme="coffeeLight"] .ps-tag-pill-category,
-body[data-theme="coffeeLight"] .ps-tag-pill-subcategory,
-body[data-theme="coffeeLight"] .ps-tag-pill-tag {
-	background: rgba(139, 107, 85, 0.08);
-	border-color: rgba(139, 107, 85, 0.18);
-	color: rgba(59, 42, 33, 0.85);
-}
+/* Theme-specific tags bar adjustments (pills use CSS vars automatically) */
 body[data-theme="coffeeLight"] .ps-tags-bar-inner {
 	background: rgba(255, 250, 244, 0.85);
 	border-color: rgba(217, 199, 188, 0.5);
@@ -892,15 +883,6 @@ body[data-theme="coffeeLight"] .ps-tags-input::placeholder {
 	color: rgba(139, 107, 85, 0.5);
 }
 
-body[data-theme="bitterLight"] .ps-tag-pill-year,
-body[data-theme="bitterLight"] .ps-tag-pill-month,
-body[data-theme="bitterLight"] .ps-tag-pill-category,
-body[data-theme="bitterLight"] .ps-tag-pill-subcategory,
-body[data-theme="bitterLight"] .ps-tag-pill-tag {
-	background: rgba(91, 90, 100, 0.06);
-	border-color: rgba(91, 90, 100, 0.15);
-	color: rgba(13, 12, 16, 0.75);
-}
 body[data-theme="bitterLight"] .ps-tags-bar-inner {
 	background: rgba(247, 246, 244, 0.9);
 	border-color: rgba(216, 210, 203, 0.5);
@@ -912,15 +894,6 @@ body[data-theme="bitterLight"] .ps-tags-input::placeholder {
 	color: rgba(91, 90, 100, 0.45);
 }
 
-body[data-theme="monoLight"] .ps-tag-pill-year,
-body[data-theme="monoLight"] .ps-tag-pill-month,
-body[data-theme="monoLight"] .ps-tag-pill-category,
-body[data-theme="monoLight"] .ps-tag-pill-subcategory,
-body[data-theme="monoLight"] .ps-tag-pill-tag {
-	background: rgba(140, 149, 159, 0.08);
-	border-color: rgba(140, 149, 159, 0.18);
-	color: rgba(36, 41, 47, 0.8);
-}
 body[data-theme="monoLight"] .ps-tags-bar-inner {
 	background: rgba(255, 255, 255, 0.9);
 	border-color: rgba(208, 215, 222, 0.6);
@@ -932,16 +905,6 @@ body[data-theme="monoLight"] .ps-tags-input::placeholder {
 	color: rgba(140, 149, 159, 0.6);
 }
 
-/* Dark theme adjustments - subtle unified colors */
-body[data-theme="coffeeDark"] .ps-tag-pill-year,
-body[data-theme="coffeeDark"] .ps-tag-pill-month,
-body[data-theme="coffeeDark"] .ps-tag-pill-category,
-body[data-theme="coffeeDark"] .ps-tag-pill-subcategory,
-body[data-theme="coffeeDark"] .ps-tag-pill-tag {
-	background: rgba(180, 152, 133, 0.1);
-	border-color: rgba(180, 152, 133, 0.2);
-	color: rgba(232, 217, 204, 0.85);
-}
 body[data-theme="coffeeDark"] .ps-tags-bar-inner {
 	background: rgba(28, 22, 20, 0.85);
 	border-color: rgba(59, 40, 32, 0.5);
@@ -953,15 +916,6 @@ body[data-theme="coffeeDark"] .ps-tags-input::placeholder {
 	color: rgba(180, 152, 133, 0.5);
 }
 
-body[data-theme="bitterDark"] .ps-tag-pill-year,
-body[data-theme="bitterDark"] .ps-tag-pill-month,
-body[data-theme="bitterDark"] .ps-tag-pill-category,
-body[data-theme="bitterDark"] .ps-tag-pill-subcategory,
-body[data-theme="bitterDark"] .ps-tag-pill-tag {
-	background: rgba(138, 123, 112, 0.1);
-	border-color: rgba(138, 123, 112, 0.2);
-	color: rgba(240, 232, 223, 0.85);
-}
 body[data-theme="bitterDark"] .ps-tags-bar-inner {
 	background: rgba(13, 12, 16, 0.9);
 	border-color: rgba(42, 42, 48, 0.5);
@@ -973,15 +927,6 @@ body[data-theme="bitterDark"] .ps-tags-input::placeholder {
 	color: rgba(138, 123, 112, 0.5);
 }
 
-body[data-theme="monoDark"] .ps-tag-pill-year,
-body[data-theme="monoDark"] .ps-tag-pill-month,
-body[data-theme="monoDark"] .ps-tag-pill-category,
-body[data-theme="monoDark"] .ps-tag-pill-subcategory,
-body[data-theme="monoDark"] .ps-tag-pill-tag {
-	background: rgba(110, 118, 129, 0.1);
-	border-color: rgba(110, 118, 129, 0.2);
-	color: rgba(201, 209, 217, 0.85);
-}
 body[data-theme="monoDark"] .ps-tags-bar-inner {
 	background: rgba(13, 17, 23, 0.9);
 	border-color: rgba(48, 54, 61, 0.5);
