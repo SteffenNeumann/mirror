@@ -314,6 +314,13 @@ body.glow-disabled .bg-glow {
 	padding-bottom: 0.5rem;
 	position: relative;
 }
+
+/* Mobile: subtle dividers */
+@media (max-width: 1023px) {
+	#psList .ps-note-item {
+		border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+	}
+}
 #psList .ps-note-item:hover {
 	max-height: 5rem;
 	background-color: transparent !important;

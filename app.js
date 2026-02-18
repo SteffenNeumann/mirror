@@ -23106,6 +23106,14 @@ self.onmessage = async (e) => {
 	if (togglePersonalSpaceBtn) {
 		togglePersonalSpaceBtn.addEventListener("click", () => {
 			if (isMobileViewport()) {
+				// Mobile: always close editing note first if open
+				if (psEditingNoteId) {
+					clearPsEditingNoteState();
+					resetPsAutoSaveState();
+					psAutoSaveLastSavedNoteId = "";
+					psAutoSaveLastSavedText = "";
+					if (psMainHint) psMainHint.classList.add("hidden");
+				}
 				mobilePsOpen = !mobilePsOpen;
 				if (mobilePsOpen && !psVisible) {
 					psVisible = true;
@@ -23132,14 +23140,26 @@ self.onmessage = async (e) => {
 		});
 	}
 	if (noteCloseMobile) {
-		noteCloseMobile.addEventListener("click", () => {
+		noteCloseMobile.addEventListener("click", async () => {
+			// Save current note if it has content before closing
+			if (textarea && textarea.value && textarea.value.trim()) {
+				try {
+					await flushPendingPsAutoSave();
+				} catch {
+					// ignore save errors on close
+				}
+			}
 			clearPsEditingNoteState();
 			resetPsAutoSaveState();
 			psAutoSaveLastSavedNoteId = "";
 			psAutoSaveLastSavedText = "";
+			psEditingNoteId = "";
+			psEditingNoteKind = "";
 			if (psMainHint) psMainHint.classList.add("hidden");
+			if (textarea) textarea.value = "";
 			mobilePsOpen = mobileNoteReturn === "ps";
 			mobileNoteReturn = "editor";
+			updatePreview();
 			syncMobileFocusState();
 		});
 	}
