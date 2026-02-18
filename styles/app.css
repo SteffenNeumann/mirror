@@ -1853,7 +1853,7 @@ body[data-theme="monoDark"] .excel-iframe {
 	justify-content: center;
 	height: 1.4rem;
 	min-width: 1.4rem;
-	padding: 0 0.35rem;
+	padding: 0 0.25rem;
 	border-radius: 999px;
 	border: 1px solid rgba(255, 255, 255, 0.12);
 	background: rgba(255, 255, 255, 0.06);
@@ -1861,6 +1861,12 @@ body[data-theme="monoDark"] .excel-iframe {
 	font-size: 0.75rem;
 	line-height: 1;
 	cursor: pointer;
+}
+.md-content .pw-toggle svg,
+.md-content .pw-copy svg {
+	width: 0.85rem;
+	height: 0.85rem;
+	display: block;
 }
 .md-content .pw-toggle:hover,
 .md-content .pw-copy:hover {
