@@ -2139,15 +2139,19 @@
 
 	function syncPsEditorTagsInput(force) {
 		if (!psEditorTagsInput) return;
-		try {
-			if (!force && document && document.activeElement === psEditorTagsInput)
-				return;
-		} catch {
-			// ignore
+		const isFocused = (() => {
+			try {
+				return document && document.activeElement === psEditorTagsInput;
+			} catch {
+				return false;
+			}
+		})();
+		// Always update pills, even if input is focused
+		if (!isFocused || force) {
+			psEditorTagsSyncing = true;
+			psEditorTagsInput.value = ""; // Clear input since tags are now shown as pills
+			psEditorTagsSyncing = false;
 		}
-		psEditorTagsSyncing = true;
-		psEditorTagsInput.value = ""; // Clear input since tags are now shown as pills
-		psEditorTagsSyncing = false;
 		syncPsEditorTagMetaInputs();
 		renderPsEditorTagsPills();
 	}
@@ -4905,10 +4909,19 @@
 		const psActive = isMobile && !previewOpen && !noteActive && mobilePsOpen;
 		const editorActive =
 			isMobile && !previewOpen && !noteActive && !mobilePsOpen;
+		const wasNoteActive = document.body.classList.contains("mobile-note-open");
 		document.body.classList.toggle("mobile-preview-open", previewActive);
 		document.body.classList.toggle("mobile-note-open", noteActive);
 		document.body.classList.toggle("mobile-ps-open", psActive);
 		document.body.classList.toggle("mobile-editor-open", editorActive);
+		// Re-render tag pills when entering note view on mobile
+		if (noteActive && !wasNoteActive) {
+			try {
+				renderPsEditorTagsPills();
+			} catch {
+				// ignore
+			}
+		}
 	}
 	let md;
 	const clearMirrorBtn = document.getElementById("clearMirror");
