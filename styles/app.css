@@ -5765,17 +5765,18 @@ body[data-theme] #noteShareModal [role="dialog"] {
 .block-arrange-preview {
 	flex: 1;
 	min-width: 0;
-	font-size: 0.875rem;
-	line-height: 1.5;
+	font-size: 0.8125rem;
+	line-height: 1.6;
 	color: rgba(255, 255, 255, 0.85);
+	white-space: pre-wrap;
+	word-break: break-word;
+	max-height: 12em;
 	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
 }
 
 .block-arrange-preview code {
 	font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Monaco, Consolas, monospace;
-	font-size: 0.8125rem;
+	font-size: 0.75rem;
 	padding: 0.125rem 0.375rem;
 	border-radius: 0.25rem;
 	background: rgba(255, 255, 255, 0.08);

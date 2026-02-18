@@ -951,10 +951,34 @@
 												d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
 										</svg>
 									</button>
+									<button
+										id="toggleBlockArrange"
+										type="button"
+										class="absolute bottom-2 right-12 z-10 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150 transition hover:bg-white/10 active:bg-white/15"
+										title="Blöcke anordnen"
+										aria-label="Blöcke anordnen"
+										data-i18n-title="arrange.toggle"
+										data-i18n-aria="arrange.toggle"
+										aria-pressed="false">
+										<svg
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="2"
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											class="h-4 w-4">
+											<rect x="3" y="3" width="7" height="7" rx="1" />
+											<rect x="14" y="3" width="7" height="7" rx="1" />
+											<rect x="3" y="14" width="7" height="7" rx="1" />
+											<path d="M14 17h7" />
+											<path d="M17.5 14v6" />
+										</svg>
+									</button>
 										<button
 											id="togglePermanentLink"
 											type="button"
-											class="absolute bottom-2 right-12 z-30 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150 transition hover:bg-white/10 active:bg-white/15"
+											class="absolute bottom-2 right-[52px] z-30 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150 transition hover:bg-white/10 active:bg-white/15"
 											title="Permanent-Link"
 											aria-label="Permanent-Link"
 											aria-pressed="false"
@@ -1064,30 +1088,6 @@
 														class="comment-badge absolute -top-1 -right-1 hidden min-w-[18px] rounded-full border border-white/10 px-1.5 py-0.5 text-[10px] font-semibold shadow-soft">
 														0
 													</span>
-											</button>
-											<button
-												id="toggleBlockArrange"
-												type="button"
-												class="absolute bottom-2 left-12 z-10 inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 shadow-soft backdrop-blur-[24px] backdrop-saturate-150 transition hover:bg-white/10 active:bg-white/15"
-												title="Blöcke anordnen"
-												aria-label="Blöcke anordnen"
-												data-i18n-title="arrange.toggle"
-												data-i18n-aria="arrange.toggle"
-												aria-pressed="false">
-												<svg
-													viewBox="0 0 24 24"
-													fill="none"
-													stroke="currentColor"
-													stroke-width="2"
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													class="h-4 w-4">
-													<rect x="3" y="3" width="7" height="7" rx="1" />
-													<rect x="14" y="3" width="7" height="7" rx="1" />
-													<rect x="3" y="14" width="7" height="7" rx="1" />
-													<path d="M14 17h7" />
-													<path d="M17.5 14v6" />
-												</svg>
 											</button>
 											<div
 												id="commentPanel"

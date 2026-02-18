@@ -24102,7 +24102,7 @@ self.onmessage = async (e) => {
 					quoteLines.push(lines[i]);
 					i++;
 				}
-				const preview = quoteLines[0].replace(/^>\s*/, "").slice(0, 60);
+			const preview = quoteLines.join("\n");
 				blocks.push({
 					type: "quote",
 					content: quoteLines.join("\n"),
@@ -24153,12 +24153,10 @@ self.onmessage = async (e) => {
 						break;
 					}
 				}
-				const itemCount = listLines.filter(l => /^[-*+]\s|^\d+\.\s|^- \[[ x]\]/i.test(l.trim())).length;
-				const firstItem = listLines[0].replace(/^[-*+]\s|^\d+\.\s|^- \[[ x]\]\s*/i, "").slice(0, 50);
-				blocks.push({
-					type: "list",
-					content: listLines.join("\n"),
-					preview: `${itemCount} items: ${firstItem}`,
+			blocks.push({
+				type: "list",
+				content: listLines.join("\n"),
+				preview: listLines.join("\n"),
 					startLine: startLine,
 					endLine: i - 1
 				});
@@ -24179,7 +24177,7 @@ self.onmessage = async (e) => {
 			blocks.push({
 				type: "paragraph",
 				content: paraLines.join("\n"),
-				preview: paraLines.join(" ").slice(0, 80),
+				preview: paraLines.join("\n"),
 				startLine: startLine,
 				endLine: i - 1
 			});
@@ -24222,8 +24220,8 @@ self.onmessage = async (e) => {
 			const actualIdx = blockArrangeOutlineOnly
 				? blockArrangeBlocks.indexOf(block)
 				: idx;
-			const selected = actualIdx === blockArrangeSelectedIdx ? "selected" : "";
-			const preview = escapeHtml(block.preview || block.content.slice(0, 60));
+		const selected = actualIdx === blockArrangeSelectedIdx ? "selected" : "";
+		const preview = escapeHtml(block.preview || block.content);
 			const badge = badgeLabels[block.type] || block.type.toUpperCase();
 			const indent = block.level ? `padding-left: ${(block.level - 1) * 1.25}rem;` : "";
 
