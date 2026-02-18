@@ -777,7 +777,7 @@ body.glow-disabled .bg-glow {
 	height: 0.95rem;
 }
 
-/* ── Pill-based Tags Bar ───────────────── */
+/* ── Tag-based Tags Bar ───────────────── */
 .ps-tags-bar-inner {
 	display: flex;
 	align-items: center;
@@ -807,7 +807,7 @@ body.glow-disabled .bg-glow {
 	gap: 4px;
 	height: 24px;
 	padding: 0 8px;
-	border-radius: 9999px;
+	border-radius: 8px;
 	font-size: 11px;
 	font-weight: 500;
 	line-height: 1;
@@ -815,6 +815,11 @@ body.glow-disabled .bg-glow {
 	cursor: default;
 	transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
 	border: 1px solid;
+}
+.ps-tag-pill-hash {
+	opacity: 0.6;
+	font-weight: 400;
+	margin-right: -2px;
 }
 .ps-tag-pill-year {
 	background: rgba(56, 189, 248, 0.12);

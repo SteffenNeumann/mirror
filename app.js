@@ -1974,7 +1974,7 @@
 		if (psEditingNoteYearTag) {
 			const pill = document.createElement("span");
 			pill.className = "ps-tag-pill ps-tag-pill-year";
-			pill.innerHTML = `<span>${escapeHtml(psEditingNoteYearTag)}</span>`;
+			pill.innerHTML = `<span class="ps-tag-pill-hash">#</span><span>${escapeHtml(psEditingNoteYearTag)}</span>`;
 			const rm = document.createElement("span");
 			rm.className = "ps-tag-pill-remove";
 			rm.appendChild(createPillRemoveIcon());
@@ -1996,7 +1996,7 @@
 		if (psEditingNoteMonthTag) {
 			const pill = document.createElement("span");
 			pill.className = "ps-tag-pill ps-tag-pill-month";
-			pill.innerHTML = `<span>${escapeHtml(psEditingNoteMonthTag.charAt(0).toUpperCase() + psEditingNoteMonthTag.slice(1))}</span>`;
+			pill.innerHTML = `<span class="ps-tag-pill-hash">#</span><span>${escapeHtml(psEditingNoteMonthTag.charAt(0).toUpperCase() + psEditingNoteMonthTag.slice(1))}</span>`;
 			const rm = document.createElement("span");
 			rm.className = "ps-tag-pill-remove";
 			rm.appendChild(createPillRemoveIcon());
@@ -2018,7 +2018,7 @@
 		if (psEditingNoteCategory) {
 			const pill = document.createElement("span");
 			pill.className = "ps-tag-pill ps-tag-pill-category";
-			pill.innerHTML = `<span>${escapeHtml(psEditingNoteCategory)}</span>`;
+			pill.innerHTML = `<span class="ps-tag-pill-hash">#</span><span>${escapeHtml(psEditingNoteCategory)}</span>`;
 			const rm = document.createElement("span");
 			rm.className = "ps-tag-pill-remove";
 			rm.appendChild(createPillRemoveIcon());
@@ -2040,7 +2040,7 @@
 		if (psEditingNoteSubcategory) {
 			const pill = document.createElement("span");
 			pill.className = "ps-tag-pill ps-tag-pill-subcategory";
-			pill.innerHTML = `<span>${escapeHtml(psEditingNoteSubcategory)}</span>`;
+			pill.innerHTML = `<span class="ps-tag-pill-hash">#</span><span>${escapeHtml(psEditingNoteSubcategory)}</span>`;
 			const rm = document.createElement("span");
 			rm.className = "ps-tag-pill-remove";
 			rm.appendChild(createPillRemoveIcon());
@@ -2065,7 +2065,7 @@
 			if (!s) continue;
 			const pill = document.createElement("span");
 			pill.className = "ps-tag-pill ps-tag-pill-tag";
-			pill.innerHTML = `<span>#${escapeHtml(s)}</span>`;
+			pill.innerHTML = `<span class="ps-tag-pill-hash">#</span><span>${escapeHtml(s)}</span>`;
 			const rm = document.createElement("span");
 			rm.className = "ps-tag-pill-remove";
 			rm.appendChild(createPillRemoveIcon());
