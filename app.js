@@ -24489,6 +24489,47 @@ self.onmessage = async (e) => {
 				e.preventDefault();
 				undoBlockArrange();
 			}
+
+			// Alt+Arrow for moving blocks (global handler)
+			if (blockArrangeOpen && e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+				e.preventDefault();
+				const idx = blockArrangeSelectedIdx;
+				if (idx < 0) {
+					// No selection - select first item
+					if (blockArrangeBlocks.length > 0) {
+						blockArrangeSelectedIdx = 0;
+						renderBlockArrangeItems();
+						const firstEl = blockArrangeList.querySelector('[data-idx="0"]');
+						if (firstEl) firstEl.focus();
+					}
+					return;
+				}
+				if (e.key === "ArrowUp" && idx > 0) {
+					moveBlock(idx, idx - 1);
+				} else if (e.key === "ArrowDown" && idx < blockArrangeBlocks.length - 1) {
+					moveBlock(idx, idx + 1);
+				}
+			}
+
+			// Arrow keys for navigation in arrange mode (without Alt)
+			if (blockArrangeOpen && !e.altKey && (e.key === "ArrowUp" || e.key === "ArrowDown")) {
+				const focused = document.activeElement;
+				const isItemFocused = focused && focused.classList && focused.classList.contains("block-arrange-item");
+				if (!isItemFocused && blockArrangeBlocks.length > 0) {
+					e.preventDefault();
+					let nextIdx = blockArrangeSelectedIdx;
+					if (e.key === "ArrowUp") {
+						nextIdx = nextIdx > 0 ? nextIdx - 1 : 0;
+					} else {
+						nextIdx = nextIdx < blockArrangeBlocks.length - 1 ? nextIdx + 1 : blockArrangeBlocks.length - 1;
+					}
+					if (nextIdx < 0) nextIdx = 0;
+					blockArrangeSelectedIdx = nextIdx;
+					renderBlockArrangeItems();
+					const nextEl = blockArrangeList.querySelector(`[data-idx="${nextIdx}"]`);
+					if (nextEl) nextEl.focus();
+				}
+			}
 		});
 
 		// Click outside list to deselect
