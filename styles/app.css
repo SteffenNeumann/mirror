@@ -198,8 +198,6 @@ body.glow-disabled .bg-glow {
 }
 
 #toggleComments,
-#psMetaToggle,
-#clearMirror,
 #psEditorTagsBar,
 #psEditorTagsBar > div {
 	background: rgba(2, 6, 23, 0.75) !important;
@@ -217,6 +215,8 @@ body.glow-disabled .bg-glow {
 }
 
 #copyMirror,
+#psMetaToggle,
+#clearMirror,
 #toggleBlockArrange,
 #togglePermanentLink,
 #toggleExcalidraw,
@@ -232,6 +232,8 @@ body.glow-disabled .bg-glow {
 }
 
 #copyMirror:hover,
+#psMetaToggle:hover,
+#clearMirror:hover,
 #toggleBlockArrange:hover,
 #togglePermanentLink:hover,
 #toggleExcalidraw:hover,
