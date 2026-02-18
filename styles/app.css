@@ -821,30 +821,15 @@ body.glow-disabled .bg-glow {
 	font-weight: 400;
 	margin-right: -2px;
 }
-.ps-tag-pill-year {
-	background: rgba(56, 189, 248, 0.12);
-	border-color: rgba(56, 189, 248, 0.25);
-	color: rgba(186, 230, 253, 0.95);
-}
-.ps-tag-pill-month {
-	background: rgba(167, 139, 250, 0.12);
-	border-color: rgba(167, 139, 250, 0.25);
-	color: rgba(221, 214, 254, 0.95);
-}
-.ps-tag-pill-category {
-	background: rgba(251, 146, 60, 0.12);
-	border-color: rgba(251, 146, 60, 0.25);
-	color: rgba(254, 215, 170, 0.95);
-}
-.ps-tag-pill-subcategory {
-	background: rgba(251, 191, 36, 0.12);
-	border-color: rgba(251, 191, 36, 0.25);
-	color: rgba(254, 240, 138, 0.95);
-}
+/* All tags use subtle theme-based colors */
+.ps-tag-pill-year,
+.ps-tag-pill-month,
+.ps-tag-pill-category,
+.ps-tag-pill-subcategory,
 .ps-tag-pill-tag {
-	background: var(--accent-bg-soft, rgba(217, 70, 239, 0.1));
-	border-color: var(--accent-border, rgba(217, 70, 239, 0.25));
-	color: var(--accent-text-soft, rgba(250, 232, 255, 0.9));
+	background: var(--accent-bg-soft, rgba(148, 163, 184, 0.08));
+	border-color: var(--accent-border, rgba(148, 163, 184, 0.15));
+	color: var(--accent-text-soft, rgba(226, 232, 240, 0.85));
 }
 .ps-tag-pill-remove {
 	display: inline-flex;
@@ -886,182 +871,126 @@ body.glow-disabled .bg-glow {
 	color: var(--accent-text-soft, rgba(148, 163, 184, 0.5));
 }
 
-/* Light theme pill adjustments */
-body[data-theme="coffeeLight"] .ps-tag-pill-year {
-	background: rgba(14, 116, 144, 0.1);
-	border-color: rgba(14, 116, 144, 0.25);
-	color: #155e75;
-}
-body[data-theme="coffeeLight"] .ps-tag-pill-month {
-	background: rgba(109, 40, 217, 0.1);
-	border-color: rgba(109, 40, 217, 0.25);
-	color: #5b21b6;
-}
-body[data-theme="coffeeLight"] .ps-tag-pill-category {
-	background: rgba(194, 65, 12, 0.1);
-	border-color: rgba(194, 65, 12, 0.2);
-	color: #9a3412;
-}
-body[data-theme="coffeeLight"] .ps-tag-pill-subcategory {
-	background: rgba(161, 98, 7, 0.1);
-	border-color: rgba(161, 98, 7, 0.2);
-	color: #854d0e;
-}
+/* Light theme pill adjustments - subtle unified colors */
+body[data-theme="coffeeLight"] .ps-tag-pill-year,
+body[data-theme="coffeeLight"] .ps-tag-pill-month,
+body[data-theme="coffeeLight"] .ps-tag-pill-category,
+body[data-theme="coffeeLight"] .ps-tag-pill-subcategory,
 body[data-theme="coffeeLight"] .ps-tag-pill-tag {
-	background: rgba(176, 112, 73, 0.12);
-	border-color: rgba(176, 112, 73, 0.3);
-	color: #78350f;
+	background: rgba(139, 107, 85, 0.08);
+	border-color: rgba(139, 107, 85, 0.18);
+	color: rgba(59, 42, 33, 0.85);
 }
 body[data-theme="coffeeLight"] .ps-tags-bar-inner {
 	background: rgba(255, 250, 244, 0.85);
-	border-color: rgba(217, 199, 188, 0.6);
+	border-color: rgba(217, 199, 188, 0.5);
 }
 body[data-theme="coffeeLight"] .ps-tags-input {
 	color: #3b2a21;
 }
 body[data-theme="coffeeLight"] .ps-tags-input::placeholder {
-	color: rgba(139, 107, 85, 0.6);
+	color: rgba(139, 107, 85, 0.5);
 }
 
-body[data-theme="bitterLight"] .ps-tag-pill-year {
-	background: rgba(14, 116, 144, 0.1);
-	border-color: rgba(14, 116, 144, 0.25);
-	color: #155e75;
-}
-body[data-theme="bitterLight"] .ps-tag-pill-month {
-	background: rgba(109, 40, 217, 0.1);
-	border-color: rgba(109, 40, 217, 0.25);
-	color: #5b21b6;
-}
-body[data-theme="bitterLight"] .ps-tag-pill-category {
-	background: rgba(194, 65, 12, 0.1);
-	border-color: rgba(194, 65, 12, 0.2);
-	color: #9a3412;
-}
-body[data-theme="bitterLight"] .ps-tag-pill-subcategory {
-	background: rgba(161, 98, 7, 0.1);
-	border-color: rgba(161, 98, 7, 0.2);
-	color: #854d0e;
-}
+body[data-theme="bitterLight"] .ps-tag-pill-year,
+body[data-theme="bitterLight"] .ps-tag-pill-month,
+body[data-theme="bitterLight"] .ps-tag-pill-category,
+body[data-theme="bitterLight"] .ps-tag-pill-subcategory,
 body[data-theme="bitterLight"] .ps-tag-pill-tag {
-	background: rgba(255, 35, 1, 0.08);
-	border-color: rgba(255, 35, 1, 0.2);
-	color: #9a3412;
+	background: rgba(91, 90, 100, 0.06);
+	border-color: rgba(91, 90, 100, 0.15);
+	color: rgba(13, 12, 16, 0.75);
 }
 body[data-theme="bitterLight"] .ps-tags-bar-inner {
 	background: rgba(247, 246, 244, 0.9);
-	border-color: rgba(216, 210, 203, 0.6);
+	border-color: rgba(216, 210, 203, 0.5);
 }
 body[data-theme="bitterLight"] .ps-tags-input {
 	color: #0d0c10;
 }
 body[data-theme="bitterLight"] .ps-tags-input::placeholder {
-	color: rgba(91, 90, 100, 0.5);
+	color: rgba(91, 90, 100, 0.45);
 }
 
-body[data-theme="monoLight"] .ps-tag-pill-year {
-	background: rgba(9, 105, 218, 0.08);
-	border-color: rgba(9, 105, 218, 0.2);
-	color: #0550ae;
-}
-body[data-theme="monoLight"] .ps-tag-pill-month {
-	background: rgba(130, 80, 223, 0.08);
-	border-color: rgba(130, 80, 223, 0.2);
-	color: #5e3e9e;
-}
-body[data-theme="monoLight"] .ps-tag-pill-category {
-	background: rgba(191, 87, 0, 0.08);
-	border-color: rgba(191, 87, 0, 0.2);
-	color: #9a6700;
-}
-body[data-theme="monoLight"] .ps-tag-pill-subcategory {
-	background: rgba(158, 106, 3, 0.08);
-	border-color: rgba(158, 106, 3, 0.2);
-	color: #7d4e00;
-}
+body[data-theme="monoLight"] .ps-tag-pill-year,
+body[data-theme="monoLight"] .ps-tag-pill-month,
+body[data-theme="monoLight"] .ps-tag-pill-category,
+body[data-theme="monoLight"] .ps-tag-pill-subcategory,
 body[data-theme="monoLight"] .ps-tag-pill-tag {
-	background: rgba(9, 105, 218, 0.08);
-	border-color: rgba(9, 105, 218, 0.2);
-	color: #0550ae;
+	background: rgba(140, 149, 159, 0.08);
+	border-color: rgba(140, 149, 159, 0.18);
+	color: rgba(36, 41, 47, 0.8);
 }
 body[data-theme="monoLight"] .ps-tags-bar-inner {
 	background: rgba(255, 255, 255, 0.9);
-	border-color: rgba(208, 215, 222, 0.7);
+	border-color: rgba(208, 215, 222, 0.6);
 }
 body[data-theme="monoLight"] .ps-tags-input {
 	color: #24292f;
 }
 body[data-theme="monoLight"] .ps-tags-input::placeholder {
-	color: rgba(140, 149, 159, 0.7);
+	color: rgba(140, 149, 159, 0.6);
 }
 
-/* Dark theme adjustments */
-body[data-theme="coffeeDark"] .ps-tag-pill-year {
-	background: rgba(94, 234, 212, 0.12);
-	border-color: rgba(94, 234, 212, 0.25);
-	color: rgba(167, 243, 208, 0.95);
-}
-body[data-theme="coffeeDark"] .ps-tag-pill-month {
-	background: rgba(196, 181, 253, 0.12);
-	border-color: rgba(196, 181, 253, 0.25);
-	color: rgba(221, 214, 254, 0.95);
-}
-body[data-theme="coffeeDark"] .ps-tag-pill-category {
-	background: rgba(253, 186, 116, 0.12);
-	border-color: rgba(253, 186, 116, 0.25);
-	color: rgba(254, 215, 170, 0.95);
-}
-body[data-theme="coffeeDark"] .ps-tag-pill-subcategory {
-	background: rgba(253, 224, 71, 0.12);
-	border-color: rgba(253, 224, 71, 0.25);
-	color: rgba(254, 240, 138, 0.95);
-}
+/* Dark theme adjustments - subtle unified colors */
+body[data-theme="coffeeDark"] .ps-tag-pill-year,
+body[data-theme="coffeeDark"] .ps-tag-pill-month,
+body[data-theme="coffeeDark"] .ps-tag-pill-category,
+body[data-theme="coffeeDark"] .ps-tag-pill-subcategory,
 body[data-theme="coffeeDark"] .ps-tag-pill-tag {
-	background: rgba(201, 155, 119, 0.15);
-	border-color: rgba(201, 155, 119, 0.35);
-	color: rgba(232, 217, 204, 0.95);
+	background: rgba(180, 152, 133, 0.1);
+	border-color: rgba(180, 152, 133, 0.2);
+	color: rgba(232, 217, 204, 0.85);
 }
 body[data-theme="coffeeDark"] .ps-tags-bar-inner {
 	background: rgba(28, 22, 20, 0.85);
-	border-color: rgba(59, 40, 32, 0.6);
+	border-color: rgba(59, 40, 32, 0.5);
 }
 body[data-theme="coffeeDark"] .ps-tags-input {
 	color: #e8d9cc;
 }
 body[data-theme="coffeeDark"] .ps-tags-input::placeholder {
-	color: rgba(180, 152, 133, 0.6);
+	color: rgba(180, 152, 133, 0.5);
 }
 
+body[data-theme="bitterDark"] .ps-tag-pill-year,
+body[data-theme="bitterDark"] .ps-tag-pill-month,
+body[data-theme="bitterDark"] .ps-tag-pill-category,
+body[data-theme="bitterDark"] .ps-tag-pill-subcategory,
 body[data-theme="bitterDark"] .ps-tag-pill-tag {
-	background: rgba(255, 59, 31, 0.12);
-	border-color: rgba(255, 59, 31, 0.3);
-	color: rgba(255, 177, 153, 0.95);
+	background: rgba(138, 123, 112, 0.1);
+	border-color: rgba(138, 123, 112, 0.2);
+	color: rgba(240, 232, 223, 0.85);
 }
 body[data-theme="bitterDark"] .ps-tags-bar-inner {
 	background: rgba(13, 12, 16, 0.9);
-	border-color: rgba(42, 42, 48, 0.6);
+	border-color: rgba(42, 42, 48, 0.5);
 }
 body[data-theme="bitterDark"] .ps-tags-input {
 	color: #f0e8df;
 }
 body[data-theme="bitterDark"] .ps-tags-input::placeholder {
-	color: rgba(138, 123, 112, 0.6);
+	color: rgba(138, 123, 112, 0.5);
 }
 
+body[data-theme="monoDark"] .ps-tag-pill-year,
+body[data-theme="monoDark"] .ps-tag-pill-month,
+body[data-theme="monoDark"] .ps-tag-pill-category,
+body[data-theme="monoDark"] .ps-tag-pill-subcategory,
 body[data-theme="monoDark"] .ps-tag-pill-tag {
-	background: rgba(0, 121, 212, 0.15);
-	border-color: rgba(0, 121, 212, 0.35);
-	color: rgba(165, 206, 255, 0.95);
+	background: rgba(110, 118, 129, 0.1);
+	border-color: rgba(110, 118, 129, 0.2);
+	color: rgba(201, 209, 217, 0.85);
 }
 body[data-theme="monoDark"] .ps-tags-bar-inner {
 	background: rgba(13, 17, 23, 0.9);
-	border-color: rgba(48, 54, 61, 0.6);
+	border-color: rgba(48, 54, 61, 0.5);
 }
 body[data-theme="monoDark"] .ps-tags-input {
 	color: #c9d1d9;
 }
 body[data-theme="monoDark"] .ps-tags-input::placeholder {
-	color: rgba(110, 118, 129, 0.6);
+	color: rgba(110, 118, 129, 0.5);
 }
 
 /* Mobile adjustments for tags bar */
