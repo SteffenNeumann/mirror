@@ -3063,6 +3063,11 @@ body[data-theme="coffeeLight"] #psEditorTagsBar > div {
 	box-shadow: none !important;
 }
 
+body[data-theme="coffeeLight"] #psMetaToggle,
+body[data-theme="coffeeLight"] #clearMirror {
+	color: #5b4436 !important;
+}
+
 body[data-theme="coffeeLight"] #psEditorTagsBar input,
 body[data-theme="coffeeLight"] #psEditorTagsBar select {
 	background: rgba(255, 250, 244, 0.76) !important;
@@ -3913,6 +3918,11 @@ body[data-theme="bitterLight"] #psEditorTagsBar > div {
 	background: rgba(247, 246, 244, 0.8) !important;
 	border-color: rgba(216, 210, 203, 0.7) !important;
 	box-shadow: none !important;
+}
+
+body[data-theme="bitterLight"] #psMetaToggle,
+body[data-theme="bitterLight"] #clearMirror {
+	color: #2a292f !important;
 }
 
 body[data-theme="bitterLight"] #psEditorTagsBar input,
@@ -4914,6 +4924,11 @@ body[data-theme="monoLight"] #psEditorTagsBar > div {
 	background: rgba(255, 255, 255, 0.7) !important;
 	border-color: rgba(208, 215, 222, 0.6) !important;
 	box-shadow: none !important;
+}
+
+body[data-theme="monoLight"] #psMetaToggle,
+body[data-theme="monoLight"] #clearMirror {
+	color: #57606a !important;
 }
 
 body[data-theme="monoLight"] #psEditorTagsBar input,
