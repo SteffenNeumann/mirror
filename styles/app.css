@@ -851,8 +851,11 @@ body.glow-disabled .bg-glow {
 	margin-left: 2px;
 	margin-right: -4px;
 	cursor: pointer;
-	opacity: 0.5;
+	opacity: 0;
 	transition: opacity 0.15s ease, background 0.15s ease;
+}
+.ps-tag-pill:hover .ps-tag-pill-remove {
+	opacity: 0.5;
 }
 .ps-tag-pill-remove:hover {
 	opacity: 1;
