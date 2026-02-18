@@ -1626,6 +1626,21 @@
 		}
 	}
 
+	function fmtShortDateTime(ts) {
+		try {
+			const date = new Date(ts);
+			if (Number.isNaN(date.getTime())) return "";
+			const dd = String(date.getDate()).padStart(2, "0");
+			const mm = String(date.getMonth() + 1).padStart(2, "0");
+			const yy = String(date.getFullYear()).slice(-2);
+			const hh = String(date.getHours()).padStart(2, "0");
+			const min = String(date.getMinutes()).padStart(2, "0");
+			return `${dd}.${mm}.${yy} ${hh}:${min}`;
+		} catch {
+			return "";
+		}
+	}
+
 	function formatDatePart(date) {
 		if (!date || Number.isNaN(date.getTime())) return "";
 		if (dateFormat === "dmy") {
@@ -1842,6 +1857,31 @@
 		if (!category && derivedCategory) category = derivedCategory;
 		if (!subcategory && derivedSubcategory) subcategory = derivedSubcategory;
 		return { year, month, category, subcategory, manual };
+	}
+
+	function sortTagsByCategory(tags) {
+		const list = Array.isArray(tags) ? tags : [];
+		const years = [];
+		const months = [];
+		const cats = [];
+		const subs = [];
+		const manual = [];
+		for (const t of list) {
+			const s = String(t || "").trim().toLowerCase();
+			if (!s) continue;
+			if (isYearTag(s)) {
+				years.push(s);
+			} else if (isMonthTag(s)) {
+				months.push(s);
+			} else if (s.startsWith("cat:")) {
+				cats.push(s);
+			} else if (s.startsWith("sub:")) {
+				subs.push(s);
+			} else {
+				manual.push(s);
+			}
+		}
+		return [...years, ...months, ...cats, ...subs, ...manual];
 	}
 
 	function buildEditorSystemTags() {
@@ -13172,7 +13212,7 @@ ${highlightThemeCss}
 				const rawTags = Array.isArray(n.tags) ? n.tags : [];
 				const pinned = rawTags.some((t) => String(t || "") === PS_PINNED_TAG);
 				const linked = id && linkedNoteIds.has(id);
-				const tags = stripPinnedTag(stripManualTagsMarker(rawTags));
+				const tags = sortTagsByCategory(stripPinnedTag(stripManualTagsMarker(rawTags)));
 				const tagsText = tags.map((t) => `#${t}`).join(" ");
 				const info = getNoteTitleAndExcerpt(n && n.text ? n.text : "");
 				const titleHtml = escapeHtml(info.title);
@@ -13208,7 +13248,7 @@ ${highlightThemeCss}
 							</div>
 						</div>
 						<div class="flex items-center gap-2 mt-1 w-full ps-note-meta min-w-0">
-							<span class="text-[10px] text-slate-400 flex-shrink-0">${fmtShortDate(n.updatedAt || n.createdAt)}</span>
+							<span class="text-[10px] text-slate-400 flex-shrink-0">${fmtShortDateTime(n.createdAt)}</span>
 							${tagsText ? `<span class="ps-note-tags-inline text-[10px] text-slate-400 truncate min-w-0">${escapeHtml(tagsText)}</span>` : ''}
 						</div>
 						${linkedBadge}
