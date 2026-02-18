@@ -1857,6 +1857,7 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		flex-direction: column;
 		pointer-events: auto;
 		border-radius: 0;
+		border: none;
 	}
 	body.mobile-preview-open #editorPanel > header {
 		display: none;
@@ -1874,7 +1875,9 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		flex-direction: column;
 		pointer-events: auto;
 		border-radius: 0;
+		border: none;
 		overflow: hidden;
+		background: rgba(2, 6, 23, 0.95);
 	}
 	body.mobile-ps-open #psList {
 		overflow-y: auto;
@@ -1891,6 +1894,8 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		z-index: 70;
 		pointer-events: auto;
 		border-radius: 0;
+		border: none;
+		background: rgba(2, 6, 23, 0.95);
 	}
 	body.mobile-note-open #editorPanel > header,
 	body.mobile-editor-open #editorPanel > header {
@@ -1916,6 +1921,7 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		height: 100vh;
 		max-height: none;
 		border-radius: 0;
+		border: none;
 		z-index: 202;
 	}
 	#settingsNav {
@@ -1953,7 +1959,7 @@ body.preview-only #editorPreviewGrid > div:first-child {
 
 	/* ── Mobile phone: general improvements ── */
 	body {
-		padding: 4px;
+		padding: 0;
 	}
 	main.relative {
 		margin: 0;
@@ -1961,7 +1967,15 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		height: 100%;
 	}
 	#mainGrid {
-		gap: 2px;
+		gap: 0;
+	}
+	
+	/* Remove borders on mobile panels for cleaner look */
+	#psPanel,
+	#editorPanel {
+		border-radius: 0;
+		border: none;
+		background: rgba(2, 6, 23, 0.95);
 	}
 
 	/* Ensure preview iframe fills space */
@@ -1973,11 +1987,15 @@ body.preview-only #editorPreviewGrid > div:first-child {
 
 	/* AI section on mobile: more compact */
 	#aiConversationSection {
-		padding: 8px 10px;
+		padding: 6px 8px;
+		background: rgba(15, 23, 42, 0.3);
+		border-top: 1px solid rgba(255, 255, 255, 0.05);
 	}
 	#aiPromptWrap textarea {
 		min-height: 64px;
 		font-size: 14px;
+		background: rgba(2, 6, 23, 0.5);
+		border: 1px solid rgba(255, 255, 255, 0.05);
 	}
 	#aiModeWrap {
 		min-width: 0 !important;
@@ -1985,6 +2003,8 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	}
 	#aiModeWrap select {
 		width: 100%;
+		background: rgba(2, 6, 23, 0.5);
+		border: 1px solid rgba(255, 255, 255, 0.05);
 	}
 
 	/* Ensure run output doesn't overflow on mobile */
@@ -2000,6 +2020,12 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	body.mobile-editor-open #editorPanel,
 	body.mobile-note-open #editorPanel {
 		overflow: hidden;
+	}
+	
+	/* Reduce border visibility on mobile inputs */
+	#mirror {
+		background: rgba(2, 6, 23, 0.5);
+		border: 1px solid rgba(255, 255, 255, 0.05);
 	}
 
 	/* ── Fix: Tags bar & meta overlapping textarea on mobile ── */
@@ -2023,6 +2049,8 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		-webkit-overflow-scrolling: touch;
 		height: 36px;
 		gap: 4px;
+		background: rgba(15, 23, 42, 0.6);
+		border: 1px solid rgba(255, 255, 255, 0.05);
 	}
 	#psEditorTagsBar input,
 	#psEditorTagsBar select {
@@ -2030,6 +2058,8 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		font-size: 10px;
 		min-width: 0;
 		flex-shrink: 1;
+		background: rgba(2, 6, 23, 0.6);
+		border: 1px solid rgba(255, 255, 255, 0.05);
 	}
 	#psEditorTagsBar .text-slate-400 {
 		display: none; /* hide "Tags:" label on mobile */
@@ -2242,18 +2272,21 @@ body.preview-only #editorPreviewGrid > div:first-child {
 
 	/* ── Small phone improvements ── */
 	body {
-		padding: 2px;
+		padding: 0;
 	}
 	#previewPanel {
 		border-radius: 0;
+		border: none;
 	}
 	body.mobile-preview-open #previewPanel {
 		border-radius: 0;
+		border: none;
 		inset: 0;
 		width: 100vw;
 		width: 100dvw;
 		height: 100vh;
 		height: 100dvh;
+		background: rgba(2, 6, 23, 0.98);
 	}
 
 	/* AI section: stack controls vertically on small phones */
@@ -2266,6 +2299,8 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	#aiUsePreviewBtn {
 		width: 100%;
 		justify-content: center;
+		background: rgba(217, 70, 239, 0.1);
+		border: 1px solid rgba(217, 70, 239, 0.2);
 	}
 	#aiModeWrap {
 		min-width: 0 !important;
@@ -2276,6 +2311,8 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	#aiPromptWrap textarea {
 		min-height: 56px;
 		font-size: 16px; /* prevent iOS zoom */
+		background: rgba(2, 6, 23, 0.6);
+		border: 1px solid rgba(255, 255, 255, 0.05);
 	}
 	#aiAssist {
 		min-height: 44px;
@@ -2284,7 +2321,8 @@ body.preview-only #editorPreviewGrid > div:first-child {
 
 	/* PS panel: prevent overflow */
 	body.mobile-ps-open #psPanel {
-		padding: 8px;
+		padding: 6px;
+		background: rgba(2, 6, 23, 0.98);
 	}
 
 	/* Modal inputs on phone: prevent zoom */
