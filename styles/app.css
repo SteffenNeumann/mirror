@@ -821,40 +821,44 @@ body.glow-disabled .bg-glow {
 	font-weight: 400;
 	margin-right: -2px;
 }
-/* All tags use theme accent colors with subtle gradation */
-/* Year: darkest/strongest */
+/* All tags use theme accent colors with subtle gradation + hue shift */
+/* Year: darkest/strongest, slight cool shift */
 .ps-tag-pill-year {
 	background: var(--accent-bg);
 	border-color: var(--accent-border-strong);
 	color: var(--accent-text);
+	filter: hue-rotate(-8deg);
 }
-/* Month: slightly lighter */
+/* Month: slightly lighter, neutral */
 .ps-tag-pill-month {
 	background: var(--accent-bg-hover);
 	border-color: var(--accent-border);
 	color: var(--accent-text);
-	opacity: 0.9;
+	opacity: 0.92;
 }
-/* Category: medium */
+/* Category: medium, slight warm shift */
 .ps-tag-pill-category {
 	background: var(--accent-bg-soft);
 	border-color: var(--accent-border);
 	color: var(--accent-text-soft);
-	opacity: 0.85;
+	opacity: 0.88;
+	filter: hue-rotate(12deg);
 }
-/* Subcategory: lighter */
+/* Subcategory: lighter, more warm shift */
 .ps-tag-pill-subcategory {
 	background: var(--accent-bg-soft);
 	border-color: var(--accent-border);
 	color: var(--accent-text-soft);
-	opacity: 0.75;
+	opacity: 0.82;
+	filter: hue-rotate(22deg);
 }
-/* Manual tags: lightest */
+/* Manual tags: lightest, cool shift */
 .ps-tag-pill-tag {
 	background: var(--accent-bg-soft);
 	border-color: var(--accent-border);
 	color: var(--accent-text-soft);
-	opacity: 0.65;
+	opacity: 0.75;
+	filter: hue-rotate(-15deg);
 }
 .ps-tag-pill-remove {
 	display: inline-flex;
