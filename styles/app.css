@@ -821,15 +821,40 @@ body.glow-disabled .bg-glow {
 	font-weight: 400;
 	margin-right: -2px;
 }
-/* All tags use theme accent colors */
-.ps-tag-pill-year,
-.ps-tag-pill-month,
-.ps-tag-pill-category,
-.ps-tag-pill-subcategory,
+/* All tags use theme accent colors with subtle gradation */
+/* Year: darkest/strongest */
+.ps-tag-pill-year {
+	background: var(--accent-bg);
+	border-color: var(--accent-border-strong);
+	color: var(--accent-text);
+}
+/* Month: slightly lighter */
+.ps-tag-pill-month {
+	background: var(--accent-bg-hover);
+	border-color: var(--accent-border);
+	color: var(--accent-text);
+	opacity: 0.9;
+}
+/* Category: medium */
+.ps-tag-pill-category {
+	background: var(--accent-bg-soft);
+	border-color: var(--accent-border);
+	color: var(--accent-text-soft);
+	opacity: 0.85;
+}
+/* Subcategory: lighter */
+.ps-tag-pill-subcategory {
+	background: var(--accent-bg-soft);
+	border-color: var(--accent-border);
+	color: var(--accent-text-soft);
+	opacity: 0.75;
+}
+/* Manual tags: lightest */
 .ps-tag-pill-tag {
 	background: var(--accent-bg-soft);
 	border-color: var(--accent-border);
 	color: var(--accent-text-soft);
+	opacity: 0.65;
 }
 .ps-tag-pill-remove {
 	display: inline-flex;
