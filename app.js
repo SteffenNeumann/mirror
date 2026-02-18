@@ -10078,7 +10078,7 @@
 		const value = String(raw || "");
 		const escaped = escapeHtml(value);
 		const dots = "•".repeat(Math.max(4, value.length));
-		return `<span class="pw-field" data-pw="${escaped}"><span class="pw-mask" aria-hidden="true">${dots}</span><span class="pw-value">${escaped}</span><button type="button" class="pw-toggle" title="Anzeigen" aria-label="Passwort anzeigen">👁</button><button type="button" class="pw-copy" title="Kopieren" aria-label="Passwort kopieren">📋</button></span>`;
+		return `<span class="pw-field" data-pw="${escaped}"><span class="pw-mask" aria-hidden="true">${dots}</span><span class="pw-value">${escaped}</span><button type="button" class="pw-toggle" title="Anzeigen" aria-label="Passwort anzeigen">◉</button><button type="button" class="pw-copy" title="Kopieren" aria-label="Passwort kopieren">⎘</button></span>`;
 	}
 
 	async function copyTextToClipboard(value) {
@@ -10122,7 +10122,7 @@
 				next ? "Passwort verbergen" : "Passwort anzeigen"
 			);
 			toggleBtn.setAttribute("title", next ? "Verbergen" : "Anzeigen");
-			toggleBtn.textContent = next ? "🙈" : "👁";
+			toggleBtn.textContent = next ? "○" : "◉";
 		}
 		return next;
 	}
