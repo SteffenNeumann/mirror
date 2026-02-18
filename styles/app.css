@@ -316,20 +316,16 @@ body.glow-disabled .bg-glow {
 }
 #psList .ps-note-item:hover {
 	max-height: 5rem;
+	background-color: transparent !important;
 }
 #psList .ps-note-item:last-child {
 	border-bottom: none;
 }
-#psList .ps-note-item:hover {
-	background-color: transparent !important;
-}
 #psList .ps-note-item.ps-note-active {
 	background-color: rgba(255, 255, 255, 0.05) !important;
 	border-radius: 8px;
-	border-right: none;
+	border: none;
 	box-shadow: none;
-	border-bottom: none;
-	border-top: none;
 }
 #psList .ps-note-item:has(+ .ps-note-active) {
 	border-bottom: none;
@@ -1877,7 +1873,6 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		border-radius: 0;
 		border: none;
 		overflow: hidden;
-		background: rgba(2, 6, 23, 0.95);
 	}
 	body.mobile-ps-open #psList {
 		overflow-y: auto;
@@ -1895,7 +1890,6 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		pointer-events: auto;
 		border-radius: 0;
 		border: none;
-		background: rgba(2, 6, 23, 0.95);
 	}
 	body.mobile-note-open #editorPanel > header,
 	body.mobile-editor-open #editorPanel > header {
@@ -1928,14 +1922,12 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		position: sticky;
 		top: 0;
 		z-index: 1;
-		background: rgba(2, 6, 23, 0.85);
 		backdrop-filter: blur(8px);
 	}
 	#settingsPanel > header {
 		position: sticky;
 		top: 0;
 		z-index: 2;
-		background: rgba(2, 6, 23, 0.85);
 		backdrop-filter: blur(8px);
 	}
 
@@ -1972,10 +1964,10 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	
 	/* Remove borders on mobile panels for cleaner look */
 	#psPanel,
-	#editorPanel {
+	#editorPanel,
+	#previewPanel {
 		border-radius: 0;
 		border: none;
-		background: rgba(2, 6, 23, 0.95);
 	}
 
 	/* Ensure preview iframe fills space */
@@ -1988,13 +1980,11 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	/* AI section on mobile: more compact */
 	#aiConversationSection {
 		padding: 6px 8px;
-		background: rgba(15, 23, 42, 0.3);
 		border-top: 1px solid rgba(255, 255, 255, 0.05);
 	}
 	#aiPromptWrap textarea {
 		min-height: 64px;
 		font-size: 14px;
-		background: rgba(2, 6, 23, 0.5);
 		border: 1px solid rgba(255, 255, 255, 0.05);
 	}
 	#aiModeWrap {
@@ -2003,7 +1993,6 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	}
 	#aiModeWrap select {
 		width: 100%;
-		background: rgba(2, 6, 23, 0.5);
 		border: 1px solid rgba(255, 255, 255, 0.05);
 	}
 
@@ -2024,7 +2013,6 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	
 	/* Reduce border visibility on mobile inputs */
 	#mirror {
-		background: rgba(2, 6, 23, 0.5);
 		border: 1px solid rgba(255, 255, 255, 0.05);
 	}
 
@@ -2049,7 +2037,6 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		-webkit-overflow-scrolling: touch;
 		height: 36px;
 		gap: 4px;
-		background: rgba(15, 23, 42, 0.6);
 		border: 1px solid rgba(255, 255, 255, 0.05);
 	}
 	#psEditorTagsBar input,
@@ -2058,7 +2045,6 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		font-size: 10px;
 		min-width: 0;
 		flex-shrink: 1;
-		background: rgba(2, 6, 23, 0.6);
 		border: 1px solid rgba(255, 255, 255, 0.05);
 	}
 	#psEditorTagsBar .text-slate-400 {
@@ -2286,7 +2272,6 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		width: 100dvw;
 		height: 100vh;
 		height: 100dvh;
-		background: rgba(2, 6, 23, 0.98);
 	}
 
 	/* AI section: stack controls vertically on small phones */
@@ -2311,7 +2296,6 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	#aiPromptWrap textarea {
 		min-height: 56px;
 		font-size: 16px; /* prevent iOS zoom */
-		background: rgba(2, 6, 23, 0.6);
 		border: 1px solid rgba(255, 255, 255, 0.05);
 	}
 	#aiAssist {
@@ -2322,7 +2306,6 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	/* PS panel: prevent overflow */
 	body.mobile-ps-open #psPanel {
 		padding: 6px;
-		background: rgba(2, 6, 23, 0.98);
 	}
 
 	/* Modal inputs on phone: prevent zoom */
@@ -5193,3 +5176,4 @@ body[data-theme] #noteShareModal [role="dialog"] {
 	background-color: var(--panel-solid-bg, #0f0a1a) !important;
 	border-color: var(--modal-border, rgba(255, 255, 255, 0.1)) !important;
 }
+
