@@ -11097,18 +11097,11 @@
 		const previewPreBorder = previewPreColors.preBorder;
 		const previewPreText = previewPreColors.preText;
 		const previewCodeBg = previewPreColors.codeBg;
-		const previewFieldBg = isLightSyntax
-			? "rgba(15,23,42,.06)"
-			: "rgba(15,23,42,.6)";
-		const previewFieldBorder = isLightSyntax
-			? "rgba(15,23,42,.12)"
-			: "rgba(255,255,255,.12)";
-		const previewFieldText = isLightSyntax
-			? "rgba(15,23,42,.9)"
-			: "rgba(226,232,240,.9)";
-		const previewValueText = isLightSyntax
-			? "rgba(15,23,42,.95)"
-			: "rgba(226,232,240,.95)";
+		const previewFieldColors = getPreviewFieldColors(activeTheme, { isLightSyntax });
+		const previewFieldBg = previewFieldColors.fieldBg;
+		const previewFieldBorder = previewFieldColors.fieldBorder;
+		const previewFieldText = previewFieldColors.fieldText;
+		const previewValueText = previewFieldColors.valueText;
 		const previewMetaBg =
 			themeColors.previewMetaBg ||
 			(isMonoLight ? "rgba(15,23,42,.04)" : "rgba(15,23,42,.55)");
@@ -11156,6 +11149,38 @@
 			? "https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css"
 			: "https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css";
 		const highlightThemeCss = buildPreviewHighlightCss(activeTheme);
+
+		function getPreviewFieldColors(theme, opts) {
+			const lightDefaults = {
+				fieldBg: "rgba(15,23,42,.06)",
+				fieldBorder: "rgba(15,23,42,.12)",
+				fieldText: "rgba(15,23,42,.9)",
+				valueText: "rgba(15,23,42,.95)",
+			};
+			const darkDefaults = {
+				fieldBg: "rgba(15,23,42,.6)",
+				fieldBorder: "rgba(255,255,255,.12)",
+				fieldText: "rgba(226,232,240,.9)",
+				valueText: "rgba(226,232,240,.95)",
+			};
+			const base = opts.isLightSyntax ? lightDefaults : darkDefaults;
+			switch (theme) {
+				case "coffeeLight":
+					return { ...base, fieldBg: "#f3e9df", fieldBorder: "#d9c7bc", fieldText: "#5b4436", valueText: "#3b2a21" };
+				case "coffeeDark":
+					return { ...base, fieldBg: "#1c1511", fieldBorder: "#35261e", fieldText: "#c7ae9d", valueText: "#e8d9cc" };
+				case "bitterLight":
+					return { ...base, fieldBg: "#f0eeeb", fieldBorder: "#d8d2cb", fieldText: "#2a292f", valueText: "#0d0c10" };
+				case "bitterDark":
+					return { ...base, fieldBg: "#0d0c10", fieldBorder: "#2a2a30", fieldText: "#c0b5ad", valueText: "#f0e8df" };
+				case "monoLight":
+					return { ...base, fieldBg: "#f6f8fa", fieldBorder: "#d0d7de", fieldText: "#57606a", valueText: "#24292f" };
+				case "monoDark":
+					return { ...base, fieldBg: "#0d1117", fieldBorder: "#30363d", fieldText: "#8b949e", valueText: "#c9d1d9" };
+				default:
+					return base;
+			}
+		}
 
 		function getPreviewPreColors(theme, opts) {
 			const lightDefaults = {
