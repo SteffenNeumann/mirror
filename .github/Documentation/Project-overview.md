@@ -1,8 +1,25 @@
 # Project overview
 
-Datum: 2026-02-16
+Datum: 2026-02-20
 
 Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische Analyse, keine Laufzeitauflösung).
+
+## Aktuelle Änderungen (2026-02-20)
+
+- **Automatischer PS-Notizen-Sync zwischen Devices** `#ps` `#sync` `#offline` `#polling`: Personal-Space-Notizen werden jetzt automatisch zwischen Devices synchronisiert — ohne manuellen Reload. Zwei Mechanismen:
+  1. **Visibility/Focus-Refresh** (`app.js`): Bei `visibilitychange` (Tab wird wieder aktiv) und `focus`-Events wird `schedulePsAutoRefresh()` aufgerufen, das `refreshPersonalSpace()` triggert. Damit lädt Device B sofort neue Notizen vom Server, sobald der Tab wieder fokussiert wird.
+  2. **Periodisches Polling** (`app.js`): `startPsPolling()` startet einen 60-Sekunden-Intervall-Timer. Nur wenn Tab sichtbar und online, wird `refreshPersonalSpace()` aufgerufen. Damit werden neue Notizen auch bei langem Offenbleiben eines Tabs synchronisiert.
+  3. **Debounce** (5s): `PS_REFRESH_DEBOUNCE_MS` verhindert, dass `refreshPersonalSpace()` öfter als alle 5 Sekunden aufgerufen wird. `psLastRefreshTs` wird sowohl bei Auto- als auch manuellen Refreshes gesetzt.
+  4. **Offline-Sync-Guard**: `schedulePsAutoRefresh()` blockiert während `offlineSyncInFlight === true`, damit die IndexedDB nicht geleert wird bevor Offline-Ops replayed wurden.
+  - Zuständige Funktionen: `schedulePsAutoRefresh` ([app.js](app.js#L21986)), `startPsPolling` ([app.js](app.js#L21995)), `stopPsPolling` ([app.js](app.js#L22003)).
+  - Zuständige Dateien: `app.js`.
+
+- **IndexedDB Full-Sync: Ghost-Notizen bereinigt** `#offline` `#sync` `#indexeddb`: `offlinePutNotes()` war bisher nur additiv — Notizen, die auf dem Server gelöscht wurden, blieben als Ghost-Einträge in der IndexedDB anderer Devices. Das führte zu unterschiedlichen Notizen-Anzahlen zwischen Devices, besonders bei Offline/Online-Wechseln.
+  1. **Full-Sync statt additiv** (`app.js`): `offlinePutNotes()` ruft jetzt `store.clear()` vor dem Einfügen auf. Damit wird die IndexedDB bei jedem Online-Refresh komplett durch den Server-Stand ersetzt.
+  2. **Leere Server-Antwort berücksichtigt** (`app.js`): Die `notes.length`-Guard im Mirror-Aufruf in `refreshPersonalSpace()` wurde entfernt. Wenn der Server 0 Notizen zurückgibt (alle gelöscht), wird die IndexedDB korrekt geleert.
+  3. **Leeres Array akzeptiert** (`app.js`): `offlinePutNotes()` akzeptiert leere Arrays und führt dann nur `clear()` aus.
+  - Zuständige Funktionen: `offlinePutNotes` ([app.js](app.js#L6728)), `refreshPersonalSpace` ([app.js](app.js#L14084)).
+  - Zuständige Dateien: `app.js`.
 
 ## Aktuelle Änderungen (2026-02-16)
 
@@ -188,9 +205,14 @@ App-Start
   +--> Service Worker (sw.js)  ----> Asset-Cache (Stale-While-Revalidate)
   +--> IndexedDB (Offline-Store) --> notes / pendingOps / meta
 
-Online ──> savePersonalSpaceNote() ──> API + offlinePutNotes() (Spiegel)
+Online ──> savePersonalSpaceNote() ──> API + offlinePutNotes() (Full-Sync-Spiegel)
 Offline ─> savePersonalSpaceNote() ──> offlineSaveNote() + offlineEnqueueOp()
 Reconnect ─> replayOfflineOps() ──> API Replay + offlineClearOps()
+
+Auto-Sync (Cross-Device):
+  visibilitychange/focus ──> schedulePsAutoRefresh() ──> refreshPersonalSpace()
+  setInterval(60s) ──────> schedulePsAutoRefresh() ──> refreshPersonalSpace()
+  refreshPersonalSpace() ──> API /api/personal-space/me ──> offlinePutNotes(clear+put)
 
 Server-Start
   |-> HTTP Server (API, Uploads) -> initDb() -> SQLite
@@ -225,10 +247,11 @@ Server-Start
 - Umsetzung: `loadCommentsForRoom`, `renderCommentList`, `updateCommentOverlay`, `addCommentFromDraft`.
 - Hinweis: Raum-Kommentare (ohne Textmarkierung) sind immer sichtbar. Textmarkierung-Kommentare sind per `noteId` an die jeweilige Notiz gebunden und werden nur angezeigt (Counter, Liste, Overlay), wenn die zugehörige Notiz aktiv ist. `getVisibleCommentItems()` filtert zentral für alle drei Ausgaben.
 
-7) Personal Space (Notizen, Tags, Auto-Save, Query-Engine)
-- Zweck: Notizen laden/filtern, Tags, Auto-Save, Tabs/History. Strukturierte Abfragen über alle Notizen via Query-Engine.
-- Umsetzung: `refreshPersonalSpace`, `applyPersonalSpaceFiltersAndRender`, `savePersonalSpaceNote`, `updateRoomTabsForNoteId`, `parseQueryTokens`, `noteMatchesStructuredQuery`, `renderQueryResults`.
+7) Personal Space (Notizen, Tags, Auto-Save, Query-Engine, Cross-Device-Sync)
+- Zweck: Notizen laden/filtern, Tags, Auto-Save, Tabs/History. Strukturierte Abfragen über alle Notizen via Query-Engine. Automatische Synchronisation zwischen Devices.
+- Umsetzung: `refreshPersonalSpace`, `applyPersonalSpaceFiltersAndRender`, `savePersonalSpaceNote`, `updateRoomTabsForNoteId`, `parseQueryTokens`, `noteMatchesStructuredQuery`, `renderQueryResults`, `schedulePsAutoRefresh`, `startPsPolling`.
 - Hinweis: Notizen werden per `filterRealNotes` auf gültige IDs geprüft und nach ID entdoppelt (neuestes `updatedAt`/`createdAt` bleibt); Tag-Änderungen aktualisieren bestehende Notizen statt neue anzulegen. Zusätzlich verhindert `psSaveNoteInFlight`-Mutex parallele manuelle Saves, `findNoteByText` erkennt inhaltlich identische Notizen (Volltext + Header-Fallback) vor dem Erstellen, `schedulePsAutoSave` stellt verlorene Note-IDs per Header-Sync wieder her, und der Server blockiert Duplikate per `contentHash`- und `title_hash`-Prüfung.
+- Cross-Device-Sync: `schedulePsAutoRefresh` ruft `refreshPersonalSpace()` bei Tab-Fokus und alle 60s auf (Debounce 5s). `offlinePutNotes` führt Full-Sync (clear + put) durch, damit die IndexedDB exakt dem Server-Stand entspricht und keine Ghost-Notizen entstehen.
 - Query-Engine: Das PS-Suchfeld unterstützt strukturierte Operatoren (`tag:`, `task:open`, `task:done`, `has:task`, `kind:`, `created:>`, `updated:<`, `pinned:`). Bei Task-Queries (`task:open`/`task:done`/`has:task`) wird ein aggregiertes Ergebnis-Panel über der Notizliste eingeblendet.
 
 8) Settings/Tools (Uploads, Kalender, AI, Bildgenerierung)
@@ -1277,7 +1300,10 @@ Server-Start
 | Funktion | Zweck | Tags | Abhängigkeiten |
 |----------|-------|------|----------------|
 | `initUiEventListeners` | UI-Event-Listener initialisieren | `#init` `#handler` | *(umfangreiche Abhängigkeiten — bindet alle UI-Events)* |
-| `initStartupTasks` | Startup-Tasks ausführen | `#init` `#main` | `applyAiContextMode`, `initAiDictation`, `initAutoBackup`, `initAutoImport`, `initUiLanguage`, `loadAiPrompt`, `loadAiUseAnswer`, `loadAiUsePreview`, `loadCommentsForRoom`, `loadMobileAutoNoteSeconds`, `refreshPersonalSpace`, `setCommentDraftSelection`, `syncMobileFocusState`, `t`, `updateTableMenuVisibility` |
+| `initStartupTasks` | Startup-Tasks ausführen | `#init` `#main` | `applyAiContextMode`, `initAiDictation`, `initAutoBackup`, `initAutoImport`, `initUiLanguage`, `loadAiPrompt`, `loadAiUseAnswer`, `loadAiUsePreview`, `loadCommentsForRoom`, `loadMobileAutoNoteSeconds`, `refreshPersonalSpace`, `setCommentDraftSelection`, `startPsPolling`, `syncMobileFocusState`, `t`, `updateTableMenuVisibility` |
+| `schedulePsAutoRefresh` | PS-Notizen auto-refresh mit Debounce (5s) | `#sync` `#debounce` | `refreshPersonalSpace` |
+| `startPsPolling` | Startet periodisches PS-Polling (60s Intervall) | `#sync` `#polling` | `schedulePsAutoRefresh` |
+| `stopPsPolling` | Stoppt periodisches PS-Polling | `#sync` `#polling` | — |
 
 #### 34 · Offline-Modus (PWA + IndexedDB + Sync-Queue) `#offline` — `app.js`
 
@@ -1285,7 +1311,7 @@ Server-Start
 |----------|-------|------|----------------|
 | `openOfflineDb` | IndexedDB-Offline-Datenbank öffnen/erstellen | `#storage` `#init` | — |
 | `offlinePutNote` | Einzelne Notiz in IndexedDB speichern | `#storage` `#save` | `openOfflineDb` |
-| `offlinePutNotes` | Notiz-Array in IndexedDB spiegeln (Batch) | `#storage` `#save` | `openOfflineDb` |
+| `offlinePutNotes` | Notiz-Array in IndexedDB spiegeln (Full-Sync: clear + put) | `#storage` `#save` `#sync` | `openOfflineDb` |
 | `offlineGetAllNotes` | Alle Notizen aus IndexedDB laden | `#storage` `#load` | `openOfflineDb` |
 | `offlineDeleteNote` | Notiz aus IndexedDB löschen | `#storage` `#delete` | `openOfflineDb` |
 | `offlineEnqueueOp` | Pending-Operation in Sync-Queue einreihen | `#sync` `#save` | `openOfflineDb` |
