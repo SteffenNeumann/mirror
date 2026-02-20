@@ -1007,15 +1007,15 @@
 			const line = raw.split(/\r?\n/)[0] || "";
 			const parts = line.trim().split(/\s+/);
 			if (parts.length < 2) return;
+			// Detect format: "date sha" (2 parts) or "date time sha" (3+ parts)
+			const hasTime = parts.length >= 3 && parts[1].includes(":");
 			const sha = parts[parts.length - 1];
 			const datePart = String(parts[0] || "");
-			const timePart = String(parts[1] || "");
+			const timePart = hasTime ? String(parts[1] || "") : "";
 			// Anzeige ohne Zeitzone: nur Uhrzeit (hh:mm)
 			let hm = "";
-			if (timePart.includes(":")) {
+			if (timePart && timePart.includes(":")) {
 				hm = timePart.split(":").slice(0, 2).join(":");
-			} else if (timePart.length >= 4) {
-				hm = `${timePart.slice(0, 2)}:${timePart.slice(2, 4)}`;
 			}
 			let shortDate = "";
 			const dateParts = datePart.split("-");
@@ -1024,7 +1024,7 @@
 					-2
 				)}`;
 			}
-			const formattedTs = shortDate && hm ? `${shortDate} ${hm}` : hm;
+			const formattedTs = shortDate && hm ? `${shortDate} ${hm}` : shortDate;
 			const shortSha = sha ? sha.slice(0, 7) : "";
 			// Subtil: kurze Anzeige, volle Infos im Tooltip.
 			buildStamp.textContent =
