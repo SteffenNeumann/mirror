@@ -22850,36 +22850,44 @@ self.onmessage = async (e) => {
 			const errMsg = err && err.message ? String(err.message) : "";
 			const is404 = errMsg.includes("404") || errMsg.includes("not_found");
 			const is409 = errMsg.includes("409") || errMsg.includes("duplicate");
-			if (is404 || is409) {
-				// 404: Note deleted server-side; 409: content already exists in another note
-				console.warn("[saveSnapshot] " + (is404 ? "not found" : "duplicate") + ", resolving:", targetId);
+			if (is409) {
+				// 409: content hash matches another note — note still exists, don't delete
+				console.warn("[saveSnapshot] duplicate content, resolving:", targetId);
+				const survivingNote = findNoteByText(rawText);
+				if (survivingNote && survivingNote.id && String(survivingNote.id) !== targetId) {
+					// Redirect to the existing note that owns this content
+					if (String(psEditingNoteId || "").trim() === targetId) {
+						psEditingNoteId = String(survivingNote.id);
+						psAutoSaveLastSavedNoteId = psEditingNoteId;
+						psAutoSaveLastSavedText = rawText;
+						setPsAutoSaveStatus("Note zugeordnet");
+					}
+				} else {
+					// Same note or no match — just accept, content is already saved
+					psAutoSaveLastSavedNoteId = targetId;
+					psAutoSaveLastSavedText = rawText;
+					setPsAutoSaveStatus("Gespeichert");
+				}
+				return true;
+			}
+			if (is404) {
+				// 404: Note deleted server-side — clean up
+				console.warn("[saveSnapshot] not found, removing:", targetId);
 				if (psState && Array.isArray(psState.notes)) {
 					psState.notes = psState.notes.filter(
 						(n) => String(n && n.id ? n.id : "") !== targetId
 					);
 				}
-				// Clear any queued auto-save for the deleted note
 				if (String(psAutoSaveQueuedNoteId || "") === targetId) {
 					psAutoSaveQueuedNoteId = "";
 					psAutoSaveQueuedText = "";
 					psAutoSaveQueuedTags = null;
 				}
-				// Clear room tab association for the deleted note
 				const staleTab = findRoomTabByNoteId(targetId);
 				if (staleTab) {
 					setRoomTabNoteId(staleTab.room, staleTab.key, "");
 				}
 				if (String(psEditingNoteId || "").trim() === targetId) {
-					// Try to find the surviving note by title
-					const survivingNote = findNoteByText(rawText);
-					if (survivingNote && survivingNote.id) {
-						psEditingNoteId = String(survivingNote.id);
-						psAutoSaveLastSavedNoteId = psEditingNoteId;
-						psAutoSaveLastSavedText = rawText;
-						setPsAutoSaveStatus("Note zugeordnet");
-						applyPersonalSpaceFiltersAndRender();
-						return true;
-					}
 					psEditingNoteId = "";
 					psAutoSaveLastSavedNoteId = "";
 					psAutoSaveLastSavedText = "";
