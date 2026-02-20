@@ -10834,6 +10834,10 @@
 			container.innerHTML = html;
 			container.querySelectorAll("pre code").forEach((codeEl) => {
 				try {
+					// Escape raw HTML inside <code> to prevent hljs security warnings
+					if (!codeEl.dataset.highlighted) {
+						codeEl.textContent = codeEl.textContent;
+					}
 					window.hljs.highlightElement(codeEl);
 				} catch {
 					// ignore
