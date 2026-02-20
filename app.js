@@ -11322,7 +11322,8 @@
 		.pw-value{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;color:transparent;-webkit-user-select:text;user-select:text;cursor:text;}
 		.pw-field.pw-revealed .pw-mask{display:none;}
 		.pw-field.pw-revealed .pw-value{color:${previewValueText};}
-		.pw-toggle,.pw-copy{display:inline-flex;align-items:center;justify-content:center;height:1.4rem;min-width:1.4rem;padding:0 .25rem;border-radius:999px;border:1px solid ${previewFieldBorder};background:${previewCodeBg};color:${previewFieldText};font-size:.75rem;line-height:1;cursor:pointer;}
+		.pw-toggle,.pw-copy{display:inline-flex;align-items:center;justify-content:center;height:1.4rem;min-width:1.4rem;padding:0 .25rem;border-radius:999px;border:1px solid ${previewFieldBorder};background:${previewCodeBg};color:${previewFieldText};font-size:.75rem;line-height:1;cursor:pointer;opacity:0;transition:opacity .16s ease;}
+		.pw-field:hover .pw-toggle,.pw-field:hover .pw-copy,.pw-field.pw-revealed .pw-toggle,.pw-field.pw-revealed .pw-copy{opacity:1;}
 		.pw-toggle svg,.pw-copy svg{width:.85rem;height:.85rem;display:block;}
 		.pw-toggle:hover,.pw-copy:hover{background:${previewPreBg};}
 		.meta-yaml{margin:0 0 12px 0;font-size:11px;line-height:1.4;color:${previewMetaText};background:${previewMetaBg};border:1px solid ${previewMetaBorder};border-radius:10px;padding:8px 10px;white-space:pre-wrap;}

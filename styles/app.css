@@ -1873,6 +1873,14 @@ body[data-theme="monoDark"] .excel-iframe {
 	font-size: 0.75rem;
 	line-height: 1;
 	cursor: pointer;
+	opacity: 0;
+	transition: opacity 0.16s ease;
+}
+.md-content .pw-field:hover .pw-toggle,
+.md-content .pw-field:hover .pw-copy,
+.md-content .pw-field.pw-revealed .pw-toggle,
+.md-content .pw-field.pw-revealed .pw-copy {
+	opacity: 1;
 }
 .md-content .pw-toggle svg,
 .md-content .pw-copy svg {
