@@ -6,6 +6,13 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
 
 ## Aktuelle Änderungen (2026-02-20)
 
+- **Fix: psList-Notizen verschwinden bei Tabwechsel** `#ps` `#psList` `#race-condition` `#tabs`: Notizen verschwanden aus der `#psList`-Sidebar beim Wechsel zwischen Tabs und wurden erst nach Server-Reload wieder angezeigt. Ursache: Mehrere parallele `refreshPersonalSpace()`-Aufrufe (hashchange + visibilitychange + focus + polling) überschrieben sich gegenseitig `psState`. Bei fehlgeschlagenem API-Call wurde `psState.authed = false` gesetzt → `applyPersonalSpaceFiltersAndRender()` machte Early-Return → psList blieb leer.
+  1. **Singleton-Guard `psRefreshPromise`** (`app.js`): Neue Variable `psRefreshPromise` verhindert parallele Ausführungen von `refreshPersonalSpace()`. Wenn bereits ein Refresh läuft, wird das existierende Promise zurückgegeben statt eine neue Ausführung zu starten. Die eigentliche Logik ist in `_refreshPersonalSpaceImpl()` ausgelagert.
+  2. **`schedulePsListRerender` Guard** (`app.js`): `if (psRefreshPromise) return;` — verhindert Rendering des 120ms-Debounce-Timers während ein Refresh in-flight ist, da `psState` in diesem Moment inkonsistent sein kann.
+  3. **`schedulePsAutoRefresh` Guard** (`app.js`): `if (psRefreshPromise) return;` — verhindert doppelte Refreshes durch simultane `visibilitychange` + `focus`-Events bei Tab-Rückkehr.
+  - Zuständige Funktionen: `refreshPersonalSpace` ([app.js](app.js#L14129)), `_refreshPersonalSpaceImpl` ([app.js](app.js#L14135)), `schedulePsListRerender` ([app.js](app.js#L8881)), `schedulePsAutoRefresh` ([app.js](app.js#L22034)).
+  - Zuständige Dateien: `app.js`.
+
 - **Automatischer PS-Notizen-Sync zwischen Devices** `#ps` `#sync` `#offline` `#polling`: Personal-Space-Notizen werden jetzt automatisch zwischen Devices synchronisiert — ohne manuellen Reload. Zwei Mechanismen:
   1. **Visibility/Focus-Refresh** (`app.js`): Bei `visibilitychange` (Tab wird wieder aktiv) und `focus`-Events wird `schedulePsAutoRefresh()` aufgerufen, das `refreshPersonalSpace()` triggert. Damit lädt Device B sofort neue Notizen vom Server, sobald der Tab wieder fokussiert wird.
   2. **Periodisches Polling** (`app.js`): `startPsPolling()` startet einen 60-Sekunden-Intervall-Timer. Nur wenn Tab sichtbar und online, wird `refreshPersonalSpace()` aufgerufen. Damit werden neue Notizen auch bei langem Offenbleiben eines Tabs synchronisiert.
