@@ -4388,10 +4388,14 @@ const server = http.createServer(async (req, res) => {
 						tags = applyDateTags(tags, existing.created_at);
 					}
 					if (contentHash) {
-						const dupe = stmtNoteGetByHashUser.get(userId, contentHash);
-						if (dupe && String(dupe.id || "") !== String(noteId || "")) {
-							json(res, 409, { ok: false, error: "duplicate" });
-							return;
+						// Skip duplicate check if content hasn't changed (idempotent save)
+						const existingHash = existing.content_hash || computeNoteContentHash(existing.text);
+						if (contentHash !== existingHash) {
+							const dupe = stmtNoteGetByHashUser.get(userId, contentHash);
+							if (dupe && String(dupe.id || "") !== String(noteId || "")) {
+								json(res, 409, { ok: false, error: "duplicate" });
+								return;
+							}
 						}
 					}
 					const updatedAt = Date.now();

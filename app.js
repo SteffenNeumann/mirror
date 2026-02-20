@@ -19015,7 +19015,11 @@ self.onmessage = async (e) => {
 				typeof lastUsedTs === "number" ? lastUsedTs : Date.now(),
 		});
 		if (noteId && psEditingNoteId && noteId === String(psEditingNoteId || "").trim()) {
-			schedulePsAutoSave();
+			// CRDT-synced text is already persisted via room state — update
+			// the auto-save tracker so the next real user edit can diff correctly,
+			// but do NOT trigger an auto-save (avoids 409 duplicate conflicts).
+			psAutoSaveLastSavedNoteId = psEditingNoteId;
+			psAutoSaveLastSavedText = String(cleaned ?? "");
 		}
 	}
 
