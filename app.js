@@ -6,6 +6,7 @@
 	const statusText = document.getElementById("statusText");
 	const roomLabel = document.getElementById("roomLabel");
 	const buildStamp = document.getElementById("buildStamp");
+	const syncStamp = document.getElementById("syncStamp");
 	const shareLink = document.getElementById("shareLink");
 	const copyLinkBtn = document.getElementById("copyLink");
 	const wsHint = document.getElementById("wsHint");
@@ -1032,6 +1033,19 @@
 		} catch {
 			// ignore
 		}
+	}
+
+	/* ── Sync-Timestamp im Settings-Header aktualisieren ── */
+	function updateSyncStamp() {
+		if (!syncStamp) return;
+		const now = new Date();
+		const hh = String(now.getHours()).padStart(2, "0");
+		const mm = String(now.getMinutes()).padStart(2, "0");
+		const dd = String(now.getDate()).padStart(2, "0");
+		const mo = String(now.getMonth() + 1).padStart(2, "0");
+		const yy = String(now.getFullYear()).slice(-2);
+		syncStamp.textContent = `\u21BB ${dd}.${mo}.${yy} ${hh}:${mm}`;
+		syncStamp.title = `Last sync: ${now.toLocaleString()}`;
 	}
 
 	let modalBusy = false;
@@ -14087,6 +14101,7 @@ self.onmessage = async (e) => {
 	async function refreshPersonalSpace() {
 		if (!psUnauthed || !psAuthed) return;
 		psLastRefreshTs = Date.now();
+		updateSyncStamp();
 
 		const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
 

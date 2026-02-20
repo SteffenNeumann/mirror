@@ -1920,13 +1920,19 @@
 						<p class="mt-1 text-xs text-slate-400" data-i18n="settings.desc">
 							Manage account, export/import, themes, AI, and help.
 						</p>
-									<div
-										id="buildStamp"
-										class="mt-1 text-xs text-slate-400"
-											title="Build info"
-											aria-label="Build info"
-											data-i18n-title="settings.build"
-											data-i18n-aria="settings.build"></div>
+						<div class="mt-1 flex items-center gap-3 text-xs text-slate-400">
+							<span
+								id="buildStamp"
+								title="Build info"
+								aria-label="Build info"
+								data-i18n-title="settings.build"
+								data-i18n-aria="settings.build"></span>
+							<span
+								id="syncStamp"
+								class="opacity-60"
+								title="Last server sync"
+								aria-label="Last server sync"></span>
+						</div>
 					</div>
 					<button
 						id="settingsClose"
