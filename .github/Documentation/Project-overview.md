@@ -6,6 +6,16 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
 
 ## Aktuelle Änderungen (2026-02-20)
 
+- **PsTransitionManager – prioritätsbasierter Orchestrator für psList-Rendering** `#ps` `#psList` `#race-condition` `#tabs` `#manager`: Ersetzt den einfachen Singleton-Guard durch einen vollständigen Transition-Manager, der den gesamten Lebenszyklus von Tab-Wechsel, Notiz-Auswahl, Background-Refresh und Debounced-Rerender orchestriert.
+  1. **PsTransitionManager IIFE** (`app.js` ~L4921–4977): Prioritätsbasierte State-Machine mit 4 Typen: `tab-switch`(3) > `note-select`(2) > `refresh`(1) > `rerender`(0). Methoden: `begin(type)→gen|null`, `end(gen)`, `isActive(type?)`, `isBlocked(type)`, `requestRender()→bool`, `activeType()→string|null`. Höherpriore Operationen blockieren niederpriore. Queued Renders werden nach `end()` automatisch nachgeholt.
+  2. **Snapshot-Restore in `_refreshPersonalSpaceImpl`** (`app.js` ~L14211): Vor dem API-Call werden `prevAuthed`/`prevNotes` gespeichert. Bei transientem Fehler (nicht-offline, vorherige Daten valide) wird der vorherige State beibehalten statt auf `{authed:false, notes:[]}` zu nullen. Damit bleiben Notizen in der psList sichtbar auch bei kurzzeitigen Netzwerkfehlern.
+  3. **hashchange: Tab-Switch Transition** (`app.js` ~L21955): Gesamter hashchange-Handler mit `psTransition.begin("tab-switch")` / `.end(tsGen)` umschlossen. Async-Pfad (`refreshPersonalSpace().then(...)`) tracked mit `asyncRefreshActive`-Flag und `.finally()` für garantiertes `end()`.
+  4. **schedulePsAutoRefresh Guard** (`app.js` ~L22136): `psTransition.isBlocked("refresh")` verhindert Auto-Refresh während höherpriorer Tab-Switch-Transition.
+  5. **schedulePsListRerender Guard** (`app.js` ~L8956): `psTransition.requestRender()` deferred Render während aktiver Transition; Manager holt ihn nach `end()` automatisch nach.
+  6. **refreshPersonalSpace Guard** (`app.js` ~L14206): `psTransition.isBlocked("refresh")` blockiert Refresh-Aufrufe während Tab-Switch.
+  - Zuständige Funktionen: `psTransition` (IIFE), `refreshPersonalSpace`, `_refreshPersonalSpaceImpl`, `schedulePsListRerender`, `schedulePsAutoRefresh`, hashchange-Handler.
+  - Zuständige Dateien: `app.js`.
+
 - **Fix: psList-Notizen verschwinden bei Tabwechsel** `#ps` `#psList` `#race-condition` `#tabs`: Notizen verschwanden aus der `#psList`-Sidebar beim Wechsel zwischen Tabs und wurden erst nach Server-Reload wieder angezeigt. Ursache: Mehrere parallele `refreshPersonalSpace()`-Aufrufe (hashchange + visibilitychange + focus + polling) überschrieben sich gegenseitig `psState`. Bei fehlgeschlagenem API-Call wurde `psState.authed = false` gesetzt → `applyPersonalSpaceFiltersAndRender()` machte Early-Return → psList blieb leer.
   1. **Singleton-Guard `psRefreshPromise`** (`app.js`): Neue Variable `psRefreshPromise` verhindert parallele Ausführungen von `refreshPersonalSpace()`. Wenn bereits ein Refresh läuft, wird das existierende Promise zurückgegeben statt eine neue Ausführung zu starten. Die eigentliche Logik ist in `_refreshPersonalSpaceImpl()` ausgelagert.
   2. **`schedulePsListRerender` Guard** (`app.js`): `if (psRefreshPromise) return;` — verhindert Rendering des 120ms-Debounce-Timers während ein Refresh in-flight ist, da `psState` in diesem Moment inkonsistent sein kann.
