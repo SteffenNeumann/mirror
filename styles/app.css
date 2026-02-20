@@ -4560,7 +4560,7 @@ body[data-theme="coffeeDark"] #mirror.attribution-active {
 }
 
 body[data-theme="coffeeDark"] #mdPreview {
-	background-color: inherit !important;
+	background-color: #18120e !important;
 	box-shadow: none !important;
 }
 
