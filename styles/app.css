@@ -4193,6 +4193,7 @@ body[data-theme="bitterDark"] {
 	background-color: #0d0c10;
 	color: #f0e8df;
 	--bitter-accent: #ff3b1f;
+	--panel-bg: #101014;
 	--selection-menu-bg: #0d0c10;
 	--selection-menu-border: #2a2a30;
 	--comment-item-bg: #151518;
@@ -4236,6 +4237,11 @@ body[data-theme="bitterDark"] .bg-white\/10,
 body[data-theme="bitterDark"] .bg-white\/15,
 body[data-theme="bitterDark"] .bg-white\/20 {
 	background-color: #151518 !important;
+}
+
+body[data-theme="bitterDark"] #psPanel,
+body[data-theme="bitterDark"] #editorPanel {
+	background-color: var(--panel-bg) !important;
 }
 
 body[data-theme="bitterDark"] .bg-slate-950\/10,
@@ -5171,6 +5177,7 @@ body[data-theme="monoDark"] {
 	background-color: #0d1117;
 	color: #c9d1d9;
 	--mono-accent: #0079d4;
+	--panel-bg: #10141a;
 	--selection-menu-bg: #0d1117;
 	--selection-menu-border: #30363d;
 	--comment-item-bg: #1f2937;
@@ -5249,6 +5256,11 @@ body[data-theme="monoDark"] .bg-white\/10,
 body[data-theme="monoDark"] .bg-white\/15,
 body[data-theme="monoDark"] .bg-white\/20 {
 	background-color: #161b22 !important;
+}
+
+body[data-theme="monoDark"] #psPanel,
+body[data-theme="monoDark"] #editorPanel {
+	background-color: var(--panel-bg) !important;
 }
 
 body[data-theme="monoDark"] .bg-slate-950\/10,
