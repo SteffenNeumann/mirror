@@ -6726,11 +6726,14 @@
 	}
 
 	async function offlinePutNotes(notes) {
-		if (!Array.isArray(notes) || !notes.length) return;
+		if (!Array.isArray(notes)) return;
 		try {
 			const db = await openOfflineDb();
 			const tx = db.transaction(OFFLINE_STORE_NOTES, "readwrite");
 			const store = tx.objectStore(OFFLINE_STORE_NOTES);
+			// Full-sync: clear all existing entries first, then put server notes.
+			// This removes ghost entries (deleted on server but still in IndexedDB).
+			store.clear();
 			for (const n of notes) {
 				if (!n || !n.id) continue;
 				store.put({
@@ -14129,8 +14132,8 @@ self.onmessage = async (e) => {
 			if (psHint) setPsHintText("");
 		}
 
-		// Mirror notes to IndexedDB when online
-		if (!isOffline && psState.authed && Array.isArray(psState.notes) && psState.notes.length) {
+		// Mirror notes to IndexedDB when online (full-sync: also clears deleted notes)
+		if (!isOffline && psState.authed && Array.isArray(psState.notes)) {
 			void offlinePutNotes(psState.notes);
 			void offlineSaveMeta("email", psState.email || "");
 		}
@@ -21982,6 +21985,7 @@ self.onmessage = async (e) => {
 	function schedulePsAutoRefresh() {
 		const now = Date.now();
 		if (now - psLastRefreshTs < PS_REFRESH_DEBOUNCE_MS) return;
+		if (offlineSyncInFlight) return; // Don't refresh while offline ops are replaying
 		psLastRefreshTs = now;
 		if (psState && psState.authed) {
 			void refreshPersonalSpace();
