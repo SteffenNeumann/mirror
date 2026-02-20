@@ -3346,6 +3346,7 @@ body[data-theme="coffeeDark"] {
 	background-color: #1c1614;
 	color: #e8d9cc;
 	--coffee-accent: #c99b77;
+	--panel-bg: #1e1916;
 	--selection-menu-bg: #1c1511;
 	--selection-menu-border: #3b2820;
 	--comment-item-bg: #261b16;
@@ -3393,6 +3394,11 @@ body[data-theme="coffeeDark"] .bg-white\/10,
 body[data-theme="coffeeDark"] .bg-white\/15,
 body[data-theme="coffeeDark"] .bg-white\/20 {
 	background-color: #211712 !important;
+}
+
+body[data-theme="coffeeDark"] #psPanel,
+body[data-theme="coffeeDark"] #editorPanel {
+	background-color: var(--panel-bg) !important;
 }
 
 body[data-theme="coffeeDark"] .bg-slate-950\/10,
