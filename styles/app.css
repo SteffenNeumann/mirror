@@ -3595,7 +3595,7 @@ body[data-theme="coffeeDark"] .shadow-soft {
 
 body[data-theme="coffeeDark"] #previewPanel,
 body[data-theme="coffeeDark"] #commentPanel {
-	background: rgba(24, 18, 14, 0.78) !important;
+	background: #18120e !important;
 	border-color: rgba(59, 40, 32, 0.78) !important;
 }
 
