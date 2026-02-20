@@ -3343,15 +3343,15 @@ body[data-theme="coffeeLight"] #mirror.attribution-active {
 
 body[data-theme="coffeeDark"] {
 	color-scheme: dark;
-	background-color: #1c1614;
+	background-color: #18120e;
 	color: #e8d9cc;
 	--coffee-accent: #c99b77;
-	--panel-bg: #1e1916;
-	--selection-menu-bg: #1c1511;
+	--panel-bg: #1d160f;
+	--selection-menu-bg: #18120e;
 	--selection-menu-border: #3b2820;
 	--comment-item-bg: #261b16;
-	--calendar-event-bg: rgba(34, 26, 21, 0.82);
-	--calendar-tooltip-bg: #1f1612;
+	--calendar-event-bg: rgba(24, 18, 14, 0.82);
+	--calendar-tooltip-bg: #1d160f;
 	--calendar-tooltip-border: rgba(201, 155, 119, 0.35);
 	--calendar-tooltip-text: #e8d9cc;
 	--calendar-tooltip-shadow: 0 12px 28px rgba(0, 0, 0, 0.36),
@@ -3393,7 +3393,7 @@ body[data-theme="coffeeDark"] .bg-white\/5,
 body[data-theme="coffeeDark"] .bg-white\/10,
 body[data-theme="coffeeDark"] .bg-white\/15,
 body[data-theme="coffeeDark"] .bg-white\/20 {
-	background-color: #211712 !important;
+	background-color: #221910 !important;
 }
 
 body[data-theme="coffeeDark"] #psPanel,
@@ -3408,7 +3408,7 @@ body[data-theme="coffeeDark"] .bg-slate-950\/30,
 body[data-theme="coffeeDark"] .bg-slate-950\/40,
 body[data-theme="coffeeDark"] .bg-slate-950\/60,
 body[data-theme="coffeeDark"] .bg-slate-950\/90 {
-	background-color: #1c1614 !important;
+	background-color: #18120e !important;
 }
 
 body[data-theme="coffeeDark"] .bg-slate-950\/70 {
@@ -3582,21 +3582,21 @@ body[data-theme="coffeeDark"] #settingsBackdrop {
 
 body[data-theme="coffeeDark"] #settingsPanel {
 	background-color: #1a130f !important;
-	border-color: #35261e !important;
+	border-color: #3b2820 !important;
 }
 
 body[data-theme="coffeeDark"] #settingsNav {
-	background-color: #211712 !important;
+	background-color: #1d160f !important;
 }
 
 body[data-theme="coffeeDark"] .shadow-soft {
-	box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4);
+	box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
 }
 
 body[data-theme="coffeeDark"] #previewPanel,
 body[data-theme="coffeeDark"] #commentPanel {
-	background: rgba(28, 21, 17, 0.78) !important;
-	border-color: rgba(53, 38, 32, 0.78) !important;
+	background: rgba(24, 18, 14, 0.78) !important;
+	border-color: rgba(59, 40, 32, 0.78) !important;
 }
 
 body[data-theme="coffeeDark"] #toggleComments,
@@ -3605,8 +3605,8 @@ body[data-theme="coffeeDark"] #clearMirror,
 body[data-theme="coffeeDark"] #copyMirror,
 body[data-theme="coffeeDark"] #psEditorTagsBar,
 body[data-theme="coffeeDark"] #psEditorTagsBar > div {
-	background: rgba(28, 21, 17, 0.78) !important;
-	border-color: rgba(53, 38, 32, 0.78) !important;
+	background: rgba(24, 18, 14, 0.78) !important;
+	border-color: rgba(59, 40, 32, 0.78) !important;
 }
 
 body[data-theme="coffeeDark"] .hover\:bg-white\/5:hover {
@@ -4557,6 +4557,11 @@ body[data-theme="bitterDark"] .md-content .pw-mask {
 body[data-theme="coffeeDark"] #mirror.attribution-active {
 	color: transparent !important;
 	caret-color: #e8d9cc;
+}
+
+body[data-theme="coffeeDark"] #mdPreview {
+	background-color: inherit !important;
+	box-shadow: none !important;
 }
 
 /* Coffee themes: visually disable glow toggle (glow is off) */
