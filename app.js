@@ -4900,6 +4900,81 @@
 	let psPinToggleInFlight = new Set();
 	let psListRerenderTimer = 0;
 	let psRefreshPromise = null;
+
+	/* ── PsTransitionManager ──────────────────────────────────────────────
+	 * Orchestrates tab-switch, note-selection, and background-refresh flows
+	 * to prevent race conditions that leave #psList empty or stale.
+	 *
+	 * Priorities (high → low):
+	 *   tab-switch  (3) — user hashchange
+	 *   note-select (2) — user clicks note in psList
+	 *   refresh     (1) — background visibility/focus/poll refresh
+	 *   rerender    (0) — debounced list rerender
+	 *
+	 * Rules:
+	 *   - Only one transition at a time (per priority).
+	 *   - Higher priority supersedes lower; lower is blocked.
+	 *   - Blocked renders are queued and executed after release.
+	 *   - Generation counter detects stale callbacks.
+	 * ───────────────────────────────────────────────────────────────────── */
+	const psTransition = (() => {
+		const PRIO = { "tab-switch": 3, "note-select": 2, "refresh": 1, "rerender": 0 };
+		let _active = null;  // { type, gen }
+		let _gen = 0;
+		let _renderQueued = false;
+
+		function begin(type) {
+			const prio = PRIO[type] ?? 0;
+			if (_active) {
+				const activePrio = PRIO[_active.type] ?? 0;
+				if (prio <= activePrio) {
+					if (type === "rerender" || type === "refresh") _renderQueued = true;
+					return null; // blocked
+				}
+				// Higher priority supersedes current
+			}
+			const gen = ++_gen;
+			_active = { type, gen };
+			_renderQueued = false;
+			return gen;
+		}
+
+		function end(gen) {
+			if (!_active || _active.gen !== gen) return;
+			_active = null;
+			if (_renderQueued) {
+				_renderQueued = false;
+				if (psState && psState.authed) {
+					applyPersonalSpaceFiltersAndRender();
+				}
+			}
+		}
+
+		function isActive(type) {
+			if (!type) return !!_active;
+			return !!(_active && _active.type === type);
+		}
+
+		function isBlocked(type) {
+			if (!_active) return false;
+			const prio = PRIO[type] ?? 0;
+			return prio <= (PRIO[_active.type] ?? 0);
+		}
+
+		function requestRender() {
+			if (_active) {
+				_renderQueued = true;
+				return false; // render deferred
+			}
+			return true; // render now
+		}
+
+		function activeType() {
+			return _active ? _active.type : null;
+		}
+
+		return { begin, end, isActive, isBlocked, requestRender, activeType };
+	})();
 	let previewOpen = false;
 	let fullPreview = false;
 	let mobilePsOpen = false;
@@ -8885,7 +8960,7 @@
 		}
 		psListRerenderTimer = window.setTimeout(() => {
 			psListRerenderTimer = 0;
-			if (psRefreshPromise) return;  // skip render while refresh in-flight
+			if (!psTransition.requestRender()) return; // deferred by manager
 			if (!psState || !psState.authed) return;
 			applyPersonalSpaceFiltersAndRender();
 		}, 120);
@@ -14128,16 +14203,23 @@ self.onmessage = async (e) => {
 
 	async function refreshPersonalSpace() {
 		if (psRefreshPromise) return psRefreshPromise;
+		if (psTransition.isBlocked("refresh")) return;
 		psRefreshPromise = _refreshPersonalSpaceImpl();
 		try { return await psRefreshPromise; } finally { psRefreshPromise = null; }
 	}
 
 	async function _refreshPersonalSpaceImpl() {
 		if (!psUnauthed || !psAuthed) return;
+		const gen = psTransition.begin("refresh");
+		// gen may be null if blocked by higher-prio transition — still run
+		// the refresh but skip the render at the end (manager will queue it).
 		psLastRefreshTs = Date.now();
 		updateSyncStamp();
 
 		const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
+		// Snapshot: preserve previous valid state so we can restore on transient error
+		const prevAuthed = psState && psState.authed;
+		const prevNotes = psState && Array.isArray(psState.notes) ? psState.notes : [];
 
 		try {
 			if (isOffline) throw new Error("offline");
@@ -14166,6 +14248,12 @@ self.onmessage = async (e) => {
 				} catch {
 					psState = { authed: false, email: "", tags: [], notes: [], favorites: [], roomTabs: [], roomPins: [], sharedRooms: [] };
 				}
+			} else if (prevAuthed && prevNotes.length > 0) {
+				// Transient API error while we had valid data — keep previous notes
+				// instead of destroying the list. This prevents psList from going blank.
+				console.warn("[ps] refresh failed, preserving previous state:", e && e.message);
+				if (gen) psTransition.end(gen);
+				return;
 			} else {
 				psState = {
 					authed: false,
@@ -14225,6 +14313,7 @@ self.onmessage = async (e) => {
 			setPsAutoSaveStatus("");
 			updatePsNoteNavButtons();
 			maybeStartMobileAutoNoteSession();
+			if (gen) psTransition.end(gen);
 			return;
 		}
 
@@ -14264,6 +14353,7 @@ self.onmessage = async (e) => {
 		await syncLocalRoomPinsToServer(serverRoomPins);
 		void loadCommentsForRoom();
 		maybeApplyStartupFavoriteFromPs();
+		if (gen) psTransition.end(gen);
 	}
 
 	function downloadJson(filename, obj) {
@@ -21861,6 +21951,8 @@ self.onmessage = async (e) => {
 		const nextKey = parsed.key;
 		if (!nextRoom) return;
 		if (nextRoom === room && nextKey === key) return;
+		/* ── Transition Manager: begin tab-switch (highest priority) ── */
+		const tsGen = psTransition.begin("tab-switch");
 		if (skipTabLimitCheck) {
 			skipTabLimitCheck = false;
 		} else {
@@ -21881,6 +21973,7 @@ self.onmessage = async (e) => {
 					skipTabLimitCheck = true;
 					location.hash = buildShareHash(prevRoom, prevKey);
 				}
+				if (tsGen) psTransition.end(tsGen);
 				return;
 			}
 		}
@@ -21923,6 +22016,8 @@ self.onmessage = async (e) => {
 		touchRoomTab(room, key, { skipSync: true });
 		renderRoomTabs();
 		syncPermanentLinkToggleUi();
+		/* Track whether the async path is active — only release lock after it settles */
+		let asyncRefreshActive = false;
 		if (textarea) {
 			const cached = loadRoomTabs().find(
 				(t) => t.room === room && t.key === key
@@ -21956,6 +22051,7 @@ self.onmessage = async (e) => {
 				applyNoteToEditor(note, null, { skipHistory: true });
 			} else {
 				if (resolvedNoteId) {
+					asyncRefreshActive = true;
 					psEditingNoteId = resolvedNoteId;
 					if (psMainHint) {
 						psMainHint.classList.remove("hidden");
@@ -21964,7 +22060,9 @@ self.onmessage = async (e) => {
 					const targetRoom = room;
 					const targetKey = key;
 					void refreshPersonalSpace().then(() => {
-						if (room !== targetRoom || key !== targetKey) return;
+						if (room !== targetRoom || key !== targetKey) {
+							return;
+						}
 						const refreshed = findNoteById(resolvedNoteId);
 						if (refreshed) {
 							applyNoteToEditor(refreshed, null, { skipHistory: true });
@@ -21979,6 +22077,10 @@ self.onmessage = async (e) => {
 							setRoomTabNoteId(targetRoom, targetKey, "");
 							applyPersonalSpaceFiltersAndRender();
 						}
+					}).catch((err) => {
+						console.warn("[psTransition] async refresh in tab-switch failed:", err && err.message);
+					}).finally(() => {
+						if (tsGen) psTransition.end(tsGen);
 					});
 				} else {
 					textarea.value = nextText;
@@ -22011,6 +22113,8 @@ self.onmessage = async (e) => {
 		updatePresenceUI();
 		syncAiChatContext();
 		connect();
+		/* Release tab-switch lock unless async refresh is still running */
+		if (!asyncRefreshActive && tsGen) psTransition.end(tsGen);
 	});
 
 	function refreshSyncOnFocus() {
@@ -22036,6 +22140,7 @@ self.onmessage = async (e) => {
 		if (now - psLastRefreshTs < PS_REFRESH_DEBOUNCE_MS) return;
 		if (offlineSyncInFlight) return; // Don't refresh while offline ops are replaying
 		if (psRefreshPromise) return;   // Don't stack concurrent refreshes
+		if (psTransition.isBlocked("refresh")) return; // Blocked by higher-prio transition
 		psLastRefreshTs = now;
 		if (psState && psState.authed) {
 			void refreshPersonalSpace();
