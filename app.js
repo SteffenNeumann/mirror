@@ -14083,6 +14083,7 @@ self.onmessage = async (e) => {
 
 	async function refreshPersonalSpace() {
 		if (!psUnauthed || !psAuthed) return;
+		psLastRefreshTs = Date.now();
 
 		const isOffline = typeof navigator !== "undefined" && navigator.onLine === false;
 
@@ -21972,9 +21973,38 @@ self.onmessage = async (e) => {
 		sendMessage({ type: "request_state", room, clientId, ts: Date.now() });
 	}
 
+	/* ── Personal Space: auto-refresh on visibility/focus + periodic polling ── */
+	let psAutoRefreshTimer = null;
+	let psLastRefreshTs = 0;
+	const PS_REFRESH_DEBOUNCE_MS = 5000;  // min 5s between auto-refreshes
+	const PS_POLL_INTERVAL_MS = 60000;    // poll every 60s
+
+	function schedulePsAutoRefresh() {
+		const now = Date.now();
+		if (now - psLastRefreshTs < PS_REFRESH_DEBOUNCE_MS) return;
+		psLastRefreshTs = now;
+		if (psState && psState.authed) {
+			void refreshPersonalSpace();
+		}
+	}
+
+	function startPsPolling() {
+		if (psAutoRefreshTimer) return;
+		psAutoRefreshTimer = setInterval(() => {
+			if (document.visibilityState !== "visible") return;
+			if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+			schedulePsAutoRefresh();
+		}, PS_POLL_INTERVAL_MS);
+	}
+
+	function stopPsPolling() {
+		if (psAutoRefreshTimer) { clearInterval(psAutoRefreshTimer); psAutoRefreshTimer = null; }
+	}
+
 	window.addEventListener("visibilitychange", () => {
 		if (document.visibilityState !== "visible") return;
 		refreshSyncOnFocus();
+		schedulePsAutoRefresh();
 		/* ── Mobile: re-check inactivity on resume ── */
 		if (isMobileViewport() && mobileAutoNoteSeconds > 0) {
 			mobileAutoNoteChecked = false;
@@ -21983,6 +22013,7 @@ self.onmessage = async (e) => {
 	});
 	window.addEventListener("focus", () => {
 		refreshSyncOnFocus();
+		schedulePsAutoRefresh();
 	});
 
 	if (toggleHeaderBtn) {
@@ -24550,6 +24581,7 @@ self.onmessage = async (e) => {
 	void initAutoBackup();
 	void initAutoImport();
 	refreshPersonalSpace();
+	startPsPolling();
 	initAiDictation();
 	loadAiPrompt();
 	loadAiUsePreview();
