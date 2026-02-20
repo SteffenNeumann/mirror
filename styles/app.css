@@ -4559,11 +4559,6 @@ body[data-theme="coffeeDark"] #mirror.attribution-active {
 	caret-color: #e8d9cc;
 }
 
-body[data-theme="coffeeDark"] #mdPreview {
-	background-color: #18120e !important;
-	box-shadow: none !important;
-}
-
 /* Coffee themes: visually disable glow toggle (glow is off) */
 body[data-theme="coffeeLight"] #settingsGlowToggle {
 	opacity: 0.35 !important;
