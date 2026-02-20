@@ -5110,7 +5110,7 @@
 			label: "Coffee Dark",
 			top: "rgba(38, 29, 26, 0.9)",
 			bottom: "rgba(28, 22, 20, 0.92)",
-			previewBg: "#1c1511",
+			previewBg: "#18120e",
 			previewMetaBg: "rgba(53, 38, 32, 0.75)",
 			previewMetaBorder: "rgba(201, 155, 119, 0.38)",
 			previewMetaText: "rgba(233, 219, 204, 0.92)",
