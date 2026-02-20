@@ -4899,6 +4899,7 @@
 	let psSaveNoteInFlight = false;
 	let psPinToggleInFlight = new Set();
 	let psListRerenderTimer = 0;
+	let psRefreshPromise = null;
 	let previewOpen = false;
 	let fullPreview = false;
 	let mobilePsOpen = false;
@@ -8884,6 +8885,7 @@
 		}
 		psListRerenderTimer = window.setTimeout(() => {
 			psListRerenderTimer = 0;
+			if (psRefreshPromise) return;  // skip render while refresh in-flight
 			if (!psState || !psState.authed) return;
 			applyPersonalSpaceFiltersAndRender();
 		}, 120);
@@ -14125,6 +14127,12 @@ self.onmessage = async (e) => {
 	}
 
 	async function refreshPersonalSpace() {
+		if (psRefreshPromise) return psRefreshPromise;
+		psRefreshPromise = _refreshPersonalSpaceImpl();
+		try { return await psRefreshPromise; } finally { psRefreshPromise = null; }
+	}
+
+	async function _refreshPersonalSpaceImpl() {
 		if (!psUnauthed || !psAuthed) return;
 		psLastRefreshTs = Date.now();
 		updateSyncStamp();
@@ -22027,6 +22035,7 @@ self.onmessage = async (e) => {
 		const now = Date.now();
 		if (now - psLastRefreshTs < PS_REFRESH_DEBOUNCE_MS) return;
 		if (offlineSyncInFlight) return; // Don't refresh while offline ops are replaying
+		if (psRefreshPromise) return;   // Don't stack concurrent refreshes
 		psLastRefreshTs = now;
 		if (psState && psState.authed) {
 			void refreshPersonalSpace();
