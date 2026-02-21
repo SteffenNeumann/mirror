@@ -6,8 +6,8 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
 
 ## Aktuelle Änderungen (2026-02-21)
 
-- **Fix: Tag-Löschen/Umbenennen via Kontextmenü wirkungslos** `#ps` `#tags` `#bug` `#context-menu`: Tags ließen sich über das Tag-Kontextmenü (Rechtsklick → Löschen/Umbenennen) nicht ändern — Toast bestätigte zwar "Updated", aber die Tags blieben in der DB unverändert. Ursache: `normalizeImportTags()` hatte ein Hard-Limit von **3 Tags**. Bei Notizen mit ≥3 Tags (z. B. `["note", "2026", "february", "__manual_tags__"]`) wurde der `__manual_tags__`-Marker abgeschnitten → Server erkannte `override = false` → verwendete alte DB-Tags statt die neuen.
-  1. **Tag-Limit erhöht** (`server.js` ~L1389): `normalizeImportTags` Limit von 3 auf 24 Tags erhöht. Damit wird der `__manual_tags__`-Marker zuverlässig durchgereicht.
+- **Fix: Tag-Löschen/Umbenennen via Kontextmenü wirkungslos** `#ps` `#tags` `#bug` `#context-menu`: Tags ließen sich über das Tag-Kontextmenü (Rechtsklick → Löschen/Umbenennen) nicht ändern — Toast bestätigte zwar "Updated", aber die Tags blieben in der DB unverändert. Ursache: `normalizeImportTags()` hatte ein Hard-Limit von **3 regulären Tags** und verwendete `break` zum Abbruch der Schleife. Bei Notizen mit ≥3 Tags (z. B. `["note", "2026", "february", "__manual_tags__"]`) verließ `break` die Schleife bevor `__manual_tags__` am Array-Ende gelesen wurde → Server erkannte `override = false` → verwendete alte DB-Tags statt die neuen.
+  1. **System-Marker vom Tag-Limit ausgenommen** (`server.js` ~L1395): Neue Konstante `SYSTEM_TAG_MARKERS = new Set(["__manual_tags__", "pinned"])`. `normalizeImportTags` sammelt System-Marker in separatem Array und zählt sie nicht gegen das 3-Tag-Limit. Reguläre Tags werden nach 3 Stück per `continue` übersprungen (statt `break`), sodass die Schleife System-Marker am Array-Ende weiterhin erreicht.
   - Zuständige Funktionen: `normalizeImportTags`, `splitManualOverrideTags`.
   - Zuständige Dateien: `server.js`.
 
