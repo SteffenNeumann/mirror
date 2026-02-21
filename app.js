@@ -24356,7 +24356,7 @@ self.onmessage = async (e) => {
 			if (openUploadModalBtn) openUploadModalBtn.click();
 			return;
 		}
-	});
+	}, true);  // capture phase – fires BEFORE textarea processes the key
 
 	// Render shortcuts list when settings section is shown
 	const _origSetActiveSettingsSection = setActiveSettingsSection;
