@@ -4451,8 +4451,7 @@ const server = http.createServer(async (req, res) => {
 						return;
 					}
 
-					const derived = classifyText(nextText);
-					const kind = derived.kind;
+					const kind = classifyText(nextText).kind;
 					const contentHash = computeNoteContentHash(nextText);
 					let tags;
 					let override = false;
@@ -4466,14 +4465,11 @@ const server = http.createServer(async (req, res) => {
 							// Manual override: keep user tags, no auto-tag recomputation
 							tags = uniq([...split.tags, MANUAL_TAGS_MARKER]);
 						} else {
-							// Update without override: preserve existing tags, don't re-classify
-							// Auto-tags are only assigned once at creation (inhibit on update)
-							tags = existingTags.length ? existingTags : mergeManualTags(nextText, split.tags).tags;
+							// Update: always preserve existing tags — auto-tags are only assigned once at creation
+							tags = existingTags;
 						}
-					} else if (hasText) {
-						// Text changed without explicit tags: preserve existing tags if available
-						tags = existingTags.length ? existingTags : derived.tags;
 					} else {
+						// No tags sent: always keep existing tags as-is
 						tags = existingTags;
 					}
 					if (!override) {
@@ -4788,9 +4784,10 @@ const server = http.createServer(async (req, res) => {
 								skipped += 1;
 								continue;
 							}
-							const derived = classifyText(textVal);
-							const kind = kindRaw ? kindRaw : derived.kind;
-							const tagsFinal = tags.length ? tags : derived.tags;
+							const kind = kindRaw ? kindRaw : classifyText(textVal).kind;
+							// Preserve existing tags on update — auto-tags only at creation
+							const existingImportTags = parseTagsJson(existing.tags_json);
+							const tagsFinal = tags.length ? tags : (existingImportTags.length ? existingImportTags : classifyText(textVal).tags);
 							stmtNoteUpdate.run(
 								textVal,
 								kind,
