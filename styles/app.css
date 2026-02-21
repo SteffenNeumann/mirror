@@ -6561,6 +6561,30 @@ body[data-theme] #calendarBundeslandSelect {
 	outline: none;
 }
 
+/* ── Calendar Search ── */
+.cal-search-list {
+	max-height: 240px;
+	overflow-y: auto;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+.cal-search-item {
+	padding: 0.375rem 0.5rem;
+	border-radius: 0.375rem;
+	cursor: pointer;
+	transition: background 0.12s;
+}
+.cal-search-item:hover {
+	background: rgba(255, 255, 255, 0.05);
+}
+.cal-search-hl {
+	background: rgba(217, 70, 239, 0.3);
+	color: #f5f3ff;
+	border-radius: 2px;
+	padding: 0 1px;
+}
+
 /* ── Calendar Sidebar Cards (subtle sub-sections) ── */
 .cal-sidebar-card {
 	padding: 0;

@@ -1674,10 +1674,21 @@
 									id="calendarGrid"
 									class="h-full min-h-0 overflow-auto rounded-xl border border-white/10 bg-slate-950/30 p-3"></div>
 								<div
-										id="calendarSidebar"
-										class="calendar-sidebar rounded-xl border border-white/10 bg-slate-950/30 p-3 pt-10 flex flex-col gap-4 overflow-y-auto">
+											id="calendarSidebar"
+											class="calendar-sidebar rounded-xl border border-white/10 bg-slate-950/30 p-3 pt-10 flex flex-col gap-4 overflow-y-auto">
 
-									<!-- ═══ Section 1: Meine Kalender ═══ -->
+										<!-- Calendar search -->
+										<div class="relative">
+											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-500"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+											<input
+												id="calendarSearchInput"
+												type="text"
+												autocomplete="off"
+												data-i18n-placeholder="calendar.search.placeholder"
+												placeholder="Termine suchen…"
+												class="w-full rounded-lg border border-white/10 bg-slate-950/40 py-1.5 pl-7 pr-2.5 text-xs text-slate-200 shadow-soft backdrop-blur transition placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/25" />
+										</div>
+										<div id="calendarSearchResults" class="hidden"></div>									<!-- ═══ Section 1: Meine Kalender ═══ -->
 									<div class="cal-sidebar-section">
 										<div class="cal-sidebar-header">
 											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cal-sidebar-header-icon"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4" /><path d="M8 2v4" /><path d="M3 10h18" /></svg>

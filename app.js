@@ -5902,6 +5902,10 @@
 				"settings.calendar.holidays.desc": "Zeige gesetzliche Feiertage und Schulferien für dein Bundesland im Kalender an.",
 				"settings.calendar.holidays.bundesland": "Bundesland",
 				"settings.calendar.holidays.no_selection": "— Kein Bundesland —",
+				"calendar.search.placeholder": "Termine suchen…",
+				"calendar.search.no_results": "Keine Treffer.",
+				"calendar.search.results": "{n} Treffer",
+				"calendar.search.allday": "Ganztägig",
 			},
 
 			en: {
@@ -6404,6 +6408,10 @@
 				"settings.calendar.holidays.desc": "Show public holidays and school vacations for your federal state in the calendar.",
 				"settings.calendar.holidays.bundesland": "Federal state",
 				"settings.calendar.holidays.no_selection": "— No state —",
+				"calendar.search.placeholder": "Search events…",
+				"calendar.search.no_results": "No results.",
+				"calendar.search.results": "{n} results",
+				"calendar.search.allday": "All day",
 			},
 		};
 
@@ -18409,6 +18417,127 @@ self.onmessage = async (e) => {
 		return [...external, ...localDecorated, ...holidays];
 	}
 
+	/* ── Calendar Fuzzy Search ── */
+
+	/**
+	 * Lightweight fuzzy match: checks if all characters of `needle` appear
+	 * in `haystack` in order (case-insensitive). Returns a score (lower = better)
+	 * or -1 if no match. Consecutive character runs score better.
+	 */
+	function fuzzyMatch(needle, haystack) {
+		if (!needle) return 0;
+		const nl = needle.toLowerCase();
+		const hl = haystack.toLowerCase();
+		// Fast path: substring match
+		const subIdx = hl.indexOf(nl);
+		if (subIdx >= 0) return subIdx; // exact substring → best score = position
+		let ni = 0;
+		let score = 0;
+		let lastMatchIdx = -1;
+		for (let hi = 0; hi < hl.length && ni < nl.length; hi++) {
+			if (hl[hi] === nl[ni]) {
+				if (lastMatchIdx >= 0 && hi - lastMatchIdx > 1) score += (hi - lastMatchIdx);
+				lastMatchIdx = hi;
+				ni++;
+			}
+		}
+		return ni === nl.length ? 100 + score : -1;
+	}
+
+	/**
+	 * Highlights fuzzy-matched characters in text with <mark> tags.
+	 */
+	function fuzzyHighlight(needle, text) {
+		if (!needle || !text) return escapeHtml(text || "");
+		const nl = needle.toLowerCase();
+		const tl = text.toLowerCase();
+		// Substring match → highlight the substring directly
+		const subIdx = tl.indexOf(nl);
+		if (subIdx >= 0) {
+			return escapeHtml(text.slice(0, subIdx)) +
+				'<mark class="cal-search-hl">' + escapeHtml(text.slice(subIdx, subIdx + nl.length)) + '</mark>' +
+				escapeHtml(text.slice(subIdx + nl.length));
+		}
+		// Fuzzy highlight
+		let ni = 0;
+		let out = "";
+		for (let i = 0; i < text.length; i++) {
+			if (ni < nl.length && tl[i] === nl[ni]) {
+				out += '<mark class="cal-search-hl">' + escapeHtml(text[i]) + '</mark>';
+				ni++;
+			} else {
+				out += escapeHtml(text[i]);
+			}
+		}
+		return out;
+	}
+
+	let calendarSearchQuery = "";
+	let calendarSearchDebounce = 0;
+
+	function searchCalendarEvents(query) {
+		const q = String(query || "").trim();
+		calendarSearchQuery = q;
+		const resultsEl = document.getElementById("calendarSearchResults");
+		if (!resultsEl) return;
+		if (!q) {
+			resultsEl.classList.add("hidden");
+			resultsEl.innerHTML = "";
+			renderCalendarPanel(); // re-render to clear highlights
+			return;
+		}
+		const events = getCalendarEvents();
+		events.sort((a, b) => a.start.getTime() - b.start.getTime());
+		const scored = [];
+		for (const evt of events) {
+			const fields = [evt.title || "", evt.location || "", evt.calendarName || ""];
+			let bestScore = -1;
+			for (const f of fields) {
+				const s = fuzzyMatch(q, f);
+				if (s >= 0 && (bestScore < 0 || s < bestScore)) bestScore = s;
+			}
+			if (bestScore >= 0) scored.push({ evt, score: bestScore });
+		}
+		scored.sort((a, b) => a.score - b.score || a.evt.start.getTime() - b.evt.start.getTime());
+		const max = 50;
+		const limited = scored.slice(0, max);
+
+		if (!limited.length) {
+			resultsEl.classList.remove("hidden");
+			resultsEl.innerHTML = `<div class="text-[11px] text-slate-500 py-1">${escapeHtml(t("calendar.search.no_results"))}</div>`;
+			return;
+		}
+
+		const countText = t("calendar.search.results").replace("{n}", String(scored.length));
+		const rows = limited.map(({ evt }) => {
+			const dk = dayKeyFromDate(evt.start);
+			const dayLabel = formatDayLabel(evt.start);
+			const time = evt.allDay
+				? t("calendar.search.allday")
+				: `${formatTime(evt.start)} – ${formatTime(evt.end)}`;
+			const titleHl = fuzzyHighlight(q, evt.title || "");
+			const locHl = evt.location ? fuzzyHighlight(q, evt.location) : "";
+			const locRow = locHl
+				? `<div class="text-[10px] text-slate-500 truncate">${locHl}</div>`
+				: "";
+			return `<div class="cal-search-item" data-search-nav="${escapeAttr(dk)}">
+				<div class="flex items-center gap-2">
+					<span class="inline-flex h-2 w-2 shrink-0 rounded-full" style="background:${escapeAttr(evt.color || "#a855f7")}"></span>
+					<span class="truncate text-xs text-slate-200">${titleHl}</span>
+				</div>
+				${locRow}
+				<div class="flex items-center justify-between gap-2 text-[10px] text-slate-500">
+					<span>${escapeHtml(dayLabel)}</span>
+					<span>${escapeHtml(time)}</span>
+				</div>
+			</div>`;
+		});
+
+		resultsEl.classList.remove("hidden");
+		resultsEl.innerHTML = `<div class="text-[10px] text-slate-400 mb-1">${escapeHtml(countText)}</div>
+			<div class="cal-search-list">${rows.join("")}</div>`;
+	}
+
 	function renderCalendarLegend() {
 		if (!calendarLegend) return;
 		const sources = loadCalendarSources();
@@ -25234,6 +25363,39 @@ self.onmessage = async (e) => {
 			window._setBundeslandCustomDropdown(val);
 		}
 	}
+
+	/* ── Calendar Search Input Wiring ── */
+	(function initCalendarSearch() {
+		const input = document.getElementById("calendarSearchInput");
+		const resultsEl = document.getElementById("calendarSearchResults");
+		if (!input) return;
+		input.addEventListener("input", () => {
+			clearTimeout(calendarSearchDebounce);
+			calendarSearchDebounce = setTimeout(() => {
+				searchCalendarEvents(input.value);
+			}, 180);
+		});
+		input.addEventListener("keydown", (e) => {
+			if (e.key === "Escape") {
+				input.value = "";
+				searchCalendarEvents("");
+				input.blur();
+			}
+		});
+		if (resultsEl) {
+			resultsEl.addEventListener("click", (e) => {
+				const item = e.target.closest("[data-search-nav]");
+				if (!item) return;
+				const dk = item.dataset.searchNav;
+				if (!dk) return;
+				const parts = dk.split("-");
+				const day = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+				calendarState.cursor = day;
+				calendarState.view = "day";
+				renderCalendarPanel();
+			});
+		}
+	})();
 	if (calendarAddBtn) {
 		calendarAddBtn.addEventListener("click", () => {
 			const name = String(calendarAddName ? calendarAddName.value : "").trim();
