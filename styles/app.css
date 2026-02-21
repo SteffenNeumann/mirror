@@ -6450,3 +6450,18 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 .calendar-day-unavailable .calendar-day-indicator {
 	color: #64748b;
 }
+
+/* ── My Selections Panel ── */
+.my-selection-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	padding: 4px 6px;
+	border-radius: 6px;
+	cursor: pointer;
+	transition: background 0.15s;
+}
+.my-selection-row:hover {
+	background: rgba(255, 255, 255, 0.06);
+}

@@ -351,6 +351,9 @@
 	const calendarFreeToggle = document.getElementById("calendarFreeToggle");
 	const calendarFreeSlotsWrap = document.getElementById("calendarFreeSlotsWrap");
 	const calendarFreeSlots = document.getElementById("calendarFreeSlots");
+	const calendarMySelectionsWrap = document.getElementById("calendarMySelectionsWrap");
+	const calendarMySelections = document.getElementById("calendarMySelections");
+	const calendarMySelectionsCount = document.getElementById("calendarMySelectionsCount");
 	const calendarCommonFreeSlotsWrap = document.getElementById("calendarCommonFreeSlotsWrap");
 	const calendarCommonFreeToggle = document.getElementById("calendarCommonFreeToggle");
 	const calendarCommonFreeParticipants = document.getElementById("calendarCommonFreeParticipants");
@@ -5879,6 +5882,11 @@
 				"calendar.free.title": "Freie Zeiten",
 				"calendar.free.month_hint": "Klicke auf einen Tag, um deine Verfügbarkeit festzulegen.",
 				"calendar.free.days_available": "Tage verfügbar",
+				"calendar.my_selections.title": "Meine Auswahl",
+				"calendar.my_selections.empty": "Noch keine Tage ausgewählt.",
+				"calendar.my_selections.jump": "Zum Tag springen",
+				"calendar.my_selections.all_slots": "Ganzer Tag",
+				"calendar.my_selections.slots": "Slots",
 			},
 			en: {
 				"ps.title": "Personal Space",
@@ -6361,6 +6369,11 @@
 				"calendar.free.title": "Free slots",
 				"calendar.free.month_hint": "Click a day to set your availability.",
 				"calendar.free.days_available": "days available",
+				"calendar.my_selections.title": "My selections",
+				"calendar.my_selections.empty": "No days selected yet.",
+				"calendar.my_selections.jump": "Jump to day",
+				"calendar.my_selections.all_slots": "All day",
+				"calendar.my_selections.slots": "Slots",
 			},
 		};
 
@@ -17326,7 +17339,10 @@ self.onmessage = async (e) => {
 			calendarPanel.classList.toggle("hidden", !calendarPanelActive);
 		}
 		if (calendarPanelActive) {
-			calendarState.view = loadCalendarDefaultView();
+			// Only reset to default view when opening for the first time (no events loaded yet)
+			if (!calendarState.lastLoadedAt) {
+				calendarState.view = loadCalendarDefaultView();
+			}
 			updateCalendarViewButtons();
 			applyCalendarFreeSlotsVisibility();
 			fetchGoogleCalendarStatus();
@@ -17883,10 +17899,7 @@ self.onmessage = async (e) => {
 		if (!calendarStatus || !calendarGrid) return;
 		calendarState.loading = true;
 		calendarStatus.textContent = "Loading calendars…";
-		if (calendarGrid) {
-			calendarGrid.innerHTML =
-				'<div class="text-sm text-slate-400">Loading calendars…</div>';
-		}
+		// Don't clear the grid – keep existing content visible to avoid flash/flicker
 		const range = getCalendarRange(
 			calendarState.view,
 			calendarState.cursor || new Date()
@@ -18321,6 +18334,88 @@ self.onmessage = async (e) => {
 			</div>`;
 		});
 		calendarFreeSlots.innerHTML = rows.join("");
+	}
+
+	/* ── My Selections Panel ── */
+
+	function renderMySelections() {
+		if (!calendarMySelections) return;
+		const events = getCalendarEvents();
+		// Collect all days where the user has marked availability
+		const entries = [];
+		for (const [dk, set] of manualFreeSlots) {
+			if (!set || !set.has(FULL_DAY_AVAILABLE_KEY)) continue;
+			entries.push(dk);
+		}
+		entries.sort();
+
+		if (calendarMySelectionsCount) {
+			calendarMySelectionsCount.textContent = entries.length
+				? `${entries.length}`
+				: "";
+		}
+
+		if (!entries.length) {
+			calendarMySelections.innerHTML =
+				`<div class="text-[11px] text-slate-500">${escapeHtml(t("calendar.my_selections.empty"))}</div>`;
+			return;
+		}
+
+		const rows = entries.map((dk) => {
+			const parts = dk.split("-");
+			const day = new Date(
+				Number(parts[0]),
+				Number(parts[1]) - 1,
+				Number(parts[2])
+			);
+			const label = formatDayLabel(day);
+			const weekday = day.toLocaleDateString(uiLang === "de" ? "de-DE" : "en-US", { weekday: "short" });
+			const set = manualFreeSlots.get(dk);
+			const slots = computeFreeSlotsForDay(day, events);
+			const selectedSlots = getSelectedFreeSlotsForDay(day, events);
+			// Determine slot info text
+			let slotInfo = "";
+			if (selectedSlots.length && selectedSlots.length < slots.length) {
+				slotInfo = `${selectedSlots.length}/${slots.length} ${escapeHtml(t("calendar.my_selections.slots"))}`;
+			} else if (selectedSlots.length) {
+				slotInfo = escapeHtml(t("calendar.my_selections.all_slots"));
+			}
+			// First selected time range for display
+			let timeRange = "";
+			if (selectedSlots.length) {
+				timeRange = `${formatTime(selectedSlots[0][0])} – ${formatTime(selectedSlots[selectedSlots.length - 1][1])}`;
+			}
+
+			return `<div class="my-selection-row group" data-my-sel-day="${escapeAttr(dk)}">
+				<div class="flex items-center gap-2 min-w-0">
+					<span class="inline-flex h-2 w-2 rounded-full bg-emerald-400 shrink-0"></span>
+					<span class="font-medium text-slate-200 truncate">${weekday}, ${label}</span>
+				</div>
+				<div class="flex items-center gap-2">
+					${timeRange ? `<span class="text-[10px] text-slate-400">${timeRange}</span>` : ""}
+					${slotInfo ? `<span class="text-[10px] text-emerald-400/70">${slotInfo}</span>` : ""}
+					<button type="button" class="my-sel-jump opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-fuchsia-400 hover:text-fuchsia-300 shrink-0" data-my-sel-jump="${escapeAttr(dk)}" title="${escapeAttr(t("calendar.my_selections.jump"))}">
+						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 inline-block"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+					</button>
+				</div>
+			</div>`;
+		});
+		calendarMySelections.innerHTML = rows.join("");
+	}
+
+	function jumpToCalendarDay(dayKey) {
+		const parts = dayKey.split("-");
+		if (parts.length !== 3) return;
+		const day = new Date(
+			Number(parts[0]),
+			Number(parts[1]) - 1,
+			Number(parts[2])
+		);
+		if (isNaN(day.getTime())) return;
+		calendarState.cursor = day;
+		calendarState.view = "day";
+		updateCalendarViewButtons();
+		renderCalendarPanel();
 	}
 
 	/* ── Common Free Slots (Availability Broadcasting) ── */
@@ -18782,6 +18877,7 @@ self.onmessage = async (e) => {
 				</div>`;
 		renderCalendarFreeSlots(view, cursor, events);
 		renderCommonFreeSlots();
+		renderMySelections();
 	}
 
 	function formatDateInputValue(date) {
@@ -24768,6 +24864,23 @@ self.onmessage = async (e) => {
 			toggleDayAvailability(day);
 			renderCalendarPanel();
 			broadcastAvailability();
+		});
+	}
+	if (calendarMySelections) {
+		calendarMySelections.addEventListener("click", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLElement)) return;
+			const jumpBtn = target.closest("[data-my-sel-jump]");
+			if (jumpBtn) {
+				const dk = String(jumpBtn.getAttribute("data-my-sel-jump") || "");
+				if (dk) jumpToCalendarDay(dk);
+				return;
+			}
+			const row = target.closest("[data-my-sel-day]");
+			if (row) {
+				const dk = String(row.getAttribute("data-my-sel-day") || "");
+				if (dk) jumpToCalendarDay(dk);
+			}
 		});
 	}
 	if (calendarCommonFreeSlots) {
