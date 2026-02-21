@@ -6310,3 +6310,29 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	}
 }
 
+/* ── Settings: borderless clean look ── */
+/* Remove borders from settings nav buttons */
+#settingsNav > button[data-settings-nav] {
+	border: none;
+}
+
+/* Remove borders from content containers inside settings sections */
+[data-settings-section] > .rounded-xl {
+	border: none;
+}
+
+/* Remove borders from inner sub-containers (e.g. linear projects panel) */
+[data-settings-section] .rounded-lg[class*="border-white"] {
+	border: none;
+}
+
+/* Remove borders from action buttons inside settings sections */
+[data-settings-section] button.rounded-lg {
+	border: none;
+}
+
+/* Remove border from glow toggle row in themes section */
+[data-settings-section="themes"] .rounded-lg {
+	border: none;
+}
+

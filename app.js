@@ -24252,7 +24252,7 @@ self.onmessage = async (e) => {
 		container.innerHTML = "";
 		MIRROR_SHORTCUTS.forEach((sc) => {
 			const row = document.createElement("div");
-			row.className = "flex items-center justify-between gap-4 rounded-lg border border-white/10 bg-white/5 px-3 py-2";
+			row.className = "flex items-center justify-between gap-4 rounded-lg bg-white/5 px-3 py-2";
 			const left = document.createElement("div");
 			left.className = "min-w-0";
 			const label = document.createElement("div");
@@ -24264,7 +24264,7 @@ self.onmessage = async (e) => {
 			left.appendChild(label);
 			left.appendChild(desc);
 			const kbd = document.createElement("kbd");
-			kbd.className = "shrink-0 rounded-md border border-white/15 bg-white/10 px-2 py-1 text-xs font-mono text-slate-200 whitespace-nowrap";
+			kbd.className = "shrink-0 rounded-md bg-white/10 px-2 py-1 text-xs font-mono text-slate-200 whitespace-nowrap";
 			kbd.textContent = shortcutDisplayKey(sc.keys);
 			row.appendChild(left);
 			row.appendChild(kbd);
