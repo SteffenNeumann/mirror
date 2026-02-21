@@ -1686,13 +1686,15 @@
 										<div id="calendarLegend" class="mt-2 space-y-1.5"></div>
 										<div id="calendarStatus" class="mt-2 text-[11px] text-slate-500"></div>
 										<!-- Bundesland selector for holidays/vacations -->
-										<div id="calendarBundeslandWrap" class="mt-3">
-											<label class="text-[10px] font-medium uppercase tracking-wider text-slate-400" for="calendarBundeslandSelect" data-i18n="calendar.holidays.bundesland">Bundesland</label>
-											<select
-												id="calendarBundeslandSelect"
-												class="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/40 px-2.5 py-1.5 text-xs text-slate-200 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/25">
-												<option value="" data-i18n="calendar.holidays.none">Kein Bundesland</option>
-											</select>
+										<div id="calendarBundeslandWrap" class="cal-room-selector mt-3">
+											<label class="cal-room-label" for="calendarBundeslandSelect">
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 shrink-0 text-fuchsia-400"><path d="M3 21V8l9-5 9 5v13" /><path d="M13 21V14h-2v7" /><path d="M2 21h20" /></svg>
+												<span class="text-[10px] font-medium uppercase tracking-wider text-slate-400" data-i18n="calendar.holidays.bundesland">Bundesland</span>
+											</label>
+											<div id="calendarBundeslandSelect" class="cal-room-select" tabindex="0" role="listbox" aria-expanded="false">
+												<span class="cal-room-select__label"></span>
+												<div class="cal-room-select__menu" role="presentation"></div>
+											</div>
 										</div>
 									</div>
 

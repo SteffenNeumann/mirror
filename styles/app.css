@@ -6534,7 +6534,9 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 }
 /* Override theme select styles — ID selector beats any class/attribute combo */
 #calendarRoomSelect,
-body[data-theme] #calendarRoomSelect {
+body[data-theme] #calendarRoomSelect,
+#calendarBundeslandSelect,
+body[data-theme] #calendarBundeslandSelect {
 	background: transparent !important;
 	background-color: transparent !important;
 	background-image: none !important;

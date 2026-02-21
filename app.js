@@ -16918,10 +16918,9 @@ self.onmessage = async (e) => {
 		}
 		if (hasBundesland) {
 			try { localStorage.setItem(CALENDAR_BUNDESLAND_KEY, calendar.bundesland); } catch { /* ignore */ }
-			// Sync sidebar/settings selectors
-			const sidebarSel = document.getElementById("calendarBundeslandSelect");
+			// Sync sidebar (custom dropdown) + settings (native select)
+			setBundeslandCustomDropdown(calendar.bundesland);
 			const settingsSel = document.getElementById("calendarSettingsBundesland");
-			if (sidebarSel) sidebarSel.value = calendar.bundesland;
 			if (settingsSel) settingsSel.value = calendar.bundesland;
 		}
 		if (
@@ -25158,30 +25157,83 @@ self.onmessage = async (e) => {
 			saveCalendarDefaultView(calendarDefaultViewSelect.value);
 		});
 	}
-	/* ── Bundesland selector initialization ── */
+	/* ── Bundesland selector initialization (sidebar: custom dropdown, settings: native select) ── */
 	(function initBundeslandSelectors() {
-		const sidebarSelect = document.getElementById("calendarBundeslandSelect");
+		const sidebarEl = document.getElementById("calendarBundeslandSelect");
 		const settingsSelect = document.getElementById("calendarSettingsBundesland");
-		const selectors = [sidebarSelect, settingsSelect].filter(Boolean);
-		// Populate options
-		for (const sel of selectors) {
+		const currentBl = loadCalendarBundesland();
+
+		/* ── Settings: native <select> ── */
+		if (settingsSelect) {
 			for (const bl of BUNDESLAENDER) {
 				const opt = document.createElement("option");
 				opt.value = bl.id;
 				opt.textContent = bl.name;
-				sel.appendChild(opt);
+				settingsSelect.appendChild(opt);
 			}
-			sel.value = loadCalendarBundesland();
-			sel.addEventListener("change", () => {
-				const val = sel.value;
+			settingsSelect.value = currentBl;
+			settingsSelect.addEventListener("change", () => {
+				const val = settingsSelect.value;
 				saveCalendarBundesland(val);
-				// Sync both selectors
-				for (const other of selectors) {
-					if (other !== sel) other.value = val;
-				}
+				setBundeslandCustomDropdown(val);
 			});
 		}
+
+		/* ── Sidebar: custom dropdown (matches calendarRoomSelect) ── */
+		if (!sidebarEl) return;
+		const menuEl = sidebarEl.querySelector(".cal-room-select__menu");
+		const labelEl = sidebarEl.querySelector(".cal-room-select__label");
+		if (!menuEl || !labelEl) return;
+
+		function buildMenu(selectedVal) {
+			const noneLabel = t("calendar.holidays.none");
+			let html = `<div class="cal-room-select__item" role="option" data-value=""${selectedVal === "" ? ' aria-selected="true"' : ""}>${escapeHtml(noneLabel)}</div>`;
+			for (const bl of BUNDESLAENDER) {
+				const sel = bl.id === selectedVal ? ' aria-selected="true"' : "";
+				html += `<div class="cal-room-select__item" role="option" data-value="${escapeAttr(bl.id)}"${sel}>${escapeHtml(bl.name)}</div>`;
+			}
+			menuEl.innerHTML = html;
+			const entry = BUNDESLAENDER.find(b => b.id === selectedVal);
+			labelEl.textContent = entry ? entry.name : noneLabel;
+			sidebarEl.dataset.value = selectedVal;
+		}
+
+		buildMenu(currentBl);
+
+		function selectItem(val) {
+			buildMenu(val);
+			sidebarEl.setAttribute("aria-expanded", "false");
+			saveCalendarBundesland(val);
+			if (settingsSelect) settingsSelect.value = val;
+		}
+
+		const toggleMenu = () => {
+			const exp = sidebarEl.getAttribute("aria-expanded") === "true";
+			sidebarEl.setAttribute("aria-expanded", exp ? "false" : "true");
+		};
+		const closeMenu = () => sidebarEl.setAttribute("aria-expanded", "false");
+
+		sidebarEl.addEventListener("click", (e) => {
+			const item = e.target.closest(".cal-room-select__item");
+			if (item) { selectItem(item.dataset.value); } else { toggleMenu(); }
+		});
+		sidebarEl.addEventListener("keydown", (e) => {
+			if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleMenu(); }
+			if (e.key === "Escape") closeMenu();
+		});
+		document.addEventListener("click", (e) => {
+			if (!sidebarEl.contains(e.target)) closeMenu();
+		});
+
+		// Expose helper for external sync (settings → sidebar)
+		window._setBundeslandCustomDropdown = buildMenu;
 	})();
+
+	function setBundeslandCustomDropdown(val) {
+		if (typeof window._setBundeslandCustomDropdown === "function") {
+			window._setBundeslandCustomDropdown(val);
+		}
+	}
 	if (calendarAddBtn) {
 		calendarAddBtn.addEventListener("click", () => {
 			const name = String(calendarAddName ? calendarAddName.value : "").trim();
