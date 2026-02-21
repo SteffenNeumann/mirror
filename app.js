@@ -14952,8 +14952,16 @@ self.onmessage = async (e) => {
 	let calendarSettingsSyncQueued = false;
 	let calendarFreeSlotsVisible = true;
 	let commonFreeSlotsSharing = false;
-	const COMMON_FREE_SLOTS_KEY = "mirror_calendar_common_sharing_v1";
-	const MANUAL_FREE_SLOTS_KEY = "mirror_calendar_manual_free_v2";
+	const COMMON_FREE_SLOTS_KEY_BASE = "mirror_calendar_common_sharing_v1";
+	const MANUAL_FREE_SLOTS_KEY_BASE = "mirror_calendar_manual_free_v2";
+	function getManualFreeSlotsKey() {
+		const r = normalizeRoom(room);
+		return r ? `${MANUAL_FREE_SLOTS_KEY_BASE}_${r}` : MANUAL_FREE_SLOTS_KEY_BASE;
+	}
+	function getCommonFreeSlotsKey() {
+		const r = normalizeRoom(room);
+		return r ? `${COMMON_FREE_SLOTS_KEY_BASE}_${r}` : COMMON_FREE_SLOTS_KEY_BASE;
+	}
 	/** Day key (YYYY-MM-DD) currently highlighted via "My Selections" jump */
 	let calendarFocusedDayKey = "";
 	let calendarFocusedDayTimer = 0;
@@ -18169,7 +18177,16 @@ self.onmessage = async (e) => {
 
 	function loadManualFreeSlots() {
 		try {
-			const raw = localStorage.getItem(MANUAL_FREE_SLOTS_KEY);
+			const rk = getManualFreeSlotsKey();
+			let raw = localStorage.getItem(rk);
+			// Migration: copy global data to room-specific key on first access
+			if (!raw && rk !== MANUAL_FREE_SLOTS_KEY_BASE) {
+				const global = localStorage.getItem(MANUAL_FREE_SLOTS_KEY_BASE);
+				if (global) {
+					localStorage.setItem(rk, global);
+					raw = global;
+				}
+			}
 			if (!raw) return new Map();
 			const obj = JSON.parse(raw);
 			const map = new Map();
@@ -18188,7 +18205,7 @@ self.onmessage = async (e) => {
 			for (const [dk, set] of manualFreeSlots) {
 				obj[dk] = Array.from(set);
 			}
-			localStorage.setItem(MANUAL_FREE_SLOTS_KEY, JSON.stringify(obj));
+			localStorage.setItem(getManualFreeSlotsKey(), JSON.stringify(obj));
 		} catch {
 			// ignore
 		}
@@ -18443,7 +18460,14 @@ self.onmessage = async (e) => {
 
 	function loadCommonFreeSlotsSharing() {
 		try {
-			return localStorage.getItem(COMMON_FREE_SLOTS_KEY) === "1";
+			const rk = getCommonFreeSlotsKey();
+			let val = localStorage.getItem(rk);
+			// Migration: copy global toggle to room-specific key
+			if (val === null && rk !== COMMON_FREE_SLOTS_KEY_BASE) {
+				val = localStorage.getItem(COMMON_FREE_SLOTS_KEY_BASE);
+				if (val !== null) localStorage.setItem(rk, val);
+			}
+			return val === "1";
 		} catch {
 			return false;
 		}
@@ -18452,7 +18476,7 @@ self.onmessage = async (e) => {
 	function saveCommonFreeSlotsSharing(next) {
 		commonFreeSlotsSharing = Boolean(next);
 		try {
-			localStorage.setItem(COMMON_FREE_SLOTS_KEY, commonFreeSlotsSharing ? "1" : "0");
+			localStorage.setItem(getCommonFreeSlotsKey(), commonFreeSlotsSharing ? "1" : "0");
 		} catch {
 			// ignore
 		}
@@ -22851,6 +22875,12 @@ self.onmessage = async (e) => {
 		manuallyUnsharedRooms.delete(`${normalizeRoom(room)}:${normalizeKey(key)}`);
 		room = nextRoom;
 		key = nextKey;
+		// Reload room-specific calendar data
+		manualFreeSlots = loadManualFreeSlots();
+		cleanupOldManualSlots();
+		commonFreeSlotsSharing = loadCommonFreeSlotsSharing();
+		applyCommonFreeToggleUI();
+		if (calendarPanelActive) renderMySelections();
 		resetE2eeKeyCache();
 		lastAppliedRemoteTs = 0;
 		lastLocalText = "";
