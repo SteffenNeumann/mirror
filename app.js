@@ -16275,7 +16275,7 @@ self.onmessage = async (e) => {
 		const canClose = tabs.length > 1;
 		const html = tabs
 			.map((tab) => {
-				const isActive = tab.room === room && tab.key === key;
+				const isActive = tab.room === room && tab.key === key && !calendarPanelActive;
 				const isCollab = isActive && presenceState && presenceState.size > 1;
 				const isShared = isRoomMarkedShared(tab.room, tab.key);
 				const privateTooltip = t(
