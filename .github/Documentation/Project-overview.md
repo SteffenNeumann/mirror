@@ -6,6 +6,12 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
 
 ## Aktuelle Änderungen (2026-02-21)
 
+- **Auto-Tag nur bei Erst-Erstellung, keine Überschreibung eigener Tags** `#ps` `#tags` `#race-condition` `#auto-tag`: Auto-Tags (z. B. `note`, `code`, `link`) werden jetzt ausschließlich beim ersten Erstellen einer Notiz vergeben. Danach können Benutzer eigene Tags anlegen, ohne dass diese durch Auto-Tags oder Refresh-Zyklen überschrieben werden. Ursache war eine Race-Condition: `refreshPersonalSpace()` (Polling, Visibility, Focus) rief `syncPsEditingNoteTagsFromState()` auf, die veraltete Server-Tags (ohne `__manual_tags__`-Marker) in den lokalen Editing-State übernahm und so den noch nicht gespeicherten Override-Flag sowie eigene Tags löschte.
+  1. **Guard in `syncPsEditingNoteTagsFromState`** (`app.js` ~L2402): Wenn `psEditingNoteTagsOverridden = true` lokal gesetzt ist, aber der Server den `__manual_tags__`-Marker noch nicht hat, wird der Tag-Sync übersprungen (nur Pinned-State wird weiter synchronisiert). Damit bleiben lokale Tag-Änderungen bis zum erfolgreichen Server-Save erhalten.
+  2. **Guard in `savePersonalSpaceNoteSnapshot`** (`app.js` ~L24410): Wenn die Text-Auto-Save-Response veraltete Tags (ohne Marker) liefert, aber lokal bereits ein Override aktiv ist, werden die lokalen Tags in `psState.notes` beibehalten statt durch die stale Server-Response überschrieben.
+  - Zuständige Funktionen: `syncPsEditingNoteTagsFromState`, `savePersonalSpaceNoteSnapshot`.
+  - Zuständige Dateien: `app.js`.
+
 - **Basiskalender für nicht registrierte User** `#calendar` `#base` `#ux`: Kalender wird jetzt immer gerendert — auch wenn keine Kalenderquellen (ICS, Google, Outlook) verknüpft sind. Bisher zeigte `renderCalendarPanel()` ein Early-Return mit "Keine Kalenderquellen aktiv." und kein Kalender-Grid.
   1. **Early-Return entfernt** (`app.js` ~L19303): Die Bedingung `!sources.length && calendarState.localEvents.length === 0` als Abbruch wurde entfernt. Das Kalender-Grid (Monat/Woche/Tag) wird immer dargestellt, auch bei 0 Events.
   2. **Status-Text angepasst** (`app.js` ~L18001): `refreshCalendarEvents()` zeigt "Basiskalender aktiv." statt "Keine Kalenderquellen aktiv." wenn keine externen Quellen aber Feiertage vorhanden.

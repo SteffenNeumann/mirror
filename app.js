@@ -2407,9 +2407,20 @@
 		const note = notes.find((n) => String(n && n.id ? n.id : "") === id);
 		if (!note) return;
 		const rawTags = Array.isArray(note.tags) ? note.tags : [];
-		psEditingNoteTagsOverridden = rawTags.some(
+		const serverHasMarker = rawTags.some(
 			(t) => String(t || "") === PS_MANUAL_TAGS_MARKER
 		);
+		// Guard: if user has locally overridden tags but server hasn't received
+		// the marker yet, preserve the local editing state to prevent race
+		// conditions (e.g. refreshPersonalSpace polling resets unsaved tag changes).
+		if (psEditingNoteTagsOverridden && !serverHasMarker) {
+			// Still sync pinned state (independent of tags)
+			psEditingNotePinned = rawTags.some(
+				(t) => String(t || "") === PS_PINNED_TAG
+			);
+			return;
+		}
+		psEditingNoteTagsOverridden = serverHasMarker;
 		psEditingNotePinned = rawTags.some(
 			(t) => String(t || "") === PS_PINNED_TAG
 		);
@@ -24398,6 +24409,23 @@ self.onmessage = async (e) => {
 			const saved = res && res.note ? res.note : null;
 			if (saved && saved.id && psState && psState.authed) {
 				saved.updatedAt = Date.now();
+				// If user has locally overridden tags but the snapshot was captured
+				// before the override, preserve the local tag state in psState.notes
+				// so that subsequent syncPsEditingNoteTagsFromState reads see the
+				// correct local tags, not the stale server response.
+				const savedTags = Array.isArray(saved.tags) ? saved.tags : [];
+				const savedHasMarker = savedTags.some(
+					(t) => String(t || "") === PS_MANUAL_TAGS_MARKER
+				);
+				if (
+					psEditingNoteTagsOverridden &&
+					!savedHasMarker &&
+					String(psEditingNoteId || "").trim() === targetId
+				) {
+					// Merge: keep server text/kind/timestamps but preserve local tags
+					const localTagsPayload = buildCurrentPsTagsPayload();
+					saved.tags = localTagsPayload;
+				}
 				const notes = Array.isArray(psState.notes) ? psState.notes : [];
 				const idx = notes.findIndex(
 					(n) => String(n && n.id ? n.id : "") === targetId
