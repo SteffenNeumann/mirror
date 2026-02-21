@@ -25368,8 +25368,22 @@ self.onmessage = async (e) => {
 	(function initCalendarSearch() {
 		const input = document.getElementById("calendarSearchInput");
 		const resultsEl = document.getElementById("calendarSearchResults");
+		const clearBtn = document.getElementById("calendarSearchClear");
 		if (!input) return;
+
+		function updateClearIcon() {
+			if (!clearBtn) return;
+			if (input.value.trim()) {
+				clearBtn.classList.remove("hidden");
+				clearBtn.classList.add("inline-flex");
+			} else {
+				clearBtn.classList.add("hidden");
+				clearBtn.classList.remove("inline-flex");
+			}
+		}
+
 		input.addEventListener("input", () => {
+			updateClearIcon();
 			clearTimeout(calendarSearchDebounce);
 			calendarSearchDebounce = setTimeout(() => {
 				searchCalendarEvents(input.value);
@@ -25378,10 +25392,19 @@ self.onmessage = async (e) => {
 		input.addEventListener("keydown", (e) => {
 			if (e.key === "Escape") {
 				input.value = "";
+				updateClearIcon();
 				searchCalendarEvents("");
 				input.blur();
 			}
 		});
+		if (clearBtn) {
+			clearBtn.addEventListener("click", () => {
+				input.value = "";
+				updateClearIcon();
+				searchCalendarEvents("");
+				input.focus();
+			});
+		}
 		if (resultsEl) {
 			resultsEl.addEventListener("click", (e) => {
 				const item = e.target.closest("[data-search-nav]");
