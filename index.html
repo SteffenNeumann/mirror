@@ -1685,6 +1685,15 @@
 										</div>
 										<div id="calendarLegend" class="mt-2 space-y-1.5"></div>
 										<div id="calendarStatus" class="mt-2 text-[11px] text-slate-500"></div>
+										<!-- Bundesland selector for holidays/vacations -->
+										<div id="calendarBundeslandWrap" class="mt-3">
+											<label class="text-[10px] font-medium uppercase tracking-wider text-slate-400" for="calendarBundeslandSelect" data-i18n="calendar.holidays.bundesland">Bundesland</label>
+											<select
+												id="calendarBundeslandSelect"
+												class="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/40 px-2.5 py-1.5 text-xs text-slate-200 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/25">
+												<option value="" data-i18n="calendar.holidays.none">Kein Bundesland</option>
+											</select>
+										</div>
 									</div>
 
 									<!-- Action buttons (always visible, outside sections) -->
@@ -2414,6 +2423,24 @@
 										<option value="day" data-i18n="settings.calendar.view.day">Tag</option>
 										<option value="week" data-i18n="settings.calendar.view.week">Woche</option>
 										<option value="month" data-i18n="settings.calendar.view.month">Monat</option>
+									</select>
+								</div>
+							</div>
+							<div class="rounded-xl border border-white/10 bg-white/5 p-3">
+								<div class="text-xs font-semibold text-slate-200" data-i18n="settings.calendar.holidays.title">
+									Feiertage & Schulferien
+								</div>
+								<p class="mt-1 text-xs text-slate-400" data-i18n="settings.calendar.holidays.desc">
+									Zeige gesetzliche Feiertage und Schulferien für dein Bundesland im Kalender an.
+								</p>
+								<div class="mt-2">
+									<label for="calendarSettingsBundesland" class="text-xs text-slate-300" data-i18n="settings.calendar.holidays.bundesland">
+										Bundesland
+									</label>
+									<select
+										id="calendarSettingsBundesland"
+										class="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/30 px-3 py-2 text-sm text-slate-200 shadow-soft backdrop-blur transition focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30">
+										<option value="" data-i18n="settings.calendar.holidays.no_selection">— Kein Bundesland —</option>
 									</select>
 								</div>
 							</div>

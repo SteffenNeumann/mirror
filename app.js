@@ -5890,7 +5890,20 @@
 				"calendar.my_selections.slots": "Slots",
 				"calendar.room_select.current": "Aktueller Raum",
 				"calendar.room_select.private": "privat",
+				"calendar.holidays.title": "Feiertage & Ferien",
+				"calendar.holidays.bundesland": "Bundesland",
+				"calendar.holidays.none": "Kein Bundesland gewählt",
+				"calendar.holidays.feiertage": "Feiertage",
+				"calendar.holidays.ferien": "Schulferien",
+				"calendar.holidays.select_hint": "Wähle ein Bundesland, um Feiertage und Ferien anzuzeigen.",
+				"calendar.base.no_events": "Keine Termine in diesem Zeitraum.",
+				"calendar.base.hint": "Erstelle Termine oder verbinde einen Kalender in den Einstellungen.",
+				"settings.calendar.holidays.title": "Feiertage & Schulferien",
+				"settings.calendar.holidays.desc": "Zeige gesetzliche Feiertage und Schulferien für dein Bundesland im Kalender an.",
+				"settings.calendar.holidays.bundesland": "Bundesland",
+				"settings.calendar.holidays.no_selection": "— Kein Bundesland —",
 			},
+
 			en: {
 				"ps.title": "Personal Space",
 				"ps.close": "Close",
@@ -6379,6 +6392,18 @@
 				"calendar.my_selections.slots": "Slots",
 				"calendar.room_select.current": "Current room",
 				"calendar.room_select.private": "private",
+				"calendar.holidays.title": "Holidays & Vacations",
+				"calendar.holidays.bundesland": "Federal state",
+				"calendar.holidays.none": "No state selected",
+				"calendar.holidays.feiertage": "Public holidays",
+				"calendar.holidays.ferien": "School vacations",
+				"calendar.holidays.select_hint": "Select a federal state to show holidays and school vacations.",
+				"calendar.base.no_events": "No events in this period.",
+				"calendar.base.hint": "Create events or connect a calendar in settings.",
+				"settings.calendar.holidays.title": "Public Holidays & School Vacations",
+				"settings.calendar.holidays.desc": "Show public holidays and school vacations for your federal state in the calendar.",
+				"settings.calendar.holidays.bundesland": "Federal state",
+				"settings.calendar.holidays.no_selection": "— No state —",
 			},
 		};
 
@@ -14924,6 +14949,7 @@ self.onmessage = async (e) => {
 	const CALENDAR_GOOGLE_CAL_ID_KEY = "mirror_calendar_google_id_v1";
 	const CALENDAR_OUTLOOK_CAL_ID_KEY = "mirror_calendar_outlook_id_v1";
 	const CALENDAR_SYNC_TARGET_KEY = "mirror_calendar_sync_target_v1";
+	const CALENDAR_BUNDESLAND_KEY = "mirror_calendar_bundesland_v1";
 	const CALENDAR_VIEWS = ["day", "week", "month"];
 	const CALENDAR_SETTINGS_SYNC_DELAY = 1200;
 	const CALENDAR_WORK_START_HOUR = 9;
@@ -14933,6 +14959,34 @@ self.onmessage = async (e) => {
 		name: "Eigene Termine",
 		color: "#f59e0b",
 	};
+	const CALENDAR_HOLIDAYS_SOURCE = {
+		id: "holidays",
+		name: "Feiertage",
+		color: "#ef4444",
+	};
+	const CALENDAR_VACATION_SOURCE = {
+		id: "vacation",
+		name: "Schulferien",
+		color: "#06b6d4",
+	};
+	const BUNDESLAENDER = [
+		{ id: "BW", name: "Baden-Württemberg" },
+		{ id: "BY", name: "Bayern" },
+		{ id: "BE", name: "Berlin" },
+		{ id: "BB", name: "Brandenburg" },
+		{ id: "HB", name: "Bremen" },
+		{ id: "HH", name: "Hamburg" },
+		{ id: "HE", name: "Hessen" },
+		{ id: "MV", name: "Mecklenburg-Vorpommern" },
+		{ id: "NI", name: "Niedersachsen" },
+		{ id: "NW", name: "Nordrhein-Westfalen" },
+		{ id: "RP", name: "Rheinland-Pfalz" },
+		{ id: "SL", name: "Saarland" },
+		{ id: "SN", name: "Sachsen" },
+		{ id: "ST", name: "Sachsen-Anhalt" },
+		{ id: "SH", name: "Schleswig-Holstein" },
+		{ id: "TH", name: "Thüringen" },
+	];
 	const CALENDAR_GOOGLE_SOURCE = {
 		id: "google",
 		name: "Google Calendar",
@@ -16821,6 +16875,7 @@ self.onmessage = async (e) => {
 			localEvents: loadLocalCalendarEventsRaw(),
 			googleCalendarId: loadCalendarGoogleId(),
 			outlookCalendarId: loadCalendarOutlookId(),
+			bundesland: loadCalendarBundesland(),
 		};
 	}
 
@@ -16831,11 +16886,9 @@ self.onmessage = async (e) => {
 		const hasLocalEvents = Array.isArray(calendar.localEvents);
 		const hasGoogleCalendarId = typeof calendar.googleCalendarId === "string";
 		const hasOutlookCalendarId = typeof calendar.outlookCalendarId === "string";
+		const hasBundesland = typeof calendar.bundesland === "string";
 		if (hasSources) saveCalendarSources(calendar.sources, { skipSync: true });
 		if (hasView) {
-			// Only persist the default view preference — don't overwrite
-			// the live calendarState.view while the calendar panel is open
-			// to prevent auto-refresh from resetting the user's current view.
 			if (calendarPanelActive) {
 				try { localStorage.setItem(CALENDAR_DEFAULT_VIEW_KEY, calendar.defaultView); } catch { /* ignore */ }
 			} else {
@@ -16863,12 +16916,21 @@ self.onmessage = async (e) => {
 				skipRender: true,
 			});
 		}
+		if (hasBundesland) {
+			try { localStorage.setItem(CALENDAR_BUNDESLAND_KEY, calendar.bundesland); } catch { /* ignore */ }
+			// Sync sidebar/settings selectors
+			const sidebarSel = document.getElementById("calendarBundeslandSelect");
+			const settingsSel = document.getElementById("calendarSettingsBundesland");
+			if (sidebarSel) sidebarSel.value = calendar.bundesland;
+			if (settingsSel) settingsSel.value = calendar.bundesland;
+		}
 		if (
 			hasSources ||
 			hasView ||
 			hasLocalEvents ||
 			hasGoogleCalendarId ||
-			hasOutlookCalendarId
+			hasOutlookCalendarId ||
+			hasBundesland
 		) {
 			renderCalendarSettings();
 			scheduleCalendarRefresh();
@@ -16879,7 +16941,8 @@ self.onmessage = async (e) => {
 			hasView ||
 			hasLocalEvents ||
 			hasGoogleCalendarId ||
-			hasOutlookCalendarId
+			hasOutlookCalendarId ||
+			hasBundesland
 		);
 	}
 
@@ -16935,7 +16998,8 @@ self.onmessage = async (e) => {
 		const hasServer =
 			serverCalendar &&
 			(Array.isArray(serverCalendar.sources) ||
-				CALENDAR_VIEWS.includes(serverCalendar.defaultView));
+				CALENDAR_VIEWS.includes(serverCalendar.defaultView) ||
+				typeof serverCalendar.bundesland === "string");
 		if (hasServer) {
 			applyCalendarSettings(serverCalendar);
 			return;
@@ -17937,12 +18001,15 @@ self.onmessage = async (e) => {
 			calendarState.externalEvents = [...googleEvents, ...outlookEvents];
 			calendarState.lastLoadedAt = Date.now();
 			calendarState.loading = false;
-			calendarStatus.textContent =
+			const bl = loadCalendarBundesland();
+			const hasContent =
 				calendarState.localEvents.length > 0 ||
 				googleEvents.length > 0 ||
-				outlookEvents.length > 0
-					? "Kalender aktualisiert."
-					: "Keine Kalenderquellen aktiv.";
+				outlookEvents.length > 0 ||
+				Boolean(bl);
+			calendarStatus.textContent = hasContent
+				? "Kalender aktualisiert."
+				: "Basiskalender aktiv.";
 			renderCalendarPanel();
 			return;
 		}
@@ -17994,6 +18061,338 @@ self.onmessage = async (e) => {
 		});
 	}
 
+	/* ── Bundesland Persistence ── */
+
+	function loadCalendarBundesland() {
+		try {
+			return localStorage.getItem(CALENDAR_BUNDESLAND_KEY) || "";
+		} catch { return ""; }
+	}
+
+	function saveCalendarBundesland(bl) {
+		try { localStorage.setItem(CALENDAR_BUNDESLAND_KEY, bl || ""); } catch { /* ignore */ }
+		scheduleCalendarSettingsSync();
+		renderCalendarPanel();
+	}
+
+	/* ── German Public Holidays (Feiertage) ── */
+
+	function computeEasterSunday(year) {
+		// Anonymous Gregorian algorithm
+		const a = year % 19;
+		const b = Math.floor(year / 100);
+		const c = year % 100;
+		const d = Math.floor(b / 4);
+		const e = b % 4;
+		const f = Math.floor((b + 8) / 25);
+		const g = Math.floor((b - f + 1) / 3);
+		const h = (19 * a + b - d - g + 15) % 30;
+		const i = Math.floor(c / 4);
+		const k = c % 4;
+		const l = (32 + 2 * e + 2 * i - h - k) % 7;
+		const m = Math.floor((a + 11 * h + 22 * l) / 451);
+		const month = Math.floor((h + l - 7 * m + 114) / 31);
+		const day = ((h + l - 7 * m + 114) % 31) + 1;
+		return new Date(year, month - 1, day);
+	}
+
+	function addDaysToDate(base, days) {
+		const d = new Date(base);
+		d.setDate(d.getDate() + days);
+		return d;
+	}
+
+	/**
+	 * Returns public holidays for a given year and Bundesland.
+	 * Each entry: { name, date: Date, allDay: true }
+	 */
+	function getGermanHolidays(year, bl) {
+		if (!bl) return [];
+		const easter = computeEasterSunday(year);
+		const fixed = [
+			{ name: "Neujahr", month: 0, day: 1, states: null },
+			{ name: "Heilige Drei Könige", month: 0, day: 6, states: ["BW", "BY", "ST"] },
+			{ name: "Internationaler Frauentag", month: 2, day: 8, states: ["BE", "MV"] },
+			{ name: "Tag der Arbeit", month: 4, day: 1, states: null },
+			{ name: "Tag der Deutschen Einheit", month: 9, day: 3, states: null },
+			{ name: "Reformationstag", month: 9, day: 31, states: ["BB", "HB", "HH", "MV", "NI", "SN", "ST", "SH", "TH"] },
+			{ name: "Allerheiligen", month: 10, day: 1, states: ["BW", "BY", "NW", "RP", "SL"] },
+			{ name: "Buß- und Bettag", month: -1, day: -1, states: ["SN"], compute: function(y) {
+				// Wednesday before Nov 23
+				const nov23 = new Date(y, 10, 23);
+				const wd = nov23.getDay(); // 0=Sun
+				const diff = (wd + 4) % 7; // days back to Wednesday
+				return new Date(y, 10, 23 - diff);
+			}},
+			{ name: "1. Weihnachtstag", month: 11, day: 25, states: null },
+			{ name: "2. Weihnachtstag", month: 11, day: 26, states: null },
+			{ name: "Weltfrauentag (Thüringen)", month: 2, day: 8, states: ["TH"] },
+			{ name: "Weltkindertag", month: 8, day: 20, states: ["TH"] },
+		];
+		const movable = [
+			{ name: "Karfreitag", offset: -2, states: null },
+			{ name: "Ostermontag", offset: 1, states: null },
+			{ name: "Christi Himmelfahrt", offset: 39, states: null },
+			{ name: "Pfingstmontag", offset: 50, states: null },
+			{ name: "Fronleichnam", offset: 60, states: ["BW", "BY", "HE", "NW", "RP", "SL", "SN", "TH"] },
+		];
+		const result = [];
+		for (const h of fixed) {
+			if (h.states && !h.states.includes(bl)) continue;
+			if (h.compute) {
+				result.push({ name: h.name, date: h.compute(year), allDay: true });
+			} else {
+				result.push({ name: h.name, date: new Date(year, h.month, h.day), allDay: true });
+			}
+		}
+		for (const h of movable) {
+			if (h.states && !h.states.includes(bl)) continue;
+			result.push({ name: h.name, date: addDaysToDate(easter, h.offset), allDay: true });
+		}
+		// Remove duplicates (Frauentag for BE is also captured in TH variant)
+		const seen = new Set();
+		return result.filter((h) => {
+			const key = `${h.date.getTime()}_${h.name}`;
+			if (seen.has(key)) return false;
+			seen.add(key);
+			return true;
+		});
+	}
+
+	/**
+	 * Returns school vacation periods for a given year and Bundesland.
+	 * Each entry: { name, start: Date, end: Date, allDay: true }
+	 * Data covers 2025/2026 school year.
+	 */
+	function getGermanSchoolVacations(year, bl) {
+		if (!bl) return [];
+		// Vacation data: [name, bundesland, startISO, endISO]
+		// Covering 2025 and 2026 data for the most common vacations
+		const DATA = [
+			// ── 2025 ──
+			["Winterferien", "BW", "2025-03-03", "2025-03-07"],
+			["Osterferien", "BW", "2025-04-14", "2025-04-25"],
+			["Pfingstferien", "BW", "2025-06-10", "2025-06-20"],
+			["Sommerferien", "BW", "2025-07-31", "2025-09-12"],
+			["Herbstferien", "BW", "2025-10-27", "2025-10-31"],
+			["Weihnachtsferien", "BW", "2025-12-22", "2026-01-05"],
+			["Winterferien", "BY", "2025-03-03", "2025-03-07"],
+			["Osterferien", "BY", "2025-04-14", "2025-04-25"],
+			["Pfingstferien", "BY", "2025-06-10", "2025-06-20"],
+			["Sommerferien", "BY", "2025-07-28", "2025-09-08"],
+			["Herbstferien", "BY", "2025-10-27", "2025-10-31"],
+			["Weihnachtsferien", "BY", "2025-12-22", "2026-01-05"],
+			["Winterferien", "BE", "2025-02-03", "2025-02-08"],
+			["Osterferien", "BE", "2025-04-14", "2025-04-25"],
+			["Sommerferien", "BE", "2025-07-24", "2025-09-05"],
+			["Herbstferien", "BE", "2025-10-20", "2025-11-01"],
+			["Weihnachtsferien", "BE", "2025-12-22", "2026-01-02"],
+			["Winterferien", "BB", "2025-02-03", "2025-02-08"],
+			["Osterferien", "BB", "2025-04-14", "2025-04-25"],
+			["Sommerferien", "BB", "2025-07-24", "2025-09-05"],
+			["Herbstferien", "BB", "2025-10-20", "2025-11-01"],
+			["Weihnachtsferien", "BB", "2025-12-22", "2026-01-02"],
+			["Winterferien", "HB", "2025-02-03", "2025-02-04"],
+			["Osterferien", "HB", "2025-04-07", "2025-04-19"],
+			["Sommerferien", "HB", "2025-07-03", "2025-08-13"],
+			["Herbstferien", "HB", "2025-10-13", "2025-10-25"],
+			["Weihnachtsferien", "HB", "2025-12-22", "2026-01-05"],
+			["Winterferien", "HH", "2025-01-31", "2025-01-31"],
+			["Osterferien", "HH", "2025-03-10", "2025-03-21"],
+			["Sommerferien", "HH", "2025-07-24", "2025-09-03"],
+			["Herbstferien", "HH", "2025-10-20", "2025-10-31"],
+			["Weihnachtsferien", "HH", "2025-12-22", "2026-01-02"],
+			["Osterferien", "HE", "2025-04-07", "2025-04-21"],
+			["Sommerferien", "HE", "2025-07-07", "2025-08-15"],
+			["Herbstferien", "HE", "2025-10-06", "2025-10-18"],
+			["Weihnachtsferien", "HE", "2025-12-22", "2026-01-10"],
+			["Winterferien", "MV", "2025-02-03", "2025-02-14"],
+			["Osterferien", "MV", "2025-04-14", "2025-04-23"],
+			["Sommerferien", "MV", "2025-07-28", "2025-09-06"],
+			["Herbstferien", "MV", "2025-10-20", "2025-10-25"],
+			["Weihnachtsferien", "MV", "2025-12-22", "2026-01-02"],
+			["Winterferien", "NI", "2025-02-03", "2025-02-04"],
+			["Osterferien", "NI", "2025-04-07", "2025-04-19"],
+			["Sommerferien", "NI", "2025-07-03", "2025-08-13"],
+			["Herbstferien", "NI", "2025-10-13", "2025-10-25"],
+			["Weihnachtsferien", "NI", "2025-12-22", "2026-01-05"],
+			["Osterferien", "NW", "2025-04-07", "2025-04-19"],
+			["Sommerferien", "NW", "2025-07-14", "2025-08-26"],
+			["Herbstferien", "NW", "2025-10-13", "2025-10-25"],
+			["Weihnachtsferien", "NW", "2025-12-22", "2026-01-06"],
+			["Osterferien", "RP", "2025-04-14", "2025-04-25"],
+			["Sommerferien", "RP", "2025-07-07", "2025-08-15"],
+			["Herbstferien", "RP", "2025-10-13", "2025-10-24"],
+			["Weihnachtsferien", "RP", "2025-12-22", "2026-01-07"],
+			["Winterferien", "SL", "2025-02-24", "2025-03-04"],
+			["Osterferien", "SL", "2025-04-14", "2025-04-25"],
+			["Sommerferien", "SL", "2025-07-07", "2025-08-15"],
+			["Herbstferien", "SL", "2025-10-13", "2025-10-24"],
+			["Weihnachtsferien", "SL", "2025-12-22", "2026-01-02"],
+			["Winterferien", "SN", "2025-02-17", "2025-03-01"],
+			["Osterferien", "SN", "2025-04-18", "2025-04-25"],
+			["Sommerferien", "SN", "2025-06-28", "2025-08-08"],
+			["Herbstferien", "SN", "2025-10-06", "2025-10-18"],
+			["Weihnachtsferien", "SN", "2025-12-22", "2026-01-02"],
+			["Winterferien", "ST", "2025-02-03", "2025-02-11"],
+			["Osterferien", "ST", "2025-04-07", "2025-04-19"],
+			["Sommerferien", "ST", "2025-06-26", "2025-08-06"],
+			["Herbstferien", "ST", "2025-10-13", "2025-10-25"],
+			["Weihnachtsferien", "ST", "2025-12-22", "2026-01-05"],
+			["Osterferien", "SH", "2025-04-11", "2025-04-25"],
+			["Sommerferien", "SH", "2025-07-28", "2025-09-06"],
+			["Herbstferien", "SH", "2025-10-20", "2025-11-01"],
+			["Weihnachtsferien", "SH", "2025-12-19", "2026-01-06"],
+			["Winterferien", "TH", "2025-02-03", "2025-02-08"],
+			["Osterferien", "TH", "2025-04-07", "2025-04-19"],
+			["Sommerferien", "TH", "2025-06-28", "2025-08-08"],
+			["Herbstferien", "TH", "2025-10-06", "2025-10-18"],
+			["Weihnachtsferien", "TH", "2025-12-22", "2026-01-03"],
+			// ── 2026 ──
+			["Winterferien", "BW", "2026-02-16", "2026-02-20"],
+			["Osterferien", "BW", "2026-03-30", "2026-04-10"],
+			["Pfingstferien", "BW", "2026-05-26", "2026-06-05"],
+			["Sommerferien", "BW", "2026-07-30", "2026-09-11"],
+			["Herbstferien", "BW", "2026-10-26", "2026-10-30"],
+			["Weihnachtsferien", "BW", "2026-12-23", "2027-01-08"],
+			["Winterferien", "BY", "2026-02-16", "2026-02-20"],
+			["Osterferien", "BY", "2026-03-30", "2026-04-10"],
+			["Pfingstferien", "BY", "2026-06-02", "2026-06-12"],
+			["Sommerferien", "BY", "2026-08-03", "2026-09-14"],
+			["Herbstferien", "BY", "2026-11-02", "2026-11-06"],
+			["Weihnachtsferien", "BY", "2026-12-23", "2027-01-08"],
+			["Winterferien", "BE", "2026-02-02", "2026-02-07"],
+			["Osterferien", "BE", "2026-03-30", "2026-04-10"],
+			["Sommerferien", "BE", "2026-07-09", "2026-08-21"],
+			["Herbstferien", "BE", "2026-10-19", "2026-10-31"],
+			["Weihnachtsferien", "BE", "2026-12-23", "2027-01-02"],
+			["Winterferien", "BB", "2026-02-02", "2026-02-07"],
+			["Osterferien", "BB", "2026-03-30", "2026-04-10"],
+			["Sommerferien", "BB", "2026-07-09", "2026-08-21"],
+			["Herbstferien", "BB", "2026-10-19", "2026-10-31"],
+			["Weihnachtsferien", "BB", "2026-12-23", "2027-01-02"],
+			["Winterferien", "HB", "2026-02-02", "2026-02-03"],
+			["Osterferien", "HB", "2026-03-23", "2026-04-04"],
+			["Sommerferien", "HB", "2026-07-02", "2026-08-12"],
+			["Herbstferien", "HB", "2026-10-12", "2026-10-24"],
+			["Weihnachtsferien", "HB", "2026-12-23", "2027-01-05"],
+			["Winterferien", "HH", "2026-01-30", "2026-01-30"],
+			["Osterferien", "HH", "2026-03-02", "2026-03-13"],
+			["Sommerferien", "HH", "2026-07-09", "2026-08-19"],
+			["Herbstferien", "HH", "2026-10-19", "2026-10-30"],
+			["Weihnachtsferien", "HH", "2026-12-23", "2027-01-02"],
+			["Osterferien", "HE", "2026-03-30", "2026-04-10"],
+			["Sommerferien", "HE", "2026-07-06", "2026-08-14"],
+			["Herbstferien", "HE", "2026-10-05", "2026-10-17"],
+			["Weihnachtsferien", "HE", "2026-12-23", "2027-01-09"],
+			["Winterferien", "MV", "2026-02-02", "2026-02-14"],
+			["Osterferien", "MV", "2026-03-30", "2026-04-08"],
+			["Sommerferien", "MV", "2026-06-22", "2026-08-01"],
+			["Herbstferien", "MV", "2026-10-24", "2026-10-28"],
+			["Weihnachtsferien", "MV", "2026-12-21", "2027-01-02"],
+			["Winterferien", "NI", "2026-02-02", "2026-02-03"],
+			["Osterferien", "NI", "2026-03-23", "2026-04-04"],
+			["Sommerferien", "NI", "2026-07-02", "2026-08-12"],
+			["Herbstferien", "NI", "2026-10-12", "2026-10-24"],
+			["Weihnachtsferien", "NI", "2026-12-23", "2027-01-05"],
+			["Osterferien", "NW", "2026-03-30", "2026-04-11"],
+			["Sommerferien", "NW", "2026-06-29", "2026-08-11"],
+			["Herbstferien", "NW", "2026-10-12", "2026-10-24"],
+			["Weihnachtsferien", "NW", "2026-12-23", "2027-01-06"],
+			["Osterferien", "RP", "2026-03-23", "2026-04-03"],
+			["Sommerferien", "RP", "2026-07-06", "2026-08-14"],
+			["Herbstferien", "RP", "2026-10-12", "2026-10-23"],
+			["Weihnachtsferien", "RP", "2026-12-23", "2027-01-07"],
+			["Winterferien", "SL", "2026-02-16", "2026-02-21"],
+			["Osterferien", "SL", "2026-03-30", "2026-04-10"],
+			["Sommerferien", "SL", "2026-07-06", "2026-08-14"],
+			["Herbstferien", "SL", "2026-10-12", "2026-10-24"],
+			["Weihnachtsferien", "SL", "2026-12-21", "2027-01-02"],
+			["Winterferien", "SN", "2026-02-09", "2026-02-21"],
+			["Osterferien", "SN", "2026-04-03", "2026-04-11"],
+			["Sommerferien", "SN", "2026-06-27", "2026-08-07"],
+			["Herbstferien", "SN", "2026-10-05", "2026-10-17"],
+			["Weihnachtsferien", "SN", "2026-12-23", "2027-01-02"],
+			["Winterferien", "ST", "2026-02-02", "2026-02-07"],
+			["Osterferien", "ST", "2026-03-30", "2026-04-08"],
+			["Sommerferien", "ST", "2026-06-25", "2026-08-05"],
+			["Herbstferien", "ST", "2026-10-19", "2026-10-24"],
+			["Weihnachtsferien", "ST", "2026-12-21", "2027-01-02"],
+			["Osterferien", "SH", "2026-04-04", "2026-04-18"],
+			["Sommerferien", "SH", "2026-06-29", "2026-08-08"],
+			["Herbstferien", "SH", "2026-10-12", "2026-10-24"],
+			["Weihnachtsferien", "SH", "2026-12-23", "2027-01-06"],
+			["Winterferien", "TH", "2026-02-02", "2026-02-07"],
+			["Osterferien", "TH", "2026-03-30", "2026-04-09"],
+			["Sommerferien", "TH", "2026-06-27", "2026-08-07"],
+			["Herbstferien", "TH", "2026-10-05", "2026-10-17"],
+			["Weihnachtsferien", "TH", "2026-12-23", "2027-01-02"],
+		];
+		const result = [];
+		for (const [name, state, startStr, endStr] of DATA) {
+			if (state !== bl) continue;
+			const sp = startStr.split("-");
+			const ep = endStr.split("-");
+			const start = new Date(Number(sp[0]), Number(sp[1]) - 1, Number(sp[2]));
+			const end = new Date(Number(ep[0]), Number(ep[1]) - 1, Number(ep[2]));
+			// Only include vacations that overlap with the requested year
+			if (start.getFullYear() <= year && end.getFullYear() >= year) {
+				result.push({ name, start, end: addDaysToDate(end, 1), allDay: true });
+			}
+		}
+		return result;
+	}
+
+	/**
+	 * Generates calendar events for holidays and vacations for the calendar view range.
+	 */
+	function getHolidayEvents() {
+		const bl = loadCalendarBundesland();
+		if (!bl) return [];
+		const cursor = calendarState.cursor || new Date();
+		const year = cursor.getFullYear();
+		const years = [year - 1, year, year + 1]; // cover year boundaries
+		const events = [];
+		for (const y of years) {
+			const holidays = getGermanHolidays(y, bl);
+			for (const h of holidays) {
+				const start = startOfDay(h.date);
+				const end = addDays(start, 1);
+				events.push({
+					title: h.name,
+					start,
+					end,
+					allDay: true,
+					color: CALENDAR_HOLIDAYS_SOURCE.color,
+					calendarId: CALENDAR_HOLIDAYS_SOURCE.id,
+					calendarName: CALENDAR_HOLIDAYS_SOURCE.name,
+					isHoliday: true,
+				});
+			}
+			const vacations = getGermanSchoolVacations(y, bl);
+			for (const v of vacations) {
+				events.push({
+					title: v.name,
+					start: v.start,
+					end: v.end,
+					allDay: true,
+					color: CALENDAR_VACATION_SOURCE.color,
+					calendarId: CALENDAR_VACATION_SOURCE.id,
+					calendarName: CALENDAR_VACATION_SOURCE.name,
+					isVacation: true,
+				});
+			}
+		}
+		// Deduplicate by title+start
+		const seen = new Set();
+		return events.filter((e) => {
+			const k = `${e.title}_${e.start.getTime()}`;
+			if (seen.has(k)) return false;
+			seen.add(k);
+			return true;
+		});
+	}
+
 	function getCalendarEvents() {
 		const external = Array.isArray(calendarState.externalEvents)
 			? calendarState.externalEvents
@@ -18007,7 +18406,8 @@ self.onmessage = async (e) => {
 			calendarName: CALENDAR_LOCAL_SOURCE.name,
 			color: CALENDAR_LOCAL_SOURCE.color,
 		}));
-		return [...external, ...localDecorated];
+		const holidays = getHolidayEvents();
+		return [...external, ...localDecorated, ...holidays];
 	}
 
 	function renderCalendarLegend() {
@@ -18018,9 +18418,11 @@ self.onmessage = async (e) => {
 			: 0;
 		const hasGoogle = googleCalendarConnected;
 		const hasOutlook = outlookCalendarConnected;
-		if (!sources.length && !localCount && !hasGoogle && !hasOutlook) {
+		const bl = loadCalendarBundesland();
+		const hasHolidays = Boolean(bl);
+		if (!sources.length && !localCount && !hasGoogle && !hasOutlook && !hasHolidays) {
 			calendarLegend.innerHTML =
-				'<div class="text-xs text-slate-400">Keine Kalender verbunden.</div>';
+				`<div class="text-xs text-slate-400">${escapeHtml(t("calendar.base.hint"))}</div>`;
 			return;
 		}
 		const localRow = localCount
@@ -18065,7 +18467,29 @@ self.onmessage = async (e) => {
 					<span class="text-[10px] text-slate-500">sync</span>
 				</div>`
 			: "";
-		calendarLegend.innerHTML = `${localRow}${googleRow}${outlookRow}${sources
+		const blEntry = BUNDESLAENDER.find((b) => b.id === bl);
+		const holidayRow = hasHolidays
+			? `
+				<div class="flex items-center justify-between gap-2 text-xs text-slate-300">
+					<div class="flex items-center gap-2">
+						<span class="inline-flex h-2.5 w-2.5 rounded-full" style="background:${escapeAttr(
+							CALENDAR_HOLIDAYS_SOURCE.color
+						)}"></span>
+						<span class="truncate">${escapeHtml(t("calendar.holidays.feiertage"))}</span>
+					</div>
+					<span class="text-[10px] text-slate-500">${escapeHtml(blEntry ? blEntry.id : "")}</span>
+				</div>
+				<div class="flex items-center justify-between gap-2 text-xs text-slate-300">
+					<div class="flex items-center gap-2">
+						<span class="inline-flex h-2.5 w-2.5 rounded-full" style="background:${escapeAttr(
+							CALENDAR_VACATION_SOURCE.color
+						)}"></span>
+						<span class="truncate">${escapeHtml(t("calendar.holidays.ferien"))}</span>
+					</div>
+					<span class="text-[10px] text-slate-500">${escapeHtml(blEntry ? blEntry.id : "")}</span>
+				</div>`
+			: "";
+		calendarLegend.innerHTML = `${localRow}${googleRow}${outlookRow}${holidayRow}${sources
 			.map((src) => {
 				const dot = `<span class="inline-flex h-2.5 w-2.5 rounded-full" style="background:${escapeAttr(
 					src.color
@@ -18879,17 +19303,10 @@ self.onmessage = async (e) => {
 			}
 		}
 		renderCalendarLegend();
-		if (!sources.length && calendarState.localEvents.length === 0) {
-			calendarGrid.innerHTML =
-				'<div class="text-sm text-slate-400">Keine Kalenderquellen aktiv.</div>';
-			renderCalendarFreeSlots(view, cursor, events);
-			return;
-		}
+		/* ── Base Calendar: always render the grid, even without linked sources ── */
 		if (!events.length) {
-			calendarGrid.innerHTML =
-				'<div class="text-sm text-slate-400">Keine Termine in diesem Zeitraum.</div>';
-			renderCalendarFreeSlots(view, cursor, events);
-			return;
+			// No events at all — still render the calendar grid structure
+			// but skip the early-return so the full grid with empty days is shown
 		}
 		if (view === "day") {
 			const start = startOfDay(cursor);
@@ -24741,6 +25158,30 @@ self.onmessage = async (e) => {
 			saveCalendarDefaultView(calendarDefaultViewSelect.value);
 		});
 	}
+	/* ── Bundesland selector initialization ── */
+	(function initBundeslandSelectors() {
+		const sidebarSelect = document.getElementById("calendarBundeslandSelect");
+		const settingsSelect = document.getElementById("calendarSettingsBundesland");
+		const selectors = [sidebarSelect, settingsSelect].filter(Boolean);
+		// Populate options
+		for (const sel of selectors) {
+			for (const bl of BUNDESLAENDER) {
+				const opt = document.createElement("option");
+				opt.value = bl.id;
+				opt.textContent = bl.name;
+				sel.appendChild(opt);
+			}
+			sel.value = loadCalendarBundesland();
+			sel.addEventListener("change", () => {
+				const val = sel.value;
+				saveCalendarBundesland(val);
+				// Sync both selectors
+				for (const other of selectors) {
+					if (other !== sel) other.value = val;
+				}
+			});
+		}
+	})();
 	if (calendarAddBtn) {
 		calendarAddBtn.addEventListener("click", () => {
 			const name = String(calendarAddName ? calendarAddName.value : "").trim();

@@ -1,8 +1,29 @@
 # Project overview
 
-Datum: 2026-02-20
+Datum: 2026-02-21
 
 Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische Analyse, keine Laufzeitauflösung).
+
+## Aktuelle Änderungen (2026-02-21)
+
+- **Basiskalender für nicht registrierte User** `#calendar` `#base` `#ux`: Kalender wird jetzt immer gerendert — auch wenn keine Kalenderquellen (ICS, Google, Outlook) verknüpft sind. Bisher zeigte `renderCalendarPanel()` ein Early-Return mit "Keine Kalenderquellen aktiv." und kein Kalender-Grid.
+  1. **Early-Return entfernt** (`app.js` ~L19303): Die Bedingung `!sources.length && calendarState.localEvents.length === 0` als Abbruch wurde entfernt. Das Kalender-Grid (Monat/Woche/Tag) wird immer dargestellt, auch bei 0 Events.
+  2. **Status-Text angepasst** (`app.js` ~L18001): `refreshCalendarEvents()` zeigt "Basiskalender aktiv." statt "Keine Kalenderquellen aktiv." wenn keine externen Quellen aber Feiertage vorhanden.
+  3. **Legend-Hint** (`app.js` ~L18418): Legende zeigt `t("calendar.base.hint")` statt "Keine Kalender verbunden." bei leerem Zustand.
+  - Zuständige Funktionen: `renderCalendarPanel`, `refreshCalendarEvents`, `renderCalendarLegend`.
+  - Zuständige Dateien: `app.js`.
+
+- **Feiertage & Schulferien mit Bundesland-Auswahl** `#calendar` `#holidays` `#vacations` `#bundesland`: Deutsche gesetzliche Feiertage und Schulferien werden im Kalender angezeigt. Nutzer wählen ein Bundesland aus einem Dropdown — die Auswahl wird geräteübergreifend synchronisiert.
+  1. **Konstanten** (`app.js` ~L14949): `CALENDAR_BUNDESLAND_KEY`, `CALENDAR_HOLIDAYS_SOURCE` (Farbe: #ef4444), `CALENDAR_VACATION_SOURCE` (Farbe: #06b6d4), `BUNDESLAENDER`-Array (16 Bundesländer).
+  2. **Feiertag-Berechnung** (`app.js` ~L18061): `computeEasterSunday(year)` (Anonymous Gregorian Algorithm), `getGermanHolidays(year, bl)` — alle bundesweiten + landesspezifischen Feiertage (Hl. Drei Könige, Fronleichnam, Buß- und Bettag, Reformationstag, Allerheiligen, Weltkindertag, Frauentag etc.).
+  3. **Schulferien-Daten** (`app.js` ~L18160): `getGermanSchoolVacations(year, bl)` — Ferien für alle 16 Bundesländer, Datensätze für 2025 und 2026 (Winter-, Oster-, Pfingst-, Sommer-, Herbst-, Weihnachtsferien).
+  4. **Event-Integration** (`app.js` ~L18370): `getHolidayEvents()` generiert Kalender-Events mit `isHoliday`/`isVacation`-Flags. `getCalendarEvents()` merged diese mit externen + lokalen Events.
+  5. **Legende** (`app.js` ~L18467): `renderCalendarLegend()` zeigt Feiertage (rot) und Schulferien (cyan) mit Bundesland-Kürzel.
+  6. **Bundesland-Selektoren** (`index.html` ~L1688, ~L2429): Dropdown im Kalender-Sidebar (`#calendarBundeslandSelect`) und in Einstellungen → Kalender (`#calendarSettingsBundesland`). Beide synchronisieren sich gegenseitig.
+  7. **Persistenz & Sync** (`app.js`): `loadCalendarBundesland()`, `saveCalendarBundesland()` — localStorage + `getLocalCalendarSettings()` liefert `bundesland`-Feld → Server-Sync via `syncCalendarSettingsToServer()`. `applyCalendarSettings()` und `syncCalendarSettingsFromServer()` unterstützen das Bundesland-Feld.
+  8. **i18n** (`app.js`): 14 neue Strings je Sprache (DE/EN) für `calendar.holidays.*`, `calendar.base.*`, `settings.calendar.holidays.*`.
+  - Zuständige Funktionen: `computeEasterSunday`, `addDaysToDate`, `getGermanHolidays`, `getGermanSchoolVacations`, `getHolidayEvents`, `getCalendarEvents`, `renderCalendarLegend`, `renderCalendarPanel`, `refreshCalendarEvents`, `loadCalendarBundesland`, `saveCalendarBundesland`, `getLocalCalendarSettings`, `applyCalendarSettings`, `syncCalendarSettingsFromServer`, `initBundeslandSelectors`.
+  - Zuständige Dateien: `app.js`, `index.html`.
 
 ## Aktuelle Änderungen (2026-02-20)
 
