@@ -6478,7 +6478,7 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	cursor: pointer;
 	position: relative;
 	background: transparent;
-	color: var(--accent-text-soft, #f472b6);
+	color: var(--accent-text, rgba(253, 242, 255, 0.98));
 	user-select: none;
 }
 /* ── Custom dropdown: trigger label ── */
@@ -6538,7 +6538,7 @@ body[data-theme] #calendarRoomSelect {
 	background: transparent !important;
 	background-color: transparent !important;
 	background-image: none !important;
-	color: var(--accent-text-soft, #f472b6) !important;
+	color: var(--accent-text, rgba(253, 242, 255, 0.98)) !important;
 	border: none !important;
 	border-color: transparent !important;
 	box-shadow: none !important;
