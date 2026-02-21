@@ -18476,7 +18476,7 @@ self.onmessage = async (e) => {
 				Number(parts[2])
 			);
 			const label = formatDayLabel(day);
-			const weekday = day.toLocaleDateString(uiLang === "de" ? "de-DE" : "en-US", { weekday: "short" });
+			const weekday = day.toLocaleDateString(uiLang === "de" ? "de-DE" : "en-US", { weekday: "short" }).toUpperCase();
 			const set = manualFreeSlots.get(dk);
 			const slots = computeFreeSlotsForDay(day, events);
 			const selectedSlots = getSelectedFreeSlotsForDay(day, events);
@@ -18493,10 +18493,15 @@ self.onmessage = async (e) => {
 				timeRange = `${formatTime(selectedSlots[0][0])} – ${formatTime(selectedSlots[selectedSlots.length - 1][1])}`;
 			}
 
-			return `<div class="cal-slot-row my-selection-row" data-my-sel-day="${escapeAttr(dk)}">
-				<span class="cal-slot-day">${weekday}, ${label}</span>
-				<span class="cal-slot-time">${timeRange || "—"}</span>
-				<span class="cal-slot-count ${slotInfo ? "cal-slot-all" : ""}">${slotInfo || ""}</span>
+			return `<div class="cal-sel-card my-selection-row" data-my-sel-day="${escapeAttr(dk)}">
+				<div class="cal-sel-left">
+					<span class="cal-sel-dot"></span>
+					<div class="cal-sel-info">
+						<span class="cal-sel-date">${weekday}, ${label}</span>
+						<span class="cal-sel-time">${timeRange || "—"}</span>
+					</div>
+				</div>
+				${slotInfo ? `<span class="cal-sel-badge">${slotInfo}</span>` : ""}
 			</div>`;
 		});
 		calendarMySelections.innerHTML = rows.join("");
@@ -24980,6 +24985,18 @@ self.onmessage = async (e) => {
 			}
 			renderCommonFreeSlots();
 		});
+		// Tooltip for share toggle
+		const shareTooltip = document.getElementById("calendarShareTooltip");
+		if (shareTooltip) {
+			let tipTimer = 0;
+			calendarCommonFreeToggle.addEventListener("mouseenter", () => {
+				tipTimer = window.setTimeout(() => shareTooltip.classList.add("is-visible"), 400);
+			});
+			calendarCommonFreeToggle.addEventListener("mouseleave", () => {
+				window.clearTimeout(tipTimer);
+				shareTooltip.classList.remove("is-visible");
+			});
+		}
 	}
 	if (calendarGrid) {
 		calendarGrid.addEventListener("click", (ev) => {

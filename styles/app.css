@@ -6459,20 +6459,27 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	font-size: 11px;
 	font-weight: 600;
 	color: #cbd5e1;
+	white-space: nowrap;
 }
 .cal-card-hint {
 	font-size: 9px;
 	font-weight: 400;
 	color: #64748b;
 }
+.cal-card-subtitle {
+	font-size: 9px;
+	color: #64748b;
+	line-height: 1.3;
+	margin-top: 2px;
+}
 
-/* ── Slot Rows (Free Slots + My Selections unified grid) ── */
+/* ── Slot Rows (Free Slots unified grid) ── */
 .cal-slot-row {
 	display: grid;
-	grid-template-columns: 1fr auto auto;
-	gap: 0.5rem;
+	grid-template-columns: minmax(0, 1fr) 80px 32px;
+	gap: 0.25rem;
 	align-items: center;
-	padding: 3px 2px;
+	padding: 3px 0;
 	font-size: 11px;
 	border-bottom: 1px solid rgba(255, 255, 255, 0.04);
 }
@@ -6491,7 +6498,6 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	white-space: nowrap;
 }
 .cal-slot-count {
-	min-width: 1.75rem;
 	text-align: right;
 	font-size: 10px;
 	font-weight: 500;
@@ -6502,6 +6508,118 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 }
 .cal-slot-partial {
 	color: #fbbf24;
+}
+
+/* ── My Selections — 2-line card layout ── */
+.cal-sel-card {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+	padding: 6px 4px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+	cursor: pointer;
+	transition: background 0.15s;
+}
+.cal-sel-card:last-child {
+	border-bottom: none;
+}
+.cal-sel-card:hover {
+	background: rgba(255, 255, 255, 0.04);
+}
+.cal-sel-left {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+	min-width: 0;
+}
+.cal-sel-dot {
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: #4ade80;
+	flex-shrink: 0;
+	margin-top: 4px;
+}
+.cal-sel-info {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+.cal-sel-date {
+	font-size: 11px;
+	font-weight: 500;
+	color: #e2e8f0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.cal-sel-time {
+	font-size: 12px;
+	font-weight: 600;
+	color: #94a3b8;
+	white-space: nowrap;
+}
+.cal-sel-badge {
+	font-size: 10px;
+	padding: 2px 8px;
+	border-radius: 9999px;
+	background: rgba(74, 222, 128, 0.12);
+	color: #4ade80;
+	white-space: nowrap;
+	flex-shrink: 0;
+}
+
+/* ── Share Toggle Tooltip ── */
+.cal-share-tooltip {
+	position: absolute;
+	right: 0;
+	bottom: calc(100% + 8px);
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.15s ease, transform 0.15s ease;
+	transform: translateY(4px);
+	z-index: 50;
+}
+.cal-share-tooltip.is-visible {
+	opacity: 1;
+	pointer-events: auto;
+	transform: translateY(0);
+}
+.cal-share-tooltip__box {
+	width: 200px;
+	padding: 8px 10px;
+	border-radius: 10px;
+	border: 1px solid var(--calendar-tooltip-border, rgba(255,255,255,0.1));
+	background: var(--calendar-tooltip-bg, rgba(15,23,42,0.95));
+	color: var(--calendar-tooltip-text, #cbd5e1);
+	font-size: 11px;
+	line-height: 1.45;
+	text-align: left;
+	box-shadow: var(--calendar-tooltip-shadow, 0 4px 12px rgba(0,0,0,0.3));
+}
+.cal-share-tooltip__box strong {
+	display: block;
+	font-size: 11px;
+	font-weight: 600;
+	color: #f1f5f9;
+	margin-bottom: 4px;
+}
+.cal-share-tooltip__box p {
+	margin: 0;
+	font-size: 10px;
+	color: #94a3b8;
+}
+.cal-share-tooltip__arrow {
+	position: absolute;
+	right: 8px;
+	bottom: -5px;
+	width: 8px;
+	height: 8px;
+	background: var(--calendar-tooltip-bg, rgba(15,23,42,0.95));
+	border-right: 1px solid var(--calendar-tooltip-border, rgba(255,255,255,0.1));
+	border-bottom: 1px solid var(--calendar-tooltip-border, rgba(255,255,255,0.1));
+	transform: rotate(45deg);
 }
 
 /* ── Free Slot Selectable Items (Day view) ── */
@@ -6570,18 +6688,7 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	color: #64748b;
 }
 
-/* ── My Selections Panel ── */
-.my-selection-row {
-	cursor: pointer;
-	border-radius: 4px;
-	transition: background 0.15s;
-}
-.my-selection-row:hover {
-	background: rgba(255, 255, 255, 0.04);
-}
-.my-selection-row .cal-slot-day {
-	color: #cbd5e1;
-}
+/* ── My Selections Panel (uses .cal-sel-card) ── */
 
 /* ── Calendar Day Focus (jump highlight) ── */
 .calendar-day-focused {

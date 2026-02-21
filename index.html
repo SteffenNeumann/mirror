@@ -1747,10 +1747,8 @@
 										<div
 											id="calendarFreeSlotsWrap"
 											class="cal-sidebar-card mt-2.5">
-											<div class="cal-card-head">
-												<span data-i18n="calendar.free.title">Freie Zeiten</span>
-												<span class="cal-card-hint" data-i18n="calendar.free.hint">Klicke um auszuwählen</span>
-											</div>
+											<div class="cal-card-head" style="white-space:nowrap" data-i18n="calendar.free.title">Freie Zeiten</div>
+											<div class="cal-card-subtitle" data-i18n="calendar.free.hint">Klicke auf einen Slot, um ihn als verfügbar zu markieren.</div>
 											<div
 												id="calendarFreeSlots"
 												class="mt-1.5"></div>
@@ -1775,29 +1773,30 @@
 											class="cal-sidebar-card mt-2.5 hidden">
 											<div class="cal-card-head">
 												<span data-i18n="calendar.common.title">Gemeinsame freie Zeiten</span>
-												<button
-													id="calendarCommonFreeToggle"
-													type="button"
-													class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-400 transition hover:bg-white/5 active:bg-white/10"
-													title="Verfügbarkeit teilen"
-													aria-label="Verfügbarkeit teilen"
-													aria-pressed="false"
-													data-i18n-title="calendar.common.toggle"
-													data-i18n-aria="calendar.common.toggle">
-													<svg
-														viewBox="0 0 24 24"
-														fill="none"
-														stroke="currentColor"
-														stroke-width="2"
-														stroke-linecap="round"
-														stroke-linejoin="round"
-														class="h-3.5 w-3.5">
-														<path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v2" />
-														<circle cx="9" cy="7" r="4" />
-														<path d="M22 21v-2a4 4 0 00-3-3.87" />
-														<path d="M16 3.13a4 4 0 010 7.75" />
-													</svg>
-												</button>
+												<div class="relative">
+													<button
+														id="calendarCommonFreeToggle"
+														type="button"
+														class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-400 transition hover:bg-white/5 active:bg-white/10"
+														aria-label="Verfügbarkeit teilen"
+														aria-pressed="false"
+														data-i18n-title="calendar.common.toggle"
+														data-i18n-aria="calendar.common.toggle">
+														<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5">
+															<path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v2" />
+															<circle cx="9" cy="7" r="4" />
+															<path d="M22 21v-2a4 4 0 00-3-3.87" />
+															<path d="M16 3.13a4 4 0 010 7.75" />
+														</svg>
+													</button>
+													<div id="calendarShareTooltip" class="cal-share-tooltip" role="tooltip">
+														<div class="cal-share-tooltip__box">
+															<strong data-i18n="calendar.common.tooltip_title">Verfügbarkeit teilen</strong>
+															<p data-i18n="calendar.common.tooltip_text">Aktiviere diese Option, um deine freien Zeiten mit allen Teilnehmern in diesem Raum zu teilen. So könnt ihr gemeinsam sehen, wann alle verfügbar sind, und schneller einen passenden Termin finden.</p>
+														</div>
+														<div class="cal-share-tooltip__arrow"></div>
+													</div>
+												</div>
 											</div>
 											<div
 												id="calendarCommonFreeParticipants"
