@@ -6418,7 +6418,7 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	);
 }
 
-/* ── Calendar Room Selector (prominent) ── */
+/* ── Calendar Room Selector ── */
 .cal-room-selector {
 	display: flex;
 	flex-direction: column;
@@ -6447,49 +6447,104 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	border-color: var(--accent-border-strong, rgba(255, 255, 255, 0.25));
 }
 
-/* ── Free Slot Selectable Items ── */
+/* ── Calendar Sidebar Cards (subtle sub-sections) ── */
+.cal-sidebar-card {
+	padding: 0;
+}
+.cal-card-head {
+	display: flex;
+	align-items: baseline;
+	justify-content: space-between;
+	gap: 0.5rem;
+	font-size: 11px;
+	font-weight: 600;
+	color: #cbd5e1;
+}
+.cal-card-hint {
+	font-size: 9px;
+	font-weight: 400;
+	color: #64748b;
+}
+
+/* ── Slot Rows (Free Slots + My Selections unified grid) ── */
+.cal-slot-row {
+	display: grid;
+	grid-template-columns: 1fr auto auto;
+	gap: 0.5rem;
+	align-items: center;
+	padding: 3px 2px;
+	font-size: 11px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+.cal-slot-row:last-child {
+	border-bottom: none;
+}
+.cal-slot-day {
+	color: #94a3b8;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.cal-slot-time {
+	color: #64748b;
+	text-align: right;
+	white-space: nowrap;
+}
+.cal-slot-count {
+	min-width: 1.75rem;
+	text-align: right;
+	font-size: 10px;
+	font-weight: 500;
+	color: #64748b;
+}
+.cal-slot-all {
+	color: #4ade80;
+}
+.cal-slot-partial {
+	color: #fbbf24;
+}
+
+/* ── Free Slot Selectable Items (Day view) ── */
 .free-slot-item {
 	display: flex;
 	align-items: center;
 	gap: 0.375rem;
-	padding: 0.25rem 0.5rem;
-	border-radius: 0.375rem;
-	border: 1px solid rgba(255, 255, 255, 0.06);
-	background: rgba(255, 255, 255, 0.02);
+	padding: 3px 6px;
+	border-radius: 4px;
+	border: none;
+	background: transparent;
 	cursor: pointer;
-	transition: background 0.15s, border-color 0.15s;
+	transition: background 0.15s;
 	user-select: none;
 	font-size: 11px;
 	color: #94a3b8;
 }
 .free-slot-item:hover {
-	background: rgba(255, 255, 255, 0.06);
-	border-color: rgba(255, 255, 255, 0.12);
+	background: rgba(255, 255, 255, 0.05);
 }
 .free-slot-item.free-slot-selected {
-	background: rgba(74, 222, 128, 0.08);
-	border-color: rgba(74, 222, 128, 0.25);
-	color: #d1fae5;
+	background: rgba(74, 222, 128, 0.06);
+	color: #86efac;
 }
 .free-slot-item.free-slot-selected:hover {
-	background: rgba(74, 222, 128, 0.14);
+	background: rgba(74, 222, 128, 0.1);
 }
 .free-slot-check {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 14px;
-	height: 14px;
+	width: 13px;
+	height: 13px;
 	border-radius: 3px;
-	border: 1px solid rgba(255, 255, 255, 0.15);
+	border: 1px solid rgba(255, 255, 255, 0.12);
 	font-size: 9px;
 	line-height: 1;
 	flex-shrink: 0;
 	color: #4ade80;
 }
 .free-slot-selected .free-slot-check {
-	background: rgba(74, 222, 128, 0.2);
-	border-color: rgba(74, 222, 128, 0.4);
+	background: rgba(74, 222, 128, 0.15);
+	border-color: rgba(74, 222, 128, 0.35);
 }
 
 /* ── Calendar Day Availability ── */
@@ -6517,17 +6572,15 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 
 /* ── My Selections Panel ── */
 .my-selection-row {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: 0.5rem;
-	padding: 4px 6px;
-	border-radius: 6px;
 	cursor: pointer;
+	border-radius: 4px;
 	transition: background 0.15s;
 }
 .my-selection-row:hover {
-	background: rgba(255, 255, 255, 0.06);
+	background: rgba(255, 255, 255, 0.04);
+}
+.my-selection-row .cal-slot-day {
+	color: #cbd5e1;
 }
 
 /* ── Calendar Day Focus (jump highlight) ── */

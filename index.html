@@ -1746,43 +1746,35 @@
 										<!-- Free Slots -->
 										<div
 											id="calendarFreeSlotsWrap"
-											class="mt-2.5 rounded-lg border border-white/10 bg-slate-950/40 p-2">
-											<div class="flex items-center justify-between gap-2">
-												<div class="text-[11px] font-semibold text-slate-300" data-i18n="calendar.free.title">
-													Freie Zeiten
-												</div>
-												<div class="text-[9px] text-slate-500" data-i18n="calendar.free.hint">
-													Klicke um auszuwählen
-												</div>
+											class="cal-sidebar-card mt-2.5">
+											<div class="cal-card-head">
+												<span data-i18n="calendar.free.title">Freie Zeiten</span>
+												<span class="cal-card-hint" data-i18n="calendar.free.hint">Klicke um auszuwählen</span>
 											</div>
 											<div
 												id="calendarFreeSlots"
-												class="mt-2 space-y-1 text-[11px] text-slate-300"></div>
+												class="mt-1.5"></div>
 										</div>
 
 										<!-- My Selections -->
 										<div
 											id="calendarMySelectionsWrap"
-											class="mt-2.5 rounded-lg border border-white/10 bg-slate-950/40 p-2">
-											<div class="flex items-center justify-between gap-2">
-												<div class="text-[11px] font-semibold text-slate-300" data-i18n="calendar.my_selections.title">
-													Meine Auswahl
-												</div>
-												<span class="text-[9px] text-slate-500" id="calendarMySelectionsCount"></span>
+											class="cal-sidebar-card mt-2.5">
+											<div class="cal-card-head">
+												<span data-i18n="calendar.my_selections.title">Meine Auswahl</span>
+												<span class="cal-card-hint" id="calendarMySelectionsCount"></span>
 											</div>
 											<div
 												id="calendarMySelections"
-												class="mt-2 space-y-1 text-[11px] text-slate-300 max-h-48 overflow-y-auto"></div>
+												class="mt-1.5 max-h-48 overflow-y-auto"></div>
 										</div>
 
 										<!-- Common Free Slots -->
 										<div
 											id="calendarCommonFreeSlotsWrap"
-											class="mt-2.5 hidden rounded-lg border border-white/10 bg-slate-950/40 p-2">
-											<div class="flex items-center justify-between gap-2">
-												<div class="text-[11px] font-semibold text-slate-300" data-i18n="calendar.common.title">
-													Gemeinsame freie Zeiten
-												</div>
+											class="cal-sidebar-card mt-2.5 hidden">
+											<div class="cal-card-head">
+												<span data-i18n="calendar.common.title">Gemeinsame freie Zeiten</span>
 												<button
 													id="calendarCommonFreeToggle"
 													type="button"

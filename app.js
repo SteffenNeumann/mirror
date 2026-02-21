@@ -18381,18 +18381,19 @@ self.onmessage = async (e) => {
 			const slots = computeFreeSlotsForDay(day, events);
 			const label = formatDayLabel(day);
 			if (!slots.length) {
-				return `<div class="flex items-center justify-between gap-2 text-[11px]">
-					<span class="text-slate-400">${label}</span>
-					<span class="text-slate-500">—</span>
+				return `<div class="cal-slot-row">
+					<span class="cal-slot-day">${label}</span>
+					<span class="cal-slot-time">—</span>
+					<span class="cal-slot-count"></span>
 				</div>`;
 			}
 			const selected = getSelectedFreeSlotsForDay(day, events);
 			const countText = `${selected.length}/${slots.length}`;
 			const allSelected = selected.length === slots.length;
-			return `<div class="flex items-center justify-between gap-2 text-[11px]">
-				<span class="text-slate-400">${label}</span>
-				<span>${selected.length ? formatTime(selected[0][0]) + " – " + formatTime(selected[0][1]) : "—"}</span>
-				<span class="text-[10px] ${allSelected ? "text-emerald-400" : "text-amber-400"}">${countText}</span>
+			return `<div class="cal-slot-row">
+				<span class="cal-slot-day">${label}</span>
+				<span class="cal-slot-time">${selected.length ? formatTime(selected[0][0]) + " – " + formatTime(selected[0][1]) : "—"}</span>
+				<span class="cal-slot-count ${allSelected ? "cal-slot-all" : "cal-slot-partial"}">${countText}</span>
 			</div>`;
 		});
 		calendarFreeSlots.innerHTML = rows.join("");
@@ -18492,18 +18493,10 @@ self.onmessage = async (e) => {
 				timeRange = `${formatTime(selectedSlots[0][0])} – ${formatTime(selectedSlots[selectedSlots.length - 1][1])}`;
 			}
 
-			return `<div class="my-selection-row group" data-my-sel-day="${escapeAttr(dk)}">
-				<div class="flex items-center gap-2 min-w-0">
-					<span class="inline-flex h-2 w-2 rounded-full bg-emerald-400 shrink-0"></span>
-					<span class="font-medium text-slate-200 truncate">${weekday}, ${label}</span>
-				</div>
-				<div class="flex items-center gap-2">
-					${timeRange ? `<span class="text-[10px] text-slate-400">${timeRange}</span>` : ""}
-					${slotInfo ? `<span class="text-[10px] text-emerald-400/70">${slotInfo}</span>` : ""}
-					<button type="button" class="my-sel-jump opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-fuchsia-400 hover:text-fuchsia-300 shrink-0" data-my-sel-jump="${escapeAttr(dk)}" title="${escapeAttr(t("calendar.my_selections.jump"))}">
-						<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 inline-block"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-					</button>
-				</div>
+			return `<div class="cal-slot-row my-selection-row" data-my-sel-day="${escapeAttr(dk)}">
+				<span class="cal-slot-day">${weekday}, ${label}</span>
+				<span class="cal-slot-time">${timeRange || "—"}</span>
+				<span class="cal-slot-count ${slotInfo ? "cal-slot-all" : ""}">${slotInfo || ""}</span>
 			</div>`;
 		});
 		calendarMySelections.innerHTML = rows.join("");
