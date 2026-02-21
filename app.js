@@ -9467,6 +9467,8 @@
 				structured.push({ type: "hasTask" });
 			} else if (v === "has:comment" || v === "has:comments") {
 				structured.push({ type: "hasComment" });
+			} else if (v === "has:permalink" || v === "has:permalinks" || v === "has:permanentlink") {
+				structured.push({ type: "hasPermalink" });
 			} else if (v.startsWith("kind:")) {
 				structured.push({ type: "kind", value: v.slice(5).trim() });
 			} else if (v.startsWith("created:>")) {
@@ -10030,6 +10032,12 @@
 					return getTasks().total > 0;
 				case "hasComment":
 					return psCommentedNoteIds.has(String(note && note.id ? note.id : "").trim());
+				case "hasPermalink": {
+					const nid = String(note && note.id ? note.id : "").trim();
+					if (!nid) return false;
+					const pins = loadRoomPinnedEntries();
+					return pins.some((p) => p.noteId === nid);
+				}
 				case "kind":
 					return kind === tok.value || (!kind && tok.value === "note");
 				case "createdAfter": {
@@ -10062,9 +10070,59 @@
 		const hasTaskQuery = parsed.structured.some(
 			(t) => t.type === "taskOpen" || t.type === "taskDone" || t.type === "hasTask"
 		);
-		if (!hasStructured || !hasTaskQuery || notes.length === 0) {
+		const hasPermalinkQuery = parsed.structured.some((t) => t.type === "hasPermalink");
+
+		if (!hasStructured || ((!hasTaskQuery && !hasPermalinkQuery) || notes.length === 0)) {
 			panel.classList.add("hidden");
 			panel.innerHTML = "";
+			return;
+		}
+
+		/* ── Permalink query results ── */
+		if (hasPermalinkQuery && !hasTaskQuery) {
+			const pins = loadRoomPinnedEntries();
+			const items = [];
+			for (const note of notes) {
+				const nid = String(note && note.id ? note.id : "").trim();
+				if (!nid) continue;
+				const matchingPins = pins.filter((p) => p.noteId === nid);
+				const title = getNoteTitle(String(note && note.text ? note.text : ""));
+				for (const pin of matchingPins) {
+					items.push({ noteId: nid, noteTitle: title, room: pin.room, key: pin.key });
+				}
+			}
+			if (items.length === 0) { panel.classList.add("hidden"); panel.innerHTML = ""; return; }
+			const countLabel = items.length + " Permalink" + (items.length !== 1 ? "s" : "");
+			const fromLabel = t("query.from_notes").replace("{n}", String(notes.length));
+			let html = '<div class="ps-query-header">';
+			html += '<div class="ps-query-header-row">';
+			html += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ps-query-icon"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>';
+			html += '<span class="ps-query-summary">' + escapeHtml(countLabel);
+			html += ' <span class="ps-query-from">' + escapeHtml(fromLabel) + '</span>';
+			html += '</span>';
+			html += '</div></div>';
+			html += '<ul class="ps-query-list">';
+			for (const item of items) {
+				html += '<li class="ps-query-item" data-query-note-id="' + escapeHtml(item.noteId) + '">';
+				html += '<svg viewBox="0 0 16 16" class="ps-query-check"><path d="M6.5 7a3.5 3.5 0 0 0 5.28.38l2.1-2.1a3.5 3.5 0 0 0-4.95-4.95l-1.2 1.2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><path d="M9.5 9a3.5 3.5 0 0 0-5.28-.38l-2.1 2.1a3.5 3.5 0 0 0 4.95 4.95l1.2-1.2" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>';
+				html += '<span class="ps-query-label">' + escapeHtml(item.noteTitle) + '</span>';
+				html += '<span class="ps-query-note-ref" title="Room: ' + escapeHtml(item.room) + '">' + escapeHtml(item.room) + '</span>';
+				html += '</li>';
+			}
+			html += '</ul>';
+			panel.innerHTML = html;
+			panel.classList.remove("hidden");
+			panel.querySelectorAll("[data-query-note-id]").forEach((el) => {
+				el.addEventListener("click", () => {
+					const noteId = el.getAttribute("data-query-note-id") || "";
+					if (!noteId) return;
+					const note = findNoteById(noteId);
+					if (note) {
+						const allNotes = filterRealNotes(psState && psState.notes ? psState.notes : []);
+						applyNoteToEditor(note, allNotes);
+					}
+				});
+			});
 			return;
 		}
 		const wantOpen = parsed.structured.some((t) => t.type === "taskOpen");
