@@ -6562,6 +6562,23 @@ body[data-theme] #calendarBundeslandSelect {
 }
 
 /* ── Calendar Search ── */
+.cal-search-dropdown {
+	position: absolute;
+	top: 100%;
+	right: 0;
+	z-index: 60;
+	margin-top: 4px;
+	min-width: 260px;
+	max-height: 320px;
+	overflow-y: auto;
+	border-radius: 0.5rem;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: rgba(2, 6, 23, 0.95);
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+	padding: 0.375rem;
+}
 .cal-search-list {
 	max-height: 240px;
 	overflow-y: auto;
