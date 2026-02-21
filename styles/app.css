@@ -6476,15 +6476,65 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	outline: none;
 	transition: color 0.15s;
 	cursor: pointer;
-	-webkit-appearance: none;
-	-moz-appearance: none;
-	appearance: none;
 	position: relative;
+	background: transparent;
+	color: var(--accent-text-soft, #f472b6);
+	user-select: none;
+}
+/* ── Custom dropdown: trigger label ── */
+.cal-room-select__label {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+/* ── Custom dropdown: floating menu ── */
+.cal-room-select__menu {
+	display: none;
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 100%;
+	z-index: 50;
+	margin-top: 2px;
+	border-radius: 0.375rem;
+	padding: 0.25rem 0;
+	max-height: 200px;
+	overflow-y: auto;
+	background-color: var(--calendar-event-bg, rgba(15, 23, 42, 0.97));
+	border: 1px solid var(--accent-border, rgba(217, 70, 239, 0.3));
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+}
+.cal-room-select[aria-expanded="true"] .cal-room-select__menu {
+	display: block;
+}
+/* ── Custom dropdown: option items ── */
+.cal-room-select__item {
+	padding: 0.375rem 0.5rem;
+	font-size: 13px;
+	font-weight: 600;
+	cursor: pointer;
+	color: var(--accent-text-soft, #f472b6);
+	background: transparent;
+	transition: background 0.12s, color 0.12s;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.cal-room-select__item:hover,
+.cal-room-select__item:focus {
+	background-color: var(--accent-bg-hover, rgba(217, 70, 239, 0.2));
+	color: var(--accent-text, rgba(253, 242, 255, 0.98));
+}
+.cal-room-select__item[aria-selected="true"] {
+	background-color: var(--accent-bg, rgba(217, 70, 239, 0.15));
+	color: var(--accent-text, rgba(253, 242, 255, 0.98));
 }
 /* Override theme select styles — ID selector beats any class/attribute combo */
 #calendarRoomSelect,
-select#calendarRoomSelect,
-body[data-theme] select#calendarRoomSelect {
+body[data-theme] #calendarRoomSelect {
 	background: transparent !important;
 	background-color: transparent !important;
 	background-image: none !important;

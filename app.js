@@ -18400,10 +18400,14 @@ self.onmessage = async (e) => {
 		calendarFreeSlots.innerHTML = rows.join("");
 	}
 
-	/* ── Room Selector for Calendar Sidebar ── */
+	/* ── Room Selector for Calendar Sidebar (custom dropdown, cross-browser) ── */
 
 	function renderCalendarRoomSelect() {
 		if (!calendarRoomSelect) return;
+		const menuEl = calendarRoomSelect.querySelector(".cal-room-select__menu");
+		const labelEl = calendarRoomSelect.querySelector(".cal-room-select__label");
+		if (!menuEl || !labelEl) return;
+
 		const shared = loadSharedRooms();
 		const curRoom = normalizeRoom(room);
 		const curKey = normalizeKey(key);
@@ -18411,9 +18415,12 @@ self.onmessage = async (e) => {
 			? `${calendarTargetRoom}:${calendarTargetKey}`
 			: `${curRoom}:${curKey}`;
 
-		let html = "";
+		const items = [];
 		// "Current room" option
-		html += `<option value="${escapeAttr(curRoom)}:${escapeAttr(curKey)}">${escapeHtml(curRoom || "—")} (${escapeHtml(t("calendar.room_select.current"))})</option>`;
+		items.push({
+			value: `${curRoom}:${curKey}`,
+			label: `${curRoom || "—"} (${t("calendar.room_select.current")})`
+		});
 		// Shared rooms (skip current room duplicate)
 		for (const sr of shared) {
 			const r = normalizeRoom(sr.room);
@@ -18421,26 +18428,73 @@ self.onmessage = async (e) => {
 			if (!r) continue;
 			if (r === curRoom && k === curKey) continue;
 			const label = k
-				? `${r} (${escapeHtml(t("calendar.room_select.private"))})`
+				? `${r} (${t("calendar.room_select.private")})`
 				: r;
-			html += `<option value="${escapeAttr(r)}:${escapeAttr(k)}">${escapeHtml(label)}</option>`;
+			items.push({ value: `${r}:${k}`, label });
 		}
-		calendarRoomSelect.innerHTML = html;
-		calendarRoomSelect.value = currentVal;
+
+		// Build menu items
+		let menuHtml = "";
+		for (const it of items) {
+			const sel = it.value === currentVal ? ' aria-selected="true"' : "";
+			menuHtml += `<div class="cal-room-select__item" role="option" data-value="${escapeAttr(it.value)}"${sel}>${escapeHtml(it.label)}</div>`;
+		}
+		menuEl.innerHTML = menuHtml;
+
+		// Set visible label
+		const current = items.find(i => i.value === currentVal) || items[0];
+		labelEl.textContent = current ? current.label : "";
+		calendarRoomSelect.dataset.value = currentVal;
+
 		// Hide dropdown if only one option
-		calendarRoomSelect.parentElement.classList.toggle("hidden", calendarRoomSelect.options.length <= 1);
+		calendarRoomSelect.parentElement.classList.toggle("hidden", items.length <= 1);
 	}
 
+	/* Custom dropdown open/close + selection */
 	if (calendarRoomSelect) {
-		calendarRoomSelect.addEventListener("change", () => {
-			const val = calendarRoomSelect.value || "";
+		const toggleMenu = () => {
+			const expanded = calendarRoomSelect.getAttribute("aria-expanded") === "true";
+			calendarRoomSelect.setAttribute("aria-expanded", expanded ? "false" : "true");
+		};
+		const closeMenu = () => {
+			calendarRoomSelect.setAttribute("aria-expanded", "false");
+		};
+		const selectItem = (val) => {
+			calendarRoomSelect.dataset.value = val;
 			const sep = val.indexOf(":");
 			calendarTargetRoom = sep >= 0 ? val.slice(0, sep) : val;
 			calendarTargetKey = sep >= 0 ? val.slice(sep + 1) : "";
+			// Update label
+			const labelEl = calendarRoomSelect.querySelector(".cal-room-select__label");
+			const menuEl = calendarRoomSelect.querySelector(".cal-room-select__menu");
+			if (menuEl) {
+				menuEl.querySelectorAll(".cal-room-select__item").forEach(el => {
+					el.setAttribute("aria-selected", el.dataset.value === val ? "true" : "false");
+				});
+				const hit = menuEl.querySelector(`[data-value="${CSS.escape(val)}"]`);
+				if (hit && labelEl) labelEl.textContent = hit.textContent;
+			}
+			closeMenu();
 			// Reload slots for the selected room
 			manualFreeSlots = new Map();
 			commonFreeSlotsSharing = false;
 			void syncRoomSlotsFromServer();
+		};
+
+		calendarRoomSelect.addEventListener("click", (e) => {
+			const item = e.target.closest(".cal-room-select__item");
+			if (item) {
+				selectItem(item.dataset.value);
+			} else {
+				toggleMenu();
+			}
+		});
+		calendarRoomSelect.addEventListener("keydown", (e) => {
+			if (e.key === "Enter" || e.key === " ") { e.preventDefault(); toggleMenu(); }
+			if (e.key === "Escape") closeMenu();
+		});
+		document.addEventListener("click", (e) => {
+			if (!calendarRoomSelect.contains(e.target)) closeMenu();
 		});
 	}
 
