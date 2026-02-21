@@ -8275,6 +8275,91 @@
 				q: "Raum teilen",
 				a: "Mit „Link kopieren“ teilst du Raum + optionalen Key. Ist ein Key gesetzt, braucht man ihn für Zugriff.",
 			},
+			{
+				q: "Ende‑zu‑Ende‑Verschlüsselung (E2EE)",
+				a: "Erstellst du einen Raum mit Key (z. B. #mein-raum:geheim), wird der gesamte Inhalt clientseitig mit AES-GCM verschlüsselt. Nur Teilnehmer mit dem richtigen Key können den Text lesen. Der Server sieht ausschließlich verschlüsselte Daten.",
+			},
+			{
+				q: "Offline‑Modus (PWA)",
+				a: "Mirror funktioniert als installierbare Progressive Web App. Ohne Internetverbindung kannst du Notizen aus dem lokalen IndexedDB‑Cache lesen und bearbeiten. Änderungen werden in einer Sync‑Warteschlange gespeichert und automatisch an den Server gesendet, sobald du wieder online bist.",
+			},
+			{
+				q: "Geräteübergreifende Synchronisation",
+				a: "Personal‑Space‑Notizen synchronisieren sich automatisch über alle Geräte. Ein Refresh wird beim Tab‑Wechsel oder Fokussieren des Fensters ausgelöst. Zusätzlich prüft ein 60‑Sekunden‑Polling im Hintergrund auf Änderungen. IndexedDB wird bei jedem Refresh vollständig durch den Serverzustand ersetzt (Full Sync).",
+			},
+			{
+				q: "Duplikat‑Schutz",
+				a: "Mehrere Mechanismen verhindern doppelte Notizen: ein Client‑Mutex blockiert paralleles Speichern, der Server prüft Content- und Titel‑Hashes als Unique Constraints, und der Client erkennt identische Notizen per Volltext- und Header‑Vergleich vor dem Erstellen.",
+			},
+			{
+				q: "Permanent‑Link",
+				a: "Mit dem Permanent‑Link‑Button im Editor bindest du eine Notiz dauerhaft an einen Raum‑Tab. Der verknüpfte Inhalt wird beim Tab‑Wechsel automatisch wiederhergestellt. Gäste im Raum sehen denselben Inhalt und können via CRDT‑Sync mitbearbeiten.",
+			},
+			{
+				q: "Geteilte Räume verwalten",
+				a: "Einstellungen → Geteilte Räume zeigt alle mit dir geteilten Räume. Du kannst einzelne Räume öffnen, entfernen oder alle auf einmal löschen. Geteilte Räume werden automatisch als Favoriten gespeichert.",
+			},
+			{
+				q: "Kommentare & Textmarkierungen",
+				a: "Markiere Text im Editor und klicke auf das Kommentar‑Icon, um eine farbige Textmarkierung mit Kommentar zu hinterlassen. In geteilten Räumen sind Kommentare für alle Teilnehmer sichtbar und werden via WebSocket synchronisiert.",
+			},
+			{
+				q: "Wiki‑Links",
+				a: "Tippe [[ im Editor, um einen Wiki‑Link zu einer anderen Personal‑Space‑Notiz einzufügen. Autovervollständigung zeigt passende Notizen nach Titel. In der Vorschau sind Wiki‑Links klickbar und öffnen die referenzierte Notiz direkt.",
+			},
+			{
+				q: "Query‑Engine (erweiterte Suche)",
+				a: "Das PS‑Suchfeld unterstützt strukturierte Abfragen: tag:projektX, task:open, task:done, has:task, kind:note, created:>2026-01, updated:<2026-02, pinned:yes. Task‑Abfragen zeigen ein aggregiertes Ergebnis‑Panel mit offenen/erledigten Aufgaben aus allen passenden Notizen.",
+			},
+			{
+				q: "Excalidraw (Zeichnen)",
+				a: "Excalidraw ist ein eingebettetes Whiteboard‑Zeichentool. In geteilten Räumen werden Zeichnungen via WebSocket synchronisiert – alle Teilnehmer sehen Änderungen in Echtzeit. Die Sichtbarkeit wird pro Notiz/Raum gespeichert.",
+			},
+			{
+				q: "Ethercalc (Tabellenkalkulation)",
+				a: "Ethercalc stellt eine eingebettete Tabellenkalkulation im Editor bereit. Sheet‑URLs werden pro Raum generiert. Du kannst das Excel‑Panel ein-/ausblenden und per Drag verschieben.",
+			},
+			{
+				q: "Linear‑Integration",
+				a: "Verbinde dein Linear‑Konto unter Einstellungen → Integrationen. Wähle ein Projekt und die Aufgaben erscheinen im Linear‑Panel neben dem Editor. In geteilten Räumen können Gäste Aufgaben ebenfalls via WebSocket sehen. Der API‑Key wird serverseitig verschlüsselt gespeichert (AES‑256‑GCM).",
+			},
+			{
+				q: "KI‑Bildgenerierung (FLUX.2)",
+				a: "Im KI‑Panel den Modus „🎨 Bild generieren“ wählen und einen Prompt eingeben. Das generierte Bild erscheint im Ausgabebereich mit Optionen zum Herunterladen, Speichern in Uploads oder direkten Einfügen als Markdown‑Bild.",
+			},
+			{
+				q: "BFL API‑Key (Bildgenerierung)",
+				a: "Unter Einstellungen → Integrationen kannst du deinen eigenen BFL‑API‑Key (Black Forest Labs) hinterlegen. Der Key wird verschlüsselt auf dem Server gespeichert. Ohne eigenen Key wird der Server‑Standard verwendet (falls konfiguriert).",
+			},
+			{
+				q: "Outlook‑Kalender",
+				a: "Verbinde dein Microsoft‑Konto über Einstellungen → Kalender → Outlook. Nach der OAuth‑Anmeldung erscheinen Outlook‑Ereignisse im Kalender‑Panel. Du kannst Termine sowohl in Google- als auch Outlook‑Kalender speichern.",
+			},
+			{
+				q: "Auto‑Backup & Auto‑Import",
+				a: "Einstellungen → Export/Import → Auto‑Backup: Wähle einen lokalen Ordner und Mirror erstellt regelmäßig ein JSON‑Backup deiner Notizen. Auto‑Import überwacht einen Ordner auf neue Markdown‑Dateien und importiert sie automatisch.",
+			},
+			{
+				q: "Markdown‑Tasks mit Zeitstempel",
+				a: "Markdown‑Checkboxen (- [ ] / - [x]) können direkt in der Vorschau abgehakt werden. Beim Abhaken wird ein Erledigungs‑Zeitstempel gespeichert und dezent unter der erledigten Aufgabe angezeigt.",
+			},
+			{
+				q: "Passwort‑Maskierung",
+				a: "Passwortähnliche Tokens werden im Editor automatisch maskiert. Mit dem PW‑Button im Auswahl‑Menü kannst du die Maskierung umschalten. In der Vorschau bleiben Passwörter verborgen, können aber per Klick aufgedeckt und als Klartext kopiert werden.",
+			},
+			{
+				q: "Gemeinsame freie Zeiten finden",
+				a: "Im Kalender‑Panel klickst du die Tage an, an denen du verfügbar bist (Opt‑in). In geteilten Räumen wird die Verfügbarkeit aller Teilnehmer per WebSocket ausgetauscht. Das Panel „Gemeinsame freie Zeiten“ zeigt die Schnittmenge – Zeitfenster, in denen alle frei sind. Wechsel in die Tagesansicht, um einzelne Zeitslots auszuwählen.",
+			},
+			{
+				q: "Diktat (Spracheingabe)",
+				a: "Klicke auf das Mikrofon‑Icon im KI‑Panel, um Text per Spracheingabe zu diktieren. Die Erkennung nutzt die Web Speech API deines Browsers. Die Sprache folgt deiner UI‑Spracheinstellung.",
+			},
+			{
+				q: "Mobil‑Unterstützung",
+				a: "Mirror passt sich an mobile Viewports an. Auf Mobilgeräten wechselt die Ansicht automatisch zwischen Editor und Vorschau. Eine optionale Auto‑Notiz‑Funktion erstellt beim App‑Öffnen nach einer konfigurierbaren Inaktivitätszeit eine neue Notiz.",
+			},
+
 		],
 		en: [
 			{
@@ -8369,6 +8454,91 @@
 				q: "Sharing a room",
 				a: "Use Copy link to share the room + optional key with collaborators. If a room key is set, only people with the key can access the room.",
 			},
+			{
+				q: "End-to-end encryption (E2EE)",
+				a: "When you create a room with a key (e.g. #my-room:secretkey), all content is encrypted client-side using AES-GCM. Only participants with the correct key can read the text. The server only sees encrypted data.",
+			},
+			{
+				q: "Offline mode (PWA)",
+				a: "Mirror works as an installable Progressive Web App. Without an internet connection, you can read and edit notes from the local IndexedDB cache. Changes are stored in a sync queue and automatically sent to the server once you\u2019re back online.",
+			},
+			{
+				q: "Cross-device sync",
+				a: "Personal Space notes sync automatically across devices. A refresh is triggered when you switch back to the tab or focus the window. Additionally, a 60-second polling interval checks for changes in the background. IndexedDB is fully replaced by the server state on each refresh (full sync).",
+			},
+			{
+				q: "Duplicate note protection",
+				a: "Multiple mechanisms prevent duplicate notes: a client mutex blocks parallel saves, the server checks content hashes and title hashes as unique constraints, and the client detects identical notes via full-text and header comparison before creating a new one.",
+			},
+			{
+				q: "Permanent link",
+				a: "Use the permanent link button in the editor to bind a note permanently to a room tab. The linked content is automatically restored when switching tabs. Guests in the room see the same content and can co-edit via CRDT sync.",
+			},
+			{
+				q: "Managing shared rooms",
+				a: "Settings \u2192 Shared Rooms shows all rooms shared with you. You can open, remove individual rooms, or clear all at once. Shared rooms are automatically saved as favorites.",
+			},
+			{
+				q: "Comments & text highlights",
+				a: "Select text in the editor and click the comment icon to leave a text highlight with a comment. Highlights are color-coded per user. In shared rooms, comments are visible to all participants and synced via WebSocket.",
+			},
+			{
+				q: "Wiki links",
+				a: "Type [[ in the editor to insert a wiki link to another Personal Space note. Autocomplete shows matching notes by title. In the preview, wiki links are clickable and open the referenced note directly.",
+			},
+			{
+				q: "Query engine (advanced search)",
+				a: "The PS search field supports structured queries: tag:projectX, task:open, task:done, has:task, kind:note, created:>2026-01, updated:<2026-02, pinned:yes. Task queries show an aggregated result panel with open/completed tasks from all matching notes.",
+			},
+			{
+				q: "Excalidraw (drawing)",
+				a: "Excalidraw is an embedded whiteboard drawing tool. In shared rooms, drawings are synced via WebSocket \u2013 all participants see changes in real time. Visibility is stored per note/room.",
+			},
+			{
+				q: "Ethercalc (spreadsheet)",
+				a: "Ethercalc provides an embedded spreadsheet in the editor. Sheet URLs are generated per room. You can toggle the Excel panel on/off and reposition it by dragging.",
+			},
+			{
+				q: "Linear integration",
+				a: "Connect your Linear account in Settings \u2192 Integrations. Select a project and tasks appear in the Linear panel next to the editor. In shared rooms, guests can also see tasks via WebSocket. The API key is stored encrypted server-side (AES-256-GCM).",
+			},
+			{
+				q: "AI image generation (FLUX.2)",
+				a: "In the AI panel, select \u201c\ud83c\udfa8 Generate image\u201d mode and enter a prompt. The generated image appears in the output area with options to download, save to uploads, or insert directly into the editor as a Markdown image.",
+			},
+			{
+				q: "BFL API key (image generation)",
+				a: "In Settings \u2192 Integrations you can store your own BFL (Black Forest Labs) API key. The key is stored encrypted on the server. Without your own key, the server default is used (if configured).",
+			},
+			{
+				q: "Outlook calendar",
+				a: "Connect your Microsoft account via Settings \u2192 Calendar \u2192 Outlook. After OAuth sign-in, Outlook events appear in the calendar panel. You can save events to both Google and Outlook calendars.",
+			},
+			{
+				q: "Auto-backup & auto-import",
+				a: "Settings \u2192 Export/Import \u2192 Auto-Backup: choose a local folder and Mirror will regularly save a JSON backup of your notes. Auto-Import watches a folder for new Markdown files and imports them automatically.",
+			},
+			{
+				q: "Markdown tasks with timestamp",
+				a: "Markdown checkboxes (- [ ] / - [x]) can be checked directly in the preview. When checked, a completion timestamp is saved and displayed subtly below the completed task.",
+			},
+			{
+				q: "Password masking",
+				a: "Password-like tokens are automatically masked in the editor. Use the PW button in the selection menu to toggle masking. In the preview, passwords remain hidden but can be revealed and copied with a click.",
+			},
+			{
+				q: "Find common free times",
+				a: "In the calendar panel, click days you\u2019re available on (opt-in). In shared rooms, availability from all participants is exchanged via WebSocket. The \u201cCommon free slots\u201d panel shows the intersection \u2013 time windows when everyone is free. Switch to day view to select individual time slots.",
+			},
+			{
+				q: "Dictation (voice input)",
+				a: "Click the microphone icon in the AI panel to dictate text via voice input. Recognition uses your browser\u2019s Web Speech API. The language follows your UI language setting.",
+			},
+			{
+				q: "Mobile support",
+				a: "Mirror adapts to mobile viewports. On mobile devices, the view automatically switches between editor and preview. An optional auto-note feature creates a new note on app open after a configurable inactivity period.",
+			},
+
 		],
 	};
 
