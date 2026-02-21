@@ -6483,10 +6483,6 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	appearance: none;
 	position: relative;
 }
-.cal-room-select option {
-	background: #0f172a;
-	color: #e2e8f0;
-}
 .cal-room-selector::after {
 	content: "";
 	position: absolute;
@@ -6497,7 +6493,7 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	pointer-events: none;
 	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat center;
 	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat center;
-	background-color: var(--accent-text, #e2e8f0);
+	background-color: var(--accent-text-soft, #f472b6);
 }
 .cal-room-select:focus {
 	outline: none;
