@@ -6474,7 +6474,7 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	padding: 0.375rem 1.5rem 0.375rem 0.5rem;
 	font-size: 13px;
 	font-weight: 600;
-	color: var(--accent-text, #e2e8f0);
+	color: var(--accent-text-soft, #f472b6);
 	outline: none;
 	transition: color 0.15s;
 	cursor: pointer;
@@ -6482,6 +6482,10 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	-moz-appearance: none;
 	appearance: none;
 	position: relative;
+}
+.cal-room-select option {
+	background: #0f172a;
+	color: #e2e8f0;
 }
 .cal-room-selector::after {
 	content: "";
