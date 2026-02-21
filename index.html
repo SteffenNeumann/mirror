@@ -2006,6 +2006,13 @@
 							</button>
 						<button
 							type="button"
+							data-settings-nav="shortcuts"
+							class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-left text-xs text-slate-200 transition hover:bg-white/5"
+							data-i18n="settings.nav.shortcuts">
+							Tastenkürzel
+						</button>
+						<button
+							type="button"
 							data-settings-nav="faq"
 							class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-left text-xs text-slate-200 transition hover:bg-white/5"
 							data-i18n="settings.nav.faq">
@@ -2701,6 +2708,16 @@
 								</div>
 							</div>
 							<div id="aiApiStatus" class="text-xs text-slate-400"></div>
+						</section>
+
+						<section data-settings-section="shortcuts" class="hidden space-y-3">
+							<div>
+								<h4 class="text-sm font-semibold text-slate-100" data-i18n="settings.shortcuts.title">Tastenkürzel</h4>
+								<p class="mt-1 text-xs text-slate-400" data-i18n="settings.shortcuts.desc">
+									Übersicht aller Tastenkombinationen für schnellen Zugriff.
+								</p>
+							</div>
+							<div id="shortcutsList" class="space-y-2"></div>
 						</section>
 
 						<section data-settings-section="faq" class="hidden space-y-3">

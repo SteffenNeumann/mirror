@@ -5836,6 +5836,28 @@
 				"offline.back_online": "Wieder online — synchronisiere…",
 				"offline.synced": "Offline-Änderungen synchronisiert.",
 				"offline.saved_locally": "Offline gespeichert.",
+				"settings.nav.shortcuts": "Tastenkürzel",
+				"settings.shortcuts.title": "Tastenkürzel",
+				"settings.shortcuts.desc": "Übersicht aller Tastenkombinationen für schnellen Zugriff.",
+				"shortcuts.new_note": "Neue Notiz",
+				"shortcuts.new_note_desc": "Erstellt eine neue Notiz im aktuellen Tab/Raum.",
+				"shortcuts.save": "Notiz speichern",
+				"shortcuts.save_desc": "Speichert die aktuelle Notiz sofort.",
+				"shortcuts.settings": "Einstellungen öffnen",
+				"shortcuts.settings_desc": "Öffnet das Einstellungs-Panel.",
+				"shortcuts.preview": "Vorschau ein/aus",
+				"shortcuts.preview_desc": "Schaltet die Markdown-Vorschau ein oder aus.",
+				"shortcuts.focus_room": "Raum-Eingabe fokussieren",
+				"shortcuts.focus_room_desc": "Setzt den Fokus auf die Raum-Eingabe zum schnellen Wechseln.",
+				"shortcuts.copy": "Editor-Inhalt kopieren",
+				"shortcuts.copy_desc": "Kopiert den gesamten Editor-Inhalt in die Zwischenablage.",
+				"shortcuts.upload": "Upload-Dialog öffnen",
+				"shortcuts.upload_desc": "Öffnet den Dialog zum Hochladen von Dateien.",
+				"shortcuts.block_arrange": "Blöcke anordnen",
+				"shortcuts.block_arrange_desc": "Öffnet/schließt den Block-Arrange-Modus.",
+				"toast.shortcut_new_note": "Neue Notiz erstellt.",
+				"toast.shortcut_saved": "Notiz gespeichert.",
+				"toast.shortcut_copied": "Inhalt kopiert.",
 			},
 			en: {
 				"ps.title": "Personal Space",
@@ -6281,6 +6303,28 @@
 				"offline.back_online": "Back online — syncing…",
 				"offline.synced": "Offline changes synced.",
 				"offline.saved_locally": "Saved offline.",
+				"settings.nav.shortcuts": "Shortcuts",
+				"settings.shortcuts.title": "Keyboard Shortcuts",
+				"settings.shortcuts.desc": "Overview of all keyboard shortcuts for quick access.",
+				"shortcuts.new_note": "New Note",
+				"shortcuts.new_note_desc": "Creates a new note in the current tab/room.",
+				"shortcuts.save": "Save Note",
+				"shortcuts.save_desc": "Saves the current note immediately.",
+				"shortcuts.settings": "Open Settings",
+				"shortcuts.settings_desc": "Opens the settings panel.",
+				"shortcuts.preview": "Toggle Preview",
+				"shortcuts.preview_desc": "Toggles the Markdown preview on or off.",
+				"shortcuts.focus_room": "Focus Room Input",
+				"shortcuts.focus_room_desc": "Focuses the room input field for quick switching.",
+				"shortcuts.copy": "Copy Editor Content",
+				"shortcuts.copy_desc": "Copies the entire editor content to clipboard.",
+				"shortcuts.upload": "Open Upload Dialog",
+				"shortcuts.upload_desc": "Opens the file upload dialog.",
+				"shortcuts.block_arrange": "Arrange Blocks",
+				"shortcuts.block_arrange_desc": "Opens/closes the block arrange mode.",
+				"toast.shortcut_new_note": "New note created.",
+				"toast.shortcut_saved": "Note saved.",
+				"toast.shortcut_copied": "Content copied.",
 			},
 		};
 
@@ -24185,6 +24229,143 @@ self.onmessage = async (e) => {
 	});
 	}
 	initUiEventListeners();
+
+	/* ── Global Keyboard Shortcuts ── */
+	const MIRROR_SHORTCUTS = [
+		{ id: "newNote",      keys: "Alt+N",              i18nLabel: "shortcuts.new_note",      i18nDesc: "shortcuts.new_note_desc" },
+		{ id: "save",         keys: "Cmd/Ctrl+S",         i18nLabel: "shortcuts.save",          i18nDesc: "shortcuts.save_desc" },
+		{ id: "settings",     keys: "Cmd/Ctrl+,",         i18nLabel: "shortcuts.settings",      i18nDesc: "shortcuts.settings_desc" },
+		{ id: "preview",      keys: "Alt+P",              i18nLabel: "shortcuts.preview",        i18nDesc: "shortcuts.preview_desc" },
+		{ id: "focusRoom",    keys: "Cmd/Ctrl+K",         i18nLabel: "shortcuts.focus_room",    i18nDesc: "shortcuts.focus_room_desc" },
+		{ id: "copy",         keys: "Alt+C",              i18nLabel: "shortcuts.copy",           i18nDesc: "shortcuts.copy_desc" },
+		{ id: "upload",       keys: "Alt+U",              i18nLabel: "shortcuts.upload",         i18nDesc: "shortcuts.upload_desc" },
+		{ id: "blockArrange", keys: "Cmd/Ctrl+Shift+A",   i18nLabel: "shortcuts.block_arrange", i18nDesc: "shortcuts.block_arrange_desc" },
+	];
+
+	const isMac = /mac|iphone|ipad|ipod/i.test(navigator.platform || navigator.userAgent || "");
+
+	function shortcutDisplayKey(raw) {
+		return String(raw || "")
+			.replace(/Cmd\/Ctrl/g, isMac ? "⌘" : "Ctrl")
+			.replace(/Alt/g, isMac ? "⌥" : "Alt")
+			.replace(/Shift/g, isMac ? "⇧" : "Shift");
+	}
+
+	function renderShortcutsList() {
+		const container = document.getElementById("shortcutsList");
+		if (!container) return;
+		container.innerHTML = "";
+		MIRROR_SHORTCUTS.forEach((sc) => {
+			const row = document.createElement("div");
+			row.className = "flex items-center justify-between gap-4 rounded-lg border border-white/10 bg-white/5 px-3 py-2";
+			const left = document.createElement("div");
+			left.className = "min-w-0";
+			const label = document.createElement("div");
+			label.className = "text-sm font-medium text-slate-100";
+			label.textContent = t(sc.i18nLabel);
+			const desc = document.createElement("div");
+			desc.className = "mt-0.5 text-xs text-slate-400";
+			desc.textContent = t(sc.i18nDesc);
+			left.appendChild(label);
+			left.appendChild(desc);
+			const kbd = document.createElement("kbd");
+			kbd.className = "shrink-0 rounded-md border border-white/15 bg-white/10 px-2 py-1 text-xs font-mono text-slate-200 whitespace-nowrap";
+			kbd.textContent = shortcutDisplayKey(sc.keys);
+			row.appendChild(left);
+			row.appendChild(kbd);
+			container.appendChild(row);
+		});
+	}
+
+	window.addEventListener("keydown", (ev) => {
+		if (!ev) return;
+		const key = (ev.key || "").toLowerCase();
+		const mod = ev.metaKey || ev.ctrlKey;
+		const alt = ev.altKey;
+		const shift = ev.shiftKey;
+		const tag = String((ev.target && ev.target.tagName) || "").toLowerCase();
+		const isInput = tag === "input" || tag === "select";
+
+		// Skip shortcuts when modal dialogs are open (except settings itself)
+		if (modalRoot && !modalRoot.classList.contains("hidden")) return;
+
+		// Alt+N → Neue Notiz
+		if (alt && !mod && !shift && key === "n") {
+			ev.preventDefault();
+			if (psNewNote) psNewNote.click();
+			return;
+		}
+
+		// Cmd/Ctrl+S → Speichern
+		if (mod && !alt && !shift && key === "s") {
+			ev.preventDefault();
+			if (psSaveMain && !psSaveMain.classList.contains("hidden")) {
+				psSaveMain.click();
+			} else {
+				const text = String(textarea && textarea.value ? textarea.value : "").trim();
+				if (text) {
+					(async () => {
+						try {
+							await savePersonalSpaceNote(text, { auto: false });
+							toast(t("toast.shortcut_saved"), "success");
+						} catch { /* ignore */ }
+					})();
+				}
+			}
+			return;
+		}
+
+		// Cmd/Ctrl+, → Einstellungen
+		if (mod && !alt && !shift && key === ",") {
+			ev.preventDefault();
+			if (settingsOpen) {
+				setSettingsOpen(false);
+			} else {
+				setSettingsOpen(true);
+			}
+			return;
+		}
+
+		// Alt+P → Preview toggle
+		if (alt && !mod && !shift && key === "p" && !isInput) {
+			ev.preventDefault();
+			setPreviewVisible(!previewOpen);
+			return;
+		}
+
+		// Cmd/Ctrl+K → Raum-Eingabe fokussieren
+		if (mod && !alt && !shift && key === "k") {
+			ev.preventDefault();
+			if (roomInput) {
+				roomInput.focus();
+				roomInput.select();
+			}
+			return;
+		}
+
+		// Alt+C → Editor-Inhalt kopieren
+		if (alt && !mod && !shift && key === "c" && !isInput) {
+			ev.preventDefault();
+			if (copyMirrorBtn) copyMirrorBtn.click();
+			return;
+		}
+
+		// Alt+U → Upload-Dialog
+		if (alt && !mod && !shift && key === "u" && !isInput) {
+			ev.preventDefault();
+			if (openUploadModalBtn) openUploadModalBtn.click();
+			return;
+		}
+	});
+
+	// Render shortcuts list when settings section is shown
+	const _origSetActiveSettingsSection = setActiveSettingsSection;
+	setActiveSettingsSection = function (next) {
+		_origSetActiveSettingsSection(next);
+		if (String(next || "") === "shortcuts") {
+			renderShortcutsList();
+		}
+	};
 
 	// Show a small post-verify hint
 	try {
