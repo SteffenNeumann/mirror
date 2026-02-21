@@ -18883,10 +18883,14 @@ self.onmessage = async (e) => {
 				const dayEnd = addDays(day, 1);
 				const isToday =
 					startOfDay(day).getTime() === startOfDay(new Date()).getTime();
-				const dayBorder = isToday ? "border-fuchsia-400/40" : "border-white/10";
 				const dayAvail = isDayAvailable(day);
-				const availClass = dayAvail ? "calendar-day-available" : "calendar-day-unavailable";
 				const dk = dayKeyFromDate(day);
+				const isFocused = dk === calendarFocusedDayKey;
+				const dayBorder = isFocused
+					? ""
+					: isToday ? "border-fuchsia-400/40" : "border-white/10";
+				const focusedClass = isFocused ? " calendar-day-focused" : "";
+				const availClass = dayAvail ? "calendar-day-available" : "calendar-day-unavailable";
 				const dayEvents = events.filter(
 					(evt) => evt.start < dayEnd && evt.end > day
 				);
@@ -18916,7 +18920,7 @@ self.onmessage = async (e) => {
 						.join("")
 					: '<div class="text-[11px] text-slate-500">Keine Termine</div>';
 				return `
-					<div class="rounded-lg border ${dayBorder} ${availClass} bg-slate-950/40 p-2 cursor-pointer select-none transition-colors" data-calendar-day="${dk}">
+					<div class="rounded-lg border ${dayBorder} ${availClass} bg-slate-950/40 p-2 cursor-pointer select-none transition-colors${focusedClass}" data-calendar-day="${dk}">
 						<div class="flex items-center justify-between">
 							<span class="text-[11px] text-slate-400">${formatDayLabel(day)}</span>
 							<span class="calendar-day-indicator text-[9px]">${dayAvail ? "✓" : "✕"}</span>
@@ -24963,7 +24967,7 @@ self.onmessage = async (e) => {
 		calendarFreeSlots.addEventListener("click", (ev) => {
 			const target = ev.target;
 			if (!(target instanceof HTMLElement)) return;
-			// Week-view row click → navigate to day view
+			// Week-view row click → navigate to week view and highlight the day
 			const navRow = target.closest("[data-slot-nav]");
 			if (navRow) {
 				const dk = navRow.getAttribute("data-slot-nav") || "";
@@ -24972,9 +24976,23 @@ self.onmessage = async (e) => {
 					const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
 					if (!isNaN(d.getTime())) {
 						calendarState.cursor = d;
-						calendarState.view = "day";
+						calendarState.view = "week";
 						updateCalendarViewButtons();
+						calendarFocusedDayKey = dk;
+						if (calendarFocusedDayTimer) window.clearTimeout(calendarFocusedDayTimer);
+						calendarFocusedDayTimer = window.setTimeout(() => {
+							calendarFocusedDayKey = "";
+							calendarFocusedDayTimer = 0;
+							if (calendarGrid) {
+								const el = calendarGrid.querySelector(".calendar-day-focused");
+								if (el) el.classList.remove("calendar-day-focused");
+							}
+						}, 3000);
 						renderCalendarPanel();
+						if (calendarGrid) {
+							const cell = calendarGrid.querySelector(`[data-calendar-day="${dk}"]`);
+							if (cell) cell.scrollIntoView({ behavior: "smooth", block: "center" });
+						}
 					}
 				}
 				return;
@@ -25009,9 +25027,23 @@ self.onmessage = async (e) => {
 					const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
 					if (!isNaN(d.getTime())) {
 						calendarState.cursor = d;
-						calendarState.view = "day";
+						calendarState.view = "week";
 						updateCalendarViewButtons();
+						calendarFocusedDayKey = dk;
+						if (calendarFocusedDayTimer) window.clearTimeout(calendarFocusedDayTimer);
+						calendarFocusedDayTimer = window.setTimeout(() => {
+							calendarFocusedDayKey = "";
+							calendarFocusedDayTimer = 0;
+							if (calendarGrid) {
+								const el = calendarGrid.querySelector(".calendar-day-focused");
+								if (el) el.classList.remove("calendar-day-focused");
+							}
+						}, 3000);
 						renderCalendarPanel();
+						if (calendarGrid) {
+							const cell = calendarGrid.querySelector(`[data-calendar-day="${dk}"]`);
+							if (cell) cell.scrollIntoView({ behavior: "smooth", block: "center" });
+						}
 					}
 				}
 			}

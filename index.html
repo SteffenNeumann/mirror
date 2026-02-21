@@ -1702,14 +1702,11 @@
 										</div>
 									</div>
 
-									<!-- ─── Divider ─── -->
-									<div class="cal-sidebar-divider"></div>
-
-									<!-- ═══ Section 2: Terminplanung / Free-Slot Booking ═══ -->
+									<!-- ═══ Section 2: Freie Zeiten (eigene) ═══ -->
 									<div class="cal-sidebar-section">
 										<div class="cal-sidebar-header">
-											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cal-sidebar-header-icon"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" /><path d="M12 6v6l4 2" /></svg>
-											<span data-i18n="calendar.sidebar.booking">Terminplanung</span>
+											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cal-sidebar-header-icon"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></svg>
+											<span data-i18n="calendar.free.title">Freie Zeiten</span>
 											<button
 												id="calendarFreeToggle"
 												type="button"
@@ -1717,8 +1714,27 @@
 												title="Freie Zeiten ein-/ausblenden"
 												aria-label="Freie Zeiten ein-/ausblenden"
 												aria-pressed="true">
-												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></svg>
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
 											</button>
+										</div>
+										<div
+											id="calendarFreeSlotsWrap"
+											class="mt-1.5">
+											<div class="cal-card-subtitle" data-i18n="calendar.free.hint">Deine verfügbaren Zeitfenster in der aktuellen Woche.</div>
+											<div
+												id="calendarFreeSlots"
+												class="mt-1.5"></div>
+										</div>
+									</div>
+
+									<!-- ─── Divider ─── -->
+									<div class="cal-sidebar-divider"></div>
+
+									<!-- ═══ Section 3: Gemeinsame Terminplanung ═══ -->
+									<div class="cal-sidebar-section">
+										<div class="cal-sidebar-header">
+											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cal-sidebar-header-icon"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-2v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" /></svg>
+											<span data-i18n="calendar.sidebar.booking">Gemeinsame Planung</span>
 										</div>
 
 										<!-- Room selector (prominent) -->
@@ -1731,17 +1747,6 @@
 												id="calendarRoomSelect"
 												class="cal-room-select">
 											</select>
-										</div>
-
-										<!-- Free Slots -->
-										<div
-											id="calendarFreeSlotsWrap"
-											class="cal-sidebar-card mt-2.5">
-											<div class="cal-card-head" style="white-space:nowrap" data-i18n="calendar.free.title">Freie Zeiten</div>
-											<div class="cal-card-subtitle" data-i18n="calendar.free.hint">Deine freien Zeitfenster – klicke auf einen Tag, um Details zu sehen.</div>
-											<div
-												id="calendarFreeSlots"
-												class="mt-1.5"></div>
 										</div>
 
 										<!-- My Selections -->
