@@ -5853,8 +5853,6 @@
 				"shortcuts.copy_desc": "Kopiert den gesamten Editor-Inhalt in die Zwischenablage.",
 				"shortcuts.upload": "Upload-Dialog öffnen",
 				"shortcuts.upload_desc": "Öffnet den Dialog zum Hochladen von Dateien.",
-				"shortcuts.block_arrange": "Blöcke anordnen",
-				"shortcuts.block_arrange_desc": "Öffnet/schließt den Block-Arrange-Modus.",
 				"toast.shortcut_new_note": "Neue Notiz erstellt.",
 				"toast.shortcut_saved": "Notiz gespeichert.",
 				"toast.shortcut_copied": "Inhalt kopiert.",
@@ -6320,8 +6318,6 @@
 				"shortcuts.copy_desc": "Copies the entire editor content to clipboard.",
 				"shortcuts.upload": "Open Upload Dialog",
 				"shortcuts.upload_desc": "Opens the file upload dialog.",
-				"shortcuts.block_arrange": "Arrange Blocks",
-				"shortcuts.block_arrange_desc": "Opens/closes the block arrange mode.",
 				"toast.shortcut_new_note": "New note created.",
 				"toast.shortcut_saved": "Note saved.",
 				"toast.shortcut_copied": "Content copied.",
@@ -24239,7 +24235,6 @@ self.onmessage = async (e) => {
 		{ id: "focusRoom",    keys: "Cmd/Ctrl+K",         i18nLabel: "shortcuts.focus_room",    i18nDesc: "shortcuts.focus_room_desc" },
 		{ id: "copy",         keys: "Alt+C",              i18nLabel: "shortcuts.copy",           i18nDesc: "shortcuts.copy_desc" },
 		{ id: "upload",       keys: "Alt+U",              i18nLabel: "shortcuts.upload",         i18nDesc: "shortcuts.upload_desc" },
-		{ id: "blockArrange", keys: "Cmd/Ctrl+Shift+A",   i18nLabel: "shortcuts.block_arrange", i18nDesc: "shortcuts.block_arrange_desc" },
 	];
 
 	const isMac = /mac|iphone|ipad|ipod/i.test(navigator.platform || navigator.userAgent || "");
@@ -24280,6 +24275,7 @@ self.onmessage = async (e) => {
 	window.addEventListener("keydown", (ev) => {
 		if (!ev) return;
 		const key = (ev.key || "").toLowerCase();
+		const code = (ev.code || "");
 		const mod = ev.metaKey || ev.ctrlKey;
 		const alt = ev.altKey;
 		const shift = ev.shiftKey;
@@ -24289,9 +24285,10 @@ self.onmessage = async (e) => {
 		// Skip shortcuts when modal dialogs are open (except settings itself)
 		if (modalRoot && !modalRoot.classList.contains("hidden")) return;
 
-		// Alt+N → Neue Notiz
-		if (alt && !mod && !shift && key === "n") {
+		// Alt+N → Neue Notiz (use ev.code because Alt produces special chars on macOS)
+		if (alt && !mod && !shift && code === "KeyN") {
 			ev.preventDefault();
+			ev.stopPropagation();
 			if (psNewNote) psNewNote.click();
 			return;
 		}
@@ -24316,7 +24313,7 @@ self.onmessage = async (e) => {
 		}
 
 		// Cmd/Ctrl+, → Einstellungen
-		if (mod && !alt && !shift && key === ",") {
+		if (mod && !alt && !shift && (key === "," || code === "Comma")) {
 			ev.preventDefault();
 			if (settingsOpen) {
 				setSettingsOpen(false);
@@ -24326,9 +24323,10 @@ self.onmessage = async (e) => {
 			return;
 		}
 
-		// Alt+P → Preview toggle
-		if (alt && !mod && !shift && key === "p" && !isInput) {
+		// Alt+P → Preview toggle (use ev.code for macOS compatibility)
+		if (alt && !mod && !shift && code === "KeyP" && !isInput) {
 			ev.preventDefault();
+			ev.stopPropagation();
 			setPreviewVisible(!previewOpen);
 			return;
 		}
@@ -24343,16 +24341,18 @@ self.onmessage = async (e) => {
 			return;
 		}
 
-		// Alt+C → Editor-Inhalt kopieren
-		if (alt && !mod && !shift && key === "c" && !isInput) {
+		// Alt+C → Editor-Inhalt kopieren (use ev.code for macOS compatibility)
+		if (alt && !mod && !shift && code === "KeyC" && !isInput) {
 			ev.preventDefault();
+			ev.stopPropagation();
 			if (copyMirrorBtn) copyMirrorBtn.click();
 			return;
 		}
 
-		// Alt+U → Upload-Dialog
-		if (alt && !mod && !shift && key === "u" && !isInput) {
+		// Alt+U → Upload-Dialog (use ev.code for macOS compatibility)
+		if (alt && !mod && !shift && code === "KeyU" && !isInput) {
 			ev.preventDefault();
+			ev.stopPropagation();
 			if (openUploadModalBtn) openUploadModalBtn.click();
 			return;
 		}
