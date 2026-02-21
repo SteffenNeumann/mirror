@@ -6421,6 +6421,7 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 /* ── Calendar Sidebar Sections ── */
 .calendar-sidebar {
 	min-height: 0;
+	overflow-x: hidden;
 }
 .cal-sidebar-section {
 	padding: 0;
