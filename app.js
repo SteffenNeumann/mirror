@@ -1599,7 +1599,9 @@
 							? String(data.message)
 							: `HTTP ${res.status}`
 						: `HTTP ${res.status}`;
-					throw new Error(msg);
+					const err = new Error(msg);
+					err.status = res.status;
+					throw err;
 				}
 				return data;
 			} catch (err) {
@@ -14760,7 +14762,7 @@ self.onmessage = async (e) => {
 	let calendarFreeSlotsVisible = true;
 	let commonFreeSlotsSharing = false;
 	const COMMON_FREE_SLOTS_KEY = "mirror_calendar_common_sharing_v1";
-	const MANUAL_FREE_SLOTS_KEY = "mirror_calendar_manual_free_v1";
+	const MANUAL_FREE_SLOTS_KEY = "mirror_calendar_manual_free_v2";
 	/** Map<clientId, { name, color, busy: Array<{start:number, end:number}> }> */
 	const availabilityByClient = new Map();
 	/** Map<dayKey(YYYY-MM-DD), Set<slotKey(startMs_endMs)>> – manually selected free slots */
@@ -16974,12 +16976,16 @@ self.onmessage = async (e) => {
 	async function fetchGoogleCalendarList() {
 		if (!psState || !psState.authed) return;
 		try {
-			const res = await api("/api/calendar/google/calendars");
+			const res = await api("/api/calendar/google/calendars", {}, 0);
 			googleCalendarList = Array.isArray(res && res.calendars)
 				? res.calendars
 				: [];
 			renderCalendarGoogleSelect();
-		} catch {
+		} catch (err) {
+			if (err && err.status === 403) {
+				googleCalendarConnected = false;
+				setGoogleCalendarUi(false);
+			}
 			googleCalendarList = [];
 			renderCalendarGoogleSelect();
 		}
@@ -17623,7 +17629,9 @@ self.onmessage = async (e) => {
 			const res = await api(
 				`/api/calendar/google/events?start=${encodeURIComponent(
 					startIso
-				)}&end=${encodeURIComponent(endIso)}`
+				)}&end=${encodeURIComponent(endIso)}`,
+				{},
+				0
 			);
 			const items = Array.isArray(res && res.events) ? res.events : [];
 			return items
@@ -17645,7 +17653,11 @@ self.onmessage = async (e) => {
 					};
 				})
 				.filter(Boolean);
-		} catch {
+		} catch (err) {
+			if (err && err.status === 403) {
+				googleCalendarConnected = false;
+				setGoogleCalendarUi(false);
+			}
 			return [];
 		}
 	}
@@ -18012,42 +18024,44 @@ self.onmessage = async (e) => {
 		saveManualFreeSlots();
 	}
 
-	/** Marker key: when present in a day's Set, the entire day is marked unavailable */
-	const FULL_DAY_UNAVAILABLE_KEY = "__day_unavailable__";
+	/** Marker key: when present in a day's Set, the entire day is explicitly marked available (opt-in) */
+	const FULL_DAY_AVAILABLE_KEY = "__day_available__";
 
 	function isDayAvailable(day) {
 		const dk = dayKeyFromDate(day);
 		const set = manualFreeSlots.get(dk);
-		if (!set) return true; // default: available
-		if (set.has(FULL_DAY_UNAVAILABLE_KEY)) return false;
-		return true;
+		if (!set) return false; // default: not selected (opt-in)
+		if (set.has(FULL_DAY_AVAILABLE_KEY)) return true;
+		return false;
 	}
 
 	function toggleDayAvailability(day) {
 		const dk = dayKeyFromDate(day);
 		let set = manualFreeSlots.get(dk);
 		if (!set) {
-			// Day was available (default) → mark unavailable
-			set = new Set([FULL_DAY_UNAVAILABLE_KEY]);
+			// Day was not selected → mark available
+			set = new Set([FULL_DAY_AVAILABLE_KEY]);
 			manualFreeSlots.set(dk, set);
-		} else if (set.has(FULL_DAY_UNAVAILABLE_KEY)) {
-			// Day was unavailable → remove marker (make available again)
-			set.delete(FULL_DAY_UNAVAILABLE_KEY);
+		} else if (set.has(FULL_DAY_AVAILABLE_KEY)) {
+			// Day was available → remove marker (deselect)
+			set.delete(FULL_DAY_AVAILABLE_KEY);
 			if (set.size === 0) manualFreeSlots.delete(dk);
 		} else {
-			// Day has individual slot selections but no unavailable marker → mark unavailable
-			set.add(FULL_DAY_UNAVAILABLE_KEY);
+			// Day has individual slot selections but no available marker → mark available
+			set.add(FULL_DAY_AVAILABLE_KEY);
 		}
 		saveManualFreeSlots();
 	}
 
 	function getSelectedFreeSlotsForDay(day, events) {
-		// If entire day is marked unavailable, return empty
+		// If day is not explicitly selected, return empty
 		if (!isDayAvailable(day)) return [];
 		const slots = computeFreeSlotsForDay(day, events);
 		const dk = dayKeyFromDate(day);
 		const set = manualFreeSlots.get(dk);
-		if (!set) return slots; // all selected by default
+		if (!set) return []; // no explicit selection
+		// If day is available (full day marker) but no individual slot keys → return all slots
+		if (set.size === 1 && set.has(FULL_DAY_AVAILABLE_KEY)) return slots;
 		return slots.filter(([s, e]) => set.has(slotKey(s.getTime(), e.getTime())));
 	}
 
