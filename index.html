@@ -1694,101 +1694,134 @@
 									class="h-full min-h-0 overflow-auto rounded-xl border border-white/10 bg-slate-950/30 p-3"></div>
 								<div
 									id="calendarSidebar"
-									class="rounded-xl border border-white/10 bg-slate-950/30 p-3">
-									<div class="flex items-center justify-between gap-2">
-										<div class="text-xs text-slate-400">Kalender</div>
-									</div>
-									<div id="calendarLegend" class="mt-2 space-y-2"></div>
-									<div id="calendarStatus" class="mt-3 text-[11px] text-slate-500"></div>
-									<div
-										id="calendarFreeSlotsWrap"
-										class="mt-3 rounded-lg border border-white/10 bg-slate-950/40 p-2">
-										<div class="flex items-center justify-between gap-2">
-											<div class="text-[11px] font-semibold text-slate-300" data-i18n="calendar.free.title">
-												Freie Zeiten
-											</div>
-											<div class="text-[9px] text-slate-500" data-i18n="calendar.free.hint">
-												Klicke um auszuwählen
-											</div>
+									class="calendar-sidebar rounded-xl border border-white/10 bg-slate-950/30 p-3 flex flex-col gap-0 overflow-y-auto">
+
+									<!-- ═══ Section 1: Meine Kalender ═══ -->
+									<div class="cal-sidebar-section">
+										<div class="cal-sidebar-header">
+											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cal-sidebar-header-icon"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4" /><path d="M8 2v4" /><path d="M3 10h18" /></svg>
+											<span data-i18n="calendar.sidebar.calendars">Kalender</span>
 										</div>
-										<div
-											id="calendarFreeSlots"
-											class="mt-2 space-y-1 text-[11px] text-slate-300"></div>
-									</div>
-									<div
-										id="calendarMySelectionsWrap"
-										class="mt-3 rounded-lg border border-white/10 bg-slate-950/40 p-2">
-										<div class="flex items-center justify-between gap-2">
-											<div class="text-[11px] font-semibold text-slate-300" data-i18n="calendar.my_selections.title">
-												Meine Auswahl
-											</div>
-											<span class="text-[9px] text-slate-500" id="calendarMySelectionsCount"></span>
-										</div>
-										<div class="mt-1.5">
-											<select
-												id="calendarRoomSelect"
-												class="w-full rounded-md border border-white/10 bg-slate-950/60 px-2 py-1 text-[11px] text-slate-200 outline-none transition focus:border-white/20">
-											</select>
-										</div>
-										<div
-											id="calendarMySelections"
-											class="mt-2 space-y-1 text-[11px] text-slate-300 max-h-48 overflow-y-auto"></div>
-									</div>
-									<div
-										id="calendarCommonFreeSlotsWrap"
-										class="mt-3 hidden rounded-lg border border-white/10 bg-slate-950/40 p-2">
-										<div class="flex items-center justify-between gap-2">
-											<div class="text-[11px] font-semibold text-slate-300" data-i18n="calendar.common.title">
-												Gemeinsame freie Zeiten
-											</div>
+										<div id="calendarLegend" class="mt-2 space-y-1.5"></div>
+										<div id="calendarStatus" class="mt-2 text-[11px] text-slate-500"></div>
+										<div class="mt-2.5 flex gap-2">
 											<button
-												id="calendarCommonFreeToggle"
+												id="calendarAddEvent"
 												type="button"
-												class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-400 transition hover:bg-white/5 active:bg-white/10"
-												title="Verfügbarkeit teilen"
-												aria-label="Verfügbarkeit teilen"
-												aria-pressed="false"
-												data-i18n-title="calendar.common.toggle"
-												data-i18n-aria="calendar.common.toggle">
-												<svg
-													viewBox="0 0 24 24"
-													fill="none"
-													stroke="currentColor"
-													stroke-width="2"
-													stroke-linecap="round"
-													stroke-linejoin="round"
-													class="h-3.5 w-3.5">
-													<path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v2" />
-													<circle cx="9" cy="7" r="4" />
-													<path d="M22 21v-2a4 4 0 00-3-3.87" />
-													<path d="M16 3.13a4 4 0 010 7.75" />
-												</svg>
+												class="flex-1 rounded-lg border border-white/10 bg-white/10 px-3 py-1.5 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">
+												Neuen Termin
+											</button>
+											<button
+												id="calendarRefresh"
+												type="button"
+												class="rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-slate-300 transition hover:bg-white/10 active:bg-white/15"
+												title="Aktualisieren">
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M21 2v6h-6" /><path d="M3 12a9 9 0 0115-6.7L21 8" /><path d="M3 22v-6h6" /><path d="M21 12a9 9 0 01-15 6.7L3 16" /></svg>
 											</button>
 										</div>
-										<div
-											id="calendarCommonFreeParticipants"
-											class="mt-1.5 flex flex-wrap gap-1"></div>
-										<div
-											id="calendarCommonFreeSlots"
-											class="mt-2 space-y-1 text-[11px] text-slate-300"></div>
 									</div>
-									<div class="mt-3 flex flex-col gap-2">
-										<button
-											id="calendarAddEvent"
-											type="button"
-											class="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">
-											Neuen Termin
-										</button>
-										<button
-											id="calendarRefresh"
-											type="button"
-											class="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">
-											Aktualisieren
-										</button>
+
+									<!-- ─── Divider ─── -->
+									<div class="cal-sidebar-divider"></div>
+
+									<!-- ═══ Section 2: Terminplanung / Free-Slot Booking ═══ -->
+									<div class="cal-sidebar-section">
+										<div class="cal-sidebar-header">
+											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cal-sidebar-header-icon"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" /><path d="M12 6v6l4 2" /></svg>
+											<span data-i18n="calendar.sidebar.booking">Terminplanung</span>
+										</div>
+
+										<!-- Room selector (prominent) -->
+										<div id="calendarRoomWrap" class="cal-room-selector mt-2">
+											<label class="cal-room-label" for="calendarRoomSelect">
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 shrink-0 text-fuchsia-400"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
+												<span class="text-[10px] font-medium uppercase tracking-wider text-slate-400" data-i18n="calendar.sidebar.room">Raum</span>
+											</label>
+											<select
+												id="calendarRoomSelect"
+												class="cal-room-select">
+											</select>
+										</div>
+
+										<!-- Free Slots -->
+										<div
+											id="calendarFreeSlotsWrap"
+											class="mt-2.5 rounded-lg border border-white/10 bg-slate-950/40 p-2">
+											<div class="flex items-center justify-between gap-2">
+												<div class="text-[11px] font-semibold text-slate-300" data-i18n="calendar.free.title">
+													Freie Zeiten
+												</div>
+												<div class="text-[9px] text-slate-500" data-i18n="calendar.free.hint">
+													Klicke um auszuwählen
+												</div>
+											</div>
+											<div
+												id="calendarFreeSlots"
+												class="mt-2 space-y-1 text-[11px] text-slate-300"></div>
+										</div>
+
+										<!-- My Selections -->
+										<div
+											id="calendarMySelectionsWrap"
+											class="mt-2.5 rounded-lg border border-white/10 bg-slate-950/40 p-2">
+											<div class="flex items-center justify-between gap-2">
+												<div class="text-[11px] font-semibold text-slate-300" data-i18n="calendar.my_selections.title">
+													Meine Auswahl
+												</div>
+												<span class="text-[9px] text-slate-500" id="calendarMySelectionsCount"></span>
+											</div>
+											<div
+												id="calendarMySelections"
+												class="mt-2 space-y-1 text-[11px] text-slate-300 max-h-48 overflow-y-auto"></div>
+										</div>
+
+										<!-- Common Free Slots -->
+										<div
+											id="calendarCommonFreeSlotsWrap"
+											class="mt-2.5 hidden rounded-lg border border-white/10 bg-slate-950/40 p-2">
+											<div class="flex items-center justify-between gap-2">
+												<div class="text-[11px] font-semibold text-slate-300" data-i18n="calendar.common.title">
+													Gemeinsame freie Zeiten
+												</div>
+												<button
+													id="calendarCommonFreeToggle"
+													type="button"
+													class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-400 transition hover:bg-white/5 active:bg-white/10"
+													title="Verfügbarkeit teilen"
+													aria-label="Verfügbarkeit teilen"
+													aria-pressed="false"
+													data-i18n-title="calendar.common.toggle"
+													data-i18n-aria="calendar.common.toggle">
+													<svg
+														viewBox="0 0 24 24"
+														fill="none"
+														stroke="currentColor"
+														stroke-width="2"
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														class="h-3.5 w-3.5">
+														<path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v2" />
+														<circle cx="9" cy="7" r="4" />
+														<path d="M22 21v-2a4 4 0 00-3-3.87" />
+														<path d="M16 3.13a4 4 0 010 7.75" />
+													</svg>
+												</button>
+											</div>
+											<div
+												id="calendarCommonFreeParticipants"
+												class="mt-1.5 flex flex-wrap gap-1"></div>
+											<div
+												id="calendarCommonFreeSlots"
+												class="mt-2 space-y-1 text-[11px] text-slate-300"></div>
+										</div>
+									</div>
+
+									<!-- ─── Footer: Settings ─── -->
+									<div class="mt-auto pt-2">
 										<button
 											id="calendarOpenSettings"
 											type="button"
-											class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10">
+											class="w-full rounded-lg border border-white/5 bg-transparent px-3 py-1.5 text-[11px] text-slate-400 transition hover:bg-white/5 hover:text-slate-200 active:bg-white/10">
 											Einstellungen öffnen
 										</button>
 									</div>
