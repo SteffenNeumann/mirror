@@ -271,6 +271,8 @@ let stmtGoogleTokenDelete;
 let stmtOutlookTokenGet;
 let stmtOutlookTokenUpsert;
 let stmtOutlookTokenDelete;
+let stmtRoomSlotsGet;
+let stmtRoomSlotsUpsert;
 
 // In-memory rate limit: ip -> { count, resetAt }
 const aiRate = new Map();
@@ -455,6 +457,15 @@ function initDb() {
 			exp INTEGER NOT NULL
 		);
 		CREATE INDEX IF NOT EXISTS idx_login_tokens_exp ON login_tokens(exp);
+		CREATE TABLE IF NOT EXISTS user_room_slots (
+			user_id INTEGER NOT NULL,
+			room_key TEXT NOT NULL,
+			slots_json TEXT NOT NULL DEFAULT '{}',
+			sharing INTEGER NOT NULL DEFAULT 0,
+			updated_at INTEGER NOT NULL,
+			PRIMARY KEY(user_id, room_key),
+			FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+		);
 	`);
 
 	const noteCols = db.prepare("PRAGMA table_info(notes)").all();
@@ -757,6 +768,12 @@ function initDb() {
 	);
 	stmtSavedQueryDelete = db.prepare(
 		"DELETE FROM saved_queries WHERE id = ? AND user_id = ?"
+	);
+	stmtRoomSlotsGet = db.prepare(
+		"SELECT slots_json, sharing, updated_at FROM user_room_slots WHERE user_id = ? AND room_key = ?"
+	);
+	stmtRoomSlotsUpsert = db.prepare(
+		"INSERT INTO user_room_slots(user_id, room_key, slots_json, sharing, updated_at) VALUES(?, ?, ?, ?, ?) ON CONFLICT(user_id, room_key) DO UPDATE SET slots_json = excluded.slots_json, sharing = excluded.sharing, updated_at = excluded.updated_at"
 	);
 	stmtTrashInsert = db.prepare(
 		"INSERT INTO notes_trash(id, user_id, text, kind, content_hash, tags_json, created_at, updated_at, deleted_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, id) DO UPDATE SET text = excluded.text, kind = excluded.kind, content_hash = excluded.content_hash, tags_json = excluded.tags_json, created_at = excluded.created_at, updated_at = excluded.updated_at, deleted_at = excluded.deleted_at"
@@ -3535,6 +3552,67 @@ const server = http.createServer(async (req, res) => {
 	}
 
 	/* ── Saved Queries API ── */
+
+	/* ── Room Slots API ── */
+
+	if (url.pathname === "/api/room-slots" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) { json(res, 401, { ok: false, error: "unauthorized" }); return; }
+		const rp = url.searchParams.get("room") || "";
+		const kp = url.searchParams.get("key") || "";
+		const rk = `${rp}:${kp}`;
+		const userId = getOrCreateUserId(email);
+		const row = stmtRoomSlotsGet.get(userId, rk);
+		if (!row) {
+			json(res, 200, { ok: true, slots: {}, sharing: false });
+			return;
+		}
+		let slots = {};
+		try { slots = JSON.parse(row.slots_json); } catch { /* ignore */ }
+		json(res, 200, { ok: true, slots, sharing: row.sharing === 1 });
+		return;
+	}
+
+	if (url.pathname === "/api/room-slots" && req.method === "POST") {
+		const email = getAuthedEmail(req);
+		if (!email) { json(res, 401, { ok: false, error: "unauthorized" }); return; }
+		readJson(req)
+			.then((body) => {
+				const rp = String(body && body.room || "").trim().slice(0, 40);
+				const kp = String(body && body.key || "").trim().slice(0, 64);
+				const rk = `${rp}:${kp}`;
+				const userId = getOrCreateUserId(email);
+				const rawSlots = body && typeof body.slots === "object" ? body.slots : null;
+				const sharing = body && typeof body.sharing === "boolean" ? body.sharing : null;
+				// Merge: load existing, apply deltas
+				const existingRow = stmtRoomSlotsGet.get(userId, rk);
+				let existingSlots = {};
+				let existingSharing = 0;
+				if (existingRow) {
+					try { existingSlots = JSON.parse(existingRow.slots_json); } catch { /* ignore */ }
+					existingSharing = existingRow.sharing;
+				}
+				const nextSlots = rawSlots !== null ? rawSlots : existingSlots;
+				const nextSharing = sharing !== null ? (sharing ? 1 : 0) : existingSharing;
+				// Validate slots size (max 500KB)
+				const slotsJson = JSON.stringify(nextSlots);
+				if (slotsJson.length > 512000) {
+					json(res, 413, { ok: false, error: "slots_too_large" });
+					return;
+				}
+				const now = Date.now();
+				stmtRoomSlotsUpsert.run(userId, rk, slotsJson, nextSharing, now);
+				json(res, 200, { ok: true, slots: nextSlots, sharing: nextSharing === 1, updatedAt: now });
+			})
+			.catch((e) => {
+				if (String(e && e.message) === "body_too_large") {
+					json(res, 413, { ok: false, error: "body_too_large" });
+					return;
+				}
+				json(res, 400, { ok: false, error: "invalid_json" });
+			});
+		return;
+	}
 
 	if (url.pathname === "/api/saved-queries" && req.method === "GET") {
 		const email = getAuthedEmail(req);
