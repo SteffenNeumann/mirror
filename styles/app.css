@@ -23,6 +23,12 @@
 		inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 	--selection-menu-bg: rgba(2, 6, 23, 0.85);
 	--selection-menu-border: rgba(255, 255, 255, 0.1);
+	--dropdown-accent: var(--accent-strong);
+	--dropdown-accent-bg: rgba(255, 255, 255, 0.05);
+	--dropdown-text: rgba(203, 213, 225, 0.9);
+	--dropdown-text-hover: rgba(241, 245, 249, 0.95);
+	--dropdown-hover-bg: rgba(255, 255, 255, 0.07);
+	--dropdown-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
 	--scrollbar-thumb: rgba(103, 232, 249, 0.1);
 	--scrollbar-thumb-hover: rgba(103, 232, 249, 0.1);
 	--scrollbar-border: rgba(2, 6, 23, 0.1);
@@ -2833,6 +2839,12 @@ body[data-theme="coffeeLight"] {
 	--calendar-tooltip-shadow: none;
 	--selection-menu-bg: #fffaf4;
 	--selection-menu-border: #d9c7bc;
+	--dropdown-accent: #b07049;
+	--dropdown-accent-bg: rgba(176, 112, 73, 0.08);
+	--dropdown-text: #3b2a21;
+	--dropdown-text-hover: #3b2a21;
+	--dropdown-hover-bg: rgba(176, 112, 73, 0.08);
+	--dropdown-shadow: 0 4px 12px rgba(59, 42, 33, 0.1);
 }
 
 body[data-theme="coffeeLight"] .bg-glow {
@@ -3283,32 +3295,6 @@ body[data-theme="coffeeLight"] #calendarSearchInput {
 	border-color: transparent;
 }
 
-/* Coffee Light: room/bundesland dropdown — warm brown accent instead of fuchsia */
-body[data-theme="coffeeLight"] #calendarRoomSelect,
-body[data-theme="coffeeLight"] #calendarBundeslandSelect {
-	color: #b07049 !important;
-}
-body[data-theme="coffeeLight"] .cal-room-selector::after {
-	background-color: #b07049;
-}
-body[data-theme="coffeeLight"] .cal-room-select__menu {
-	background: #fffaf4;
-	border-color: #d9c7bc;
-	box-shadow: 0 4px 12px rgba(59, 42, 33, 0.1);
-}
-body[data-theme="coffeeLight"] .cal-room-select__item {
-	color: #3b2a21;
-}
-body[data-theme="coffeeLight"] .cal-room-select__item:hover,
-body[data-theme="coffeeLight"] .cal-room-select__item:focus {
-	background-color: rgba(176, 112, 73, 0.08);
-	color: #3b2a21;
-}
-body[data-theme="coffeeLight"] .cal-room-select__item[aria-selected="true"] {
-	color: #b07049;
-	background-color: rgba(176, 112, 73, 0.08);
-}
-
 /* Light theme checkbox: white checkmark */
 body[data-theme="coffeeLight"] input[type="checkbox"]:checked,
 body[data-theme="bitterLight"] input[type="checkbox"]:checked,
@@ -3398,6 +3384,12 @@ body[data-theme="coffeeDark"] {
 	--scrollbar-thumb: rgba(201, 155, 119, 0.2);
 	--scrollbar-thumb-hover: rgba(201, 155, 119, 0.3);
 	--scrollbar-border: rgba(16, 12, 10, 0.6);
+	--dropdown-accent: var(--coffee-accent);
+	--dropdown-accent-bg: rgba(201, 155, 119, 0.1);
+	--dropdown-text: #e8d9cc;
+	--dropdown-text-hover: #f5ece3;
+	--dropdown-hover-bg: rgba(201, 155, 119, 0.1);
+	--dropdown-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 body[data-theme="coffeeDark"] .bg-glow {
@@ -3718,6 +3710,12 @@ body[data-theme="bitterLight"] {
 	--calendar-tooltip-shadow: none;
 	--selection-menu-bg: #f7f6f4;
 	--selection-menu-border: #d8d2cb;
+	--dropdown-accent: #c42000;
+	--dropdown-accent-bg: rgba(196, 32, 0, 0.06);
+	--dropdown-text: #0d0c10;
+	--dropdown-text-hover: #0d0c10;
+	--dropdown-hover-bg: rgba(0, 0, 0, 0.04);
+	--dropdown-shadow: 0 4px 12px rgba(13, 12, 16, 0.08);
 }
 
 body[data-theme="bitterLight"] .bg-glow {
@@ -4174,32 +4172,6 @@ body[data-theme="bitterLight"] #calendarSearchInput {
 	border-color: transparent;
 }
 
-/* Bitter Light: room/bundesland dropdown — bitter accent instead of fuchsia */
-body[data-theme="bitterLight"] #calendarRoomSelect,
-body[data-theme="bitterLight"] #calendarBundeslandSelect {
-	color: #c42000 !important;
-}
-body[data-theme="bitterLight"] .cal-room-selector::after {
-	background-color: #c42000;
-}
-body[data-theme="bitterLight"] .cal-room-select__menu {
-	background: #f7f6f4;
-	border-color: #d8d2cb;
-	box-shadow: 0 4px 12px rgba(13, 12, 16, 0.08);
-}
-body[data-theme="bitterLight"] .cal-room-select__item {
-	color: #0d0c10;
-}
-body[data-theme="bitterLight"] .cal-room-select__item:hover,
-body[data-theme="bitterLight"] .cal-room-select__item:focus {
-	background-color: rgba(0, 0, 0, 0.04);
-	color: #0d0c10;
-}
-body[data-theme="bitterLight"] .cal-room-select__item[aria-selected="true"] {
-	color: #c42000;
-	background-color: rgba(196, 32, 0, 0.06);
-}
-
 body[data-theme="bitterLight"] ::placeholder {
 	color: #5b5a64;
 }
@@ -4282,6 +4254,12 @@ body[data-theme="bitterDark"] {
 	--scrollbar-thumb: rgba(255, 210, 194, 0.25);
 	--scrollbar-thumb-hover: rgba(255, 210, 194, 0.35);
 	--scrollbar-border: rgba(13, 12, 16, 0.8);
+	--dropdown-accent: var(--bitter-accent);
+	--dropdown-accent-bg: rgba(255, 59, 31, 0.08);
+	--dropdown-text: #f0e8df;
+	--dropdown-text-hover: #faf5f0;
+	--dropdown-hover-bg: rgba(255, 59, 31, 0.08);
+	--dropdown-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 }
 
 body[data-theme="bitterDark"] .bg-glow {
@@ -4684,6 +4662,12 @@ body[data-theme="monoLight"] {
 	--calendar-tooltip-shadow: none;
 	--selection-menu-bg: #f6f8fa;
 	--selection-menu-border: #d0d7de;
+	--dropdown-accent: var(--mono-accent);
+	--dropdown-accent-bg: rgba(9, 105, 218, 0.06);
+	--dropdown-text: #24292f;
+	--dropdown-text-hover: #24292f;
+	--dropdown-hover-bg: rgba(0, 0, 0, 0.04);
+	--dropdown-shadow: 0 4px 12px rgba(27, 31, 36, 0.12);
 }
 
 body[data-theme="monoLight"] .bg-glow {
@@ -5220,32 +5204,6 @@ body[data-theme="monoLight"] #calendarSearchInput {
 	border-color: transparent;
 }
 
-/* Mono Light: room/bundesland dropdown — mono accent instead of fuchsia */
-body[data-theme="monoLight"] #calendarRoomSelect,
-body[data-theme="monoLight"] #calendarBundeslandSelect {
-	color: var(--mono-accent, #0969da) !important;
-}
-body[data-theme="monoLight"] .cal-room-selector::after {
-	background-color: var(--mono-accent, #0969da);
-}
-body[data-theme="monoLight"] .cal-room-select__menu {
-	background: #ffffff;
-	border-color: #d0d7de;
-	box-shadow: 0 4px 12px rgba(27, 31, 36, 0.12);
-}
-body[data-theme="monoLight"] .cal-room-select__item {
-	color: #24292f;
-}
-body[data-theme="monoLight"] .cal-room-select__item:hover,
-body[data-theme="monoLight"] .cal-room-select__item:focus {
-	background-color: rgba(0, 0, 0, 0.04);
-	color: #24292f;
-}
-body[data-theme="monoLight"] .cal-room-select__item[aria-selected="true"] {
-	color: var(--mono-accent, #0969da);
-	background-color: rgba(9, 105, 218, 0.06);
-}
-
 body[data-theme="monoLight"] ::placeholder {
 	color: #8c959f;
 }
@@ -5291,6 +5249,12 @@ body[data-theme="monoDark"] {
 	--scrollbar-thumb: rgba(148, 163, 184, 0.3);
 	--scrollbar-thumb-hover: rgba(148, 163, 184, 0.45);
 	--scrollbar-border: rgba(2, 6, 23, 0.35);
+	--dropdown-accent: var(--mono-accent);
+	--dropdown-accent-bg: rgba(0, 121, 212, 0.1);
+	--dropdown-text: #c9d1d9;
+	--dropdown-text-hover: #e6edf3;
+	--dropdown-hover-bg: rgba(0, 121, 212, 0.08);
+	--dropdown-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 body[data-theme="monoDark"] .bg-glow {
@@ -6572,7 +6536,7 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	cursor: pointer;
 	position: relative;
 	background: transparent;
-	color: var(--accent-strong, rgba(217, 70, 239, 0.6));
+	color: var(--dropdown-accent, var(--accent-strong));
 	user-select: none;
 }
 /* ── Custom dropdown: trigger label ── */
@@ -6597,7 +6561,7 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	overflow-y: auto;
 	background: var(--selection-menu-bg);
 	border: 1px solid var(--selection-menu-border);
-	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+	box-shadow: var(--dropdown-shadow, 0 8px 24px rgba(0, 0, 0, 0.35));
 	backdrop-filter: blur(12px);
 	-webkit-backdrop-filter: blur(12px);
 }
@@ -6610,7 +6574,7 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	font-size: 13px;
 	font-weight: 500;
 	cursor: pointer;
-	color: rgba(203, 213, 225, 0.9);
+	color: var(--dropdown-text, rgba(203, 213, 225, 0.9));
 	background: transparent;
 	transition: background 0.12s, color 0.12s;
 	white-space: nowrap;
@@ -6619,12 +6583,12 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 }
 .cal-room-select__item:hover,
 .cal-room-select__item:focus {
-	background-color: rgba(255, 255, 255, 0.07);
-	color: rgba(241, 245, 249, 0.95);
+	background-color: var(--dropdown-hover-bg, rgba(255, 255, 255, 0.07));
+	color: var(--dropdown-text-hover, rgba(241, 245, 249, 0.95));
 }
 .cal-room-select__item[aria-selected="true"] {
-	background-color: rgba(255, 255, 255, 0.05);
-	color: var(--accent-strong, rgba(217, 70, 239, 0.6));
+	background-color: var(--dropdown-accent-bg, rgba(255, 255, 255, 0.05));
+	color: var(--dropdown-accent, var(--accent-strong));
 }
 /* Override theme select styles — ID selector beats any class/attribute combo */
 #calendarRoomSelect,
@@ -6634,7 +6598,7 @@ body[data-theme] #calendarBundeslandSelect {
 	background: transparent !important;
 	background-color: transparent !important;
 	background-image: none !important;
-	color: var(--accent-strong, rgba(217, 70, 239, 0.6)) !important;
+	color: var(--dropdown-accent, var(--accent-strong)) !important;
 	border: none !important;
 	border-color: transparent !important;
 	box-shadow: none !important;
@@ -6649,7 +6613,7 @@ body[data-theme] #calendarBundeslandSelect {
 	pointer-events: none;
 	mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat center;
 	-webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat center;
-	background-color: var(--accent-strong, rgba(217, 70, 239, 0.6));
+	background-color: var(--dropdown-accent, var(--accent-strong));
 }
 .cal-room-select:focus {
 	outline: none;
