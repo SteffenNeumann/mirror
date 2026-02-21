@@ -6468,12 +6468,14 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 
 /* ── Calendar Day Focus (jump highlight) ── */
 .calendar-day-focused {
+	border-color: var(--accent-border-strong) !important;
+	box-shadow: 0 0 0 2px var(--accent-ring-strong);
 	animation: calFocusPulse 3s ease-out forwards;
 	position: relative;
 	z-index: 1;
 }
 @keyframes calFocusPulse {
-	0%   { box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.5); }
-	60%  { box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.3); }
-	100% { box-shadow: 0 0 0 0 rgba(217, 70, 239, 0); }
+	0%   { box-shadow: 0 0 0 3px var(--accent-ring-strong); }
+	60%  { box-shadow: 0 0 0 3px var(--accent-ring); }
+	100% { box-shadow: 0 0 0 0 transparent; }
 }

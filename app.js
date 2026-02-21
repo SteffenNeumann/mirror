@@ -18875,7 +18875,7 @@ self.onmessage = async (e) => {
 			const isCurrentMonth = day.getMonth() === cursor.getMonth();
 			const isFocused = dk === calendarFocusedDayKey;
 			const borderClass = isFocused
-				? "border-fuchsia-400 ring-2 ring-fuchsia-400/50"
+				? ""
 				: isToday
 					? "border-fuchsia-400/40"
 					: (dayAvail ? "border-emerald-500/30" : "border-white/10");
