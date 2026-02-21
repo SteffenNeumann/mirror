@@ -1575,25 +1575,6 @@
 								<div class="flex flex-wrap items-center justify-between gap-2">
 									<div class="flex items-center gap-2">
 										<h3 class="text-sm font-semibold text-slate-100">Kalender</h3>
-										<button
-											id="calendarFreeToggle"
-											type="button"
-											class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
-											title="Freie Zeiten"
-											aria-label="Freie Zeiten"
-											aria-pressed="true">
-											<svg
-												viewBox="0 0 24 24"
-												fill="none"
-												stroke="currentColor"
-												stroke-width="2"
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												class="h-4 w-4">
-												<circle cx="12" cy="12" r="9" />
-												<path d="M12 7v5l3 3" />
-											</svg>
-										</button>
 									</div>
 									<div class="flex items-center gap-1.5">
 										<button
@@ -1729,6 +1710,15 @@
 										<div class="cal-sidebar-header">
 											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cal-sidebar-header-icon"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" /><path d="M12 6v6l4 2" /></svg>
 											<span data-i18n="calendar.sidebar.booking">Terminplanung</span>
+											<button
+												id="calendarFreeToggle"
+												type="button"
+												class="ml-auto inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-400 transition hover:bg-white/5 active:bg-white/10"
+												title="Freie Zeiten ein-/ausblenden"
+												aria-label="Freie Zeiten ein-/ausblenden"
+												aria-pressed="true">
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></svg>
+											</button>
 										</div>
 
 										<!-- Room selector (prominent) -->
