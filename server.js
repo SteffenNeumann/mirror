@@ -1206,7 +1206,10 @@ function extractHashtags(text) {
 	const tags = [];
 	const re = /#([a-zA-Z0-9_-]{2,30})/g;
 	let m;
-	while ((m = re.exec(text))) tags.push(m[1].toLowerCase());
+	while ((m = re.exec(text))) {
+		tags.push(m[1].toLowerCase());
+		if (tags.length >= 3) break;
+	}
 	return tags;
 }
 
@@ -1394,7 +1397,7 @@ function normalizeImportTags(rawTags) {
 		if (!s) continue;
 		if (!/^[a-z0-9_+:\-]{1,48}$/i.test(s)) continue;
 		out.push(s);
-		if (out.length >= 24) break;
+		if (out.length >= 3) break;
 	}
 	return uniq(out);
 }
