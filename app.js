@@ -14954,6 +14954,9 @@ self.onmessage = async (e) => {
 	let commonFreeSlotsSharing = false;
 	const COMMON_FREE_SLOTS_KEY = "mirror_calendar_common_sharing_v1";
 	const MANUAL_FREE_SLOTS_KEY = "mirror_calendar_manual_free_v2";
+	/** Day key (YYYY-MM-DD) currently highlighted via "My Selections" jump */
+	let calendarFocusedDayKey = "";
+	let calendarFocusedDayTimer = 0;
 	/** Map<clientId, { name, color, busy: Array<{start:number, end:number}> }> */
 	const availabilityByClient = new Map();
 	/** Map<dayKey(YYYY-MM-DD), Set<slotKey(startMs_endMs)>> – manually selected free slots */
@@ -18412,10 +18415,28 @@ self.onmessage = async (e) => {
 			Number(parts[2])
 		);
 		if (isNaN(day.getTime())) return;
+		// Navigate to month view with focus on the target day
 		calendarState.cursor = day;
-		calendarState.view = "day";
+		calendarState.view = "month";
 		updateCalendarViewButtons();
+		// Set temporary focus highlight
+		calendarFocusedDayKey = dayKey;
+		if (calendarFocusedDayTimer) window.clearTimeout(calendarFocusedDayTimer);
+		calendarFocusedDayTimer = window.setTimeout(() => {
+			calendarFocusedDayKey = "";
+			calendarFocusedDayTimer = 0;
+			// Remove highlight class after fade
+			if (calendarGrid) {
+				const el = calendarGrid.querySelector(".calendar-day-focused");
+				if (el) el.classList.remove("calendar-day-focused");
+			}
+		}, 3000);
 		renderCalendarPanel();
+		// Scroll the focused cell into view
+		if (calendarGrid) {
+			const cell = calendarGrid.querySelector(`[data-calendar-day="${dayKey}"]`);
+			if (cell) cell.scrollIntoView({ behavior: "smooth", block: "center" });
+		}
 	}
 
 	/* ── Common Free Slots (Availability Broadcasting) ── */
@@ -18852,13 +18873,17 @@ self.onmessage = async (e) => {
 					: "";
 			const isToday = startOfDay(day).getTime() === startOfDay(new Date()).getTime();
 			const isCurrentMonth = day.getMonth() === cursor.getMonth();
-			const borderClass = isToday
-				? "border-fuchsia-400/40"
-				: (dayAvail ? "border-emerald-500/30" : "border-white/10");
+			const isFocused = dk === calendarFocusedDayKey;
+			const borderClass = isFocused
+				? "border-fuchsia-400 ring-2 ring-fuchsia-400/50"
+				: isToday
+					? "border-fuchsia-400/40"
+					: (dayAvail ? "border-emerald-500/30" : "border-white/10");
+			const focusedClass = isFocused ? " calendar-day-focused" : "";
 			const availClass = dayAvail ? "calendar-day-available" : "calendar-day-unavailable";
 			const opacityClass = isCurrentMonth ? "" : " opacity-40";
 			return `
-				<div class="min-h-[88px] rounded-lg border ${borderClass} ${availClass} bg-slate-950/40 p-2 cursor-pointer select-none transition-colors${opacityClass}" data-calendar-day="${dk}">
+				<div class="min-h-[88px] rounded-lg border ${borderClass} ${availClass} bg-slate-950/40 p-2 cursor-pointer select-none transition-colors${opacityClass}${focusedClass}" data-calendar-day="${dk}">
 					<div class="flex items-center justify-between">
 						<span class="text-[11px] text-slate-400">${day.getDate()}</span>
 						<span class="calendar-day-indicator text-[9px]">${dayAvail ? "✓" : "✕"}</span>
