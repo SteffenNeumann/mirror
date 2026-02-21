@@ -1411,8 +1411,8 @@ function normalizeImportTags(rawTags) {
 			system.push(s);
 			continue;
 		}
+		if (out.length >= 3) continue; // skip surplus regular tags but keep scanning for system markers
 		out.push(s);
-		if (out.length >= 3) break;
 	}
 	return uniq([...out, ...system]);
 }
