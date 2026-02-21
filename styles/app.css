@@ -3278,6 +3278,11 @@ body[data-theme="coffeeLight"] textarea {
 	border-color: #d9c7bc;
 }
 
+body[data-theme="coffeeLight"] #calendarSearchInput {
+	background: transparent !important;
+	border-color: transparent;
+}
+
 /* Light theme checkbox: white checkmark */
 body[data-theme="coffeeLight"] input[type="checkbox"]:checked,
 body[data-theme="bitterLight"] input[type="checkbox"]:checked,
@@ -4136,6 +4141,11 @@ body[data-theme="bitterLight"] textarea {
 	background-color: #fff9f4 !important;
 	color: #0d0c10;
 	border-color: #d8d2cb;
+}
+
+body[data-theme="bitterLight"] #calendarSearchInput {
+	background: transparent !important;
+	border-color: transparent;
 }
 
 body[data-theme="bitterLight"] ::placeholder {
@@ -5151,6 +5161,11 @@ body[data-theme="monoLight"] textarea {
 	background-color: #ffffff !important;
 	color: #24292f;
 	border-color: #d0d7de;
+}
+
+body[data-theme="monoLight"] #calendarSearchInput {
+	background: transparent !important;
+	border-color: transparent;
 }
 
 body[data-theme="monoLight"] ::placeholder {
