@@ -6382,3 +6382,48 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	background: rgba(255, 255, 255, 0.1);
 	color: #f1f5f9;
 }
+
+/* ── Free Slot Selectable Items ── */
+.free-slot-item {
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	padding: 0.25rem 0.5rem;
+	border-radius: 0.375rem;
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	background: rgba(255, 255, 255, 0.02);
+	cursor: pointer;
+	transition: background 0.15s, border-color 0.15s;
+	user-select: none;
+	font-size: 11px;
+	color: #94a3b8;
+}
+.free-slot-item:hover {
+	background: rgba(255, 255, 255, 0.06);
+	border-color: rgba(255, 255, 255, 0.12);
+}
+.free-slot-item.free-slot-selected {
+	background: rgba(74, 222, 128, 0.08);
+	border-color: rgba(74, 222, 128, 0.25);
+	color: #d1fae5;
+}
+.free-slot-item.free-slot-selected:hover {
+	background: rgba(74, 222, 128, 0.14);
+}
+.free-slot-check {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 14px;
+	height: 14px;
+	border-radius: 3px;
+	border: 1px solid rgba(255, 255, 255, 0.15);
+	font-size: 9px;
+	line-height: 1;
+	flex-shrink: 0;
+	color: #4ade80;
+}
+.free-slot-selected .free-slot-check {
+	background: rgba(74, 222, 128, 0.2);
+	border-color: rgba(74, 222, 128, 0.4);
+}

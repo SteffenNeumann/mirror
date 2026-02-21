@@ -5871,6 +5871,10 @@
 				"calendar.common.all_free": "alle frei",
 				"calendar.common.partial": "{n}/{total}",
 				"calendar.common.book_best": "Besten Slot buchen",
+				"calendar.free.select_day_week": "Für freie Zeiten bitte Tag/Woche wählen.",
+				"calendar.free.none": "Keine freien Zeiten.",
+				"calendar.free.hint": "Klicke auf einen Slot, um ihn als verfügbar zu markieren.",
+				"calendar.free.title": "Freie Zeiten",
 			},
 			en: {
 				"ps.title": "Personal Space",
@@ -6347,6 +6351,10 @@
 				"calendar.common.all_free": "all free",
 				"calendar.common.partial": "{n}/{total}",
 				"calendar.common.book_best": "Book best slot",
+				"calendar.free.select_day_week": "Select Day/Week for free slots.",
+				"calendar.free.none": "No free times.",
+				"calendar.free.hint": "Click a slot to mark it as available.",
+				"calendar.free.title": "Free slots",
 			},
 		};
 
@@ -14748,8 +14756,11 @@ self.onmessage = async (e) => {
 	let calendarFreeSlotsVisible = true;
 	let commonFreeSlotsSharing = false;
 	const COMMON_FREE_SLOTS_KEY = "mirror_calendar_common_sharing_v1";
+	const MANUAL_FREE_SLOTS_KEY = "mirror_calendar_manual_free_v1";
 	/** Map<clientId, { name, color, busy: Array<{start:number, end:number}> }> */
 	const availabilityByClient = new Map();
+	/** Map<dayKey(YYYY-MM-DD), Set<slotKey(startMs_endMs)>> – manually selected free slots */
+	let manualFreeSlots = new Map();
 	let googleCalendarConnected = false;
 	let googleCalendarList = [];
 	let outlookCalendarConnected = false;
@@ -17933,6 +17944,93 @@ self.onmessage = async (e) => {
 		return free.filter((slot) => slot[1] > slot[0]);
 	}
 
+	/* ── Manual Free Slot Selection Helpers ── */
+
+	function dayKeyFromDate(d) {
+		const y = d.getFullYear();
+		const m = String(d.getMonth() + 1).padStart(2, "0");
+		const dd = String(d.getDate()).padStart(2, "0");
+		return `${y}-${m}-${dd}`;
+	}
+
+	function slotKey(startMs, endMs) {
+		return `${startMs}_${endMs}`;
+	}
+
+	function loadManualFreeSlots() {
+		try {
+			const raw = localStorage.getItem(MANUAL_FREE_SLOTS_KEY);
+			if (!raw) return new Map();
+			const obj = JSON.parse(raw);
+			const map = new Map();
+			for (const [dk, arr] of Object.entries(obj)) {
+				if (Array.isArray(arr)) map.set(dk, new Set(arr));
+			}
+			return map;
+		} catch {
+			return new Map();
+		}
+	}
+
+	function saveManualFreeSlots() {
+		try {
+			const obj = {};
+			for (const [dk, set] of manualFreeSlots) {
+				obj[dk] = Array.from(set);
+			}
+			localStorage.setItem(MANUAL_FREE_SLOTS_KEY, JSON.stringify(obj));
+		} catch {
+			// ignore
+		}
+	}
+
+	function isSlotSelected(day, startMs, endMs) {
+		const dk = dayKeyFromDate(day);
+		const set = manualFreeSlots.get(dk);
+		if (!set) return true; // default: all selected if no manual override
+		return set.has(slotKey(startMs, endMs));
+	}
+
+	function toggleSlotSelection(day, startMs, endMs, allSlotKeys) {
+		const dk = dayKeyFromDate(day);
+		let set = manualFreeSlots.get(dk);
+		const sk = slotKey(startMs, endMs);
+		if (!set) {
+			// First toggle on this day: initialize with all slots selected, then toggle
+			set = new Set(allSlotKeys);
+			manualFreeSlots.set(dk, set);
+		}
+		if (set.has(sk)) {
+			set.delete(sk);
+		} else {
+			set.add(sk);
+		}
+		saveManualFreeSlots();
+	}
+
+	function getSelectedFreeSlotsForDay(day, events) {
+		const slots = computeFreeSlotsForDay(day, events);
+		const dk = dayKeyFromDate(day);
+		const set = manualFreeSlots.get(dk);
+		if (!set) return slots; // all selected by default
+		return slots.filter(([s, e]) => set.has(slotKey(s.getTime(), e.getTime())));
+	}
+
+	function cleanupOldManualSlots() {
+		// Remove entries older than 14 days
+		const cutoff = new Date();
+		cutoff.setDate(cutoff.getDate() - 14);
+		const cutoffKey = dayKeyFromDate(cutoff);
+		let changed = false;
+		for (const dk of manualFreeSlots.keys()) {
+			if (dk < cutoffKey) {
+				manualFreeSlots.delete(dk);
+				changed = true;
+			}
+		}
+		if (changed) saveManualFreeSlots();
+	}
+
 	function renderCalendarFreeSlots(view, cursor, events) {
 		if (!calendarFreeSlots) return;
 		if (!calendarFreeSlotsVisible) {
@@ -17941,27 +18039,31 @@ self.onmessage = async (e) => {
 		}
 		if (view === "month") {
 			calendarFreeSlots.innerHTML =
-				'<div class="text-[11px] text-slate-400">Für freie Zeiten bitte Tag/Woche wählen.</div>';
+				`<div class="text-[11px] text-slate-400">${escapeHtml(t("calendar.free.select_day_week"))}</div>`;
 			return;
 		}
 		if (view === "day") {
 			const slots = computeFreeSlotsForDay(cursor, events);
 			if (!slots.length) {
 				calendarFreeSlots.innerHTML =
-					'<div class="text-[11px] text-slate-500">Keine freien Zeiten.</div>';
+					`<div class="text-[11px] text-slate-500">${escapeHtml(t("calendar.free.none"))}</div>`;
 				return;
 			}
+			const dayDate = cursor;
 			calendarFreeSlots.innerHTML = slots
-				.map(
-					([start, end]) =>
-						`<div class="flex items-center justify-between gap-2">
-							<span>${formatTime(start)} – ${formatTime(end)}</span>
-							<span class="text-[10px] text-slate-500">frei</span>
-						</div>`
-				)
+				.map(([start, end]) => {
+					const sMs = start.getTime();
+					const eMs = end.getTime();
+					const selected = isSlotSelected(dayDate, sMs, eMs);
+					return `<div class="free-slot-item${selected ? " free-slot-selected" : ""}" data-free-slot="${sMs}|${eMs}">
+						<span class="free-slot-check">${selected ? "✓" : ""}</span>
+						<span>${formatTime(start)} – ${formatTime(end)}</span>
+					</div>`;
+				})
 				.join("");
 			return;
 		}
+		// Week view: show slots per day with selection count
 		const weekStart = startOfWeek(cursor);
 		const rows = Array.from({ length: 7 }).map((_, idx) => {
 			const day = addDays(weekStart, idx);
@@ -17973,10 +18075,13 @@ self.onmessage = async (e) => {
 					<span class="text-slate-500">—</span>
 				</div>`;
 			}
-			const [start, end] = slots[0];
+			const selected = getSelectedFreeSlotsForDay(day, events);
+			const countText = `${selected.length}/${slots.length}`;
+			const allSelected = selected.length === slots.length;
 			return `<div class="flex items-center justify-between gap-2 text-[11px]">
 				<span class="text-slate-400">${label}</span>
-				<span>${formatTime(start)} – ${formatTime(end)}</span>
+				<span>${selected.length ? formatTime(selected[0][0]) + " – " + formatTime(selected[0][1]) : "—"}</span>
+				<span class="text-[10px] ${allSelected ? "text-emerald-400" : "text-amber-400"}">${countText}</span>
 			</div>`;
 		});
 		calendarFreeSlots.innerHTML = rows.join("");
@@ -18033,7 +18138,24 @@ self.onmessage = async (e) => {
 		const rangeStart = startOfDay(now);
 		const rangeEnd = addDays(rangeStart, 7);
 		const events = getCalendarEvents();
-		const busy = extractBusyIntervals(events, rangeStart, rangeEnd);
+		// Build busy as complement of manually selected free slots within work window
+		const busy = [];
+		for (let d = 0; d < 7; d++) {
+			const day = addDays(rangeStart, d);
+			const window = buildWorkWindow(day);
+			const selectedFree = getSelectedFreeSlotsForDay(day, events);
+			// Invert selected free to get busy within work window
+			let cursor = window.start;
+			for (const [freeStart, freeEnd] of selectedFree) {
+				if (freeStart > cursor) {
+					busy.push({ start: cursor.getTime(), end: freeStart.getTime() });
+				}
+				if (freeEnd > cursor) cursor = freeEnd;
+			}
+			if (cursor < window.end) {
+				busy.push({ start: cursor.getTime(), end: window.end.getTime() });
+			}
+		}
 		const identity = loadIdentity();
 		try {
 			ws.send(JSON.stringify({
@@ -24348,6 +24470,28 @@ self.onmessage = async (e) => {
 			renderCalendarPanel();
 		});
 	}
+	if (calendarFreeSlots) {
+		calendarFreeSlots.addEventListener("click", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLElement)) return;
+			const item = target.closest("[data-free-slot]");
+			if (!item) return;
+			const raw = String(item.getAttribute("data-free-slot") || "");
+			const [startStr, endStr] = raw.split("|");
+			if (!startStr || !endStr) return;
+			const sMs = Number(startStr);
+			const eMs = Number(endStr);
+			if (!Number.isFinite(sMs) || !Number.isFinite(eMs)) return;
+			// Compute all slot keys for this day so first toggle initializes correctly
+			const cursor = calendarState.cursor || new Date();
+			const events = getCalendarEvents();
+			const allSlots = computeFreeSlotsForDay(cursor, events);
+			const allSlotKeys = allSlots.map(([s, e]) => slotKey(s.getTime(), e.getTime()));
+			toggleSlotSelection(cursor, sMs, eMs, allSlotKeys);
+			renderCalendarPanel();
+			broadcastAvailability();
+		});
+	}
 	if (calendarCommonFreeToggle) {
 		calendarCommonFreeToggle.addEventListener("click", () => {
 			saveCommonFreeSlotsSharing(!commonFreeSlotsSharing);
@@ -25285,6 +25429,8 @@ self.onmessage = async (e) => {
 	initBlockArrange();
 	commonFreeSlotsSharing = loadCommonFreeSlotsSharing();
 	applyCommonFreeToggleUI();
+	manualFreeSlots = loadManualFreeSlots();
+	cleanupOldManualSlots();
 	}
 	initStartupTasks();
 })();
