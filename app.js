@@ -354,6 +354,7 @@
 	const calendarMySelectionsWrap = document.getElementById("calendarMySelectionsWrap");
 	const calendarMySelections = document.getElementById("calendarMySelections");
 	const calendarMySelectionsCount = document.getElementById("calendarMySelectionsCount");
+	const calendarRoomSelect = document.getElementById("calendarRoomSelect");
 	const calendarCommonFreeSlotsWrap = document.getElementById("calendarCommonFreeSlotsWrap");
 	const calendarCommonFreeToggle = document.getElementById("calendarCommonFreeToggle");
 	const calendarCommonFreeParticipants = document.getElementById("calendarCommonFreeParticipants");
@@ -5887,6 +5888,8 @@
 				"calendar.my_selections.jump": "Zum Tag springen",
 				"calendar.my_selections.all_slots": "Ganzer Tag",
 				"calendar.my_selections.slots": "Slots",
+				"calendar.room_select.current": "Aktueller Raum",
+				"calendar.room_select.private": "privat",
 			},
 			en: {
 				"ps.title": "Personal Space",
@@ -6374,6 +6377,8 @@
 				"calendar.my_selections.jump": "Jump to day",
 				"calendar.my_selections.all_slots": "All day",
 				"calendar.my_selections.slots": "Slots",
+				"calendar.room_select.current": "Current room",
+				"calendar.room_select.private": "private",
 			},
 		};
 
@@ -14956,6 +14961,9 @@ self.onmessage = async (e) => {
 	let roomSlotsSyncInFlight = false;
 	let roomSlotsSyncQueued = false;
 	const ROOM_SLOTS_SYNC_DELAY = 1500;
+	/** Which room the calendar sidebar targets (may differ from the active editor room) */
+	let calendarTargetRoom = "";
+	let calendarTargetKey = "";
 	/** Day key (YYYY-MM-DD) currently highlighted via "My Selections" jump */
 	let calendarFocusedDayKey = "";
 	let calendarFocusedDayTimer = 0;
@@ -16825,10 +16833,17 @@ self.onmessage = async (e) => {
 		const hasOutlookCalendarId = typeof calendar.outlookCalendarId === "string";
 		if (hasSources) saveCalendarSources(calendar.sources, { skipSync: true });
 		if (hasView) {
-			saveCalendarDefaultView(calendar.defaultView, {
-				skipSync: true,
-				skipRender: true,
-			});
+			// Only persist the default view preference — don't overwrite
+			// the live calendarState.view while the calendar panel is open
+			// to prevent auto-refresh from resetting the user's current view.
+			if (calendarPanelActive) {
+				try { localStorage.setItem(CALENDAR_DEFAULT_VIEW_KEY, calendar.defaultView); } catch { /* ignore */ }
+			} else {
+				saveCalendarDefaultView(calendar.defaultView, {
+					skipSync: true,
+					skipRender: true,
+				});
+			}
 		}
 		if (hasLocalEvents) {
 			saveLocalCalendarEvents(calendar.localEvents, {
@@ -17350,6 +17365,7 @@ self.onmessage = async (e) => {
 			}
 			updateCalendarViewButtons();
 			applyCalendarFreeSlotsVisibility();
+			renderCalendarRoomSelect();
 			fetchGoogleCalendarStatus();
 			fetchOutlookCalendarStatus();
 			renderCalendarPanel();
@@ -18180,8 +18196,8 @@ self.onmessage = async (e) => {
 
 	async function syncRoomSlotsFromServer() {
 		if (!psState || !psState.authed) return;
-		const r = normalizeRoom(room);
-		const k = normalizeKey(key);
+		const r = calendarTargetRoom || normalizeRoom(room);
+		const k = calendarTargetKey || normalizeKey(key);
 		try {
 			const data = await api(`/api/room-slots?room=${encodeURIComponent(r)}&key=${encodeURIComponent(k)}`);
 			if (!data || !data.ok) return;
@@ -18217,11 +18233,11 @@ self.onmessage = async (e) => {
 				for (const [dk, set] of manualFreeSlots) {
 					obj[dk] = Array.from(set);
 				}
-				await api("/api/room-slots", {
+			await api("/api/room-slots", {
 					method: "POST",
 					body: JSON.stringify({
-						room: normalizeRoom(room),
-						key: normalizeKey(key),
+						room: calendarTargetRoom || normalizeRoom(room),
+						key: calendarTargetKey || normalizeKey(key),
 						slots: obj,
 						sharing: commonFreeSlotsSharing,
 					}),
@@ -18382,6 +18398,50 @@ self.onmessage = async (e) => {
 		calendarFreeSlots.innerHTML = rows.join("");
 	}
 
+	/* ── Room Selector for Calendar Sidebar ── */
+
+	function renderCalendarRoomSelect() {
+		if (!calendarRoomSelect) return;
+		const shared = loadSharedRooms();
+		const curRoom = normalizeRoom(room);
+		const curKey = normalizeKey(key);
+		const currentVal = calendarTargetRoom
+			? `${calendarTargetRoom}:${calendarTargetKey}`
+			: `${curRoom}:${curKey}`;
+
+		let html = "";
+		// "Current room" option
+		html += `<option value="${escapeAttr(curRoom)}:${escapeAttr(curKey)}">${escapeHtml(curRoom || "—")} (${escapeHtml(t("calendar.room_select.current"))})</option>`;
+		// Shared rooms (skip current room duplicate)
+		for (const sr of shared) {
+			const r = normalizeRoom(sr.room);
+			const k = normalizeKey(sr.key);
+			if (!r) continue;
+			if (r === curRoom && k === curKey) continue;
+			const label = k
+				? `${r} (${escapeHtml(t("calendar.room_select.private"))})`
+				: r;
+			html += `<option value="${escapeAttr(r)}:${escapeAttr(k)}">${escapeHtml(label)}</option>`;
+		}
+		calendarRoomSelect.innerHTML = html;
+		calendarRoomSelect.value = currentVal;
+		// Hide dropdown if only one option
+		calendarRoomSelect.parentElement.classList.toggle("hidden", calendarRoomSelect.options.length <= 1);
+	}
+
+	if (calendarRoomSelect) {
+		calendarRoomSelect.addEventListener("change", () => {
+			const val = calendarRoomSelect.value || "";
+			const sep = val.indexOf(":");
+			calendarTargetRoom = sep >= 0 ? val.slice(0, sep) : val;
+			calendarTargetKey = sep >= 0 ? val.slice(sep + 1) : "";
+			// Reload slots for the selected room
+			manualFreeSlots = new Map();
+			commonFreeSlotsSharing = false;
+			void syncRoomSlotsFromServer();
+		});
+	}
+
 	/* ── My Selections Panel ── */
 
 	function renderMySelections() {
@@ -18502,8 +18562,8 @@ self.onmessage = async (e) => {
 	}
 
 	function isInSharedRoom() {
-		const roomName = normalizeRoom(room);
-		const keyName = normalizeKey(key);
+		const roomName = calendarTargetRoom || normalizeRoom(room);
+		const keyName = calendarTargetKey !== undefined && calendarTargetRoom ? calendarTargetKey : normalizeKey(key);
 		return roomName && isRoomMarkedShared(roomName, keyName);
 	}
 
@@ -22887,11 +22947,17 @@ self.onmessage = async (e) => {
 		manuallyUnsharedRooms.delete(`${normalizeRoom(room)}:${normalizeKey(key)}`);
 		room = nextRoom;
 		key = nextKey;
+		// Reset target room to follow active room
+		calendarTargetRoom = "";
+		calendarTargetKey = "";
 		// Reload room-specific calendar data from server
 		manualFreeSlots = new Map();
 		commonFreeSlotsSharing = false;
 		applyCommonFreeToggleUI();
-		if (calendarPanelActive) renderMySelections();
+		if (calendarPanelActive) {
+			renderCalendarRoomSelect();
+			renderMySelections();
+		}
 		void syncRoomSlotsFromServer();
 		resetE2eeKeyCache();
 		lastAppliedRemoteTs = 0;
