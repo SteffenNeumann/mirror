@@ -1213,6 +1213,11 @@ function extractHashtags(text) {
 	return tags;
 }
 
+// Tags that auto-classification should never produce.
+// Extend this set as needed — tags listed here are stripped from
+// classifyText() results before they reach the database.
+const AUTO_TAG_BLACKLIST = new Set(["markdown", "yaml"]);
+
 function classifyText(text) {
 	const t = String(text || "").trim();
 	if (!t) return { kind: "note", tags: ["note"] };
@@ -1299,7 +1304,8 @@ function classifyText(text) {
 	}
 	tags.push(...extractHashtags(t));
 
-	return { kind, tags: uniq(tags) };
+	const filtered = uniq(tags).filter((tag) => !AUTO_TAG_BLACKLIST.has(tag));
+	return { kind, tags: filtered.length ? filtered : [kind] };
 }
 
 function parseTagsJson(raw) {
@@ -1397,7 +1403,7 @@ function normalizeImportTags(rawTags) {
 		if (!s) continue;
 		if (!/^[a-z0-9_+:\-]{1,48}$/i.test(s)) continue;
 		out.push(s);
-		if (out.length >= 3) break;
+		if (out.length >= 24) break;
 	}
 	return uniq(out);
 }
@@ -1494,7 +1500,6 @@ function mergeManualTags(textVal, manualTags) {
 	for (const t of derived.tags) {
 		if (t === derived.kind) keep.add(t);
 		if (
-			t === "markdown" ||
 			t === "json" ||
 			t === "stacktrace"
 		) {
@@ -1503,10 +1508,12 @@ function mergeManualTags(textVal, manualTags) {
 		if (t.startsWith("lang-")) keep.add(t);
 		if (
 			derived.kind === "code" &&
-			/^(python|javascript|java|sql|yaml|json|stacktrace)$/i.test(t)
+			/^(python|javascript|java|sql|json|stacktrace)$/i.test(t)
 		)
 			keep.add(t);
 	}
+	// Remove blacklisted auto-tags from merged result
+	for (const bl of AUTO_TAG_BLACKLIST) keep.delete(bl);
 	const tags = uniq([...keep, ...manual]);
 	return { kind: derived.kind, tags };
 }

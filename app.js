@@ -1854,6 +1854,7 @@
 		for (const t of cleaned) {
 			const s = String(t || "").trim().toLowerCase();
 			if (!s) continue;
+			if (AUTO_TAG_BLACKLIST.has(s)) continue;
 			if (!year && isYearTag(s)) {
 				year = s;
 				continue;
@@ -5072,6 +5073,9 @@
 	const PS_AUTO_IMPORT_SEEN_KEY = "mirror_ps_auto_import_seen_v1";
 	const PS_MANUAL_TAGS_MARKER = "__manual_tags__";
 	const PS_PINNED_TAG = "pinned";
+	// Tags that should never appear from auto-classification.
+	// Must stay in sync with AUTO_TAG_BLACKLIST in server.js.
+	const AUTO_TAG_BLACKLIST = new Set(["markdown", "yaml"]);
 	const PS_QUERY_RESULT_KEY = "mirror_ps_query_result_collapsed";
 	const AI_PROMPT_KEY = "mirror_ai_prompt";
 	const AI_USE_PREVIEW_KEY = "mirror_ai_use_preview";
@@ -13194,6 +13198,7 @@ ${highlightThemeCss}
 				const tag = String(t || "");
 				if (!tag) return;
 				if (tag === PS_PINNED_TAG || tag === PS_MANUAL_TAGS_MARKER) return;
+				if (AUTO_TAG_BLACKLIST.has(tag)) return;
 				tags.add(tag);
 			});
 		}
@@ -13689,7 +13694,7 @@ ${highlightThemeCss}
 				const rawTags = Array.isArray(n.tags) ? n.tags : [];
 				const pinned = rawTags.some((t) => String(t || "") === PS_PINNED_TAG);
 				const linked = id && linkedNoteIds.has(id);
-				const tags = sortTagsByCategory(stripPinnedTag(stripManualTagsMarker(rawTags)));
+				const tags = sortTagsByCategory(stripPinnedTag(stripManualTagsMarker(rawTags)).filter((t) => !AUTO_TAG_BLACKLIST.has(t)));
 				const tagsText = tags.map((t) => `#${t}`).join(" ");
 				const info = getNoteTitleAndExcerpt(n && n.text ? n.text : "");
 				const titleHtml = escapeHtml(info.title);
