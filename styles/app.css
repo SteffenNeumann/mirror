@@ -5168,6 +5168,32 @@ body[data-theme="monoLight"] #calendarSearchInput {
 	border-color: transparent;
 }
 
+/* Mono Light: room/bundesland dropdown — mono accent instead of fuchsia */
+body[data-theme="monoLight"] #calendarRoomSelect,
+body[data-theme="monoLight"] #calendarBundeslandSelect {
+	color: var(--mono-accent, #0969da) !important;
+}
+body[data-theme="monoLight"] .cal-room-selector::after {
+	background-color: var(--mono-accent, #0969da);
+}
+body[data-theme="monoLight"] .cal-room-select__menu {
+	background: #ffffff;
+	border-color: #d0d7de;
+	box-shadow: 0 4px 12px rgba(27, 31, 36, 0.12);
+}
+body[data-theme="monoLight"] .cal-room-select__item {
+	color: #24292f;
+}
+body[data-theme="monoLight"] .cal-room-select__item:hover,
+body[data-theme="monoLight"] .cal-room-select__item:focus {
+	background-color: rgba(0, 0, 0, 0.04);
+	color: #24292f;
+}
+body[data-theme="monoLight"] .cal-room-select__item[aria-selected="true"] {
+	color: var(--mono-accent, #0969da);
+	background-color: rgba(9, 105, 218, 0.06);
+}
+
 body[data-theme="monoLight"] ::placeholder {
 	color: #8c959f;
 }
