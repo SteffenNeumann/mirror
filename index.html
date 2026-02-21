@@ -1674,8 +1674,8 @@
 									id="calendarGrid"
 									class="h-full min-h-0 overflow-auto rounded-xl border border-white/10 bg-slate-950/30 p-3"></div>
 								<div
-									id="calendarSidebar"
-									class="calendar-sidebar rounded-xl border border-white/10 bg-slate-950/30 p-3 flex flex-col gap-0 overflow-y-auto">
+										id="calendarSidebar"
+										class="calendar-sidebar rounded-xl border border-white/10 bg-slate-950/30 p-3 pt-10 flex flex-col gap-4 overflow-y-auto">
 
 									<!-- ═══ Section 1: Meine Kalender ═══ -->
 									<div class="cal-sidebar-section">
@@ -1685,21 +1685,23 @@
 										</div>
 										<div id="calendarLegend" class="mt-2 space-y-1.5"></div>
 										<div id="calendarStatus" class="mt-2 text-[11px] text-slate-500"></div>
-										<div class="mt-2.5 flex gap-2">
-											<button
-												id="calendarAddEvent"
-												type="button"
-												class="flex-1 rounded-lg border border-white/10 bg-white/10 px-3 py-1.5 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">
-												Neuen Termin
-											</button>
-											<button
-												id="calendarRefresh"
-												type="button"
-												class="rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-slate-300 transition hover:bg-white/10 active:bg-white/15"
-												title="Aktualisieren">
-												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M21 2v6h-6" /><path d="M3 12a9 9 0 0115-6.7L21 8" /><path d="M3 22v-6h6" /><path d="M21 12a9 9 0 01-15 6.7L3 16" /></svg>
-											</button>
-										</div>
+									</div>
+
+									<!-- Action buttons (always visible, outside sections) -->
+									<div class="flex gap-2">
+										<button
+											id="calendarAddEvent"
+											type="button"
+											class="flex-1 rounded-lg border border-white/10 bg-white/10 px-3 py-1.5 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">
+											Neuen Termin
+										</button>
+										<button
+											id="calendarRefresh"
+											type="button"
+											class="rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-slate-300 transition hover:bg-white/10 active:bg-white/15"
+											title="Aktualisieren">
+											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M21 2v6h-6" /><path d="M3 12a9 9 0 0115-6.7L21 8" /><path d="M3 22v-6h6" /><path d="M21 12a9 9 0 01-15 6.7L3 16" /></svg>
+										</button>
 									</div>
 
 									<!-- ═══ Section 2: Freie Zeiten (eigene) ═══ -->
@@ -1719,11 +1721,11 @@
 										</div>
 										<div
 											id="calendarFreeSlotsWrap"
-											class="mt-1.5">
+											class="mt-2">
 											<div class="cal-card-subtitle" data-i18n="calendar.free.hint">Deine verfügbaren Zeitfenster in der aktuellen Woche.</div>
 											<div
 												id="calendarFreeSlots"
-												class="mt-1.5"></div>
+												class="mt-2"></div>
 										</div>
 									</div>
 
@@ -1752,20 +1754,20 @@
 										<!-- My Selections -->
 										<div
 											id="calendarMySelectionsWrap"
-											class="cal-sidebar-card mt-2.5">
+											class="cal-sidebar-card mt-2">
 											<div class="cal-card-head">
 												<span data-i18n="calendar.my_selections.title">Meine Auswahl</span>
 												<span class="cal-card-hint" id="calendarMySelectionsCount"></span>
 											</div>
 											<div
 												id="calendarMySelections"
-												class="mt-1.5 max-h-48 overflow-y-auto"></div>
+												class="mt-2 max-h-48 overflow-y-auto"></div>
 										</div>
 
 										<!-- Common Free Slots -->
 										<div
 											id="calendarCommonFreeSlotsWrap"
-											class="cal-sidebar-card mt-2.5 hidden">
+											class="cal-sidebar-card mt-2 hidden">
 											<div class="cal-card-head">
 												<span data-i18n="calendar.common.title">Gemeinsame freie Zeiten</span>
 												<div class="relative">
@@ -1795,7 +1797,7 @@
 											</div>
 											<div
 												id="calendarCommonFreeParticipants"
-												class="mt-1.5 flex flex-wrap gap-1"></div>
+												class="mt-2 flex flex-wrap gap-1"></div>
 											<div
 												id="calendarCommonFreeSlots"
 												class="mt-2 space-y-1 text-[11px] text-slate-300"></div>
