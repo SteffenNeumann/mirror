@@ -2252,6 +2252,17 @@ const roomLinearData = new Map();
 /** roomKey -> Map<noteId, sceneJsonString> */
 const roomExcalidrawScenes = new Map();
 const EXCALIDRAW_SCENE_MAX_BYTES = 200000;
+/** roomKey -> Map<clientId, { name, color, busy: Array<{start:number, end:number}> }> */
+const roomAvailabilityState = new Map();
+
+function getRoomAvailabilityState(roomKeyName) {
+	let map = roomAvailabilityState.get(roomKeyName);
+	if (!map) {
+		map = new Map();
+		roomAvailabilityState.set(roomKeyName, map);
+	}
+	return map;
+}
 
 function getRoomSockets(roomKeyName) {
 	let set = roomSockets.get(roomKeyName);
@@ -5630,6 +5641,21 @@ wss.on("connection", (ws, req) => {
 		}
 	}
 
+	const initialAvail = roomAvailabilityState.get(rk);
+	if (initialAvail && initialAvail.size > 0) {
+		const participants = Array.from(initialAvail.entries()).map(([cid, entry]) => ({
+			clientId: cid,
+			name: entry.name,
+			color: entry.color,
+			busy: entry.busy,
+		}));
+		try {
+			ws.send(JSON.stringify({ type: "availability_state", room, participants }));
+		} catch {
+			// ignore
+		}
+	}
+
 	ws.on("message", (raw) => {
 		const msg = safeJsonParse(String(raw));
 		if (!msg || msg.room !== room) return;
@@ -5957,6 +5983,33 @@ wss.on("connection", (ws, req) => {
 			return;
 		}
 
+		if (msg.type === "availability_state") {
+			const fromClientId = typeof msg.clientId === "string" ? msg.clientId : "";
+			if (!fromClientId) return;
+			const name = typeof msg.name === "string" ? msg.name.slice(0, 100) : "Guest";
+			const color = typeof msg.color === "string" ? msg.color.slice(0, 20) : "#94a3b8";
+			const rawBusy = Array.isArray(msg.busy) ? msg.busy : [];
+			const busy = [];
+			for (const b of rawBusy) {
+				if (!b || typeof b.start !== "number" || typeof b.end !== "number") continue;
+				if (!Number.isFinite(b.start) || !Number.isFinite(b.end)) continue;
+				if (b.end <= b.start) continue;
+				busy.push({ start: b.start, end: b.end });
+				if (busy.length >= 200) break;
+			}
+			const map = getRoomAvailabilityState(rk);
+			map.set(fromClientId, { name, color, busy });
+			// Broadcast full state to all clients
+			const participants = Array.from(map.entries()).map(([cid, entry]) => ({
+				clientId: cid,
+				name: entry.name,
+				color: entry.color,
+				busy: entry.busy,
+			}));
+			broadcast(rk, { type: "availability_state", room, participants });
+			return;
+		}
+
 		if (msg.type === "comment_update") {
 			const clientId = String(msg.clientId || "").trim();
 			if (!clientId) return;
@@ -6265,6 +6318,20 @@ wss.on("connection", (ws, req) => {
 					}
 				}
 			}
+			const reqAvail = roomAvailabilityState.get(rk);
+			if (reqAvail && reqAvail.size > 0) {
+				const participants = Array.from(reqAvail.entries()).map(([cid, entry]) => ({
+					clientId: cid,
+					name: entry.name,
+					color: entry.color,
+					busy: entry.busy,
+				}));
+				try {
+					ws.send(JSON.stringify({ type: "availability_state", room, participants }));
+				} catch {
+					// ignore
+				}
+			}
 			return;
 		}
 	});
@@ -6277,6 +6344,22 @@ wss.on("connection", (ws, req) => {
 			map.delete(clientId);
 			broadcastPresenceState(rk, room);
 			if (map.size === 0) roomPresence.delete(rk);
+			// Remove availability for disconnected client
+			const availMap = roomAvailabilityState.get(rk);
+			if (availMap) {
+				availMap.delete(clientId);
+				if (availMap.size > 0) {
+					const participants = Array.from(availMap.entries()).map(([cid, entry]) => ({
+						clientId: cid,
+						name: entry.name,
+						color: entry.color,
+						busy: entry.busy,
+					}));
+					broadcast(rk, { type: "availability_state", room, participants });
+				} else {
+					broadcast(rk, { type: "availability_leave", room, clientId });
+				}
+			}
 		}
 		if (sockets.size === 0) {
 			roomSockets.delete(rk);
@@ -6285,6 +6368,7 @@ wss.on("connection", (ws, req) => {
 			roomLinearState.delete(rk);
 			roomLinearData.delete(rk);
 			roomExcalidrawScenes.delete(rk);
+			roomAvailabilityState.delete(rk);
 			roomSharedPins.delete(rk);
 		}
 	});

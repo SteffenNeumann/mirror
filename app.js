@@ -351,6 +351,10 @@
 	const calendarFreeToggle = document.getElementById("calendarFreeToggle");
 	const calendarFreeSlotsWrap = document.getElementById("calendarFreeSlotsWrap");
 	const calendarFreeSlots = document.getElementById("calendarFreeSlots");
+	const calendarCommonFreeSlotsWrap = document.getElementById("calendarCommonFreeSlotsWrap");
+	const calendarCommonFreeToggle = document.getElementById("calendarCommonFreeToggle");
+	const calendarCommonFreeParticipants = document.getElementById("calendarCommonFreeParticipants");
+	const calendarCommonFreeSlots = document.getElementById("calendarCommonFreeSlots");
 	const calendarAddEventBtn = document.getElementById("calendarAddEvent");
 	const calendarGoogleStatus = document.getElementById("calendarGoogleStatus");
 	const calendarGoogleSelect = document.getElementById("calendarGoogleSelect");
@@ -5856,6 +5860,17 @@
 				"toast.shortcut_new_note": "Neue Notiz erstellt.",
 				"toast.shortcut_saved": "Notiz gespeichert.",
 				"toast.shortcut_copied": "Inhalt kopiert.",
+				"calendar.common.title": "Gemeinsame freie Zeiten",
+				"calendar.common.toggle": "Verfügbarkeit teilen",
+				"calendar.common.sharing": "Wird geteilt",
+				"calendar.common.not_sharing": "Nicht geteilt",
+				"calendar.common.no_shared_room": "Nur in geteilten Räumen verfügbar.",
+				"calendar.common.no_participants": "Noch keine Teilnehmer teilen ihre Verfügbarkeit.",
+				"calendar.common.no_common": "Keine gemeinsame freie Zeit.",
+				"calendar.common.select_day_week": "Für gemeinsame Zeiten bitte Tag/Woche wählen.",
+				"calendar.common.all_free": "alle frei",
+				"calendar.common.partial": "{n}/{total}",
+				"calendar.common.book_best": "Besten Slot buchen",
 			},
 			en: {
 				"ps.title": "Personal Space",
@@ -6321,6 +6336,17 @@
 				"toast.shortcut_new_note": "New note created.",
 				"toast.shortcut_saved": "Note saved.",
 				"toast.shortcut_copied": "Content copied.",
+				"calendar.common.title": "Common free slots",
+				"calendar.common.toggle": "Share availability",
+				"calendar.common.sharing": "Sharing",
+				"calendar.common.not_sharing": "Not sharing",
+				"calendar.common.no_shared_room": "Only available in shared rooms.",
+				"calendar.common.no_participants": "No participants sharing availability yet.",
+				"calendar.common.no_common": "No common free time.",
+				"calendar.common.select_day_week": "Select Day/Week for common free slots.",
+				"calendar.common.all_free": "all free",
+				"calendar.common.partial": "{n}/{total}",
+				"calendar.common.book_best": "Book best slot",
 			},
 		};
 
@@ -14720,6 +14746,10 @@ self.onmessage = async (e) => {
 	let calendarSettingsSyncInFlight = false;
 	let calendarSettingsSyncQueued = false;
 	let calendarFreeSlotsVisible = true;
+	let commonFreeSlotsSharing = false;
+	const COMMON_FREE_SLOTS_KEY = "mirror_calendar_common_sharing_v1";
+	/** Map<clientId, { name, color, busy: Array<{start:number, end:number}> }> */
+	const availabilityByClient = new Map();
 	let googleCalendarConnected = false;
 	let googleCalendarList = [];
 	let outlookCalendarConnected = false;
@@ -17703,6 +17733,7 @@ self.onmessage = async (e) => {
 			outlookEvents.length ? " · Outlook sync" : ""
 		}`;
 		renderCalendarPanel();
+		if (commonFreeSlotsSharing) broadcastAvailability();
 	}
 
 	function scheduleCalendarRefresh() {
@@ -17951,6 +17982,253 @@ self.onmessage = async (e) => {
 		calendarFreeSlots.innerHTML = rows.join("");
 	}
 
+	/* ── Common Free Slots (Availability Broadcasting) ── */
+
+	function loadCommonFreeSlotsSharing() {
+		try {
+			return localStorage.getItem(COMMON_FREE_SLOTS_KEY) === "1";
+		} catch {
+			return false;
+		}
+	}
+
+	function saveCommonFreeSlotsSharing(next) {
+		commonFreeSlotsSharing = Boolean(next);
+		try {
+			localStorage.setItem(COMMON_FREE_SLOTS_KEY, commonFreeSlotsSharing ? "1" : "0");
+		} catch {
+			// ignore
+		}
+		applyCommonFreeToggleUI();
+	}
+
+	function applyCommonFreeToggleUI() {
+		if (!calendarCommonFreeToggle) return;
+		calendarCommonFreeToggle.setAttribute("aria-pressed", commonFreeSlotsSharing ? "true" : "false");
+		calendarCommonFreeToggle.title = commonFreeSlotsSharing ? t("calendar.common.sharing") : t("calendar.common.toggle");
+	}
+
+	function isInSharedRoom() {
+		const roomName = normalizeRoom(room);
+		const keyName = normalizeKey(key);
+		return roomName && isRoomMarkedShared(roomName, keyName);
+	}
+
+	function extractBusyIntervals(events, rangeStart, rangeEnd) {
+		const busy = [];
+		for (const evt of events) {
+			if (!evt || !evt.start || !evt.end) continue;
+			const s = evt.start < rangeStart ? rangeStart : evt.start;
+			const e = evt.end > rangeEnd ? rangeEnd : evt.end;
+			if (s >= e) continue;
+			busy.push({ start: s.getTime(), end: e.getTime() });
+		}
+		return busy;
+	}
+
+	function broadcastAvailability() {
+		if (!commonFreeSlotsSharing || !ws || ws.readyState !== 1) return;
+		if (!isInSharedRoom()) return;
+		const now = new Date();
+		const rangeStart = startOfDay(now);
+		const rangeEnd = addDays(rangeStart, 7);
+		const events = getCalendarEvents();
+		const busy = extractBusyIntervals(events, rangeStart, rangeEnd);
+		const identity = loadIdentity();
+		try {
+			ws.send(JSON.stringify({
+				type: "availability_state",
+				room,
+				clientId,
+				name: identity.name || "Guest",
+				color: identity.color || "#94a3b8",
+				busy,
+			}));
+		} catch {
+			// ignore
+		}
+	}
+
+	function handleAvailabilityState(msg) {
+		if (!msg) return;
+		// Full state: array of all participants
+		if (Array.isArray(msg.participants)) {
+			availabilityByClient.clear();
+			for (const p of msg.participants) {
+				if (!p || !p.clientId) continue;
+				availabilityByClient.set(String(p.clientId), {
+					name: String(p.name || "Guest"),
+					color: String(p.color || "#94a3b8"),
+					busy: Array.isArray(p.busy) ? p.busy : [],
+				});
+			}
+		} else if (msg.clientId) {
+			// Single participant update
+			availabilityByClient.set(String(msg.clientId), {
+				name: String(msg.name || "Guest"),
+				color: String(msg.color || "#94a3b8"),
+				busy: Array.isArray(msg.busy) ? msg.busy : [],
+			});
+		}
+		renderCommonFreeSlots();
+	}
+
+	function handleAvailabilityLeave(leftClientId) {
+		if (!leftClientId) return;
+		if (availabilityByClient.delete(String(leftClientId))) {
+			renderCommonFreeSlots();
+		}
+	}
+
+	function computeCommonFreeSlotsForDay(day, allBusy) {
+		const dayStart = startOfDay(day);
+		const dayEnd = addDays(dayStart, 1);
+		const window = buildWorkWindow(dayStart);
+		// Merge all busy intervals from all participants
+		const unionBusy = [];
+		for (const participantBusy of allBusy) {
+			for (const b of participantBusy) {
+				const s = new Date(b.start);
+				const e = new Date(b.end);
+				if (e <= dayStart || s >= dayEnd) continue;
+				unionBusy.push([
+					s < dayStart ? dayStart : s,
+					e > dayEnd ? dayEnd : e,
+				]);
+			}
+		}
+		const merged = mergeIntervals(unionBusy);
+		const free = [];
+		let cursor = window.start;
+		const windowEnd = window.end;
+		for (const [start, end] of merged) {
+			if (end <= window.start || start >= windowEnd) continue;
+			const sliceStart = start < window.start ? window.start : start;
+			const sliceEnd = end > windowEnd ? windowEnd : end;
+			if (sliceStart > cursor) {
+				free.push([cursor, sliceStart]);
+			}
+			if (sliceEnd > cursor) cursor = sliceEnd;
+		}
+		if (cursor < windowEnd) {
+			free.push([cursor, windowEnd]);
+		}
+		return free.filter((slot) => slot[1] > slot[0]);
+	}
+
+	function computePerParticipantFreeForDay(day) {
+		const participants = Array.from(availabilityByClient.entries());
+		if (!participants.length) return { common: [], perParticipant: [], total: 0 };
+		const allBusy = participants.map(([, p]) => p.busy);
+		const common = computeCommonFreeSlotsForDay(day, allBusy);
+		// For partial info: check each participant's availability per common slot
+		const perParticipant = common.map(([start, end]) => {
+			let freeCount = 0;
+			for (const [, p] of participants) {
+				const isBusy = p.busy.some((b) => {
+					const bs = b.start;
+					const be = b.end;
+					return bs < end.getTime() && be > start.getTime();
+				});
+				if (!isBusy) freeCount++;
+			}
+			return { start, end, freeCount, total: participants.length };
+		});
+		return { common, perParticipant, total: participants.length };
+	}
+
+	function renderCommonFreeSlots() {
+		if (!calendarCommonFreeSlotsWrap) return;
+		const shared = isInSharedRoom();
+		// Show panel only in shared rooms
+		calendarCommonFreeSlotsWrap.classList.toggle("hidden", !shared);
+		if (!shared) return;
+
+		// Update participants chips
+		if (calendarCommonFreeParticipants) {
+			const parts = Array.from(availabilityByClient.entries());
+			if (parts.length === 0) {
+				calendarCommonFreeParticipants.innerHTML = "";
+			} else {
+				calendarCommonFreeParticipants.innerHTML = parts
+					.map(([cid, p]) => {
+						const dotColor = escapeAttr(p.color || "#94a3b8");
+						const name = escapeHtml(p.name || "Guest");
+						return `<span class="common-slot-chip"><span class="chip-dot" style="background:${dotColor}"></span>${name}</span>`;
+					})
+					.join("");
+			}
+		}
+
+		if (!calendarCommonFreeSlots) return;
+		const view = calendarState.view;
+		const cursor = calendarState.cursor || new Date();
+
+		if (availabilityByClient.size === 0) {
+			calendarCommonFreeSlots.innerHTML =
+				`<div class="text-[11px] text-slate-500">${escapeHtml(t("calendar.common.no_participants"))}</div>`;
+			return;
+		}
+
+		if (view === "month") {
+			calendarCommonFreeSlots.innerHTML =
+				`<div class="text-[11px] text-slate-400">${escapeHtml(t("calendar.common.select_day_week"))}</div>`;
+			return;
+		}
+
+		if (view === "day") {
+			const result = computePerParticipantFreeForDay(cursor);
+			if (!result.perParticipant.length) {
+				calendarCommonFreeSlots.innerHTML =
+					`<div class="text-[11px] text-slate-500">${escapeHtml(t("calendar.common.no_common"))}</div>`;
+				return;
+			}
+			const rows = result.perParticipant.map((slot) => {
+				const isAll = slot.freeCount === slot.total;
+				const badgeClass = isAll ? "common-slot-badge--all" : "common-slot-badge--partial";
+				const badgeText = isAll
+					? t("calendar.common.all_free")
+					: `${slot.freeCount}/${slot.total}`;
+				return `<div class="common-slot-row">
+					<span>${formatTime(slot.start)} – ${formatTime(slot.end)}</span>
+					<span class="common-slot-badge ${badgeClass}">${escapeHtml(badgeText)}</span>
+				</div>`;
+			});
+			const bestSlot = result.perParticipant.find((s) => s.freeCount === s.total) || result.perParticipant[0];
+			if (bestSlot) {
+				rows.push(`<button type="button" class="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-[11px] text-slate-200 transition hover:bg-white/10 active:bg-white/15" data-common-book="${bestSlot.start.toISOString()}|${bestSlot.end.toISOString()}">${escapeHtml(t("calendar.common.book_best"))}</button>`);
+			}
+			calendarCommonFreeSlots.innerHTML = rows.join("");
+			return;
+		}
+
+		// Week view
+		const weekStart = startOfWeek(cursor);
+		const rows = Array.from({ length: 7 }).map((_, idx) => {
+			const day = addDays(weekStart, idx);
+			const result = computePerParticipantFreeForDay(day);
+			const label = formatDayLabel(day);
+			if (!result.perParticipant.length) {
+				return `<div class="common-slot-row text-[11px]">
+					<span class="text-slate-400">${label}</span>
+					<span class="text-slate-500">—</span>
+				</div>`;
+			}
+			const best = result.perParticipant[0];
+			const isAll = best.freeCount === best.total;
+			const badgeClass = isAll ? "common-slot-badge--all" : "common-slot-badge--partial";
+			const badgeText = isAll
+				? t("calendar.common.all_free")
+				: `${best.freeCount}/${best.total}`;
+			return `<div class="common-slot-row text-[11px]">
+				<span class="text-slate-400">${label}</span>
+				<span>${formatTime(best.start)} – ${formatTime(best.end)}</span>
+				<span class="common-slot-badge ${badgeClass}">${escapeHtml(badgeText)}</span>
+			</div>`;
+		});
+		calendarCommonFreeSlots.innerHTML = rows.join("");
+	}
+
 	function renderCalendarPanel() {
 		if (!calendarGrid) return;
 		const view = calendarState.view;
@@ -18132,6 +18410,7 @@ self.onmessage = async (e) => {
 					${cells.join("")}
 				</div>`;
 		renderCalendarFreeSlots(view, cursor, events);
+		renderCommonFreeSlots();
 	}
 
 	function formatDateInputValue(date) {
@@ -18139,7 +18418,7 @@ self.onmessage = async (e) => {
 		return new Date(date.getTime() - offset).toISOString().slice(0, 10);
 	}
 
-	function openCalendarEventModal(baseDate) {
+	function openCalendarEventModal(baseDate, endDate) {
 		if (!calendarEventModal) return;
 		calendarEventModal.classList.remove("hidden");
 		calendarEventModal.classList.add("flex");
@@ -18151,8 +18430,24 @@ self.onmessage = async (e) => {
 		if (calendarEventName) calendarEventName.value = "";
 		if (calendarEventLocation) calendarEventLocation.value = "";
 		if (calendarEventAllDay) calendarEventAllDay.checked = false;
-		if (calendarEventStart) calendarEventStart.value = "09:00";
-		if (calendarEventEnd) calendarEventEnd.value = "10:00";
+		if (calendarEventStart) {
+			if (baseDate instanceof Date) {
+				const hh = String(baseDate.getHours()).padStart(2, "0");
+				const mm = String(baseDate.getMinutes()).padStart(2, "0");
+				calendarEventStart.value = `${hh}:${mm}`;
+			} else {
+				calendarEventStart.value = "09:00";
+			}
+		}
+		if (calendarEventEnd) {
+			if (endDate instanceof Date) {
+				const hh = String(endDate.getHours()).padStart(2, "0");
+				const mm = String(endDate.getMinutes()).padStart(2, "0");
+				calendarEventEnd.value = `${hh}:${mm}`;
+			} else {
+				calendarEventEnd.value = "10:00";
+			}
+		}
 		if (calendarEventSyncTarget) {
 			calendarEventSyncTarget.value = loadCalendarSyncTarget();
 			updateCalendarSyncTargetOptions();
@@ -19283,6 +19578,7 @@ self.onmessage = async (e) => {
 
 		destroyCrdt();
 		presenceState.clear();
+		availabilityByClient.clear();
 		upsertPresence({
 			clientId,
 			name: identity.name,
@@ -19337,6 +19633,10 @@ self.onmessage = async (e) => {
 				sendLinearDataForNote(currentLinearNote);
 			}
 			void loadCommentsForRoom();
+			// Broadcast availability if sharing is enabled
+			if (commonFreeSlotsSharing) {
+				setTimeout(() => broadcastAvailability(), 500);
+			}
 			ensureYjsLoaded().then((ok) => {
 				if (mySeq !== connectionSeq) return;
 				if (!ok) {
@@ -19542,6 +19842,16 @@ self.onmessage = async (e) => {
 						renderLinearTasks(activeId);
 					}
 				}
+				return;
+			}
+
+			if (msg.type === "availability_state") {
+				handleAvailabilityState(msg);
+				return;
+			}
+
+			if (msg.type === "availability_leave") {
+				handleAvailabilityLeave(msg.leftClientId || msg.clientId);
 				return;
 			}
 
@@ -24038,6 +24348,30 @@ self.onmessage = async (e) => {
 			renderCalendarPanel();
 		});
 	}
+	if (calendarCommonFreeToggle) {
+		calendarCommonFreeToggle.addEventListener("click", () => {
+			saveCommonFreeSlotsSharing(!commonFreeSlotsSharing);
+			if (commonFreeSlotsSharing) {
+				broadcastAvailability();
+			}
+			renderCommonFreeSlots();
+		});
+	}
+	if (calendarCommonFreeSlots) {
+		calendarCommonFreeSlots.addEventListener("click", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLElement)) return;
+			const btn = target.closest("[data-common-book]");
+			if (!btn) return;
+			const raw = String(btn.getAttribute("data-common-book") || "");
+			const [startStr, endStr] = raw.split("|");
+			if (!startStr || !endStr) return;
+			const startDate = new Date(startStr);
+			const endDate = new Date(endStr);
+			if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) return;
+			openCalendarEventModal(startDate, endDate);
+		});
+	}
 	if (favoritesManageList) {
 		favoritesManageList.addEventListener("click", (ev) => {
 			const target = ev.target;
@@ -24949,6 +25283,8 @@ self.onmessage = async (e) => {
 	updateTableMenuVisibility();
 	syncMobileFocusState();
 	initBlockArrange();
+	commonFreeSlotsSharing = loadCommonFreeSlotsSharing();
+	applyCommonFreeToggleUI();
 	}
 	initStartupTasks();
 })();
