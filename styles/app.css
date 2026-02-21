@@ -3283,6 +3283,32 @@ body[data-theme="coffeeLight"] #calendarSearchInput {
 	border-color: transparent;
 }
 
+/* Coffee Light: room/bundesland dropdown — warm brown accent instead of fuchsia */
+body[data-theme="coffeeLight"] #calendarRoomSelect,
+body[data-theme="coffeeLight"] #calendarBundeslandSelect {
+	color: #b07049 !important;
+}
+body[data-theme="coffeeLight"] .cal-room-selector::after {
+	background-color: #b07049;
+}
+body[data-theme="coffeeLight"] .cal-room-select__menu {
+	background: #fffaf4;
+	border-color: #d9c7bc;
+	box-shadow: 0 4px 12px rgba(59, 42, 33, 0.1);
+}
+body[data-theme="coffeeLight"] .cal-room-select__item {
+	color: #3b2a21;
+}
+body[data-theme="coffeeLight"] .cal-room-select__item:hover,
+body[data-theme="coffeeLight"] .cal-room-select__item:focus {
+	background-color: rgba(176, 112, 73, 0.08);
+	color: #3b2a21;
+}
+body[data-theme="coffeeLight"] .cal-room-select__item[aria-selected="true"] {
+	color: #b07049;
+	background-color: rgba(176, 112, 73, 0.08);
+}
+
 /* Light theme checkbox: white checkmark */
 body[data-theme="coffeeLight"] input[type="checkbox"]:checked,
 body[data-theme="bitterLight"] input[type="checkbox"]:checked,
@@ -4146,6 +4172,32 @@ body[data-theme="bitterLight"] textarea {
 body[data-theme="bitterLight"] #calendarSearchInput {
 	background: transparent !important;
 	border-color: transparent;
+}
+
+/* Bitter Light: room/bundesland dropdown — bitter accent instead of fuchsia */
+body[data-theme="bitterLight"] #calendarRoomSelect,
+body[data-theme="bitterLight"] #calendarBundeslandSelect {
+	color: #c42000 !important;
+}
+body[data-theme="bitterLight"] .cal-room-selector::after {
+	background-color: #c42000;
+}
+body[data-theme="bitterLight"] .cal-room-select__menu {
+	background: #f7f6f4;
+	border-color: #d8d2cb;
+	box-shadow: 0 4px 12px rgba(13, 12, 16, 0.08);
+}
+body[data-theme="bitterLight"] .cal-room-select__item {
+	color: #0d0c10;
+}
+body[data-theme="bitterLight"] .cal-room-select__item:hover,
+body[data-theme="bitterLight"] .cal-room-select__item:focus {
+	background-color: rgba(0, 0, 0, 0.04);
+	color: #0d0c10;
+}
+body[data-theme="bitterLight"] .cal-room-select__item[aria-selected="true"] {
+	color: #c42000;
+	background-color: rgba(196, 32, 0, 0.06);
 }
 
 body[data-theme="bitterLight"] ::placeholder {
