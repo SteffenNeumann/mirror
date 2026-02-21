@@ -6427,3 +6427,26 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	background: rgba(74, 222, 128, 0.2);
 	border-color: rgba(74, 222, 128, 0.4);
 }
+
+/* ── Calendar Day Availability ── */
+.calendar-day-available {
+	background: rgba(74, 222, 128, 0.04) !important;
+}
+.calendar-day-available:hover {
+	background: rgba(74, 222, 128, 0.08) !important;
+}
+.calendar-day-unavailable {
+	background: rgba(255, 255, 255, 0.01) !important;
+}
+.calendar-day-unavailable:hover {
+	background: rgba(255, 255, 255, 0.04) !important;
+}
+.calendar-day-indicator {
+	font-weight: 600;
+}
+.calendar-day-available .calendar-day-indicator {
+	color: #4ade80;
+}
+.calendar-day-unavailable .calendar-day-indicator {
+	color: #64748b;
+}

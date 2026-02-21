@@ -5875,6 +5875,8 @@
 				"calendar.free.none": "Keine freien Zeiten.",
 				"calendar.free.hint": "Klicke auf einen Slot, um ihn als verfügbar zu markieren.",
 				"calendar.free.title": "Freie Zeiten",
+				"calendar.free.month_hint": "Klicke auf einen Tag, um deine Verfügbarkeit festzulegen.",
+				"calendar.free.days_available": "Tage verfügbar",
 			},
 			en: {
 				"ps.title": "Personal Space",
@@ -6355,6 +6357,8 @@
 				"calendar.free.none": "No free times.",
 				"calendar.free.hint": "Click a slot to mark it as available.",
 				"calendar.free.title": "Free slots",
+				"calendar.free.month_hint": "Click a day to set your availability.",
+				"calendar.free.days_available": "days available",
 			},
 		};
 
@@ -18009,6 +18013,8 @@ self.onmessage = async (e) => {
 	}
 
 	function getSelectedFreeSlotsForDay(day, events) {
+		// If entire day is marked unavailable, return empty
+		if (!isDayAvailable(day)) return [];
 		const slots = computeFreeSlotsForDay(day, events);
 		const dk = dayKeyFromDate(day);
 		const set = manualFreeSlots.get(dk);
@@ -18038,8 +18044,17 @@ self.onmessage = async (e) => {
 			return;
 		}
 		if (view === "month") {
+			// Show summary of selected days in current month
+			const mStart = startOfMonth(cursor);
+			const daysInMonth = new Date(mStart.getFullYear(), mStart.getMonth() + 1, 0).getDate();
+			let availCount = 0;
+			for (let i = 0; i < daysInMonth; i++) {
+				const d = addDays(mStart, i);
+				if (isDayAvailable(d)) availCount++;
+			}
 			calendarFreeSlots.innerHTML =
-				`<div class="text-[11px] text-slate-400">${escapeHtml(t("calendar.free.select_day_week"))}</div>`;
+				`<div class="text-[11px] text-slate-400">${escapeHtml(t("calendar.free.month_hint"))}</div>
+				 <div class="mt-1 text-[11px] ${availCount === daysInMonth ? "text-emerald-400" : "text-amber-400"}">${availCount}/${daysInMonth} ${escapeHtml(t("calendar.free.days_available"))}</div>`;
 			return;
 		}
 		if (view === "day") {
@@ -18434,6 +18449,9 @@ self.onmessage = async (e) => {
 				const isToday =
 					startOfDay(day).getTime() === startOfDay(new Date()).getTime();
 				const dayBorder = isToday ? "border-fuchsia-400/40" : "border-white/10";
+				const dayAvail = isDayAvailable(day);
+				const availClass = dayAvail ? "calendar-day-available" : "calendar-day-unavailable";
+				const dk = dayKeyFromDate(day);
 				const dayEvents = events.filter(
 					(evt) => evt.start < dayEnd && evt.end > day
 				);
@@ -18463,10 +18481,11 @@ self.onmessage = async (e) => {
 						.join("")
 					: '<div class="text-[11px] text-slate-500">Keine Termine</div>';
 				return `
-					<div class="rounded-lg border ${dayBorder} bg-slate-950/40 p-2">
-						<div class="text-[11px] text-slate-400">${formatDayLabel(
-							day
-						)}</div>
+					<div class="rounded-lg border ${dayBorder} ${availClass} bg-slate-950/40 p-2 cursor-pointer select-none transition-colors" data-calendar-day="${dk}">
+						<div class="flex items-center justify-between">
+							<span class="text-[11px] text-slate-400">${formatDayLabel(day)}</span>
+							<span class="calendar-day-indicator text-[9px]">${dayAvail ? "✓" : "✕"}</span>
+						</div>
 						<div class="mt-2 space-y-1">${list}</div>
 					</div>`;
 			});
@@ -18487,6 +18506,8 @@ self.onmessage = async (e) => {
 		const cells = Array.from({ length: 42 }).map((_, idx) => {
 			const day = addDays(gridStart, idx);
 			const dayEnd = addDays(day, 1);
+			const dk = dayKeyFromDate(day);
+			const dayAvail = isDayAvailable(day);
 			const dayEvents = events.filter(
 				(evt) => evt.start < dayEnd && evt.end > day
 			);
@@ -18514,11 +18535,18 @@ self.onmessage = async (e) => {
 					} weitere</span>`
 					: "";
 			const isToday = startOfDay(day).getTime() === startOfDay(new Date()).getTime();
+			const isCurrentMonth = day.getMonth() === cursor.getMonth();
+			const borderClass = isToday
+				? "border-fuchsia-400/40"
+				: (dayAvail ? "border-emerald-500/30" : "border-white/10");
+			const availClass = dayAvail ? "calendar-day-available" : "calendar-day-unavailable";
+			const opacityClass = isCurrentMonth ? "" : " opacity-40";
 			return `
-				<div class="min-h-[88px] rounded-lg border ${
-					isToday ? "border-fuchsia-400/40" : "border-white/10"
-				} bg-slate-950/40 p-2">
-					<div class="text-[11px] text-slate-400">${day.getDate()}</div>
+				<div class="min-h-[88px] rounded-lg border ${borderClass} ${availClass} bg-slate-950/40 p-2 cursor-pointer select-none transition-colors${opacityClass}" data-calendar-day="${dk}">
+					<div class="flex items-center justify-between">
+						<span class="text-[11px] text-slate-400">${day.getDate()}</span>
+						<span class="calendar-day-indicator text-[9px]">${dayAvail ? "✓" : "✕"}</span>
+					</div>
 					<div class="mt-1 space-y-1">${visibleEvents.join("")}${
 						visibleEvents.length && extra ? `<div>${extra}</div>` : extra
 					}</div>
@@ -24499,6 +24527,26 @@ self.onmessage = async (e) => {
 				broadcastAvailability();
 			}
 			renderCommonFreeSlots();
+		});
+	}
+	if (calendarGrid) {
+		calendarGrid.addEventListener("click", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof Element)) return;
+			// Don't toggle when clicking on an event itself
+			if (target.closest(".calendar-event")) return;
+			const cell = target.closest("[data-calendar-day]");
+			if (!cell) return;
+			const dk = cell.getAttribute("data-calendar-day");
+			if (!dk) return;
+			// Parse YYYY-MM-DD to Date
+			const parts = dk.split("-");
+			if (parts.length !== 3) return;
+			const day = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+			if (Number.isNaN(day.getTime())) return;
+			toggleDayAvailability(day);
+			renderCalendarPanel();
+			broadcastAvailability();
 		});
 	}
 	if (calendarCommonFreeSlots) {
