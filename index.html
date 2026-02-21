@@ -3054,13 +3054,15 @@
 							id="uploadFile"
 							type="file"
 							accept="image/*,application/pdf"
-							class="hidden" />
-						<button
+							class="sr-only" />
+						<label
 							id="uploadPick"
-							type="button"
-							class="rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-xs font-medium text-slate-100 transition hover:bg-white/15 active:bg-white/20">
+							for="uploadFile"
+							role="button"
+							tabindex="0"
+							class="inline-block cursor-pointer rounded-lg border border-white/10 bg-white/10 px-3 py-2 text-xs font-medium text-slate-100 transition hover:bg-white/15 active:bg-white/20">
 							Datei auswählen
-						</button>
+						</label>
 						<div
 							class="rounded-xl border border-white/10 bg-slate-950/40 p-3 text-xs">
 							<div id="uploadFileName" class="text-slate-200">

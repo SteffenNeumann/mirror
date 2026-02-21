@@ -22682,7 +22682,16 @@ self.onmessage = async (e) => {
 		uploadCancel.addEventListener("click", () => setUploadModalOpen(false));
 	}
 	if (uploadPickBtn && uploadFileInput) {
-		uploadPickBtn.addEventListener("click", () => uploadFileInput.click());
+		// label[for] handles click natively; keep programmatic fallback + keyboard support
+		uploadPickBtn.addEventListener("click", (ev) => {
+			if (uploadPickBtn.tagName !== "LABEL") uploadFileInput.click();
+		});
+		uploadPickBtn.addEventListener("keydown", (ev) => {
+			if (ev && (ev.key === "Enter" || ev.key === " ")) {
+				ev.preventDefault();
+				uploadFileInput.click();
+			}
+		});
 	}
 	if (uploadFileInput) {
 		uploadFileInput.addEventListener("change", () => {
