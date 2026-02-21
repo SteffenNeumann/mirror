@@ -1571,99 +1571,70 @@
 						<div
 							id="calendarPanel"
 								class="hidden flex min-h-0 flex-1 flex-col gap-3">
-							<div class="rounded-xl border border-white/10 bg-slate-950/40 p-3 sm:p-4">
-								<div class="flex flex-wrap items-center justify-between gap-2">
-									<div class="flex items-center gap-2">
-										<h3 class="text-sm font-semibold text-slate-100">Kalender</h3>
+							<!-- ═══ Compact Calendar Header ═══ -->
+							<div class="cal-header rounded-xl border border-white/10 bg-slate-950/40 px-3 py-2 sm:px-4">
+								<div class="flex items-center gap-3">
+									<!-- Left: Title + Nav + KW/Date -->
+									<div class="flex items-center gap-3 min-w-0">
+										<h3 class="text-sm font-bold text-slate-100 whitespace-nowrap">Kalender</h3>
+										<div class="flex items-center gap-1">
+											<button id="calendarPrev" type="button"
+												class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
+												title="Zurück" aria-label="Zurück">
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M15 18l-6-6 6-6" /></svg>
+											</button>
+											<button id="calendarToday" type="button"
+												class="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">Heute</button>
+											<button id="calendarNext" type="button"
+												class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
+												title="Weiter" aria-label="Weiter">
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M9 6l6 6-6 6" /></svg>
+											</button>
+										</div>
+										<div class="flex items-center gap-1.5 text-xs text-slate-400 whitespace-nowrap min-w-0">
+											<span id="calendarWeekLabel" class="hidden font-semibold text-slate-300"></span>
+											<span id="calendarTitle" class="truncate text-slate-400"></span>
+										</div>
 									</div>
-									<div class="flex items-center gap-1.5">
-										<button
-											id="calendarPrev"
-											type="button"
-												class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
-											title="Zurück"
-											aria-label="Zurück">
-											<svg
-												viewBox="0 0 24 24"
-												fill="none"
-												stroke="currentColor"
-												stroke-width="2"
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												class="h-4 w-4">
-												<path d="M15 18l-6-6 6-6" />
-											</svg>
-										</button>
-										<button
-											id="calendarToday"
-											type="button"
-												class="rounded-md border border-white/10 bg-white/10 px-2.5 py-1.5 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">
-											Heute
-										</button>
-										<button
-											id="calendarNext"
-											type="button"
-												class="inline-flex h-8 w-8 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
-											title="Weiter"
-											aria-label="Weiter">
-											<svg
-												viewBox="0 0 24 24"
-												fill="none"
-												stroke="currentColor"
-												stroke-width="2"
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												class="h-4 w-4">
-												<path d="M9 6l6 6-6 6" />
-											</svg>
-										</button>
+									<!-- Right: Search + View Dropdown + Neu -->
+									<div class="ml-auto flex items-center gap-2">
+										<!-- Search -->
+										<div class="relative hidden sm:inline-flex items-center rounded-lg border border-white/10 bg-slate-950/40 px-2 py-1" style="min-width:180px">
+											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none h-3.5 w-3.5 flex-shrink-0 text-slate-500"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+											<input id="calendarSearchInput" type="text" autocomplete="off"
+												data-i18n-placeholder="calendar.search.placeholder"
+												placeholder="Termine suchen…"
+												class="w-full bg-transparent py-0.5 pl-2 pr-5 text-xs text-slate-200 transition placeholder:text-slate-500 focus:outline-none" />
+											<button id="calendarSearchClear" type="button"
+												class="absolute right-1.5 top-1/2 -translate-y-1/2 hidden h-4 w-4 flex-shrink-0 items-center justify-center rounded text-slate-400 transition hover:text-slate-200"
+												aria-label="Clear">
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+											</button>
+											<div id="calendarSearchResults" class="cal-search-dropdown hidden"></div>
+										</div>
+										<!-- View Dropdown -->
+										<div class="relative" id="calendarViewDropdownWrap">
+											<button id="calendarViewDropdownBtn" type="button"
+												class="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-950/40 px-2.5 py-1 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10">
+												<span id="calendarViewDropdownLabel">Woche</span>
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 text-slate-400"><path d="m6 9 6 6 6-6" /></svg>
+											</button>
+											<div id="calendarViewDropdownMenu"
+												class="absolute right-0 top-full z-50 mt-1 hidden min-w-[100px] rounded-lg border border-white/10 bg-slate-900 py-1 shadow-lg">
+												<button data-calendar-view="day" type="button"
+													class="flex w-full items-center px-3 py-1.5 text-xs text-slate-300 transition hover:bg-white/5 hover:text-slate-100">Tag</button>
+												<button data-calendar-view="week" type="button"
+													class="flex w-full items-center px-3 py-1.5 text-xs text-slate-300 transition hover:bg-white/5 hover:text-slate-100">Woche</button>
+												<button data-calendar-view="month" type="button"
+													class="flex w-full items-center px-3 py-1.5 text-xs text-slate-300 transition hover:bg-white/5 hover:text-slate-100">Monat</button>
 											</div>
-					</div>
-								<div class="mt-2 flex flex-wrap items-center gap-2">
-									<div class="inline-flex items-center gap-1 rounded-full border border-white/10 bg-slate-950/40 p-1">
-										<button
-											data-calendar-view="day"
-											type="button"
-											class="rounded-full px-2.5 py-1 text-[11px] text-slate-300 transition hover:bg-white/5">
-											Tag
+										</div>
+										<!-- + Neu Button -->
+										<button id="calendarAddEventHeader" type="button"
+											class="cal-header-add-btn inline-flex items-center gap-1 rounded-lg px-3 py-1 text-xs font-medium shadow-sm transition">
+											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
+											Neu
 										</button>
-										<button
-											data-calendar-view="week"
-											type="button"
-											class="rounded-full px-2.5 py-1 text-[11px] text-slate-300 transition hover:bg-white/5">
-											Woche
-										</button>
-										<button
-											data-calendar-view="month"
-											type="button"
-											class="rounded-full px-2.5 py-1 text-[11px] text-slate-300 transition hover:bg-white/5">
-											Monat
-										</button>
-									</div>
-									<!-- Calendar search (inline, matches view-switcher pill) -->
-									<div class="relative inline-flex items-center rounded-full border border-white/10 bg-slate-950/40 p-1" style="min-width:260px">
-										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none ml-1.5 h-3 w-3 flex-shrink-0 text-slate-500"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
-										<input
-											id="calendarSearchInput"
-											type="text"
-											autocomplete="off"
-											data-i18n-placeholder="calendar.search.placeholder"
-											placeholder="Suche…"
-											class="w-full bg-transparent py-1 pl-2 pr-6 text-[11px] text-slate-200 transition placeholder:text-slate-500 focus:outline-none" />
-										<button
-											id="calendarSearchClear"
-											type="button"
-											class="mr-1 hidden h-4 w-4 flex-shrink-0 items-center justify-center rounded text-slate-400 transition hover:text-slate-200"
-											aria-label="Clear">
-											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
-										</button>
-										<div id="calendarSearchResults" class="cal-search-dropdown hidden"></div>
-									</div>
-									<div class="ml-auto flex flex-wrap items-center gap-2 text-xs text-slate-400">
-										<div
-											id="calendarWeekLabel"
-											class="hidden text-xs font-semibold text-slate-300"></div>
-										<div id="calendarTitle" class="text-right text-xs text-slate-400"></div>
 									</div>
 								</div>
 							</div>

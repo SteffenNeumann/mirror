@@ -373,6 +373,10 @@
 		"calendarOutlookDisconnect"
 	);
 	const calendarViewButtons = document.querySelectorAll("[data-calendar-view]");
+	const calendarViewDropdownBtn = document.getElementById("calendarViewDropdownBtn");
+	const calendarViewDropdownLabel = document.getElementById("calendarViewDropdownLabel");
+	const calendarViewDropdownMenu = document.getElementById("calendarViewDropdownMenu");
+	const calendarAddEventHeaderBtn = document.getElementById("calendarAddEventHeader");
 	const calendarLocalEventsList = document.getElementById("calendarLocalEventsList");
 	const calendarLocalEventsEmpty = document.getElementById("calendarLocalEventsEmpty");
 	const calendarEventModal = document.getElementById("calendarEventModal");
@@ -18075,13 +18079,18 @@ self.onmessage = async (e) => {
 
 	function updateCalendarViewButtons() {
 		if (!calendarViewButtons || !calendarViewButtons.length) return;
+		const viewLabels = { day: "Tag", week: "Woche", month: "Monat" };
 		calendarViewButtons.forEach((btn) => {
 			const name = String(btn.getAttribute("data-calendar-view") || "");
 			const active = name === calendarState.view;
 			btn.classList.toggle("bg-white/10", active);
 			btn.classList.toggle("text-slate-100", active);
 			btn.classList.toggle("text-slate-300", !active);
+			btn.setAttribute("aria-current", active ? "true" : "false");
 		});
+		if (calendarViewDropdownLabel) {
+			calendarViewDropdownLabel.textContent = viewLabels[calendarState.view] || calendarState.view;
+		}
 	}
 
 	/* ── Bundesland Persistence ── */
@@ -25540,7 +25549,28 @@ self.onmessage = async (e) => {
 				calendarState.view = view;
 				updateCalendarViewButtons();
 				renderCalendarPanel();
+				if (calendarViewDropdownMenu) calendarViewDropdownMenu.classList.add("hidden");
 			});
+		});
+	}
+	/* ── View Dropdown toggle ── */
+	if (calendarViewDropdownBtn && calendarViewDropdownMenu) {
+		calendarViewDropdownBtn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			calendarViewDropdownMenu.classList.toggle("hidden");
+		});
+		document.addEventListener("click", (e) => {
+			if (!calendarViewDropdownMenu.classList.contains("hidden")) {
+				if (!calendarViewDropdownMenu.contains(e.target) && e.target !== calendarViewDropdownBtn) {
+					calendarViewDropdownMenu.classList.add("hidden");
+				}
+			}
+		});
+	}
+	/* ── Header "+ Neu" button → same as sidebar add-event ── */
+	if (calendarAddEventHeaderBtn) {
+		calendarAddEventHeaderBtn.addEventListener("click", () => {
+			if (calendarAddEventBtn) calendarAddEventBtn.click();
 		});
 	}
 	if (calendarPrevBtn) {

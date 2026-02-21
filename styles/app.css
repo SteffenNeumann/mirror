@@ -6475,6 +6475,46 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	color: #f1f5f9;
 }
 
+/* ── Calendar Header (compact single-row) ── */
+.cal-header {
+	container-type: inline-size;
+}
+@container (max-width: 600px) {
+	.cal-header > div {
+		flex-wrap: wrap;
+	}
+	.cal-header #calendarTitle {
+		display: none;
+	}
+}
+#calendarViewDropdownMenu {
+	pointer-events: auto;
+	background-color: var(--selection-menu-bg);
+	border-color: var(--selection-menu-border);
+	box-shadow: var(--dropdown-shadow);
+}
+#calendarViewDropdownMenu button {
+	color: var(--dropdown-text);
+}
+#calendarViewDropdownMenu button:hover {
+	background-color: var(--dropdown-hover-bg);
+	color: var(--dropdown-text-hover);
+}
+#calendarViewDropdownMenu button[aria-current="true"] {
+	background-color: var(--dropdown-accent-bg);
+	color: var(--dropdown-text-hover);
+}
+.cal-header-add-btn {
+	background-color: var(--accent-strong);
+	color: var(--accent-text);
+}
+.cal-header-add-btn:hover {
+	background-color: var(--accent-strong-hover);
+}
+.cal-header-add-btn:active {
+	background-color: var(--accent-strong-active);
+}
+
 /* ── Calendar Sidebar Sections ── */
 .calendar-sidebar {
 	min-height: 0;
