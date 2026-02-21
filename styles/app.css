@@ -6361,6 +6361,41 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	background: rgba(251, 191, 36, 0.12);
 	color: #fbbf24;
 }
+/* ── Common Slot Card (2-line: date top, time below) ── */
+#calendarCommonFreeSlotsWrap .common-slot-card {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	padding: 5px 4px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+	font-size: 11px;
+}
+#calendarCommonFreeSlotsWrap .common-slot-card:last-child {
+	border-bottom: none;
+}
+#calendarCommonFreeSlotsWrap .common-slot-card--nav {
+	cursor: pointer;
+	border-radius: 4px;
+	transition: background 0.15s;
+}
+#calendarCommonFreeSlotsWrap .common-slot-card--nav:hover {
+	background: rgba(255, 255, 255, 0.04);
+}
+#calendarCommonFreeSlotsWrap .common-slot-card__top {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.5rem;
+}
+#calendarCommonFreeSlotsWrap .common-slot-date {
+	color: #94a3b8;
+	font-weight: 500;
+	white-space: nowrap;
+}
+#calendarCommonFreeSlotsWrap .common-slot-time {
+	color: #64748b;
+	font-size: 10px;
+}
 #calendarCommonFreeSlotsWrap .common-slot-chip {
 	display: inline-flex;
 	align-items: center;
@@ -6485,6 +6520,14 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 }
 .cal-slot-row:last-child {
 	border-bottom: none;
+}
+.cal-slot-row--nav {
+	cursor: pointer;
+	border-radius: 4px;
+	transition: background 0.15s;
+}
+.cal-slot-row--nav:hover {
+	background: rgba(255, 255, 255, 0.04);
 }
 .cal-slot-day {
 	color: #94a3b8;

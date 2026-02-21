@@ -18378,10 +18378,11 @@ self.onmessage = async (e) => {
 		const weekStart = startOfWeek(cursor);
 		const rows = Array.from({ length: 7 }).map((_, idx) => {
 			const day = addDays(weekStart, idx);
+			const dk = dayKeyFromDate(day);
 			const slots = computeFreeSlotsForDay(day, events);
 			const label = formatDayLabel(day);
 			if (!slots.length) {
-				return `<div class="cal-slot-row">
+				return `<div class="cal-slot-row cal-slot-row--nav" data-slot-nav="${dk}">
 					<span class="cal-slot-day">${label}</span>
 					<span class="cal-slot-time">—</span>
 					<span class="cal-slot-count"></span>
@@ -18390,7 +18391,7 @@ self.onmessage = async (e) => {
 			const selected = getSelectedFreeSlotsForDay(day, events);
 			const countText = `${selected.length}/${slots.length}`;
 			const allSelected = selected.length === slots.length;
-			return `<div class="cal-slot-row">
+			return `<div class="cal-slot-row cal-slot-row--nav" data-slot-nav="${dk}">
 				<span class="cal-slot-day">${label}</span>
 				<span class="cal-slot-time">${selected.length ? formatTime(selected[0][0]) + " – " + formatTime(selected[0][1]) : "—"}</span>
 				<span class="cal-slot-count ${allSelected ? "cal-slot-all" : "cal-slot-partial"}">${countText}</span>
@@ -18770,16 +18771,17 @@ self.onmessage = async (e) => {
 			return;
 		}
 
-		// Week view
+		// Week view — 2-line cards per day (date top, time below)
 		const weekStart = startOfWeek(cursor);
 		const rows = Array.from({ length: 7 }).map((_, idx) => {
 			const day = addDays(weekStart, idx);
+			const dk = dayKeyFromDate(day);
 			const result = computePerParticipantFreeForDay(day);
 			const label = formatDayLabel(day);
 			if (!result.perParticipant.length) {
-				return `<div class="common-slot-row text-[11px]">
-					<span class="text-slate-400">${label}</span>
-					<span class="text-slate-500">—</span>
+				return `<div class="common-slot-card common-slot-card--nav" data-slot-nav="${dk}">
+					<span class="common-slot-date">${label}</span>
+					<span class="common-slot-time">—</span>
 				</div>`;
 			}
 			const best = result.perParticipant[0];
@@ -18788,10 +18790,12 @@ self.onmessage = async (e) => {
 			const badgeText = isAll
 				? t("calendar.common.all_free")
 				: `${best.freeCount}/${best.total}`;
-			return `<div class="common-slot-row text-[11px]">
-				<span class="text-slate-400">${label}</span>
-				<span>${formatTime(best.start)} – ${formatTime(best.end)}</span>
-				<span class="common-slot-badge ${badgeClass}">${escapeHtml(badgeText)}</span>
+			return `<div class="common-slot-card common-slot-card--nav" data-slot-nav="${dk}">
+				<div class="common-slot-card__top">
+					<span class="common-slot-date">${label}</span>
+					<span class="common-slot-badge ${badgeClass}">${escapeHtml(badgeText)}</span>
+				</div>
+				<span class="common-slot-time">${formatTime(best.start)} – ${formatTime(best.end)}</span>
 			</div>`;
 		});
 		calendarCommonFreeSlots.innerHTML = rows.join("");
@@ -24959,6 +24963,22 @@ self.onmessage = async (e) => {
 		calendarFreeSlots.addEventListener("click", (ev) => {
 			const target = ev.target;
 			if (!(target instanceof HTMLElement)) return;
+			// Week-view row click → navigate to day view
+			const navRow = target.closest("[data-slot-nav]");
+			if (navRow) {
+				const dk = navRow.getAttribute("data-slot-nav") || "";
+				const parts = dk.split("-");
+				if (parts.length === 3) {
+					const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+					if (!isNaN(d.getTime())) {
+						calendarState.cursor = d;
+						calendarState.view = "day";
+						updateCalendarViewButtons();
+						renderCalendarPanel();
+					}
+				}
+				return;
+			}
 			const item = target.closest("[data-free-slot]");
 			if (!item) return;
 			const raw = String(item.getAttribute("data-free-slot") || "");
@@ -24975,6 +24995,26 @@ self.onmessage = async (e) => {
 			toggleSlotSelection(cursor, sMs, eMs, allSlotKeys);
 			renderCalendarPanel();
 			broadcastAvailability();
+		});
+	}
+	if (calendarCommonFreeSlots) {
+		calendarCommonFreeSlots.addEventListener("click", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLElement)) return;
+			const navRow = target.closest("[data-slot-nav]");
+			if (navRow) {
+				const dk = navRow.getAttribute("data-slot-nav") || "";
+				const parts = dk.split("-");
+				if (parts.length === 3) {
+					const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+					if (!isNaN(d.getTime())) {
+						calendarState.cursor = d;
+						calendarState.view = "day";
+						updateCalendarViewButtons();
+						renderCalendarPanel();
+					}
+				}
+			}
 		});
 	}
 	if (calendarCommonFreeToggle) {
