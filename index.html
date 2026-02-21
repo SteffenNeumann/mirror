@@ -1631,7 +1631,7 @@
 										</div>
 										<!-- + Neu Button -->
 										<button id="calendarAddEventHeader" type="button"
-											class="cal-header-add-btn inline-flex items-center gap-1 rounded-lg px-3 py-1 text-xs font-medium shadow-sm transition">
+											class="cal-header-add-btn inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-xs font-medium transition">
 											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M12 5v14" /><path d="M5 12h14" /></svg>
 											Neu
 										</button>
@@ -1691,23 +1691,11 @@
 									<!-- Action buttons (always visible, outside sections) -->
 									<div class="flex gap-2">
 										<button
-											id="calendarAddEvent"
-											type="button"
-											class="flex-1 rounded-lg border border-white/10 bg-white/10 px-3 py-1.5 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">
-											Neuen Termin
-										</button>
-										<button
-											id="calendarRefresh"
-											type="button"
-											class="rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-slate-300 transition hover:bg-white/10 active:bg-white/15"
-											title="Aktualisieren">
-											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M21 2v6h-6" /><path d="M3 12a9 9 0 0115-6.7L21 8" /><path d="M3 22v-6h6" /><path d="M21 12a9 9 0 01-15 6.7L3 16" /></svg>
-										</button>
-									</div>
-
-									<!-- ═══ Section 2: Freie Zeiten (eigene) ═══ -->
-									<div class="cal-sidebar-section">
-										<div class="cal-sidebar-header">
+												id="calendarRefresh"
+												type="button"
+												class="flex-1 rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-xs text-slate-300 transition hover:bg-white/10 active:bg-white/15"
+												title="Aktualisieren">
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mx-auto h-3.5 w-3.5"><path d="M21 2v6h-6" /><path d="M3 12a9 9 0 0115-6.7L21 8" /><path d="M3 22v-6h6" /><path d="M21 12a9 9 0 01-15 6.7L3 16" /></svg>
 											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cal-sidebar-header-icon"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 3" /></svg>
 											<span data-i18n="calendar.free.title">Freie Zeiten</span>
 											<button

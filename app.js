@@ -359,7 +359,6 @@
 	const calendarCommonFreeToggle = document.getElementById("calendarCommonFreeToggle");
 	const calendarCommonFreeParticipants = document.getElementById("calendarCommonFreeParticipants");
 	const calendarCommonFreeSlots = document.getElementById("calendarCommonFreeSlots");
-	const calendarAddEventBtn = document.getElementById("calendarAddEvent");
 	const calendarGoogleStatus = document.getElementById("calendarGoogleStatus");
 	const calendarGoogleSelect = document.getElementById("calendarGoogleSelect");
 	const calendarGoogleConnect = document.getElementById("calendarGoogleConnect");
@@ -25567,10 +25566,10 @@ self.onmessage = async (e) => {
 			}
 		});
 	}
-	/* ── Header "+ Neu" button → same as sidebar add-event ── */
+	/* ── Header "+ Neu" button → open event modal directly ── */
 	if (calendarAddEventHeaderBtn) {
 		calendarAddEventHeaderBtn.addEventListener("click", () => {
-			if (calendarAddEventBtn) calendarAddEventBtn.click();
+			openCalendarEventModal(calendarState.cursor || new Date());
 		});
 	}
 	if (calendarPrevBtn) {
@@ -25604,11 +25603,6 @@ self.onmessage = async (e) => {
 	if (calendarOpenSettingsBtn) {
 		calendarOpenSettingsBtn.addEventListener("click", () => {
 			openSettingsAt("calendar");
-		});
-	}
-	if (calendarAddEventBtn) {
-		calendarAddEventBtn.addEventListener("click", () => {
-			openCalendarEventModal(calendarState.cursor || new Date());
 		});
 	}
 	if (calendarEventClose) {

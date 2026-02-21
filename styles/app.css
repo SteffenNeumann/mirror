@@ -2526,6 +2526,10 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	border: none;
 	background-color: var(--calendar-event-bg) !important;
 }
+/* Events inside day-tiles (week/month) have no separate background */
+[data-calendar-day] .calendar-event {
+	background-color: transparent !important;
+}
 
 /* #calendarGrid.calendar-grid-month {
 	overflow: visible;
