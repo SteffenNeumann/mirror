@@ -1640,20 +1640,20 @@
 											Monat
 										</button>
 									</div>
-									<!-- Calendar search (inline, max 100px) -->
-									<div class="relative" style="width:100px">
-										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none absolute left-1.5 top-1/2 h-3 w-3 -translate-y-1/2 text-slate-500"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
+									<!-- Calendar search (inline, matches view-switcher pill) -->
+									<div class="relative inline-flex items-center rounded-full border border-white/10 bg-slate-950/40 p-1" style="width:300px">
+										<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none ml-1.5 h-3 w-3 flex-shrink-0 text-slate-500"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
 										<input
 											id="calendarSearchInput"
 											type="text"
 											autocomplete="off"
 											data-i18n-placeholder="calendar.search.placeholder"
 											placeholder="Suche…"
-											class="w-full rounded-lg border border-white/10 bg-slate-950/40 py-1 pl-6 pr-6 text-[11px] text-slate-200 shadow-soft backdrop-blur transition placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/25" />
+											class="w-full bg-transparent py-0.5 pl-2 pr-6 text-[11px] text-slate-200 transition placeholder:text-slate-500 focus:outline-none" />
 										<button
 											id="calendarSearchClear"
 											type="button"
-											class="absolute right-1 top-1/2 hidden h-4 w-4 -translate-y-1/2 items-center justify-center rounded text-slate-400 transition hover:text-slate-200"
+											class="mr-1 hidden h-4 w-4 flex-shrink-0 items-center justify-center rounded text-slate-400 transition hover:text-slate-200"
 											aria-label="Clear">
 											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
 										</button>
