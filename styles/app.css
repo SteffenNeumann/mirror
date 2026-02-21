@@ -6481,13 +6481,17 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	appearance: none;
 	position: relative;
 }
-/* Override theme select styles — needs higher specificity than body[data-theme] select */
-select.cal-room-select,
-body[data-theme] select.cal-room-select {
+/* Override theme select styles — ID selector beats any class/attribute combo */
+#calendarRoomSelect,
+select#calendarRoomSelect,
+body[data-theme] select#calendarRoomSelect {
 	background: transparent !important;
 	background-color: transparent !important;
+	background-image: none !important;
 	color: var(--accent-text-soft, #f472b6) !important;
+	border: none !important;
 	border-color: transparent !important;
+	box-shadow: none !important;
 }
 .cal-room-selector::after {
 	content: "";
