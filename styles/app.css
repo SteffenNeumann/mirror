@@ -2849,6 +2849,10 @@ body[data-theme="coffeeLight"] {
 	--dropdown-text-hover: #3b2a21;
 	--dropdown-hover-bg: rgba(176, 112, 73, 0.08);
 	--dropdown-shadow: 0 4px 12px rgba(59, 42, 33, 0.1);
+	--accent-strong: rgba(176, 112, 73, 0.85);
+	--accent-strong-hover: rgba(176, 112, 73, 0.95);
+	--accent-strong-active: rgba(176, 112, 73, 1);
+	--accent-text: #fff;
 }
 
 body[data-theme="coffeeLight"] .bg-glow {
@@ -3720,6 +3724,10 @@ body[data-theme="bitterLight"] {
 	--dropdown-text-hover: #0d0c10;
 	--dropdown-hover-bg: rgba(0, 0, 0, 0.04);
 	--dropdown-shadow: 0 4px 12px rgba(13, 12, 16, 0.08);
+	--accent-strong: rgba(196, 32, 0, 0.85);
+	--accent-strong-hover: rgba(196, 32, 0, 0.95);
+	--accent-strong-active: rgba(196, 32, 0, 1);
+	--accent-text: #fff;
 }
 
 body[data-theme="bitterLight"] .bg-glow {
@@ -4672,6 +4680,10 @@ body[data-theme="monoLight"] {
 	--dropdown-text-hover: #24292f;
 	--dropdown-hover-bg: rgba(0, 0, 0, 0.04);
 	--dropdown-shadow: 0 4px 12px rgba(27, 31, 36, 0.12);
+	--accent-strong: rgba(9, 105, 218, 0.85);
+	--accent-strong-hover: rgba(9, 105, 218, 0.95);
+	--accent-strong-active: rgba(9, 105, 218, 1);
+	--accent-text: #fff;
 }
 
 body[data-theme="monoLight"] .bg-glow {
