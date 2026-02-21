@@ -1392,9 +1392,14 @@ function sanitizeCommentItems(raw) {
 	return out;
 }
 
+// Internal system markers that pass through normalizeImportTags
+// without counting against the 3-tag limit.
+const SYSTEM_TAG_MARKERS = new Set(["__manual_tags__", "pinned"]);
+
 function normalizeImportTags(rawTags) {
 	const tags = Array.isArray(rawTags) ? rawTags : [];
 	const out = [];
+	const system = [];
 	for (const t of tags) {
 		const s = String(t || "")
 			.trim()
@@ -1402,10 +1407,14 @@ function normalizeImportTags(rawTags) {
 			.slice(0, 48);
 		if (!s) continue;
 		if (!/^[a-z0-9_+:\-]{1,48}$/i.test(s)) continue;
+		if (SYSTEM_TAG_MARKERS.has(s)) {
+			system.push(s);
+			continue;
+		}
 		out.push(s);
-		if (out.length >= 24) break;
+		if (out.length >= 3) break;
 	}
-	return uniq(out);
+	return uniq([...out, ...system]);
 }
 
 const NOTE_MONTH_TAGS = [
