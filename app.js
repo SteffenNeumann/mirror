@@ -18012,6 +18012,35 @@ self.onmessage = async (e) => {
 		saveManualFreeSlots();
 	}
 
+	/** Marker key: when present in a day's Set, the entire day is marked unavailable */
+	const FULL_DAY_UNAVAILABLE_KEY = "__day_unavailable__";
+
+	function isDayAvailable(day) {
+		const dk = dayKeyFromDate(day);
+		const set = manualFreeSlots.get(dk);
+		if (!set) return true; // default: available
+		if (set.has(FULL_DAY_UNAVAILABLE_KEY)) return false;
+		return true;
+	}
+
+	function toggleDayAvailability(day) {
+		const dk = dayKeyFromDate(day);
+		let set = manualFreeSlots.get(dk);
+		if (!set) {
+			// Day was available (default) → mark unavailable
+			set = new Set([FULL_DAY_UNAVAILABLE_KEY]);
+			manualFreeSlots.set(dk, set);
+		} else if (set.has(FULL_DAY_UNAVAILABLE_KEY)) {
+			// Day was unavailable → remove marker (make available again)
+			set.delete(FULL_DAY_UNAVAILABLE_KEY);
+			if (set.size === 0) manualFreeSlots.delete(dk);
+		} else {
+			// Day has individual slot selections but no unavailable marker → mark unavailable
+			set.add(FULL_DAY_UNAVAILABLE_KEY);
+		}
+		saveManualFreeSlots();
+	}
+
 	function getSelectedFreeSlotsForDay(day, events) {
 		// If entire day is marked unavailable, return empty
 		if (!isDayAvailable(day)) return [];
