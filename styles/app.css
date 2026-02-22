@@ -2104,21 +2104,37 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		position: relative;
 		z-index: 40;
 	}
+	.cal-header * {
+		-webkit-tap-highlight-color: transparent;
+	}
+	#calendarViewDropdownWrap {
+		overflow: visible;
+		z-index: 50;
+	}
 	/* Calendar view dropdown: ensure usability on touch */
 	#calendarViewDropdownBtn {
 		min-height: 36px;
 		min-width: 36px;
 		-webkit-tap-highlight-color: transparent;
 		touch-action: manipulation;
+		cursor: pointer;
+		position: relative;
+		z-index: 51;
 	}
 	#calendarViewDropdownMenu {
 		z-index: 60;
 		min-width: 120px;
+		position: absolute;
+		right: 0;
+		top: 100%;
+		pointer-events: auto;
 	}
 	#calendarViewDropdownMenu button {
 		min-height: 40px;
 		padding: 0.5rem 0.75rem;
 		font-size: 13px;
+		cursor: pointer;
+		touch-action: manipulation;
 	}
 	/* Calendar sidebar mobile: better sizing */
 	.calendar-sidebar {
