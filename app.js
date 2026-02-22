@@ -25552,15 +25552,29 @@ self.onmessage = async (e) => {
 			});
 		});
 	}
-	/* ── View Dropdown toggle ── */
+	/* ── View Dropdown toggle (mobile-safe: uses .closest() for child taps) ── */
 	if (calendarViewDropdownBtn && calendarViewDropdownMenu) {
-		calendarViewDropdownBtn.addEventListener("click", (e) => {
+		const toggleCalViewDropdown = (e) => {
 			e.stopPropagation();
+			e.preventDefault();
+			calendarViewDropdownMenu.classList.toggle("hidden");
+		};
+		calendarViewDropdownBtn.addEventListener("click", toggleCalViewDropdown);
+		calendarViewDropdownBtn.addEventListener("touchend", (e) => {
+			e.stopPropagation();
+			e.preventDefault();
 			calendarViewDropdownMenu.classList.toggle("hidden");
 		});
 		document.addEventListener("click", (e) => {
 			if (!calendarViewDropdownMenu.classList.contains("hidden")) {
-				if (!calendarViewDropdownMenu.contains(e.target) && e.target !== calendarViewDropdownBtn) {
+				if (!calendarViewDropdownMenu.contains(e.target) && !e.target.closest("#calendarViewDropdownBtn")) {
+					calendarViewDropdownMenu.classList.add("hidden");
+				}
+			}
+		});
+		document.addEventListener("touchstart", (e) => {
+			if (!calendarViewDropdownMenu.classList.contains("hidden")) {
+				if (!calendarViewDropdownMenu.contains(e.target) && !e.target.closest("#calendarViewDropdownBtn")) {
 					calendarViewDropdownMenu.classList.add("hidden");
 				}
 			}
