@@ -11,7 +11,8 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
   2. **`syncPsEditingNoteFromEditorText`** (`app.js` ~L13401): Gleiche Änderung — Notiz per Text-Match gefunden → sofort `true`.
   3. **`savePersonalSpaceNote` POST-Response** (`app.js` ~L24341): Nach `syncPsEditingNoteTagsFromState()` wird `psEditingNoteTagsOverridden = true` gesetzt, damit alle weiteren Saves (Auto-Save, manuell) den Marker enthalten.
   4. **`togglePinnedForNote`** (`app.js` ~L13170): Override bleibt nach Pin-Toggle `true`, wird nicht durch Server-Response zurückgesetzt.
-  - Zuständige Funktionen: `applyNoteToEditor`, `syncPsEditingNoteFromEditorText`, `savePersonalSpaceNote`, `togglePinnedForNote`.
+  5. **`syncPsEditingNoteTagsFromState` Guard verstärkt** (`app.js` ~L2406): Akzeptiert jetzt `opts.force`-Parameter. Wenn `psEditingNoteTagsOverridden = true` und **nicht** `force`, wird der gesamte Tag-Sync übersprungen (nur Pinned-State wird synchronisiert). Vorher wurde nur geschützt wenn der Server den Marker noch nicht hatte — bei vorherigem Save mit Marker wurde der Guard umgangen und `refreshPersonalSpace`-Polling überschrieb lokale Tag-Änderungen (Category, Subcategory, manuelle Tags) mit veraltetem Server-Stand. Nur `updateNotesForTagChange` (Tag-Kontextmenü) übergibt `{ force: true }`.
+  - Zuständige Funktionen: `applyNoteToEditor`, `syncPsEditingNoteFromEditorText`, `savePersonalSpaceNote`, `togglePinnedForNote`, `syncPsEditingNoteTagsFromState`, `updateNotesForTagChange`.
   - Zuständige Dateien: `app.js`.
 
 ## Aktuelle Änderungen (2026-02-21)
