@@ -2403,7 +2403,8 @@
 		updatePsEditorTagsSuggest(true);
 	}
 
-	function syncPsEditingNoteTagsFromState() {
+	function syncPsEditingNoteTagsFromState(opts) {
+		const force = Boolean(opts && opts.force);
 		if (!psState || !psState.authed) return;
 		if (!psEditingNoteId) return;
 		const notes = Array.isArray(psState.notes) ? psState.notes : [];
@@ -2411,20 +2412,16 @@
 		const note = notes.find((n) => String(n && n.id ? n.id : "") === id);
 		if (!note) return;
 		const rawTags = Array.isArray(note.tags) ? note.tags : [];
-		const serverHasMarker = rawTags.some(
-			(t) => String(t || "") === PS_MANUAL_TAGS_MARKER
-		);
-		// Guard: if user has locally overridden tags but server hasn't received
-		// the marker yet, preserve the local editing state to prevent race
-		// conditions (e.g. refreshPersonalSpace polling resets unsaved tag changes).
-		if (psEditingNoteTagsOverridden && !serverHasMarker) {
+		// Guard: once the override flag is set, local tag state is authoritative.
+		// Server polling / save responses must NOT overwrite unsaved local edits.
+		// Only explicit user actions (tag context-menu) pass force:true.
+		if (psEditingNoteTagsOverridden && !force) {
 			// Still sync pinned state (independent of tags)
 			psEditingNotePinned = rawTags.some(
 				(t) => String(t || "") === PS_PINNED_TAG
 			);
 			return;
 		}
-		psEditingNoteTagsOverridden = serverHasMarker;
 		psEditingNotePinned = rawTags.some(
 			(t) => String(t || "") === PS_PINNED_TAG
 		);
@@ -12907,7 +12904,7 @@ ${highlightThemeCss}
 			rebuildPsTagsFromNotes();
 			applyPersonalSpaceFiltersAndRender();
 			if (touchedCurrentNote) {
-				syncPsEditingNoteTagsFromState();
+				syncPsEditingNoteTagsFromState({ force: true });
 			}
 			toast(`Updated ${updatedCount} note${updatedCount === 1 ? "" : "s"}.`, "success");
 		} else {
