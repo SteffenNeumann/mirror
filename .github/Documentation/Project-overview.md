@@ -1,8 +1,18 @@
 # Project overview
 
-Datum: 2026-02-21
+Datum: 2026-02-22
 
 Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische Analyse, keine Laufzeitauflösung).
+
+## Aktuelle Änderungen (2026-02-22)
+
+- **Auto-Tag-Generator nur bei Erst-Erstellung aktiv (per-Note Lock)** `#ps` `#tags` `#auto-tag` `#override`: Der Auto-Tag-Generator (`classifyText`/`mergeManualTags`) läuft nur noch beim allerersten Speichern einer Notiz (POST). Sobald die Notiz existiert (in Editor geladen oder nach POST-Response), wird `psEditingNoteTagsOverridden = true` gesetzt. Jeder folgende Save sendet den `__manual_tags__`-Marker → Server überspringt Auto-Tag-Recomputation. Damit kann der Auto-Tag-Generator beim Bearbeiten von Tags nicht mehr „dazwischenfunken".
+  1. **`applyNoteToEditor`** (`app.js` ~L13443): `psEditingNoteTagsOverridden = true` statt `rawTags.some(marker)`. Existierende Notizen werden sofort als manuell-überschrieben behandelt.
+  2. **`syncPsEditingNoteFromEditorText`** (`app.js` ~L13401): Gleiche Änderung — Notiz per Text-Match gefunden → sofort `true`.
+  3. **`savePersonalSpaceNote` POST-Response** (`app.js` ~L24341): Nach `syncPsEditingNoteTagsFromState()` wird `psEditingNoteTagsOverridden = true` gesetzt, damit alle weiteren Saves (Auto-Save, manuell) den Marker enthalten.
+  4. **`togglePinnedForNote`** (`app.js` ~L13170): Override bleibt nach Pin-Toggle `true`, wird nicht durch Server-Response zurückgesetzt.
+  - Zuständige Funktionen: `applyNoteToEditor`, `syncPsEditingNoteFromEditorText`, `savePersonalSpaceNote`, `togglePinnedForNote`.
+  - Zuständige Dateien: `app.js`.
 
 ## Aktuelle Änderungen (2026-02-21)
 
