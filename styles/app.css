@@ -2107,6 +2107,15 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	.cal-header * {
 		-webkit-tap-highlight-color: transparent;
 	}
+	.cal-header button,
+	.cal-header input {
+		touch-action: manipulation;
+		cursor: pointer;
+		pointer-events: auto;
+	}
+	.cal-header input {
+		cursor: text;
+	}
 	#calendarViewDropdownWrap {
 		overflow: visible;
 		z-index: 50;
@@ -2230,6 +2239,23 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		max-height: 100vh;
 		max-height: 100dvh;
 		overflow: visible;
+		padding: 0.25rem;
+	}
+	/* ── :has() CSS-only fallback: works even when old JS is cached ── */
+	#editorPanel:has(#calendarPanel:not(.hidden)) {
+		overflow: visible !important;
+		padding: 0 !important;
+	}
+	#editorPanel:has(#calendarPanel:not(.hidden)) > header {
+		display: none !important;
+	}
+	#editorPanel:has(#calendarPanel:not(.hidden)) > div {
+		margin-top: 0 !important;
+	}
+	#calendarPanel:not(.hidden) {
+		height: 100% !important;
+		max-height: 100dvh !important;
+		overflow: visible !important;
 		padding: 0.25rem;
 	}
 	body.mobile-note-open #editorPanel > header,
