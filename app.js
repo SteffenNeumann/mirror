@@ -13166,9 +13166,8 @@ ${highlightThemeCss}
 					psEditingNotePinned = updatedRaw.some(
 						(t) => String(t || "") === PS_PINNED_TAG
 					);
-					psEditingNoteTagsOverridden = updatedRaw.some(
-						(t) => String(t || "") === PS_MANUAL_TAGS_MARKER
-					);
+					// Keep override locked — auto-tags must not reactivate after pin toggle
+					psEditingNoteTagsOverridden = true;
 					const split = splitTagsForEditor(updatedRaw, saved.createdAt);
 					psEditingNoteTags = split.manual;
 					psEditingNoteYearTag = normalizeYearTag(split.year);
@@ -13398,9 +13397,8 @@ ${highlightThemeCss}
 		psEditingNoteId = String(note.id || "");
 		psEditingNoteKind = String(note.kind || "");
 		const rawTags = Array.isArray(note.tags) ? note.tags : [];
-		psEditingNoteTagsOverridden = rawTags.some(
-			(t) => String(t || "") === PS_MANUAL_TAGS_MARKER
-		);
+		// Once a note exists, lock override flag so auto-tags never run again.
+		psEditingNoteTagsOverridden = true;
 		psEditingNotePinned = rawTags.some(
 			(t) => String(t || "") === PS_PINNED_TAG
 		);
@@ -13441,9 +13439,8 @@ ${highlightThemeCss}
 			pushPsNoteHistory(psEditingNoteId);
 		}
 		const rawTags = Array.isArray(note.tags) ? note.tags : [];
-		psEditingNoteTagsOverridden = rawTags.some(
-			(t) => String(t || "") === PS_MANUAL_TAGS_MARKER
-		);
+		// Once a note exists, lock override flag so auto-tags never run again.
+		psEditingNoteTagsOverridden = true;
 		psEditingNotePinned = rawTags.some(
 			(t) => String(t || "") === PS_PINNED_TAG
 		);
@@ -24338,6 +24335,8 @@ self.onmessage = async (e) => {
 				psState.notes = filterRealNotes([saved, ...notes]);
 				applyPersonalSpaceFiltersAndRender();
 				syncPsEditingNoteTagsFromState();
+				// Lock override after first creation so auto-tags never run again
+				psEditingNoteTagsOverridden = true;
 				updateEditorMetaYaml();
 				if (!auto && room && key) {
 					const canSyncRoom = isPinnedContentActiveForRoom(
