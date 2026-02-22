@@ -11244,6 +11244,85 @@
 		}
 	}
 
+	const VIDEO_EXTENSIONS_RE = /\.(mp4|webm|ogg|ogv|mov)$/i;
+	const VIDEO_MIME_MAP = { mp4: "video/mp4", webm: "video/webm", ogg: "video/ogg", ogv: "video/ogg", mov: "video/quicktime" };
+
+	function embedVideoLinks(html) {
+		try {
+			const container = document.createElement("div");
+			container.innerHTML = String(html || "");
+			// 1) Replace <img> tags whose src points to a video file
+			const imgs = container.querySelectorAll("img[src]");
+			imgs.forEach((img) => {
+				const src = String(img.getAttribute("src") || "").trim();
+				if (!src) return;
+				const m = src.match(VIDEO_EXTENSIONS_RE);
+				if (!m) return;
+				const ext = m[1].toLowerCase();
+				let resolved = src;
+				try {
+					if (typeof location !== "undefined" && location.origin) {
+						resolved = new URL(src, location.origin).href;
+					}
+				} catch { resolved = src; }
+				const video = document.createElement("video");
+				video.controls = true;
+				video.preload = "metadata";
+				video.style.maxWidth = "100%";
+				video.style.borderRadius = "8px";
+				video.style.marginBlock = "0.5em";
+				const source = document.createElement("source");
+				source.src = resolved;
+				source.type = VIDEO_MIME_MAP[ext] || "video/mp4";
+				video.appendChild(source);
+				const fallback = document.createElement("a");
+				fallback.href = resolved;
+				fallback.target = "_blank";
+				fallback.rel = "noopener noreferrer";
+				fallback.textContent = img.getAttribute("alt") || "Video herunterladen";
+				video.appendChild(fallback);
+				img.replaceWith(video);
+			});
+			// 2) Replace <a> tags whose href points to a video file (bare links)
+			const links = container.querySelectorAll("a[href]");
+			links.forEach((link) => {
+				const href = String(link.getAttribute("href") || "").trim();
+				if (!href) return;
+				const m2 = href.match(VIDEO_EXTENSIONS_RE);
+				if (!m2) return;
+				// Skip if parent is already a <video> (from step 1 fallback)
+				if (link.closest("video")) return;
+				const ext2 = m2[1].toLowerCase();
+				let resolved2 = href;
+				try {
+					if (typeof location !== "undefined" && location.origin) {
+						resolved2 = new URL(href, location.origin).href;
+					}
+				} catch { resolved2 = href; }
+				const video2 = document.createElement("video");
+				video2.controls = true;
+				video2.preload = "metadata";
+				video2.style.maxWidth = "100%";
+				video2.style.borderRadius = "8px";
+				video2.style.marginBlock = "0.5em";
+				const source2 = document.createElement("source");
+				source2.src = resolved2;
+				source2.type = VIDEO_MIME_MAP[ext2] || "video/mp4";
+				video2.appendChild(source2);
+				const fallback2 = document.createElement("a");
+				fallback2.href = resolved2;
+				fallback2.target = "_blank";
+				fallback2.rel = "noopener noreferrer";
+				fallback2.textContent = link.textContent || "Video herunterladen";
+				video2.appendChild(fallback2);
+				link.replaceWith(video2);
+			});
+			return container.innerHTML;
+		} catch {
+			return html;
+		}
+	}
+
 	function embedPdfLinks(html) {
 		try {
 			const container = document.createElement("div");
@@ -11439,7 +11518,7 @@
 		let bodyHtml = "";
 		const taskScopeKey = buildTaskScopeKey(getActiveRoomTabNoteId());
 		try {
-			bodyHtml = embedPdfLinks(applyHljsToHtml(renderer.render(src)));
+			bodyHtml = embedVideoLinks(embedPdfLinks(applyHljsToHtml(renderer.render(src))));
 			bodyHtml = applyTaskClosedTimestampsToHtml(
 				bodyHtml,
 				String(srcRaw || ""),
@@ -11525,7 +11604,7 @@
 		let bodyHtml = "";
 		const taskScopeKey = buildTaskScopeKey(getActiveRoomTabNoteId());
 		try {
-			bodyHtml = embedPdfLinks(applyHljsToHtml(renderer.render(src)));
+			bodyHtml = embedVideoLinks(embedPdfLinks(applyHljsToHtml(renderer.render(src))));
 			bodyHtml = applyTaskClosedTimestampsToHtml(
 				bodyHtml,
 				srcRaw,

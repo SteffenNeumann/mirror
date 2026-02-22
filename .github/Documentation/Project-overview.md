@@ -4,7 +4,51 @@ Datum: 2026-02-22
 
 Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische Analyse, keine Laufzeitauflösung).
 
+## Feature-Analyse: Video-Upload & Preview-Wiedergabe (2026-02-22)
+
+**Frage:** Ist es möglich, Videos hochzuladen (Server) und im Preview wiederzugeben?
+
+**Antwort: Aktuell NEIN — aber ab diesem Commit implementiert.** Video-Upload und -Wiedergabe wurden mit folgenden Änderungen freigeschaltet:
+
+### Implementierte Änderungen (2026-02-22)
+
+| # | Datei | Änderung | Stelle |
+|---|-------|----------|--------|
+| **S1** | `server.js` | `isAllowedUploadMime()` akzeptiert jetzt `video/*` MIME-Types | [server.js](server.js#L1185) |
+| **S2** | `server.js` | `extForMime()` kennt `.mp4`, `.webm`, `.ogg`, `.mov` | [server.js](server.js#L1190) |
+| **S3** | `server.js` | `mimeTypeForPath()` liefert korrekte `Content-Type`-Header für Video-Dateien (`video/mp4`, `video/webm`, `video/ogg`, `video/quicktime`) | [server.js](server.js#L950) |
+| **C1** | `app.js` | Neue `embedVideoLinks(html)` Funktion — ersetzt `<img>` und `<a>` mit Video-Erweiterungen durch `<video controls>` mit `<source>` + Fallback-Download-Link | [app.js](app.js#L11247) |
+| **C2** | `app.js` | `buildPreviewContentHtml()` und `updatePreview()` pipen HTML durch `embedVideoLinks()` nach `embedPdfLinks()` | [app.js](app.js#L11442) |
+| **C3** | `index.html` | Upload-File-Input akzeptiert `video/*` zusätzlich zu `image/*` und `application/pdf` | [index.html](index.html#L3094) |
+
+### Nutzung
+
+1. **Upload**: Upload-Modal → Datei wählen (`.mp4`, `.webm`, `.ogg`, `.mov`) → In Mirror einfügen
+2. **Markdown-Syntax**: `![Mein Video](/uploads/xyz.mp4)` oder einfacher Link `[Video](/uploads/xyz.mp4)`
+3. **Preview**: Video wird automatisch als `<video controls>` gerendert mit nativen Browser-Controls (Play, Pause, Lautstärke, Fullscreen)
+
+### Bekannte Limitierungen
+
+| Limitation | Detail |
+|------------|--------|
+| **Dateigröße** | Max `MIRROR_UPLOAD_MAX_MB` (Default 8 MB, max 50 MB). Für längere Videos ggf. erhöhen. |
+| **Base64-Encoding** | Upload nutzt Data-URI im JSON-Body → 33% Overhead. Kein Streaming-Upload. |
+| **Browserformat** | Nicht jeder Browser spielt jedes Format ab. `.mp4` (H.264) hat die beste Kompatibilität. `.mov` funktioniert primär in Safari. |
+| **Kein Transcoding** | Videos werden 1:1 gespeichert, kein Server-seitiges Transcoding. |
+
+---
+
 ## Aktuelle Änderungen (2026-02-22)
+
+- **Video-Upload & Preview-Wiedergabe** `#upload` `#video` `#preview`: Videos können jetzt über das Upload-Modal hochgeladen und im Markdown-Preview als `<video controls>` abgespielt werden. Unterstützte Formate: MP4, WebM, OGG, MOV.
+  1. **Server: MIME-Filter erweitert** (`server.js` ~L1185): `isAllowedUploadMime()` akzeptiert `video/*` zusätzlich zu `image/*` und `application/pdf`.
+  2. **Server: Extension-Mapping** (`server.js` ~L1190): `extForMime()` kennt `.mp4`, `.webm`, `.ogg`, `.mov`.
+  3. **Server: Static-Serving MIME** (`server.js` ~L950): `mimeTypeForPath()` liefert korrekte `Content-Type`-Header für Video-Dateien.
+  4. **Client: `embedVideoLinks()`** (`app.js` ~L11247): Neue Post-Processing-Funktion (analog zu `embedPdfLinks`). Erkennt `<img>`- und `<a>`-Tags mit Video-Erweiterungen und ersetzt sie durch `<video controls>` mit `<source>` + Fallback-Download-Link. Responsive Styling (max-width:100%, border-radius).
+  5. **Client: Preview-Pipeline** (`app.js` ~L11442, ~L11528): `buildPreviewContentHtml()` und `updatePreview()` pipen HTML durch `embedVideoLinks()` nach `embedPdfLinks()`.
+  6. **Upload-Modal: Accept erweitert** (`index.html` ~L3094): File-Input akzeptiert `video/*`.
+  - Zuständige Funktionen: `isAllowedUploadMime`, `extForMime`, `mimeTypeForPath`, `embedVideoLinks`, `buildPreviewContentHtml`, `updatePreview`.
+  - Zuständige Dateien: `server.js`, `app.js`, `index.html`.
 
 - **Auto-Tag-Generator nur bei Erst-Erstellung aktiv (per-Note Lock)** `#ps` `#tags` `#auto-tag` `#override`: Der Auto-Tag-Generator (`classifyText`/`mergeManualTags`) läuft nur noch beim allerersten Speichern einer Notiz (POST). Sobald die Notiz existiert (in Editor geladen oder nach POST-Response), wird `psEditingNoteTagsOverridden = true` gesetzt. Jeder folgende Save sendet den `__manual_tags__`-Marker → Server überspringt Auto-Tag-Recomputation. Damit kann der Auto-Tag-Generator beim Bearbeiten von Tags nicht mehr „dazwischenfunken".
   1. **`applyNoteToEditor`** (`app.js` ~L13443): `psEditingNoteTagsOverridden = true` statt `rawTags.some(marker)`. Existierende Notizen werden sofort als manuell-überschrieben behandelt.

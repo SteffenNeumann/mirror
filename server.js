@@ -960,6 +960,10 @@ function mimeTypeForPath(filePath) {
 	if (ext === ".jpg" || ext === ".jpeg") return "image/jpeg";
 	if (ext === ".pdf") return "application/pdf";
 	if (ext === ".ico") return "image/x-icon";
+	if (ext === ".mp4") return "video/mp4";
+	if (ext === ".webm") return "video/webm";
+	if (ext === ".ogg" || ext === ".ogv") return "video/ogg";
+	if (ext === ".mov") return "video/quicktime";
 	return "application/octet-stream";
 }
 
@@ -1184,7 +1188,7 @@ function decodeDataUrl(input) {
 
 function isAllowedUploadMime(mime) {
 	const m = String(mime || "").toLowerCase();
-	return m.startsWith("image/") || m === "application/pdf";
+	return m.startsWith("image/") || m.startsWith("video/") || m === "application/pdf";
 }
 
 function extForMime(mime) {
@@ -1195,6 +1199,10 @@ function extForMime(mime) {
 	if (m === "image/webp") return ".webp";
 	if (m === "image/gif") return ".gif";
 	if (m === "image/svg+xml") return ".svg";
+	if (m === "video/mp4") return ".mp4";
+	if (m === "video/webm") return ".webm";
+	if (m === "video/ogg") return ".ogg";
+	if (m === "video/quicktime") return ".mov";
 	return "";
 }
 
