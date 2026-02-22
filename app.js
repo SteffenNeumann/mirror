@@ -5804,6 +5804,20 @@
 				"calendar.modal.sync.local": "Nur lokal",
 				"calendar.modal.sync.google": "Google Calendar",
 				"calendar.modal.sync.outlook": "Outlook Calendar",
+				"calendar.modal.location": "Ort (optional)",
+				"calendar.modal.location_placeholder": "z. B. Office, Call",
+				"calendar.modal.cancel": "Abbrechen",
+				"calendar.modal.save": "Speichern",
+				"calendar.header.add": "Neu",
+				"calendar.toast.title_required": "Bitte einen Titel angeben.",
+				"calendar.toast.date_required": "Bitte ein Datum auswählen.",
+				"calendar.toast.time_required": "Bitte Start- und Endzeit angeben.",
+				"calendar.toast.end_before_start": "Ende muss nach Start liegen.",
+				"calendar.toast.saved": "Termin gespeichert.",
+				"calendar.toast.google_not_connected": "Google Kalender ist nicht verbunden.",
+				"calendar.toast.google_sync_failed": "Google Sync fehlgeschlagen",
+				"calendar.toast.outlook_not_connected": "Outlook Kalender ist nicht verbunden.",
+				"calendar.toast.outlook_sync_failed": "Outlook Sync fehlgeschlagen",
 				"toast.dictation_failed": "Diktat fehlgeschlagen.",
 				"toast.ai_saved": "KI-Einstellungen gespeichert.",
 				"toast.ai_cleared": "KI-Einstellungen gelöscht.",
@@ -5926,6 +5940,15 @@
 				"calendar.search.no_results": "Keine Treffer.",
 				"calendar.search.results": "{n} Treffer",
 				"calendar.search.allday": "Ganztägig",
+				"calendar.allday": "Ganztägig",
+				"calendar.day.no_events": "Keine Termine heute.",
+				"calendar.week.no_events": "Keine Termine",
+				"calendar.month.more": "+{n} weitere",
+				"calendar.view.day": "Tag",
+				"calendar.view.week": "Woche",
+				"calendar.view.month": "Monat",
+				"calendar.kw": "KW {n}",
+				"calendar.weekdays": "Mo,Di,Mi,Do,Fr,Sa,So",
 			},
 
 			en: {
@@ -6310,6 +6333,20 @@
 				"calendar.modal.sync.local": "Local only",
 				"calendar.modal.sync.google": "Google Calendar",
 				"calendar.modal.sync.outlook": "Outlook Calendar",
+				"calendar.modal.location": "Location (optional)",
+				"calendar.modal.location_placeholder": "e.g. Office, Call",
+				"calendar.modal.cancel": "Cancel",
+				"calendar.modal.save": "Save",
+				"calendar.header.add": "New",
+				"calendar.toast.title_required": "Please enter a title.",
+				"calendar.toast.date_required": "Please select a date.",
+				"calendar.toast.time_required": "Please enter start and end time.",
+				"calendar.toast.end_before_start": "End must be after start.",
+				"calendar.toast.saved": "Event saved.",
+				"calendar.toast.google_not_connected": "Google Calendar is not connected.",
+				"calendar.toast.google_sync_failed": "Google sync failed",
+				"calendar.toast.outlook_not_connected": "Outlook Calendar is not connected.",
+				"calendar.toast.outlook_sync_failed": "Outlook sync failed",
 				"toast.dictation_failed": "Dictation failed.",
 				"toast.ai_saved": "AI settings saved.",
 				"toast.ai_cleared": "AI settings cleared.",
@@ -6432,6 +6469,15 @@
 				"calendar.search.no_results": "No results.",
 				"calendar.search.results": "{n} results",
 				"calendar.search.allday": "All day",
+				"calendar.allday": "All day",
+				"calendar.day.no_events": "No events today.",
+				"calendar.week.no_events": "No events",
+				"calendar.month.more": "+{n} more",
+				"calendar.view.day": "Day",
+				"calendar.view.week": "Week",
+				"calendar.view.month": "Month",
+				"calendar.kw": "CW {n}",
+				"calendar.weekdays": "Mon,Tue,Wed,Thu,Fri,Sat,Sun",
 			},
 		};
 
@@ -18081,7 +18127,7 @@ self.onmessage = async (e) => {
 
 	function updateCalendarViewButtons() {
 		if (!calendarViewButtons || !calendarViewButtons.length) return;
-		const viewLabels = { day: "Tag", week: "Woche", month: "Monat" };
+		const viewLabels = { day: t("calendar.view.day"), week: t("calendar.view.week"), month: t("calendar.view.month") };
 		calendarViewButtons.forEach((btn) => {
 			const name = String(btn.getAttribute("data-calendar-view") || "");
 			const active = name === calendarState.view;
@@ -19450,7 +19496,7 @@ self.onmessage = async (e) => {
 		if (calendarWeekLabel) {
 			const showWeek = view === "week" || view === "day";
 			if (showWeek) {
-				calendarWeekLabel.textContent = `KW ${getIsoWeekNumber(cursor)}`;
+				calendarWeekLabel.textContent = formatUi(t("calendar.kw"), { n: getIsoWeekNumber(cursor) });
 				calendarWeekLabel.classList.remove("hidden");
 			} else {
 				calendarWeekLabel.textContent = "";
@@ -19473,7 +19519,7 @@ self.onmessage = async (e) => {
 				? dayEvents
 					.map((evt) => {
 						const time = evt.allDay
-							? "Ganztägig"
+							? t("calendar.allday")
 							: `${formatTime(evt.start)} – ${formatTime(evt.end)}`;
 						const tooltip = evt.location
 							? `${time} · ${evt.title} · ${evt.location}`
@@ -19498,7 +19544,7 @@ self.onmessage = async (e) => {
 							</div>`;
 					})
 					.join("")
-				: '<div class="text-sm text-slate-400">Keine Termine heute.</div>';
+				: `<div class="text-sm text-slate-400">${escapeHtml(t("calendar.day.no_events"))}</div>`;
 			renderCalendarFreeSlots(view, cursor, events);
 			return;
 		}
@@ -19524,7 +19570,7 @@ self.onmessage = async (e) => {
 					? dayEvents
 						.map((evt) => {
 							const time = evt.allDay
-								? "Ganztägig"
+								? t("calendar.allday")
 								: formatTime(evt.start);
 							const tooltip = evt.location
 								? `${time} · ${evt.title} · ${evt.location}`
@@ -19544,7 +19590,7 @@ self.onmessage = async (e) => {
 								</div>`;
 						})
 						.join("")
-					: '<div class="text-[11px] text-slate-500">Keine Termine</div>';
+					: `<div class="text-[11px] text-slate-500">${escapeHtml(t("calendar.week.no_events"))}</div>`;
 				return `
 					<div class="rounded-lg border ${dayBorder} ${availClass} bg-slate-950/40 p-2 cursor-pointer select-none transition-colors${focusedClass}" data-calendar-day="${dk}">
 						<div class="flex items-center justify-between">
@@ -19561,7 +19607,7 @@ self.onmessage = async (e) => {
 		}
 		const monthStart = startOfMonth(cursor);
 		const gridStart = startOfWeek(monthStart);
-		const weekdayLabels = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
+		const weekdayLabels = t("calendar.weekdays").split(",");
 		const weekdayHeader = weekdayLabels
 			.map(
 				(label) =>
@@ -19577,7 +19623,7 @@ self.onmessage = async (e) => {
 				(evt) => evt.start < dayEnd && evt.end > day
 			);
 			const visibleEvents = dayEvents.slice(0, 2).map((evt) => {
-				const time = evt.allDay ? "Ganztägig" : formatTime(evt.start);
+				const time = evt.allDay ? t("calendar.allday") : formatTime(evt.start);
 				const title = evt.location
 					? `${time} · ${evt.title} · ${evt.location}`
 					: `${time} · ${evt.title}`;
@@ -19595,9 +19641,7 @@ self.onmessage = async (e) => {
 			});
 			const extra =
 				dayEvents.length > 2
-					? `<span class=\"text-[10px] text-slate-500\">+${
-						dayEvents.length - 2
-					} weitere</span>`
+					? `<span class=\"text-[10px] text-slate-500\">${formatUi(t("calendar.month.more"), { n: dayEvents.length - 2 })}</span>`
 					: "";
 			const isToday = startOfDay(day).getTime() === startOfDay(new Date()).getTime();
 			const isCurrentMonth = day.getMonth() === cursor.getMonth();
@@ -19694,12 +19738,12 @@ self.onmessage = async (e) => {
 	function buildLocalEventFromModal() {
 		const title = String(calendarEventName ? calendarEventName.value : "").trim();
 		if (!title) {
-			toast("Bitte einen Titel angeben.", "error");
+			toast(t("calendar.toast.title_required"), "error");
 			return null;
 		}
 		const dateStr = String(calendarEventDate ? calendarEventDate.value : "").trim();
 		if (!dateStr) {
-			toast("Bitte ein Datum auswählen.", "error");
+			toast(t("calendar.toast.date_required"), "error");
 			return null;
 		}
 		const allDay = Boolean(calendarEventAllDay && calendarEventAllDay.checked);
@@ -19720,7 +19764,7 @@ self.onmessage = async (e) => {
 				calendarEventEnd ? calendarEventEnd.value : ""
 			).trim();
 			if (!startTime || !endTime) {
-				toast("Bitte Start- und Endzeit angeben.", "error");
+				toast(t("calendar.toast.time_required"), "error");
 				return null;
 			}
 			const [y, m, d] = dateStr.split("-").map((v) => Number(v));
@@ -19729,7 +19773,7 @@ self.onmessage = async (e) => {
 			start = new Date(y, m - 1, d, sh, sm || 0, 0);
 			end = new Date(y, m - 1, d, eh, em || 0, 0);
 			if (!(end > start)) {
-				toast("Ende muss nach Start liegen.", "error");
+				toast(t("calendar.toast.end_before_start"), "error");
 				return null;
 			}
 		}
@@ -19751,7 +19795,7 @@ self.onmessage = async (e) => {
 			: [];
 		list.push(evt);
 		saveLocalCalendarEvents(list);
-		toast("Termin gespeichert.", "success");
+		toast(t("calendar.toast.saved"), "success");
 	}
 
 	async function loadUploadsManage() {
@@ -25653,7 +25697,7 @@ self.onmessage = async (e) => {
 			saveCalendarSyncTarget(syncTarget);
 			if (syncTarget === "google") {
 				if (!googleCalendarConnected) {
-					toast("Google Kalender ist nicht verbunden.", "error");
+					toast(t("calendar.toast.google_not_connected"), "error");
 				} else {
 					try {
 						const res = await createGoogleCalendarEvent(evt);
@@ -25662,13 +25706,13 @@ self.onmessage = async (e) => {
 						}
 					} catch (err) {
 						const msg = err && err.message ? err.message : "";
-						toast("Google Sync fehlgeschlagen" + (msg ? ": " + msg : "."), "error");
+						toast(t("calendar.toast.google_sync_failed") + (msg ? ": " + msg : "."), "error");
 					}
 				}
 			}
 			if (syncTarget === "outlook") {
 				if (!outlookCalendarConnected) {
-					toast("Outlook Kalender ist nicht verbunden.", "error");
+					toast(t("calendar.toast.outlook_not_connected"), "error");
 				} else {
 					try {
 						const res = await createOutlookCalendarEvent(evt);
@@ -25677,7 +25721,7 @@ self.onmessage = async (e) => {
 						}
 					} catch (err) {
 						const msg = err && err.message ? err.message : "";
-						toast("Outlook Sync fehlgeschlagen" + (msg ? ": " + msg : "."), "error");
+						toast(t("calendar.toast.outlook_sync_failed") + (msg ? ": " + msg : "."), "error");
 					}
 				}
 			}
