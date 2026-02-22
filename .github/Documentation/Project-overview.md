@@ -12,8 +12,9 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
   3. **`savePersonalSpaceNote` POST-Response** (`app.js` ~L24341): Nach `syncPsEditingNoteTagsFromState()` wird `psEditingNoteTagsOverridden = true` gesetzt, damit alle weiteren Saves (Auto-Save, manuell) den Marker enthalten.
   4. **`togglePinnedForNote`** (`app.js` ~L13170): Override bleibt nach Pin-Toggle `true`, wird nicht durch Server-Response zurückgesetzt.
   5. **`syncPsEditingNoteTagsFromState` Guard verstärkt** (`app.js` ~L2406): Akzeptiert jetzt `opts.force`-Parameter. Wenn `psEditingNoteTagsOverridden = true` und **nicht** `force`, wird der gesamte Tag-Sync übersprungen (nur Pinned-State wird synchronisiert). Vorher wurde nur geschützt wenn der Server den Marker noch nicht hatte — bei vorherigem Save mit Marker wurde der Guard umgangen und `refreshPersonalSpace`-Polling überschrieb lokale Tag-Änderungen (Category, Subcategory, manuelle Tags) mit veraltetem Server-Stand. Nur `updateNotesForTagChange` (Tag-Kontextmenü) übergibt `{ force: true }`.
-  - Zuständige Funktionen: `applyNoteToEditor`, `syncPsEditingNoteFromEditorText`, `savePersonalSpaceNote`, `togglePinnedForNote`, `syncPsEditingNoteTagsFromState`, `updateNotesForTagChange`.
-  - Zuständige Dateien: `app.js`.
+  6. **3-Tag-Limit nur für Auto-Tags, nicht für User-Tags** (`server.js` ~L1399): `normalizeImportTags` akzeptiert jetzt optionalen `limit`-Parameter (Default: 3). `splitManualOverrideTags` prüft **vor** der Normalisierung ob der `__manual_tags__`-Marker im Payload ist: wenn ja → `limit=50` (User-kuratierte Tags werden vollständig erhalten), wenn nein → `limit=3` (Auto-Tag-Cap bleibt). Vorher wurden User-Tags wie `cat:custom` bei ≥3 regulären Tags stillschweigend abgeschnitten.
+  - Zuständige Funktionen: `applyNoteToEditor`, `syncPsEditingNoteFromEditorText`, `savePersonalSpaceNote`, `togglePinnedForNote`, `syncPsEditingNoteTagsFromState`, `updateNotesForTagChange`, `normalizeImportTags`, `splitManualOverrideTags`.
+  - Zuständige Dateien: `app.js`, `server.js`.
 
 ## Aktuelle Änderungen (2026-02-21)
 
