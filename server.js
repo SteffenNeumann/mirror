@@ -1396,7 +1396,8 @@ function sanitizeCommentItems(raw) {
 // without counting against the 3-tag limit.
 const SYSTEM_TAG_MARKERS = new Set(["__manual_tags__", "pinned"]);
 
-function normalizeImportTags(rawTags) {
+function normalizeImportTags(rawTags, limit) {
+	const maxRegular = typeof limit === "number" && Number.isFinite(limit) ? limit : 3;
 	const tags = Array.isArray(rawTags) ? rawTags : [];
 	const out = [];
 	const system = [];
@@ -1411,7 +1412,7 @@ function normalizeImportTags(rawTags) {
 			system.push(s);
 			continue;
 		}
-		if (out.length >= 3) continue; // skip surplus regular tags but keep scanning for system markers
+		if (out.length >= maxRegular) continue; // skip surplus regular tags but keep scanning for system markers
 		out.push(s);
 	}
 	return uniq([...out, ...system]);
@@ -1490,7 +1491,14 @@ function applyDateTags(tags, createdAt) {
 const MANUAL_TAGS_MARKER = "__manual_tags__";
 
 function splitManualOverrideTags(rawTags) {
-	const normalized = normalizeImportTags(rawTags);
+	// Peek: if __manual_tags__ marker is present, the user manually curated
+	// these tags → don't apply the 3-tag auto-tag limit.
+	const raw = Array.isArray(rawTags) ? rawTags : [];
+	const hasMarker = raw.some(
+		(t) => String(t || "").trim().toLowerCase() === MANUAL_TAGS_MARKER
+	);
+	const limit = hasMarker ? 50 : 3;
+	const normalized = normalizeImportTags(raw, limit);
 	const override = normalized.includes(MANUAL_TAGS_MARKER);
 	const tags = override
 		? normalized.filter((t) => t !== MANUAL_TAGS_MARKER)
