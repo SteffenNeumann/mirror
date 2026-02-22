@@ -2144,7 +2144,8 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	body.mobile-preview-open main,
 	body.mobile-editor-open main,
 	body.mobile-ps-open main,
-	body.mobile-note-open main {
+	body.mobile-note-open main,
+	body.mobile-calendar-open main {
 		width: 100vw;
 		width: 100dvw;
 		height: 100vh;
@@ -2156,7 +2157,8 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	body.mobile-ps-open #editorPanel,
 	body.mobile-ps-open #previewPanel,
 	body.mobile-note-open #previewPanel,
-	body.mobile-editor-open #psPanel {
+	body.mobile-editor-open #psPanel,
+	body.mobile-calendar-open #psPanel {
 		display: none;
 	}
 	body.mobile-preview-open #previewPanel {
@@ -2207,9 +2209,36 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		border-radius: 0;
 		border: none;
 	}
+	/* Calendar on mobile: fullscreen editor panel, hide editor header */
+	body.mobile-calendar-open #editorPanel {
+		position: fixed;
+		inset: 0;
+		width: 100vw;
+		height: 100vh;
+		z-index: 70;
+		pointer-events: auto;
+		border-radius: 0;
+		border: none;
+		overflow: visible;
+		padding: 0;
+	}
+	body.mobile-calendar-open #editorPanel > header {
+		display: none;
+	}
+	body.mobile-calendar-open #calendarPanel {
+		height: 100%;
+		max-height: 100vh;
+		max-height: 100dvh;
+		overflow: visible;
+		padding: 0.25rem;
+	}
 	body.mobile-note-open #editorPanel > header,
 	body.mobile-editor-open #editorPanel > header {
 		flex: 0 0 auto;
+	}
+	body.mobile-note-open #editorPanel,
+	body.mobile-editor-open #editorPanel {
+		overflow: hidden;
 	}
 	body:not(.mobile-preview-open) #previewCloseMobile {
 		display: none;
@@ -2624,7 +2653,11 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		padding: 0.25rem 0.5rem;
 		font-size: 11px;
 	}
-	/* Search bar: hidden on very small screens (already hidden sm:) */
+	/* Calendar search: compact on small phones */
+	#calendarSearchInput {
+		min-width: 60px;
+		font-size: 14px; /* prevent iOS zoom */
+	}
 	/* Calendar sidebar: stack below grid */
 	.calendar-sidebar {
 		max-height: 180px;
@@ -6603,6 +6636,29 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 		gap: 0.25rem;
 	}
 	/* Navigation auf eigene Zeile, rechte Controls daneben */
+	.cal-header > div > div:first-child {
+		flex: 1 1 100%;
+	}
+	.cal-header > div > div:last-child {
+		flex: 1 1 100%;
+		justify-content: flex-end;
+	}
+}
+/* Mobile fallback: disable container-type to avoid WebKit containment bugs */
+@media (max-width: 1023px) {
+	.cal-header {
+		container-type: normal;
+	}
+	/* Replicate container queries via media queries on mobile */
+	.cal-header > div {
+		flex-wrap: wrap;
+		gap: 0.375rem;
+	}
+	.cal-header #calendarTitle {
+		display: none;
+	}
+}
+@media (max-width: 420px) {
 	.cal-header > div > div:first-child {
 		flex: 1 1 100%;
 	}

@@ -5018,17 +5018,19 @@
 	function syncMobileFocusState() {
 		if (!document.body || !document.body.classList) return;
 		const isMobile = isMobileViewport();
-		const previewActive = isMobile && previewOpen;
+		const calActive = isMobile && calendarPanelActive;
+		const previewActive = isMobile && !calActive && previewOpen;
 		const noteActive =
-			isMobile && !previewOpen && Boolean(String(psEditingNoteId || ""));
-		const psActive = isMobile && !previewOpen && !noteActive && mobilePsOpen;
+			isMobile && !calActive && !previewOpen && Boolean(String(psEditingNoteId || ""));
+		const psActive = isMobile && !calActive && !previewOpen && !noteActive && mobilePsOpen;
 		const editorActive =
-			isMobile && !previewOpen && !noteActive && !mobilePsOpen;
+			isMobile && !calActive && !previewOpen && !noteActive && !mobilePsOpen;
 		const wasNoteActive = document.body.classList.contains("mobile-note-open");
 		document.body.classList.toggle("mobile-preview-open", previewActive);
 		document.body.classList.toggle("mobile-note-open", noteActive);
 		document.body.classList.toggle("mobile-ps-open", psActive);
 		document.body.classList.toggle("mobile-editor-open", editorActive);
+		document.body.classList.toggle("mobile-calendar-open", calActive);
 		// Re-render tag pills when entering note view on mobile
 		if (noteActive && !wasNoteActive) {
 			try {
@@ -17448,6 +17450,7 @@ self.onmessage = async (e) => {
 		if (calendarPanel && calendarPanel.classList) {
 			calendarPanel.classList.toggle("hidden", !calendarPanelActive);
 		}
+		syncMobileFocusState();
 		if (calendarPanelActive) {
 			// Only reset to default view when opening for the first time (no events loaded yet)
 			if (!calendarState.lastLoadedAt) {
