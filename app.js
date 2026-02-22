@@ -1515,12 +1515,13 @@
 		if (!safeUrl) return name;
 		const mime = file ? String(file.type || "") : "";
 		if (mime.startsWith("image/")) return `![${name}](${safeUrl})`;
+		if (mime.startsWith("video/")) return `![${name}](${safeUrl})`;
 		return `[${name}](${safeUrl})`;
 	}
 
 	function isAllowedUploadType(file) {
 		const mime = file ? String(file.type || "") : "";
-		return mime.startsWith("image/") || mime === "application/pdf";
+		return mime.startsWith("image/") || mime.startsWith("video/") || mime === "application/pdf";
 	}
 
 	function updateUploadPreview(file) {
@@ -23473,7 +23474,7 @@ self.onmessage = async (e) => {
 				return;
 			}
 			if (!isAllowedUploadType(file)) {
-				toast("Nur Bilder oder PDFs sind erlaubt.", "error");
+				toast("Nur Bilder, Videos oder PDFs sind erlaubt.", "error");
 				uploadSelectedFile = null;
 				uploadFileInput.value = "";
 				updateUploadPreview(null);
@@ -23481,7 +23482,7 @@ self.onmessage = async (e) => {
 				return;
 			}
 			if (file.size > MAX_UPLOAD_BYTES) {
-				toast("Datei zu groß (max. 8 MB).", "error");
+				toast(`Datei zu groß (max. ${MAX_UPLOAD_BYTES / (1024*1024)} MB).`, "error");
 				uploadSelectedFile = null;
 				uploadFileInput.value = "";
 				updateUploadPreview(null);
@@ -23501,11 +23502,11 @@ self.onmessage = async (e) => {
 				return;
 			}
 			if (!isAllowedUploadType(uploadSelectedFile)) {
-				toast("Nur Bilder oder PDFs sind erlaubt.", "error");
+				toast("Nur Bilder, Videos oder PDFs sind erlaubt.", "error");
 				return;
 			}
 			if (uploadSelectedFile.size > MAX_UPLOAD_BYTES) {
-				toast("Datei zu groß (max. 8 MB).", "error");
+				toast(`Datei zu groß (max. ${MAX_UPLOAD_BYTES / (1024*1024)} MB).`, "error");
 				return;
 			}
 			uploadBusy = true;

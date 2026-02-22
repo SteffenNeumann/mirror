@@ -20,6 +20,9 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
 | **C1** | `app.js` | Neue `embedVideoLinks(html)` Funktion — ersetzt `<img>` und `<a>` mit Video-Erweiterungen durch `<video controls>` mit `<source>` + Fallback-Download-Link | [app.js](app.js#L11247) |
 | **C2** | `app.js` | `buildPreviewContentHtml()` und `updatePreview()` pipen HTML durch `embedVideoLinks()` nach `embedPdfLinks()` | [app.js](app.js#L11442) |
 | **C3** | `index.html` | Upload-File-Input akzeptiert `video/*` zusätzlich zu `image/*` und `application/pdf` | [index.html](index.html#L3094) |
+| **C4** | `app.js` | `isAllowedUploadType()` akzeptiert `video/*` (vorher nur `image/*` + `application/pdf` → Client blockierte Upload) | [app.js](app.js#L1521) |
+| **C5** | `app.js` | `buildUploadMarkdown()` erzeugt `![video](url)` für Video-MIME-Types (nötig für `embedVideoLinks`) | [app.js](app.js#L1511) |
+| **C6** | `app.js` | Toast-Meldungen: „Nur Bilder, Videos oder PDFs sind erlaubt." (vorher: „Nur Bilder oder PDFs") | [app.js](app.js#L23475) |
 
 ### Nutzung
 
@@ -47,7 +50,10 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
   4. **Client: `embedVideoLinks()`** (`app.js` ~L11247): Neue Post-Processing-Funktion (analog zu `embedPdfLinks`). Erkennt `<img>`- und `<a>`-Tags mit Video-Erweiterungen und ersetzt sie durch `<video controls>` mit `<source>` + Fallback-Download-Link. Responsive Styling (max-width:100%, border-radius).
   5. **Client: Preview-Pipeline** (`app.js` ~L11442, ~L11528): `buildPreviewContentHtml()` und `updatePreview()` pipen HTML durch `embedVideoLinks()` nach `embedPdfLinks()`.
   6. **Upload-Modal: Accept erweitert** (`index.html` ~L3094): File-Input akzeptiert `video/*`.
-  - Zuständige Funktionen: `isAllowedUploadMime`, `extForMime`, `mimeTypeForPath`, `embedVideoLinks`, `buildPreviewContentHtml`, `updatePreview`.
+  7. **Client: MIME-Filter erweitert** (`app.js` ~L1521): `isAllowedUploadType()` akzeptiert `video/*` — vorher blockierte der Client den Upload vor dem Server-Request.
+  8. **Client: Markdown-Builder** (`app.js` ~L1511): `buildUploadMarkdown()` erzeugt `![video](url)` für Video-MIME-Types, damit `embedVideoLinks()` greift.
+  9. **Client: Toast-Meldungen** (`app.js` ~L23475): „Nur Bilder, Videos oder PDFs sind erlaubt." statt „Nur Bilder oder PDFs".
+  - Zuständige Funktionen: `isAllowedUploadMime`, `extForMime`, `mimeTypeForPath`, `embedVideoLinks`, `buildPreviewContentHtml`, `updatePreview`, `isAllowedUploadType`, `buildUploadMarkdown`.
   - Zuständige Dateien: `server.js`, `app.js`, `index.html`.
 
 - **Auto-Tag-Generator nur bei Erst-Erstellung aktiv (per-Note Lock)** `#ps` `#tags` `#auto-tag` `#override`: Der Auto-Tag-Generator (`classifyText`/`mergeManualTags`) läuft nur noch beim allerersten Speichern einer Notiz (POST). Sobald die Notiz existiert (in Editor geladen oder nach POST-Response), wird `psEditingNoteTagsOverridden = true` gesetzt. Jeder folgende Save sendet den `__manual_tags__`-Marker → Server überspringt Auto-Tag-Recomputation. Damit kann der Auto-Tag-Generator beim Bearbeiten von Tags nicht mehr „dazwischenfunken".
