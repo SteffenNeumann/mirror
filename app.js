@@ -1844,6 +1844,17 @@
 		"todo",
 	]);
 
+	/**
+	 * Normalize a single tag for display & filtering.
+	 * Legacy bare kind tags → cat:kind, lang-xxx → sub:xxx.
+	 */
+	function normalizeTagForFilter(tag) {
+		const s = String(tag || "").trim().toLowerCase();
+		if (PS_KIND_TAGS.has(s)) return `cat:${s}`;
+		if (s.startsWith("lang-")) return `sub:${s.slice(5)}`;
+		return s;
+	}
+
 	function splitTagsForEditor(rawTags, createdAt) {
 		const tags = Array.isArray(rawTags) ? rawTags : [];
 		const cleaned = stripPinnedTag(stripManualTagsMarker(tags));
@@ -1874,11 +1885,13 @@
 				subcategory = s.slice(4);
 				continue;
 			}
-			if (!derivedCategory && PS_KIND_TAGS.has(s)) {
-				derivedCategory = s;
+			if (PS_KIND_TAGS.has(s)) {
+				if (!derivedCategory) derivedCategory = s;
+				continue;
 			}
-			if (!derivedSubcategory && s.startsWith("lang-")) {
-				derivedSubcategory = s.slice(5);
+			if (s.startsWith("lang-")) {
+				if (!derivedSubcategory) derivedSubcategory = s.slice(5);
+				continue;
 			}
 			manual.push(s);
 		}
@@ -1905,6 +1918,10 @@
 				cats.push(s);
 			} else if (s.startsWith("sub:")) {
 				subs.push(s);
+			} else if (PS_KIND_TAGS.has(s)) {
+				cats.push(`cat:${s}`);
+			} else if (s.startsWith("lang-")) {
+				subs.push(`sub:${s.slice(5)}`);
 			} else {
 				manual.push(s);
 			}
@@ -10482,12 +10499,12 @@
 		if (active.length) {
 			if (psTagFilterMode === "or") {
 				notes = notes.filter((n) => {
-					const tags = Array.isArray(n && n.tags) ? n.tags : [];
+					const tags = (Array.isArray(n && n.tags) ? n.tags : []).map(normalizeTagForFilter);
 					return active.some((t) => tags.includes(t));
 				});
 			} else {
 				notes = notes.filter((n) => {
-					const tags = Array.isArray(n && n.tags) ? n.tags : [];
+					const tags = (Array.isArray(n && n.tags) ? n.tags : []).map(normalizeTagForFilter);
 					return active.every((t) => tags.includes(t));
 				});
 			}
@@ -12743,8 +12760,6 @@ ${highlightThemeCss}
 			month: [],
 			category: [],
 			subcategory: [],
-			kind: [],
-			language: [],
 			other: [],
 		};
 		for (const t of all) {
@@ -12767,11 +12782,11 @@ ${highlightThemeCss}
 				continue;
 			}
 			if (PS_KIND_TAGS.has(tag)) {
-				buckets.kind.push(tag);
+				buckets.category.push(`cat:${tag}`);
 				continue;
 			}
 			if (tag.startsWith("lang-")) {
-				buckets.language.push(tag);
+				buckets.subcategory.push(`sub:${tag.slice(5)}`);
 				continue;
 			}
 			buckets.other.push(tag);
@@ -12785,8 +12800,6 @@ ${highlightThemeCss}
 				label: "Subcategory",
 				tags: sortTagList(buckets.subcategory),
 			},
-			{ key: "kind", label: "Type", tags: sortTagList(buckets.kind) },
-			{ key: "language", label: "Language", tags: sortTagList(buckets.language) },
 			{ key: "other", label: "Tags", tags: sortTagList(buckets.other) },
 		].filter((section) => section.tags.length > 0);
 	}
@@ -12847,12 +12860,12 @@ ${highlightThemeCss}
 		let touchedCurrentNote = false;
 		for (const note of notes) {
 			const rawTags = Array.isArray(note && note.tags) ? note.tags : [];
-			if (!rawTags.includes(target)) continue;
+			if (!rawTags.some((t) => normalizeTagForFilter(t) === target)) continue;
 			const nextTags = [];
 			let replaced = false;
 			for (const t of rawTags) {
 				const s = String(t || "");
-				if (s === target) {
+				if (normalizeTagForFilter(s) === target) {
 					replaced = true;
 					if (next) nextTags.push(next);
 					continue;
@@ -13252,7 +13265,7 @@ ${highlightThemeCss}
 				if (!tag) return;
 				if (tag === PS_PINNED_TAG || tag === PS_MANUAL_TAGS_MARKER) return;
 				if (AUTO_TAG_BLACKLIST.has(tag)) return;
-				tags.add(tag);
+				tags.add(normalizeTagForFilter(tag));
 			});
 		}
 		psState.tags = Array.from(tags).sort();

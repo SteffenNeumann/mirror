@@ -1308,6 +1308,34 @@ function classifyText(text) {
 	return { kind, tags: filtered.length ? filtered : [kind] };
 }
 
+/**
+ * Build structured auto-tags from text analysis.
+ * Only produces cat:{kind} and sub:{language} — no free-form tags.
+ * Date tags (year, month) are added separately by applyDateTags.
+ */
+function buildStructuredAutoTags(text) {
+	const result = classifyText(text);
+	const tags = [];
+	// Category from kind
+	tags.push(`cat:${result.kind}`);
+	// Subcategory from language detection
+	for (const t of result.tags) {
+		if (t.startsWith("lang-")) {
+			tags.push(`sub:${t.slice(5)}`);
+			break; // max 1 subcategory
+		}
+		// Bare language tags (python, javascript, java, sql) → sub:
+		if (
+			result.kind === "code" &&
+			/^(python|javascript|java|sql)$/i.test(t)
+		) {
+			tags.push(`sub:${t}`);
+			break;
+		}
+	}
+	return { kind: result.kind, tags };
+}
+
 function parseTagsJson(raw) {
 	try {
 		const parsed = JSON.parse(String(raw || "[]"));
@@ -1507,32 +1535,11 @@ function splitManualOverrideTags(rawTags) {
 }
 
 function mergeManualTags(textVal, manualTags) {
-	const derived = classifyText(textVal);
+	const structured = buildStructuredAutoTags(textVal);
 	const manual = normalizeImportTags(manualTags);
-	if (!manual.length) return { kind: derived.kind, tags: derived.tags };
-
-	const keep = new Set();
-	keep.add(derived.kind);
-	for (const ht of extractHashtags(textVal)) keep.add(ht);
-	for (const t of derived.tags) {
-		if (t === derived.kind) keep.add(t);
-		if (
-			t === "json" ||
-			t === "stacktrace"
-		) {
-			keep.add(t);
-		}
-		if (t.startsWith("lang-")) keep.add(t);
-		if (
-			derived.kind === "code" &&
-			/^(python|javascript|java|sql|json|stacktrace)$/i.test(t)
-		)
-			keep.add(t);
-	}
-	// Remove blacklisted auto-tags from merged result
-	for (const bl of AUTO_TAG_BLACKLIST) keep.delete(bl);
-	const tags = uniq([...keep, ...manual]);
-	return { kind: derived.kind, tags };
+	if (!manual.length) return structured;
+	const tags = uniq([...structured.tags, ...manual]);
+	return { kind: structured.kind, tags };
 }
 
 function isValidNoteId(id) {
@@ -4172,7 +4179,7 @@ const server = http.createServer(async (req, res) => {
 						tags = merged.tags;
 					}
 				} else {
-					const merged = classifyText(textFinal);
+					const merged = buildStructuredAutoTags(textFinal);
 					kind = merged.kind;
 					tags = merged.tags;
 				}
