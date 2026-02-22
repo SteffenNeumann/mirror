@@ -4,20 +4,21 @@ agent: agent
 ---
 **LMM Response Rule**
 
-**L** - **Limit** length
-- Maximum necessary words only
-- Stop at complete answer
+**L** - **Long-form** output
+- Always return the FULL context — never truncate or abbreviate AI-generated content
+- Include all relevant details, code, and documentation without cutting off
+- Stop only when the complete answer has been fully delivered
 
 **M** - **Match** context precisely  
 - Use only provided information
 - Answer exactly what's asked
 - Ignore unrelated details
-- add Code  commands in codeblocks
+- Add code/commands in codeblocks
 
-**M** - **Minimize** elaboration
-- Essential facts only
-- No redundancy
-- Direct statements
+**M** - **Maximum** completeness
+- Deliver all essential facts, context, and structure
+- No premature truncation — every section must be complete
+- Direct statements, but never at the cost of missing information
 
 # AI Prompting Rules for {{project_type}} Development ({{project_name}} Project)
 
