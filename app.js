@@ -19694,8 +19694,9 @@ self.onmessage = async (e) => {
 				const isFocused = dk === calendarFocusedDayKey;
 				const dayBorder = isFocused
 					? ""
-					: isToday ? "border-fuchsia-400/40" : "border-white/10";
+					: "border-white/10";
 				const focusedClass = isFocused ? " calendar-day-focused" : "";
+				const todayClass = isToday ? " calendar-day-today" : "";
 				const availClass = dayAvail ? "calendar-day-available" : "calendar-day-unavailable";
 				const dayEvents = events.filter(
 					(evt) => evt.start < dayEnd && evt.end > day
@@ -19726,7 +19727,7 @@ self.onmessage = async (e) => {
 						.join("")
 					: `<div class="text-[11px] text-slate-500">${escapeHtml(t("calendar.week.no_events"))}</div>`;
 				return `
-					<div class="calendar-day-cell border ${dayBorder} ${availClass} cursor-pointer select-none transition-colors${focusedClass}" data-calendar-day="${dk}">
+					<div class="calendar-day-cell border ${dayBorder} ${availClass} cursor-pointer select-none transition-colors${todayClass}${focusedClass}" data-calendar-day="${dk}">
 						<div class="flex items-center justify-between">
 							<span class="text-[11px] text-slate-400">${formatDayLabel(day)}</span>
 							<span class="calendar-day-indicator text-[9px]">${dayAvail ? "✓" : "✕"}</span>
@@ -19782,14 +19783,13 @@ self.onmessage = async (e) => {
 			const isFocused = dk === calendarFocusedDayKey;
 			const borderClass = isFocused
 				? ""
-				: isToday
-					? "border-fuchsia-400/40"
-					: (dayAvail ? "border-emerald-500/30" : "border-white/10");
+				: (dayAvail ? "border-emerald-500/30" : "border-white/10");
 			const focusedClass = isFocused ? " calendar-day-focused" : "";
+			const todayClass = isToday ? " calendar-day-today" : "";
 			const availClass = dayAvail ? "calendar-day-available" : "calendar-day-unavailable";
 			const opacityClass = isCurrentMonth ? "" : " opacity-40";
 			return `
-				<div class="calendar-day-cell calendar-day-cell-month min-h-[88px] border ${borderClass} ${availClass} cursor-pointer select-none transition-colors${opacityClass}${focusedClass}" data-calendar-day="${dk}">
+				<div class="calendar-day-cell calendar-day-cell-month min-h-[88px] border ${borderClass} ${availClass} cursor-pointer select-none transition-colors${opacityClass}${todayClass}${focusedClass}" data-calendar-day="${dk}">
 					<div class="flex items-center justify-between">
 						<span class="text-[11px] text-slate-400">${day.getDate()}</span>
 						<span class="calendar-day-indicator text-[9px]">${dayAvail ? "✓" : "✕"}</span>

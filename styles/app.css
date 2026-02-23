@@ -7268,6 +7268,18 @@ body[data-theme] #calendarBundeslandSelect {
 	min-height: 94px;
 }
 
+.calendar-day-today {
+	background: var(--accent-bg-soft) !important;
+	box-shadow: inset 0 0 0 1px var(--accent-border);
+}
+.calendar-day-today:hover {
+	background: var(--accent-bg) !important;
+}
+.calendar-day-today .calendar-day-indicator {
+	color: var(--accent-text-soft);
+	opacity: 0.9;
+}
+
 .calendar-day-available {
 	background: rgba(74, 222, 128, 0.015) !important;
 }
