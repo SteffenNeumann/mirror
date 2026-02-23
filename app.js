@@ -19478,7 +19478,9 @@ self.onmessage = async (e) => {
 
 	function broadcastAvailability() {
 		if (!commonFreeSlotsSharing || !ws || ws.readyState !== 1) return;
-		if (!isInSharedRoom()) return;
+		// No isInSharedRoom guard - clients in "guest rooms" may not have the room
+		// explicitly marked as shared in localStorage, but can still share availability
+		// via WebSocket when other participants are present.
 		const now = new Date();
 		const rangeStart = startOfDay(now);
 		const rangeEnd = addDays(rangeStart, 7);
@@ -19679,9 +19681,10 @@ self.onmessage = async (e) => {
 	/**
 	 * Renders participant indicators (small colored dots) for a day cell.
 	 * Only shows indicators when at least one OTHER participant has marked this day as available.
+	 * Works for guest rooms (clients without PS) by checking availabilityByClient directly.
 	 */
 	function renderParticipantIndicators(day) {
-		if (!isInSharedRoom()) return "";
+		// No isInSharedRoom guard - show indicators whenever other participants have availability data
 		if (availabilityByClient.size === 0) return "";
 		const info = getParticipantsAvailabilityForDay(day);
 		// Only show indicators if there are other participants AND at least one is available
@@ -19705,10 +19708,12 @@ self.onmessage = async (e) => {
 
 	function renderCommonFreeSlots() {
 		if (!calendarCommonFreeSlotsWrap) return;
-		const shared = isInSharedRoom();
-		// Show panel only in shared rooms
-		calendarCommonFreeSlotsWrap.classList.toggle("hidden", !shared);
-		if (!shared) return;
+		// Show panel when we have other participants' availability data (works for guest rooms)
+		// Check if there are other participants besides self
+		const hasOtherParticipants = Array.from(availabilityByClient.keys()).some(cid => cid !== clientId);
+		const showPanel = isInSharedRoom() || hasOtherParticipants;
+		calendarCommonFreeSlotsWrap.classList.toggle("hidden", !showPanel);
+		if (!showPanel) return;
 
 		// Update participants chips
 		if (calendarCommonFreeParticipants) {
@@ -21298,6 +21303,11 @@ self.onmessage = async (e) => {
 					if (roomName && !isRoomMarkedShared(roomName, keyName)) {
 						markRoomShared(roomName, keyName);
 						void loadCommentsForRoom();
+					}
+					// Broadcast availability when other participants join
+					// so guests in shared rooms can participate in time-finding
+					if (commonFreeSlotsSharing) {
+						broadcastAvailability();
 					}
 				}
 				return;
