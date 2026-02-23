@@ -4718,6 +4718,87 @@
 		tableMenuBtn.classList.toggle("hidden", !ctx);
 	}
 
+	/**
+	 * Markdown-Listen-Fortsetzung: Erkennt Listen, Todos, Blockquotes und fügt
+	 * bei Enter automatisch die nächste Zeile mit dem passenden Präfix ein.
+	 * Bei leeren Listenzeilen wird das Präfix entfernt (Listenende).
+	 * @param {HTMLTextAreaElement} el
+	 * @returns {boolean} true wenn verarbeitet, false sonst
+	 */
+	function handleMarkdownListContinuation(el) {
+		if (!el) return false;
+		const value = String(el.value || "");
+		const caret = Number(el.selectionEnd || 0);
+		const { start, end, line } = getLineBounds(value, caret);
+
+		// Muster für Listen-Typen (mit führenden Leerzeichen für Einrückung)
+		// Checkbox: - [ ] oder - [x] oder - [X] oder * [ ] etc.
+		const checkboxMatch = line.match(/^(\s*)([-*+])\s*\[([ xX])\]\s(.*)$/);
+		// Leere Checkbox (nur Marker): - [ ] oder - [x] etc ohne Text
+		const emptyCheckboxMatch = line.match(/^(\s*)([-*+])\s*\[([ xX])\]\s*$/);
+		// Unordered List: - item, * item, + item
+		const unorderedMatch = line.match(/^(\s*)([-*+])\s(.+)$/);
+		// Leere Unordered List
+		const emptyUnorderedMatch = line.match(/^(\s*)([-*+])\s*$/);
+		// Ordered List: 1. item, 2. item, 10. item
+		const orderedMatch = line.match(/^(\s*)(\d+)\.\s(.+)$/);
+		// Leere Ordered List
+		const emptyOrderedMatch = line.match(/^(\s*)(\d+)\.\s*$/);
+		// Blockquote: > text
+		const blockquoteMatch = line.match(/^(\s*)(>+)\s(.*)$/);
+		// Leere Blockquote
+		const emptyBlockquoteMatch = line.match(/^(\s*)(>+)\s*$/);
+
+		// Bei leeren Listenzeilen: Präfix entfernen (Listenende)
+		if (emptyCheckboxMatch || emptyUnorderedMatch || emptyOrderedMatch || emptyBlockquoteMatch) {
+			// Zeile löschen und Cursor an den Anfang setzen
+			replaceTextRange(el, start, end, "");
+			el.selectionStart = start;
+			el.selectionEnd = start;
+			return true;
+		}
+
+		let nextPrefix = "";
+		const cursorInLine = caret - start;
+
+		// Checkbox-Liste
+		if (checkboxMatch) {
+			const indent = checkboxMatch[1];
+			const marker = checkboxMatch[2];
+			// Nächste Checkbox ist immer unchecked
+			nextPrefix = `${indent}${marker} [ ] `;
+		}
+		// Unordered Liste (aber keine Checkbox - prüfe dass es kein Checkbox ist)
+		else if (unorderedMatch && !line.match(/^\s*[-*+]\s*\[[ xX]\]/)) {
+			const indent = unorderedMatch[1];
+			const marker = unorderedMatch[2];
+			nextPrefix = `${indent}${marker} `;
+		}
+		// Ordered Liste
+		else if (orderedMatch) {
+			const indent = orderedMatch[1];
+			const num = parseInt(orderedMatch[2], 10);
+			nextPrefix = `${indent}${num + 1}. `;
+		}
+		// Blockquote
+		else if (blockquoteMatch) {
+			const indent = blockquoteMatch[1];
+			const markers = blockquoteMatch[2];
+			nextPrefix = `${indent}${markers} `;
+		}
+
+		if (!nextPrefix) return false;
+
+		// Neue Zeile mit Präfix einfügen
+		const insertion = "\n" + nextPrefix;
+		// Cursor-Position im Text
+		replaceTextRange(el, caret, caret, insertion);
+		const newCursor = caret + insertion.length;
+		el.selectionStart = newCursor;
+		el.selectionEnd = newCursor;
+		return true;
+	}
+
 	function applySlashCommand(el) {
 		if (!el) return false;
 		const value = String(el.value || "");
@@ -23445,13 +23526,26 @@ self.onmessage = async (e) => {
 		if (!ev) return;
 		if (ev.key !== "Enter") return;
 		if (ev.shiftKey || ev.metaKey || ev.ctrlKey || ev.altKey) return;
-		const applied = applySlashCommand(textarea);
-		if (!applied) return;
-		ev.preventDefault();
-		metaLeft.textContent = "Formatting";
-		metaRight.textContent = nowIso();
-		updatePreview();
-		scheduleSend();
+		
+		// Zuerst Slash-Commands prüfen
+		const slashApplied = applySlashCommand(textarea);
+		if (slashApplied) {
+			ev.preventDefault();
+			metaLeft.textContent = "Formatting";
+			metaRight.textContent = nowIso();
+			updatePreview();
+			scheduleSend();
+			return;
+		}
+		
+		// Dann Markdown-Listen-Fortsetzung prüfen
+		const listApplied = handleMarkdownListContinuation(textarea);
+		if (listApplied) {
+			ev.preventDefault();
+			updatePreview();
+			scheduleSend();
+			return;
+		}
 	});
 
 	if (tableModalClose) {
