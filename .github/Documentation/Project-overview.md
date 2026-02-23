@@ -6,6 +6,18 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
 
 ## Aktuelle Änderungen (2026-02-23)
 
+- **Gemeinsame Zeit finden: Teilnehmer-Visualisierung im Kalender-Grid** `#calendar` `#availability` `#shared`: Die Verfügbarkeit von Teilnehmern in geteilten Räumen wird jetzt direkt in den Kalender-Grid-Zellen (Tag/Woche/Monat) visuell dargestellt. Farbige User-Dots zeigen auf einen Blick, welche Teilnehmer an einem Tag verfügbar sind. Ein Badge zeigt die Schnittmenge an („alle frei" oder „X/Y verfügbar").
+  1. **Neue Hilfsfunktion `getParticipantsAvailabilityForDay(day)`** (`app.js` ~L19525): Berechnet für jeden Teilnehmer die Verfügbarkeit eines Tages basierend auf den via WebSocket empfangenen Busy-Intervallen. Rückgabe: Array mit `{clientId, name, color, isAvailable}` sowie `allAvailable`/`someAvailable`-Flags.
+  2. **Neue Render-Funktion `renderParticipantIndicators(day)`** (`app.js` ~L19590): Erzeugt HTML mit farbigen Dots pro Teilnehmer (Opacity 1 = verfügbar, 0.35 = beschäftigt) und Badge für Schnittmenge (grün = alle frei, gelb = teilweise).
+  3. **Day-View erweitert** (`app.js` ~L19722): Am Anfang des Day-Grids werden die Participant-Indikatoren angezeigt.
+  4. **Week-View erweitert** (`app.js` ~L19800): Jede Tageszelle zeigt Participant-Indikatoren unterhalb des Datums-Headers.
+  5. **Month-View erweitert** (`app.js` ~L19865): Jede Tageszelle zeigt Participant-Indikatoren unterhalb des Datums-Headers.
+  6. **Handler-Update für Live-Aktualisierung** (`app.js` ~L19438): `handleAvailabilityState()` und `handleAvailabilityLeave()` rufen nun `renderCalendarPanel()` auf, wenn der Kalender aktiv ist, damit neue Verfügbarkeitsdaten sofort im Grid reflektiert werden.
+  7. **CSS-Styles** (`styles/app.css` ~L6743): Neue Styles für `.participant-indicators`, `.participant-dot`, `.participant-badge`, `.participant-badge--all`, `.participant-badge--partial`. Tageszellen mit „alle verfügbar" erhalten einen subtilen grünen Hintergrund via `:has(.participant-badge--all)`.
+  8. **i18n** (`app.js`): Neue Strings `calendar.grid.all_available` und `calendar.grid.partial_available` für DE/EN.
+  - Zuständige Funktionen: `getParticipantsAvailabilityForDay`, `renderParticipantIndicators`, `renderCalendarPanel`, `handleAvailabilityState`, `handleAvailabilityLeave`.
+  - Zuständige Dateien: `app.js`, `styles/app.css`.
+
 - **Kalender Mobile UX kompakter + schließbar** `#calendar` `#mobile` `#ux`: Die mobile Kalenderansicht wurde deutlich verdichtet und kann jetzt direkt per X-Button geschlossen werden, um schnell zu Tabs/Räumen zurückzukehren.
   1. **Mobile Close-Button** (`index.html` ~L1639, `app.js` ~L25755): Neuer `#calendarCloseMobile` im Header; Handler setzt `setCalendarPanelActive(false)`.
   2. **Sichtbarkeit nur im Kalenderzustand** (`styles/app.css` ~L2278): `#calendarCloseMobile` wird nur bei `body.mobile-calendar-open` angezeigt.

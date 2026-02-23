@@ -5956,6 +5956,8 @@
 				"calendar.common.all_free": "alle frei",
 				"calendar.common.partial": "{n}/{total}",
 				"calendar.common.book_best": "Besten Slot buchen",
+				"calendar.grid.all_available": "Alle Teilnehmer verfügbar",
+				"calendar.grid.partial_available": "Teilweise verfügbar",
 				"calendar.free.select_day_week": "Für freie Zeiten bitte Tag/Woche wählen.",
 				"calendar.free.none": "Keine freien Zeiten.",
 				"calendar.free.hint": "Klicke auf einen Slot, um ihn als verfügbar zu markieren.",
@@ -6488,6 +6490,8 @@
 				"calendar.common.all_free": "all free",
 				"calendar.common.partial": "{n}/{total}",
 				"calendar.common.book_best": "Book best slot",
+				"calendar.grid.all_available": "All participants available",
+				"calendar.grid.partial_available": "Partially available",
 				"calendar.free.select_day_week": "Select Day/Week for free slots.",
 				"calendar.free.none": "No free times.",
 				"calendar.free.hint": "Click a slot to mark it as available.",
@@ -19453,12 +19457,20 @@ self.onmessage = async (e) => {
 			});
 		}
 		renderCommonFreeSlots();
+		// Re-render calendar grid to update participant indicators
+		if (calendarPanelActive) {
+			renderCalendarPanel();
+		}
 	}
 
 	function handleAvailabilityLeave(leftClientId) {
 		if (!leftClientId) return;
 		if (availabilityByClient.delete(String(leftClientId))) {
 			renderCommonFreeSlots();
+			// Re-render calendar grid to update participant indicators
+			if (calendarPanelActive) {
+				renderCalendarPanel();
+			}
 		}
 	}
 
@@ -19517,6 +19529,78 @@ self.onmessage = async (e) => {
 			return { start, end, freeCount, total: participants.length };
 		});
 		return { common, perParticipant, total: participants.length };
+	}
+
+	/**
+	 * Computes participant availability for a given day.
+	 * Returns an array of { clientId, name, color, isAvailable } for each participant.
+	 * Also computes whether all participants are free at some point during work hours.
+	 */
+	function getParticipantsAvailabilityForDay(day) {
+		const participants = Array.from(availabilityByClient.entries());
+		if (!participants.length) return { participants: [], allAvailable: false, someAvailable: false };
+		const dayStart = startOfDay(day);
+		const dayEnd = addDays(dayStart, 1);
+		const window = buildWorkWindow(dayStart);
+		const windowStart = window.start.getTime();
+		const windowEnd = window.end.getTime();
+		const result = [];
+		let availCount = 0;
+		for (const [cid, p] of participants) {
+			// Check if participant has any free time within work window
+			const busyInWindow = p.busy.filter(b => {
+				const bs = b.start;
+				const be = b.end;
+				return bs < windowEnd && be > windowStart;
+			});
+			// Compute total busy duration in the work window
+			let totalBusy = 0;
+			for (const b of busyInWindow) {
+				const s = Math.max(b.start, windowStart);
+				const e = Math.min(b.end, windowEnd);
+				totalBusy += Math.max(0, e - s);
+			}
+			const windowDuration = windowEnd - windowStart;
+			// If less than 80% busy, consider them available for the day
+			const isAvailable = totalBusy < windowDuration * 0.8;
+			if (isAvailable) availCount++;
+			result.push({
+				clientId: cid,
+				name: p.name || "Guest",
+				color: p.color || "#94a3b8",
+				isAvailable,
+			});
+		}
+		return {
+			participants: result,
+			allAvailable: availCount === participants.length && participants.length > 0,
+			someAvailable: availCount > 0,
+			availableCount: availCount,
+			totalCount: participants.length,
+		};
+	}
+
+	/**
+	 * Renders participant indicators (small colored dots) for a day cell.
+	 */
+	function renderParticipantIndicators(day) {
+		if (!isInSharedRoom()) return "";
+		if (availabilityByClient.size === 0) return "";
+		const info = getParticipantsAvailabilityForDay(day);
+		if (!info.participants.length) return "";
+		// Build small user color dots
+		const dots = info.participants.map(p => {
+			const opacity = p.isAvailable ? "1" : "0.35";
+			return `<span class="participant-dot" style="background:${escapeAttr(p.color)};opacity:${opacity}" title="${escapeAttr(p.name)}"></span>`;
+		}).join("");
+		// Summary badge (all/partial)
+		let badge = "";
+		if (info.allAvailable) {
+			badge = `<span class="participant-badge participant-badge--all" title="${escapeAttr(t("calendar.grid.all_available"))}">${info.availableCount}/${info.totalCount}</span>`;
+		} else if (info.someAvailable) {
+			badge = `<span class="participant-badge participant-badge--partial" title="${escapeAttr(t("calendar.grid.partial_available"))}">${info.availableCount}/${info.totalCount}</span>`;
+		}
+		return `<div class="participant-indicators">${dots}${badge}</div>`;
 	}
 
 	function renderCommonFreeSlots() {
@@ -19649,7 +19733,9 @@ self.onmessage = async (e) => {
 			const dayEvents = events.filter(
 				(evt) => evt.start < end && evt.end > start
 			);
-			calendarGrid.innerHTML = dayEvents.length
+			const participantHtml = renderParticipantIndicators(cursor);
+			const dayHeader = participantHtml ? `<div class="mb-3">${participantHtml}</div>` : "";
+			calendarGrid.innerHTML = dayHeader + (dayEvents.length
 				? dayEvents
 					.map((evt) => {
 						const time = evt.allDay
@@ -19678,7 +19764,7 @@ self.onmessage = async (e) => {
 							</div>`;
 					})
 					.join("")
-				: `<div class="text-sm text-slate-400">${escapeHtml(t("calendar.day.no_events"))}</div>`;
+				: `<div class="text-sm text-slate-400">${escapeHtml(t("calendar.day.no_events"))}</div>`);
 			renderCalendarFreeSlots(view, cursor, events);
 			return;
 		}
@@ -19726,12 +19812,14 @@ self.onmessage = async (e) => {
 						})
 						.join("")
 					: `<div class="text-[11px] text-slate-500">${escapeHtml(t("calendar.week.no_events"))}</div>`;
+				const participantHtml = renderParticipantIndicators(day);
 				return `
 					<div class="calendar-day-cell border ${dayBorder} ${availClass} cursor-pointer select-none transition-colors${todayClass}${focusedClass}" data-calendar-day="${dk}">
 						<div class="flex items-center justify-between">
 							<span class="text-[11px] text-slate-400">${formatDayLabel(day)}</span>
 							<span class="calendar-day-indicator text-[9px]">${dayAvail ? "✓" : "✕"}</span>
 						</div>
+						${participantHtml}
 						<div class="mt-2 space-y-1">${list}</div>
 					</div>`;
 			});
@@ -19788,12 +19876,14 @@ self.onmessage = async (e) => {
 			const todayClass = isToday ? " calendar-day-today" : "";
 			const availClass = dayAvail ? "calendar-day-available" : "calendar-day-unavailable";
 			const opacityClass = isCurrentMonth ? "" : " opacity-40";
+			const participantHtml = renderParticipantIndicators(day);
 			return `
 				<div class="calendar-day-cell calendar-day-cell-month min-h-[88px] border ${borderClass} ${availClass} cursor-pointer select-none transition-colors${opacityClass}${todayClass}${focusedClass}" data-calendar-day="${dk}">
 					<div class="flex items-center justify-between">
 						<span class="text-[11px] text-slate-400">${day.getDate()}</span>
 						<span class="calendar-day-indicator text-[9px]">${dayAvail ? "✓" : "✕"}</span>
 					</div>
+					${participantHtml}
 					<div class="mt-1 space-y-1">${visibleEvents.join("")}${
 						visibleEvents.length && extra ? `<div>${extra}</div>` : extra
 					}</div>

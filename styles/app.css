@@ -6737,6 +6737,56 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	color: #f1f5f9;
 }
 
+/* ── Participant indicators in calendar grid cells ── */
+.participant-indicators {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	margin-top: 2px;
+	flex-wrap: wrap;
+}
+.participant-dot {
+	display: inline-block;
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	border: 1px solid rgba(255, 255, 255, 0.2);
+	transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.participant-dot:hover {
+	transform: scale(1.2);
+	box-shadow: 0 0 4px rgba(255, 255, 255, 0.3);
+}
+.participant-badge {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	margin-left: auto;
+	border-radius: 9999px;
+	padding: 1px 6px;
+	font-size: 9px;
+	font-weight: 600;
+	line-height: 1.2;
+	white-space: nowrap;
+}
+.participant-badge--all {
+	background: rgba(74, 222, 128, 0.15);
+	color: #4ade80;
+	border: 1px solid rgba(74, 222, 128, 0.3);
+}
+.participant-badge--partial {
+	background: rgba(251, 191, 36, 0.15);
+	color: #fbbf24;
+	border: 1px solid rgba(251, 191, 36, 0.3);
+}
+/* Highlight day cells where all participants are available */
+.calendar-day-cell:has(.participant-badge--all) {
+	background: rgba(74, 222, 128, 0.05);
+}
+.calendar-day-cell:has(.participant-badge--partial) {
+	background: rgba(251, 191, 36, 0.03);
+}
+
 /* ── Calendar Header (compact single-row) ── */
 .cal-header {
 	container-type: inline-size;
