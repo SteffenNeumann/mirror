@@ -1,8 +1,32 @@
 # Project overview
 
-Datum: 2026-02-22
+Datum: 2026-02-23
 
 Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische Analyse, keine Laufzeitauflösung).
+
+## Aktuelle Änderungen (2026-02-23)
+
+- **Kalender Mobile UX kompakter + schließbar** `#calendar` `#mobile` `#ux`: Die mobile Kalenderansicht wurde deutlich verdichtet und kann jetzt direkt per X-Button geschlossen werden, um schnell zu Tabs/Räumen zurückzukehren.
+  1. **Mobile Close-Button** (`index.html` ~L1639, `app.js` ~L25755): Neuer `#calendarCloseMobile` im Header; Handler setzt `setCalendarPanelActive(false)`.
+  2. **Sichtbarkeit nur im Kalenderzustand** (`styles/app.css` ~L2278): `#calendarCloseMobile` wird nur bei `body.mobile-calendar-open` angezeigt.
+  3. **Phone-Layout kompakter** (`styles/app.css` ~L2643): Engere Header-Abstände, kleinere Controls, reduzierte Grid/Sidebar-Paddings, kleinere Listenhöhen.
+  4. **Ultra-Kompakt für sehr kleine Geräte** (`styles/app.css` ~L2751): Zusätzliche Regeln für `<390px` Viewport (30px Controls, engeres Spacing, dichtere Tageszellen).
+  - Zuständige Dateien: `index.html`, `app.js`, `styles/app.css`.
+
+- **Kalender-Sidebar auf Phones entrümpelt** `#calendar` `#mobile` `#sidebar`: Zur Übersichtsgewinnung ist der Block „Meine Kalender“ inkl. Bundesland-Auswahl in der Phone-Ansicht ausgeblendet; „Gemeinsame Planung“ bleibt erhalten.
+  1. **Gezielte Section-ID** (`index.html` ~L1689): `#calendarSidebarCalendarsSection` ergänzt.
+  2. **Mobile-Ausblendung** (`styles/app.css` ~L2666): `#calendarSidebarCalendarsSection`, `#calendarBundeslandWrap`, `#calendarLegend`, `#calendarStatus`, `#calendarRefresh` auf Phone ausgeblendet.
+  - Zuständige Dateien: `index.html`, `styles/app.css`.
+
+- **Mobile Startup/Ladezeit massiv beschleunigt (Reihenfolge optimiert)** `#mobile` `#performance` `#startup`: Nicht-kritische Initialisierungen werden auf mobilen Geräten nicht mehr im kritischen Startpfad ausgeführt, sondern idle/verzögert nachgeladen.
+  1. **Deferred Startup Helper** (`app.js` ~L5034): `runDeferredStartupTask(task, opts)` mit `requestIdleCallback`-Fallback.
+  2. **Nicht-kritische Tasks auf Mobile verschoben** (`app.js` ~L27007): `initAutoBackup`, `initAutoImport`, `startPsPolling`, `initAiDictation`, `loadCommentsForRoom`, `initBlockArrange`, `syncRoomSlotsFromServer` laufen gestaffelt nach Initial-Render.
+  3. **Kalender-Open ohne doppelte Refresh-Last** (`app.js` ~L21490): Doppelte `refreshCalendarEvents(true)`-Ausführung beim Öffnen per Kalendertab entfernt.
+  4. **Ressourcenpriorität angepasst** (`index.html` ~L23, ~L3424): `yjs.bundle.js` von `preload` auf `prefetch` umgestellt und Script mit `fetchpriority="low"` markiert.
+  5. **Service Worker später registriert** (`index.html` ~L3426): Registrierung erst nach `load` + verzögert (`setTimeout`), um den initialen Main-Thread zu entlasten.
+  6. **CDN-Verbindungsaufbau vorgezogen** (`index.html` ~L28): `preconnect` für `cdn.jsdelivr.net` ergänzt.
+  - Zuständige Dateien: `app.js`, `index.html`.
+
 
 ## Feature-Analyse: Video-Upload & Preview-Wiedergabe (2026-02-22)
 
