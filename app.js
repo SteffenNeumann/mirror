@@ -376,6 +376,7 @@
 	const calendarViewDropdownLabel = document.getElementById("calendarViewDropdownLabel");
 	const calendarViewDropdownMenu = document.getElementById("calendarViewDropdownMenu");
 	const calendarAddEventHeaderBtn = document.getElementById("calendarAddEventHeader");
+	const calendarCloseMobileBtn = document.getElementById("calendarCloseMobile");
 	const calendarLocalEventsList = document.getElementById("calendarLocalEventsList");
 	const calendarLocalEventsEmpty = document.getElementById("calendarLocalEventsEmpty");
 	const calendarEventModal = document.getElementById("calendarEventModal");
@@ -5028,6 +5029,32 @@
 		} catch {
 			return false;
 		}
+	}
+
+	function runDeferredStartupTask(task, opts) {
+		if (typeof task !== "function") return;
+		const options = opts && typeof opts === "object" ? opts : {};
+		const delay = Number(options.delay) || 0;
+		const timeout = Number(options.timeout) || 1200;
+		const run = () => {
+			try {
+				const result = task();
+				if (result && typeof result.catch === "function") {
+					result.catch(() => {
+						// ignore deferred startup failures
+					});
+				}
+			} catch {
+				// ignore deferred startup failures
+			}
+		};
+		window.setTimeout(() => {
+			if ("requestIdleCallback" in window) {
+				window.requestIdleCallback(run, { timeout });
+				return;
+			}
+			window.setTimeout(run, 0);
+		}, delay);
 	}
 
 	function syncMobileFocusState() {
@@ -17598,10 +17625,22 @@ self.onmessage = async (e) => {
 			updateCalendarViewButtons();
 			applyCalendarFreeSlotsVisibility();
 			renderCalendarRoomSelect();
-			fetchGoogleCalendarStatus();
-			fetchOutlookCalendarStatus();
 			renderCalendarPanel();
-			refreshCalendarEvents(true);
+			const isMobile = isMobileViewport();
+			if (isMobile) {
+				window.setTimeout(() => {
+					Promise.allSettled([
+						fetchGoogleCalendarStatus(),
+						fetchOutlookCalendarStatus(),
+					]).finally(() => {
+						refreshCalendarEvents(true);
+					});
+				}, 80);
+			} else {
+				fetchGoogleCalendarStatus();
+				fetchOutlookCalendarStatus();
+				refreshCalendarEvents(true);
+			}
 		}
 		renderRoomTabs();
 	}
@@ -19685,7 +19724,7 @@ self.onmessage = async (e) => {
 						.join("")
 					: `<div class="text-[11px] text-slate-500">${escapeHtml(t("calendar.week.no_events"))}</div>`;
 				return `
-					<div class="rounded-lg border ${dayBorder} ${availClass} bg-slate-950/40 p-2 cursor-pointer select-none transition-colors${focusedClass}" data-calendar-day="${dk}">
+					<div class="calendar-day-cell border ${dayBorder} ${availClass} cursor-pointer select-none transition-colors${focusedClass}" data-calendar-day="${dk}">
 						<div class="flex items-center justify-between">
 							<span class="text-[11px] text-slate-400">${formatDayLabel(day)}</span>
 							<span class="calendar-day-indicator text-[9px]">${dayAvail ? "✓" : "✕"}</span>
@@ -19693,7 +19732,7 @@ self.onmessage = async (e) => {
 						<div class="mt-2 space-y-1">${list}</div>
 					</div>`;
 			});
-			calendarGrid.innerHTML = `<div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-7">${cols.join(
+			calendarGrid.innerHTML = `<div class="calendar-week-grid grid grid-cols-1 gap-0 sm:grid-cols-2 lg:grid-cols-7">${cols.join(
 				"")}</div>`;
 			renderCalendarFreeSlots(view, cursor, events);
 			return;
@@ -19704,7 +19743,7 @@ self.onmessage = async (e) => {
 		const weekdayHeader = weekdayLabels
 			.map(
 				(label) =>
-					`<div class="text-[11px] text-slate-400 uppercase tracking-wide">${label}</div>`
+					`<div class="calendar-weekday-label text-[11px] text-slate-400 uppercase tracking-wide">${label}</div>`
 			)
 			.join("");
 		const cells = Array.from({ length: 42 }).map((_, idx) => {
@@ -19748,7 +19787,7 @@ self.onmessage = async (e) => {
 			const availClass = dayAvail ? "calendar-day-available" : "calendar-day-unavailable";
 			const opacityClass = isCurrentMonth ? "" : " opacity-40";
 			return `
-				<div class="min-h-[88px] rounded-lg border ${borderClass} ${availClass} bg-slate-950/40 p-2 cursor-pointer select-none transition-colors${opacityClass}${focusedClass}" data-calendar-day="${dk}">
+				<div class="calendar-day-cell calendar-day-cell-month min-h-[88px] border ${borderClass} ${availClass} cursor-pointer select-none transition-colors${opacityClass}${focusedClass}" data-calendar-day="${dk}">
 					<div class="flex items-center justify-between">
 						<span class="text-[11px] text-slate-400">${day.getDate()}</span>
 						<span class="calendar-day-indicator text-[9px]">${dayAvail ? "✓" : "✕"}</span>
@@ -19759,10 +19798,10 @@ self.onmessage = async (e) => {
 				</div>`;
 		});
 		calendarGrid.innerHTML = `
-				<div class="grid grid-cols-7 gap-2 text-center">
+				<div class="calendar-month-weekdays grid grid-cols-7 gap-0 text-center">
 					${weekdayHeader}
 				</div>
-				<div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+				<div class="calendar-month-grid mt-2 grid grid-cols-2 gap-0 sm:grid-cols-4 lg:grid-cols-7">
 					${cells.join("")}
 				</div>`;
 		renderCalendarFreeSlots(view, cursor, events);
@@ -21490,7 +21529,6 @@ self.onmessage = async (e) => {
 			if (calendarBtn) {
 				ev.preventDefault();
 				setCalendarPanelActive(true);
-				refreshCalendarEvents(true);
 				return;
 			}
 			const closeBtn = target.closest("[data-tab-close]");
@@ -25714,6 +25752,11 @@ self.onmessage = async (e) => {
 			openCalendarEventModal(calendarState.cursor || new Date());
 		});
 	}
+	if (calendarCloseMobileBtn) {
+		calendarCloseMobileBtn.addEventListener("click", () => {
+			setCalendarPanelActive(false);
+		});
+	}
 	if (calendarPrevBtn) {
 		calendarPrevBtn.addEventListener("click", () => {
 			moveCalendarCursor(-1);
@@ -26947,24 +26990,37 @@ self.onmessage = async (e) => {
 
 	function initStartupTasks() {
 		setupScrollbarReveal();
-	initUiLanguage();
-	loadMobileAutoNoteSeconds();
-	void initAutoBackup();
-	void initAutoImport();
-	refreshPersonalSpace();
-	startPsPolling();
-	initAiDictation();
-	loadAiPrompt();
-	loadAiUsePreview();
-	loadAiUseAnswer();
-	applyAiContextMode();
-	syncAiChatContext();
-	setCommentDraftSelection(null);
-	void loadCommentsForRoom();
-	updateTableMenuVisibility();
-	syncMobileFocusState();
-	initBlockArrange();
-	void syncRoomSlotsFromServer();
+		initUiLanguage();
+		loadMobileAutoNoteSeconds();
+		refreshPersonalSpace();
+		loadAiPrompt();
+		loadAiUsePreview();
+		loadAiUseAnswer();
+		applyAiContextMode();
+		syncAiChatContext();
+		setCommentDraftSelection(null);
+		updateTableMenuVisibility();
+		syncMobileFocusState();
+
+		const mobile = isMobileViewport();
+		if (mobile) {
+			runDeferredStartupTask(() => initAutoBackup(), { delay: 140, timeout: 1800 });
+			runDeferredStartupTask(() => initAutoImport(), { delay: 220, timeout: 2200 });
+			runDeferredStartupTask(() => startPsPolling(), { delay: 260, timeout: 2200 });
+			runDeferredStartupTask(() => initAiDictation(), { delay: 320, timeout: 2200 });
+			runDeferredStartupTask(() => loadCommentsForRoom(), { delay: 420, timeout: 2500 });
+			runDeferredStartupTask(() => initBlockArrange(), { delay: 520, timeout: 2500 });
+			runDeferredStartupTask(() => syncRoomSlotsFromServer(), { delay: 640, timeout: 2500 });
+			return;
+		}
+
+		void initAutoBackup();
+		void initAutoImport();
+		startPsPolling();
+		initAiDictation();
+		void loadCommentsForRoom();
+		initBlockArrange();
+		void syncRoomSlotsFromServer();
 	}
 	initStartupTasks();
 })();
