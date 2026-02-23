@@ -19502,6 +19502,12 @@ self.onmessage = async (e) => {
 			}
 		}
 		const identity = loadIdentity();
+		// Also store own availability locally so intersection calculation includes self
+		availabilityByClient.set(String(clientId), {
+			name: identity.name || "Guest",
+			color: identity.color || "#94a3b8",
+			busy,
+		});
 		try {
 			ws.send(JSON.stringify({
 				type: "availability_state",
@@ -19513,6 +19519,11 @@ self.onmessage = async (e) => {
 			}));
 		} catch {
 			// ignore
+		}
+		// Re-render to show updated intersection
+		renderCommonFreeSlots();
+		if (calendarPanelActive) {
+			renderCalendarPanel();
 		}
 	}
 
@@ -19616,6 +19627,7 @@ self.onmessage = async (e) => {
 	 * Computes participant availability for a given day.
 	 * Returns an array of { clientId, name, color, isAvailable } for each participant.
 	 * Also computes whether all participants are free at some point during work hours.
+	 * Excludes the current client (self) from the result.
 	 */
 	function getParticipantsAvailabilityForDay(day) {
 		const participants = Array.from(availabilityByClient.entries());
@@ -19625,9 +19637,12 @@ self.onmessage = async (e) => {
 		const window = buildWorkWindow(dayStart);
 		const windowStart = window.start.getTime();
 		const windowEnd = window.end.getTime();
+		const windowDuration = windowEnd - windowStart;
 		const result = [];
 		let availCount = 0;
 		for (const [cid, p] of participants) {
+			// Skip own client - own selections are shown with ✓ indicator
+			if (cid === clientId) continue;
 			// Check if participant has any free time within work window
 			const busyInWindow = p.busy.filter(b => {
 				const bs = b.start;
@@ -19641,9 +19656,9 @@ self.onmessage = async (e) => {
 				const e = Math.min(b.end, windowEnd);
 				totalBusy += Math.max(0, e - s);
 			}
-			const windowDuration = windowEnd - windowStart;
-			// If less than 80% busy, consider them available for the day
-			const isAvailable = totalBusy < windowDuration * 0.8;
+			// If participant has ANY free time (not 100% busy), consider them available for the day
+			// This means they explicitly marked this day as available
+			const isAvailable = totalBusy < windowDuration * 0.95;
 			if (isAvailable) availCount++;
 			result.push({
 				clientId: cid,
@@ -19654,31 +19669,35 @@ self.onmessage = async (e) => {
 		}
 		return {
 			participants: result,
-			allAvailable: availCount === participants.length && participants.length > 0,
+			allAvailable: availCount === result.length && result.length > 0,
 			someAvailable: availCount > 0,
 			availableCount: availCount,
-			totalCount: participants.length,
+			totalCount: result.length,
 		};
 	}
 
 	/**
 	 * Renders participant indicators (small colored dots) for a day cell.
+	 * Only shows indicators when at least one OTHER participant has marked this day as available.
 	 */
 	function renderParticipantIndicators(day) {
 		if (!isInSharedRoom()) return "";
 		if (availabilityByClient.size === 0) return "";
 		const info = getParticipantsAvailabilityForDay(day);
+		// Only show indicators if there are other participants AND at least one is available
 		if (!info.participants.length) return "";
-		// Build small user color dots
-		const dots = info.participants.map(p => {
-			const opacity = p.isAvailable ? "1" : "0.35";
-			return `<span class="participant-dot" style="background:${escapeAttr(p.color)};opacity:${opacity}" title="${escapeAttr(p.name)}"></span>`;
+		if (!info.someAvailable) return "";
+		// Build small user color dots - only for participants who are available
+		const availableParticipants = info.participants.filter(p => p.isAvailable);
+		if (!availableParticipants.length) return "";
+		const dots = availableParticipants.map(p => {
+			return `<span class="participant-dot" style="background:${escapeAttr(p.color)}" title="${escapeAttr(p.name)}"></span>`;
 		}).join("");
 		// Summary badge (all/partial)
 		let badge = "";
-		if (info.allAvailable) {
+		if (info.allAvailable && info.totalCount > 0) {
 			badge = `<span class="participant-badge participant-badge--all" title="${escapeAttr(t("calendar.grid.all_available"))}">${info.availableCount}/${info.totalCount}</span>`;
-		} else if (info.someAvailable) {
+		} else if (info.someAvailable && info.totalCount > 1) {
 			badge = `<span class="participant-badge participant-badge--partial" title="${escapeAttr(t("calendar.grid.partial_available"))}">${info.availableCount}/${info.totalCount}</span>`;
 		}
 		return `<div class="participant-indicators">${dots}${badge}</div>`;
