@@ -19509,6 +19509,8 @@ self.onmessage = async (e) => {
 			name: identity.name || "Guest",
 			color: identity.color || "#94a3b8",
 			busy,
+			rangeStart: rangeStart.getTime(),
+			rangeEnd: rangeEnd.getTime(),
 		});
 		try {
 			ws.send(JSON.stringify({
@@ -19518,6 +19520,8 @@ self.onmessage = async (e) => {
 				name: identity.name || "Guest",
 				color: identity.color || "#94a3b8",
 				busy,
+				rangeStart: rangeStart.getTime(),
+				rangeEnd: rangeEnd.getTime(),
 			}));
 		} catch {
 			// ignore
@@ -19540,6 +19544,8 @@ self.onmessage = async (e) => {
 					name: String(p.name || "Guest"),
 					color: String(p.color || "#94a3b8"),
 					busy: Array.isArray(p.busy) ? p.busy : [],
+					rangeStart: typeof p.rangeStart === "number" ? p.rangeStart : 0,
+					rangeEnd: typeof p.rangeEnd === "number" ? p.rangeEnd : 0,
 				});
 			}
 		} else if (msg.clientId) {
@@ -19548,6 +19554,8 @@ self.onmessage = async (e) => {
 				name: String(msg.name || "Guest"),
 				color: String(msg.color || "#94a3b8"),
 				busy: Array.isArray(msg.busy) ? msg.busy : [],
+				rangeStart: typeof msg.rangeStart === "number" ? msg.rangeStart : 0,
+				rangeEnd: typeof msg.rangeEnd === "number" ? msg.rangeEnd : 0,
 			});
 		}
 		renderCommonFreeSlots();
@@ -19636,6 +19644,8 @@ self.onmessage = async (e) => {
 		if (!participants.length) return { participants: [], allAvailable: false, someAvailable: false };
 		const dayStart = startOfDay(day);
 		const dayEnd = addDays(dayStart, 1);
+		const dayStartTs = dayStart.getTime();
+		const dayEndTs = dayEnd.getTime();
 		const window = buildWorkWindow(dayStart);
 		const windowStart = window.start.getTime();
 		const windowEnd = window.end.getTime();
@@ -19645,6 +19655,14 @@ self.onmessage = async (e) => {
 		for (const [cid, p] of participants) {
 			// Skip own client - own selections are shown with ✓ indicator
 			if (cid === clientId) continue;
+			// Check if this day is within the participant's data range
+			// If not, they have no data for this day → not available (don't show dot)
+			if (p.rangeStart && p.rangeEnd) {
+				if (dayEndTs <= p.rangeStart || dayStartTs >= p.rangeEnd) {
+					// Day is outside participant's range → no data → skip (not available)
+					continue;
+				}
+			}
 			// Check if participant has any free time within work window
 			const busyInWindow = p.busy.filter(b => {
 				const bs = b.start;

@@ -5765,6 +5765,8 @@ wss.on("connection", (ws, req) => {
 			name: entry.name,
 			color: entry.color,
 			busy: entry.busy,
+			rangeStart: entry.rangeStart || 0,
+			rangeEnd: entry.rangeEnd || 0,
 		}));
 		try {
 			ws.send(JSON.stringify({ type: "availability_state", room, participants }));
@@ -6114,14 +6116,19 @@ wss.on("connection", (ws, req) => {
 				busy.push({ start: b.start, end: b.end });
 				if (busy.length >= 200) break;
 			}
+			// Validate and store range timestamps
+			const rangeStart = typeof msg.rangeStart === "number" && Number.isFinite(msg.rangeStart) ? msg.rangeStart : 0;
+			const rangeEnd = typeof msg.rangeEnd === "number" && Number.isFinite(msg.rangeEnd) ? msg.rangeEnd : 0;
 			const map = getRoomAvailabilityState(rk);
-			map.set(fromClientId, { name, color, busy });
+			map.set(fromClientId, { name, color, busy, rangeStart, rangeEnd });
 			// Broadcast full state to all clients
 			const participants = Array.from(map.entries()).map(([cid, entry]) => ({
 				clientId: cid,
 				name: entry.name,
 				color: entry.color,
 				busy: entry.busy,
+				rangeStart: entry.rangeStart || 0,
+				rangeEnd: entry.rangeEnd || 0,
 			}));
 			broadcast(rk, { type: "availability_state", room, participants });
 			return;
@@ -6442,6 +6449,8 @@ wss.on("connection", (ws, req) => {
 					name: entry.name,
 					color: entry.color,
 					busy: entry.busy,
+					rangeStart: entry.rangeStart || 0,
+					rangeEnd: entry.rangeEnd || 0,
 				}));
 				try {
 					ws.send(JSON.stringify({ type: "availability_state", room, participants }));
@@ -6471,6 +6480,8 @@ wss.on("connection", (ws, req) => {
 						name: entry.name,
 						color: entry.color,
 						busy: entry.busy,
+						rangeStart: entry.rangeStart || 0,
+						rangeEnd: entry.rangeEnd || 0,
 					}));
 					broadcast(rk, { type: "availability_state", room, participants });
 				} else {
