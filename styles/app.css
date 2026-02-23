@@ -2625,14 +2625,15 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	position: relative;
 	cursor: pointer;
 	overflow: visible;
-	border: none;
-	background-color: var(--calendar-event-bg) !important;
+	border: none !important;
+	background-color: transparent !important;
+	box-shadow: none !important;
 }
 /* Events inside day-tiles (week/month) have no separate background */
 [data-calendar-day] .calendar-event {
 	background-color: transparent !important;
-	border: 1px solid rgba(255, 255, 255, 0.08);
-	border-radius: 6px;
+	border: none !important;
+	border-radius: 0;
 }
 
 /* #calendarGrid.calendar-grid-month {
@@ -7233,16 +7234,16 @@ body[data-theme] #calendarBundeslandSelect {
 .calendar-week-grid,
 .calendar-month-grid {
 	position: relative;
-	border: 1px solid rgba(255, 255, 255, 0.08);
-	border-radius: 10px;
+	border: none;
+	border-radius: 0;
 	overflow: hidden;
-	background: rgba(2, 6, 23, 0.12);
+	background: transparent;
 }
 .calendar-month-weekdays {
-	border: 1px solid rgba(255, 255, 255, 0.08);
-	border-radius: 10px;
+	border: none;
+	border-radius: 0;
 	overflow: hidden;
-	background: rgba(2, 6, 23, 0.1);
+	background: transparent;
 }
 .calendar-weekday-label {
 	padding: 0.45rem 0.25rem;
