@@ -15629,8 +15629,7 @@ self.onmessage = async (e) => {
 		const updatedAt = Number(it && (it.updatedAt || it.updated_at)) || 0;
 		const rawText = String(it && it.text ? it.text : "");
 		const text = noteId ? "" : rawText;
-		const hasTextContent = !noteId && String(text).trim().length > 0;
-		if (!roomName || (!noteId && !hasTextContent)) return null;
+		if (!roomName) return null;
 		return { room: roomName, key: keyName, noteId, text, updatedAt };
 	}
 
@@ -15840,7 +15839,9 @@ self.onmessage = async (e) => {
 	function syncPermanentLinkToggleUi() {
 		if (!togglePermanentLinkBtn) return;
 		const pinned = getRoomPinnedEntry(room, key);
-		const active = Boolean(pinned);
+		// Only show active if actual content is pinned (noteId or non-empty text)
+		const hasContent = pinned && (pinned.noteId || String(pinned.text || "").trim().length > 0);
+		const active = Boolean(hasContent);
 		const label = active ? t("editor.permalink_active") : t("editor.permalink");
 		togglePermanentLinkBtn.setAttribute("aria-pressed", active ? "true" : "false");
 		togglePermanentLinkBtn.setAttribute("title", label);
@@ -21259,9 +21260,9 @@ self.onmessage = async (e) => {
 				const keyName = normalizeKey(key);
 				const noteId = String(msg && msg.noteId ? msg.noteId : "").trim();
 				const textVal = noteId ? "" : String(msg && msg.text ? msg.text : "");
-				const hasTextContent = !noteId && String(textVal).trim().length > 0;
+				const hasContent = noteId || String(textVal).trim().length > 0;
 				const updatedAt = Number(msg && msg.updatedAt) || Date.now();
-				if (!noteId && !hasTextContent) {
+				if (!hasContent) {
 					clearSharedRoomPinnedEntry(roomName, keyName);
 				} else {
 					setSharedRoomPinnedEntry(roomName, keyName, {
@@ -21272,7 +21273,7 @@ self.onmessage = async (e) => {
 				}
 				// Always mark room as shared when we receive pin state (even empty)
 				// so comment scope and guest features work for all participants
-				if (msg.shared || noteId || hasTextContent) {
+				if (msg.shared || hasContent) {
 					markRoomShared(roomName, keyName);
 				}
 				syncPermanentLinkToggleUi();
