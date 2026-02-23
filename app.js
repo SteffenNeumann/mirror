@@ -15629,7 +15629,8 @@ self.onmessage = async (e) => {
 		const updatedAt = Number(it && (it.updatedAt || it.updated_at)) || 0;
 		const rawText = String(it && it.text ? it.text : "");
 		const text = noteId ? "" : rawText;
-		if (!roomName) return null;
+		const hasTextContent = !noteId && String(text).trim().length > 0;
+		if (!roomName || (!noteId && !hasTextContent)) return null;
 		return { room: roomName, key: keyName, noteId, text, updatedAt };
 	}
 
@@ -21258,8 +21259,9 @@ self.onmessage = async (e) => {
 				const keyName = normalizeKey(key);
 				const noteId = String(msg && msg.noteId ? msg.noteId : "").trim();
 				const textVal = noteId ? "" : String(msg && msg.text ? msg.text : "");
+				const hasTextContent = !noteId && String(textVal).trim().length > 0;
 				const updatedAt = Number(msg && msg.updatedAt) || Date.now();
-				if (!noteId && !textVal) {
+				if (!noteId && !hasTextContent) {
 					clearSharedRoomPinnedEntry(roomName, keyName);
 				} else {
 					setSharedRoomPinnedEntry(roomName, keyName, {
@@ -21270,7 +21272,7 @@ self.onmessage = async (e) => {
 				}
 				// Always mark room as shared when we receive pin state (even empty)
 				// so comment scope and guest features work for all participants
-				if (msg.shared || noteId || textVal) {
+				if (msg.shared || noteId || hasTextContent) {
 					markRoomShared(roomName, keyName);
 				}
 				syncPermanentLinkToggleUi();
@@ -21721,6 +21723,10 @@ self.onmessage = async (e) => {
 			const textSnapshot = noteId
 				? ""
 				: String(textarea && textarea.value ? textarea.value : "");
+			if (!noteId && String(textSnapshot).trim().length === 0) {
+				syncPermanentLinkToggleUi();
+				return;
+			}
 			setRoomPinnedEntry(roomName, keyName, {
 				noteId,
 				text: textSnapshot,
