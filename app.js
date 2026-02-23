@@ -25775,8 +25775,25 @@ self.onmessage = async (e) => {
 	}
 	if (calendarTodayBtn) {
 		calendarTodayBtn.addEventListener("click", () => {
-			calendarState.cursor = new Date();
+			const today = startOfDay(new Date());
+			const todayKey = dayKeyFromDate(today);
+			calendarState.cursor = today;
+			calendarFocusedDayKey = todayKey;
+			if (calendarFocusedDayTimer) window.clearTimeout(calendarFocusedDayTimer);
+			calendarFocusedDayTimer = window.setTimeout(() => {
+				calendarFocusedDayKey = "";
+				calendarFocusedDayTimer = 0;
+				if (calendarGrid) {
+					const el = calendarGrid.querySelector(".calendar-day-focused");
+					if (el) el.classList.remove("calendar-day-focused");
+				}
+			}, 3000);
+			updateCalendarViewButtons();
 			renderCalendarPanel();
+			if (calendarGrid) {
+				const cell = calendarGrid.querySelector(`[data-calendar-day="${todayKey}"]`);
+				if (cell) cell.scrollIntoView({ behavior: "smooth", block: "center" });
+			}
 		});
 	}
 	if (calendarRefreshBtn) {
