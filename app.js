@@ -21285,6 +21285,18 @@ self.onmessage = async (e) => {
 					clientId,
 					ts: Date.now(),
 				});
+				// After a short delay, if no snapshot arrived from the server,
+				// seed the CRDT with the local textarea content so it gets shared
+				setTimeout(() => {
+					if (mySeq !== connectionSeq) return;
+					if (crdtHasSnapshot) return; // Server sent a snapshot, don't override
+					const localText = String(textarea.value || "");
+					if (!localText) return; // Nothing to seed
+					const crdtText = ytext ? ytext.toString() : "";
+					if (crdtText) return; // CRDT already has content
+					// Seed CRDT with local text
+					updateCrdtFromTextarea();
+				}, 300);
 				scheduleCrdtSnapshot();
 			});
 		});
