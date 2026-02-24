@@ -273,6 +273,10 @@ let stmtOutlookTokenUpsert;
 let stmtOutlookTokenDelete;
 let stmtRoomSlotsGet;
 let stmtRoomSlotsUpsert;
+let stmtRoomAvailabilityUpsert;
+let stmtRoomAvailabilityGetByRoom;
+let stmtRoomAvailabilityDelete;
+let stmtRoomAvailabilityCleanup;
 
 // In-memory rate limit: ip -> { count, resetAt }
 const aiRate = new Map();
@@ -466,6 +470,20 @@ function initDb() {
 			PRIMARY KEY(user_id, room_key),
 			FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
 		);
+		CREATE TABLE IF NOT EXISTS room_availability (
+			room_key TEXT NOT NULL,
+			client_id TEXT NOT NULL,
+			name TEXT NOT NULL DEFAULT 'Guest',
+			color TEXT NOT NULL DEFAULT '#94a3b8',
+			selected_days_json TEXT NOT NULL DEFAULT '[]',
+			busy_json TEXT NOT NULL DEFAULT '[]',
+			range_start INTEGER NOT NULL DEFAULT 0,
+			range_end INTEGER NOT NULL DEFAULT 0,
+			updated_at INTEGER NOT NULL,
+			PRIMARY KEY(room_key, client_id)
+		);
+		CREATE INDEX IF NOT EXISTS idx_room_availability_room ON room_availability(room_key);
+		CREATE INDEX IF NOT EXISTS idx_room_availability_updated ON room_availability(updated_at);
 	`);
 
 	const noteCols = db.prepare("PRAGMA table_info(notes)").all();
@@ -774,6 +792,18 @@ function initDb() {
 	);
 	stmtRoomSlotsUpsert = db.prepare(
 		"INSERT INTO user_room_slots(user_id, room_key, slots_json, sharing, updated_at) VALUES(?, ?, ?, ?, ?) ON CONFLICT(user_id, room_key) DO UPDATE SET slots_json = excluded.slots_json, sharing = excluded.sharing, updated_at = excluded.updated_at"
+	);
+	stmtRoomAvailabilityUpsert = db.prepare(
+		"INSERT INTO room_availability(room_key, client_id, name, color, selected_days_json, busy_json, range_start, range_end, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(room_key, client_id) DO UPDATE SET name = excluded.name, color = excluded.color, selected_days_json = excluded.selected_days_json, busy_json = excluded.busy_json, range_start = excluded.range_start, range_end = excluded.range_end, updated_at = excluded.updated_at"
+	);
+	stmtRoomAvailabilityGetByRoom = db.prepare(
+		"SELECT client_id, name, color, selected_days_json, busy_json, range_start, range_end, updated_at FROM room_availability WHERE room_key = ? AND updated_at > ?"
+	);
+	stmtRoomAvailabilityDelete = db.prepare(
+		"DELETE FROM room_availability WHERE room_key = ? AND client_id = ?"
+	);
+	stmtRoomAvailabilityCleanup = db.prepare(
+		"DELETE FROM room_availability WHERE updated_at < ?"
 	);
 	stmtTrashInsert = db.prepare(
 		"INSERT INTO notes_trash(id, user_id, text, kind, content_hash, tags_json, created_at, updated_at, deleted_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(user_id, id) DO UPDATE SET text = excluded.text, kind = excluded.kind, content_hash = excluded.content_hash, tags_json = excluded.tags_json, created_at = excluded.created_at, updated_at = excluded.updated_at, deleted_at = excluded.deleted_at"
@@ -5771,9 +5801,37 @@ wss.on("connection", (ws, req) => {
 		}
 	}
 
-	const initialAvail = roomAvailabilityState.get(rk);
-	if (initialAvail && initialAvail.size > 0) {
-		const participants = Array.from(initialAvail.entries()).map(([cid, entry]) => ({
+	// Load availability from DB if in-memory is empty, then send to client
+	let availMap = roomAvailabilityState.get(rk);
+	if (!availMap || availMap.size === 0) {
+		// Try to load from database (entries updated in last 7 days)
+		const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+		try {
+			const rows = stmtRoomAvailabilityGetByRoom.all(rk, sevenDaysAgo);
+			if (rows && rows.length > 0) {
+				availMap = getRoomAvailabilityState(rk);
+				for (const row of rows) {
+					try {
+						availMap.set(row.client_id, {
+							name: row.name || "Guest",
+							color: row.color || "#94a3b8",
+							selectedDays: JSON.parse(row.selected_days_json || "[]"),
+							busy: JSON.parse(row.busy_json || "[]"),
+							rangeStart: row.range_start || 0,
+							rangeEnd: row.range_end || 0,
+						});
+					} catch {
+						// Skip invalid rows
+					}
+				}
+				console.log("[AVAIL-DB] Loaded", rows.length, "availability entries from DB for room", rk);
+			}
+		} catch (dbErr) {
+			console.error("[AVAIL-DB] Failed to load availability from DB:", dbErr.message);
+		}
+	}
+	if (availMap && availMap.size > 0) {
+		const participants = Array.from(availMap.entries()).map(([cid, entry]) => ({
 			clientId: cid,
 			name: entry.name,
 			color: entry.color,
@@ -6150,6 +6208,22 @@ wss.on("connection", (ws, req) => {
 			const rangeEnd = typeof msg.rangeEnd === "number" && Number.isFinite(msg.rangeEnd) ? msg.rangeEnd : 0;
 			const map = getRoomAvailabilityState(rk);
 			map.set(fromClientId, { name, color, busy, selectedDays, rangeStart, rangeEnd });
+			// Persist to database
+			try {
+				stmtRoomAvailabilityUpsert.run(
+					rk,
+					fromClientId,
+					name,
+					color,
+					JSON.stringify(selectedDays),
+					JSON.stringify(busy),
+					rangeStart,
+					rangeEnd,
+					Date.now()
+				);
+			} catch (dbErr) {
+				console.error("[AVAIL-DB] Failed to persist availability:", dbErr.message);
+			}
 			// Broadcast full state to all clients
 			const participants = Array.from(map.entries()).map(([cid, entry]) => ({
 				clientId: cid,
@@ -6177,6 +6251,12 @@ wss.on("connection", (ws, req) => {
 			const map = roomAvailabilityState.get(rk);
 			if (map) {
 				map.delete(fromClientId);
+				// Remove from database
+				try {
+					stmtRoomAvailabilityDelete.run(rk, fromClientId);
+				} catch (dbErr) {
+					console.error("[AVAIL-DB] Failed to delete availability:", dbErr.message);
+				}
 				if (map.size > 0) {
 					const participants = Array.from(map.entries()).map(([cid, entry]) => ({
 						clientId: cid,
@@ -6567,6 +6647,28 @@ wss.on("connection", (ws, req) => {
 server.listen(PORT, HOST, async () => {
 	console.log(`Mirror server running on http://${HOST}:${PORT}`);
 	console.log(`WebSocket endpoint: ws://${HOST}:${PORT}/ws?room=<room>`);
+	// Cleanup old availability entries (older than 7 days)
+	try {
+		const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+		const result = stmtRoomAvailabilityCleanup.run(sevenDaysAgo);
+		if (result.changes > 0) {
+			console.log(`[AVAIL-DB] Cleaned up ${result.changes} old availability entries`);
+		}
+	} catch (cleanupErr) {
+		console.error("[AVAIL-DB] Cleanup error:", cleanupErr.message);
+	}
+	// Schedule periodic cleanup (every 6 hours)
+	setInterval(() => {
+		try {
+			const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+			const result = stmtRoomAvailabilityCleanup.run(cutoff);
+			if (result.changes > 0) {
+				console.log(`[AVAIL-DB] Periodic cleanup: removed ${result.changes} old entries`);
+			}
+		} catch {
+			// ignore
+		}
+	}, 6 * 60 * 60 * 1000);
 	// Fetch latest Anthropic model on startup
 	await refreshLatestModel();
 	console.log(`[ai] active model: ${ANTHROPIC_MODEL}`);
