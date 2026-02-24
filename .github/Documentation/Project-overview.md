@@ -220,6 +220,15 @@ interface AvailabilityData {
 
 ## Aktuelle Änderungen (2026-02-24)
 
+- **AI-Chat-History Persistierung** `#ai` `#chat` `#persistence`: Der AI-Chatverlauf wird jetzt in localStorage gespeichert und bleibt auch nach Seiten-Reload erhalten.
+  1. **Neue Konstante `AI_CHAT_HISTORY_KEY`** (`app.js` ~L2597): localStorage-Key für Chat-History.
+  2. **`saveAiChatHistory()`** (`app.js` ~L2602): Serialisiert `aiChatHistoryByContext` Map nach JSON und speichert in localStorage. Begrenzt auf max. 50 Einträge pro Kontext.
+  3. **`loadAiChatHistory()`** (`app.js` ~L2617): Lädt Chat-History aus localStorage beim Startup, stellt auch `aiChatSeq` Counter wieder her.
+  4. **Auto-Save bei Änderungen**: `clearAiChatHistoryForContext`, `deleteAiChatEntryById` und `addAiChatEntry` rufen jetzt `saveAiChatHistory()` auf.
+  5. **Startup-Integration** (`app.js` ~L28015): `loadAiChatHistory()` wird in `initStartupTasks()` vor `syncAiChatContext()` aufgerufen.
+  - Zuständige Funktionen: `saveAiChatHistory`, `loadAiChatHistory`, `clearAiChatHistoryForContext`, `deleteAiChatEntryById`, `addAiChatEntry`, `initStartupTasks`.
+  - Zuständige Dateien: `app.js`.
+
 - **AI-Output-Größenerweiterung für lange Antworten** `#ai` `#ui` `#output`: Lange AI-Text-Ausgaben (z.B. generierter Code) werden jetzt korrekt mit erweiterten Größenlimits dargestellt, sodass der vollständige Inhalt sichtbar ist.
   1. **`updateRunOutputSizing()` erweitert** (`app.js` ~L11062): Neue `isAiText`-Erkennung für `source === "ai"`. AI-Text-Outputs erhalten jetzt basePx=320 (statt 160) und 85%/90% Panel-/Window-Anteil (statt 65%/70%).
   2. **`updateRunOutputUi()` setzt CSS-Klasse** (`app.js` ~L11051): Neue `.is-ai-output`-Klasse wird auf `#runOutput` gesetzt wenn `source === "ai"` oder `source === "ai-image"`.

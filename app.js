@@ -2592,9 +2592,47 @@
 	let crdtMarksStyle = "underline";
 	const CRDT_MARKS_DISABLED_KEY = "mirror_crdt_marks_disabled";
 	const CRDT_MARKS_STYLE_KEY = "mirror_crdt_marks_style";
+	const AI_CHAT_HISTORY_KEY = "mirror_ai_chat_history_v1";
 	const aiChatHistoryByContext = new Map();
 	let aiChatContextKey = "";
 	let aiChatSeq = 0;
+
+	// ── AI Chat History Persistence ──
+	function saveAiChatHistory() {
+		try {
+			const obj = {};
+			for (const [key, list] of aiChatHistoryByContext.entries()) {
+				if (Array.isArray(list) && list.length > 0) {
+					// Keep only last 50 entries per context to avoid localStorage bloat
+					obj[key] = list.slice(-50);
+				}
+			}
+			localStorage.setItem(AI_CHAT_HISTORY_KEY, JSON.stringify(obj));
+		} catch {
+			// ignore quota errors
+		}
+	}
+
+	function loadAiChatHistory() {
+		try {
+			const raw = localStorage.getItem(AI_CHAT_HISTORY_KEY);
+			if (!raw) return;
+			const obj = JSON.parse(raw);
+			if (!obj || typeof obj !== "object") return;
+			for (const [key, list] of Object.entries(obj)) {
+				if (Array.isArray(list)) {
+					aiChatHistoryByContext.set(key, list);
+					// Restore sequence counter
+					for (const entry of list) {
+						const id = parseInt(String(entry.id || "").replace(/\D/g, ""), 10);
+						if (id && id > aiChatSeq) aiChatSeq = id;
+					}
+				}
+			}
+		} catch {
+			// ignore parse errors
+		}
+	}
 
 	function getTextareaCaretCoords(el, pos) {
 		if (!el) return { left: 0, top: 0, height: 0 };
@@ -9492,6 +9530,7 @@
 		if (!aiChatContextKey) return;
 		aiChatHistoryByContext.set(aiChatContextKey, []);
 		renderAiChatHistory();
+		saveAiChatHistory();
 	}
 
 	function deleteAiChatEntryById(entryId) {
@@ -9502,6 +9541,7 @@
 		const next = list.filter((item) => String(item.id || "") !== id);
 		aiChatHistoryByContext.set(aiChatContextKey, next);
 		renderAiChatHistory();
+		saveAiChatHistory();
 	}
 
 	function addAiChatEntry(role, text, contextKey) {
@@ -9536,6 +9576,7 @@
 			aiChatContextKey = key;
 		}
 		renderAiChatHistory();
+		saveAiChatHistory();
 	}
 
 	function stripManualTagsMarker(tags) {
@@ -27970,6 +28011,7 @@ self.onmessage = async (e) => {
 		loadAiUsePreview();
 		loadAiUseAnswer();
 		applyAiContextMode();
+		loadAiChatHistory();
 		syncAiChatContext();
 		setCommentDraftSelection(null);
 		updateTableMenuVisibility();
