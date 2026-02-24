@@ -6917,16 +6917,16 @@ body[data-theme="monoLight"] .cal-room-label {
 
 /* ── Participant indicators in calendar grid cells ── */
 .participant-indicators {
-	display: flex;
+	display: inline-flex;
 	align-items: center;
-	gap: 4px;
-	margin-top: 2px;
-	flex-wrap: wrap;
+	gap: 3px;
+	flex-wrap: nowrap;
+	flex-shrink: 0;
 }
 .participant-dot {
 	display: inline-block;
-	width: 8px;
-	height: 8px;
+	width: 6px;
+	height: 6px;
 	border-radius: 50%;
 	border: 1px solid rgba(255, 255, 255, 0.2);
 	transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -6939,9 +6939,8 @@ body[data-theme="monoLight"] .cal-room-label {
 	display: inline-flex;
 	align-items: center;
 	gap: 2px;
-	margin-left: auto;
 	border-radius: 9999px;
-	padding: 1px 6px;
+	padding: 1px 5px;
 	font-size: 9px;
 	font-weight: 600;
 	line-height: 1.2;

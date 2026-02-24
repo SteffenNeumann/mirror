@@ -19801,8 +19801,8 @@ self.onmessage = async (e) => {
 		const result = [];
 		let availCount = 0;
 		for (const [cid, p] of participants) {
-			// Skip own client - own selections are shown with ✓ indicator
-			if (cid === clientId) continue;
+			// Include ALL participants (including self) for accurate badge count
+			const isSelf = cid === clientId;
 			// Primary check: if participant has selectedDays array, use that directly
 			// This is independent of the busy-interval range
 			let isAvailable = false;
@@ -19844,6 +19844,7 @@ self.onmessage = async (e) => {
 				name: p.name || "Guest",
 				color: p.color || "#94a3b8",
 				isAvailable,
+				isSelf,
 			});
 		}
 		return {
@@ -19867,19 +19868,20 @@ self.onmessage = async (e) => {
 		// Only show indicators if there are other participants AND at least one is available
 		if (!info.participants.length) return "";
 		if (!info.someAvailable) return "";
-		// Build small user color dots - only for participants who are available
-		const availableParticipants = info.participants.filter(p => p.isAvailable);
-		if (!availableParticipants.length) return "";
-		const dots = availableParticipants.map(p => {
+		// Build small user color dots - only for OTHER participants who are available (self is shown via ✓)
+		const availableOthers = info.participants.filter(p => p.isAvailable && !p.isSelf);
+		const dots = availableOthers.map(p => {
 			return `<span class="participant-dot" style="background:${escapeAttr(p.color)}" title="${escapeAttr(p.name)}"></span>`;
 		}).join("");
-		// Summary badge (all/partial)
+		// Summary badge (all/partial) - now counts ALL participants including self
 		let badge = "";
 		if (info.allAvailable && info.totalCount > 0) {
 			badge = `<span class="participant-badge participant-badge--all" title="${escapeAttr(t("calendar.grid.all_available"))}">${info.availableCount}/${info.totalCount}</span>`;
 		} else if (info.someAvailable && info.totalCount > 1) {
 			badge = `<span class="participant-badge participant-badge--partial" title="${escapeAttr(t("calendar.grid.partial_available"))}">${info.availableCount}/${info.totalCount}</span>`;
 		}
+		// Return empty if no dots and no badge to display
+		if (!dots && !badge) return "";
 		return `<div class="participant-indicators">${dots}${badge}</div>`;
 	}
 
@@ -20187,11 +20189,11 @@ self.onmessage = async (e) => {
 				const participantHtml = renderParticipantIndicators(day);
 				return `
 					<div class="calendar-day-cell border ${dayBorder} ${availClass}${commonClass} cursor-pointer select-none transition-colors${todayClass}${focusedClass}" data-calendar-day="${dk}">
-						<div class="flex items-center justify-between">
+						<div class="flex items-center justify-between gap-1">
 							<span class="text-[11px] text-slate-400">${formatDayLabel(day)}</span>
-							<span class="calendar-day-indicator text-[9px]">${dayAvail ? "✓" : "✕"}</span>
+							${participantHtml}
+							<span class="calendar-day-indicator text-[9px] ml-auto">${dayAvail ? "✓" : "✕"}</span>
 						</div>
-						${participantHtml}
 						<div class="mt-2 space-y-1">${list}</div>
 					</div>`;
 			});
@@ -20248,11 +20250,11 @@ self.onmessage = async (e) => {
 				const participantHtml = renderParticipantIndicators(day);
 				return `
 					<div class="calendar-day-cell border ${dayBorder} ${availClass}${commonClass} cursor-pointer select-none transition-colors${todayClass}${focusedClass}" data-calendar-day="${dk}">
-						<div class="flex items-center justify-between">
+						<div class="flex items-center justify-between gap-1">
 							<span class="text-[11px] text-slate-400">${formatDayLabel(day)}</span>
-							<span class="calendar-day-indicator text-[9px]">${dayAvail ? "✓" : "✕"}</span>
+							${participantHtml}
+							<span class="calendar-day-indicator text-[9px] ml-auto">${dayAvail ? "✓" : "✕"}</span>
 						</div>
-						${participantHtml}
 						<div class="mt-2 space-y-1">${list}</div>
 					</div>`;
 			});
@@ -20313,11 +20315,11 @@ self.onmessage = async (e) => {
 			const participantHtml = renderParticipantIndicators(day);
 			return `
 				<div class="calendar-day-cell calendar-day-cell-month min-h-[88px] border ${borderClass} ${availClass}${commonClass} cursor-pointer select-none transition-colors${opacityClass}${todayClass}${focusedClass}" data-calendar-day="${dk}">
-					<div class="flex items-center justify-between">
+					<div class="flex items-center justify-between gap-1">
 						<span class="text-[11px] text-slate-400">${day.getDate()}</span>
-						<span class="calendar-day-indicator text-[9px]">${dayAvail ? "✓" : "✕"}</span>
+						${participantHtml}
+						<span class="calendar-day-indicator text-[9px] ml-auto">${dayAvail ? "✓" : "✕"}</span>
 					</div>
-					${participantHtml}
 					<div class="mt-1 space-y-1">${visibleEvents.join("")}${
 						visibleEvents.length && extra ? `<div>${extra}</div>` : extra
 					}</div>
