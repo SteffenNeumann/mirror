@@ -7134,6 +7134,86 @@ body[data-theme="monoLight"] .participant-badge--partial {
 	);
 }
 
+/* ── Calendar Source Toggle Rows ── */
+.cal-source-row {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	width: 100%;
+	padding: 0.25rem 0.125rem;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	border-radius: 0.375rem;
+	transition: background 0.15s, opacity 0.2s;
+	text-align: left;
+}
+.cal-source-row:hover {
+	background: rgba(255, 255, 255, 0.04);
+}
+.cal-source-row:active {
+	background: rgba(255, 255, 255, 0.06);
+}
+.cal-source-toggle {
+	position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 14px;
+	height: 14px;
+	flex-shrink: 0;
+	border-radius: 3px;
+	border: 1.5px solid rgba(148, 163, 184, 0.4);
+	background: transparent;
+	transition: border-color 0.15s, background 0.15s;
+}
+.cal-source-row:hover .cal-source-toggle {
+	border-color: rgba(148, 163, 184, 0.55);
+}
+.cal-source-toggle--checked {
+	border-color: rgba(167, 139, 250, 0.7);
+	background: rgba(167, 139, 250, 0.15);
+}
+.cal-source-row:hover .cal-source-toggle--checked {
+	border-color: rgba(167, 139, 250, 0.85);
+	background: rgba(167, 139, 250, 0.2);
+}
+.cal-source-check {
+	width: 10px;
+	height: 10px;
+	color: #a78bfa;
+	opacity: 0;
+	transform: scale(0.8);
+	transition: opacity 0.15s, transform 0.15s;
+}
+.cal-source-toggle--checked .cal-source-check {
+	opacity: 1;
+	transform: scale(1);
+}
+.cal-source-dot {
+	display: inline-flex;
+	width: 8px;
+	height: 8px;
+	flex-shrink: 0;
+	border-radius: 999px;
+	transition: opacity 0.2s;
+}
+.cal-source-name {
+	flex: 1;
+	min-width: 0;
+	font-size: 12px;
+	color: #cbd5e1;
+	transition: color 0.15s;
+}
+.cal-source-row:hover .cal-source-name {
+	color: #e2e8f0;
+}
+.cal-source-badge {
+	font-size: 10px;
+	color: #64748b;
+	flex-shrink: 0;
+}
+
 /* ── Calendar Room Selector ── */
 .cal-room-selector {
 	display: flex;

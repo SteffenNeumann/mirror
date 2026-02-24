@@ -15252,6 +15252,7 @@ self.onmessage = async (e) => {
 	const CALENDAR_SOURCES_KEY = "mirror_calendar_sources_v1";
 	const CALENDAR_LOCAL_EVENTS_KEY = "mirror_calendar_local_events_v1";
 	const CALENDAR_DEFAULT_VIEW_KEY = "mirror_calendar_default_view_v1";
+	const CALENDAR_HIDDEN_SOURCES_KEY = "mirror_calendar_hidden_sources_v1";
 	const CALENDAR_FREE_SLOTS_KEY = "mirror_calendar_free_slots_v1";
 	const CALENDAR_GOOGLE_CAL_ID_KEY = "mirror_calendar_google_id_v1";
 	const CALENDAR_OUTLOOK_CAL_ID_KEY = "mirror_calendar_outlook_id_v1";
@@ -15344,6 +15345,51 @@ self.onmessage = async (e) => {
 		loading: false,
 		lastLoadedAt: 0,
 	};
+
+	/** Set of hidden calendar source IDs (persisted in localStorage) */
+	let calendarHiddenSources = new Set();
+
+	function loadCalendarHiddenSources() {
+		try {
+			const raw = localStorage.getItem(CALENDAR_HIDDEN_SOURCES_KEY);
+			if (raw) {
+				const arr = JSON.parse(raw);
+				if (Array.isArray(arr)) {
+					calendarHiddenSources = new Set(arr);
+					return;
+				}
+			}
+		} catch (e) {
+			// ignore
+		}
+		calendarHiddenSources = new Set();
+	}
+
+	function saveCalendarHiddenSources() {
+		try {
+			localStorage.setItem(
+				CALENDAR_HIDDEN_SOURCES_KEY,
+				JSON.stringify([...calendarHiddenSources])
+			);
+		} catch (e) {
+			// ignore
+		}
+	}
+
+	function toggleCalendarSource(sourceId) {
+		if (calendarHiddenSources.has(sourceId)) {
+			calendarHiddenSources.delete(sourceId);
+		} else {
+			calendarHiddenSources.add(sourceId);
+		}
+		saveCalendarHiddenSources();
+		renderCalendarLegend();
+		renderCalendarPanel();
+	}
+
+	function isCalendarSourceVisible(sourceId) {
+		return !calendarHiddenSources.has(sourceId);
+	}
 
 	function normalizeFavoriteEntry(it) {
 		const roomName = normalizeRoom(it && it.room);
@@ -18067,6 +18113,7 @@ self.onmessage = async (e) => {
 
 	calendarFreeSlotsVisible = loadCalendarFreeSlotsVisible();
 	calendarState.localEvents = loadLocalCalendarEvents();
+	loadCalendarHiddenSources();
 	applyCalendarFreeSlotsVisibility();
 
 	function parseIcsDate(value) {
@@ -18748,7 +18795,9 @@ self.onmessage = async (e) => {
 			color: CALENDAR_LOCAL_SOURCE.color,
 		}));
 		const holidays = getHolidayEvents();
-		return [...external, ...localDecorated, ...holidays];
+		const all = [...external, ...localDecorated, ...holidays];
+		// Filter out hidden sources
+		return all.filter((evt) => isCalendarSourceVisible(evt.calendarId));
 	}
 
 	/* ── Calendar Fuzzy Search ── */
@@ -18887,87 +18936,51 @@ self.onmessage = async (e) => {
 				`<div class="text-xs text-slate-400">${escapeHtml(t("calendar.base.hint"))}</div>`;
 			return;
 		}
-		const localRow = localCount
-			? `
-				<div class="flex items-center justify-between gap-2 text-xs text-slate-300">
-					<div class="flex items-center gap-2">
-						<span class="inline-flex h-2.5 w-2.5 rounded-full" style="background:${escapeAttr(
-							CALENDAR_LOCAL_SOURCE.color
-						)}"></span>
-						<span class="truncate">${escapeHtml(
-							CALENDAR_LOCAL_SOURCE.name
-						)}</span>
-					</div>
-					<span class="text-[10px] text-slate-500">lokal</span>
-				</div>`
-			: "";
-		const googleRow = hasGoogle
-			? `
-				<div class="flex items-center justify-between gap-2 text-xs text-slate-300">
-					<div class="flex items-center gap-2">
-						<span class="inline-flex h-2.5 w-2.5 rounded-full" style="background:${escapeAttr(
-							CALENDAR_GOOGLE_SOURCE.color
-						)}"></span>
-						<span class="truncate">${escapeHtml(
-							CALENDAR_GOOGLE_SOURCE.name
-						)}</span>
-					</div>
-					<span class="text-[10px] text-slate-500">sync</span>
-				</div>`
-			: "";
-		const outlookRow = hasOutlook
-			? `
-				<div class="flex items-center justify-between gap-2 text-xs text-slate-300">
-					<div class="flex items-center gap-2">
-						<span class="inline-flex h-2.5 w-2.5 rounded-full" style="background:${escapeAttr(
-							CALENDAR_OUTLOOK_SOURCE.color
-						)}"></span>
-						<span class="truncate">${escapeHtml(
-							CALENDAR_OUTLOOK_SOURCE.name
-						)}</span>
-					</div>
-					<span class="text-[10px] text-slate-500">sync</span>
-				</div>`
-			: "";
+
+		// Helper to render a calendar row with toggle
+		const renderRow = (id, color, name, badge) => {
+			const isVisible = isCalendarSourceVisible(id);
+			const checkedClass = isVisible ? "cal-source-toggle--checked" : "";
+			const opacityClass = isVisible ? "" : "opacity-40";
+			return `
+				<button type="button" class="cal-source-row group ${opacityClass}" data-cal-toggle="${escapeAttr(id)}">
+					<span class="cal-source-toggle ${checkedClass}" aria-hidden="true">
+						<svg viewBox="0 0 12 12" fill="none" class="cal-source-check">
+							<path d="M2.5 6.5L5 9L9.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+						</svg>
+					</span>
+					<span class="cal-source-dot" style="background:${escapeAttr(color)}"></span>
+					<span class="cal-source-name truncate">${escapeHtml(name)}</span>
+					${badge ? `<span class="cal-source-badge">${escapeHtml(badge)}</span>` : ""}
+				</button>`;
+		};
+
+		const localRow = localCount ? renderRow(CALENDAR_LOCAL_SOURCE.id, CALENDAR_LOCAL_SOURCE.color, CALENDAR_LOCAL_SOURCE.name, "lokal") : "";
+		const googleRow = hasGoogle ? renderRow(CALENDAR_GOOGLE_SOURCE.id, CALENDAR_GOOGLE_SOURCE.color, CALENDAR_GOOGLE_SOURCE.name, "sync") : "";
+		const outlookRow = hasOutlook ? renderRow(CALENDAR_OUTLOOK_SOURCE.id, CALENDAR_OUTLOOK_SOURCE.color, CALENDAR_OUTLOOK_SOURCE.name, "sync") : "";
+
 		const blEntry = BUNDESLAENDER.find((b) => b.id === bl);
+		const blBadge = blEntry ? blEntry.id : "";
 		const holidayRow = hasHolidays
-			? `
-				<div class="flex items-center justify-between gap-2 text-xs text-slate-300">
-					<div class="flex items-center gap-2">
-						<span class="inline-flex h-2.5 w-2.5 rounded-full" style="background:${escapeAttr(
-							CALENDAR_HOLIDAYS_SOURCE.color
-						)}"></span>
-						<span class="truncate">${escapeHtml(t("calendar.holidays.feiertage"))}</span>
-					</div>
-					<span class="text-[10px] text-slate-500">${escapeHtml(blEntry ? blEntry.id : "")}</span>
-				</div>
-				<div class="flex items-center justify-between gap-2 text-xs text-slate-300">
-					<div class="flex items-center gap-2">
-						<span class="inline-flex h-2.5 w-2.5 rounded-full" style="background:${escapeAttr(
-							CALENDAR_VACATION_SOURCE.color
-						)}"></span>
-						<span class="truncate">${escapeHtml(t("calendar.holidays.ferien"))}</span>
-					</div>
-					<span class="text-[10px] text-slate-500">${escapeHtml(blEntry ? blEntry.id : "")}</span>
-				</div>`
+			? renderRow(CALENDAR_HOLIDAYS_SOURCE.id, CALENDAR_HOLIDAYS_SOURCE.color, t("calendar.holidays.feiertage"), blBadge) +
+			  renderRow(CALENDAR_VACATION_SOURCE.id, CALENDAR_VACATION_SOURCE.color, t("calendar.holidays.ferien"), blBadge)
 			: "";
-		calendarLegend.innerHTML = `${localRow}${googleRow}${outlookRow}${holidayRow}${sources
-			.map((src) => {
-				const dot = `<span class="inline-flex h-2.5 w-2.5 rounded-full" style="background:${escapeAttr(
-					src.color
-				)}"></span>`;
-				const state = src.enabled ? "" : "<span class=\"text-[10px] text-slate-500\">inaktiv</span>";
-				return `
-					<div class="flex items-center justify-between gap-2 text-xs text-slate-300">
-						<div class="flex items-center gap-2">
-							${dot}
-							<span class="truncate">${escapeHtml(src.name)}</span>
-						</div>
-						${state}
-					</div>`;
-			})
-			.join("")}`;
+
+		const sourceRows = sources.map((src) => renderRow(src.id || src.name, src.color, src.name, src.enabled ? "" : "inaktiv")).join("");
+
+		calendarLegend.innerHTML = `${localRow}${googleRow}${outlookRow}${holidayRow}${sourceRows}`;
 	}
+
+	// Event delegation for calendar source toggles
+	document.addEventListener("click", (e) => {
+		const btn = e.target.closest("[data-cal-toggle]");
+		if (btn) {
+			const sourceId = btn.dataset.calToggle;
+			if (sourceId) {
+				toggleCalendarSource(sourceId);
+			}
+		}
+	});
 
 	function moveCalendarCursor(direction) {
 		const dir = Number(direction) || 0;
