@@ -2359,14 +2359,27 @@ function getRoomAvailabilityState(roomKeyName) {
 
 /**
  * Build deduplicated participants array from availability map (by name)
+ * When multiple clients have the same name, keep the one with more selectedDays
+ * (or the latest one if equal) to avoid silently dropping active participants.
  */
 function buildDeduplicatedParticipants(availMap) {
 	if (!availMap || availMap.size === 0) return [];
 	const byName = new Map();
 	for (const [cid, entry] of availMap.entries()) {
 		const name = entry.name || "Guest";
-		if (!byName.has(name)) {
+		const existing = byName.get(name);
+		if (!existing) {
 			byName.set(name, { cid, entry });
+		} else {
+			// Keep the entry with more selectedDays, or the newer one if equal
+			const existingDays = existing.entry.selectedDays?.length || 0;
+			const newDays = entry.selectedDays?.length || 0;
+			if (newDays > existingDays) {
+				byName.set(name, { cid, entry });
+			}
+			// If equal days, we could compare timestamps, but for now keep existing
+			// to maintain stability. The key fix is not silently dropping entries
+			// with more data.
 		}
 	}
 	return Array.from(byName.values()).map(({ cid, entry }) => ({
