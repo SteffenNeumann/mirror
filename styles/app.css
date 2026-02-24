@@ -73,6 +73,10 @@ body {
 	border-color: var(--selection-menu-border);
 }
 
+#calendarTitle {
+	color: var(--accent-text-soft) !important;
+}
+
 #slashMenu,
 #wikiMenu {
 	background-color: var(--selection-menu-bg) !important;
@@ -5627,6 +5631,9 @@ body[data-theme="monoDark"] .text-slate-300 {
 }
 body[data-theme="monoDark"] .text-slate-400 {
 	color: #6e7681 !important;
+}
+body[data-theme="monoDark"] #calendarTitle {
+	color: var(--accent-text-soft) !important;
 }
 body[data-theme="monoDark"] .text-slate-500 {
 	color: #6e7681 !important;
