@@ -2173,6 +2173,21 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		color: var(--calendar-text-primary, #f1f5f9);
 		font-weight: 600;
 	}
+	/* Calendar Clear Buttons */
+	.cal-clear-btn {
+		padding: 0.25rem 0.5rem;
+		font-size: 10px;
+		border-radius: 0.375rem;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		background: transparent;
+		color: #94a3b8;
+		transition: all 0.15s ease;
+	}
+	.cal-clear-btn:hover {
+		background: var(--accent-bg-soft);
+		color: var(--accent-text);
+		border-color: var(--accent-border);
+	}
 	/* Calendar sidebar mobile: better sizing */
 	.calendar-sidebar {
 		max-height: 200px;

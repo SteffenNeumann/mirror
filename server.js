@@ -5814,7 +5814,16 @@ wss.on("connection", (ws, req) => {
 			const rows = stmtRoomAvailabilityGetByRoom.all(rk, thirtyDaysAgo);
 			if (rows && rows.length > 0) {
 				availMap = getRoomAvailabilityState(rk);
+				// Deduplicate by name: keep only the most recent entry per name
+				const byName = new Map();
 				for (const row of rows) {
+					const name = row.name || "Guest";
+					const existing = byName.get(name);
+					if (!existing || row.updated_at > existing.updated_at) {
+						byName.set(name, row);
+					}
+				}
+				for (const row of byName.values()) {
 					try {
 						availMap.set(row.client_id, {
 							name: row.name || "Guest",
@@ -5828,7 +5837,7 @@ wss.on("connection", (ws, req) => {
 						// Skip invalid rows
 					}
 				}
-				console.log("[AVAIL-DB] Loaded", rows.length, "availability entries from DB for room", rk);
+				console.log("[AVAIL-DB] Loaded", byName.size, "availability entries from DB for room", rk, "(deduped from", rows.length, ")");
 			}
 		} catch (dbErr) {
 			console.error("[AVAIL-DB] Failed to load availability from DB:", dbErr.message);
