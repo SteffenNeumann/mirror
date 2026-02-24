@@ -19402,7 +19402,6 @@ self.onmessage = async (e) => {
 				Number(parts[2])
 			);
 			const label = formatDayLabel(day);
-			const weekday = day.toLocaleDateString(uiLang === "de" ? "de-DE" : "en-US", { weekday: "short" }).toUpperCase();
 			const set = manualFreeSlots.get(dk);
 			const slots = computeFreeSlotsForDay(day, events);
 			const selectedSlots = getSelectedFreeSlotsForDay(day, events);
@@ -19423,7 +19422,7 @@ self.onmessage = async (e) => {
 				<div class="cal-sel-left">
 					<span class="cal-sel-dot"></span>
 					<div class="cal-sel-info">
-						<span class="cal-sel-date">${weekday}, ${label}</span>
+						<span class="cal-sel-date">${label}</span>
 						<span class="cal-sel-time">${timeRange || "—"}</span>
 					</div>
 				</div>
