@@ -276,6 +276,7 @@ let stmtRoomSlotsUpsert;
 let stmtRoomAvailabilityUpsert;
 let stmtRoomAvailabilityGetByRoom;
 let stmtRoomAvailabilityDelete;
+let stmtRoomAvailabilityDeleteRoom;
 let stmtRoomAvailabilityCleanup;
 
 // In-memory rate limit: ip -> { count, resetAt }
@@ -801,6 +802,9 @@ function initDb() {
 	);
 	stmtRoomAvailabilityDelete = db.prepare(
 		"DELETE FROM room_availability WHERE room_key = ? AND client_id = ?"
+	);
+	stmtRoomAvailabilityDeleteRoom = db.prepare(
+		"DELETE FROM room_availability WHERE room_key = ?"
 	);
 	stmtRoomAvailabilityCleanup = db.prepare(
 		"DELETE FROM room_availability WHERE updated_at < ?"
@@ -5804,10 +5808,10 @@ wss.on("connection", (ws, req) => {
 	// Load availability from DB if in-memory is empty, then send to client
 	let availMap = roomAvailabilityState.get(rk);
 	if (!availMap || availMap.size === 0) {
-		// Try to load from database (entries updated in last 7 days)
-		const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+		// Try to load from database (entries updated in last 30 days)
+		const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
 		try {
-			const rows = stmtRoomAvailabilityGetByRoom.all(rk, sevenDaysAgo);
+			const rows = stmtRoomAvailabilityGetByRoom.all(rk, thirtyDaysAgo);
 			if (rows && rows.length > 0) {
 				availMap = getRoomAvailabilityState(rk);
 				for (const row of rows) {
@@ -6275,6 +6279,28 @@ wss.on("connection", (ws, req) => {
 			return;
 		}
 
+		// Handle clearing ALL availability data for the room
+		if (msg.type === "availability_clear_all") {
+			const fromClientId = typeof msg.clientId === "string" ? msg.clientId : "";
+			console.log("[AVAIL-DEBUG-SERVER] availability_clear_all received", { room, rk, fromClientId });
+			if (!fromClientId) return;
+			// Clear in-memory state
+			const map = roomAvailabilityState.get(rk);
+			if (map) {
+				map.clear();
+			}
+			// Clear from database
+			try {
+				const result = stmtRoomAvailabilityDeleteRoom.run(rk);
+				console.log(`[AVAIL-DB] Cleared ${result.changes} availability entries for room ${rk}`);
+			} catch (dbErr) {
+				console.error("[AVAIL-DB] Failed to clear room availability:", dbErr.message);
+			}
+			// Broadcast clear event to all clients
+			broadcast(rk, { type: "availability_cleared", room });
+			return;
+		}
+
 		if (msg.type === "comment_update") {
 			const clientId = String(msg.clientId || "").trim();
 			if (!clientId) return;
@@ -6647,20 +6673,21 @@ wss.on("connection", (ws, req) => {
 server.listen(PORT, HOST, async () => {
 	console.log(`Mirror server running on http://${HOST}:${PORT}`);
 	console.log(`WebSocket endpoint: ws://${HOST}:${PORT}/ws?room=<room>`);
-	// Cleanup old availability entries (older than 7 days)
+	// Cleanup old availability entries (older than 30 days - fallback for forgotten sessions)
+	// Users can delete their own data manually or clear all via "Alle Daten löschen"
 	try {
-		const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-		const result = stmtRoomAvailabilityCleanup.run(sevenDaysAgo);
+		const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+		const result = stmtRoomAvailabilityCleanup.run(thirtyDaysAgo);
 		if (result.changes > 0) {
 			console.log(`[AVAIL-DB] Cleaned up ${result.changes} old availability entries`);
 		}
 	} catch (cleanupErr) {
 		console.error("[AVAIL-DB] Cleanup error:", cleanupErr.message);
 	}
-	// Schedule periodic cleanup (every 6 hours)
+	// Schedule periodic cleanup (every 24 hours)
 	setInterval(() => {
 		try {
-			const cutoff = Date.now() - 7 * 24 * 60 * 60 * 1000;
+			const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
 			const result = stmtRoomAvailabilityCleanup.run(cutoff);
 			if (result.changes > 0) {
 				console.log(`[AVAIL-DB] Periodic cleanup: removed ${result.changes} old entries`);
@@ -6668,7 +6695,7 @@ server.listen(PORT, HOST, async () => {
 		} catch {
 			// ignore
 		}
-	}, 6 * 60 * 60 * 1000);
+	}, 24 * 60 * 60 * 1000);
 	// Fetch latest Anthropic model on startup
 	await refreshLatestModel();
 	console.log(`[ai] active model: ${ANTHROPIC_MODEL}`);

@@ -359,6 +359,9 @@
 	const calendarCommonFreeToggle = document.getElementById("calendarCommonFreeToggle");
 	const calendarCommonFreeParticipants = document.getElementById("calendarCommonFreeParticipants");
 	const calendarCommonFreeSlots = document.getElementById("calendarCommonFreeSlots");
+	const calendarAvailabilityActions = document.getElementById("calendarAvailabilityActions");
+	const calendarClearMyAvailability = document.getElementById("calendarClearMyAvailability");
+	const calendarClearAllAvailability = document.getElementById("calendarClearAllAvailability");
 	const calendarGoogleStatus = document.getElementById("calendarGoogleStatus");
 	const calendarGoogleSelect = document.getElementById("calendarGoogleSelect");
 	const calendarGoogleConnect = document.getElementById("calendarGoogleConnect");
@@ -6042,6 +6045,13 @@
 				"calendar.common.no_common_days": "Keine gemeinsamen Tage",
 				"calendar.common.waiting_for_others": "Warte auf weitere Teilnehmer...",
 				"calendar.common.others_no_selection": "Andere Teilnehmer haben noch keine Tage gewählt",
+				"calendar.availability.clear_mine": "Meine Daten löschen",
+				"calendar.availability.clear_all": "Alle Daten löschen",
+				"calendar.availability.cleared_mine": "Deine Verfügbarkeitsdaten wurden gelöscht",
+				"calendar.availability.cleared_all": "Alle Verfügbarkeitsdaten wurden gelöscht",
+				"calendar.availability.session_cleared": "Die Verfügbarkeitsdaten wurden gelöscht",
+				"calendar.availability.confirm_clear_all": "Alle Verfügbarkeitsdaten löschen?",
+				"calendar.availability.confirm_clear_all_desc": "Dies löscht die Daten aller Teilnehmer in diesem Raum. Diese Aktion kann nicht rückgängig gemacht werden.",
 				"calendar.grid.all_available": "Alle Teilnehmer verfügbar",
 				"calendar.grid.partial_available": "Teilweise verfügbar",
 				"calendar.free.select_day_week": "Für freie Zeiten bitte Tag/Woche wählen.",
@@ -6581,6 +6591,13 @@
 				"calendar.common.no_common_days": "No common days",
 				"calendar.common.waiting_for_others": "Waiting for other participants...",
 				"calendar.common.others_no_selection": "Other participants haven't selected days yet",
+				"calendar.availability.clear_mine": "Clear my data",
+				"calendar.availability.clear_all": "Clear all data",
+				"calendar.availability.cleared_mine": "Your availability data has been cleared",
+				"calendar.availability.cleared_all": "All availability data has been cleared",
+				"calendar.availability.session_cleared": "Availability data has been cleared",
+				"calendar.availability.confirm_clear_all": "Clear all availability data?",
+				"calendar.availability.confirm_clear_all_desc": "This will delete the data of all participants in this room. This action cannot be undone.",
 				"calendar.grid.all_available": "All participants available",
 				"calendar.grid.partial_available": "Partially available",
 				"calendar.free.select_day_week": "Select Day/Week for free slots.",
@@ -19610,6 +19627,50 @@ self.onmessage = async (e) => {
 		}
 	}
 
+	/**
+	 * Clear own availability data (local + server + DB).
+	 * User-initiated action to delete their own selections.
+	 */
+	function clearMyAvailability() {
+		// Clear local manualFreeSlots
+		manualFreeSlots.clear();
+		// Turn off sharing
+		saveCommonFreeSlotsSharing(false);
+		// Notify server to remove our data
+		broadcastAvailabilityLeave();
+		// Re-render
+		renderMySelections();
+		renderCalendarPanel();
+		showToast(t("calendar.availability.cleared_mine") || "Deine Verfügbarkeitsdaten wurden gelöscht", "success");
+	}
+
+	/**
+	 * Request server to clear ALL availability data for this room.
+	 * Only affects the current room's availability session.
+	 */
+	function clearAllAvailability() {
+		if (!ws || ws.readyState !== 1) return;
+		try {
+			ws.send(JSON.stringify({
+				type: "availability_clear_all",
+				room,
+				clientId,
+			}));
+			console.log("[AVAIL-DEBUG] availability_clear_all sent");
+		} catch (err) {
+			console.error("[AVAIL-DEBUG] availability_clear_all FAILED:", err);
+		}
+		// Clear local state too
+		manualFreeSlots.clear();
+		availabilityByClient.clear();
+		saveCommonFreeSlotsSharing(false);
+		_cachedCommonDays = null;
+		renderMySelections();
+		renderCommonFreeSlots();
+		renderCalendarPanel();
+		showToast(t("calendar.availability.cleared_all") || "Alle Verfügbarkeitsdaten wurden gelöscht", "success");
+	}
+
 	function handleAvailabilityState(msg) {
 		console.log("[AVAIL-DEBUG] handleAvailabilityState RECEIVED:", {
 			hasParticipants: Array.isArray(msg?.participants),
@@ -19666,6 +19727,26 @@ self.onmessage = async (e) => {
 				renderCalendarPanel();
 			}
 		}
+	}
+
+	/**
+	 * Handle availability_cleared message from server.
+	 * This is broadcast when someone clears all availability data for the room.
+	 */
+	function handleAvailabilityCleared() {
+		console.log("[AVAIL-DEBUG] handleAvailabilityCleared called");
+		// Clear all local availability data
+		availabilityByClient.clear();
+		manualFreeSlots.clear();
+		saveCommonFreeSlotsSharing(false);
+		_cachedCommonDays = null;
+		// Re-render
+		renderMySelections();
+		renderCommonFreeSlots();
+		if (calendarPanelActive) {
+			renderCalendarPanel();
+		}
+		showToast(t("calendar.availability.session_cleared") || "Die Verfügbarkeitsdaten wurden gelöscht", "info");
 	}
 
 	function computeCommonFreeSlotsForDay(day, allBusy) {
@@ -20068,6 +20149,24 @@ self.onmessage = async (e) => {
 		}
 
 		calendarCommonFreeSlots.innerHTML = html;
+
+		// Show/hide availability action buttons
+		if (calendarAvailabilityActions) {
+			// Show actions panel when there's any data (own or others)
+			const hasAnyData = manualFreeSlots.size > 0 || availabilityByClient.size > 0;
+			calendarAvailabilityActions.classList.toggle("hidden", !hasAnyData);
+
+			// Show "Clear my data" when user has own selections
+			if (calendarClearMyAvailability) {
+				calendarClearMyAvailability.classList.toggle("hidden", manualFreeSlots.size === 0);
+			}
+
+			// Show "Clear all" when user is sharing (active participant) and there are others
+			if (calendarClearAllAvailability) {
+				const showClearAll = commonFreeSlotsSharing && availabilityByClient.size > 0;
+				calendarClearAllAvailability.classList.toggle("hidden", !showClearAll);
+			}
+		}
 	}
 
 	function renderCalendarPanel() {
@@ -21807,6 +21906,11 @@ self.onmessage = async (e) => {
 
 			if (msg.type === "availability_leave") {
 				handleAvailabilityLeave(msg.leftClientId || msg.clientId);
+				return;
+			}
+
+			if (msg.type === "availability_cleared") {
+				handleAvailabilityCleared();
 				return;
 			}
 
@@ -26643,6 +26747,23 @@ self.onmessage = async (e) => {
 				shareTooltip.classList.remove("is-visible");
 			});
 		}
+	}
+	// Availability clear buttons
+	if (calendarClearMyAvailability) {
+		calendarClearMyAvailability.addEventListener("click", () => {
+			clearMyAvailability();
+		});
+	}
+	if (calendarClearAllAvailability) {
+		calendarClearAllAvailability.addEventListener("click", async () => {
+			const confirmed = await asyncConfirm(
+				t("calendar.availability.confirm_clear_all") || "Alle Verfügbarkeitsdaten für diesen Raum löschen?",
+				t("calendar.availability.confirm_clear_all_desc") || "Dies löscht die Daten aller Teilnehmer in diesem Raum. Diese Aktion kann nicht rückgängig gemacht werden."
+			);
+			if (confirmed) {
+				clearAllAvailability();
+			}
+		});
 	}
 	if (calendarGrid) {
 		calendarGrid.addEventListener("click", (ev) => {
