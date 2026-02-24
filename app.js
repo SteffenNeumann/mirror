@@ -9446,7 +9446,8 @@
 		if (!getAiUsePreview()) return "global";
 		const noteId = String(psEditingNoteId || "").trim();
 		if (noteId) return `note:${noteId}`;
-		return "";
+		// Fallback to global context when using preview but no note is being edited
+		return "global";
 	}
 
 	function getAiChatEntriesForContext(key) {

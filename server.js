@@ -202,7 +202,7 @@ const OUTLOOK_OAUTH_TENANT = String(
 	process.env.OUTLOOK_OAUTH_TENANT || ""
 ).trim();
 const AI_MAX_INPUT_CHARS = 20000;
-const AI_MAX_OUTPUT_TOKENS = Number(process.env.AI_MAX_OUTPUT_TOKENS || 4096);
+const AI_MAX_OUTPUT_TOKENS = Number(process.env.AI_MAX_OUTPUT_TOKENS || 8192);
 const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 60000);
 const AI_RATE_WINDOW_MS = Number(process.env.AI_RATE_WINDOW_MS || 60_000);
 const AI_RATE_MAX = Number(process.env.AI_RATE_MAX || 10);
