@@ -19638,8 +19638,10 @@ self.onmessage = async (e) => {
 		saveCommonFreeSlotsSharing(false);
 		// Notify server to remove our data
 		broadcastAvailabilityLeave();
-		// Re-render
+		// Re-render all views to update common days
+		_cachedCommonDays = null;
 		renderMySelections();
+		renderCommonFreeSlots();
 		renderCalendarPanel();
 		showToast(t("calendar.availability.cleared_mine") || "Deine Verfügbarkeitsdaten wurden gelöscht", "success");
 	}
@@ -20179,9 +20181,9 @@ self.onmessage = async (e) => {
 				calendarClearMyAvailability.classList.toggle("hidden", manualFreeSlots.size === 0);
 			}
 
-			// Show "Clear all" when user is sharing (active participant) and there are others
+			// Show "Clear all" when there are participants (own or others)
 			if (calendarClearAllAvailability) {
-				const showClearAll = commonFreeSlotsSharing && availabilityByClient.size > 0;
+				const showClearAll = availabilityByClient.size > 0;
 				calendarClearAllAvailability.classList.toggle("hidden", !showClearAll);
 			}
 		}
