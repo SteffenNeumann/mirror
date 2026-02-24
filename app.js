@@ -28013,6 +28013,7 @@ self.onmessage = async (e) => {
 		applyAiContextMode();
 		loadAiChatHistory();
 		syncAiChatContext();
+		renderAiChatHistory();
 		setCommentDraftSelection(null);
 		updateTableMenuVisibility();
 		syncMobileFocusState();
