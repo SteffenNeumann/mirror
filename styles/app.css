@@ -7171,17 +7171,17 @@ body[data-theme="monoLight"] .participant-badge--partial {
 	border-color: rgba(148, 163, 184, 0.55);
 }
 .cal-source-toggle--checked {
-	border-color: rgba(167, 139, 250, 0.7);
-	background: rgba(167, 139, 250, 0.15);
+	border-color: var(--accent-strong);
+	background: var(--accent-bg);
 }
 .cal-source-row:hover .cal-source-toggle--checked {
-	border-color: rgba(167, 139, 250, 0.85);
-	background: rgba(167, 139, 250, 0.2);
+	border-color: var(--accent-strong-hover);
+	background: var(--accent-bg-hover);
 }
 .cal-source-check {
 	width: 10px;
 	height: 10px;
-	color: #a78bfa;
+	color: var(--accent-strong);
 	opacity: 0;
 	transform: scale(0.8);
 	transition: opacity 0.15s, transform 0.15s;
