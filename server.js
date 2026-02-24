@@ -6169,6 +6169,32 @@ wss.on("connection", (ws, req) => {
 			return;
 		}
 
+		// Handle client stopping availability sharing
+		if (msg.type === "availability_leave") {
+			const fromClientId = typeof msg.clientId === "string" ? msg.clientId : "";
+			console.log("[AVAIL-DEBUG-SERVER] availability_leave received", { room, rk, fromClientId });
+			if (!fromClientId) return;
+			const map = roomAvailabilityState.get(rk);
+			if (map) {
+				map.delete(fromClientId);
+				if (map.size > 0) {
+					const participants = Array.from(map.entries()).map(([cid, entry]) => ({
+						clientId: cid,
+						name: entry.name,
+						color: entry.color,
+						busy: entry.busy,
+						selectedDays: entry.selectedDays || [],
+						rangeStart: entry.rangeStart || 0,
+						rangeEnd: entry.rangeEnd || 0,
+					}));
+					broadcast(rk, { type: "availability_state", room, participants });
+				} else {
+					broadcast(rk, { type: "availability_leave", room, clientId: fromClientId });
+				}
+			}
+			return;
+		}
+
 		if (msg.type === "comment_update") {
 			const clientId = String(msg.clientId || "").trim();
 			if (!clientId) return;

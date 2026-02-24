@@ -19569,6 +19569,31 @@ self.onmessage = async (e) => {
 		}
 	}
 
+	/**
+	 * Send availability_leave message to server when user stops sharing.
+	 * This removes the client from the server's availability state.
+	 */
+	function broadcastAvailabilityLeave() {
+		if (!ws || ws.readyState !== 1) return;
+		try {
+			ws.send(JSON.stringify({
+				type: "availability_leave",
+				room,
+				clientId,
+			}));
+			console.log("[AVAIL-DEBUG] broadcastAvailabilityLeave sent");
+		} catch (err) {
+			console.error("[AVAIL-DEBUG] broadcastAvailabilityLeave FAILED:", err);
+		}
+		// Also clear own entry from local map
+		availabilityByClient.delete(String(clientId));
+		_cachedCommonDays = null;
+		renderCommonFreeSlots();
+		if (calendarPanelActive) {
+			renderCalendarPanel();
+		}
+	}
+
 	function handleAvailabilityState(msg) {
 		console.log("[AVAIL-DEBUG] handleAvailabilityState RECEIVED:", {
 			hasParticipants: Array.isArray(msg?.participants),
@@ -19617,6 +19642,8 @@ self.onmessage = async (e) => {
 	function handleAvailabilityLeave(leftClientId) {
 		if (!leftClientId) return;
 		if (availabilityByClient.delete(String(leftClientId))) {
+			// Invalidate common days cache
+			_cachedCommonDays = null;
 			renderCommonFreeSlots();
 			// Re-render calendar grid to update participant indicators
 			if (calendarPanelActive) {
@@ -26505,10 +26532,14 @@ self.onmessage = async (e) => {
 	if (calendarCommonFreeToggle) {
 		calendarCommonFreeToggle.addEventListener("click", () => {
 			console.log("[AVAIL-DEBUG] Toggle clicked! Current:", commonFreeSlotsSharing, "-> New:", !commonFreeSlotsSharing);
+			const wasSharing = commonFreeSlotsSharing;
 			saveCommonFreeSlotsSharing(!commonFreeSlotsSharing);
 			console.log("[AVAIL-DEBUG] After saveCommonFreeSlotsSharing:", commonFreeSlotsSharing);
 			if (commonFreeSlotsSharing) {
 				broadcastAvailability();
+			} else if (wasSharing) {
+				// Was sharing, now stopped - notify server to remove our availability
+				broadcastAvailabilityLeave();
 			}
 			renderCommonFreeSlots();
 		});
