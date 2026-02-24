@@ -2357,6 +2357,29 @@ function getRoomAvailabilityState(roomKeyName) {
 	return map;
 }
 
+/**
+ * Build deduplicated participants array from availability map (by name)
+ */
+function buildDeduplicatedParticipants(availMap) {
+	if (!availMap || availMap.size === 0) return [];
+	const byName = new Map();
+	for (const [cid, entry] of availMap.entries()) {
+		const name = entry.name || "Guest";
+		if (!byName.has(name)) {
+			byName.set(name, { cid, entry });
+		}
+	}
+	return Array.from(byName.values()).map(({ cid, entry }) => ({
+		clientId: cid,
+		name: entry.name,
+		color: entry.color,
+		busy: entry.busy,
+		selectedDays: entry.selectedDays || [],
+		rangeStart: entry.rangeStart || 0,
+		rangeEnd: entry.rangeEnd || 0,
+	}));
+}
+
 function getRoomSockets(roomKeyName) {
 	let set = roomSockets.get(roomKeyName);
 	if (!set) {
@@ -5844,15 +5867,7 @@ wss.on("connection", (ws, req) => {
 		}
 	}
 	if (availMap && availMap.size > 0) {
-		const participants = Array.from(availMap.entries()).map(([cid, entry]) => ({
-			clientId: cid,
-			name: entry.name,
-			color: entry.color,
-			busy: entry.busy,
-			selectedDays: entry.selectedDays || [],
-			rangeStart: entry.rangeStart || 0,
-			rangeEnd: entry.rangeEnd || 0,
-		}));
+		const participants = buildDeduplicatedParticipants(availMap);
 		try {
 			ws.send(JSON.stringify({ type: "availability_state", room, participants }));
 		} catch {
@@ -6238,15 +6253,7 @@ wss.on("connection", (ws, req) => {
 				console.error("[AVAIL-DB] Failed to persist availability:", dbErr.message);
 			}
 			// Broadcast full state to all clients
-			const participants = Array.from(map.entries()).map(([cid, entry]) => ({
-				clientId: cid,
-				name: entry.name,
-				color: entry.color,
-				busy: entry.busy,
-				selectedDays: entry.selectedDays || [],
-				rangeStart: entry.rangeStart || 0,
-				rangeEnd: entry.rangeEnd || 0,
-			}));
+			const participants = buildDeduplicatedParticipants(map);
 			console.log("[AVAIL-DEBUG-SERVER] Broadcasting to all in room", {
 				rk,
 				participantCount: participants.length,
@@ -6271,15 +6278,7 @@ wss.on("connection", (ws, req) => {
 					console.error("[AVAIL-DB] Failed to delete availability:", dbErr.message);
 				}
 				if (map.size > 0) {
-					const participants = Array.from(map.entries()).map(([cid, entry]) => ({
-						clientId: cid,
-						name: entry.name,
-						color: entry.color,
-						busy: entry.busy,
-						selectedDays: entry.selectedDays || [],
-						rangeStart: entry.rangeStart || 0,
-						rangeEnd: entry.rangeEnd || 0,
-					}));
+					const participants = buildDeduplicatedParticipants(map);
 					broadcast(rk, { type: "availability_state", room, participants });
 				} else {
 					broadcast(rk, { type: "availability_leave", room, clientId: fromClientId });
@@ -6652,14 +6651,7 @@ wss.on("connection", (ws, req) => {
 			if (availMap) {
 				availMap.delete(clientId);
 				if (availMap.size > 0) {
-					const participants = Array.from(availMap.entries()).map(([cid, entry]) => ({
-						clientId: cid,
-						name: entry.name,
-						color: entry.color,
-						busy: entry.busy,
-						rangeStart: entry.rangeStart || 0,
-						rangeEnd: entry.rangeEnd || 0,
-					}));
+					const participants = buildDeduplicatedParticipants(availMap);
 					broadcast(rk, { type: "availability_state", room, participants });
 				} else {
 					broadcast(rk, { type: "availability_leave", room, clientId });

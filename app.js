@@ -19685,11 +19685,20 @@ self.onmessage = async (e) => {
 		// Full state: array of all participants
 		if (Array.isArray(msg.participants)) {
 			availabilityByClient.clear();
+			// Deduplicate by name: keep only first entry per name (server sends most recent first)
+			const seenNames = new Set();
 			for (const p of msg.participants) {
 				if (!p || !p.clientId) continue;
-				console.log("[AVAIL-DEBUG] Adding participant:", p.clientId, p.name, "days:", p.selectedDays?.length);
+				const name = String(p.name || "Guest");
+				// Skip duplicates (same name) - keep only the first (most recent) entry
+				if (seenNames.has(name)) {
+					console.log("[AVAIL-DEBUG] Skipping duplicate:", p.clientId, name);
+					continue;
+				}
+				seenNames.add(name);
+				console.log("[AVAIL-DEBUG] Adding participant:", p.clientId, name, "days:", p.selectedDays?.length);
 				availabilityByClient.set(String(p.clientId), {
-					name: String(p.name || "Guest"),
+					name: name,
 					color: String(p.color || "#94a3b8"),
 					busy: Array.isArray(p.busy) ? p.busy : [],
 					selectedDays: Array.isArray(p.selectedDays) ? p.selectedDays : [],
@@ -19699,9 +19708,18 @@ self.onmessage = async (e) => {
 			}
 			console.log("[AVAIL-DEBUG] availabilityByClient after update:", availabilityByClient.size, "entries");
 		} else if (msg.clientId) {
-			// Single participant update
+			// Single participant update - also check for existing entry with same name
+			const newName = String(msg.name || "Guest");
+			// Remove any existing entry with same name but different clientId
+			for (const [cid, entry] of availabilityByClient.entries()) {
+				if (entry.name === newName && cid !== String(msg.clientId)) {
+					availabilityByClient.delete(cid);
+					console.log("[AVAIL-DEBUG] Removed duplicate entry:", cid, newName);
+					break;
+				}
+			}
 			availabilityByClient.set(String(msg.clientId), {
-				name: String(msg.name || "Guest"),
+				name: newName,
 				color: String(msg.color || "#94a3b8"),
 				busy: Array.isArray(msg.busy) ? msg.busy : [],
 				selectedDays: Array.isArray(msg.selectedDays) ? msg.selectedDays : [],
