@@ -43,6 +43,181 @@ else if (room && key)              → "room:roomName:key"
 
 ---
 
+## Architektur: Gemeinsame Zeit finden (Availability Broadcasting)
+
+Die "Gemeinsame Planung"-Funktion ermöglicht es mehreren Teilnehmern in einem geteilten Raum, ihre Verfügbarkeit zu teilen und gemeinsame freie Termine zu finden.
+
+### Workflow-Diagramm
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        GEMEINSAME PLANUNG - WORKFLOW                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────┐                                                    ┌──────────────┐
+│   USER A     │                                                    │   USER B     │
+│  (Browser)   │                                                    │  (Browser)   │
+└──────┬───────┘                                                    └──────┬───────┘
+       │                                                                   │
+       │ 1. Klick auf "Verfügbarkeit teilen" Toggle                        │
+       │    (calendarCommonFreeToggle)                                     │
+       ▼                                                                   │
+┌──────────────────────────────────────┐                                   │
+│ saveCommonFreeSlotsSharing(true)     │                                   │
+│ → commonFreeSlotsSharing = true      │                                   │
+│ → applyCommonFreeToggleUI()          │                                   │
+│ → scheduleRoomSlotsSync()            │                                   │
+└──────────────────────────────────────┘                                   │
+       │                                                                   │
+       │ 2. User wählt Tage im Kalender-Grid aus                           │
+       │    (Klick auf Tag-Zelle)                                          │
+       ▼                                                                   │
+┌──────────────────────────────────────┐                                   │
+│ toggleDayAvailability(day)           │                                   │
+│ → manualFreeSlots.set(dayKey, Set)   │                                   │
+│ → Set enthält FULL_DAY_AVAILABLE_KEY │                                   │
+└──────────────────────────────────────┘                                   │
+       │                                                                   │
+       │ 3. Verfügbarkeit wird via WebSocket gesendet                      │
+       ▼                                                                   │
+┌──────────────────────────────────────┐                                   │
+│ broadcastAvailability()              │                                   │
+│ → Sammelt alle selectedDays aus      │                                   │
+│   manualFreeSlots Map                │                                   │
+│ → Berechnet busy-Intervalle          │                                   │
+│   (Komplement der freien Zeiten)     │                                   │
+│ → Sendet WebSocket-Nachricht:        │                                   │
+│   {                                  │                                   │
+│     type: "availability_state",      │                                   │
+│     clientId, name, color,           │                                   │
+│     busy: [...],                     │                                   │
+│     selectedDays: ["2026-02-24",...],│                                   │
+│     rangeStart, rangeEnd             │                                   │
+│   }                                  │                                   │
+└──────────────────────────────────────┘                                   │
+       │                                                                   │
+       │                    WebSocket                                      │
+       ▼                                                                   │
+┌──────────────────────────────────────────────────────────────────────────┐
+│                            SERVER (server.js)                            │
+│                                                                          │
+│  if (msg.type === "availability_state") {                                │
+│    → Validiert clientId, name, color                                     │
+│    → Validiert busy-Intervalle (max 200)                                 │
+│    → Validiert selectedDays (YYYY-MM-DD, max 60)                         │
+│    → Speichert in roomAvailabilityState Map:                             │
+│      map.set(clientId, { name, color, busy, selectedDays, ... })         │
+│    → Broadcast an ALLE Clients im Raum:                                  │
+│      { type: "availability_state", participants: [...] }                 │
+│  }                                                                       │
+└──────────────────────────────────────────────────────────────────────────┘
+       │                                                                   │
+       │                    WebSocket Broadcast                            │
+       ▼                                                                   ▼
+┌──────────────────────────────────────┐    ┌──────────────────────────────────┐
+│ handleAvailabilityState(msg)         │    │ handleAvailabilityState(msg)     │
+│ (User A - Bestätigung)               │    │ (User B - Empfängt Daten)        │
+│ → availabilityByClient.set(...)      │    │ → availabilityByClient.set(...)  │
+│ → renderCommonFreeSlots()            │    │ → renderCommonFreeSlots()        │
+│ → renderCalendarPanel()              │    │ → renderCalendarPanel()          │
+└──────────────────────────────────────┘    └──────────────────────────────────┘
+       │                                                                   │
+       ▼                                                                   ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         RENDERING (beide Clients)                           │
+│                                                                             │
+│  renderCommonFreeSlots()                                                    │
+│  ├─ computeCommonSelectedDays()                                             │
+│  │   → Berechnet Schnittmenge der selectedDays aller Teilnehmer             │
+│  │   → Gibt commonDays[] + perParticipant[] zurück                          │
+│  │                                                                          │
+│  ├─ Zeigt Teilnehmer-Chips mit Tage-Anzahl:                                 │
+│  │   "User A (du) 3 Tage" "User B 2 Tage"                                   │
+│  │                                                                          │
+│  ├─ Wenn commonDays.length > 0:                                             │
+│  │   → Zeigt "Gemeinsame Tage" Sektion mit grünen Chips                     │
+│  │                                                                          │
+│  └─ Sonst:                                                                  │
+│      → Zeigt pro Teilnehmer deren ausgewählte Tage                          │
+│                                                                             │
+│  renderCalendarPanel()                                                      │
+│  └─ renderParticipantIndicators(day)                                        │
+│      ├─ getParticipantsAvailabilityForDay(day)                              │
+│      │   → Prüft für JEDEN anderen Teilnehmer ob selectedDays               │
+│      │     den aktuellen Tag enthält                                        │
+│      │   → Gibt { participants, allAvailable, someAvailable } zurück        │
+│      │                                                                      │
+│      └─ Rendert farbige Dots + Badge im Kalender-Grid:                      │
+│          [🔴][🟢][🔵] 2/3 (2 von 3 Teilnehmern verfügbar)                   │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Datenstrukturen
+
+| Variable | Typ | Beschreibung |
+|----------|-----|--------------|
+| `commonFreeSlotsSharing` | `boolean` | Lokaler Toggle-Status (teilt der User?) |
+| `manualFreeSlots` | `Map<string, Set<string>>` | Lokal ausgewählte Tage: `"2026-02-24" → Set(["__day_available__"])` |
+| `availabilityByClient` | `Map<string, AvailabilityData>` | Empfangene Daten aller Teilnehmer inkl. self |
+| `FULL_DAY_AVAILABLE_KEY` | `"__day_available__"` | Marker für "Tag ist ausgewählt" |
+
+```typescript
+// AvailabilityData Struktur
+interface AvailabilityData {
+  name: string;           // "Max Mustermann"
+  color: string;          // "#ef4444"
+  busy: Array<{start: number, end: number}>;  // Busy-Intervalle (Timestamps)
+  selectedDays: string[]; // ["2026-02-24", "2026-02-25", ...]
+  rangeStart: number;     // Timestamp (Beginn des 7-Tage-Fensters)
+  rangeEnd: number;       // Timestamp (Ende des 7-Tage-Fensters)
+}
+```
+
+### Funktions-Referenz
+
+| Funktion | Datei | Zweck |
+|----------|-------|-------|
+| `saveCommonFreeSlotsSharing(bool)` | app.js | Aktiviert/deaktiviert Sharing-Toggle |
+| `broadcastAvailability()` | app.js | Sendet eigene Verfügbarkeit via WebSocket |
+| `handleAvailabilityState(msg)` | app.js | Empfängt Verfügbarkeit anderer Teilnehmer |
+| `handleAvailabilityLeave(clientId)` | app.js | Entfernt Teilnehmer bei Disconnect |
+| `computeCommonSelectedDays()` | app.js | Berechnet Schnittmenge aller selectedDays |
+| `getParticipantsAvailabilityForDay(day)` | app.js | Prüft wer an einem Tag verfügbar ist |
+| `renderCommonFreeSlots()` | app.js | Rendert Sidebar "Gemeinsame freie Zeiten" |
+| `renderParticipantIndicators(day)` | app.js | Rendert Dots im Kalender-Grid |
+| `availability_state` handler | server.js | Validiert und broadcastet Availability |
+
+### WebSocket-Nachrichtenformat
+
+**Client → Server:**
+```json
+{
+  "type": "availability_state",
+  "room": "myroom",
+  "clientId": "abc123",
+  "name": "Max Mustermann",
+  "color": "#ef4444",
+  "busy": [{"start": 1740380400000, "end": 1740384000000}],
+  "selectedDays": ["2026-02-24", "2026-02-25"],
+  "rangeStart": 1740355200000,
+  "rangeEnd": 1740960000000
+}
+```
+
+**Server → Alle Clients (Broadcast):**
+```json
+{
+  "type": "availability_state",
+  "room": "myroom",
+  "participants": [
+    {"clientId": "abc123", "name": "Max", "color": "#ef4444", "busy": [...], "selectedDays": [...], ...},
+    {"clientId": "def456", "name": "Lisa", "color": "#10b981", "busy": [...], "selectedDays": [...], ...}
+  ]
+}
+```
+
+---
+
 ## Aktuelle Änderungen (2026-02-24)
 
 - **Fix: Shared Room Content-Sync für neue User** `#shared` `#sync` `#bug`: User ohne Personal Space sahen den existierenden Inhalt einer geteilten Notiz erst nachdem sie selbst schrieben. Ursache: `applyRemoteText()` und `applySyncedText()` blockierten das Übernehmen von Remote-Content wenn lokaler Content leer war.
