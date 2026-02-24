@@ -832,6 +832,179 @@
 		return fresh;
 	})();
 
+	// ── Identity Modal ──
+	const identityModal = document.getElementById("identityModal");
+	const identityModalBackdrop = identityModal?.querySelector('[data-role="identityModalBackdrop"]');
+	const identityModalClose = document.getElementById("identityModalClose");
+	const identityModalCancel = document.getElementById("identityModalCancel");
+	const identityModalSave = document.getElementById("identityModalSave");
+	const identityNameInput = document.getElementById("identityNameInput");
+	const identityAvatarGrid = document.getElementById("identityAvatarGrid");
+	const identityColorGrid = document.getElementById("identityColorGrid");
+	const identityRandomize = document.getElementById("identityRandomize");
+	const identityPreviewAvatar = document.getElementById("identityPreviewAvatar");
+	const identityPreviewDot = document.getElementById("identityPreviewDot");
+	const identityPreviewName = document.getElementById("identityPreviewName");
+
+	const IDENTITY_AVATARS = ["🦊", "🦦", "🦅", "🐾", "🐼", "🦉", "🐺", "🦄", "🐯", "🐨", "🦝", "🐬", "🫎", "🦩", "🦎", "🦌"];
+	const IDENTITY_COLORS = ["#38bdf8", "#a78bfa", "#f472b6", "#22d3ee", "#f59e0b", "#34d399", "#e879f9", "#60a5fa", "#fb7185", "#c084fc", "#f97316", "#2dd4bf", "#facc15", "#4ade80", "#a3e635", "#818cf8"];
+
+	let identityModalOpen = false;
+	let identityModalState = { name: "", avatar: "", color: "" };
+
+	function updateIdentityPreview() {
+		if (identityPreviewAvatar) identityPreviewAvatar.textContent = identityModalState.avatar || "🙂";
+		if (identityPreviewDot) identityPreviewDot.style.background = identityModalState.color || "#94a3b8";
+		if (identityPreviewName) identityPreviewName.textContent = identityModalState.name || "Anonym";
+	}
+
+	function renderIdentityAvatarGrid() {
+		if (!identityAvatarGrid) return;
+		identityAvatarGrid.innerHTML = "";
+		for (const av of IDENTITY_AVATARS) {
+			const btn = document.createElement("button");
+			btn.type = "button";
+			btn.className = "identity-avatar-item" + (av === identityModalState.avatar ? " selected" : "");
+			btn.textContent = av;
+			btn.addEventListener("click", () => {
+				identityModalState.avatar = av;
+				renderIdentityAvatarGrid();
+				updateIdentityPreview();
+			});
+			identityAvatarGrid.appendChild(btn);
+		}
+	}
+
+	function renderIdentityColorGrid() {
+		if (!identityColorGrid) return;
+		identityColorGrid.innerHTML = "";
+		for (const col of IDENTITY_COLORS) {
+			const btn = document.createElement("button");
+			btn.type = "button";
+			btn.className = "identity-color-item" + (col === identityModalState.color ? " selected" : "");
+			btn.style.background = col;
+			btn.style.color = col;
+			btn.addEventListener("click", () => {
+				identityModalState.color = col;
+				renderIdentityColorGrid();
+				updateIdentityPreview();
+			});
+			identityColorGrid.appendChild(btn);
+		}
+	}
+
+	function openIdentityModal() {
+		if (!identityModal) return;
+		identityModalState = {
+			name: identity.name || "",
+			avatar: identity.avatar || "🦊",
+			color: identity.color || "#94a3b8"
+		};
+		if (identityNameInput) identityNameInput.value = identityModalState.name;
+		renderIdentityAvatarGrid();
+		renderIdentityColorGrid();
+		updateIdentityPreview();
+		identityModal.classList.remove("hidden");
+		identityModal.classList.add("flex");
+		identityModal.setAttribute("aria-hidden", "false");
+		identityModalOpen = true;
+		setTimeout(() => {
+			if (identityNameInput) identityNameInput.focus();
+		}, 50);
+	}
+
+	function closeIdentityModal() {
+		if (!identityModal) return;
+		identityModal.classList.add("hidden");
+		identityModal.classList.remove("flex");
+		identityModal.setAttribute("aria-hidden", "true");
+		identityModalOpen = false;
+	}
+
+	function saveIdentityFromModal() {
+		const name = identityNameInput ? String(identityNameInput.value || "").trim().slice(0, 32) : "";
+		if (!name) {
+			if (identityNameInput) identityNameInput.focus();
+			return;
+		}
+		identity.name = name;
+		identity.avatar = identityModalState.avatar || "🦊";
+		identity.color = identityModalState.color || "#94a3b8";
+		saveIdentity(identity);
+		closeIdentityModal();
+		// Update presence UI and broadcast to other participants
+		if (typeof updatePresenceUI === "function") updatePresenceUI();
+		if (typeof upsertPresence === "function") {
+			upsertPresence({
+				clientId,
+				name: identity.name,
+				avatar: identity.avatar,
+				color: identity.color,
+				typing: false,
+				selection: typeof lastSelection !== "undefined" ? lastSelection : null,
+			});
+		}
+		// Re-send hello to broadcast updated identity to room
+		if (typeof sendMessage === "function" && typeof room !== "undefined" && room) {
+			sendMessage({
+				type: "hello",
+				room,
+				clientId,
+				mode: typeof isCrdtAvailable === "function" && isCrdtAvailable() ? "crdt" : "lww",
+				name: identity.name,
+				color: identity.color,
+				avatar: identity.avatar,
+				ts: Date.now(),
+			});
+		}
+		showToast("Profil aktualisiert", "success");
+	}
+
+	// Identity Modal Event Listeners
+	if (identityModalClose) {
+		identityModalClose.addEventListener("click", closeIdentityModal);
+	}
+	if (identityModalCancel) {
+		identityModalCancel.addEventListener("click", closeIdentityModal);
+	}
+	if (identityModalBackdrop) {
+		identityModalBackdrop.addEventListener("click", closeIdentityModal);
+	}
+	if (identityModalSave) {
+		identityModalSave.addEventListener("click", saveIdentityFromModal);
+	}
+	if (identityNameInput) {
+		identityNameInput.addEventListener("input", () => {
+			identityModalState.name = String(identityNameInput.value || "").trim();
+			updateIdentityPreview();
+		});
+		identityNameInput.addEventListener("keydown", (ev) => {
+			if (ev && ev.key === "Enter") {
+				ev.preventDefault();
+				saveIdentityFromModal();
+			}
+		});
+	}
+	if (identityRandomize) {
+		identityRandomize.addEventListener("click", () => {
+			const fresh = randomIdentity();
+			identityModalState.name = fresh.name;
+			identityModalState.avatar = fresh.avatar;
+			identityModalState.color = fresh.color;
+			if (identityNameInput) identityNameInput.value = fresh.name;
+			renderIdentityAvatarGrid();
+			renderIdentityColorGrid();
+			updateIdentityPreview();
+		});
+	}
+	// Global Escape key for identity modal
+	document.addEventListener("keydown", (ev) => {
+		if (identityModalOpen && ev && ev.key === "Escape") {
+			ev.preventDefault();
+			closeIdentityModal();
+		}
+	});
+
 	function normalizeRoom(raw) {
 		return String(raw || "")
 			.trim()
@@ -21287,8 +21460,16 @@ self.onmessage = async (e) => {
 		presenceList.innerHTML = "";
 		for (const user of users) {
 			const chip = document.createElement("span");
+			const isOwnUser = user.clientId === clientId;
 			chip.className =
-				"inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-slate-200";
+				"inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-slate-200" +
+				(isOwnUser ? " presence-chip-own" : "");
+			if (isOwnUser) {
+				chip.title = "Klicken um Profil zu bearbeiten";
+				chip.addEventListener("click", () => {
+					if (typeof openIdentityModal === "function") openIdentityModal();
+				});
+			}
 			const avatar = document.createElement("span");
 			avatar.textContent = user.avatar || "🙂";
 			avatar.style.filter = "drop-shadow(0 0 6px rgba(0,0,0,0.25))";
@@ -21297,7 +21478,7 @@ self.onmessage = async (e) => {
 			dot.style.background = user.color || "#94a3b8";
 			const label = document.createElement("span");
 			label.textContent =
-				user.clientId === clientId ? `${user.name} (du)` : user.name;
+				isOwnUser ? `${user.name} (du)` : user.name;
 			chip.appendChild(avatar);
 			chip.appendChild(dot);
 			chip.appendChild(label);

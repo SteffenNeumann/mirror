@@ -7769,3 +7769,110 @@ body[data-theme="monoLight"] .cal-sel-badge {
 	60%  { box-shadow: inset 0 0 0 2px var(--accent-ring); }
 	100% { box-shadow: inset 0 0 0 1px transparent; }
 }
+
+/* ── Identity Modal ── */
+.identity-modal-content {
+	animation: identityModalIn 0.2s ease-out;
+}
+@keyframes identityModalIn {
+	from {
+		opacity: 0;
+		transform: scale(0.95) translateY(-8px);
+	}
+	to {
+		opacity: 1;
+		transform: scale(1) translateY(0);
+	}
+}
+
+.identity-preview-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.75rem 1.25rem;
+	border-radius: 999px;
+	border: 1px solid rgba(255, 255, 255, 0.12);
+	background: rgba(255, 255, 255, 0.06);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+	transition: all 0.2s ease;
+}
+
+.identity-preview-dot {
+	width: 10px;
+	height: 10px;
+	border-radius: 50%;
+	background: #94a3b8;
+	box-shadow: 0 0 8px currentColor;
+}
+
+.identity-avatar-grid {
+	display: grid;
+	grid-template-columns: repeat(8, 1fr);
+	gap: 0.375rem;
+}
+@media (max-width: 400px) {
+	.identity-avatar-grid {
+		grid-template-columns: repeat(6, 1fr);
+	}
+}
+
+.identity-avatar-item {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	aspect-ratio: 1;
+	border-radius: 0.75rem;
+	border: 2px solid transparent;
+	background: rgba(255, 255, 255, 0.04);
+	font-size: 1.25rem;
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+.identity-avatar-item:hover {
+	background: rgba(255, 255, 255, 0.08);
+	transform: scale(1.08);
+}
+.identity-avatar-item.selected {
+	border-color: var(--accent-strong);
+	background: var(--accent-bg);
+	box-shadow: 0 0 12px var(--accent-ring);
+}
+
+.identity-color-grid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+}
+
+.identity-color-item {
+	width: 28px;
+	height: 28px;
+	border-radius: 50%;
+	border: 2px solid transparent;
+	cursor: pointer;
+	transition: all 0.15s ease;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+.identity-color-item:hover {
+	transform: scale(1.15);
+	box-shadow: 0 0 12px currentColor;
+}
+.identity-color-item.selected {
+	border-color: white;
+	transform: scale(1.1);
+	box-shadow: 0 0 16px currentColor, inset 0 0 0 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Presence chip clickable (own) */
+.presence-chip-own {
+	cursor: pointer;
+	transition: all 0.15s ease;
+}
+.presence-chip-own:hover {
+	background: rgba(255, 255, 255, 0.1) !important;
+	border-color: var(--accent-border) !important;
+}
+.presence-chip-own:active {
+	transform: scale(0.97);
+}
