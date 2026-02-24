@@ -6712,6 +6712,8 @@ wss.on("connection", (ws, req) => {
 server.listen(PORT, HOST, async () => {
 	console.log(`Mirror server running on http://${HOST}:${PORT}`);
 	console.log(`WebSocket endpoint: ws://${HOST}:${PORT}/ws?room=<room>`);
+	// Ensure DB is initialized before cleanup
+	initDb();
 	// Cleanup old availability entries (older than 30 days - fallback for forgotten sessions)
 	// Users can delete their own data manually or clear all via "Alle Daten löschen"
 	try {
