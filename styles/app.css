@@ -2094,20 +2094,63 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	transform: rotate(-90deg);
 }
 
-/* Calendar Clear Buttons */
-.cal-clear-btn {
-	padding: 0.25rem 0.5rem;
-	font-size: 10px;
+/* Calendar Clear Availability Dropdown */
+.cal-clear-select {
+	position: relative;
+	display: flex;
+	align-items: center;
+	gap: 0.375rem;
+	padding: 0.375rem 0.5rem;
+	font-size: 11px;
 	border-radius: 0.375rem;
-	border: 1px solid rgba(255, 255, 255, 0.1);
-	background: transparent;
-	color: #94a3b8;
+	border: 1px solid rgba(239, 68, 68, 0.3);
+	background: rgba(239, 68, 68, 0.08);
+	color: #f87171;
+	cursor: pointer;
 	transition: all 0.15s ease;
 }
-.cal-clear-btn:hover {
-	background: var(--accent-bg-soft);
-	color: var(--accent-text);
-	border-color: var(--accent-border);
+.cal-clear-select:hover {
+	background: rgba(239, 68, 68, 0.15);
+	border-color: rgba(239, 68, 68, 0.5);
+}
+.cal-clear-select .cal-room-select__menu {
+	min-width: 200px;
+	right: 0;
+	left: auto;
+}
+.cal-clear-select .cal-room-select__chevron {
+	margin-left: auto;
+	transition: transform 0.15s ease;
+}
+.cal-clear-select[aria-expanded="true"] .cal-room-select__chevron {
+	transform: rotate(180deg);
+}
+.cal-clear-item {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	padding: 0.5rem 0.625rem !important;
+	font-size: 11px !important;
+}
+.cal-clear-item svg {
+	flex-shrink: 0;
+}
+.cal-clear-item--danger {
+	color: #f87171;
+}
+.cal-clear-item--danger:hover {
+	background: rgba(239, 68, 68, 0.15) !important;
+}
+.cal-clear-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+.cal-room-select__separator {
+	height: 1px;
+	margin: 0.375rem 0;
+	background: rgba(255, 255, 255, 0.08);
 }
 
 @media (max-width: 1023px) {

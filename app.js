@@ -360,8 +360,7 @@
 	const calendarCommonFreeParticipants = document.getElementById("calendarCommonFreeParticipants");
 	const calendarCommonFreeSlots = document.getElementById("calendarCommonFreeSlots");
 	const calendarAvailabilityActions = document.getElementById("calendarAvailabilityActions");
-	const calendarClearMyAvailability = document.getElementById("calendarClearMyAvailability");
-	const calendarClearAllAvailability = document.getElementById("calendarClearAllAvailability");
+	const calendarClearAvailabilitySelect = document.getElementById("calendarClearAvailabilitySelect");
 	const calendarGoogleStatus = document.getElementById("calendarGoogleStatus");
 	const calendarGoogleSelect = document.getElementById("calendarGoogleSelect");
 	const calendarGoogleConnect = document.getElementById("calendarGoogleConnect");
@@ -19686,6 +19685,98 @@ self.onmessage = async (e) => {
 		showToast(t("calendar.availability.cleared_all") || "Alle Verfügbarkeitsdaten wurden gelöscht", "success");
 	}
 
+	/**
+	 * Request server to clear availability data for a specific client.
+	 * @param {string} targetClientId - The clientId to remove
+	 */
+	function clearClientAvailability(targetClientId) {
+		if (!targetClientId) return;
+		const isOwnClient = targetClientId === clientId;
+		if (isOwnClient) {
+			// Use existing clearMyAvailability for own data
+			clearMyAvailability();
+			return;
+		}
+		// Send request to server to remove specific client
+		if (!ws || ws.readyState !== 1) return;
+		try {
+			ws.send(JSON.stringify({
+				type: "availability_clear_client",
+				room,
+				clientId,
+				targetClientId,
+			}));
+			console.log("[AVAIL-DEBUG] availability_clear_client sent for:", targetClientId);
+		} catch (err) {
+			console.error("[AVAIL-DEBUG] availability_clear_client FAILED:", err);
+		}
+		// Remove from local state
+		availabilityByClient.delete(targetClientId);
+		_cachedCommonDays = null;
+		renderCommonFreeSlots();
+		renderCalendarPanel();
+		const entry = availabilityByClient.get(targetClientId);
+		const name = entry?.name || "Teilnehmer";
+		showToast(t("calendar.availability.cleared_client", { name }) || `Daten von ${name} wurden entfernt`, "success");
+	}
+
+	/**
+	 * Build and update the clear availability dropdown menu
+	 */
+	function updateClearAvailabilityDropdown() {
+		if (!calendarClearAvailabilitySelect) return;
+		const menuEl = calendarClearAvailabilitySelect.querySelector(".cal-room-select__menu");
+		if (!menuEl) return;
+
+		const hasOwnData = manualFreeSlots.size > 0;
+		const participants = Array.from(availabilityByClient.entries());
+		const hasAnyData = hasOwnData || participants.length > 0;
+
+		// Hide if no data at all
+		if (calendarAvailabilityActions) {
+			calendarAvailabilityActions.classList.toggle("hidden", !hasAnyData);
+		}
+		if (!hasAnyData) {
+			menuEl.innerHTML = "";
+			return;
+		}
+
+		let html = "";
+		// Option: Clear my data (if user has own selections)
+		if (hasOwnData) {
+			html += `<div class="cal-room-select__item cal-clear-item" role="option" data-action="clear-mine">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-3 w-3 text-amber-400"><path d="M12 12m-9 0a9 9 0 1 0 18 0 9 9 0 1 0 -18 0"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+				<span>${escapeHtml(t("calendar.availability.clear_mine") || "Meine Daten löschen")}</span>
+			</div>`;
+		}
+		// Option: Clear all data (if there are any participants)
+		if (participants.length > 0) {
+			html += `<div class="cal-room-select__item cal-clear-item cal-clear-item--danger" role="option" data-action="clear-all">
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-3 w-3 text-red-400"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+				<span>${escapeHtml(t("calendar.availability.clear_all") || "Alle Daten löschen")}</span>
+			</div>`;
+		}
+		// Separator if we have both global options and individual clients
+		if ((hasOwnData || participants.length > 0) && participants.length > 0) {
+			html += `<div class="cal-room-select__separator"></div>`;
+		}
+		// Individual clients
+		for (const [cid, entry] of participants) {
+			const name = entry.name || "Guest";
+			const color = entry.color || "#94a3b8";
+			const dayCount = entry.selectedDays?.length || 0;
+			const isSelf = cid === clientId;
+			const selfBadge = isSelf ? ` <span class="text-[9px] text-slate-500">(du)</span>` : "";
+			html += `<div class="cal-room-select__item cal-clear-item" role="option" data-action="clear-client" data-client-id="${escapeAttr(cid)}">
+				<span class="cal-clear-dot" style="background:${escapeAttr(color)}"></span>
+				<span class="flex-1 truncate">${escapeHtml(name)}${selfBadge}</span>
+				<span class="text-[9px] text-slate-500">${dayCount} ${dayCount === 1 ? "Tag" : "Tage"}</span>
+			</div>`;
+		}
+
+		menuEl.innerHTML = html;
+	}
+
 	function handleAvailabilityState(msg) {
 		console.log("[AVAIL-DEBUG] handleAvailabilityState RECEIVED:", {
 			hasParticipants: Array.isArray(msg?.participants),
@@ -20185,23 +20276,8 @@ self.onmessage = async (e) => {
 
 		calendarCommonFreeSlots.innerHTML = html;
 
-		// Show/hide availability action buttons
-		if (calendarAvailabilityActions) {
-			// Show actions panel when there's any data (own or others)
-			const hasAnyData = manualFreeSlots.size > 0 || availabilityByClient.size > 0;
-			calendarAvailabilityActions.classList.toggle("hidden", !hasAnyData);
-
-			// Show "Clear my data" when user has own selections
-			if (calendarClearMyAvailability) {
-				calendarClearMyAvailability.classList.toggle("hidden", manualFreeSlots.size === 0);
-			}
-
-			// Show "Clear all" when there are participants (own or others)
-			if (calendarClearAllAvailability) {
-				const showClearAll = availabilityByClient.size > 0;
-				calendarClearAllAvailability.classList.toggle("hidden", !showClearAll);
-			}
-		}
+		// Update the clear availability dropdown
+		updateClearAvailabilityDropdown();
 	}
 
 	function renderCalendarPanel() {
@@ -26797,15 +26873,48 @@ self.onmessage = async (e) => {
 			});
 		}
 	}
-	// Availability clear buttons
-	if (calendarClearMyAvailability) {
-		calendarClearMyAvailability.addEventListener("click", () => {
-			clearMyAvailability();
+	// Availability clear dropdown
+	if (calendarClearAvailabilitySelect) {
+		const menuEl = calendarClearAvailabilitySelect.querySelector(".cal-room-select__menu");
+		const toggleMenu = () => {
+			const exp = calendarClearAvailabilitySelect.getAttribute("aria-expanded") === "true";
+			calendarClearAvailabilitySelect.setAttribute("aria-expanded", exp ? "false" : "true");
+		};
+		const closeMenu = () => calendarClearAvailabilitySelect.setAttribute("aria-expanded", "false");
+
+		calendarClearAvailabilitySelect.addEventListener("click", (ev) => {
+			const target = ev.target;
+			if (!(target instanceof HTMLElement)) return;
+			const item = target.closest(".cal-clear-item");
+			if (item) {
+				const action = item.dataset.action;
+				if (action === "clear-mine") {
+					clearMyAvailability();
+				} else if (action === "clear-all") {
+					clearAllAvailability();
+				} else if (action === "clear-client") {
+					const targetClientId = item.dataset.clientId;
+					if (targetClientId) {
+						clearClientAvailability(targetClientId);
+					}
+				}
+				closeMenu();
+			} else {
+				toggleMenu();
+			}
 		});
-	}
-	if (calendarClearAllAvailability) {
-		calendarClearAllAvailability.addEventListener("click", () => {
-			clearAllAvailability();
+		calendarClearAvailabilitySelect.addEventListener("keydown", (ev) => {
+			if (ev.key === "Enter" || ev.key === " ") {
+				ev.preventDefault();
+				toggleMenu();
+			} else if (ev.key === "Escape") {
+				closeMenu();
+			}
+		});
+		document.addEventListener("click", (ev) => {
+			if (!calendarClearAvailabilitySelect.contains(ev.target)) {
+				closeMenu();
+			}
 		});
 	}
 	if (calendarGrid) {

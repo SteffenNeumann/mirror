@@ -6322,6 +6322,31 @@ wss.on("connection", (ws, req) => {
 			return;
 		}
 
+		// Handle clearing availability data for a specific client
+		if (msg.type === "availability_clear_client") {
+			const fromClientId = typeof msg.clientId === "string" ? msg.clientId : "";
+			const targetClientId = typeof msg.targetClientId === "string" ? msg.targetClientId : "";
+			console.log("[AVAIL-DEBUG-SERVER] availability_clear_client received", { room, rk, fromClientId, targetClientId });
+			if (!fromClientId || !targetClientId) return;
+			// Remove from in-memory state
+			const map = roomAvailabilityState.get(rk);
+			if (map) {
+				map.delete(targetClientId);
+			}
+			// Remove from database
+			try {
+				stmtRoomAvailabilityDelete.run(rk, targetClientId);
+				console.log(`[AVAIL-DB] Deleted availability for client ${targetClientId} in room ${rk}`);
+			} catch (dbErr) {
+				console.error("[AVAIL-DB] Failed to delete client availability:", dbErr.message);
+			}
+			// Broadcast updated state to all clients
+			const availMap = getRoomAvailabilityState(rk);
+			const participants = buildDeduplicatedParticipants(availMap);
+			broadcast(rk, { type: "availability_state", room, participants });
+			return;
+		}
+
 		if (msg.type === "comment_update") {
 			const clientId = String(msg.clientId || "").trim();
 			if (!clientId) return;
