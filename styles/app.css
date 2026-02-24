@@ -7182,9 +7182,12 @@ body[data-theme] #calendarBundeslandSelect {
 	position: absolute;
 	top: 100%;
 	left: 0;
+	right: auto;
 	z-index: 60;
 	margin-top: 4px;
 	min-width: 100%;
+	max-width: min(400px, calc(100vw - 2rem));
+	width: max-content;
 	max-height: 320px;
 	overflow-y: auto;
 	border-radius: 0.5rem;
