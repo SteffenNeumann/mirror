@@ -19578,6 +19578,8 @@ self.onmessage = async (e) => {
 			room: msg?.room
 		});
 		if (!msg) return;
+		// Invalidate common days cache since state changed
+		_cachedCommonDays = null;
 		// Full state: array of all participants
 		if (Array.isArray(msg.participants)) {
 			availabilityByClient.clear();
@@ -19714,6 +19716,24 @@ self.onmessage = async (e) => {
 			commonDays.sort();
 		}
 		return { commonDays, perParticipant, total: participants.length, participantsWithDaysCount: participantsWithDays.length, hasOtherParticipantsWithDays };
+	}
+
+	/**
+	 * Checks if a specific day is a "common day" (all participants who have selections agree on this day).
+	 * Uses cached computation for efficiency during render cycles.
+	 */
+	let _cachedCommonDays = null;
+	let _cachedCommonDaysTs = 0;
+	function isCommonDay(day) {
+		const dk = dayKeyFromDate(day);
+		// Cache for 500ms to avoid recomputing during a single render cycle
+		const now = Date.now();
+		if (!_cachedCommonDays || now - _cachedCommonDaysTs > 500) {
+			const data = computeCommonSelectedDays();
+			_cachedCommonDays = new Set(data.commonDays);
+			_cachedCommonDaysTs = now;
+		}
+		return _cachedCommonDays.has(dk);
 	}
 
 	/**
@@ -20082,6 +20102,7 @@ self.onmessage = async (e) => {
 				const focusedClass = isFocused ? " calendar-day-focused" : "";
 				const todayClass = isToday ? " calendar-day-today" : "";
 				const availClass = dayAvail ? "calendar-day-available" : "calendar-day-unavailable";
+				const commonClass = isCommonDay(day) ? " calendar-day-common" : "";
 				const dayEvents = events.filter(
 					(evt) => evt.start < dayEnd && evt.end > day
 				);
@@ -20112,7 +20133,7 @@ self.onmessage = async (e) => {
 					: `<div class="text-[11px] text-slate-500">${escapeHtml(t("calendar.week.no_events"))}</div>`;
 				const participantHtml = renderParticipantIndicators(day);
 				return `
-					<div class="calendar-day-cell border ${dayBorder} ${availClass} cursor-pointer select-none transition-colors${todayClass}${focusedClass}" data-calendar-day="${dk}">
+					<div class="calendar-day-cell border ${dayBorder} ${availClass}${commonClass} cursor-pointer select-none transition-colors${todayClass}${focusedClass}" data-calendar-day="${dk}">
 						<div class="flex items-center justify-between">
 							<span class="text-[11px] text-slate-400">${formatDayLabel(day)}</span>
 							<span class="calendar-day-indicator text-[9px]">${dayAvail ? "✓" : "✕"}</span>
@@ -20173,10 +20194,11 @@ self.onmessage = async (e) => {
 			const focusedClass = isFocused ? " calendar-day-focused" : "";
 			const todayClass = isToday ? " calendar-day-today" : "";
 			const availClass = dayAvail ? "calendar-day-available" : "calendar-day-unavailable";
+			const commonClass = isCommonDay(day) ? " calendar-day-common" : "";
 			const opacityClass = isCurrentMonth ? "" : " opacity-40";
 			const participantHtml = renderParticipantIndicators(day);
 			return `
-				<div class="calendar-day-cell calendar-day-cell-month min-h-[88px] border ${borderClass} ${availClass} cursor-pointer select-none transition-colors${opacityClass}${todayClass}${focusedClass}" data-calendar-day="${dk}">
+				<div class="calendar-day-cell calendar-day-cell-month min-h-[88px] border ${borderClass} ${availClass}${commonClass} cursor-pointer select-none transition-colors${opacityClass}${todayClass}${focusedClass}" data-calendar-day="${dk}">
 					<div class="flex items-center justify-between">
 						<span class="text-[11px] text-slate-400">${day.getDate()}</span>
 						<span class="calendar-day-indicator text-[9px]">${dayAvail ? "✓" : "✕"}</span>
