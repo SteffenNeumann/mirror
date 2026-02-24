@@ -613,6 +613,17 @@ Server-Start
   |-> HTTP Server (API, Uploads) -> initDb() -> SQLite
   |-> WebSocketServer -> persistRoomState()/loadPersistedRoomState()
   |-> Static Files (sw.js, manifest.json, ...)
+
+Server-Start Detailliert (`server.listen` Callback):
+  1. initDb()                          // DB + Prepared Statements initialisieren (PFLICHT vor DB-Zugriffen)
+  2. stmtRoomAvailabilityCleanup.run() // Alte Availability-Einträge (>30 Tage) löschen
+  3. refreshLatestModel()              // Anthropic Models API: aktuelles AI-Modell ermitteln
+  4. setInterval(Cleanup, 24h)         // Periodischer Cleanup aller 24 Stunden
+  5. setInterval(refreshModel, 6h)     // AI-Modell alle 6 Stunden aktualisieren
+
+WICHTIG: initDb() MUSS vor allen DB-Zugriffen aufgerufen werden.
+         Die Prepared Statements (stmtRoomAvailability*, stmtNotes*, etc.)
+         werden erst in initDb() erzeugt und sind vorher undefined.
 ````
 
 ## Chronologischer Ablauf (App öffnet → Nutzeraktionen)
