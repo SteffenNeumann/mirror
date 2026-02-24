@@ -19984,17 +19984,21 @@ self.onmessage = async (e) => {
 				html += `<div class="common-days-section mb-2">
 					<div class="text-[10px] font-medium uppercase tracking-wider text-slate-400 mb-1">${escapeHtml(t("calendar.common.participant_days"))}</div>`;
 				for (const p of participantsWithDays) {
-					const dayLabels = p.days.slice(0, 5).map(dk => {
+					const dayChips = p.days.slice(0, 10).map(dk => {
 						const parts = dk.split("-");
-						if (parts.length !== 3) return dk;
+						if (parts.length !== 3) return `<span class="participant-day-chip">${dk}</span>`;
 						const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-						return formatDayLabel(d);
-					});
-					const moreText = p.days.length > 5 ? ` +${p.days.length - 5}` : "";
-					html += `<div class="mb-1">
-						<span class="chip-dot inline-block mr-1" style="background:${escapeAttr(p.color)}"></span>
-						<span class="text-[11px] text-slate-300">${escapeHtml(p.name)}:</span>
-						<span class="text-[11px] text-slate-400">${dayLabels.join(", ")}${moreText}</span>
+						const dayStr = d.toLocaleDateString(uiLang === "de" ? "de-DE" : "en-US", { weekday: "short", day: "numeric", month: "numeric" });
+						return `<span class="participant-day-chip">${escapeHtml(dayStr)}</span>`;
+					}).join("");
+					const moreChip = p.days.length > 10 ? `<span class="participant-day-chip participant-day-chip--more">+${p.days.length - 10}</span>` : "";
+					html += `<div class="participant-days-row mb-2">
+						<div class="flex items-center gap-1.5 mb-1">
+							<span class="chip-dot" style="background:${escapeAttr(p.color)}"></span>
+							<span class="text-[11px] text-slate-300 font-medium">${escapeHtml(p.name)}</span>
+							<span class="participant-day-count">${p.days.length} ${p.days.length === 1 ? "Tag" : "Tage"}</span>
+						</div>
+						<div class="participant-days-grid">${dayChips}${moreChip}</div>
 					</div>`;
 				}
 				html += `</div>`;

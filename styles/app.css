@@ -6780,6 +6780,45 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
+/* ── Participant days grid layout ── */
+.participant-days-row {
+	padding: 0.25rem 0;
+}
+.participant-days-grid {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.25rem;
+}
+.participant-day-chip {
+	display: inline-block;
+	padding: 0.125rem 0.375rem;
+	border-radius: 4px;
+	font-size: 10px;
+	background: rgba(255, 255, 255, 0.06);
+	color: #94a3b8;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	white-space: nowrap;
+}
+.participant-day-chip--more {
+	background: rgba(255, 255, 255, 0.03);
+	color: #64748b;
+	font-style: italic;
+}
+.participant-day-count {
+	font-size: 9px;
+	color: #64748b;
+	margin-left: auto;
+}
+
+/* ── Light theme overrides for participant days ── */
+body[data-theme="coffeeLight"] .participant-day-chip,
+body[data-theme="bitterLight"] .participant-day-chip,
+body[data-theme="monoLight"] .participant-day-chip {
+	background: rgba(0, 0, 0, 0.05);
+	color: var(--dropdown-text);
+	border-color: rgba(0, 0, 0, 0.1);
+}
+
 /* ── Light theme overrides for Gemeinsame Planung section ── */
 body[data-theme="coffeeLight"] #calendarCommonFreeSlotsWrap,
 body[data-theme="bitterLight"] #calendarCommonFreeSlotsWrap,
