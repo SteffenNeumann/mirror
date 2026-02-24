@@ -116,6 +116,13 @@ body {
 	}
 }
 
+/* Run output default sizing - JS dynamically adjusts max-height */
+#runOutput {
+	max-height: 160px;
+	overflow: auto;
+	-webkit-overflow-scrolling: touch;
+}
+
 main.relative {
 	margin: 0;
 	width: 100%;
@@ -2461,11 +2468,14 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	#runOutput {
 		max-height: 120px;
 		font-size: 11px;
+		overflow: auto;
+		-webkit-overflow-scrolling: touch;
 	}
 	/* AI outputs (text + image) get expanded sizing for long responses */
 	#runOutput.is-ai-output,
 	#runOutput:has(img) {
 		max-height: 70vh;
+		overflow: auto;
 	}
 
 	/* Editor panel full-width on mobile */
