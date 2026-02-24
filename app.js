@@ -15240,7 +15240,7 @@ self.onmessage = async (e) => {
 	const CALENDAR_OUTLOOK_CAL_ID_KEY = "mirror_calendar_outlook_id_v1";
 	const CALENDAR_SYNC_TARGET_KEY = "mirror_calendar_sync_target_v1";
 	const CALENDAR_BUNDESLAND_KEY = "mirror_calendar_bundesland_v1";
-	const CALENDAR_VIEWS = ["day", "week", "month"];
+	const CALENDAR_VIEWS = ["day", "threedays", "week", "month"];
 	const CALENDAR_SETTINGS_SYNC_DELAY = 1200;
 	const CALENDAR_WORK_START_HOUR = 9;
 	const CALENDAR_WORK_END_HOUR = 18;
@@ -17812,6 +17812,14 @@ self.onmessage = async (e) => {
 			if (weekday && datePart) return `${weekday} · ${datePart}`;
 			return weekday || datePart || "";
 		}
+		if (view === "threedays") {
+			const start = date;
+			const end = addDays(start, 2);
+			const startPart = formatDatePart(start);
+			const endPart = formatDatePart(end);
+			if (startPart && endPart) return `${startPart} – ${endPart}`;
+			return startPart || endPart || "";
+		}
 		if (view === "week") {
 			const start = startOfWeek(date);
 			const end = addDays(start, 6);
@@ -18195,6 +18203,10 @@ self.onmessage = async (e) => {
 			const start = startOfDay(cursor);
 			return { start, end: addDays(start, 1) };
 		}
+		if (view === "threedays") {
+			const start = startOfDay(cursor);
+			return { start, end: addDays(start, 3) };
+		}
 		if (view === "week") {
 			const start = startOfWeek(cursor);
 			return { start, end: addDays(start, 7) };
@@ -18356,13 +18368,16 @@ self.onmessage = async (e) => {
 
 	function updateCalendarViewButtons() {
 		if (!calendarViewButtons || !calendarViewButtons.length) return;
-		const viewLabels = { day: t("calendar.view.day"), week: t("calendar.view.week"), month: t("calendar.view.month") };
+		const viewLabels = { day: t("calendar.view.day"), threedays: "3 " + t("calendar.view.days", "Tage"), week: t("calendar.view.week"), month: t("calendar.view.month") };
 		calendarViewButtons.forEach((btn) => {
 			const name = String(btn.getAttribute("data-calendar-view") || "");
 			const active = name === calendarState.view;
+			// Support both old classes and new cal-view-btn classes
+			btn.classList.toggle("cal-view-btn-active", active);
 			btn.classList.toggle("bg-white/10", active);
 			btn.classList.toggle("text-slate-100", active);
-			btn.classList.toggle("text-slate-300", !active);
+			btn.classList.toggle("text-slate-400", !active && btn.classList.contains("cal-view-btn"));
+			btn.classList.toggle("text-slate-300", !active && !btn.classList.contains("cal-view-btn"));
 			btn.setAttribute("aria-current", active ? "true" : "false");
 		});
 		if (calendarViewDropdownLabel) {
@@ -18945,6 +18960,8 @@ self.onmessage = async (e) => {
 		const next = new Date(base);
 		if (view === "day") {
 			next.setDate(next.getDate() + dir);
+		} else if (view === "threedays") {
+			next.setDate(next.getDate() + dir * 3);
 		} else if (view === "week") {
 			next.setDate(next.getDate() + dir * 7);
 		} else {
@@ -20057,7 +20074,7 @@ self.onmessage = async (e) => {
 			calendarTitle.textContent = formatCalendarTitle(view, cursor);
 		}
 		if (calendarWeekLabel) {
-			const showWeek = view === "week" || view === "day";
+			const showWeek = view === "week" || view === "day" || view === "threedays";
 			if (showWeek) {
 				calendarWeekLabel.textContent = formatUi(t("calendar.kw"), { n: getIsoWeekNumber(cursor) });
 				calendarWeekLabel.classList.remove("hidden");
@@ -20110,6 +20127,67 @@ self.onmessage = async (e) => {
 					})
 					.join("")
 				: `<div class="text-sm text-slate-400">${escapeHtml(t("calendar.day.no_events"))}</div>`);
+			renderCalendarFreeSlots(view, cursor, events);
+			return;
+		}
+		if (view === "threedays") {
+			const start = startOfDay(cursor);
+			const cols = Array.from({ length: 3 }).map((_, idx) => {
+				const day = addDays(start, idx);
+				const dayEnd = addDays(day, 1);
+				const isToday =
+					startOfDay(day).getTime() === startOfDay(new Date()).getTime();
+				const dayAvail = isDayAvailable(day);
+				const dk = dayKeyFromDate(day);
+				const isFocused = dk === calendarFocusedDayKey;
+				const dayBorder = isFocused
+					? ""
+					: "border-white/10";
+				const focusedClass = isFocused ? " calendar-day-focused" : "";
+				const todayClass = isToday ? " calendar-day-today" : "";
+				const availClass = dayAvail ? "calendar-day-available" : "calendar-day-unavailable";
+				const commonClass = isCommonDay(day) ? " calendar-day-common" : "";
+				const dayEvents = events.filter(
+					(evt) => evt.start < dayEnd && evt.end > day
+				);
+				const list = dayEvents.length
+					? dayEvents
+						.map((evt) => {
+							const time = evt.allDay
+								? t("calendar.allday")
+								: formatTime(evt.start);
+							const tooltip = evt.location
+								? `${time} · ${evt.title} · ${evt.location}`
+								: `${time} · ${evt.title}`;
+							return `
+								<div class="calendar-event rounded-md bg-slate-950/50 px-2 py-1 text-[11px] text-slate-200" data-tooltip="${escapeAttr(
+									tooltip
+								)}">
+									<div class="flex items-center gap-2">
+										<span class="inline-flex h-2 w-2 rounded-full" style="background:${escapeAttr(
+											evt.color
+										)}"></span>
+										<span class="truncate">${time} · ${escapeHtml(
+											evt.title
+										)}</span>
+									</div>
+								</div>`;
+						})
+						.join("")
+					: `<div class="text-[11px] text-slate-500">${escapeHtml(t("calendar.week.no_events"))}</div>`;
+				const participantHtml = renderParticipantIndicators(day);
+				return `
+					<div class="calendar-day-cell border ${dayBorder} ${availClass}${commonClass} cursor-pointer select-none transition-colors${todayClass}${focusedClass}" data-calendar-day="${dk}">
+						<div class="flex items-center justify-between">
+							<span class="text-[11px] text-slate-400">${formatDayLabel(day)}</span>
+							<span class="calendar-day-indicator text-[9px]">${dayAvail ? "✓" : "✕"}</span>
+						</div>
+						${participantHtml}
+						<div class="mt-2 space-y-1">${list}</div>
+					</div>`;
+			});
+			calendarGrid.innerHTML = `<div class="calendar-week-grid grid grid-cols-1 gap-0 sm:grid-cols-3">${cols.join(
+				"")}</div>`;
 			renderCalendarFreeSlots(view, cursor, events);
 			return;
 		}

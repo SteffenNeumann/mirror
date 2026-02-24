@@ -2157,6 +2157,22 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		cursor: pointer;
 		touch-action: manipulation;
 	}
+	/* Calendar View Buttons (Desktop/Tablet) */
+	.cal-view-buttons {
+		-webkit-tap-highlight-color: transparent;
+	}
+	.cal-view-btn {
+		font-weight: 500;
+		transition: all 0.15s ease;
+	}
+	.cal-view-btn:hover:not(.cal-view-btn-active) {
+		background: rgba(255, 255, 255, 0.05);
+	}
+	.cal-view-btn-active {
+		background: rgba(255, 255, 255, 0.1);
+		color: var(--calendar-text-primary, #f1f5f9);
+		font-weight: 600;
+	}
 	/* Calendar sidebar mobile: better sizing */
 	.calendar-sidebar {
 		max-height: 200px;

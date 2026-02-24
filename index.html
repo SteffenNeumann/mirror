@@ -1579,14 +1579,14 @@
 									<div class="flex items-center gap-3 min-w-0">
 										<div class="flex items-center gap-1">
 											<button id="calendarPrev" type="button"
-												class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
+												class="inline-flex h-7 w-7 items-center justify-center rounded-md bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
 												title="Zurück" aria-label="Zurück">
 												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M15 18l-6-6 6-6" /></svg>
 											</button>
 											<button id="calendarToday" type="button"
-												class="rounded-md border border-white/10 bg-white/10 px-2 py-1 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">Heute</button>
+												class="rounded-md bg-white/10 px-2 py-1 text-xs text-slate-100 transition hover:bg-white/15 active:bg-white/20">Heute</button>
 											<button id="calendarNext" type="button"
-												class="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
+												class="inline-flex h-7 w-7 items-center justify-center rounded-md bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
 												title="Weiter" aria-label="Weiter">
 												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M9 6l6 6-6 6" /></svg>
 											</button>
@@ -1599,7 +1599,7 @@
 									<!-- Right: Search + View Dropdown + Neu -->
 									<div class="ml-auto flex items-center gap-2">
 										<!-- Search -->
-										<div class="relative inline-flex items-center rounded-lg border border-white/10 bg-slate-950/40 px-2 py-1" style="min-width:120px">
+										<div class="relative inline-flex items-center rounded-lg bg-slate-950/40 px-2 py-1" style="min-width:120px">
 											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none h-3.5 w-3.5 flex-shrink-0 text-slate-500"><circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" /></svg>
 											<input id="calendarSearchInput" type="text" autocomplete="off"
 												data-i18n-placeholder="calendar.search.placeholder"
@@ -1612,10 +1612,21 @@
 											</button>
 											<div id="calendarSearchResults" class="cal-search-dropdown hidden"></div>
 										</div>
-										<!-- View Dropdown -->
-										<div class="relative" id="calendarViewDropdownWrap">
+										<!-- View Toggle Buttons (Desktop/Tablet) -->
+										<div id="calendarViewButtons" class="cal-view-buttons hidden sm:flex items-center rounded-lg bg-slate-950/40 p-0.5">
+											<button data-calendar-view="month" type="button"
+												class="cal-view-btn rounded-md px-3 py-1 text-xs text-slate-400 transition hover:text-slate-200">Monat</button>
+											<button data-calendar-view="week" type="button"
+												class="cal-view-btn cal-view-btn-active rounded-md px-3 py-1 text-xs text-slate-100 bg-white/10 transition">Woche</button>
+											<button data-calendar-view="threedays" type="button"
+												class="cal-view-btn rounded-md px-3 py-1 text-xs text-slate-400 transition hover:text-slate-200">3 Tage</button>
+											<button data-calendar-view="day" type="button"
+												class="cal-view-btn rounded-md px-3 py-1 text-xs text-slate-400 transition hover:text-slate-200">Tag</button>
+										</div>
+										<!-- View Dropdown (Mobile) -->
+										<div class="relative sm:hidden" id="calendarViewDropdownWrap">
 											<button id="calendarViewDropdownBtn" type="button"
-												class="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-slate-950/40 px-2.5 py-1 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10">
+												class="inline-flex items-center gap-1.5 rounded-lg bg-slate-950/40 px-2.5 py-1 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10">
 												<span id="calendarViewDropdownLabel">Woche</span>
 												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3 text-slate-400"><path d="m6 9 6 6 6-6" /></svg>
 											</button>
@@ -1623,6 +1634,8 @@
 												class="absolute right-0 top-full z-50 mt-1 hidden min-w-[100px] rounded-lg border border-white/10 bg-slate-900 py-1 shadow-lg">
 												<button data-calendar-view="day" type="button"
 													class="flex w-full items-center px-3 py-1.5 text-xs text-slate-300 transition hover:bg-white/5 hover:text-slate-100">Tag</button>
+												<button data-calendar-view="threedays" type="button"
+													class="flex w-full items-center px-3 py-1.5 text-xs text-slate-300 transition hover:bg-white/5 hover:text-slate-100">3 Tage</button>
 												<button data-calendar-view="week" type="button"
 													class="flex w-full items-center px-3 py-1.5 text-xs text-slate-300 transition hover:bg-white/5 hover:text-slate-100">Woche</button>
 												<button data-calendar-view="month" type="button"
