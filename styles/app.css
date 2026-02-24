@@ -2180,6 +2180,7 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	.cal-view-btn {
 		font-weight: 500;
 		transition: all 0.15s ease;
+		white-space: nowrap;
 	}
 	.cal-view-btn:hover:not(.cal-view-btn-active) {
 		background: rgba(255, 255, 255, 0.05);
