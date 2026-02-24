@@ -19487,7 +19487,16 @@ self.onmessage = async (e) => {
 	}
 
 	function broadcastAvailability() {
-		if (!commonFreeSlotsSharing || !ws || ws.readyState !== 1) return;
+		console.log("[AVAIL-DEBUG] broadcastAvailability called", {
+			commonFreeSlotsSharing,
+			wsState: ws ? ws.readyState : "no-ws",
+			clientId,
+			room
+		});
+		if (!commonFreeSlotsSharing || !ws || ws.readyState !== 1) {
+			console.log("[AVAIL-DEBUG] broadcastAvailability SKIPPED - sharing:", commonFreeSlotsSharing, "ws:", ws?.readyState);
+			return;
+		}
 		// No isInSharedRoom guard - clients in "guest rooms" may not have the room
 		// explicitly marked as shared in localStorage, but can still share availability
 		// via WebSocket when other participants are present.
@@ -19530,20 +19539,28 @@ self.onmessage = async (e) => {
 			rangeStart: rangeStart.getTime(),
 			rangeEnd: rangeEnd.getTime(),
 		});
+		const msgPayload = {
+			type: "availability_state",
+			room,
+			clientId,
+			name: identity.name || "Guest",
+			color: identity.color || "#94a3b8",
+			busy,
+			selectedDays,
+			rangeStart: rangeStart.getTime(),
+			rangeEnd: rangeEnd.getTime(),
+		};
+		console.log("[AVAIL-DEBUG] SENDING availability_state:", {
+			room,
+			clientId,
+			selectedDays,
+			name: identity.name
+		});
 		try {
-			ws.send(JSON.stringify({
-				type: "availability_state",
-				room,
-				clientId,
-				name: identity.name || "Guest",
-				color: identity.color || "#94a3b8",
-				busy,
-				selectedDays,
-				rangeStart: rangeStart.getTime(),
-				rangeEnd: rangeEnd.getTime(),
-			}));
-		} catch {
-			// ignore
+			ws.send(JSON.stringify(msgPayload));
+			console.log("[AVAIL-DEBUG] ws.send SUCCESS");
+		} catch (err) {
+			console.error("[AVAIL-DEBUG] ws.send FAILED:", err);
 		}
 		// Re-render to show updated intersection
 		renderCommonFreeSlots();
@@ -19553,12 +19570,20 @@ self.onmessage = async (e) => {
 	}
 
 	function handleAvailabilityState(msg) {
+		console.log("[AVAIL-DEBUG] handleAvailabilityState RECEIVED:", {
+			hasParticipants: Array.isArray(msg?.participants),
+			participantCount: msg?.participants?.length,
+			participants: msg?.participants?.map(p => ({ clientId: p?.clientId, name: p?.name, days: p?.selectedDays?.length })),
+			myClientId: clientId,
+			room: msg?.room
+		});
 		if (!msg) return;
 		// Full state: array of all participants
 		if (Array.isArray(msg.participants)) {
 			availabilityByClient.clear();
 			for (const p of msg.participants) {
 				if (!p || !p.clientId) continue;
+				console.log("[AVAIL-DEBUG] Adding participant:", p.clientId, p.name, "days:", p.selectedDays?.length);
 				availabilityByClient.set(String(p.clientId), {
 					name: String(p.name || "Guest"),
 					color: String(p.color || "#94a3b8"),
@@ -19568,6 +19593,7 @@ self.onmessage = async (e) => {
 					rangeEnd: typeof p.rangeEnd === "number" ? p.rangeEnd : 0,
 				});
 			}
+			console.log("[AVAIL-DEBUG] availabilityByClient after update:", availabilityByClient.size, "entries");
 		} else if (msg.clientId) {
 			// Single participant update
 			availabilityByClient.set(String(msg.clientId), {
@@ -19790,6 +19816,14 @@ self.onmessage = async (e) => {
 
 	function renderCommonFreeSlots() {
 		if (!calendarCommonFreeSlotsWrap) return;
+		// Debug: log state
+		console.log("[AVAIL-DEBUG] renderCommonFreeSlots called", {
+			availabilityByClientSize: availabilityByClient.size,
+			availabilityByClientKeys: Array.from(availabilityByClient.keys()),
+			myClientId: clientId,
+			commonFreeSlotsSharing,
+			isSharedRoom: isInSharedRoom()
+		});
 		// Show panel when:
 		// - User has sharing enabled (commonFreeSlotsSharing = true), OR
 		// - Room is marked as shared, OR
@@ -21451,6 +21485,15 @@ self.onmessage = async (e) => {
 			if (mySeq !== connectionSeq) return;
 			const msg = safeJsonParse(ev.data);
 			if (!msg || msg.room !== room) return;
+			// Debug: log all incoming messages
+			if (msg.type === "availability_state" || msg.type === "availability_leave") {
+				console.log("[AVAIL-DEBUG] WS RAW message:", msg.type, {
+					msgClientId: msg.clientId,
+					myClientId: clientId,
+					wouldFilter: msg.clientId === clientId,
+					participantCount: msg.participants?.length
+				});
+			}
 			if (msg.clientId === clientId) return;
 
 			if (msg.type === "presence_state") {
@@ -21620,6 +21663,7 @@ self.onmessage = async (e) => {
 			}
 
 			if (msg.type === "availability_state") {
+				console.log("[AVAIL-DEBUG] WS MESSAGE availability_state received from server");
 				handleAvailabilityState(msg);
 				return;
 			}

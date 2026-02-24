@@ -2417,10 +2417,22 @@ function broadcastPresenceState(roomKeyName, room, except) {
 
 function broadcast(roomKeyName, data, except) {
 	const payload = JSON.stringify(data);
-	for (const socket of getRoomSockets(roomKeyName)) {
-		if (socket === except) continue;
-		if (socket.readyState !== socket.OPEN) continue;
+	const sockets = getRoomSockets(roomKeyName);
+	let sentCount = 0;
+	let skipCount = 0;
+	for (const socket of sockets) {
+		if (socket === except) { skipCount++; continue; }
+		if (socket.readyState !== socket.OPEN) { skipCount++; continue; }
 		socket.send(payload);
+		sentCount++;
+	}
+	if (data.type === "availability_state") {
+		console.log("[AVAIL-DEBUG-SERVER] broadcast result:", {
+			roomKeyName,
+			totalSockets: sockets.size,
+			sentCount,
+			skipCount
+		});
 	}
 }
 
@@ -5614,6 +5626,7 @@ wss.on("connection", (ws, req) => {
 	const room = clampRoom(url.searchParams.get("room"));
 	const key = clampKey(url.searchParams.get("key"));
 	const rk = roomKey(room, key);
+	console.log("[AVAIL-DEBUG-SERVER] WebSocket connection:", { room, key, rk });
 
 	if (!room) {
 		ws.close(1008, "room required");
@@ -6105,6 +6118,12 @@ wss.on("connection", (ws, req) => {
 
 		if (msg.type === "availability_state") {
 			const fromClientId = typeof msg.clientId === "string" ? msg.clientId : "";
+			console.log("[AVAIL-DEBUG-SERVER] availability_state received", {
+				room,
+				rk,
+				fromClientId,
+				selectedDays: msg.selectedDays?.length || 0
+			});
 			if (!fromClientId) return;
 			const name = typeof msg.name === "string" ? msg.name.slice(0, 100) : "Guest";
 			const color = typeof msg.color === "string" ? msg.color.slice(0, 20) : "#94a3b8";
@@ -6141,6 +6160,11 @@ wss.on("connection", (ws, req) => {
 				rangeStart: entry.rangeStart || 0,
 				rangeEnd: entry.rangeEnd || 0,
 			}));
+			console.log("[AVAIL-DEBUG-SERVER] Broadcasting to all in room", {
+				rk,
+				participantCount: participants.length,
+				participants: participants.map(p => ({ clientId: p.clientId, name: p.name, days: p.selectedDays?.length }))
+			});
 			broadcast(rk, { type: "availability_state", room, participants });
 			return;
 		}
