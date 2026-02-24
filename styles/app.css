@@ -2135,6 +2135,9 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	.cal-header * {
 		-webkit-tap-highlight-color: transparent;
 	}
+	#calendarTitle {
+		color: var(--accent-text-soft) !important;
+	}
 	.cal-header button,
 	.cal-header input {
 		touch-action: manipulation;
