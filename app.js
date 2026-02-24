@@ -6004,6 +6004,7 @@
 				"offline.now_offline": "Du bist offline. Änderungen werden lokal gespeichert.",
 				"offline.back_online": "Wieder online — synchronisiere…",
 				"offline.synced": "Offline-Änderungen synchronisiert.",
+				"offline.sync_failed": "Sync fehlgeschlagen für eine Offline-Änderung (Max. Versuche erreicht).",
 				"offline.saved_locally": "Offline gespeichert.",
 				"settings.nav.shortcuts": "Tastenkürzel",
 				"settings.shortcuts.title": "Tastenkürzel",
@@ -6550,6 +6551,7 @@
 				"offline.now_offline": "You are offline. Changes are saved locally.",
 				"offline.back_online": "Back online — syncing…",
 				"offline.synced": "Offline changes synced.",
+				"offline.sync_failed": "Sync failed for an offline change (max retries reached).",
 				"offline.saved_locally": "Saved offline.",
 				"settings.nav.shortcuts": "Shortcuts",
 				"settings.shortcuts.title": "Keyboard Shortcuts",
@@ -7252,6 +7254,28 @@
 		} catch (e) { console.warn("[offline] clearOps failed:", e); }
 	}
 
+	// Update a single operation (e.g., increment retry count)
+	async function offlineUpdateOp(op) {
+		if (!op || !op.opId) return;
+		try {
+			const db = await openOfflineDb();
+			const tx = db.transaction(OFFLINE_STORE_OPS, "readwrite");
+			tx.objectStore(OFFLINE_STORE_OPS).put(op);
+			await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+		} catch (e) { console.warn("[offline] updateOp failed:", e); }
+	}
+
+	// Delete a single operation by opId
+	async function offlineDeleteSingleOp(opId) {
+		if (!opId) return;
+		try {
+			const db = await openOfflineDb();
+			const tx = db.transaction(OFFLINE_STORE_OPS, "readwrite");
+			tx.objectStore(OFFLINE_STORE_OPS).delete(opId);
+			await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+		} catch (e) { console.warn("[offline] deleteSingleOp failed:", e); }
+	}
+
 	async function offlineSaveMeta(key, value) {
 		try {
 			const db = await openOfflineDb();
@@ -7310,16 +7334,29 @@
 	}
 
 	// --- Sync Queue Replay: push pending ops to server ---
+	const OFFLINE_MAX_RETRIES = 5;
+	const OFFLINE_BASE_DELAY_MS = 2000; // 2s base, exponential backoff
 	let offlineSyncInFlight = false;
+	let offlineBackoffUntil = 0; // timestamp when backoff ends
+
 	async function replayOfflineOps() {
 		if (offlineSyncInFlight) return;
 		if (typeof navigator !== "undefined" && navigator.onLine === false) return;
+		// Check backoff timer
+		if (offlineBackoffUntil > Date.now()) {
+			const remainSec = Math.ceil((offlineBackoffUntil - Date.now()) / 1000);
+			console.log(`[offline] backoff active, retrying in ${remainSec}s`);
+			return;
+		}
 		offlineSyncInFlight = true;
 		try {
 			const ops = await offlineGetAllOps();
 			if (!ops.length) return;
-			let anyFailed = false;
+			let successCount = 0;
+			let transientFailure = false;
 			for (const op of ops) {
+				const opId = op.opId;
+				const retries = op.retries || 0;
 				try {
 					if (op.type === "create") {
 						const res = await api("/api/notes", {
@@ -7345,6 +7382,8 @@
 								psAutoSaveLastSavedNoteId = psEditingNoteId;
 							}
 						}
+						await offlineDeleteSingleOp(opId);
+						successCount++;
 					} else if (op.type === "update") {
 						await api(`/api/notes/${encodeURIComponent(op.noteId)}`, {
 							method: "PUT",
@@ -7354,28 +7393,76 @@
 						const allN = await offlineGetAllNotes();
 						const n = allN.find((x) => x.id === op.noteId);
 						if (n) { n.dirty = false; await offlinePutNote(n); }
+						await offlineDeleteSingleOp(opId);
+						successCount++;
 					} else if (op.type === "delete") {
 						await api(`/api/notes/${encodeURIComponent(op.noteId)}`, {
 							method: "DELETE",
 						});
 						await offlineDeleteNote(op.noteId);
+						await offlineDeleteSingleOp(opId);
+						successCount++;
 					}
 				} catch (e) {
 					const msg = e && e.message ? String(e.message) : "";
 					const is404 = msg.includes("404") || msg.includes("not_found");
 					const is409 = msg.includes("409") || msg.includes("duplicate");
+					const is5xx = /\b50[0-9]\b/.test(msg) || msg.includes("Bad Gateway") || msg.includes("Service Unavailable");
+
+					// 404/409: skip this op permanently (note deleted or duplicate)
 					if (is404 || is409) {
 						console.warn("[offline] replay op skipped (" + (is404 ? "deleted" : "duplicate") + "):", op.noteId || op.tempId);
+						await offlineDeleteSingleOp(opId);
 						continue;
 					}
-					console.warn("[offline] replay op failed:", op, e);
-					anyFailed = true;
-					break; // Stop at first failure, retry later
+
+					// 5xx (transient server error): retry with backoff
+					if (is5xx) {
+						const nextRetries = retries + 1;
+						if (nextRetries >= OFFLINE_MAX_RETRIES) {
+							console.error("[offline] op max retries reached, discarding:", op.noteId || op.tempId, op);
+							await offlineDeleteSingleOp(opId);
+							toast(t("offline.sync_failed") || "Sync failed for an offline change (max retries).", "error");
+							continue;
+						}
+						// Update retry count
+						op.retries = nextRetries;
+						op.lastError = msg;
+						op.lastRetryAt = Date.now();
+						await offlineUpdateOp(op);
+						// Set exponential backoff: 2s, 4s, 8s, 16s, 32s
+						const backoffMs = OFFLINE_BASE_DELAY_MS * Math.pow(2, nextRetries - 1);
+						offlineBackoffUntil = Date.now() + backoffMs;
+						console.warn(`[offline] transient error (${msg}), retry ${nextRetries}/${OFFLINE_MAX_RETRIES} in ${backoffMs / 1000}s`);
+						transientFailure = true;
+						break; // Stop processing, will retry after backoff
+					}
+
+					// Other errors: also retry with backoff
+					const nextRetries2 = retries + 1;
+					if (nextRetries2 >= OFFLINE_MAX_RETRIES) {
+						console.error("[offline] op max retries reached, discarding:", op.noteId || op.tempId, op);
+						await offlineDeleteSingleOp(opId);
+						toast(t("offline.sync_failed") || "Sync failed for an offline change.", "error");
+						continue;
+					}
+					op.retries = nextRetries2;
+					op.lastError = msg;
+					op.lastRetryAt = Date.now();
+					await offlineUpdateOp(op);
+					const backoffMs2 = OFFLINE_BASE_DELAY_MS * Math.pow(2, nextRetries2 - 1);
+					offlineBackoffUntil = Date.now() + backoffMs2;
+					console.warn(`[offline] replay op failed (${msg}), retry ${nextRetries2}/${OFFLINE_MAX_RETRIES} in ${backoffMs2 / 1000}s`);
+					transientFailure = true;
+					break;
 				}
 			}
-			if (!anyFailed) {
-				await offlineClearOps();
-				toast(t("offline.synced") || "Offline changes synced.", "success");
+			// If we had successful syncs, show toast and refresh
+			if (successCount > 0 && !transientFailure) {
+				const remaining = await offlineGetAllOps();
+				if (remaining.length === 0) {
+					toast(t("offline.synced") || "Offline changes synced.", "success");
+				}
 				await refreshPersonalSpace();
 				// Restore textarea + CRDT to correct server text after replay
 				const editId = String(psEditingNoteId || "").trim();
@@ -7390,6 +7477,11 @@
 						if (typeof scheduleCrdtSnapshot === "function") scheduleCrdtSnapshot();
 					}
 				}
+			}
+			// Schedule retry if transient failure with backoff
+			if (transientFailure && offlineBackoffUntil > Date.now()) {
+				const delayMs = offlineBackoffUntil - Date.now();
+				setTimeout(() => void replayOfflineOps(), delayMs + 100);
 			}
 		} finally {
 			offlineSyncInFlight = false;
