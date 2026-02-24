@@ -26775,10 +26775,11 @@ self.onmessage = async (e) => {
 		});
 	}
 	if (calendarClearAllAvailability) {
-		calendarClearAllAvailability.addEventListener("click", async () => {
-			const confirmed = await asyncConfirm(
-				t("calendar.availability.confirm_clear_all") || "Alle Verfügbarkeitsdaten für diesen Raum löschen?",
-				t("calendar.availability.confirm_clear_all_desc") || "Dies löscht die Daten aller Teilnehmer in diesem Raum. Diese Aktion kann nicht rückgängig gemacht werden."
+		calendarClearAllAvailability.addEventListener("click", () => {
+			const confirmed = confirm(
+				(t("calendar.availability.confirm_clear_all") || "Alle Verfügbarkeitsdaten für diesen Raum löschen?") + 
+				"\n\n" +
+				(t("calendar.availability.confirm_clear_all_desc") || "Dies löscht die Daten aller Teilnehmer in diesem Raum. Diese Aktion kann nicht rückgängig gemacht werden.")
 			);
 			if (confirmed) {
 				clearAllAvailability();
