@@ -26482,7 +26482,9 @@ self.onmessage = async (e) => {
 	}
 	if (calendarCommonFreeToggle) {
 		calendarCommonFreeToggle.addEventListener("click", () => {
+			console.log("[AVAIL-DEBUG] Toggle clicked! Current:", commonFreeSlotsSharing, "-> New:", !commonFreeSlotsSharing);
 			saveCommonFreeSlotsSharing(!commonFreeSlotsSharing);
+			console.log("[AVAIL-DEBUG] After saveCommonFreeSlotsSharing:", commonFreeSlotsSharing);
 			if (commonFreeSlotsSharing) {
 				broadcastAvailability();
 			}
