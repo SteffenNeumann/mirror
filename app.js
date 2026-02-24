@@ -6039,6 +6039,9 @@
 				"calendar.common.book_best": "Besten Slot buchen",
 				"calendar.common.common_days": "Gemeinsame Tage",
 				"calendar.common.participant_days": "Ausgewählte Tage",
+				"calendar.common.no_common_days": "Keine gemeinsamen Tage",
+				"calendar.common.waiting_for_others": "Warte auf weitere Teilnehmer...",
+				"calendar.common.others_no_selection": "Andere Teilnehmer haben noch keine Tage gewählt",
 				"calendar.grid.all_available": "Alle Teilnehmer verfügbar",
 				"calendar.grid.partial_available": "Teilweise verfügbar",
 				"calendar.free.select_day_week": "Für freie Zeiten bitte Tag/Woche wählen.",
@@ -6575,6 +6578,9 @@
 				"calendar.common.book_best": "Book best slot",
 				"calendar.common.common_days": "Common Days",
 				"calendar.common.participant_days": "Selected Days",
+				"calendar.common.no_common_days": "No common days",
+				"calendar.common.waiting_for_others": "Waiting for other participants...",
+				"calendar.common.others_no_selection": "Other participants haven't selected days yet",
 				"calendar.grid.all_available": "All participants available",
 				"calendar.grid.partial_available": "Partially available",
 				"calendar.free.select_day_week": "Select Day/Week for free slots.",
@@ -19650,11 +19656,11 @@ self.onmessage = async (e) => {
 
 	/**
 	 * Computes the intersection of selectedDays across all participants.
-	 * Returns { commonDays: string[], perParticipant: Array<{ name, color, days }>, total }
+	 * Returns { commonDays: string[], perParticipant: Array<{ name, color, days }>, total, participantsWithDaysCount, hasOtherParticipantsWithDays }
 	 */
 	function computeCommonSelectedDays() {
 		const participants = Array.from(availabilityByClient.entries());
-		if (!participants.length) return { commonDays: [], perParticipant: [], total: 0 };
+		if (!participants.length) return { commonDays: [], perParticipant: [], total: 0, participantsWithDaysCount: 0, hasOtherParticipantsWithDays: false };
 		// Get selectedDays for each participant
 		const perParticipant = participants.map(([cid, p]) => ({
 			clientId: cid,
@@ -19664,18 +19670,24 @@ self.onmessage = async (e) => {
 		}));
 		// Find participants who have selected at least one day
 		const participantsWithDays = perParticipant.filter(p => p.days.length > 0);
+		// Check if OTHER participants (not self) have selected days
+		const otherParticipantsWithDays = participantsWithDays.filter(p => p.clientId !== clientId);
+		const hasOtherParticipantsWithDays = otherParticipantsWithDays.length > 0;
 		if (participantsWithDays.length === 0) {
-			return { commonDays: [], perParticipant, total: participants.length };
+			return { commonDays: [], perParticipant, total: participants.length, participantsWithDaysCount: 0, hasOtherParticipantsWithDays: false };
 		}
-		// Compute intersection of all selectedDays
-		let commonDays = [...participantsWithDays[0].days];
-		for (let i = 1; i < participantsWithDays.length; i++) {
-			const otherDays = new Set(participantsWithDays[i].days);
-			commonDays = commonDays.filter(day => otherDays.has(day));
+		// Compute intersection of all selectedDays (only when >= 2 participants have days)
+		let commonDays = [];
+		if (participantsWithDays.length >= 2) {
+			commonDays = [...participantsWithDays[0].days];
+			for (let i = 1; i < participantsWithDays.length; i++) {
+				const otherDays = new Set(participantsWithDays[i].days);
+				commonDays = commonDays.filter(day => otherDays.has(day));
+			}
+			// Sort by date
+			commonDays.sort();
 		}
-		// Sort by date
-		commonDays.sort();
-		return { commonDays, perParticipant, total: participants.length };
+		return { commonDays, perParticipant, total: participants.length, participantsWithDaysCount: participantsWithDays.length, hasOtherParticipantsWithDays };
 	}
 
 	/**
@@ -19829,8 +19841,14 @@ self.onmessage = async (e) => {
 		// Build HTML sections
 		let html = "";
 
+		// Check if we have other participants with days (not just self)
+		const hasOthersWithDays = commonData.hasOtherParticipantsWithDays;
+		const totalParticipants = availabilityByClient.size;
+		const otherParticipantsCount = totalParticipants - (availabilityByClient.has(clientId) ? 1 : 0);
+
 		// Section 1: Common days (intersection of all participants' selectedDays)
-		if (commonData.commonDays.length > 0) {
+		// Only show when >= 2 participants have days selected
+		if (commonData.commonDays.length > 0 && commonData.participantsWithDaysCount >= 2) {
 			const dayLabels = commonData.commonDays.slice(0, 10).map(dk => {
 				const parts = dk.split("-");
 				if (parts.length !== 3) return dk;
@@ -19845,6 +19863,21 @@ self.onmessage = async (e) => {
 				<div class="flex flex-wrap gap-1">${dayLabels.map(l =>
 					`<span class="common-day-chip">${escapeHtml(l)}</span>`
 				).join("")}${moreText}</div>
+			</div>`;
+		} else if (commonData.participantsWithDaysCount >= 2 && commonData.commonDays.length === 0) {
+			// Multiple participants have days but no common intersection
+			html += `<div class="common-days-section mb-2">
+				<div class="text-[10px] font-medium uppercase tracking-wider text-amber-400 mb-1">${escapeHtml(t("calendar.common.no_common_days"))}</div>
+			</div>`;
+		} else if (!hasOthersWithDays && otherParticipantsCount === 0) {
+			// Only self is present - waiting for others
+			html += `<div class="common-days-section mb-2">
+				<div class="text-[11px] text-slate-500">${escapeHtml(t("calendar.common.waiting_for_others"))}</div>
+			</div>`;
+		} else if (!hasOthersWithDays && otherParticipantsCount > 0) {
+			// Others are present but haven't selected days yet
+			html += `<div class="common-days-section mb-2">
+				<div class="text-[11px] text-slate-500">${escapeHtml(t("calendar.common.others_no_selection"))}</div>
 			</div>`;
 		} else {
 			// Show per-participant selected days when no common days exist
