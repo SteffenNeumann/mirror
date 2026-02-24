@@ -265,6 +265,7 @@ let stmtUserSettingsGet;
 let stmtUserSettingsUpsert;
 let stmtUserLinearKeyUpsert;
 let stmtUserBflKeyUpsert;
+let stmtUserIdentityUpsert;
 let stmtGoogleTokenGet;
 let stmtGoogleTokenUpsert;
 let stmtGoogleTokenDelete;
@@ -634,6 +635,38 @@ function initDb() {
 		}
 	}
 
+	// Identity columns migration
+	const hasIdentityName = settingsCols.some(
+		(c) => String(c && c.name) === "identity_name"
+	);
+	const hasIdentityAvatar = settingsCols.some(
+		(c) => String(c && c.name) === "identity_avatar"
+	);
+	const hasIdentityColor = settingsCols.some(
+		(c) => String(c && c.name) === "identity_color"
+	);
+	if (!hasIdentityName) {
+		try {
+			db.exec("ALTER TABLE user_settings ADD COLUMN identity_name TEXT");
+		} catch {
+			// ignore
+		}
+	}
+	if (!hasIdentityAvatar) {
+		try {
+			db.exec("ALTER TABLE user_settings ADD COLUMN identity_avatar TEXT");
+		} catch {
+			// ignore
+		}
+	}
+	if (!hasIdentityColor) {
+		try {
+			db.exec("ALTER TABLE user_settings ADD COLUMN identity_color TEXT");
+		} catch {
+			// ignore
+		}
+	}
+
 	const favoriteCols = db.prepare("PRAGMA table_info(room_favorites)").all();
 	const hasIsStartup = favoriteCols.some(
 		(c) => String(c && c.name) === "is_startup"
@@ -893,7 +926,7 @@ function initDb() {
 		"DELETE FROM shared_rooms WHERE user_id = ?"
 	);
 	stmtUserSettingsGet = db.prepare(
-		"SELECT calendar_json, linear_api_key_ciphertext, linear_api_key_iv, linear_api_key_tag, bfl_api_key_ciphertext, bfl_api_key_iv, bfl_api_key_tag, updated_at FROM user_settings WHERE user_id = ?"
+		"SELECT calendar_json, linear_api_key_ciphertext, linear_api_key_iv, linear_api_key_tag, bfl_api_key_ciphertext, bfl_api_key_iv, bfl_api_key_tag, identity_name, identity_avatar, identity_color, updated_at FROM user_settings WHERE user_id = ?"
 	);
 	stmtUserSettingsUpsert = db.prepare(
 		"INSERT INTO user_settings(user_id, calendar_json, updated_at) VALUES(?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET calendar_json = excluded.calendar_json, updated_at = excluded.updated_at"
@@ -903,6 +936,9 @@ function initDb() {
 	);
 	stmtUserBflKeyUpsert = db.prepare(
 		"INSERT INTO user_settings(user_id, calendar_json, bfl_api_key_ciphertext, bfl_api_key_iv, bfl_api_key_tag, updated_at) VALUES(?, ?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET bfl_api_key_ciphertext = excluded.bfl_api_key_ciphertext, bfl_api_key_iv = excluded.bfl_api_key_iv, bfl_api_key_tag = excluded.bfl_api_key_tag, updated_at = excluded.updated_at"
+	);
+	stmtUserIdentityUpsert = db.prepare(
+		"INSERT INTO user_settings(user_id, calendar_json, identity_name, identity_avatar, identity_color, updated_at) VALUES(?, ?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET identity_name = excluded.identity_name, identity_avatar = excluded.identity_avatar, identity_color = excluded.identity_color, updated_at = excluded.updated_at"
 	);
 	stmtGoogleTokenGet = db.prepare(
 		"SELECT access_token, refresh_token, expires_at, scope, token_type, updated_at FROM google_calendar_tokens WHERE user_id = ?"
@@ -2017,6 +2053,35 @@ function saveUserBflApiKey(userId, apiKey) {
 	return { ok: true };
 }
 
+function getUserIdentity(userId) {
+	const row = getUserSettingsRow(userId);
+	if (!row) return null;
+	const name = row.identity_name ? String(row.identity_name).trim() : "";
+	const avatar = row.identity_avatar ? String(row.identity_avatar).trim() : "";
+	const color = row.identity_color ? String(row.identity_color).trim() : "";
+	if (!name && !avatar && !color) return null;
+	return { name, avatar, color };
+}
+
+function saveUserIdentity(userId, identity) {
+	const now = Date.now();
+	const row = getUserSettingsRow(userId);
+	const calendarJson = row && row.calendar_json
+		? String(row.calendar_json)
+		: JSON.stringify({
+			sources: [],
+			defaultView: "month",
+			localEvents: [],
+			googleCalendarId: "primary",
+			outlookCalendarId: "primary",
+		});
+	const name = String(identity && identity.name || "").trim().slice(0, 32);
+	const avatar = String(identity && identity.avatar || "").trim().slice(0, 10);
+	const color = String(identity && identity.color || "").trim().slice(0, 20);
+	stmtUserIdentityUpsert.run(userId, calendarJson, name, avatar, color, now);
+	return { ok: true, identity: { name, avatar, color } };
+}
+
 function googleConfigured() {
 	return Boolean(
 		GOOGLE_OAUTH_CLIENT_ID &&
@@ -2554,6 +2619,49 @@ const server = http.createServer(async (req, res) => {
 			json(res, 502, { ok: false, error: "linear_api_failed" });
 			return;
 		}
+	}
+
+	// ── Identity API ──
+	if (url.pathname === "/api/identity" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const identity = getUserIdentity(userId);
+		json(res, 200, { ok: true, identity: identity || null });
+		return;
+	}
+
+	if (url.pathname === "/api/identity" && req.method === "PUT") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		let body;
+		try {
+			body = await readJsonBody(req, 4096);
+		} catch {
+			json(res, 400, { ok: false, error: "invalid_body" });
+			return;
+		}
+		if (!body || typeof body !== "object") {
+			json(res, 400, { ok: false, error: "invalid_body" });
+			return;
+		}
+		const name = String(body.name || "").trim().slice(0, 32);
+		const avatar = String(body.avatar || "").trim().slice(0, 10);
+		const color = String(body.color || "").trim().slice(0, 20);
+		if (!name) {
+			json(res, 400, { ok: false, error: "name_required" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const result = saveUserIdentity(userId, { name, avatar, color });
+		json(res, 200, { ok: true, identity: result.identity });
+		return;
 	}
 
 	if (url.pathname === "/api/calendar/google/status" && req.method === "GET") {

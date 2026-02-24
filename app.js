@@ -822,6 +822,60 @@
 		} catch {
 			// ignore
 		}
+		// Also sync to server if logged in
+		saveIdentityToServer(identity);
+	}
+
+	async function saveIdentityToServer(identity) {
+		if (!psState || !psState.authed) return;
+		try {
+			const res = await fetch("/api/identity", {
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					name: identity.name || "",
+					avatar: identity.avatar || "",
+					color: identity.color || "",
+				}),
+			});
+			if (!res.ok) {
+				console.warn("[Identity] Server save failed:", res.status);
+			}
+		} catch (err) {
+			console.warn("[Identity] Server save error:", err);
+		}
+	}
+
+	async function syncIdentityFromServer() {
+		if (!psState || !psState.authed) return;
+		try {
+			const res = await fetch("/api/identity", { method: "GET" });
+			if (!res.ok) return;
+			const data = await res.json();
+			if (data && data.ok && data.identity) {
+				const serverIdentity = data.identity;
+				const hasServerData = serverIdentity.name || serverIdentity.avatar || serverIdentity.color;
+				if (hasServerData) {
+					// Server has identity - merge/override local
+					if (serverIdentity.name) identity.name = serverIdentity.name;
+					if (serverIdentity.avatar) identity.avatar = serverIdentity.avatar;
+					if (serverIdentity.color) identity.color = serverIdentity.color;
+					// Update localStorage
+					try {
+						localStorage.setItem(IDENTITY_KEY, JSON.stringify(identity));
+					} catch {}
+					// Update presence
+					if (typeof updatePresenceUI === "function") updatePresenceUI();
+					console.log("[Identity] Synced from server:", identity.name);
+				} else {
+					// Server has no identity - push local to server
+					await saveIdentityToServer(identity);
+					console.log("[Identity] Pushed to server:", identity.name);
+				}
+			}
+		} catch (err) {
+			console.warn("[Identity] Server sync error:", err);
+		}
 	}
 
 	const identity = (() => {
@@ -15264,6 +15318,7 @@ self.onmessage = async (e) => {
 		setPsEditorTagsVisible(true);
 		await syncLinearApiKeyFromServer();
 		await syncBflApiKeyFromServer();
+		await syncIdentityFromServer();
 		syncCalendarSettingsFromServer();
 		const serverRoomPins = Array.isArray(psState.roomPins)
 			? psState.roomPins
