@@ -1,8 +1,64 @@
 # Project overview
 
-Datum: 2026-02-23
+Datum: 2026-02-24
 
 Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische Analyse, keine Laufzeitauflösung).
+
+---
+
+## Architektur: Shared Rooms für User ohne Personal Space
+
+User ohne Personal Space (PS) können vollständig an geteilten Räumen teilnehmen. Es gibt kein separates "Gastraum"-Konzept – stattdessen nutzt das System einen **Room-Scope** anstelle eines Note-Scopes:
+
+### Room-Scope-Mechanismus (User ohne PS)
+
+| Komponente | Verhalten für User ohne PS |
+|------------|----------------------------|
+| **Text-Sync (CRDT)** | WebSocket-Sync läuft über `room:key`, CRDT ist konfliktfrei → alle Clients dürfen senden/empfangen |
+| **Kommentare** | `getCommentScopeId()` gibt `room:roomName:key` zurück statt `note:xxx` |
+| **Apps (Excalidraw/Excel/Linear)** | `getExcalidrawNoteId()` etc. fallen auf `room:roomName:key` zurück |
+| **Availability/Kalender** | `availability_state` mit `selectedDays` funktioniert unabhängig von PS-Auth |
+| **Permanent-Links** | Per WebSocket empfangene Pins werden im Shared-Storage gespeichert |
+
+### Automatische Shared-Markierung
+
+Der Raum wird automatisch als "shared" markiert wenn:
+1. `presence_state`-Handler andere `clientIds` erkennt (anderer User anwesend)
+2. `room_pin_state` empfangen wird mit `shared: true` Flag oder Pin-Daten
+3. User explizit `markCurrentRoomShared()` aufruft (Link teilen)
+
+### Scope-Priorisierung (`getCommentScopeId`)
+
+```
+if (isRoomMarkedShared(room, key)) → "room:roomName:key[:n:noteId]"
+else if (psEditingNoteId)          → "note:noteId"
+else if (room && key)              → "room:roomName:key"
+```
+
+### Zuständige Funktionen
+- `getCommentScopeId` ([app.js](app.js#L2813))
+- `isRoomMarkedShared` → prüft Shared-Status
+- `markRoomShared` → (auto/manual) setzt Shared-Flag
+- `getExcalidrawNoteId`, `getExcelNoteId`, `getLinearNoteId` → Room-Scope-Fallback
+
+---
+
+## Aktuelle Änderungen (2026-02-24)
+
+- **Fix: Shared Room Content-Sync für neue User** `#shared` `#sync` `#bug`: User ohne Personal Space sahen den existierenden Inhalt einer geteilten Notiz erst nachdem sie selbst schrieben. Ursache: `applyRemoteText()` und `applySyncedText()` blockierten das Übernehmen von Remote-Content wenn lokaler Content leer war.
+  1. **`applySyncedText()` mit `force`-Option erweitert** (`app.js` ~L20954): Neuer `opts.force`-Parameter umgeht den `offlineSyncInFlight`-Guard.
+  2. **`applyRemoteText()` setzt `force: true` bei leerem Content** (`app.js` ~L21195): Wenn der lokale Editor leer ist (neuer User im Raum), wird `force: true` gesetzt um den Remote-Content sofort zu übernehmen.
+  - Zuständige Funktionen: `applySyncedText`, `applyRemoteText`.
+  - Zuständige Dateien: `app.js`.
+
+- **Fix: Kalender-Availability-Sync in geteilten Räumen** `#calendar` `#availability` `#sync` `#bug`: Die ausgewählten Tage im "Gemeinsame Planung"-Kalender wurden nicht zwischen Teilnehmern synchronisiert — jeder sah nur seine eigenen Auswahlen. Ursache: `manualFreeSlots` (ausgewählte Tage) wurde nur lokal gespeichert, nicht via WebSocket übertragen.
+  1. **Client: `selectedDays` zu `broadcastAvailability()` hinzugefügt** (`app.js` ~L19479): Die Funktion sendet jetzt ein `selectedDays`-Array mit allen explizit ausgewählten Tagen (YYYY-MM-DD Format).
+  2. **Client: `handleAvailabilityState()` parst `selectedDays`** (`app.js` ~L19547): Empfangene `selectedDays` werden im `availabilityByClient`-Map gespeichert.
+  3. **Client: `getParticipantsAvailabilityForDay()` nutzt `selectedDays`** (`app.js` ~L19654): Die Primär-Prüfung für Teilnehmerverfügbarkeit basiert jetzt auf den explizit ausgewählten Tagen statt auf Busy-Intervall-Inferenz.
+  4. **Server: `availability_state`-Handler speichert `selectedDays`** (`server.js` ~L6115): Neue Validierung (max 60 Tage, YYYY-MM-DD Format) und Persistierung im `roomAvailabilityState`.
+  5. **Server: Initial-State und `request_state` senden `selectedDays`** (`server.js` ~L5771, ~L6458): Neue Clients erhalten die ausgewählten Tage aller Teilnehmer beim Verbinden.
+  - Zuständige Funktionen: `broadcastAvailability`, `handleAvailabilityState`, `getParticipantsAvailabilityForDay` (Client), `availability_state`-Handler, Initial-State, `request_state` (Server).
+  - Zuständige Dateien: `app.js`, `server.js`.
 
 ## Aktuelle Änderungen (2026-02-23)
 
