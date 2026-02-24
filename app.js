@@ -19503,12 +19503,20 @@ self.onmessage = async (e) => {
 				busy.push({ start: cursor.getTime(), end: window.end.getTime() });
 			}
 		}
+		// Build selectedDays: Array of day keys where the user has marked themselves available
+		const selectedDays = [];
+		for (const [dk, set] of manualFreeSlots) {
+			if (set && set.has(FULL_DAY_AVAILABLE_KEY)) {
+				selectedDays.push(dk);
+			}
+		}
 		const identity = loadIdentity();
 		// Also store own availability locally so intersection calculation includes self
 		availabilityByClient.set(String(clientId), {
 			name: identity.name || "Guest",
 			color: identity.color || "#94a3b8",
 			busy,
+			selectedDays,
 			rangeStart: rangeStart.getTime(),
 			rangeEnd: rangeEnd.getTime(),
 		});
@@ -19520,6 +19528,7 @@ self.onmessage = async (e) => {
 				name: identity.name || "Guest",
 				color: identity.color || "#94a3b8",
 				busy,
+				selectedDays,
 				rangeStart: rangeStart.getTime(),
 				rangeEnd: rangeEnd.getTime(),
 			}));
@@ -19544,6 +19553,7 @@ self.onmessage = async (e) => {
 					name: String(p.name || "Guest"),
 					color: String(p.color || "#94a3b8"),
 					busy: Array.isArray(p.busy) ? p.busy : [],
+					selectedDays: Array.isArray(p.selectedDays) ? p.selectedDays : [],
 					rangeStart: typeof p.rangeStart === "number" ? p.rangeStart : 0,
 					rangeEnd: typeof p.rangeEnd === "number" ? p.rangeEnd : 0,
 				});
@@ -19554,6 +19564,7 @@ self.onmessage = async (e) => {
 				name: String(msg.name || "Guest"),
 				color: String(msg.color || "#94a3b8"),
 				busy: Array.isArray(msg.busy) ? msg.busy : [],
+				selectedDays: Array.isArray(msg.selectedDays) ? msg.selectedDays : [],
 				rangeStart: typeof msg.rangeStart === "number" ? msg.rangeStart : 0,
 				rangeEnd: typeof msg.rangeEnd === "number" ? msg.rangeEnd : 0,
 			});
@@ -19646,6 +19657,7 @@ self.onmessage = async (e) => {
 		const dayEnd = addDays(dayStart, 1);
 		const dayStartTs = dayStart.getTime();
 		const dayEndTs = dayEnd.getTime();
+		const dayKey = dayKeyFromDate(day);
 		const window = buildWorkWindow(dayStart);
 		const windowStart = window.start.getTime();
 		const windowEnd = window.end.getTime();
@@ -19663,22 +19675,28 @@ self.onmessage = async (e) => {
 					continue;
 				}
 			}
-			// Check if participant has any free time within work window
-			const busyInWindow = p.busy.filter(b => {
-				const bs = b.start;
-				const be = b.end;
-				return bs < windowEnd && be > windowStart;
-			});
-			// Compute total busy duration in the work window
-			let totalBusy = 0;
-			for (const b of busyInWindow) {
-				const s = Math.max(b.start, windowStart);
-				const e = Math.min(b.end, windowEnd);
-				totalBusy += Math.max(0, e - s);
+			// Primary check: if participant has selectedDays array, use that
+			// This is the explicit day selection by the participant
+			let isAvailable = false;
+			if (Array.isArray(p.selectedDays) && p.selectedDays.length > 0) {
+				isAvailable = p.selectedDays.includes(dayKey);
+			} else {
+				// Fallback: infer from busy intervals (for backwards compatibility)
+				const busyInWindow = p.busy.filter(b => {
+					const bs = b.start;
+					const be = b.end;
+					return bs < windowEnd && be > windowStart;
+				});
+				// Compute total busy duration in the work window
+				let totalBusy = 0;
+				for (const b of busyInWindow) {
+					const s = Math.max(b.start, windowStart);
+					const e = Math.min(b.end, windowEnd);
+					totalBusy += Math.max(0, e - s);
+				}
+				// If participant has ANY free time (not 100% busy), consider them available for the day
+				isAvailable = totalBusy < windowDuration * 0.95;
 			}
-			// If participant has ANY free time (not 100% busy), consider them available for the day
-			// This means they explicitly marked this day as available
-			const isAvailable = totalBusy < windowDuration * 0.95;
 			if (isAvailable) availCount++;
 			result.push({
 				clientId: cid,
@@ -20933,9 +20951,11 @@ self.onmessage = async (e) => {
 		}, 120);
 	}
 
-	function applySyncedText(text, label, lastUsedTs) {
+	function applySyncedText(text, label, lastUsedTs, opts) {
 		// Block CRDT text overwrites while offline ops are being replayed
-		if (offlineSyncInFlight) return;
+		// Exception: force option allows initial state to be applied
+		const force = opts && opts.force;
+		if (offlineSyncInFlight && !force) return;
 		suppressSend = true;
 		const cleaned = sanitizeLegacySnapshotText(text);
 		textarea.value = String(cleaned ?? "");
@@ -21162,7 +21182,7 @@ self.onmessage = async (e) => {
 		}, 180);
 	}
 
-	function applyRemoteText(text, ts) {
+	function applyRemoteText(text, ts, opts) {
 		if (typeof ts !== "number" || ts < lastAppliedRemoteTs) return;
 		const boundNoteId = getRoomTabNoteIdForRoom(room, key);
 		if (boundNoteId) {
@@ -21171,7 +21191,10 @@ self.onmessage = async (e) => {
 			if (Number.isFinite(noteUpdatedAt) && ts <= noteUpdatedAt) return;
 		}
 		lastAppliedRemoteTs = ts;
-		applySyncedText(text, "Synced.", ts);
+		// Force apply for initial state if local content is empty (new user in shared room)
+		const localEmpty = !String(textarea.value || "").trim();
+		const force = (opts && opts.force) || localEmpty;
+		applySyncedText(text, "Synced.", ts, { force });
 	}
 
 	function connect() {

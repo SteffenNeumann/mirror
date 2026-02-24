@@ -35,7 +35,7 @@ These rules ensure code integrity, maintain app functionality, and preserve cons
 
 ## 2. Contextual Awareness Requirements
 
-- **Review and reference the project's architecture documentation (`{{documentation_file}}`) before suggesting changes.**
+- **Review and reference the project's architecture documentation (Project-overview.md) before suggesting changes.**
 - **Ensure all suggestions are compatible with {{framework}} patterns and {{platform}} development conventions.**
 - **Account for the {{feature_1}} support integrated in the app.**  
   - Validate that all prompts and modifications preserve or enhance current {{feature_1}} structures.

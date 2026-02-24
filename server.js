@@ -5765,6 +5765,7 @@ wss.on("connection", (ws, req) => {
 			name: entry.name,
 			color: entry.color,
 			busy: entry.busy,
+			selectedDays: entry.selectedDays || [],
 			rangeStart: entry.rangeStart || 0,
 			rangeEnd: entry.rangeEnd || 0,
 		}));
@@ -6116,17 +6117,27 @@ wss.on("connection", (ws, req) => {
 				busy.push({ start: b.start, end: b.end });
 				if (busy.length >= 200) break;
 			}
+			// Parse selectedDays (array of day keys like "2026-02-24")
+			const rawSelectedDays = Array.isArray(msg.selectedDays) ? msg.selectedDays : [];
+			const selectedDays = [];
+			for (const dk of rawSelectedDays) {
+				if (typeof dk !== "string") continue;
+				if (!/^\d{4}-\d{2}-\d{2}$/.test(dk)) continue;
+				selectedDays.push(dk);
+				if (selectedDays.length >= 60) break; // Max 60 days
+			}
 			// Validate and store range timestamps
 			const rangeStart = typeof msg.rangeStart === "number" && Number.isFinite(msg.rangeStart) ? msg.rangeStart : 0;
 			const rangeEnd = typeof msg.rangeEnd === "number" && Number.isFinite(msg.rangeEnd) ? msg.rangeEnd : 0;
 			const map = getRoomAvailabilityState(rk);
-			map.set(fromClientId, { name, color, busy, rangeStart, rangeEnd });
+			map.set(fromClientId, { name, color, busy, selectedDays, rangeStart, rangeEnd });
 			// Broadcast full state to all clients
 			const participants = Array.from(map.entries()).map(([cid, entry]) => ({
 				clientId: cid,
 				name: entry.name,
 				color: entry.color,
 				busy: entry.busy,
+				selectedDays: entry.selectedDays || [],
 				rangeStart: entry.rangeStart || 0,
 				rangeEnd: entry.rangeEnd || 0,
 			}));
@@ -6449,6 +6460,7 @@ wss.on("connection", (ws, req) => {
 					name: entry.name,
 					color: entry.color,
 					busy: entry.busy,
+					selectedDays: entry.selectedDays || [],
 					rangeStart: entry.rangeStart || 0,
 					rangeEnd: entry.rangeEnd || 0,
 				}));
