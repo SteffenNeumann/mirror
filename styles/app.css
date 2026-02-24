@@ -6764,6 +6764,102 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	border: 1px solid rgba(16, 185, 129, 0.3);
 }
 
+/* ── Light theme overrides for Gemeinsame Planung section ── */
+body[data-theme="coffeeLight"] #calendarCommonFreeSlotsWrap,
+body[data-theme="bitterLight"] #calendarCommonFreeSlotsWrap,
+body[data-theme="monoLight"] #calendarCommonFreeSlotsWrap {
+	color: var(--dropdown-text);
+}
+body[data-theme="coffeeLight"] #calendarCommonFreeSlotsWrap .common-slot-date,
+body[data-theme="bitterLight"] #calendarCommonFreeSlotsWrap .common-slot-date,
+body[data-theme="monoLight"] #calendarCommonFreeSlotsWrap .common-slot-date {
+	color: var(--dropdown-text);
+}
+body[data-theme="coffeeLight"] #calendarCommonFreeSlotsWrap .common-slot-time,
+body[data-theme="bitterLight"] #calendarCommonFreeSlotsWrap .common-slot-time,
+body[data-theme="monoLight"] #calendarCommonFreeSlotsWrap .common-slot-time {
+	color: var(--dropdown-text);
+	opacity: 0.7;
+}
+body[data-theme="coffeeLight"] #calendarCommonFreeSlotsWrap .common-slot-chip,
+body[data-theme="bitterLight"] #calendarCommonFreeSlotsWrap .common-slot-chip,
+body[data-theme="monoLight"] #calendarCommonFreeSlotsWrap .common-slot-chip {
+	border-color: rgba(0, 0, 0, 0.12);
+	background: rgba(0, 0, 0, 0.04);
+	color: var(--dropdown-text);
+}
+body[data-theme="coffeeLight"] #calendarCommonFreeSlotsWrap .common-slot-card,
+body[data-theme="bitterLight"] #calendarCommonFreeSlotsWrap .common-slot-card,
+body[data-theme="monoLight"] #calendarCommonFreeSlotsWrap .common-slot-card {
+	border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+body[data-theme="coffeeLight"] #calendarCommonFreeSlotsWrap .common-slot-card--nav:hover,
+body[data-theme="bitterLight"] #calendarCommonFreeSlotsWrap .common-slot-card--nav:hover,
+body[data-theme="monoLight"] #calendarCommonFreeSlotsWrap .common-slot-card--nav:hover {
+	background: rgba(0, 0, 0, 0.04);
+}
+body[data-theme="coffeeLight"] .common-days-section,
+body[data-theme="bitterLight"] .common-days-section,
+body[data-theme="monoLight"] .common-days-section {
+	border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+body[data-theme="coffeeLight"] .common-day-chip,
+body[data-theme="bitterLight"] .common-day-chip,
+body[data-theme="monoLight"] .common-day-chip {
+	background: rgba(16, 185, 129, 0.12);
+	color: #059669;
+	border-color: rgba(16, 185, 129, 0.4);
+}
+body[data-theme="coffeeLight"] #calendarCommonFreeParticipants,
+body[data-theme="bitterLight"] #calendarCommonFreeParticipants,
+body[data-theme="monoLight"] #calendarCommonFreeParticipants {
+	color: var(--dropdown-text);
+}
+body[data-theme="coffeeLight"] #calendarCommonFreeSlots,
+body[data-theme="bitterLight"] #calendarCommonFreeSlots,
+body[data-theme="monoLight"] #calendarCommonFreeSlots {
+	color: var(--dropdown-text);
+}
+/* Sidebar header and card head for light themes */
+body[data-theme="coffeeLight"] .cal-sidebar-header,
+body[data-theme="bitterLight"] .cal-sidebar-header,
+body[data-theme="monoLight"] .cal-sidebar-header {
+	color: var(--dropdown-text);
+}
+body[data-theme="coffeeLight"] .cal-card-head,
+body[data-theme="bitterLight"] .cal-card-head,
+body[data-theme="monoLight"] .cal-card-head {
+	color: var(--dropdown-text);
+}
+body[data-theme="coffeeLight"] .cal-card-hint,
+body[data-theme="bitterLight"] .cal-card-hint,
+body[data-theme="monoLight"] .cal-card-hint {
+	color: var(--dropdown-text);
+	opacity: 0.6;
+}
+body[data-theme="coffeeLight"] .cal-card-subtitle,
+body[data-theme="bitterLight"] .cal-card-subtitle,
+body[data-theme="monoLight"] .cal-card-subtitle {
+	color: var(--dropdown-text);
+	opacity: 0.6;
+}
+body[data-theme="coffeeLight"] .cal-sidebar-divider,
+body[data-theme="bitterLight"] .cal-sidebar-divider,
+body[data-theme="monoLight"] .cal-sidebar-divider {
+	background: linear-gradient(
+		90deg,
+		transparent 0%,
+		rgba(0, 0, 0, 0.1) 20%,
+		rgba(0, 0, 0, 0.1) 80%,
+		transparent 100%
+	);
+}
+body[data-theme="coffeeLight"] .cal-room-label,
+body[data-theme="bitterLight"] .cal-room-label,
+body[data-theme="monoLight"] .cal-room-label {
+	color: var(--dropdown-text);
+}
+
 /* ── Participant indicators in calendar grid cells ── */
 .participant-indicators {
 	display: flex;
@@ -6812,6 +6908,31 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 }
 .calendar-day-cell:has(.participant-badge--partial) {
 	background: rgba(251, 191, 36, 0.03);
+}
+/* Light theme overrides for participant indicators */
+body[data-theme="coffeeLight"] .participant-dot,
+body[data-theme="bitterLight"] .participant-dot,
+body[data-theme="monoLight"] .participant-dot {
+	border-color: rgba(0, 0, 0, 0.15);
+}
+body[data-theme="coffeeLight"] .participant-dot:hover,
+body[data-theme="bitterLight"] .participant-dot:hover,
+body[data-theme="monoLight"] .participant-dot:hover {
+	box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+}
+body[data-theme="coffeeLight"] .participant-badge--all,
+body[data-theme="bitterLight"] .participant-badge--all,
+body[data-theme="monoLight"] .participant-badge--all {
+	background: rgba(16, 185, 129, 0.12);
+	color: #059669;
+	border-color: rgba(16, 185, 129, 0.4);
+}
+body[data-theme="coffeeLight"] .participant-badge--partial,
+body[data-theme="bitterLight"] .participant-badge--partial,
+body[data-theme="monoLight"] .participant-badge--partial {
+	background: rgba(245, 158, 11, 0.12);
+	color: #b45309;
+	border-color: rgba(245, 158, 11, 0.4);
 }
 
 /* ── Calendar Header (compact single-row) ── */
@@ -7210,6 +7331,34 @@ body[data-theme] #calendarBundeslandSelect {
 	color: #4ade80;
 	white-space: nowrap;
 	flex-shrink: 0;
+}
+/* Light theme overrides for My Selections */
+body[data-theme="coffeeLight"] .cal-sel-card,
+body[data-theme="bitterLight"] .cal-sel-card,
+body[data-theme="monoLight"] .cal-sel-card {
+	border-bottom-color: rgba(0, 0, 0, 0.06);
+}
+body[data-theme="coffeeLight"] .cal-sel-card:hover,
+body[data-theme="bitterLight"] .cal-sel-card:hover,
+body[data-theme="monoLight"] .cal-sel-card:hover {
+	background: rgba(0, 0, 0, 0.04);
+}
+body[data-theme="coffeeLight"] .cal-sel-date,
+body[data-theme="bitterLight"] .cal-sel-date,
+body[data-theme="monoLight"] .cal-sel-date {
+	color: var(--dropdown-text);
+}
+body[data-theme="coffeeLight"] .cal-sel-time,
+body[data-theme="bitterLight"] .cal-sel-time,
+body[data-theme="monoLight"] .cal-sel-time {
+	color: var(--dropdown-text);
+	opacity: 0.7;
+}
+body[data-theme="coffeeLight"] .cal-sel-badge,
+body[data-theme="bitterLight"] .cal-sel-badge,
+body[data-theme="monoLight"] .cal-sel-badge {
+	background: rgba(16, 185, 129, 0.12);
+	color: #059669;
 }
 
 /* ── Share Toggle Tooltip ── */
