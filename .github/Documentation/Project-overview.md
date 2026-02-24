@@ -60,6 +60,17 @@ else if (room && key)              → "room:roomName:key"
   - Zuständige Funktionen: `broadcastAvailability`, `handleAvailabilityState`, `getParticipantsAvailabilityForDay` (Client), `availability_state`-Handler, Initial-State, `request_state` (Server).
   - Zuständige Dateien: `app.js`, `server.js`.
 
+- **Gemeinsame Planung: Erweiterte Teilnehmer- und Tage-Anzeige** `#calendar` `#availability` `#ux`: Die "Gemeinsame Planung"-Sektion in der Kalender-Sidebar zeigt jetzt detaillierte Informationen zu Teilnehmern und deren ausgewählten Tagen.
+  1. **Neue Funktion `computeCommonSelectedDays()`** (`app.js` ~L19656): Berechnet die Schnittmenge aller `selectedDays` über alle Teilnehmer hinweg. Gibt `commonDays` (gemeinsame Tage) und `perParticipant` (Tage pro Teilnehmer) zurück.
+  2. **Erweiterte Teilnehmer-Chips** (`app.js` ~L19797): Jeder Teilnehmer-Chip zeigt jetzt die Anzahl der ausgewählten Tage an (`X Tage`). Eigener User wird mit `(du)` markiert.
+  3. **Gemeinsame Tage Sektion** (`app.js` ~L19820): Wenn alle Teilnehmer mindestens einen gemeinsamen Tag haben, wird eine "Gemeinsame Tage"-Liste mit grünen Chips angezeigt.
+  4. **Teilnehmer-Tage Fallback** (`app.js` ~L19835): Wenn keine gemeinsamen Tage existieren, werden die ausgewählten Tage jedes anderen Teilnehmers einzeln aufgelistet.
+  5. **Verbesserte Panel-Sichtbarkeit** (`app.js` ~L19785): Das Panel wird jetzt auch angezeigt wenn der User seinen Sharing-Toggle aktiviert hat, unabhängig davon ob andere bereits teilen.
+  6. **CSS-Styles für `.common-day-chip`** (`styles/app.css` ~L6742): Neue Styles für die grünen Tag-Chips in der Gemeinsame-Tage-Liste.
+  7. **i18n-Strings** (`app.js`): Neue Strings `calendar.common.common_days` und `calendar.common.participant_days` für DE/EN.
+  - Zuständige Funktionen: `computeCommonSelectedDays`, `renderCommonFreeSlots`.
+  - Zuständige Dateien: `app.js`, `styles/app.css`.
+
 ## Aktuelle Änderungen (2026-02-23)
 
 - **Gemeinsame Zeit finden: Teilnehmer-Visualisierung im Kalender-Grid** `#calendar` `#availability` `#shared`: Die Verfügbarkeit von Teilnehmern in geteilten Räumen wird jetzt direkt in den Kalender-Grid-Zellen (Tag/Woche/Monat) visuell dargestellt. Farbige User-Dots zeigen auf einen Blick, welche Teilnehmer an einem Tag verfügbar sind. Ein Badge zeigt die Schnittmenge an („alle frei" oder „X/Y verfügbar").

@@ -6037,6 +6037,8 @@
 				"calendar.common.all_free": "alle frei",
 				"calendar.common.partial": "{n}/{total}",
 				"calendar.common.book_best": "Besten Slot buchen",
+				"calendar.common.common_days": "Gemeinsame Tage",
+				"calendar.common.participant_days": "Ausgewählte Tage",
 				"calendar.grid.all_available": "Alle Teilnehmer verfügbar",
 				"calendar.grid.partial_available": "Teilweise verfügbar",
 				"calendar.free.select_day_week": "Für freie Zeiten bitte Tag/Woche wählen.",
@@ -6571,6 +6573,8 @@
 				"calendar.common.all_free": "all free",
 				"calendar.common.partial": "{n}/{total}",
 				"calendar.common.book_best": "Book best slot",
+				"calendar.common.common_days": "Common Days",
+				"calendar.common.participant_days": "Selected Days",
 				"calendar.grid.all_available": "All participants available",
 				"calendar.grid.partial_available": "Partially available",
 				"calendar.free.select_day_week": "Select Day/Week for free slots.",
@@ -19645,6 +19649,36 @@ self.onmessage = async (e) => {
 	}
 
 	/**
+	 * Computes the intersection of selectedDays across all participants.
+	 * Returns { commonDays: string[], perParticipant: Array<{ name, color, days }>, total }
+	 */
+	function computeCommonSelectedDays() {
+		const participants = Array.from(availabilityByClient.entries());
+		if (!participants.length) return { commonDays: [], perParticipant: [], total: 0 };
+		// Get selectedDays for each participant
+		const perParticipant = participants.map(([cid, p]) => ({
+			clientId: cid,
+			name: p.name || "Guest",
+			color: p.color || "#94a3b8",
+			days: Array.isArray(p.selectedDays) ? p.selectedDays : [],
+		}));
+		// Find participants who have selected at least one day
+		const participantsWithDays = perParticipant.filter(p => p.days.length > 0);
+		if (participantsWithDays.length === 0) {
+			return { commonDays: [], perParticipant, total: participants.length };
+		}
+		// Compute intersection of all selectedDays
+		let commonDays = [...participantsWithDays[0].days];
+		for (let i = 1; i < participantsWithDays.length; i++) {
+			const otherDays = new Set(participantsWithDays[i].days);
+			commonDays = commonDays.filter(day => otherDays.has(day));
+		}
+		// Sort by date
+		commonDays.sort();
+		return { commonDays, perParticipant, total: participants.length };
+	}
+
+	/**
 	 * Computes participant availability for a given day.
 	 * Returns an array of { clientId, name, color, isAvailable } for each participant.
 	 * Also computes whether all participants are free at some point during work hours.
@@ -19744,14 +19778,23 @@ self.onmessage = async (e) => {
 
 	function renderCommonFreeSlots() {
 		if (!calendarCommonFreeSlotsWrap) return;
-		// Show panel when we have other participants' availability data (works for guest rooms)
-		// Check if there are other participants besides self
+		// Show panel when:
+		// - User has sharing enabled (commonFreeSlotsSharing = true), OR
+		// - Room is marked as shared, OR
+		// - Other participants have shared availability data, OR
+		// - Multiple users present in room (via presenceState)
 		const hasOtherParticipants = Array.from(availabilityByClient.keys()).some(cid => cid !== clientId);
-		const showPanel = isInSharedRoom() || hasOtherParticipants;
+		// Note: presenceState is defined later in the file but will be initialized before this function is called
+		let hasOtherPresence = false;
+		try { hasOtherPresence = presenceState && presenceState.size > 1; } catch { /* TDZ guard */ }
+		const showPanel = commonFreeSlotsSharing || isInSharedRoom() || hasOtherParticipants || hasOtherPresence;
 		calendarCommonFreeSlotsWrap.classList.toggle("hidden", !showPanel);
 		if (!showPanel) return;
 
-		// Update participants chips
+		// Compute common selected days and per-participant data
+		const commonData = computeCommonSelectedDays();
+
+		// Update participants chips with day count indicator
 		if (calendarCommonFreeParticipants) {
 			const parts = Array.from(availabilityByClient.entries());
 			if (parts.length === 0) {
@@ -19761,7 +19804,13 @@ self.onmessage = async (e) => {
 					.map(([cid, p]) => {
 						const dotColor = escapeAttr(p.color || "#94a3b8");
 						const name = escapeHtml(p.name || "Guest");
-						return `<span class="common-slot-chip"><span class="chip-dot" style="background:${dotColor}"></span>${name}</span>`;
+						const dayCount = Array.isArray(p.selectedDays) ? p.selectedDays.length : 0;
+						const isSelf = cid === clientId;
+						const selfBadge = isSelf ? ' <span class="text-[9px] text-slate-500">(du)</span>' : "";
+						const dayBadge = dayCount > 0
+							? ` <span class="text-[9px] text-emerald-400">${dayCount} ${dayCount === 1 ? "Tag" : "Tage"}</span>`
+							: ' <span class="text-[9px] text-slate-500">0 Tage</span>';
+						return `<span class="common-slot-chip"><span class="chip-dot" style="background:${dotColor}"></span>${name}${selfBadge}${dayBadge}</span>`;
 					})
 					.join("");
 			}
@@ -19777,66 +19826,107 @@ self.onmessage = async (e) => {
 			return;
 		}
 
-		if (view === "month") {
-			calendarCommonFreeSlots.innerHTML =
-				`<div class="text-[11px] text-slate-400">${escapeHtml(t("calendar.common.select_day_week"))}</div>`;
-			return;
+		// Build HTML sections
+		let html = "";
+
+		// Section 1: Common days (intersection of all participants' selectedDays)
+		if (commonData.commonDays.length > 0) {
+			const dayLabels = commonData.commonDays.slice(0, 10).map(dk => {
+				const parts = dk.split("-");
+				if (parts.length !== 3) return dk;
+				const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+				return formatDayLabel(d);
+			});
+			const moreText = commonData.commonDays.length > 10
+				? ` <span class="text-slate-500">+${commonData.commonDays.length - 10}</span>`
+				: "";
+			html += `<div class="common-days-section mb-2">
+				<div class="text-[10px] font-medium uppercase tracking-wider text-emerald-400 mb-1">${escapeHtml(t("calendar.common.common_days"))}</div>
+				<div class="flex flex-wrap gap-1">${dayLabels.map(l =>
+					`<span class="common-day-chip">${escapeHtml(l)}</span>`
+				).join("")}${moreText}</div>
+			</div>`;
+		} else {
+			// Show per-participant selected days when no common days exist
+			const participantsWithDays = commonData.perParticipant.filter(p => p.days.length > 0 && p.clientId !== clientId);
+			if (participantsWithDays.length > 0) {
+				html += `<div class="common-days-section mb-2">
+					<div class="text-[10px] font-medium uppercase tracking-wider text-slate-400 mb-1">${escapeHtml(t("calendar.common.participant_days"))}</div>`;
+				for (const p of participantsWithDays) {
+					const dayLabels = p.days.slice(0, 5).map(dk => {
+						const parts = dk.split("-");
+						if (parts.length !== 3) return dk;
+						const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+						return formatDayLabel(d);
+					});
+					const moreText = p.days.length > 5 ? ` +${p.days.length - 5}` : "";
+					html += `<div class="mb-1">
+						<span class="chip-dot inline-block mr-1" style="background:${escapeAttr(p.color)}"></span>
+						<span class="text-[11px] text-slate-300">${escapeHtml(p.name)}:</span>
+						<span class="text-[11px] text-slate-400">${dayLabels.join(", ")}${moreText}</span>
+					</div>`;
+				}
+				html += `</div>`;
+			}
 		}
 
-		if (view === "day") {
+		// Section 2: Time slots (existing logic)
+		if (view === "month") {
+			html += `<div class="text-[11px] text-slate-400">${escapeHtml(t("calendar.common.select_day_week"))}</div>`;
+		} else if (view === "day") {
 			const result = computePerParticipantFreeForDay(cursor);
 			if (!result.perParticipant.length) {
-				calendarCommonFreeSlots.innerHTML =
-					`<div class="text-[11px] text-slate-500">${escapeHtml(t("calendar.common.no_common"))}</div>`;
-				return;
+				html += `<div class="text-[11px] text-slate-500">${escapeHtml(t("calendar.common.no_common"))}</div>`;
+			} else {
+				const rows = result.perParticipant.map((slot) => {
+					const isAll = slot.freeCount === slot.total;
+					const badgeClass = isAll ? "common-slot-badge--all" : "common-slot-badge--partial";
+					const badgeText = isAll
+						? t("calendar.common.all_free")
+						: `${slot.freeCount}/${slot.total}`;
+					return `<div class="common-slot-row">
+						<span>${formatTime(slot.start)} – ${formatTime(slot.end)}</span>
+						<span class="common-slot-badge ${badgeClass}">${escapeHtml(badgeText)}</span>
+					</div>`;
+				});
+				const bestSlot = result.perParticipant.find((s) => s.freeCount === s.total) || result.perParticipant[0];
+				if (bestSlot) {
+					rows.push(`<button type="button" class="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-[11px] text-slate-200 transition hover:bg-white/10 active:bg-white/15" data-common-book="${bestSlot.start.toISOString()}|${bestSlot.end.toISOString()}">${escapeHtml(t("calendar.common.book_best"))}</button>`);
+				}
+				html += rows.join("");
 			}
-			const rows = result.perParticipant.map((slot) => {
-				const isAll = slot.freeCount === slot.total;
+		} else {
+			// Week view — 2-line cards per day (date top, time below)
+			const weekStart = startOfWeek(cursor);
+			const rows = Array.from({ length: 7 }).map((_, idx) => {
+				const day = addDays(weekStart, idx);
+				const dk = dayKeyFromDate(day);
+				const result = computePerParticipantFreeForDay(day);
+				const label = formatDayLabel(day);
+				if (!result.perParticipant.length) {
+					return `<div class="common-slot-card common-slot-card--nav" data-slot-nav="${dk}">
+						<span class="common-slot-date">${label}</span>
+						<span class="common-slot-time">—</span>
+					</div>`;
+				}
+				const best = result.perParticipant[0];
+				const isAll = best.freeCount === best.total;
 				const badgeClass = isAll ? "common-slot-badge--all" : "common-slot-badge--partial";
 				const badgeText = isAll
 					? t("calendar.common.all_free")
-					: `${slot.freeCount}/${slot.total}`;
-				return `<div class="common-slot-row">
-					<span>${formatTime(slot.start)} – ${formatTime(slot.end)}</span>
-					<span class="common-slot-badge ${badgeClass}">${escapeHtml(badgeText)}</span>
+					: `${best.freeCount}/${best.total}`;
+				return `<div class="common-slot-card common-slot-card--nav" data-slot-nav="${dk}">
+					<div class="common-slot-card__top">
+						<span class="common-slot-date">${label}</span>
+						<span class="common-slot-badge ${badgeClass}">${escapeHtml(badgeText)}</span>
+					</div>
+					<span class="common-slot-time">${formatTime(best.start)} – ${formatTime(best.end)}</span>
 				</div>`;
 			});
-			const bestSlot = result.perParticipant.find((s) => s.freeCount === s.total) || result.perParticipant[0];
-			if (bestSlot) {
-				rows.push(`<button type="button" class="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-2 py-1.5 text-[11px] text-slate-200 transition hover:bg-white/10 active:bg-white/15" data-common-book="${bestSlot.start.toISOString()}|${bestSlot.end.toISOString()}">${escapeHtml(t("calendar.common.book_best"))}</button>`);
-			}
-			calendarCommonFreeSlots.innerHTML = rows.join("");
-			return;
+			html += rows.join("");
 		}
 
-		// Week view — 2-line cards per day (date top, time below)
-		const weekStart = startOfWeek(cursor);
-		const rows = Array.from({ length: 7 }).map((_, idx) => {
-			const day = addDays(weekStart, idx);
-			const dk = dayKeyFromDate(day);
-			const result = computePerParticipantFreeForDay(day);
-			const label = formatDayLabel(day);
-			if (!result.perParticipant.length) {
-				return `<div class="common-slot-card common-slot-card--nav" data-slot-nav="${dk}">
-					<span class="common-slot-date">${label}</span>
-					<span class="common-slot-time">—</span>
-				</div>`;
-			}
-			const best = result.perParticipant[0];
-			const isAll = best.freeCount === best.total;
-			const badgeClass = isAll ? "common-slot-badge--all" : "common-slot-badge--partial";
-			const badgeText = isAll
-				? t("calendar.common.all_free")
-				: `${best.freeCount}/${best.total}`;
-			return `<div class="common-slot-card common-slot-card--nav" data-slot-nav="${dk}">
-				<div class="common-slot-card__top">
-					<span class="common-slot-date">${label}</span>
-					<span class="common-slot-badge ${badgeClass}">${escapeHtml(badgeText)}</span>
-				</div>
-				<span class="common-slot-time">${formatTime(best.start)} – ${formatTime(best.end)}</span>
-			</div>`;
-		});
-		calendarCommonFreeSlots.innerHTML = rows.join("");
+		calendarCommonFreeSlots.innerHTML = html;
 	}
 
 	function renderCalendarPanel() {

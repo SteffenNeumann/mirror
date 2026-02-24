@@ -6737,6 +6737,21 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	color: #f1f5f9;
 }
 
+/* ── Common days section ── */
+.common-days-section {
+	padding-bottom: 0.5rem;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.common-day-chip {
+	display: inline-block;
+	padding: 0.125rem 0.375rem;
+	border-radius: 4px;
+	font-size: 10px;
+	background: rgba(16, 185, 129, 0.15);
+	color: #34d399;
+	border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
 /* ── Participant indicators in calendar grid cells ── */
 .participant-indicators {
 	display: flex;
