@@ -224,8 +224,11 @@ interface AvailabilityData {
   1. **`updateRunOutputSizing()` erweitert** (`app.js` ~L11062): Neue `isAiText`-Erkennung für `source === "ai"`. AI-Text-Outputs erhalten jetzt basePx=320 (statt 160) und 85%/90% Panel-/Window-Anteil (statt 65%/70%).
   2. **`updateRunOutputUi()` setzt CSS-Klasse** (`app.js` ~L11051): Neue `.is-ai-output`-Klasse wird auf `#runOutput` gesetzt wenn `source === "ai"` oder `source === "ai-image"`.
   3. **Mobile CSS erweitert** (`styles/app.css` ~L2467): `#runOutput.is-ai-output` erhält wie Bild-Outputs `max-height: 70vh` statt der bisherigen 120px-Begrenzung.
+  4. **Tailwind max-h-40 entfernt** (`index.html` ~L1565): Festes 160px-Limit entfernt, JS-basiertes dynamisches Sizing kann jetzt greifen.
+  5. **Default CSS-Regel für #runOutput** (`styles/app.css` ~L117): Basis-Sizing mit `overflow: auto` und `-webkit-overflow-scrolling: touch` für Scrollbar-Unterstützung.
+  6. **AI-Token-Limit erhöht** (`server.js` ~L205): `AI_MAX_OUTPUT_TOKENS` von 900 auf 4096 erhöht. `AI_TIMEOUT_MS` von 30s auf 60s erhöht für längere Generierungen.
   - Zuständige Funktionen: `updateRunOutputSizing`, `updateRunOutputUi`.
-  - Zuständige Dateien: `app.js`, `styles/app.css`.
+  - Zuständige Dateien: `app.js`, `styles/app.css`, `index.html`, `server.js`.
 
 - **Fix: Shared Room Content-Sync für neue User** `#shared` `#sync` `#bug`: User ohne Personal Space sahen den existierenden Inhalt einer geteilten Notiz erst nachdem sie selbst schrieben. Ursache: `applyRemoteText()` und `applySyncedText()` blockierten das Übernehmen von Remote-Content wenn lokaler Content leer war.
   1. **`applySyncedText()` mit `force`-Option erweitert** (`app.js` ~L20954): Neuer `opts.force`-Parameter umgeht den `offlineSyncInFlight`-Guard.
