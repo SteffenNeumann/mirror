@@ -2462,6 +2462,8 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		max-height: 120px;
 		font-size: 11px;
 	}
+	/* AI outputs (text + image) get expanded sizing for long responses */
+	#runOutput.is-ai-output,
 	#runOutput:has(img) {
 		max-height: 70vh;
 	}

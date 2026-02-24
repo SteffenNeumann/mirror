@@ -220,6 +220,13 @@ interface AvailabilityData {
 
 ## Aktuelle Änderungen (2026-02-24)
 
+- **AI-Output-Größenerweiterung für lange Antworten** `#ai` `#ui` `#output`: Lange AI-Text-Ausgaben (z.B. generierter Code) werden jetzt korrekt mit erweiterten Größenlimits dargestellt, sodass der vollständige Inhalt sichtbar ist.
+  1. **`updateRunOutputSizing()` erweitert** (`app.js` ~L11062): Neue `isAiText`-Erkennung für `source === "ai"`. AI-Text-Outputs erhalten jetzt basePx=320 (statt 160) und 85%/90% Panel-/Window-Anteil (statt 65%/70%).
+  2. **`updateRunOutputUi()` setzt CSS-Klasse** (`app.js` ~L11051): Neue `.is-ai-output`-Klasse wird auf `#runOutput` gesetzt wenn `source === "ai"` oder `source === "ai-image"`.
+  3. **Mobile CSS erweitert** (`styles/app.css` ~L2467): `#runOutput.is-ai-output` erhält wie Bild-Outputs `max-height: 70vh` statt der bisherigen 120px-Begrenzung.
+  - Zuständige Funktionen: `updateRunOutputSizing`, `updateRunOutputUi`.
+  - Zuständige Dateien: `app.js`, `styles/app.css`.
+
 - **Fix: Shared Room Content-Sync für neue User** `#shared` `#sync` `#bug`: User ohne Personal Space sahen den existierenden Inhalt einer geteilten Notiz erst nachdem sie selbst schrieben. Ursache: `applyRemoteText()` und `applySyncedText()` blockierten das Übernehmen von Remote-Content wenn lokaler Content leer war.
   1. **`applySyncedText()` mit `force`-Option erweitert** (`app.js` ~L20954): Neuer `opts.force`-Parameter umgeht den `offlineSyncInFlight`-Guard.
   2. **`applyRemoteText()` setzt `force: true` bei leerem Content** (`app.js` ~L21195): Wenn der lokale Editor leer ist (neuer User im Raum), wird `force: true` gesetzt um den Remote-Content sofort zu übernehmen.

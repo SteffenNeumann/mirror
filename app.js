@@ -11008,6 +11008,7 @@
 		const src = String(
 			previewRunState && previewRunState.source ? previewRunState.source : ""
 		);
+		const isAiSource = src === "ai" || src === "ai-image";
 		const hasAiOutput =
 			src === "ai" &&
 			Boolean(
@@ -11047,6 +11048,10 @@
 		if (clearRunOutputBtn && clearRunOutputBtn.classList) {
 			clearRunOutputBtn.classList.toggle("hidden", !canClear);
 		}
+		// Add CSS marker class for AI-source outputs (for expanded mobile sizing)
+		if (runOutputEl && runOutputEl.classList) {
+			runOutputEl.classList.toggle("is-ai-output", isAiSource);
+		}
 	}
 
 	function setRunOutputProcessing(active) {
@@ -11071,7 +11076,9 @@
 		}
 
 		const isAiImage = previewRunState && previewRunState.source === "ai-image";
-		const basePx = isAiImage ? 480 : 160;
+		const isAiText = previewRunState && previewRunState.source === "ai";
+		// AI-Text outputs get expanded sizing to handle long responses (e.g. generated code)
+		const basePx = isAiImage ? 480 : isAiText ? 320 : 160;
 		let contentPx = 0;
 		try {
 			contentPx = Math.ceil(runOutputEl.scrollHeight || 0);
@@ -11094,8 +11101,9 @@
 			panelPx = 0;
 		}
 		const winPx = Math.max(0, Math.floor(window.innerHeight || 0));
-		const fraction = isAiImage ? 0.85 : 0.65;
-		const fractionWin = isAiImage ? 0.85 : 0.7;
+		// AI outputs (image + text) get more screen real estate
+		const fraction = isAiImage || isAiText ? 0.85 : 0.65;
+		const fractionWin = isAiImage || isAiText ? 0.9 : 0.7;
 		const budgetPx = Math.floor(
 			Math.min((panelPx || winPx) * fraction, winPx * fractionWin || 520)
 		);
