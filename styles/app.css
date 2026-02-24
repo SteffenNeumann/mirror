@@ -7165,12 +7165,15 @@ body[data-theme="monoLight"] .participant-badge--partial {
 	border-radius: 3px;
 	border: 1.5px solid rgba(148, 163, 184, 0.4);
 	background: transparent;
-	transition: border-color 0.15s, background 0.15s;
+	opacity: 0;
+	transition: border-color 0.15s, background 0.15s, opacity 0.15s;
 }
 .cal-source-row:hover .cal-source-toggle {
+	opacity: 1;
 	border-color: rgba(148, 163, 184, 0.55);
 }
 .cal-source-toggle--checked {
+	opacity: 1;
 	border-color: rgba(148, 163, 184, 0.6);
 	background: rgba(255, 255, 255, 0.08);
 }
