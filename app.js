@@ -19918,11 +19918,13 @@ self.onmessage = async (e) => {
 			const isSelf = cid === clientId;
 			// Primary check: if participant has selectedDays array, use that directly
 			// This is independent of the busy-interval range
+			// Note: An empty selectedDays array means "no days selected" - don't fall back to busy logic
 			let isAvailable = false;
-			if (Array.isArray(p.selectedDays) && p.selectedDays.length > 0) {
+			if (Array.isArray(p.selectedDays)) {
+				// Explicit selectedDays: empty array = nothing selected, non-empty = check inclusion
 				isAvailable = p.selectedDays.includes(dayKey);
-			} else {
-				// Fallback: infer from busy intervals (for backwards compatibility)
+			} else if (p.selectedDays === undefined || p.selectedDays === null) {
+				// Fallback: infer from busy intervals (for backwards compatibility with old clients)
 				// Only apply range check for busy-interval logic
 				if (p.rangeStart && p.rangeEnd) {
 					if (dayEndTs <= p.rangeStart || dayStartTs >= p.rangeEnd) {
