@@ -2107,11 +2107,6 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	background: rgba(239, 68, 68, 0.08);
 	color: #f87171;
 	cursor: pointer;
-	transition: all 0.15s ease;
-}
-.cal-clear-select:hover {
-	background: rgba(239, 68, 68, 0.15);
-	border-color: rgba(239, 68, 68, 0.5);
 }
 .cal-clear-select .cal-room-select__menu {
 	min-width: 200px;
@@ -2137,9 +2132,6 @@ body.preview-only #editorPreviewGrid > div:first-child {
 }
 .cal-clear-item--danger {
 	color: #f87171;
-}
-.cal-clear-item--danger:hover {
-	background: rgba(239, 68, 68, 0.15) !important;
 }
 .cal-clear-dot {
 	width: 8px;
