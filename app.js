@@ -19803,21 +19803,26 @@ self.onmessage = async (e) => {
 		for (const [cid, p] of participants) {
 			// Skip own client - own selections are shown with ✓ indicator
 			if (cid === clientId) continue;
-			// Check if this day is within the participant's data range
-			// If not, they have no data for this day → not available (don't show dot)
-			if (p.rangeStart && p.rangeEnd) {
-				if (dayEndTs <= p.rangeStart || dayStartTs >= p.rangeEnd) {
-					// Day is outside participant's range → no data → skip (not available)
-					continue;
-				}
-			}
-			// Primary check: if participant has selectedDays array, use that
-			// This is the explicit day selection by the participant
+			// Primary check: if participant has selectedDays array, use that directly
+			// This is independent of the busy-interval range
 			let isAvailable = false;
 			if (Array.isArray(p.selectedDays) && p.selectedDays.length > 0) {
 				isAvailable = p.selectedDays.includes(dayKey);
 			} else {
 				// Fallback: infer from busy intervals (for backwards compatibility)
+				// Only apply range check for busy-interval logic
+				if (p.rangeStart && p.rangeEnd) {
+					if (dayEndTs <= p.rangeStart || dayStartTs >= p.rangeEnd) {
+						// Day is outside participant's range → no data → skip for busy logic
+						result.push({
+							clientId: cid,
+							name: p.name || "Guest",
+							color: p.color || "#94a3b8",
+							isAvailable: false,
+						});
+						continue;
+					}
+				}
 				const busyInWindow = p.busy.filter(b => {
 					const bs = b.start;
 					const be = b.end;
