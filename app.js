@@ -26757,18 +26757,32 @@ self.onmessage = async (e) => {
 		});
 	}
 	if (calendarCommonFreeToggle) {
+		console.log("[AVAIL-DEBUG] ✓ calendarCommonFreeToggle element found, registering click listener");
 		calendarCommonFreeToggle.addEventListener("click", () => {
+			console.log("[AVAIL-DEBUG] ═══════════════════════════════════════════");
 			console.log("[AVAIL-DEBUG] Toggle clicked! Current:", commonFreeSlotsSharing, "-> New:", !commonFreeSlotsSharing);
+			console.log("[AVAIL-DEBUG] WebSocket status:", ws ? `readyState=${ws.readyState} (0=CONNECTING, 1=OPEN, 2=CLOSING, 3=CLOSED)` : "ws is null/undefined");
+			console.log("[AVAIL-DEBUG] psState:", psState ? { authed: psState.authed, hasToken: !!psState.token } : "null");
+			console.log("[AVAIL-DEBUG] room:", room, "key:", key);
+			console.log("[AVAIL-DEBUG] clientId:", clientId);
+			console.log("[AVAIL-DEBUG] isInSharedRoom():", isInSharedRoom());
+			console.log("[AVAIL-DEBUG] availabilityByClient.size:", availabilityByClient.size);
 			const wasSharing = commonFreeSlotsSharing;
 			saveCommonFreeSlotsSharing(!commonFreeSlotsSharing);
 			console.log("[AVAIL-DEBUG] After saveCommonFreeSlotsSharing:", commonFreeSlotsSharing);
+			console.log("[AVAIL-DEBUG] aria-pressed now:", calendarCommonFreeToggle.getAttribute("aria-pressed"));
 			if (commonFreeSlotsSharing) {
+				console.log("[AVAIL-DEBUG] Calling broadcastAvailability()...");
 				broadcastAvailability();
 			} else if (wasSharing) {
 				// Was sharing, now stopped - notify server to remove our availability
+				console.log("[AVAIL-DEBUG] Calling broadcastAvailabilityLeave()...");
 				broadcastAvailabilityLeave();
 			}
+			console.log("[AVAIL-DEBUG] Calling renderCommonFreeSlots()...");
 			renderCommonFreeSlots();
+			console.log("[AVAIL-DEBUG] calendarCommonFreeSlotsWrap hidden?:", calendarCommonFreeSlotsWrap?.classList.contains("hidden"));
+			console.log("[AVAIL-DEBUG] ═══════════════════════════════════════════");
 		});
 		// Tooltip for share toggle
 		const shareTooltip = document.getElementById("calendarShareTooltip");
