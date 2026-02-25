@@ -8527,6 +8527,19 @@ body[data-theme="bitterLight"] .ps-search-help-arrow {
 	border-color: #d8d2cb !important;
 }
 
+body[data-theme="bitterLight"] #identityModalSave,
+body[data-theme="bitterLight"] .identity-modal-btn-primary {
+	background-color: #ff2301 !important;
+	border-color: #ff2301 !important;
+	color: #ffffff !important;
+}
+
+body[data-theme="bitterLight"] #identityModalSave:hover,
+body[data-theme="bitterLight"] .identity-modal-btn-primary:hover {
+	background-color: #e52000 !important;
+	border-color: #e52000 !important;
+}
+
 /* ── bitterDark Theme ── */
 body[data-theme="bitterDark"] #identityModal [data-role="identityModalBackdrop"],
 body[data-theme="bitterDark"] .qb-overlay {
