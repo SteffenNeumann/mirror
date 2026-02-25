@@ -18219,10 +18219,11 @@ self.onmessage = async (e) => {
 			calendarLayout.classList.remove(
 				"lg:grid-cols-[minmax(0,1fr)_200px]",
 				"lg:grid-cols-[minmax(0,1fr)_260px]",
+				"lg:grid-cols-[1fr_1fr]",
 				"lg:grid-cols-1"
 			);
 			calendarLayout.classList.add(
-				next ? "lg:grid-cols-1" : "lg:grid-cols-[minmax(0,1fr)_260px]"
+				next ? "lg:grid-cols-1" : "lg:grid-cols-[1fr_1fr]"
 			);
 		}
 		if (calendarSidebarToggle) {
