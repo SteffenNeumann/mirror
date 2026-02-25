@@ -8339,6 +8339,19 @@ body[data-theme="monoLight"] .ps-search-help-arrow {
 	border-color: #d0d7de !important;
 }
 
+body[data-theme="monoLight"] #identityModalSave,
+body[data-theme="monoLight"] .identity-modal-btn-primary {
+	background-color: #0969da !important;
+	border-color: #0969da !important;
+	color: #ffffff !important;
+}
+
+body[data-theme="monoLight"] #identityModalSave:hover,
+body[data-theme="monoLight"] .identity-modal-btn-primary:hover {
+	background-color: #0550ae !important;
+	border-color: #0550ae !important;
+}
+
 /* ── coffeeLight Theme ── */
 body[data-theme="coffeeLight"] #identityModal [data-role="identityModalBackdrop"],
 body[data-theme="coffeeLight"] .qb-overlay {
@@ -8431,6 +8444,19 @@ body[data-theme="coffeeLight"] .identity-modal-footer {
 body[data-theme="coffeeLight"] .ps-search-help-arrow {
 	background: #f3ebe2 !important;
 	border-color: #d9c7bc !important;
+}
+
+body[data-theme="coffeeLight"] #identityModalSave,
+body[data-theme="coffeeLight"] .identity-modal-btn-primary {
+	background-color: #b07049 !important;
+	border-color: #b07049 !important;
+	color: #ffffff !important;
+}
+
+body[data-theme="coffeeLight"] #identityModalSave:hover,
+body[data-theme="coffeeLight"] .identity-modal-btn-primary:hover {
+	background-color: #8b5a2b !important;
+	border-color: #8b5a2b !important;
 }
 
 /* ── bitterLight Theme ── */
