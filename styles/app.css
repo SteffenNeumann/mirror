@@ -5741,6 +5741,19 @@ body[data-theme="monoDark"] #aiAssist {
 	color: #ffffff !important;
 }
 
+body[data-theme="monoDark"] #identityModalSave,
+body[data-theme="monoDark"] .identity-modal-btn-primary {
+	background-color: #0079d4 !important;
+	border-color: #0079d4 !important;
+	color: #ffffff !important;
+}
+
+body[data-theme="monoDark"] #identityModalSave:hover,
+body[data-theme="monoDark"] .identity-modal-btn-primary:hover {
+	background-color: #005a9e !important;
+	border-color: #005a9e !important;
+}
+
 body[data-theme="monoDark"] #roomTabs .border-fuchsia-400\/40 {
 	border-color: var(--mono-accent) !important;
 }
