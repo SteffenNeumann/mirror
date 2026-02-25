@@ -7407,6 +7407,7 @@ body[data-theme="monoLight"] .participant-badge--partial {
 	display: flex;
 	align-items: center;
 	gap: 0.25rem;
+	color: #94a3b8;
 }
 .cal-room-select {
 	width: 100%;
