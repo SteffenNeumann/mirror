@@ -7076,6 +7076,49 @@ body[data-theme="bitterLight"] .cal-room-label,
 body[data-theme="monoLight"] .cal-room-label {
 	color: var(--dropdown-text);
 }
+/* Light theme: Calendar source list text colors */
+body[data-theme="coffeeLight"] .cal-source-name,
+body[data-theme="bitterLight"] .cal-source-name,
+body[data-theme="monoLight"] .cal-source-name {
+	color: var(--dropdown-text);
+}
+body[data-theme="coffeeLight"] .cal-source-row:hover .cal-source-name,
+body[data-theme="bitterLight"] .cal-source-row:hover .cal-source-name,
+body[data-theme="monoLight"] .cal-source-row:hover .cal-source-name {
+	color: var(--dropdown-text-hover);
+}
+body[data-theme="coffeeLight"] .cal-source-badge,
+body[data-theme="bitterLight"] .cal-source-badge,
+body[data-theme="monoLight"] .cal-source-badge {
+	color: var(--dropdown-text);
+	opacity: 0.7;
+}
+body[data-theme="coffeeLight"] .cal-source-row:hover,
+body[data-theme="bitterLight"] .cal-source-row:hover,
+body[data-theme="monoLight"] .cal-source-row:hover {
+	background: rgba(0, 0, 0, 0.04);
+}
+body[data-theme="coffeeLight"] .cal-source-row:active,
+body[data-theme="bitterLight"] .cal-source-row:active,
+body[data-theme="monoLight"] .cal-source-row:active {
+	background: rgba(0, 0, 0, 0.06);
+}
+body[data-theme="coffeeLight"] .cal-source-toggle,
+body[data-theme="bitterLight"] .cal-source-toggle,
+body[data-theme="monoLight"] .cal-source-toggle {
+	border-color: rgba(100, 116, 139, 0.4);
+}
+body[data-theme="coffeeLight"] .cal-source-toggle--checked,
+body[data-theme="bitterLight"] .cal-source-toggle--checked,
+body[data-theme="monoLight"] .cal-source-toggle--checked {
+	border-color: rgba(100, 116, 139, 0.6);
+	background: rgba(0, 0, 0, 0.06);
+}
+body[data-theme="coffeeLight"] .cal-source-check,
+body[data-theme="bitterLight"] .cal-source-check,
+body[data-theme="monoLight"] .cal-source-check {
+	color: rgba(71, 85, 105, 0.9);
+}
 
 /* ── Participant indicators in calendar grid cells ── */
 .participant-indicators {
