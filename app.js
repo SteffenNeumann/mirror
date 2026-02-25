@@ -10941,82 +10941,9 @@
 	function renderQueryResults(notes, parsed, hasStructured) {
 		const panel = document.getElementById("psQueryResults");
 		if (!panel) return;
-		const hasTaskQuery = parsed.structured.some(
-			(t) => t.type === "taskOpen" || t.type === "taskDone" || t.type === "hasTask"
-		);
-		if (!hasStructured || !hasTaskQuery || notes.length === 0) {
-			panel.classList.add("hidden");
-			panel.innerHTML = "";
-			return;
-		}
-		const wantOpen = parsed.structured.some((t) => t.type === "taskOpen");
-		const wantDone = parsed.structured.some((t) => t.type === "taskDone");
-		const showBoth = !wantOpen && !wantDone;
-		const items = [];
-		for (const note of notes) {
-			const text = String(note && note.text ? note.text : "");
-			const tasks = extractNoteTasks(text);
-			const title = getNoteTitle(text);
-			const noteId = String(note && note.id ? note.id : "");
-			if (wantOpen || showBoth) {
-				for (const t of tasks.open) {
-					items.push({ label: t, done: false, noteTitle: title, noteId });
-				}
-			}
-			if (wantDone || showBoth) {
-				for (const t of tasks.done) {
-					items.push({ label: t, done: true, noteTitle: title, noteId });
-				}
-			}
-		}
-		if (items.length === 0) {
-			panel.classList.add("hidden");
-			panel.innerHTML = "";
-			return;
-		}
-		const openCount = items.filter((i) => !i.done).length;
-		const doneCount = items.filter((i) => i.done).length;
-		const tagTokens = parsed.structured.filter((t) => t.type === "tag").map((t) => "#" + t.value);
-		const tagLabel = tagTokens.length ? tagTokens.join(", ") : "";
-		const headerParts = [];
-		if (openCount > 0) headerParts.push(`${openCount} ` + t("query.open"));
-		if (doneCount > 0) headerParts.push(`${doneCount} ` + t("query.done"));
-		const countLabel = headerParts.join(", ");
-		const fromLabel = t("query.from_notes").replace("{n}", String(notes.length));
-		let html = '<div class="ps-query-header">';
-		html += '<div class="ps-query-header-row">';
-		html += '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ps-query-icon"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>';
-		html += '<span class="ps-query-summary">' + countLabel;
-		if (tagLabel) html += ' <span class="ps-query-tag">' + escapeHtml(tagLabel) + '</span>';
-		html += ' <span class="ps-query-from">' + escapeHtml(fromLabel) + '</span>';
-		html += '</span>';
-		html += '</div></div>';
-		html += '<ul class="ps-query-list">';
-		for (const item of items) {
-			const cls = item.done ? 'ps-query-item done' : 'ps-query-item';
-			const check = item.done
-				? '<svg viewBox="0 0 16 16" class="ps-query-check done"><rect x="1" y="1" width="14" height="14" rx="3" fill="currentColor" opacity="0.15" stroke="currentColor" stroke-width="1.5"/><path d="M4.5 8l2.5 2.5 4.5-5" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-				: '<svg viewBox="0 0 16 16" class="ps-query-check"><rect x="1" y="1" width="14" height="14" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>';
-			html += '<li class="' + cls + '" data-query-note-id="' + escapeHtml(item.noteId) + '">';
-			html += check;
-			html += '<span class="ps-query-label">' + escapeHtml(item.label) + '</span>';
-			html += '<span class="ps-query-note-ref" title="' + escapeHtml(item.noteTitle) + '">' + escapeHtml(item.noteTitle) + '</span>';
-			html += '</li>';
-		}
-		html += '</ul>';
-		panel.innerHTML = html;
-		panel.classList.remove("hidden");
-		panel.querySelectorAll("[data-query-note-id]").forEach((el) => {
-			el.addEventListener("click", () => {
-				const noteId = el.getAttribute("data-query-note-id") || "";
-				if (!noteId) return;
-				const note = findNoteById(noteId);
-				if (note) {
-					const allNotes = filterRealNotes(psState && psState.notes ? psState.notes : []);
-					applyNoteToEditor(note, allNotes);
-				}
-			});
-		});
+		// Query results are now shown only via filtered notes list, not in separate panel
+		panel.classList.add("hidden");
+		panel.innerHTML = "";
 	}
 
 	function applyPersonalSpaceFiltersAndRender() {
