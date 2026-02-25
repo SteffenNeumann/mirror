@@ -2165,6 +2165,23 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	.calendar-cell-weekday {
 		display: inline;
 	}
+	/* Tablet portrait: 50/50 vertical split for calendar grid and sidebar */
+	#calendarLayout {
+		display: flex;
+		flex-direction: column;
+		gap: 0.5rem;
+	}
+	#calendarGrid {
+		flex: 1 1 50%;
+		min-height: 0;
+		overflow: auto;
+	}
+	#calendarSidebar {
+		flex: 1 1 50%;
+		max-height: none;
+		min-height: 0;
+		overflow-y: auto;
+	}
 }
 
 /* ── Laptop Calendar Layout Fixes (lg+) ── */
@@ -2189,12 +2206,12 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		font-size: 12px;
 		color: rgba(148, 163, 184, 0.85);
 	}
-	/* Fix: Calendar sidebar 50/50 split with calendar grid */
+	/* Fix: Calendar sidebar gets more space */
 	#calendarLayout {
-		grid-template-columns: 1fr 1fr;
+		grid-template-columns: minmax(0, 1fr) 260px;
 	}
 	#calendarSidebar {
-		min-width: 0;
+		min-width: 260px;
 	}
 	/* Fix: Ensure hidden class works for toggle */
 	#calendarSidebar.hidden {
