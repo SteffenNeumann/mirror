@@ -8180,24 +8180,27 @@ body[data-theme="monoLight"] .cal-sel-badge {
 /* ── monoLight Theme ── */
 body[data-theme="monoLight"] #identityModal [data-role="identityModalBackdrop"],
 body[data-theme="monoLight"] .qb-overlay {
-	background: rgba(27, 31, 36, 0.22);
+	background: rgba(27, 31, 36, 0.22) !important;
 }
 
 body[data-theme="monoLight"] #identityModal [role="dialog"],
 body[data-theme="monoLight"] .qb-modal,
 body[data-theme="monoLight"] .ps-search-help-box {
-	background: #eef1f5;
-	border-color: #d0d7de;
+	background: #eef1f5 !important;
+	border-color: #d0d7de !important;
 }
 
 body[data-theme="monoLight"] #identityModal h3,
 body[data-theme="monoLight"] #identityModal #identityPreviewName,
+body[data-theme="monoLight"] #identityModal .text-slate-100,
 body[data-theme="monoLight"] .qb-title {
-	color: rgba(15, 23, 42, 0.98);
+	color: rgba(15, 23, 42, 0.98) !important;
 }
 
 body[data-theme="monoLight"] #identityModal label,
 body[data-theme="monoLight"] #identityModal .text-slate-400,
+body[data-theme="monoLight"] #identityModal .text-slate-200,
+body[data-theme="monoLight"] #identityModal .text-slate-300,
 body[data-theme="monoLight"] #identityModal #identityModalClose,
 body[data-theme="monoLight"] #identityModal #identityModalCancel,
 body[data-theme="monoLight"] #identityModal #identityRandomize,
@@ -8205,81 +8208,92 @@ body[data-theme="monoLight"] .qb-section-title,
 body[data-theme="monoLight"] .qb-date-label,
 body[data-theme="monoLight"] .qb-close,
 body[data-theme="monoLight"] .ps-search-help-box {
-	color: rgba(51, 65, 85, 0.9);
+	color: rgba(51, 65, 85, 0.9) !important;
 }
 
 body[data-theme="monoLight"] #identityModal input,
 body[data-theme="monoLight"] .qb-tag-select,
 body[data-theme="monoLight"] .qb-date-input {
-	background: rgba(9, 105, 218, 0.08);
-	border-color: rgba(9, 105, 218, 0.28);
-	color: rgba(15, 23, 42, 0.98);
+	background: rgba(9, 105, 218, 0.08) !important;
+	border-color: rgba(9, 105, 218, 0.28) !important;
+	color: rgba(15, 23, 42, 0.98) !important;
 }
 
 body[data-theme="monoLight"] .qb-chip {
-	background: rgba(9, 105, 218, 0.08);
-	border-color: rgba(9, 105, 218, 0.28);
-	color: rgba(51, 65, 85, 0.9);
+	background: rgba(9, 105, 218, 0.08) !important;
+	border-color: rgba(9, 105, 218, 0.28) !important;
+	color: rgba(51, 65, 85, 0.9) !important;
 }
 
 body[data-theme="monoLight"] .qb-chip:hover {
-	background: rgba(9, 105, 218, 0.16);
+	background: rgba(9, 105, 218, 0.16) !important;
 }
 
 body[data-theme="monoLight"] .qb-chip.is-active {
-	background: #0969da;
-	border-color: #0969da;
-	color: #fff;
+	background: #0969da !important;
+	border-color: #0969da !important;
+	color: #fff !important;
 }
 
 body[data-theme="monoLight"] .qb-preview {
-	background: rgba(9, 105, 218, 0.08);
-	border-color: rgba(9, 105, 218, 0.28);
-	color: rgba(15, 23, 42, 0.98);
+	background: rgba(9, 105, 218, 0.08) !important;
+	border-color: rgba(9, 105, 218, 0.28) !important;
+	color: rgba(15, 23, 42, 0.98) !important;
 }
 
 body[data-theme="monoLight"] #identityModal .identity-preview-chip,
 body[data-theme="monoLight"] #identityModal .identity-avatar-grid {
-	background: rgba(9, 105, 218, 0.06);
-	border-color: rgba(9, 105, 218, 0.2);
+	background: rgba(9, 105, 218, 0.06) !important;
+	border-color: rgba(9, 105, 218, 0.2) !important;
+}
+
+body[data-theme="monoLight"] #identityModal .identity-avatar-item {
+	background: transparent !important;
+}
+
+body[data-theme="monoLight"] #identityModal .identity-avatar-item:hover {
+	background: rgba(9, 105, 218, 0.12) !important;
 }
 
 body[data-theme="monoLight"] #identityModal [role="dialog"] > div:first-child,
 body[data-theme="monoLight"] #identityModal [role="dialog"] > div:last-child,
 body[data-theme="monoLight"] .qb-header {
-	border-color: #d0d7de;
+	border-color: #d0d7de !important;
 }
 
 body[data-theme="monoLight"] #identityModal [role="dialog"] > div:last-child {
-	background: rgba(9, 105, 218, 0.05);
+	background: rgba(9, 105, 218, 0.05) !important;
 }
 
 body[data-theme="monoLight"] .ps-search-help-arrow {
-	background: #eef1f5;
-	border-color: #d0d7de;
+	background: #eef1f5 !important;
+	border-color: #d0d7de !important;
 }
 
 /* ── coffeeLight Theme ── */
 body[data-theme="coffeeLight"] #identityModal [data-role="identityModalBackdrop"],
 body[data-theme="coffeeLight"] .qb-overlay {
-	background: rgba(68, 45, 30, 0.2);
+	background: rgba(68, 45, 30, 0.2) !important;
 }
 
 body[data-theme="coffeeLight"] #identityModal [role="dialog"],
 body[data-theme="coffeeLight"] .qb-modal,
 body[data-theme="coffeeLight"] .ps-search-help-box {
-	background: #f3ebe2;
-	border-color: #d9c7bc;
+	background: #f3ebe2 !important;
+	border-color: #d9c7bc !important;
 }
 
 body[data-theme="coffeeLight"] #identityModal h3,
 body[data-theme="coffeeLight"] #identityModal #identityPreviewName,
+body[data-theme="coffeeLight"] #identityModal .text-slate-100,
 body[data-theme="coffeeLight"] .qb-title {
-	color: rgba(50, 32, 18, 0.98);
+	color: rgba(50, 32, 18, 0.98) !important;
 }
 
 body[data-theme="coffeeLight"] #identityModal label,
 body[data-theme="coffeeLight"] #identityModal .text-slate-400,
+body[data-theme="coffeeLight"] #identityModal .text-slate-200,
+body[data-theme="coffeeLight"] #identityModal .text-slate-300,
 body[data-theme="coffeeLight"] #identityModal #identityModalClose,
 body[data-theme="coffeeLight"] #identityModal #identityModalCancel,
 body[data-theme="coffeeLight"] #identityModal #identityRandomize,
@@ -8287,81 +8301,92 @@ body[data-theme="coffeeLight"] .qb-section-title,
 body[data-theme="coffeeLight"] .qb-date-label,
 body[data-theme="coffeeLight"] .qb-close,
 body[data-theme="coffeeLight"] .ps-search-help-box {
-	color: rgba(92, 62, 41, 0.9);
+	color: rgba(92, 62, 41, 0.9) !important;
 }
 
 body[data-theme="coffeeLight"] #identityModal input,
 body[data-theme="coffeeLight"] .qb-tag-select,
 body[data-theme="coffeeLight"] .qb-date-input {
-	background: rgba(176, 112, 73, 0.1);
-	border-color: rgba(176, 112, 73, 0.25);
-	color: rgba(50, 32, 18, 0.98);
+	background: rgba(176, 112, 73, 0.1) !important;
+	border-color: rgba(176, 112, 73, 0.25) !important;
+	color: rgba(50, 32, 18, 0.98) !important;
 }
 
 body[data-theme="coffeeLight"] .qb-chip {
-	background: rgba(176, 112, 73, 0.1);
-	border-color: rgba(176, 112, 73, 0.25);
-	color: rgba(92, 62, 41, 0.9);
+	background: rgba(176, 112, 73, 0.1) !important;
+	border-color: rgba(176, 112, 73, 0.25) !important;
+	color: rgba(92, 62, 41, 0.9) !important;
 }
 
 body[data-theme="coffeeLight"] .qb-chip:hover {
-	background: rgba(176, 112, 73, 0.18);
+	background: rgba(176, 112, 73, 0.18) !important;
 }
 
 body[data-theme="coffeeLight"] .qb-chip.is-active {
-	background: #8b5a2b;
-	border-color: #8b5a2b;
-	color: #fff;
+	background: #8b5a2b !important;
+	border-color: #8b5a2b !important;
+	color: #fff !important;
 }
 
 body[data-theme="coffeeLight"] .qb-preview {
-	background: rgba(176, 112, 73, 0.1);
-	border-color: rgba(176, 112, 73, 0.25);
-	color: rgba(50, 32, 18, 0.98);
+	background: rgba(176, 112, 73, 0.1) !important;
+	border-color: rgba(176, 112, 73, 0.25) !important;
+	color: rgba(50, 32, 18, 0.98) !important;
 }
 
 body[data-theme="coffeeLight"] #identityModal .identity-preview-chip,
 body[data-theme="coffeeLight"] #identityModal .identity-avatar-grid {
-	background: rgba(176, 112, 73, 0.08);
-	border-color: rgba(176, 112, 73, 0.18);
+	background: rgba(176, 112, 73, 0.08) !important;
+	border-color: rgba(176, 112, 73, 0.18) !important;
+}
+
+body[data-theme="coffeeLight"] #identityModal .identity-avatar-item {
+	background: transparent !important;
+}
+
+body[data-theme="coffeeLight"] #identityModal .identity-avatar-item:hover {
+	background: rgba(176, 112, 73, 0.15) !important;
 }
 
 body[data-theme="coffeeLight"] #identityModal [role="dialog"] > div:first-child,
 body[data-theme="coffeeLight"] #identityModal [role="dialog"] > div:last-child,
 body[data-theme="coffeeLight"] .qb-header {
-	border-color: #d9c7bc;
+	border-color: #d9c7bc !important;
 }
 
 body[data-theme="coffeeLight"] #identityModal [role="dialog"] > div:last-child {
-	background: rgba(176, 112, 73, 0.06);
+	background: rgba(176, 112, 73, 0.06) !important;
 }
 
 body[data-theme="coffeeLight"] .ps-search-help-arrow {
-	background: #f3ebe2;
-	border-color: #d9c7bc;
+	background: #f3ebe2 !important;
+	border-color: #d9c7bc !important;
 }
 
 /* ── bitterLight Theme ── */
 body[data-theme="bitterLight"] #identityModal [data-role="identityModalBackdrop"],
 body[data-theme="bitterLight"] .qb-overlay {
-	background: rgba(21, 21, 24, 0.2);
+	background: rgba(21, 21, 24, 0.2) !important;
 }
 
 body[data-theme="bitterLight"] #identityModal [role="dialog"],
 body[data-theme="bitterLight"] .qb-modal,
 body[data-theme="bitterLight"] .ps-search-help-box {
-	background: #efecea;
-	border-color: #d8d2cb;
+	background: #efecea !important;
+	border-color: #d8d2cb !important;
 }
 
 body[data-theme="bitterLight"] #identityModal h3,
 body[data-theme="bitterLight"] #identityModal #identityPreviewName,
+body[data-theme="bitterLight"] #identityModal .text-slate-100,
 body[data-theme="bitterLight"] .qb-title {
-	color: rgba(27, 27, 32, 0.98);
+	color: rgba(27, 27, 32, 0.98) !important;
 }
 
 body[data-theme="bitterLight"] #identityModal label,
 body[data-theme="bitterLight"] #identityModal .text-slate-400,
+body[data-theme="bitterLight"] #identityModal .text-slate-200,
+body[data-theme="bitterLight"] #identityModal .text-slate-300,
 body[data-theme="bitterLight"] #identityModal #identityModalClose,
 body[data-theme="bitterLight"] #identityModal #identityModalCancel,
 body[data-theme="bitterLight"] #identityModal #identityRandomize,
@@ -8369,56 +8394,157 @@ body[data-theme="bitterLight"] .qb-section-title,
 body[data-theme="bitterLight"] .qb-date-label,
 body[data-theme="bitterLight"] .qb-close,
 body[data-theme="bitterLight"] .ps-search-help-box {
-	color: rgba(52, 52, 60, 0.9);
+	color: rgba(52, 52, 60, 0.9) !important;
 }
 
 body[data-theme="bitterLight"] #identityModal input,
 body[data-theme="bitterLight"] .qb-tag-select,
 body[data-theme="bitterLight"] .qb-date-input {
-	background: rgba(255, 35, 1, 0.08);
-	border-color: rgba(255, 35, 1, 0.25);
-	color: rgba(27, 27, 32, 0.98);
+	background: rgba(255, 35, 1, 0.08) !important;
+	border-color: rgba(255, 35, 1, 0.25) !important;
+	color: rgba(27, 27, 32, 0.98) !important;
 }
 
 body[data-theme="bitterLight"] .qb-chip {
-	background: rgba(255, 35, 1, 0.08);
-	border-color: rgba(255, 35, 1, 0.25);
-	color: rgba(52, 52, 60, 0.9);
+	background: rgba(255, 35, 1, 0.08) !important;
+	border-color: rgba(255, 35, 1, 0.25) !important;
+	color: rgba(52, 52, 60, 0.9) !important;
 }
 
 body[data-theme="bitterLight"] .qb-chip:hover {
-	background: rgba(255, 35, 1, 0.16);
+	background: rgba(255, 35, 1, 0.16) !important;
 }
 
 body[data-theme="bitterLight"] .qb-chip.is-active {
-	background: #ff2301;
-	border-color: #ff2301;
-	color: #fff;
+	background: #ff2301 !important;
+	border-color: #ff2301 !important;
+	color: #fff !important;
 }
 
 body[data-theme="bitterLight"] .qb-preview {
-	background: rgba(255, 35, 1, 0.08);
-	border-color: rgba(255, 35, 1, 0.25);
-	color: rgba(27, 27, 32, 0.98);
+	background: rgba(255, 35, 1, 0.08) !important;
+	border-color: rgba(255, 35, 1, 0.25) !important;
+	color: rgba(27, 27, 32, 0.98) !important;
 }
 
 body[data-theme="bitterLight"] #identityModal .identity-preview-chip,
 body[data-theme="bitterLight"] #identityModal .identity-avatar-grid {
-	background: rgba(255, 35, 1, 0.06);
-	border-color: rgba(255, 35, 1, 0.15);
+	background: rgba(255, 35, 1, 0.06) !important;
+	border-color: rgba(255, 35, 1, 0.15) !important;
+}
+
+body[data-theme="bitterLight"] #identityModal .identity-avatar-item {
+	background: transparent !important;
+}
+
+body[data-theme="bitterLight"] #identityModal .identity-avatar-item:hover {
+	background: rgba(255, 35, 1, 0.12) !important;
 }
 
 body[data-theme="bitterLight"] #identityModal [role="dialog"] > div:first-child,
 body[data-theme="bitterLight"] #identityModal [role="dialog"] > div:last-child,
 body[data-theme="bitterLight"] .qb-header {
-	border-color: #d8d2cb;
+	border-color: #d8d2cb !important;
 }
 
 body[data-theme="bitterLight"] #identityModal [role="dialog"] > div:last-child {
-	background: rgba(255, 35, 1, 0.04);
+	background: rgba(255, 35, 1, 0.04) !important;
 }
 
 body[data-theme="bitterLight"] .ps-search-help-arrow {
-	background: #efecea;
-	border-color: #d8d2cb;
+	background: #efecea !important;
+	border-color: #d8d2cb !important;
+}
+
+/* ── bitterDark Theme ── */
+body[data-theme="bitterDark"] #identityModal [data-role="identityModalBackdrop"],
+body[data-theme="bitterDark"] .qb-overlay {
+	background: rgba(13, 12, 16, 0.6) !important;
+}
+
+body[data-theme="bitterDark"] #identityModal [role="dialog"],
+body[data-theme="bitterDark"] .qb-modal,
+body[data-theme="bitterDark"] .ps-search-help-box {
+	background: #131216 !important;
+	border-color: #2a2a30 !important;
+}
+
+body[data-theme="bitterDark"] #identityModal h3,
+body[data-theme="bitterDark"] #identityModal #identityPreviewName,
+body[data-theme="bitterDark"] #identityModal .text-slate-100,
+body[data-theme="bitterDark"] .qb-title {
+	color: rgba(250, 250, 252, 0.98) !important;
+}
+
+body[data-theme="bitterDark"] #identityModal label,
+body[data-theme="bitterDark"] #identityModal .text-slate-400,
+body[data-theme="bitterDark"] #identityModal .text-slate-200,
+body[data-theme="bitterDark"] #identityModal .text-slate-300,
+body[data-theme="bitterDark"] #identityModal #identityModalClose,
+body[data-theme="bitterDark"] #identityModal #identityModalCancel,
+body[data-theme="bitterDark"] #identityModal #identityRandomize,
+body[data-theme="bitterDark"] .qb-section-title,
+body[data-theme="bitterDark"] .qb-date-label,
+body[data-theme="bitterDark"] .qb-close,
+body[data-theme="bitterDark"] .ps-search-help-box {
+	color: rgba(200, 200, 210, 0.9) !important;
+}
+
+body[data-theme="bitterDark"] #identityModal input,
+body[data-theme="bitterDark"] .qb-tag-select,
+body[data-theme="bitterDark"] .qb-date-input {
+	background: rgba(255, 35, 1, 0.12) !important;
+	border-color: rgba(255, 35, 1, 0.3) !important;
+	color: rgba(250, 250, 252, 0.98) !important;
+}
+
+body[data-theme="bitterDark"] .qb-chip {
+	background: rgba(255, 35, 1, 0.12) !important;
+	border-color: rgba(255, 35, 1, 0.3) !important;
+	color: rgba(200, 200, 210, 0.9) !important;
+}
+
+body[data-theme="bitterDark"] .qb-chip:hover {
+	background: rgba(255, 35, 1, 0.2) !important;
+}
+
+body[data-theme="bitterDark"] .qb-chip.is-active {
+	background: #ff2301 !important;
+	border-color: #ff2301 !important;
+	color: #fff !important;
+}
+
+body[data-theme="bitterDark"] .qb-preview {
+	background: rgba(255, 35, 1, 0.12) !important;
+	border-color: rgba(255, 35, 1, 0.3) !important;
+	color: rgba(250, 250, 252, 0.98) !important;
+}
+
+body[data-theme="bitterDark"] #identityModal .identity-preview-chip,
+body[data-theme="bitterDark"] #identityModal .identity-avatar-grid {
+	background: rgba(255, 35, 1, 0.1) !important;
+	border-color: rgba(255, 35, 1, 0.25) !important;
+}
+
+body[data-theme="bitterDark"] #identityModal .identity-avatar-item {
+	background: transparent !important;
+}
+
+body[data-theme="bitterDark"] #identityModal .identity-avatar-item:hover {
+	background: rgba(255, 35, 1, 0.15) !important;
+}
+
+body[data-theme="bitterDark"] #identityModal [role="dialog"] > div:first-child,
+body[data-theme="bitterDark"] #identityModal [role="dialog"] > div:last-child,
+body[data-theme="bitterDark"] .qb-header {
+	border-color: #2a2a30 !important;
+}
+
+body[data-theme="bitterDark"] #identityModal [role="dialog"] > div:last-child {
+	background: rgba(255, 35, 1, 0.08) !important;
+}
+
+body[data-theme="bitterDark"] .ps-search-help-arrow {
+	background: #131216 !important;
+	border-color: #2a2a30 !important;
 }
