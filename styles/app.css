@@ -2152,6 +2152,37 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	background: rgba(255, 255, 255, 0.08);
 }
 
+/* ── Laptop Calendar Layout Fixes ── */
+@media (min-width: 1024px) {
+	/* Fix: SidebarToggle z-index so it's clickable above day cells */
+	#calendarSidebarToggle {
+		z-index: 20;
+	}
+	/* Fix: Weekday labels sticky & more visible in month view */
+	.calendar-month-weekdays {
+		position: sticky;
+		top: 0;
+		z-index: 10;
+		background: rgba(2, 6, 23, 0.95);
+		backdrop-filter: blur(8px);
+		-webkit-backdrop-filter: blur(8px);
+		padding-block: 0.5rem;
+		margin-bottom: 0.25rem;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+	}
+	.calendar-weekday-label {
+		font-size: 12px;
+		color: rgba(148, 163, 184, 0.85);
+	}
+	/* Fix: Calendar sidebar gets more space */
+	#calendarLayout {
+		grid-template-columns: minmax(0, 1fr) 260px !important;
+	}
+	#calendarSidebar {
+		min-width: 260px;
+	}
+}
+
 @media (max-width: 1023px) {
 	.mobile-only {
 		display: inline-flex !important;
