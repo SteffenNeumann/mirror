@@ -2217,6 +2217,10 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	#calendarSidebar.hidden {
 		display: none !important;
 	}
+	/* Fix: calendarGrid uses full width when sidebar is hidden */
+	#calendarLayout:has(#calendarSidebar.hidden) {
+		grid-template-columns: 1fr;
+	}
 	/* Hide inline weekday when header is visible */
 	.calendar-cell-weekday {
 		display: none;
