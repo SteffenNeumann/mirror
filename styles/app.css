@@ -8025,7 +8025,7 @@ body[data-theme="monoLight"] .cal-sel-badge {
 }
 
 .qb-close:hover {
-	background: var(--accent-bg-soft, rgba(255, 255, 255, 0.06));
+	background: rgba(255, 255, 255, 0.08);
 	color: var(--accent-text, rgba(253, 242, 255, 0.95));
 }
 
@@ -8075,8 +8075,8 @@ body[data-theme="monoLight"] .cal-sel-badge {
 	gap: 6px;
 	padding: 6px 12px;
 	border-radius: 999px;
-	border: 1px solid var(--accent-border, rgba(255, 255, 255, 0.1));
-	background: var(--accent-bg-soft, rgba(255, 255, 255, 0.04));
+	border: 1px solid var(--modal-border, rgba(255, 255, 255, 0.1));
+	background: rgba(255, 255, 255, 0.05);
 	color: var(--accent-text-soft, rgba(148, 163, 184, 0.85));
 	font-size: 12px;
 	cursor: pointer;
@@ -8085,8 +8085,8 @@ body[data-theme="monoLight"] .cal-sel-badge {
 }
 
 .qb-chip:hover {
-	background: var(--accent-bg, rgba(255, 255, 255, 0.08));
-	border-color: var(--accent-border-strong, rgba(255, 255, 255, 0.15));
+	background: rgba(255, 255, 255, 0.1);
+	border-color: rgba(255, 255, 255, 0.15);
 	color: var(--accent-text, rgba(253, 242, 255, 0.95));
 }
 
@@ -8104,8 +8104,8 @@ body[data-theme="monoLight"] .cal-sel-badge {
 	width: 100%;
 	padding: 8px 12px;
 	border-radius: 10px;
-	border: 1px solid var(--accent-border, rgba(255, 255, 255, 0.1));
-	background: var(--accent-bg-soft, rgba(255, 255, 255, 0.04));
+	border: 1px solid var(--modal-border, rgba(255, 255, 255, 0.1));
+	background: rgba(255, 255, 255, 0.05);
 	color: var(--accent-text, rgba(253, 242, 255, 0.95));
 	font-size: 12px;
 	cursor: pointer;
@@ -8119,7 +8119,7 @@ body[data-theme="monoLight"] .cal-sel-badge {
 
 .qb-tag-select:hover,
 .qb-tag-select:focus {
-	border-color: var(--accent-border-strong, rgba(255, 255, 255, 0.15));
+	border-color: rgba(255, 255, 255, 0.18);
 	outline: none;
 }
 
@@ -8149,8 +8149,8 @@ body[data-theme="monoLight"] .cal-sel-badge {
 	flex: 1;
 	padding: 6px 10px;
 	border-radius: 8px;
-	border: 1px solid var(--accent-border, rgba(255, 255, 255, 0.1));
-	background: var(--accent-bg-soft, rgba(255, 255, 255, 0.04));
+	border: 1px solid var(--modal-border, rgba(255, 255, 255, 0.1));
+	background: rgba(255, 255, 255, 0.05);
 	color: var(--accent-text, rgba(253, 242, 255, 0.95));
 	font-size: 12px;
 	transition: all 0.15s ease;
@@ -8158,7 +8158,7 @@ body[data-theme="monoLight"] .cal-sel-badge {
 
 .qb-date-input:hover,
 .qb-date-input:focus {
-	border-color: var(--accent-border-strong, rgba(255, 255, 255, 0.15));
+	border-color: rgba(255, 255, 255, 0.18);
 	outline: none;
 }
 
@@ -8171,8 +8171,8 @@ body[data-theme="monoLight"] .cal-sel-badge {
 	margin-top: 16px;
 	padding: 12px;
 	border-radius: 10px;
-	border: 1px solid var(--accent-border, rgba(255, 255, 255, 0.08));
-	background: rgba(0, 0, 0, 0.2);
+	border: 1px solid var(--modal-border, rgba(255, 255, 255, 0.08));
+	background: rgba(0, 0, 0, 0.15);
 }
 
 .qb-preview-label {
