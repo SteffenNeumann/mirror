@@ -5829,6 +5829,30 @@
 				"query.done": "erledigt",
 				"query.from_notes": "aus {n} Notizen",
 				"search.help": "⚡ Query-Operatoren:\n• tag:name – Notizen mit Tag filtern\n• task:open – offene Aufgaben anzeigen\n• task:done – erledigte Aufgaben\n• has:task – Notizen mit Aufgaben\n• has:comment – Notizen mit Kommentaren\n• has:permalink – Notizen mit aktivem Permalink\n• has:link – Notizen mit Links (URLs oder Markdown-Links)\n• kind:note – nach Art filtern\n• pinned:yes / pinned:no\n• created:>2026-01-01\n• updated:<2026-02-01\n\nKombinierbar: task:open tag:projektA",
+				"qb.title": "Query Builder",
+				"qb.tags": "Tags",
+				"qb.tasks": "Aufgaben",
+				"qb.status": "Status",
+				"qb.dates": "Datum",
+				"qb.other": "Weitere",
+				"qb.task_open": "Offene Aufgaben",
+				"qb.task_done": "Erledigte Aufgaben",
+				"qb.has_task": "Mit Aufgaben",
+				"qb.has_comment": "Mit Kommentaren",
+				"qb.has_permalink": "Mit Permalink",
+				"qb.has_link": "Mit Links",
+				"qb.pinned_yes": "Angepinnt",
+				"qb.pinned_no": "Nicht angepinnt",
+				"qb.kind_note": "Art: Notiz",
+				"qb.created_after": "Erstellt nach",
+				"qb.created_before": "Erstellt vor",
+				"qb.updated_after": "Geändert nach",
+				"qb.updated_before": "Geändert vor",
+				"qb.select_tag": "Tag wählen…",
+				"qb.preview": "Vorschau",
+				"qb.apply": "Anwenden",
+				"qb.reset": "Zurücksetzen",
+				"qb.close": "Schließen",
 				"ps.sort_by": "Sortieren nach",
 				"ps.sort.modified": "Geändert",
 				"ps.sort.created": "Erstellt",
@@ -6388,6 +6412,30 @@
 				"query.done": "done",
 				"query.from_notes": "from {n} notes",
 				"search.help": "⚡ Query operators:\n• tag:name – filter notes by tag\n• task:open – show open tasks\n• task:done – completed tasks\n• has:task – notes with tasks\n• has:comment – notes with comments\n• has:permalink – notes with active permalink\n• has:link – notes with links (URLs or Markdown links)\n• kind:note – filter by type\n• pinned:yes / pinned:no\n• created:>2026-01-01\n• updated:<2026-02-01\n\nCombine freely: task:open tag:projectA",
+				"qb.title": "Query Builder",
+				"qb.tags": "Tags",
+				"qb.tasks": "Tasks",
+				"qb.status": "Status",
+				"qb.dates": "Dates",
+				"qb.other": "Other",
+				"qb.task_open": "Open tasks",
+				"qb.task_done": "Completed tasks",
+				"qb.has_task": "With tasks",
+				"qb.has_comment": "With comments",
+				"qb.has_permalink": "With permalink",
+				"qb.has_link": "With links",
+				"qb.pinned_yes": "Pinned",
+				"qb.pinned_no": "Not pinned",
+				"qb.kind_note": "Kind: Note",
+				"qb.created_after": "Created after",
+				"qb.created_before": "Created before",
+				"qb.updated_after": "Updated after",
+				"qb.updated_before": "Updated before",
+				"qb.select_tag": "Select tag…",
+				"qb.preview": "Preview",
+				"qb.apply": "Apply",
+				"qb.reset": "Reset",
+				"qb.close": "Close",
 				"ps.sort_by": "Sort by",
 				"ps.sort.modified": "Modified",
 				"ps.sort.created": "Created",
@@ -26436,8 +26484,348 @@ self.onmessage = async (e) => {
 		psSearchHelpBtn.addEventListener("click", (ev) => {
 			ev.preventDefault();
 			ev.stopPropagation();
-			if (searchHelpEl) { hideSearchHelp(); } else { showSearchHelp(); }
+			hideSearchHelp();
+			openQueryBuilder();
 		});
+	}
+
+	/* ── Query Builder Modal ── */
+	let qbOverlay = null;
+	let qbModal = null;
+	let qbState = {
+		tags: [],
+		taskOpen: false,
+		taskDone: false,
+		hasTask: false,
+		hasComment: false,
+		hasPermalink: false,
+		hasLink: false,
+		pinnedYes: false,
+		pinnedNo: false,
+		kindNote: false,
+		createdAfter: "",
+		createdBefore: "",
+		updatedAfter: "",
+		updatedBefore: ""
+	};
+
+	function resetQbState() {
+		qbState = {
+			tags: [],
+			taskOpen: false,
+			taskDone: false,
+			hasTask: false,
+			hasComment: false,
+			hasPermalink: false,
+			hasLink: false,
+			pinnedYes: false,
+			pinnedNo: false,
+			kindNote: false,
+			createdAfter: "",
+			createdBefore: "",
+			updatedAfter: "",
+			updatedBefore: ""
+		};
+	}
+
+	function buildQueryFromState() {
+		const parts = [];
+		qbState.tags.forEach(tag => parts.push(`tag:${tag}`));
+		if (qbState.taskOpen) parts.push("task:open");
+		if (qbState.taskDone) parts.push("task:done");
+		if (qbState.hasTask) parts.push("has:task");
+		if (qbState.hasComment) parts.push("has:comment");
+		if (qbState.hasPermalink) parts.push("has:permalink");
+		if (qbState.hasLink) parts.push("has:link");
+		if (qbState.pinnedYes) parts.push("pinned:yes");
+		if (qbState.pinnedNo) parts.push("pinned:no");
+		if (qbState.kindNote) parts.push("kind:note");
+		if (qbState.createdAfter) parts.push(`created:>${qbState.createdAfter}`);
+		if (qbState.createdBefore) parts.push(`created:<${qbState.createdBefore}`);
+		if (qbState.updatedAfter) parts.push(`updated:>${qbState.updatedAfter}`);
+		if (qbState.updatedBefore) parts.push(`updated:<${qbState.updatedBefore}`);
+		return parts.join(" ");
+	}
+
+	function updateQbPreview() {
+		const previewEl = qbModal ? qbModal.querySelector(".qb-preview-query") : null;
+		if (!previewEl) return;
+		const query = buildQueryFromState();
+		if (query) {
+			previewEl.textContent = query;
+			previewEl.classList.remove("qb-preview-empty");
+		} else {
+			previewEl.textContent = "—";
+			previewEl.classList.add("qb-preview-empty");
+		}
+	}
+
+	function renderQbChips() {
+		if (!qbModal) return;
+		qbModal.querySelectorAll(".qb-chip[data-qb]").forEach(chip => {
+			const key = chip.getAttribute("data-qb");
+			const isActive = qbState[key] === true;
+			chip.classList.toggle("is-active", isActive);
+		});
+		updateQbPreview();
+	}
+
+	function getAvailableTags() {
+		if (psState && Array.isArray(psState.tags)) {
+			return psState.tags.filter(t => t !== PS_PINNED_TAG).sort();
+		}
+		return [];
+	}
+
+	function openQueryBuilder() {
+		if (qbOverlay) { closeQueryBuilder(); return; }
+
+		resetQbState();
+
+		// Parse existing query from search input
+		const currentQuery = psSearchInput ? String(psSearchInput.value || "").trim() : "";
+		if (currentQuery) {
+			const tagMatches = currentQuery.match(/tag:(\S+)/g) || [];
+			tagMatches.forEach(m => {
+				const tag = m.replace("tag:", "");
+				if (tag && !qbState.tags.includes(tag)) qbState.tags.push(tag);
+			});
+			if (/task:open/i.test(currentQuery)) qbState.taskOpen = true;
+			if (/task:done/i.test(currentQuery)) qbState.taskDone = true;
+			if (/has:task/i.test(currentQuery)) qbState.hasTask = true;
+			if (/has:comment/i.test(currentQuery)) qbState.hasComment = true;
+			if (/has:permalink/i.test(currentQuery)) qbState.hasPermalink = true;
+			if (/has:link/i.test(currentQuery)) qbState.hasLink = true;
+			if (/pinned:yes/i.test(currentQuery)) qbState.pinnedYes = true;
+			if (/pinned:no/i.test(currentQuery)) qbState.pinnedNo = true;
+			if (/kind:note/i.test(currentQuery)) qbState.kindNote = true;
+			const createdAfterMatch = currentQuery.match(/created:>(\d{4}-\d{2}-\d{2})/);
+			if (createdAfterMatch) qbState.createdAfter = createdAfterMatch[1];
+			const createdBeforeMatch = currentQuery.match(/created:<(\d{4}-\d{2}-\d{2})/);
+			if (createdBeforeMatch) qbState.createdBefore = createdBeforeMatch[1];
+			const updatedAfterMatch = currentQuery.match(/updated:>(\d{4}-\d{2}-\d{2})/);
+			if (updatedAfterMatch) qbState.updatedAfter = updatedAfterMatch[1];
+			const updatedBeforeMatch = currentQuery.match(/updated:<(\d{4}-\d{2}-\d{2})/);
+			if (updatedBeforeMatch) qbState.updatedBefore = updatedBeforeMatch[1];
+		}
+
+		const availableTags = getAvailableTags();
+		const tagOptions = availableTags.map(tag => `<option value="${tag}">#${tag}</option>`).join("");
+
+		// Create overlay
+		qbOverlay = document.createElement("div");
+		qbOverlay.className = "qb-overlay";
+		qbOverlay.addEventListener("click", closeQueryBuilder);
+
+		// Create modal
+		qbModal = document.createElement("div");
+		qbModal.className = "qb-modal";
+		qbModal.innerHTML = `
+			<div class="qb-header">
+				<span class="qb-title" data-i18n="qb.title">Query Builder</span>
+				<button type="button" class="qb-close" data-i18n-aria="qb.close" aria-label="Close">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+				</button>
+			</div>
+			<div class="qb-body">
+				<!-- Tags Section -->
+				<div class="qb-section">
+					<div class="qb-section-title">
+						<svg class="qb-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+						<span data-i18n="qb.tags">Tags</span>
+					</div>
+					<select class="qb-tag-select" id="qbTagSelect">
+						<option value="" data-i18n="qb.select_tag">Select tag…</option>
+						${tagOptions}
+					</select>
+					<div class="qb-chips qb-selected-tags" style="margin-top:8px"></div>
+				</div>
+
+				<!-- Tasks Section -->
+				<div class="qb-section">
+					<div class="qb-section-title">
+						<svg class="qb-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+						<span data-i18n="qb.tasks">Tasks</span>
+					</div>
+					<div class="qb-chips">
+						<button type="button" class="qb-chip" data-qb="taskOpen"><span data-i18n="qb.task_open">Open tasks</span></button>
+						<button type="button" class="qb-chip" data-qb="taskDone"><span data-i18n="qb.task_done">Completed tasks</span></button>
+						<button type="button" class="qb-chip" data-qb="hasTask"><span data-i18n="qb.has_task">With tasks</span></button>
+					</div>
+				</div>
+
+				<!-- Status Section -->
+				<div class="qb-section">
+					<div class="qb-section-title">
+						<svg class="qb-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+						<span data-i18n="qb.status">Status</span>
+					</div>
+					<div class="qb-chips">
+						<button type="button" class="qb-chip" data-qb="hasComment"><span data-i18n="qb.has_comment">With comments</span></button>
+						<button type="button" class="qb-chip" data-qb="hasPermalink"><span data-i18n="qb.has_permalink">With permalink</span></button>
+						<button type="button" class="qb-chip" data-qb="hasLink"><span data-i18n="qb.has_link">With links</span></button>
+						<button type="button" class="qb-chip" data-qb="pinnedYes"><span data-i18n="qb.pinned_yes">Pinned</span></button>
+						<button type="button" class="qb-chip" data-qb="pinnedNo"><span data-i18n="qb.pinned_no">Not pinned</span></button>
+						<button type="button" class="qb-chip" data-qb="kindNote"><span data-i18n="qb.kind_note">Kind: Note</span></button>
+					</div>
+				</div>
+
+				<!-- Dates Section -->
+				<div class="qb-section">
+					<div class="qb-section-title">
+						<svg class="qb-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+						<span data-i18n="qb.dates">Dates</span>
+					</div>
+					<div class="qb-date-row">
+						<span class="qb-date-label" data-i18n="qb.created_after">Created after</span>
+						<input type="date" class="qb-date-input" id="qbCreatedAfter" value="${qbState.createdAfter}">
+					</div>
+					<div class="qb-date-row">
+						<span class="qb-date-label" data-i18n="qb.created_before">Created before</span>
+						<input type="date" class="qb-date-input" id="qbCreatedBefore" value="${qbState.createdBefore}">
+					</div>
+					<div class="qb-date-row">
+						<span class="qb-date-label" data-i18n="qb.updated_after">Updated after</span>
+						<input type="date" class="qb-date-input" id="qbUpdatedAfter" value="${qbState.updatedAfter}">
+					</div>
+					<div class="qb-date-row">
+						<span class="qb-date-label" data-i18n="qb.updated_before">Updated before</span>
+						<input type="date" class="qb-date-input" id="qbUpdatedBefore" value="${qbState.updatedBefore}">
+					</div>
+				</div>
+
+				<!-- Preview -->
+				<div class="qb-preview">
+					<div class="qb-preview-label" data-i18n="qb.preview">Preview</div>
+					<div class="qb-preview-query qb-preview-empty">—</div>
+				</div>
+			</div>
+			<div class="qb-footer">
+				<button type="button" class="qb-btn qb-btn-secondary" id="qbReset" data-i18n="qb.reset">Reset</button>
+				<button type="button" class="qb-btn qb-btn-primary" id="qbApply" data-i18n="qb.apply">Apply</button>
+			</div>
+		`;
+
+		document.body.appendChild(qbOverlay);
+		document.body.appendChild(qbModal);
+
+		// Apply translations
+		applyUiTranslations();
+
+		// Show with animation
+		requestAnimationFrame(() => {
+			qbOverlay.classList.add("is-visible");
+			qbModal.classList.add("is-visible");
+		});
+
+		// Render selected tags
+		renderQbSelectedTags();
+		renderQbChips();
+
+		// Event listeners
+		qbModal.querySelector(".qb-close").addEventListener("click", closeQueryBuilder);
+
+		// Tag select
+		const tagSelect = qbModal.querySelector("#qbTagSelect");
+		if (tagSelect) {
+			tagSelect.addEventListener("change", () => {
+				const val = tagSelect.value;
+				if (val && !qbState.tags.includes(val)) {
+					qbState.tags.push(val);
+					renderQbSelectedTags();
+					updateQbPreview();
+				}
+				tagSelect.value = "";
+			});
+		}
+
+		// Chip toggles
+		qbModal.querySelectorAll(".qb-chip[data-qb]").forEach(chip => {
+			chip.addEventListener("click", () => {
+				const key = chip.getAttribute("data-qb");
+				if (key && key in qbState) {
+					qbState[key] = !qbState[key];
+					renderQbChips();
+				}
+			});
+		});
+
+		// Date inputs
+		["qbCreatedAfter", "qbCreatedBefore", "qbUpdatedAfter", "qbUpdatedBefore"].forEach(id => {
+			const input = qbModal.querySelector(`#${id}`);
+			if (input) {
+				input.addEventListener("change", () => {
+					const key = id.replace("qb", "").replace(/^./, c => c.toLowerCase());
+					qbState[key] = input.value;
+					updateQbPreview();
+				});
+			}
+		});
+
+		// Reset button
+		qbModal.querySelector("#qbReset").addEventListener("click", () => {
+			resetQbState();
+			qbModal.querySelectorAll(".qb-date-input").forEach(inp => inp.value = "");
+			renderQbSelectedTags();
+			renderQbChips();
+		});
+
+		// Apply button
+		qbModal.querySelector("#qbApply").addEventListener("click", () => {
+			const query = buildQueryFromState();
+			if (psSearchInput) {
+				psSearchInput.value = query;
+				psSearchInput.dispatchEvent(new Event("input", { bubbles: true }));
+			}
+			closeQueryBuilder();
+		});
+
+		// Escape key
+		document.addEventListener("keydown", handleQbEscape);
+	}
+
+	function renderQbSelectedTags() {
+		if (!qbModal) return;
+		const container = qbModal.querySelector(".qb-selected-tags");
+		if (!container) return;
+		if (qbState.tags.length === 0) {
+			container.innerHTML = "";
+			return;
+		}
+		container.innerHTML = qbState.tags.map(tag => `
+			<button type="button" class="qb-chip is-active" data-qb-tag="${tag}">
+				<span>#${tag}</span>
+				<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;opacity:0.7"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+			</button>
+		`).join("");
+		container.querySelectorAll("[data-qb-tag]").forEach(chip => {
+			chip.addEventListener("click", () => {
+				const tag = chip.getAttribute("data-qb-tag");
+				qbState.tags = qbState.tags.filter(t => t !== tag);
+				renderQbSelectedTags();
+				updateQbPreview();
+			});
+		});
+	}
+
+	function handleQbEscape(ev) {
+		if (ev && ev.key === "Escape" && qbModal) {
+			closeQueryBuilder();
+		}
+	}
+
+	function closeQueryBuilder() {
+		document.removeEventListener("keydown", handleQbEscape);
+		if (qbOverlay) {
+			qbOverlay.classList.remove("is-visible");
+		}
+		if (qbModal) {
+			qbModal.classList.remove("is-visible");
+		}
+		setTimeout(() => {
+			if (qbOverlay) { qbOverlay.remove(); qbOverlay = null; }
+			if (qbModal) { qbModal.remove(); qbModal = null; }
+		}, 200);
 	}
 
 	/* ── Save Query Button ── */
