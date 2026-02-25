@@ -14421,6 +14421,35 @@ ${highlightThemeCss}
 					return;
 				}
 				const existingTab = findRoomTabByNoteId(id);
+				// If calendar panel is active, navigate to appropriate tab with the note
+				if (calendarPanelActive) {
+					let targetTab = existingTab;
+					if (!targetTab) {
+						// Try to find favorite tab (isStartup)
+						const favs = dedupeFavorites(loadFavorites());
+						const startupFav = favs.find((f) => f.isStartup);
+						if (startupFav) {
+							targetTab = { room: startupFav.room, key: startupFav.key };
+						} else {
+							// Fallback to first tab
+							const tabs = dedupeRoomTabs(loadRoomTabs());
+							if (tabs.length > 0) {
+								targetTab = { room: tabs[0].room, key: tabs[0].key };
+							}
+						}
+					}
+					if (targetTab) {
+						pendingCalendarNoteId = id;
+						goToRoomWithKey(targetTab.room, targetTab.key);
+						return;
+					}
+					// No tab available, just close calendar and apply note
+					const note = findNoteById(id);
+					if (!note) return;
+					setCalendarPanelActive(false);
+					applyNoteToEditor(note);
+					return;
+				}
 				if (
 					existingTab &&
 					!(existingTab.room === room && existingTab.key === key)
@@ -15692,6 +15721,8 @@ self.onmessage = async (e) => {
 	let roomTabLimitNoticeAt = 0;
 	let skipTabLimitCheck = false;
 	let calendarPanelActive = false;
+	/** Note ID to load after navigating away from calendar via PS note click */
+	let pendingCalendarNoteId = "";
 	let calendarRefreshTimer = 0;
 	let calendarSidebarCollapsed = false;
 	let calendarSettingsSyncTimer = 0;
@@ -24974,6 +25005,9 @@ self.onmessage = async (e) => {
 		syncPermanentLinkToggleUi();
 		/* Track whether the async path is active — only release lock after it settles */
 		let asyncRefreshActive = false;
+		// Handle pending note from calendar navigation
+		const calNavNoteId = pendingCalendarNoteId;
+		pendingCalendarNoteId = "";
 		if (textarea) {
 			const cached = loadRoomTabs().find(
 				(t) => t.room === room && t.key === key
@@ -24984,7 +25018,8 @@ self.onmessage = async (e) => {
 			const pinned = getRoomPinnedEntry(room, key);
 			const pinnedNoteId = pinned && pinned.noteId ? String(pinned.noteId || "") : "";
 			const pinnedText = pinned && !pinnedNoteId ? String(pinned.text || "") : "";
-			const resolvedNoteId = pinnedNoteId || cachedNoteId || boundNoteId;
+			// If navigating from calendar with a specific note, use that note
+			const resolvedNoteId = calNavNoteId || pinnedNoteId || cachedNoteId || boundNoteId;
 			if (pinnedNoteId && cachedNoteId !== pinnedNoteId) {
 				setRoomTabNoteId(room, key, pinnedNoteId);
 			}
@@ -24993,6 +25028,10 @@ self.onmessage = async (e) => {
 			}
 			if (!pinnedNoteId && !cachedNoteId && boundNoteId) {
 				setRoomTabNoteId(room, key, boundNoteId);
+			}
+			// Update tab binding for calendar-navigated note
+			if (calNavNoteId && !pinnedNoteId) {
+				setRoomTabNoteId(room, key, calNavNoteId);
 			}
 			const note = resolvedNoteId ? findNoteById(resolvedNoteId) : null;
 			const cachedText =
