@@ -21159,10 +21159,9 @@ self.onmessage = async (e) => {
 	async function deleteUpload(name) {
 		const safeName = String(name || "").trim();
 		if (!safeName) return;
-		if (!window.confirm(`Upload löschen?\n${safeName}`)) return;
 		try {
 			await api("/api/uploads/delete", {
-				method: "DELETE",
+				method: "POST",
 				body: JSON.stringify({ name: safeName }),
 			});
 			toast("Upload gelöscht.", "success");
