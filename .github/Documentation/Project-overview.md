@@ -490,7 +490,7 @@ interface AvailabilityData {
 ## Aktuelle Änderungen (2026-02-10)
 
 - **Query-Engine für Personal-Space-Notizen** `#ps` `#search` `#filter` `#query`: Erweiterte Suchsyntax im PS-Suchfeld ermöglicht strukturierte Abfragen über alle Notizen. Nutzer können Tasks, Tags, Datumsbereiche, Notiztypen und Pin-Status filtern und erhalten ein aggregiertes Ergebnis-Panel mit allen passenden Tasks.
-  - **Query-Parser** (`parseQueryTokens`): Zerlegt Sucheingabe in strukturierte Operatoren (`tag:`, `task:open`, `task:done`, `has:task`, `kind:`, `created:>`, `updated:<`, `pinned:`) und Freitext-Tokens. Unterstützt exakte Phrasen mit Anführungszeichen.
+  - **Query-Parser** (`parseQueryTokens`): Zerlegt Sucheingabe in strukturierte Operatoren (`tag:`, `task:open`, `task:done`, `has:task`, `has:link`, `kind:`, `created:>`, `updated:<`, `pinned:`) und Freitext-Tokens. Unterstützt exakte Phrasen mit Anführungszeichen.
   - **Task-Extraktor** (`extractNoteTasks`): Extrahiert Markdown-Checkboxen (`- [ ]` / `- [x]`) mit Labeltext aus Notizen.
   - **Strukturierte Suche** (`noteMatchesStructuredQuery`): Filtert Notizen anhand der Query-Operatoren – lazy Task-Parsing für Performance.
   - **Query-Result-Panel** (`renderQueryResults`): Aggregiert Tasks über alle gefilterten Notizen in einem glasmorphen Panel (`#psQueryResults`) oberhalb der Notizliste. Zeigt offene/erledigte Zähler, Tag-Badges und Quellnotiz-Referenz. Klick auf einen Task öffnet die zugehörige Notiz im Editor.
@@ -681,7 +681,7 @@ WICHTIG: initDb() MUSS vor allen DB-Zugriffen aufgerufen werden.
 - Umsetzung: `refreshPersonalSpace`, `applyPersonalSpaceFiltersAndRender`, `savePersonalSpaceNote`, `updateRoomTabsForNoteId`, `parseQueryTokens`, `noteMatchesStructuredQuery`, `renderQueryResults`, `schedulePsAutoRefresh`, `startPsPolling`.
 - Hinweis: Notizen werden per `filterRealNotes` auf gültige IDs geprüft und nach ID entdoppelt (neuestes `updatedAt`/`createdAt` bleibt); Tag-Änderungen aktualisieren bestehende Notizen statt neue anzulegen. Zusätzlich verhindert `psSaveNoteInFlight`-Mutex parallele manuelle Saves, `findNoteByText` erkennt inhaltlich identische Notizen (Volltext + Header-Fallback) vor dem Erstellen, `schedulePsAutoSave` stellt verlorene Note-IDs per Header-Sync wieder her, und der Server blockiert Duplikate per `contentHash`- und `title_hash`-Prüfung.
 - Cross-Device-Sync: `schedulePsAutoRefresh` ruft `refreshPersonalSpace()` bei Tab-Fokus und alle 60s auf (Debounce 5s). `offlinePutNotes` führt Full-Sync (clear + put) durch, damit die IndexedDB exakt dem Server-Stand entspricht und keine Ghost-Notizen entstehen.
-- Query-Engine: Das PS-Suchfeld unterstützt strukturierte Operatoren (`tag:`, `task:open`, `task:done`, `has:task`, `kind:`, `created:>`, `updated:<`, `pinned:`). Bei Task-Queries (`task:open`/`task:done`/`has:task`) wird ein aggregiertes Ergebnis-Panel über der Notizliste eingeblendet.
+- Query-Engine: Das PS-Suchfeld unterstützt strukturierte Operatoren (`tag:`, `task:open`, `task:done`, `has:task`, `has:link`, `kind:`, `created:>`, `updated:<`, `pinned:`). Bei Task-Queries (`task:open`/`task:done`/`has:task`) wird ein aggregiertes Ergebnis-Panel über der Notizliste eingeblendet. `has:link` filtert alle Notizen, die Markdown-Links `[text](url)`, URLs (`https://...`) oder `www.`-Präfix-Links enthalten.
 
 8) Settings/Tools (Uploads, Kalender, AI, Bildgenerierung)
 - Zweck: Uploads/Trash/Calendar/AI-Einstellungen verwalten; KI-gestützte Bildgenerierung.

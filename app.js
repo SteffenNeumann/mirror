@@ -5828,7 +5828,7 @@
 				"query.open": "offen",
 				"query.done": "erledigt",
 				"query.from_notes": "aus {n} Notizen",
-				"search.help": "⚡ Query-Operatoren:\n• tag:name – Notizen mit Tag filtern\n• task:open – offene Aufgaben anzeigen\n• task:done – erledigte Aufgaben\n• has:task – Notizen mit Aufgaben\n• has:comment – Notizen mit Kommentaren\n• has:permalink – Notizen mit aktivem Permalink\n• kind:note – nach Art filtern\n• pinned:yes / pinned:no\n• created:>2026-01-01\n• updated:<2026-02-01\n\nKombinierbar: task:open tag:projektA",
+				"search.help": "⚡ Query-Operatoren:\n• tag:name – Notizen mit Tag filtern\n• task:open – offene Aufgaben anzeigen\n• task:done – erledigte Aufgaben\n• has:task – Notizen mit Aufgaben\n• has:comment – Notizen mit Kommentaren\n• has:permalink – Notizen mit aktivem Permalink\n• has:link – Notizen mit Links (URLs oder Markdown-Links)\n• kind:note – nach Art filtern\n• pinned:yes / pinned:no\n• created:>2026-01-01\n• updated:<2026-02-01\n\nKombinierbar: task:open tag:projektA",
 				"ps.sort_by": "Sortieren nach",
 				"ps.sort.modified": "Geändert",
 				"ps.sort.created": "Erstellt",
@@ -6387,7 +6387,7 @@
 				"query.open": "open",
 				"query.done": "done",
 				"query.from_notes": "from {n} notes",
-				"search.help": "⚡ Query operators:\n• tag:name – filter notes by tag\n• task:open – show open tasks\n• task:done – completed tasks\n• has:task – notes with tasks\n• has:comment – notes with comments\n• has:permalink – notes with active permalink\n• kind:note – filter by type\n• pinned:yes / pinned:no\n• created:>2026-01-01\n• updated:<2026-02-01\n\nCombine freely: task:open tag:projectA",
+				"search.help": "⚡ Query operators:\n• tag:name – filter notes by tag\n• task:open – show open tasks\n• task:done – completed tasks\n• has:task – notes with tasks\n• has:comment – notes with comments\n• has:permalink – notes with active permalink\n• has:link – notes with links (URLs or Markdown links)\n• kind:note – filter by type\n• pinned:yes / pinned:no\n• created:>2026-01-01\n• updated:<2026-02-01\n\nCombine freely: task:open tag:projectA",
 				"ps.sort_by": "Sort by",
 				"ps.sort.modified": "Modified",
 				"ps.sort.created": "Created",
@@ -10288,6 +10288,8 @@
 				structured.push({ type: "hasComment" });
 			} else if (v === "has:permalink" || v === "has:permalinks" || v === "has:permanentlink") {
 				structured.push({ type: "hasPermalink" });
+			} else if (v === "has:link" || v === "has:links" || v === "has:url") {
+				structured.push({ type: "hasLink" });
 			} else if (v.startsWith("kind:")) {
 				structured.push({ type: "kind", value: v.slice(5).trim() });
 			} else if (v.startsWith("created:>")) {
@@ -10856,6 +10858,11 @@
 					if (!nid) return false;
 					const pins = loadRoomPinnedEntries();
 					return pins.some((p) => p.noteId === nid);
+				}
+				case "hasLink": {
+					// Detects Markdown links [text](url), bare URLs, or www. prefixed links
+					const linkRegex = /(\[[^\]]+\]\([^)]+\)|https?:\/\/[^\s<>"']+|www\.[^\s<>"']+)/i;
+					return linkRegex.test(text);
 				}
 				case "kind":
 					return kind === tok.value || (!kind && tok.value === "note");
