@@ -2968,78 +2968,78 @@
 			aria-hidden="true">
 			<div
 				data-role="identityModalBackdrop"
-				class="absolute inset-0 bg-slate-950/70 backdrop-blur-sm"></div>
+				class="identity-modal-backdrop absolute inset-0 backdrop-blur-sm"></div>
 			<div
 				role="dialog"
 				aria-modal="true"
 				aria-labelledby="identityModalTitle"
-				class="identity-modal-content relative w-full max-w-sm overflow-hidden rounded-2xl border border-white/10 bg-slate-950/80 shadow-soft backdrop-blur-md">
-				<div class="border-b border-white/10 px-5 py-4">
+				class="identity-modal-content relative w-full max-w-sm overflow-hidden rounded-2xl shadow-soft backdrop-blur-md">
+				<div class="identity-modal-header px-5 py-4">
 					<div class="flex items-center justify-between gap-3">
-						<h3 id="identityModalTitle" class="text-base font-semibold text-slate-100">
+						<h3 id="identityModalTitle" class="identity-modal-title text-base font-semibold">
 							Profil bearbeiten
 						</h3>
 						<button
 							id="identityModalClose"
 							type="button"
-							class="rounded-lg border border-white/10 bg-transparent px-2 py-1 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+							class="identity-modal-btn-secondary rounded-lg px-2 py-1 text-xs transition"
 							aria-label="Close">
 							Esc
 						</button>
 					</div>
 				</div>
-				<div class="p-5 space-y-5">
+				<div class="identity-modal-body p-5 space-y-5">
 					<!-- Preview -->
 					<div class="flex items-center justify-center">
 						<div id="identityPreview" class="identity-preview-chip">
 							<span id="identityPreviewAvatar" class="text-2xl">🦊</span>
 							<span id="identityPreviewDot" class="identity-preview-dot"></span>
-							<span id="identityPreviewName" class="text-sm font-medium text-slate-100">Nebula Fox</span>
+							<span id="identityPreviewName" class="identity-modal-title text-sm font-medium">Nebula Fox</span>
 						</div>
 					</div>
 					<!-- Name -->
 					<div>
-						<label for="identityNameInput" class="block text-xs font-medium text-slate-400 mb-1.5">Name</label>
+						<label for="identityNameInput" class="identity-modal-label block text-xs font-medium mb-1.5">Name</label>
 						<input
 							id="identityNameInput"
 							type="text"
 							maxlength="32"
 							autocomplete="off"
 							placeholder="Dein Anzeigename..."
-							class="w-full rounded-xl border border-white/10 bg-slate-950/50 px-3 py-2.5 text-sm text-slate-100 shadow-inner outline-none ring-1 ring-transparent transition placeholder:text-slate-500 focus:border-white/15 focus:ring-fuchsia-400/25" />
+							class="identity-modal-input w-full rounded-xl px-3 py-2.5 text-sm shadow-inner outline-none ring-1 ring-transparent transition" />
 					</div>
 					<!-- Avatar Selection -->
 					<div>
-						<label class="block text-xs font-medium text-slate-400 mb-2">Avatar</label>
+						<label class="identity-modal-label block text-xs font-medium mb-2">Avatar</label>
 						<div id="identityAvatarGrid" class="identity-avatar-grid"></div>
 					</div>
 					<!-- Color Selection -->
 					<div>
-						<label class="block text-xs font-medium text-slate-400 mb-2">Farbe</label>
+						<label class="identity-modal-label block text-xs font-medium mb-2">Farbe</label>
 						<div id="identityColorGrid" class="identity-color-grid"></div>
 					</div>
 					<!-- Randomize Button -->
 					<button
 						id="identityRandomize"
 						type="button"
-						class="w-full rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm text-slate-300 transition hover:bg-white/10 active:bg-white/15 flex items-center justify-center gap-2">
+						class="identity-modal-btn-secondary w-full rounded-xl px-3 py-2 text-sm transition flex items-center justify-center gap-2">
 						<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
 						</svg>
 						Zufällig generieren
 					</button>
 				</div>
-				<div class="flex items-center justify-end gap-2 border-t border-white/10 bg-slate-950/40 px-5 py-3">
+				<div class="identity-modal-footer flex items-center justify-end gap-2 px-5 py-3">
 					<button
 						id="identityModalCancel"
 						type="button"
-						class="rounded-lg border border-white/10 bg-transparent px-4 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10">
+						class="identity-modal-btn-secondary rounded-lg px-4 py-2 text-sm transition">
 						Abbrechen
 					</button>
 					<button
 						id="identityModalSave"
 						type="button"
-						class="rounded-lg border border-fuchsia-400/30 bg-fuchsia-500/20 px-4 py-2 text-sm font-medium text-fuchsia-100 transition hover:bg-fuchsia-500/30 active:bg-fuchsia-500/40">
+						class="identity-modal-btn-primary rounded-lg px-4 py-2 text-sm font-medium transition">
 						Speichern
 					</button>
 				</div>

@@ -7771,9 +7771,76 @@ body[data-theme="monoLight"] .cal-sel-badge {
 }
 
 /* ── Identity Modal ── */
+.identity-modal-backdrop {
+	background: var(--modal-backdrop, rgba(2, 6, 23, 0.7));
+}
+
 .identity-modal-content {
 	animation: identityModalIn 0.2s ease-out;
+	background: var(--panel-solid-bg, #0f0a1a);
+	border: 1px solid var(--modal-border, rgba(255, 255, 255, 0.1));
 }
+
+.identity-modal-header {
+	border-bottom: 1px solid var(--modal-border, rgba(255, 255, 255, 0.1));
+}
+
+.identity-modal-footer {
+	border-top: 1px solid var(--modal-border, rgba(255, 255, 255, 0.1));
+	background: var(--accent-bg-soft, rgba(255, 255, 255, 0.04));
+}
+
+.identity-modal-title {
+	color: var(--accent-text, rgba(255, 255, 255, 0.95));
+}
+
+.identity-modal-label {
+	color: var(--accent-text-soft, rgba(148, 163, 184, 0.9));
+}
+
+.identity-modal-input {
+	background: var(--accent-bg-soft, rgba(255, 255, 255, 0.06));
+	border: 1px solid var(--accent-border, rgba(255, 255, 255, 0.1));
+	color: var(--accent-text, rgba(255, 255, 255, 0.95));
+}
+
+.identity-modal-input::placeholder {
+	color: var(--accent-text-soft, rgba(148, 163, 184, 0.6));
+}
+
+.identity-modal-input:focus {
+	border-color: var(--accent-border-strong, rgba(255, 255, 255, 0.15));
+	box-shadow: 0 0 0 2px var(--accent-ring, rgba(217, 70, 239, 0.25));
+}
+
+.identity-modal-btn-secondary {
+	background: transparent;
+	border: 1px solid var(--modal-border, rgba(255, 255, 255, 0.1));
+	color: var(--accent-text-soft, rgba(148, 163, 184, 0.9));
+}
+
+.identity-modal-btn-secondary:hover {
+	background: var(--accent-bg-soft, rgba(255, 255, 255, 0.06));
+}
+
+.identity-modal-btn-secondary:active {
+	background: var(--accent-bg, rgba(255, 255, 255, 0.1));
+}
+
+.identity-modal-btn-primary {
+	background: var(--accent-bg, rgba(217, 70, 239, 0.2));
+	border: 1px solid var(--accent-border, rgba(217, 70, 239, 0.3));
+	color: var(--accent-text, rgba(255, 255, 255, 0.95));
+}
+
+.identity-modal-btn-primary:hover {
+	background: var(--accent-bg-hover, rgba(217, 70, 239, 0.3));
+}
+
+.identity-modal-btn-primary:active {
+	background: var(--accent-strong, rgba(217, 70, 239, 0.4));
+}
+
 @keyframes identityModalIn {
 	from {
 		opacity: 0;
@@ -7791,8 +7858,9 @@ body[data-theme="monoLight"] .cal-sel-badge {
 	gap: 0.5rem;
 	padding: 0.75rem 1.25rem;
 	border-radius: 999px;
-	border: 1px solid rgba(255, 255, 255, 0.12);
-	background: rgba(255, 255, 255, 0.06);
+	border: 1px solid var(--modal-border, rgba(255, 255, 255, 0.12));
+	background: var(--accent-bg-soft, rgba(255, 255, 255, 0.06));
+	color: var(--accent-text, rgba(255, 255, 255, 0.95));
 	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 	transition: all 0.2s ease;
 }
