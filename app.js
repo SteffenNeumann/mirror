@@ -20928,9 +20928,12 @@ self.onmessage = async (e) => {
 			const commonClass = isCommonDay(day) ? " calendar-day-common" : "";
 			const opacityClass = isCurrentMonth ? "" : " opacity-40";
 			const participantHtml = renderParticipantIndicators(day);
+			const weekdayIdx = idx % 7;
+			const weekdayShort = weekdayLabels[weekdayIdx] || "";
 			return `
 				<div class="calendar-day-cell calendar-day-cell-month min-h-[88px] border ${borderClass} ${availClass}${commonClass} cursor-pointer select-none transition-colors${opacityClass}${todayClass}${focusedClass}" data-calendar-day="${dk}">
 					<div class="flex items-center justify-between gap-1">
+						<span class="calendar-cell-weekday text-[9px] text-slate-500 uppercase mr-0.5">${weekdayShort}</span>
 						<span class="text-[11px] text-slate-400">${day.getDate()}</span>
 						${participantHtml}
 						<span class="calendar-day-indicator text-[9px] ml-auto">${dayAvail ? "✓" : "✕"}</span>

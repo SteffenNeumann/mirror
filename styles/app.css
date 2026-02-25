@@ -2152,7 +2152,22 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	background: rgba(255, 255, 255, 0.08);
 }
 
-/* ── Laptop Calendar Layout Fixes ── */
+/* ── Calendar Cell Weekday (visible under lg only) ── */
+.calendar-cell-weekday {
+	display: none;
+}
+@media (min-width: 640px) and (max-width: 1023px) {
+	/* Hide weekday header row when grid is not 7 cols */
+	.calendar-month-weekdays {
+		display: none !important;
+	}
+	/* Show weekday abbreviation inside each cell */
+	.calendar-cell-weekday {
+		display: inline;
+	}
+}
+
+/* ── Laptop Calendar Layout Fixes (lg+) ── */
 @media (min-width: 1024px) {
 	/* Fix: SidebarToggle z-index so it's clickable above day cells */
 	#calendarSidebarToggle {
@@ -2180,6 +2195,10 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	}
 	#calendarSidebar {
 		min-width: 260px;
+	}
+	/* Hide inline weekday when header is visible */
+	.calendar-cell-weekday {
+		display: none;
 	}
 }
 
