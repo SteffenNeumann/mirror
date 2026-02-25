@@ -14439,8 +14439,17 @@ ${highlightThemeCss}
 						}
 					}
 					if (targetTab) {
-						pendingCalendarNoteId = id;
-						goToRoomWithKey(targetTab.room, targetTab.key);
+						const isSameRoom = targetTab.room === room && targetTab.key === key;
+						setCalendarPanelActive(false);
+						if (isSameRoom) {
+							// Already in the target room, load note directly
+							const note = findNoteById(id);
+							if (note) applyNoteToEditor(note);
+						} else {
+							// Different room, navigate with pending note
+							pendingCalendarNoteId = id;
+							goToRoomWithKey(targetTab.room, targetTab.key);
+						}
 						return;
 					}
 					// No tab available, just close calendar and apply note
