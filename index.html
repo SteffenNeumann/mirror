@@ -1705,7 +1705,17 @@
 											<span data-i18n="calendar.sidebar.calendars">Kalender</span>
 										</div>
 										<div id="calendarLegend" class="mt-2 space-y-1.5"></div>
-										<div id="calendarStatus" class="mt-2 text-[11px] text-slate-500"></div>
+										<div class="mt-2 flex items-center justify-between gap-2">
+											<div id="calendarStatus" class="text-[11px] text-slate-500"></div>
+											<button
+												id="calendarRefresh"
+												type="button"
+												class="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border border-white/10 bg-transparent text-slate-400 transition hover:bg-white/5 active:bg-white/10"
+												title="Aktualisieren"
+												aria-label="Aktualisieren">
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><path d="M21 2v6h-6" /><path d="M3 12a9 9 0 0115-6.7L21 8" /><path d="M3 22v-6h6" /><path d="M21 12a9 9 0 01-15 6.7L3 16" /></svg>
+											</button>
+										</div>
 										<!-- Bundesland selector for holidays/vacations -->
 										<div id="calendarBundeslandWrap" class="cal-room-selector mt-3">
 											<label class="cal-room-label" for="calendarBundeslandSelect">
@@ -1717,18 +1727,6 @@
 												<div class="cal-room-select__menu" role="presentation"></div>
 											</div>
 										</div>
-									</div>
-
-									<!-- Action buttons (always visible, right-aligned) -->
-									<div class="flex justify-end gap-2">
-										<button
-											id="calendarRefresh"
-											type="button"
-											class="ml-auto inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-400 transition hover:bg-white/5 active:bg-white/10"
-											title="Aktualisieren"
-											aria-label="Aktualisieren">
-											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M21 2v6h-6" /><path d="M3 12a9 9 0 0115-6.7L21 8" /><path d="M3 22v-6h6" /><path d="M21 12a9 9 0 01-15 6.7L3 16" /></svg>
-										</button>
 									</div>
 
 									<!-- ═══ Section 2: Freie Zeiten (eigene) ═══ -->
