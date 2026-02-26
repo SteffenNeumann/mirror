@@ -7847,13 +7847,14 @@ body[data-theme="monoLight"] .cal-sel-badge {
 .calendar-day-today:hover {
 	background: var(--accent-bg-soft) !important;
 }
-/* Today badge on date number (first span in header row) */
-.calendar-day-today > div:first-child > span:first-child {
+/* Today badge on date number */
+.calendar-day-today .calendar-day-number {
 	background: var(--accent-strong);
-	color: var(--accent-text);
+	color: #fff;
 	padding: 0.1rem 0.4rem;
 	border-radius: 6px;
 	box-shadow: 0 0 12px rgba(217, 70, 239, 0.4);
+	font-weight: 600;
 }
 
 .calendar-day-available {
