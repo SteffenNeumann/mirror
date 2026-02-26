@@ -20226,11 +20226,13 @@ self.onmessage = async (e) => {
 		const participants = Array.from(availabilityByClient.entries());
 		const hasAnyData = hasOwnData || participants.length > 0;
 
-		// Show dropdown when in planning mode, shared room, or has data
-		const showDropdown = calendarMode === "planning" || isInSharedRoom() || hasAnyData;
+		// Always show dropdown in planning mode
+		const showDropdown = calendarMode === "planning";
 		if (calendarAvailabilityActions) {
 			calendarAvailabilityActions.classList.toggle("hidden", !showDropdown);
 		}
+		if (!showDropdown) return;
+		
 		if (!hasAnyData) {
 			// Show empty state message
 			menuEl.innerHTML = `<div class="cal-room-select__item cal-clear-item--empty">
@@ -20612,6 +20614,10 @@ self.onmessage = async (e) => {
 		try { hasOtherPresence = presenceState && presenceState.size > 1; } catch { /* TDZ guard */ }
 		const showPanel = calendarMode === "planning" || commonFreeSlotsSharing || isInSharedRoom() || hasOtherParticipants || hasOtherPresence;
 		calendarCommonFreeSlotsWrap.classList.toggle("hidden", !showPanel);
+		
+		// Always update the clear dropdown (independent of showPanel)
+		updateClearAvailabilityDropdown();
+		
 		if (!showPanel) return;
 
 		// Compute common selected days and per-participant data
@@ -20783,9 +20789,6 @@ self.onmessage = async (e) => {
 		}
 
 		calendarCommonFreeSlots.innerHTML = html;
-
-		// Update the clear availability dropdown
-		updateClearAvailabilityDropdown();
 	}
 
 	function renderCalendarPanel() {
