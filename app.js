@@ -20706,7 +20706,8 @@ self.onmessage = async (e) => {
 			calendarTitle.textContent = formatCalendarTitle(view, cursor);
 		}
 		if (calendarWeekLabel) {
-			const showWeek = view === "week" || view === "day" || view === "threedays";
+			// Only show separate KW label for day view (week/threedays have KW in title)
+			const showWeek = view === "day";
 			if (showWeek) {
 				calendarWeekLabel.textContent = formatUi(t("calendar.kw"), { n: getIsoWeekNumber(cursor) });
 				calendarWeekLabel.classList.remove("hidden");
