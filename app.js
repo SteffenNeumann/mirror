@@ -15832,6 +15832,11 @@ self.onmessage = async (e) => {
 			const stored = localStorage.getItem(CALENDAR_MODE_KEY);
 			if (stored === "planning" || stored === "personal") {
 				calendarMode = stored;
+				// Auto-enable sharing when loading in planning mode
+				// (mirrors the behavior of setCalendarMode)
+				if (calendarMode === "planning" && !commonFreeSlotsSharing) {
+					commonFreeSlotsSharing = true;
+				}
 			}
 		} catch {
 			// ignore
