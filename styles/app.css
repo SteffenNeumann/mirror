@@ -7861,33 +7861,15 @@ body[data-theme="monoLight"] .cal-sel-badge {
 .calendar-day-today:hover {
 	background: var(--accent-bg-soft) !important;
 }
-/* Today badge on date number - Theme-specific solid colors for contrast */
+/* Today badge on date number - uses same styling as cal-header-add-btn */
 .calendar-day-today .calendar-day-number {
-	background: var(--calendar-today-badge, #d946ef);
-	color: var(--calendar-today-badge-text, #fff);
+	background-color: var(--accent-strong);
+	color: var(--accent-text);
 	padding: 0.1rem 0.4rem;
 	border-radius: 6px;
-	box-shadow: 0 0 10px var(--calendar-today-glow, rgba(217, 70, 239, 0.5));
+	box-shadow: 0 0 10px var(--accent-ring-strong);
 	font-weight: 600;
 }
-/* Fuchsia (default) */
-body[data-theme="fuchsia"] { --calendar-today-badge: #d946ef; --calendar-today-badge-text: #fff; --calendar-today-glow: rgba(217, 70, 239, 0.5); }
-/* Cyan */
-body[data-theme="cyan"] { --calendar-today-badge: #0ea5e9; --calendar-today-badge-text: #fff; --calendar-today-glow: rgba(14, 165, 233, 0.5); }
-/* Emerald */
-body[data-theme="emerald"] { --calendar-today-badge: #10b981; --calendar-today-badge-text: #fff; --calendar-today-glow: rgba(16, 185, 129, 0.5); }
-/* Violet */
-body[data-theme="violet"] { --calendar-today-badge: #7c3aed; --calendar-today-badge-text: #fff; --calendar-today-glow: rgba(124, 58, 237, 0.5); }
-/* Coffee Dark */
-body[data-theme="coffeeDark"] { --calendar-today-badge: #c99b77; --calendar-today-badge-text: #1a1210; --calendar-today-glow: rgba(201, 155, 119, 0.5); }
-/* Bitter Dark */
-body[data-theme="bitterDark"] { --calendar-today-badge: #ff2301; --calendar-today-badge-text: #fff; --calendar-today-glow: rgba(255, 35, 1, 0.5); }
-/* Coffee Light */
-body[data-theme="coffeeLight"] { --calendar-today-badge: #a06035; --calendar-today-badge-text: #fff; --calendar-today-glow: rgba(160, 96, 53, 0.4); }
-/* Bitter Light */
-body[data-theme="bitterLight"] { --calendar-today-badge: #e02000; --calendar-today-badge-text: #fff; --calendar-today-glow: rgba(224, 32, 0, 0.4); }
-/* Mono Dark */
-body[data-theme="monoDark"] { --calendar-today-badge: #58a6ff; --calendar-today-badge-text: #0d1117; --calendar-today-glow: rgba(88, 166, 255, 0.5); }
 
 .calendar-day-available {
 	background: rgba(74, 222, 128, 0.015) !important;
