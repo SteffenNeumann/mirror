@@ -15329,6 +15329,7 @@ self.onmessage = async (e) => {
 		);
 
 		if (!psState.authed) {
+			document.body.setAttribute("data-ps-authed", "false");
 			psUnauthed.classList.remove("hidden");
 			psAuthed.classList.add("hidden");
 			if (psLogout) psLogout.classList.add("hidden");
@@ -15355,6 +15356,7 @@ self.onmessage = async (e) => {
 
 		psUnauthed.classList.add("hidden");
 		psAuthed.classList.remove("hidden");
+		document.body.setAttribute("data-ps-authed", "true");
 		if (psLogout) psLogout.classList.remove("hidden");
 		if (psEmail) psEmail.textContent = psState.email || "";
 		if (psUserAuthed) psUserAuthed.classList.remove("hidden");
@@ -15866,6 +15868,12 @@ self.onmessage = async (e) => {
 	}
 
 	function applyCalendarModeUI() {
+		// If user has no PS and is in personal mode, auto-switch to planning
+		const hasPS = psState && psState.authed;
+		if (!hasPS && calendarMode === "personal") {
+			calendarMode = "planning";
+			saveCalendarMode();
+		}
 		// Update body attribute for CSS-based section visibility
 		document.body.setAttribute("data-calendar-mode", calendarMode);
 		// Update tab active states
