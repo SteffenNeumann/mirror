@@ -73,13 +73,13 @@ body {
 	transition: box-shadow 0.3s ease;
 }
 #statusDot.bg-emerald-400 {
-	box-shadow: 0 0 8px rgba(52, 211, 153, 0.6), 0 0 16px rgba(52, 211, 153, 0.3);
+	box-shadow: 0 0 10px rgba(52, 211, 153, 0.8), 0 0 20px rgba(52, 211, 153, 0.5), 0 0 30px rgba(52, 211, 153, 0.25);
 }
 #statusDot.bg-amber-400 {
-	box-shadow: 0 0 8px rgba(251, 191, 36, 0.6), 0 0 16px rgba(251, 191, 36, 0.3);
+	box-shadow: 0 0 10px rgba(251, 191, 36, 0.8), 0 0 20px rgba(251, 191, 36, 0.5), 0 0 30px rgba(251, 191, 36, 0.25);
 }
 #statusDot.bg-slate-500 {
-	box-shadow: 0 0 6px rgba(100, 116, 139, 0.4);
+	box-shadow: 0 0 8px rgba(100, 116, 139, 0.5), 0 0 14px rgba(100, 116, 139, 0.3);
 }
 
 #selectionMenu {
