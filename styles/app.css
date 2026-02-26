@@ -7296,10 +7296,10 @@ body[data-theme="monoLight"] .participant-badge--partial {
 .cal-mode-tabs {
 	display: flex;
 	gap: 0.25rem;
-	padding: 0.375rem;
-	background: rgba(15, 23, 42, 0.5);
-	border-radius: 0.75rem;
-	border: 1px solid rgba(255, 255, 255, 0.06);
+	padding: 0.25rem;
+	background: transparent;
+	border-radius: 0.5rem;
+	border: 1px solid rgba(255, 255, 255, 0.08);
 	margin-bottom: 0.75rem;
 }
 
@@ -7309,15 +7309,15 @@ body[data-theme="monoLight"] .participant-badge--partial {
 	align-items: center;
 	justify-content: center;
 	gap: 0.5rem;
-	padding: 0.625rem 1rem;
+	padding: 0.5rem 0.75rem;
 	border: none;
-	border-radius: 0.5rem;
+	border-radius: 0.375rem;
 	background: transparent;
 	color: #64748b;
-	font-size: 0.8125rem;
+	font-size: 0.75rem;
 	font-weight: 500;
 	cursor: pointer;
-	transition: all 0.2s ease;
+	transition: all 0.15s ease;
 }
 
 .cal-mode-tab:hover:not(.cal-mode-tab--active) {
@@ -7326,16 +7326,16 @@ body[data-theme="monoLight"] .participant-badge--partial {
 }
 
 .cal-mode-tab--active {
-	background: rgba(255, 255, 255, 0.08);
-	color: #f1f5f9;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+	background: var(--accent-bg-soft, rgba(255, 255, 255, 0.06));
+	color: var(--accent-text-soft, #e2e8f0);
+	box-shadow: none;
 }
 
 .cal-mode-tab--active[data-calendar-mode="planning"] {
-	background: rgba(255, 255, 255, 0.08);
-	color: #f1f5f9;
+	background: var(--accent-bg-soft, rgba(255, 255, 255, 0.06));
+	color: var(--accent-text-soft, #e2e8f0);
 	border: none;
-	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+	box-shadow: none;
 }
 
 .cal-mode-tab-icon {
@@ -7691,7 +7691,7 @@ body[data-theme="monoLight"] .cal-wizard-step {
 	width: 100%;
 	border-radius: 0.375rem;
 	border: none;
-	padding: 0.375rem 1.5rem 0.375rem 0.5rem;
+	padding: 0.375rem 0.5rem;
 	font-size: 13px;
 	font-weight: 600;
 	outline: none;
@@ -7701,10 +7701,20 @@ body[data-theme="monoLight"] .cal-wizard-step {
 	background: transparent;
 	color: var(--dropdown-accent, var(--accent-strong));
 	user-select: none;
+	display: flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+
+.cal-room-select__chevron {
+	flex-shrink: 0;
+	margin-left: auto;
+	color: #64748b;
 }
 /* ── Custom dropdown: trigger label ── */
 .cal-room-select__label {
-	display: block;
+	flex: 1;
+	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
 	white-space: nowrap;
