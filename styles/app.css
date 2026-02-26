@@ -7864,11 +7864,20 @@ body[data-theme="monoLight"] .cal-sel-badge {
 /* Today badge on date number - uses same styling as cal-header-add-btn */
 .calendar-day-today .calendar-day-number {
 	background-color: var(--accent-strong);
-	color: #fff !important;
+	color: #fff;
 	padding: 0.1rem 0.4rem;
 	border-radius: 6px;
 	box-shadow: 0 0 10px var(--accent-ring-strong);
 	font-weight: 600;
+}
+/* Override text-slate-400 for today badge in monochrome themes */
+body[data-theme="coffeeLight"] .calendar-day-today .calendar-day-number,
+body[data-theme="coffeeDark"] .calendar-day-today .calendar-day-number,
+body[data-theme="bitterLight"] .calendar-day-today .calendar-day-number,
+body[data-theme="bitterDark"] .calendar-day-today .calendar-day-number,
+body[data-theme="monoLight"] .calendar-day-today .calendar-day-number,
+body[data-theme="monoDark"] .calendar-day-today .calendar-day-number {
+	color: #fff;
 }
 
 .calendar-day-available {
