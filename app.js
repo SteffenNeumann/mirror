@@ -19604,8 +19604,8 @@ self.onmessage = async (e) => {
 				if (Array.isArray(arr)) map.set(dk, new Set(arr));
 			}
 			manualFreeSlots = map;
-			commonFreeSlotsSharing = Boolean(data.sharing);
-			applyCommonFreeToggleUI();
+			// Sharing is always enabled - ignore server value
+			commonFreeSlotsSharing = true;
 			if (calendarPanelActive) {
 				renderMySelections();
 				renderCalendarPanel();
@@ -19874,7 +19874,8 @@ self.onmessage = async (e) => {
 			closeMenu();
 			// Reload slots for the selected room
 			manualFreeSlots = new Map();
-			commonFreeSlotsSharing = false;
+			// Sharing is always enabled
+			commonFreeSlotsSharing = true;
 			void syncRoomSlotsFromServer();
 		};
 
@@ -20091,9 +20092,9 @@ self.onmessage = async (e) => {
 		if (calendarPanelActive) {
 			renderCalendarPanel();
 		}
-		// Only send via WebSocket if sharing is enabled and connection is ready
-		if (!commonFreeSlotsSharing || !ws || ws.readyState !== 1) {
-			console.log("[AVAIL-DEBUG] WebSocket send SKIPPED - sharing:", commonFreeSlotsSharing, "ws:", ws?.readyState);
+		// Only send via WebSocket if connection is ready (sharing is always enabled)
+		if (!ws || ws.readyState !== 1) {
+			console.log("[AVAIL-DEBUG] WebSocket send SKIPPED - ws:", ws?.readyState);
 			// Mark as offline (not synced to server)
 			availabilitySyncStatus = "offline";
 			renderCommonFreeSlots(); // Re-render to show offline icon
@@ -25124,8 +25125,8 @@ self.onmessage = async (e) => {
 		calendarTargetKey = "";
 		// Reload room-specific calendar data from server
 		manualFreeSlots = new Map();
-		commonFreeSlotsSharing = false;
-		applyCommonFreeToggleUI();
+		// Sharing is always enabled
+		commonFreeSlotsSharing = true;
 		if (calendarPanelActive) {
 			renderCalendarRoomSelect();
 			renderMySelections();
