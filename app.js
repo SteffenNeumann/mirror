@@ -20623,6 +20623,9 @@ self.onmessage = async (e) => {
 			if (parts.length === 0) {
 				calendarCommonFreeParticipants.innerHTML = "";
 			} else {
+				// Get common days as a Set for quick lookup
+				const commonDaysSet = new Set(commonData.commonDays || []);
+				
 				// Build a clean grid showing each participant with their selected days
 				let gridHtml = '<div class="participants-days-overview">';
 				for (const [cid, p] of parts) {
@@ -20632,13 +20635,16 @@ self.onmessage = async (e) => {
 					const isSelf = cid === clientId;
 					const selfBadge = isSelf ? ' <span class="participant-self-badge">(du)</span>' : "";
 					
-					// Format day chips with click-to-navigate
+					// Format day chips with click-to-navigate, highlight common days
 					const dayChips = days.slice(0, 8).map(dk => {
 						const parts = dk.split("-");
 						if (parts.length !== 3) return `<span class="participant-day-chip">${escapeHtml(dk)}</span>`;
 						const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
 						const dayStr = d.toLocaleDateString(uiLang === "de" ? "de-DE" : "en-US", { weekday: "short", day: "numeric", month: "numeric" });
-						return `<span class="participant-day-chip participant-day-chip--clickable" data-goto-day="${escapeAttr(dk)}" title="Zum Tag springen">${escapeHtml(dayStr)}</span>`;
+						const isCommon = commonDaysSet.has(dk);
+						const commonClass = isCommon ? " participant-day-chip--common" : "";
+						const title = isCommon ? "Gemeinsamer Tag – Zum Tag springen" : "Zum Tag springen";
+						return `<span class="participant-day-chip participant-day-chip--clickable${commonClass}" data-goto-day="${escapeAttr(dk)}" title="${escapeAttr(title)}">${escapeHtml(dayStr)}</span>`;
 					}).join("");
 					const moreChip = days.length > 8 ? `<span class="participant-day-chip participant-day-chip--more">+${days.length - 8}</span>` : "";
 					
