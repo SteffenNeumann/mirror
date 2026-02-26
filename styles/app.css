@@ -7513,6 +7513,11 @@ body[data-ps-authed="false"] #calendarModeTabPersonal {
 	display: none;
 }
 
+/* Hide settings button in planning mode */
+body[data-calendar-mode="planning"] #calendarOpenSettings {
+	display: none;
+}
+
 /* Mode-based section visibility */
 [data-calendar-section="personal"] {
 	display: block;
