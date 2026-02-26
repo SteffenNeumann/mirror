@@ -2222,10 +2222,10 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	}
 	/* Fix: Calendar sidebar gets more space */
 	#calendarLayout {
-		grid-template-columns: minmax(0, 1fr) 260px;
+		grid-template-columns: minmax(0, 1fr) 320px;
 	}
 	#calendarSidebar {
-		min-width: 260px;
+		min-width: 320px;
 	}
 	/* Fix: Ensure hidden class works for toggle */
 	#calendarSidebar.hidden {
@@ -6954,6 +6954,64 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	background: rgba(16, 185, 129, 0.15);
 	color: #34d399;
 	border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+/* ── Participants Days Overview Grid ── */
+.participants-days-overview {
+	display: flex;
+	flex-direction: column;
+	gap: 0.75rem;
+}
+.participant-row {
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 8px;
+	padding: 0.625rem;
+}
+.participant-header {
+	display: flex;
+	align-items: center;
+	gap: 0.5rem;
+	margin-bottom: 0.5rem;
+}
+.participant-header .chip-dot {
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	flex-shrink: 0;
+}
+.participant-name {
+	font-size: 11px;
+	font-weight: 500;
+	color: #e2e8f0;
+}
+.participant-self-badge {
+	font-size: 9px;
+	color: #64748b;
+	margin-left: 0.25rem;
+}
+.participant-count {
+	font-size: 9px;
+	color: #64748b;
+	margin-left: auto;
+}
+.participant-no-days {
+	font-size: 10px;
+	color: #64748b;
+	font-style: italic;
+}
+
+/* Light theme overrides for participants overview */
+body[data-theme="coffeeLight"] .participant-row,
+body[data-theme="bitterLight"] .participant-row,
+body[data-theme="monoLight"] .participant-row {
+	background: rgba(0, 0, 0, 0.02);
+	border-color: rgba(0, 0, 0, 0.08);
+}
+body[data-theme="coffeeLight"] .participant-name,
+body[data-theme="bitterLight"] .participant-name,
+body[data-theme="monoLight"] .participant-name {
+	color: var(--dropdown-text);
 }
 
 /* ── Participant days grid layout ── */

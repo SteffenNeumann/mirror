@@ -20613,25 +20613,47 @@ self.onmessage = async (e) => {
 		// Compute common selected days and per-participant data
 		const commonData = computeCommonSelectedDays();
 
-		// Update participants chips with day count indicator
+		// Update participants grid with day chips
 		if (calendarCommonFreeParticipants) {
 			const parts = Array.from(availabilityByClient.entries());
 			if (parts.length === 0) {
 				calendarCommonFreeParticipants.innerHTML = "";
 			} else {
-				calendarCommonFreeParticipants.innerHTML = parts
-					.map(([cid, p]) => {
-						const dotColor = escapeAttr(p.color || "#94a3b8");
-						const name = escapeHtml(p.name || "Guest");
-						const dayCount = Array.isArray(p.selectedDays) ? p.selectedDays.length : 0;
-						const isSelf = cid === clientId;
-						const selfBadge = isSelf ? ' <span class="text-[9px] text-slate-500">(du)</span>' : "";
-						const dayBadge = dayCount > 0
-							? ` <span class="text-[9px] text-emerald-400">${dayCount} ${dayCount === 1 ? "Tag" : "Tage"}</span>`
-							: ' <span class="text-[9px] text-slate-500">0 Tage</span>';
-						return `<span class="common-slot-chip"><span class="chip-dot" style="background:${dotColor}"></span>${name}${selfBadge}${dayBadge}</span>`;
-					})
-					.join("");
+				// Build a clean grid showing each participant with their selected days
+				let gridHtml = '<div class="participants-days-overview">';
+				for (const [cid, p] of parts) {
+					const dotColor = escapeAttr(p.color || "#94a3b8");
+					const name = escapeHtml(p.name || "Guest");
+					const days = Array.isArray(p.selectedDays) ? p.selectedDays : [];
+					const isSelf = cid === clientId;
+					const selfBadge = isSelf ? ' <span class="participant-self-badge">(du)</span>' : "";
+					
+					// Format day chips
+					const dayChips = days.slice(0, 8).map(dk => {
+						const parts = dk.split("-");
+						if (parts.length !== 3) return `<span class="participant-day-chip">${escapeHtml(dk)}</span>`;
+						const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+						const dayStr = d.toLocaleDateString(uiLang === "de" ? "de-DE" : "en-US", { weekday: "short", day: "numeric", month: "numeric" });
+						return `<span class="participant-day-chip">${escapeHtml(dayStr)}</span>`;
+					}).join("");
+					const moreChip = days.length > 8 ? `<span class="participant-day-chip participant-day-chip--more">+${days.length - 8}</span>` : "";
+					
+					const noDaysHint = days.length === 0 
+						? '<span class="participant-no-days">Noch keine Tage gewählt</span>' 
+						: "";
+					
+					gridHtml += `
+						<div class="participant-row">
+							<div class="participant-header">
+								<span class="chip-dot" style="background:${dotColor}"></span>
+								<span class="participant-name">${name}${selfBadge}</span>
+								<span class="participant-count">${days.length} ${days.length === 1 ? "Tag" : "Tage"}</span>
+							</div>
+							<div class="participant-days-grid">${dayChips}${moreChip}${noDaysHint}</div>
+						</div>`;
+				}
+				gridHtml += '</div>';
+				calendarCommonFreeParticipants.innerHTML = gridHtml;
 			}
 		}
 
@@ -20692,32 +20714,6 @@ self.onmessage = async (e) => {
 			html += `<div class="common-days-section mb-2">
 				<div class="text-[11px] text-slate-500">${escapeHtml(t("calendar.common.others_no_selection"))}</div>
 			</div>`;
-		}
-
-		// Per-participant selected days - always show when participants have selected days
-		const participantsWithDays = commonData.perParticipant.filter(p => p.days.length > 0 && p.clientId !== clientId);
-		if (participantsWithDays.length > 0) {
-			html += `<div class="common-days-section mb-2">
-				<div class="text-[10px] font-medium uppercase tracking-wider text-slate-400 mb-1">${escapeHtml(t("calendar.common.participant_days"))}</div>`;
-			for (const p of participantsWithDays) {
-				const dayChips = p.days.slice(0, 10).map(dk => {
-					const parts = dk.split("-");
-					if (parts.length !== 3) return `<span class="participant-day-chip">${dk}</span>`;
-					const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-					const dayStr = d.toLocaleDateString(uiLang === "de" ? "de-DE" : "en-US", { weekday: "short", day: "numeric", month: "numeric" });
-					return `<span class="participant-day-chip">${escapeHtml(dayStr)}</span>`;
-				}).join("");
-				const moreChip = p.days.length > 10 ? `<span class="participant-day-chip participant-day-chip--more">+${p.days.length - 10}</span>` : "";
-				html += `<div class="participant-days-row mb-2">
-					<div class="flex items-center gap-1.5 mb-1">
-						<span class="chip-dot" style="background:${escapeAttr(p.color)}"></span>
-						<span class="text-[11px] text-slate-300 font-medium">${escapeHtml(p.name)}</span>
-						<span class="participant-day-count">${p.days.length} ${p.days.length === 1 ? "Tag" : "Tage"}</span>
-					</div>
-					<div class="participant-days-grid">${dayChips}${moreChip}</div>
-				</div>`;
-			}
-			html += `</div>`;
 		}
 
 		// Section 2: Time slots (existing logic)
