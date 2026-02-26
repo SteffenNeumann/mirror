@@ -7850,15 +7850,10 @@ body[data-theme="monoLight"] .cal-sel-badge {
 /* Today badge on date number (first span in header row) */
 .calendar-day-today > div:first-child > span:first-child {
 	background: var(--accent-strong);
-	color: #fff;
+	color: var(--accent-text);
 	padding: 0.1rem 0.4rem;
 	border-radius: 6px;
 	box-shadow: 0 0 12px rgba(217, 70, 239, 0.4);
-}
-/* Light themes: darker text on badge */
-body[data-theme="coffeeLight"] .calendar-day-today > div:first-child > span:first-child,
-body[data-theme="bitterLight"] .calendar-day-today > div:first-child > span:first-child {
-	color: #1e1b4b;
 }
 
 .calendar-day-available {
