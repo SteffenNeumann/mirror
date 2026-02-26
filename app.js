@@ -19880,11 +19880,20 @@ self.onmessage = async (e) => {
 				if (hit && labelEl) labelEl.textContent = hit.textContent;
 			}
 			closeMenu();
+			// Clear other participants' availability data (they're for a different room)
+			// Keep only the current user's data
+			const myData = availabilityByClient.get(String(clientId));
+			availabilityByClient.clear();
+			if (myData) availabilityByClient.set(String(clientId), myData);
+			_cachedCommonDays = null;
 			// Reload slots for the selected room
 			manualFreeSlots = new Map();
 			// Sharing is always enabled
 			commonFreeSlotsSharing = true;
 			void syncRoomSlotsFromServer();
+			// Re-render UI
+			renderCommonFreeSlots();
+			if (calendarPanelActive) renderCalendarPanel();
 		};
 
 		calendarRoomSelect.addEventListener("click", (e) => {
