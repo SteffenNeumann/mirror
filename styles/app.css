@@ -7273,9 +7273,9 @@ body[data-theme="monoLight"] .cal-source-check {
 	white-space: nowrap;
 }
 .participant-badge--all {
-	background: rgba(74, 222, 128, 0.15);
-	color: #4ade80;
-	border: 1px solid rgba(74, 222, 128, 0.3);
+	background: var(--accent-bg);
+	color: var(--accent-text);
+	border: 1px solid var(--accent-border-strong);
 }
 .participant-badge--partial {
 	background: rgba(251, 191, 36, 0.15);
@@ -7284,7 +7284,7 @@ body[data-theme="monoLight"] .cal-source-check {
 }
 /* Highlight day cells where all participants are available */
 .calendar-day-cell:has(.participant-badge--all) {
-	background: rgba(74, 222, 128, 0.05);
+	background: var(--accent-bg);
 }
 .calendar-day-cell:has(.participant-badge--partial) {
 	background: rgba(251, 191, 36, 0.03);
@@ -7303,9 +7303,9 @@ body[data-theme="monoLight"] .participant-dot:hover {
 body[data-theme="coffeeLight"] .participant-badge--all,
 body[data-theme="bitterLight"] .participant-badge--all,
 body[data-theme="monoLight"] .participant-badge--all {
-	background: rgba(16, 185, 129, 0.12);
-	color: #059669;
-	border-color: rgba(16, 185, 129, 0.4);
+	background: var(--accent-bg);
+	color: var(--accent-text);
+	border-color: var(--accent-border-strong);
 }
 body[data-theme="coffeeLight"] .participant-badge--partial,
 body[data-theme="bitterLight"] .participant-badge--partial,
