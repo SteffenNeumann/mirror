@@ -7326,16 +7326,16 @@ body[data-theme="monoLight"] .participant-badge--partial {
 }
 
 .cal-mode-tab--active {
-	border-color: rgba(232, 121, 249, 0.4);
-	background: rgba(217, 70, 239, 0.15);
-	color: #f5d0fe;
+	border-color: var(--accent-border-strong, rgba(232, 121, 249, 0.4));
+	background: var(--accent-bg, rgba(217, 70, 239, 0.15));
+	color: var(--accent-text, #f5d0fe);
 	box-shadow: none;
 }
 
 .cal-mode-tab--active[data-calendar-mode="planning"] {
-	border-color: rgba(232, 121, 249, 0.4);
-	background: rgba(217, 70, 239, 0.15);
-	color: #f5d0fe;
+	border-color: var(--accent-border-strong, rgba(232, 121, 249, 0.4));
+	background: var(--accent-bg, rgba(217, 70, 239, 0.15));
+	color: var(--accent-text, #f5d0fe);
 	box-shadow: none;
 }
 
