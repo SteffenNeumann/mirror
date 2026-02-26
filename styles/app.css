@@ -6956,9 +6956,9 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	padding: 0.125rem 0.375rem;
 	border-radius: 4px;
 	font-size: 10px;
-	background: rgba(16, 185, 129, 0.15);
-	color: #34d399;
-	border: 1px solid rgba(16, 185, 129, 0.3);
+	background: var(--accent-bg);
+	color: var(--accent-text-soft);
+	border: 1px solid var(--accent-border-strong);
 }
 
 /* ── Participants Days Overview Grid ── */
@@ -7050,16 +7050,16 @@ body[data-theme="monoLight"] .participant-name {
 .participant-day-chip--clickable:active {
 	transform: scale(0.96);
 }
-/* Gemeinsame Tage - grüne Hervorhebung */
+/* Gemeinsame Tage - Akzentfarben-Hervorhebung */
 .participant-day-chip--common {
-	background: rgba(16, 185, 129, 0.2);
-	border-color: rgba(16, 185, 129, 0.5);
-	color: #34d399;
+	background: var(--accent-bg);
+	border-color: var(--accent-border-strong);
+	color: var(--accent-text-soft);
 }
 .participant-day-chip--common:hover {
-	background: rgba(16, 185, 129, 0.35);
-	border-color: rgba(16, 185, 129, 0.7);
-	color: #6ee7b7;
+	background: var(--accent-bg-hover);
+	border-color: var(--accent-border-strong);
+	color: var(--accent-text);
 }
 .participant-day-chip--more {
 	background: rgba(255, 255, 255, 0.03);
@@ -7090,16 +7090,16 @@ body[data-theme="monoLight"] .participant-day-chip--clickable:hover {
 body[data-theme="coffeeLight"] .participant-day-chip--common,
 body[data-theme="bitterLight"] .participant-day-chip--common,
 body[data-theme="monoLight"] .participant-day-chip--common {
-	background: rgba(16, 185, 129, 0.15);
-	border-color: rgba(16, 185, 129, 0.4);
-	color: #059669;
+	background: var(--accent-bg);
+	border-color: var(--accent-border-strong);
+	color: var(--accent-text-soft);
 }
 body[data-theme="coffeeLight"] .participant-day-chip--common:hover,
 body[data-theme="bitterLight"] .participant-day-chip--common:hover,
 body[data-theme="monoLight"] .participant-day-chip--common:hover {
-	background: rgba(16, 185, 129, 0.25);
-	border-color: rgba(16, 185, 129, 0.6);
-	color: #047857;
+	background: var(--accent-bg-hover);
+	border-color: var(--accent-border-strong);
+	color: var(--accent-text);
 }
 
 /* ── Light theme overrides for Gemeinsame Planung section ── */
