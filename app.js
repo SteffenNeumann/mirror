@@ -20226,12 +20226,16 @@ self.onmessage = async (e) => {
 		const participants = Array.from(availabilityByClient.entries());
 		const hasAnyData = hasOwnData || participants.length > 0;
 
-		// Hide if no data at all
+		// Show dropdown when in planning mode, shared room, or has data
+		const showDropdown = calendarMode === "planning" || isInSharedRoom() || hasAnyData;
 		if (calendarAvailabilityActions) {
-			calendarAvailabilityActions.classList.toggle("hidden", !hasAnyData);
+			calendarAvailabilityActions.classList.toggle("hidden", !showDropdown);
 		}
 		if (!hasAnyData) {
-			menuEl.innerHTML = "";
+			// Show empty state message
+			menuEl.innerHTML = `<div class="cal-room-select__item cal-clear-item--empty">
+				<span class="text-slate-500 text-[10px]">${escapeHtml(t("calendar.availability.no_data") || "Keine Daten zum Löschen")}</span>
+			</div>`;
 			return;
 		}
 
