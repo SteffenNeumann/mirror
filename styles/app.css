@@ -7033,6 +7033,18 @@ body[data-theme="monoLight"] .participant-name {
 	border: 1px solid rgba(255, 255, 255, 0.1);
 	white-space: nowrap;
 }
+.participant-day-chip--clickable {
+	cursor: pointer;
+	transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+.participant-day-chip--clickable:hover {
+	background: rgba(59, 130, 246, 0.2);
+	border-color: rgba(59, 130, 246, 0.4);
+	color: #93c5fd;
+}
+.participant-day-chip--clickable:active {
+	transform: scale(0.96);
+}
 .participant-day-chip--more {
 	background: rgba(255, 255, 255, 0.03);
 	color: #64748b;
@@ -7051,6 +7063,13 @@ body[data-theme="monoLight"] .participant-day-chip {
 	background: rgba(0, 0, 0, 0.05);
 	color: var(--dropdown-text);
 	border-color: rgba(0, 0, 0, 0.1);
+}
+body[data-theme="coffeeLight"] .participant-day-chip--clickable:hover,
+body[data-theme="bitterLight"] .participant-day-chip--clickable:hover,
+body[data-theme="monoLight"] .participant-day-chip--clickable:hover {
+	background: rgba(59, 130, 246, 0.15);
+	border-color: rgba(59, 130, 246, 0.35);
+	color: #2563eb;
 }
 
 /* ── Light theme overrides for Gemeinsame Planung section ── */

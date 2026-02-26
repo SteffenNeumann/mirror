@@ -20628,13 +20628,13 @@ self.onmessage = async (e) => {
 					const isSelf = cid === clientId;
 					const selfBadge = isSelf ? ' <span class="participant-self-badge">(du)</span>' : "";
 					
-					// Format day chips
+					// Format day chips with click-to-navigate
 					const dayChips = days.slice(0, 8).map(dk => {
 						const parts = dk.split("-");
 						if (parts.length !== 3) return `<span class="participant-day-chip">${escapeHtml(dk)}</span>`;
 						const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
 						const dayStr = d.toLocaleDateString(uiLang === "de" ? "de-DE" : "en-US", { weekday: "short", day: "numeric", month: "numeric" });
-						return `<span class="participant-day-chip">${escapeHtml(dayStr)}</span>`;
+						return `<span class="participant-day-chip participant-day-chip--clickable" data-goto-day="${escapeAttr(dk)}" title="Zum Tag springen">${escapeHtml(dayStr)}</span>`;
 					}).join("");
 					const moreChip = days.length > 8 ? `<span class="participant-day-chip participant-day-chip--more">+${days.length - 8}</span>` : "";
 					
@@ -27469,6 +27469,21 @@ self.onmessage = async (e) => {
 	if (calendarOpenSettingsBtn) {
 		calendarOpenSettingsBtn.addEventListener("click", () => {
 			openSettingsAt("calendar");
+		});
+	}
+	// Click handler for participant day chips - navigate to that day
+	if (calendarCommonFreeParticipants) {
+		calendarCommonFreeParticipants.addEventListener("click", (e) => {
+			const chip = e.target.closest("[data-goto-day]");
+			if (!chip) return;
+			const dk = chip.dataset.gotoDay;
+			if (!dk) return;
+			const parts = dk.split("-");
+			if (parts.length !== 3) return;
+			const day = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+			calendarState.cursor = day;
+			calendarState.view = "day";
+			renderCalendarPanel();
 		});
 	}
 	if (calendarEventClose) {
