@@ -27482,7 +27482,7 @@ self.onmessage = async (e) => {
 			if (parts.length !== 3) return;
 			const day = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
 			calendarState.cursor = day;
-			calendarState.view = "day";
+			calendarState.view = "month";
 			renderCalendarPanel();
 		});
 	}
