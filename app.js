@@ -15748,7 +15748,7 @@ self.onmessage = async (e) => {
 	let calendarSettingsSyncInFlight = false;
 	let calendarSettingsSyncQueued = false;
 	let calendarFreeSlotsVisible = true;
-	let commonFreeSlotsSharing = false;
+	let commonFreeSlotsSharing = true;
 	let roomSlotsSyncTimer = 0;
 	let roomSlotsSyncInFlight = false;
 	let roomSlotsSyncQueued = false;

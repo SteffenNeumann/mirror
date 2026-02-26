@@ -7332,9 +7332,10 @@ body[data-theme="monoLight"] .participant-badge--partial {
 }
 
 .cal-mode-tab--active[data-calendar-mode="planning"] {
-	background: var(--accent-bg, rgba(16, 185, 129, 0.15));
-	color: var(--accent-text-soft, #34d399);
-	border: 1px solid var(--accent-border, rgba(16, 185, 129, 0.25));
+	background: rgba(255, 255, 255, 0.08);
+	color: #f1f5f9;
+	border: none;
+	box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .cal-mode-tab-icon {
@@ -7372,9 +7373,12 @@ body[data-calendar-mode="planning"] #calendarGrid {
 
 /* ═══ Wizard UI for Planning Mode ═══ */
 .cal-wizard {
-	display: flex;
 	flex-direction: column;
 	gap: 0;
+}
+
+body[data-calendar-mode="planning"] .cal-wizard {
+	display: flex;
 }
 
 .cal-wizard-step {
@@ -7423,7 +7427,7 @@ body[data-calendar-mode="planning"] #calendarGrid {
 }
 
 .cal-wizard-step-content {
-	margin-left: 1.75rem;
+	margin-left: 0;
 }
 
 .cal-wizard-selections {
