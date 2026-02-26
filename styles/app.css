@@ -7505,76 +7505,76 @@ body[data-calendar-mode="planning"] .cal-wizard {
 
 /* Light theme adjustments */
 body[data-theme="coffeeLight"] .cal-mode-tab {
-	background: rgba(0, 0, 0, 0.04);
-	border-color: rgba(176, 112, 73, 0.3);
-	color: #5d4037;
+	background: rgba(0, 0, 0, 0.04) !important;
+	border-color: rgba(176, 112, 73, 0.3) !important;
+	color: #5d4037 !important;
 }
 
 body[data-theme="coffeeLight"] .cal-mode-tab--active {
-	border-color: #b07049;
-	background: rgba(176, 112, 73, 0.15);
-	color: #3b2a21;
+	border-color: #b07049 !important;
+	background: rgba(176, 112, 73, 0.15) !important;
+	color: #3b2a21 !important;
 }
 
 body[data-theme="bitterLight"] .cal-mode-tab {
-	background: rgba(0, 0, 0, 0.04);
-	border-color: rgba(255, 35, 1, 0.3);
-	color: #7f1d1d;
+	background: rgba(0, 0, 0, 0.04) !important;
+	border-color: rgba(255, 35, 1, 0.3) !important;
+	color: #7f1d1d !important;
 }
 
 body[data-theme="bitterLight"] .cal-mode-tab--active {
-	border-color: rgba(255, 35, 1, 0.5);
-	background: rgba(255, 35, 1, 0.12);
-	color: #991b1b;
+	border-color: rgba(255, 35, 1, 0.5) !important;
+	background: rgba(255, 35, 1, 0.12) !important;
+	color: #991b1b !important;
 }
 
 body[data-theme="monoLight"] .cal-mode-tab {
-	background: rgba(0, 0, 0, 0.04);
-	border-color: rgba(0, 121, 212, 0.3);
-	color: #1e3a5f;
+	background: rgba(0, 0, 0, 0.04) !important;
+	border-color: rgba(0, 121, 212, 0.3) !important;
+	color: #1e3a5f !important;
 }
 
 body[data-theme="monoLight"] .cal-mode-tab--active {
-	border-color: rgba(0, 121, 212, 0.5);
-	background: rgba(0, 121, 212, 0.12);
-	color: #0369a1;
+	border-color: rgba(0, 121, 212, 0.5) !important;
+	background: rgba(0, 121, 212, 0.12) !important;
+	color: #0369a1 !important;
 }
 
 /* Dark theme adjustments */
 body[data-theme="coffeeDark"] .cal-mode-tab {
-	background: rgba(24, 18, 14, 0.4);
-	border-color: rgba(201, 155, 119, 0.3);
-	color: #d4c4b0;
+	background: rgba(24, 18, 14, 0.4) !important;
+	border-color: rgba(201, 155, 119, 0.3) !important;
+	color: #d4c4b0 !important;
 }
 
 body[data-theme="coffeeDark"] .cal-mode-tab--active {
-	border-color: var(--coffee-accent);
-	background: rgba(201, 155, 119, 0.15);
-	color: var(--coffee-accent);
+	border-color: var(--coffee-accent) !important;
+	background: rgba(201, 155, 119, 0.15) !important;
+	color: var(--coffee-accent) !important;
 }
 
 body[data-theme="bitterDark"] .cal-mode-tab {
-	background: rgba(20, 14, 14, 0.4);
-	border-color: rgba(255, 35, 1, 0.3);
-	color: #e5d0d0;
+	background: rgba(20, 14, 14, 0.4) !important;
+	border-color: rgba(255, 35, 1, 0.3) !important;
+	color: #e5d0d0 !important;
 }
 
 body[data-theme="bitterDark"] .cal-mode-tab--active {
-	border-color: var(--bitter-accent);
-	background: rgba(255, 35, 1, 0.15);
-	color: var(--bitter-accent);
+	border-color: var(--bitter-accent) !important;
+	background: rgba(255, 35, 1, 0.15) !important;
+	color: var(--bitter-accent) !important;
 }
 
 body[data-theme="monoDark"] .cal-mode-tab {
-	background: rgba(13, 17, 23, 0.4);
-	border-color: rgba(0, 121, 212, 0.3);
-	color: #c9d1d9;
+	background: rgba(13, 17, 23, 0.4) !important;
+	border-color: rgba(0, 121, 212, 0.3) !important;
+	color: #c9d1d9 !important;
 }
 
 body[data-theme="monoDark"] .cal-mode-tab--active {
-	border-color: var(--mono-accent);
-	background: rgba(0, 121, 212, 0.15);
-	color: var(--mono-accent);
+	border-color: var(--mono-accent) !important;
+	background: rgba(0, 121, 212, 0.15) !important;
+	color: var(--mono-accent) !important;
 }
 
 /* Light theme wizard adjustments */
