@@ -7877,7 +7877,7 @@ body[data-theme="bitterLight"] .calendar-day-today .calendar-day-number,
 body[data-theme="bitterDark"] .calendar-day-today .calendar-day-number,
 body[data-theme="monoLight"] .calendar-day-today .calendar-day-number,
 body[data-theme="monoDark"] .calendar-day-today .calendar-day-number {
-	color: #fff;
+	color: #fff !important;
 }
 
 .calendar-day-available {
