@@ -7864,7 +7864,7 @@ body[data-theme="monoLight"] .cal-sel-badge {
 /* Today badge on date number - uses same styling as cal-header-add-btn */
 .calendar-day-today .calendar-day-number {
 	background-color: var(--accent-strong);
-	color: var(--accent-text);
+	color: #fff !important;
 	padding: 0.1rem 0.4rem;
 	border-radius: 6px;
 	box-shadow: 0 0 10px var(--accent-ring-strong);
