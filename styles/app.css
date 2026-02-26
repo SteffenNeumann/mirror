@@ -7328,14 +7328,14 @@ body[data-theme="monoLight"] .participant-badge--partial {
 .cal-mode-tab--active {
 	border-color: var(--accent-border-strong, rgba(232, 121, 249, 0.4));
 	background: var(--accent-bg, rgba(217, 70, 239, 0.15));
-	color: var(--accent-text, #f5d0fe);
+	color: #e2e8f0;
 	box-shadow: none;
 }
 
 .cal-mode-tab--active[data-calendar-mode="planning"] {
 	border-color: var(--accent-border-strong, rgba(232, 121, 249, 0.4));
 	background: var(--accent-bg, rgba(217, 70, 239, 0.15));
-	color: var(--accent-text, #f5d0fe);
+	color: #e2e8f0;
 	box-shadow: none;
 }
 
@@ -7513,7 +7513,7 @@ body[data-theme="coffeeLight"] .cal-mode-tab {
 body[data-theme="coffeeLight"] .cal-mode-tab--active {
 	border-color: #b07049 !important;
 	background: rgba(176, 112, 73, 0.15) !important;
-	color: #3b2a21 !important;
+	color: #5d4037 !important;
 }
 
 body[data-theme="bitterLight"] .cal-mode-tab {
@@ -7525,7 +7525,7 @@ body[data-theme="bitterLight"] .cal-mode-tab {
 body[data-theme="bitterLight"] .cal-mode-tab--active {
 	border-color: rgba(255, 35, 1, 0.5) !important;
 	background: rgba(255, 35, 1, 0.12) !important;
-	color: #991b1b !important;
+	color: #7f1d1d !important;
 }
 
 body[data-theme="monoLight"] .cal-mode-tab {
@@ -7537,7 +7537,7 @@ body[data-theme="monoLight"] .cal-mode-tab {
 body[data-theme="monoLight"] .cal-mode-tab--active {
 	border-color: rgba(0, 121, 212, 0.5) !important;
 	background: rgba(0, 121, 212, 0.12) !important;
-	color: #0369a1 !important;
+	color: #1e3a5f !important;
 }
 
 /* Dark theme adjustments */
@@ -7550,7 +7550,7 @@ body[data-theme="coffeeDark"] .cal-mode-tab {
 body[data-theme="coffeeDark"] .cal-mode-tab--active {
 	border-color: var(--coffee-accent) !important;
 	background: rgba(201, 155, 119, 0.15) !important;
-	color: var(--coffee-accent) !important;
+	color: #d4c4b0 !important;
 }
 
 body[data-theme="bitterDark"] .cal-mode-tab {
@@ -7562,7 +7562,7 @@ body[data-theme="bitterDark"] .cal-mode-tab {
 body[data-theme="bitterDark"] .cal-mode-tab--active {
 	border-color: var(--bitter-accent) !important;
 	background: rgba(255, 35, 1, 0.15) !important;
-	color: var(--bitter-accent) !important;
+	color: #e5d0d0 !important;
 }
 
 body[data-theme="monoDark"] .cal-mode-tab {
@@ -7574,7 +7574,7 @@ body[data-theme="monoDark"] .cal-mode-tab {
 body[data-theme="monoDark"] .cal-mode-tab--active {
 	border-color: var(--mono-accent) !important;
 	background: rgba(0, 121, 212, 0.15) !important;
-	color: var(--mono-accent) !important;
+	color: #c9d1d9 !important;
 }
 
 /* Light theme wizard adjustments */
