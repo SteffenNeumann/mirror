@@ -377,6 +377,8 @@
 	const calendarViewDropdownBtn = document.getElementById("calendarViewDropdownBtn");
 	const calendarViewDropdownLabel = document.getElementById("calendarViewDropdownLabel");
 	const calendarViewDropdownMenu = document.getElementById("calendarViewDropdownMenu");
+	const calendarModeTabs = document.getElementById("calendarModeTabs");
+	const calendarModeButtons = document.querySelectorAll("[data-calendar-mode]");
 	const calendarAddEventHeaderBtn = document.getElementById("calendarAddEventHeader");
 	const calendarCloseMobileBtn = document.getElementById("calendarCloseMobile");
 	const calendarLocalEventsList = document.getElementById("calendarLocalEventsList");
@@ -15714,6 +15716,9 @@ self.onmessage = async (e) => {
 	let roomTabLimitNoticeAt = 0;
 	let skipTabLimitCheck = false;
 	let calendarPanelActive = false;
+	/** Calendar mode: "personal" (default) or "planning" (Doodle-style) */
+	let calendarMode = "personal";
+	const CALENDAR_MODE_KEY = "mirror_calendar_mode_v1";
 	/** Note ID to load after navigating away from calendar via PS note click */
 	let pendingCalendarNoteId = "";
 	let calendarRefreshTimer = 0;
@@ -15794,6 +15799,57 @@ self.onmessage = async (e) => {
 
 	function isCalendarSourceVisible(sourceId) {
 		return !calendarHiddenSources.has(sourceId);
+	}
+
+	// ═══════════════════════════════════════════════════════════════════════════
+	// Calendar Mode: Personal vs Planning (Doodle-style)
+	// ═══════════════════════════════════════════════════════════════════════════
+
+	function loadCalendarMode() {
+		try {
+			const stored = localStorage.getItem(CALENDAR_MODE_KEY);
+			if (stored === "planning" || stored === "personal") {
+				calendarMode = stored;
+			}
+		} catch {
+			// ignore
+		}
+	}
+
+	function saveCalendarMode() {
+		try {
+			localStorage.setItem(CALENDAR_MODE_KEY, calendarMode);
+		} catch {
+			// ignore
+		}
+	}
+
+	function setCalendarMode(mode) {
+		const newMode = mode === "planning" ? "planning" : "personal";
+		if (calendarMode === newMode) return;
+		calendarMode = newMode;
+		saveCalendarMode();
+		applyCalendarModeUI();
+		renderCalendarPanel();
+		renderCommonFreeSlots();
+		// Auto-enable sharing when entering planning mode
+		if (newMode === "planning" && !commonFreeSlotsSharing) {
+			saveCommonFreeSlotsSharing(true);
+		}
+	}
+
+	function applyCalendarModeUI() {
+		// Update body attribute for CSS-based section visibility
+		document.body.setAttribute("data-calendar-mode", calendarMode);
+		// Update tab active states
+		if (calendarModeButtons && calendarModeButtons.length) {
+			calendarModeButtons.forEach(btn => {
+				const mode = btn.getAttribute("data-calendar-mode");
+				const isActive = mode === calendarMode;
+				btn.classList.toggle("cal-mode-tab--active", isActive);
+				btn.setAttribute("aria-pressed", String(isActive));
+			});
+		}
 	}
 
 	function normalizeFavoriteEntry(it) {
@@ -18525,7 +18581,9 @@ self.onmessage = async (e) => {
 	calendarFreeSlotsVisible = loadCalendarFreeSlotsVisible();
 	calendarState.localEvents = loadLocalCalendarEvents();
 	loadCalendarHiddenSources();
+	loadCalendarMode();
 	applyCalendarFreeSlotsVisibility();
+	applyCalendarModeUI();
 
 	function parseIcsDate(value) {
 		const raw = String(value || "").trim();
@@ -20511,9 +20569,11 @@ self.onmessage = async (e) => {
 			availabilityByClientKeys: Array.from(availabilityByClient.keys()),
 			myClientId: clientId,
 			commonFreeSlotsSharing,
-			isSharedRoom: isInSharedRoom()
+			isSharedRoom: isInSharedRoom(),
+			calendarMode
 		});
 		// Show panel when:
+		// - Calendar is in planning mode, OR
 		// - User has sharing enabled (commonFreeSlotsSharing = true), OR
 		// - Room is marked as shared, OR
 		// - Other participants have shared availability data, OR
@@ -20522,7 +20582,7 @@ self.onmessage = async (e) => {
 		// Note: presenceState is defined later in the file but will be initialized before this function is called
 		let hasOtherPresence = false;
 		try { hasOtherPresence = presenceState && presenceState.size > 1; } catch { /* TDZ guard */ }
-		const showPanel = commonFreeSlotsSharing || isInSharedRoom() || hasOtherParticipants || hasOtherPresence;
+		const showPanel = calendarMode === "planning" || commonFreeSlotsSharing || isInSharedRoom() || hasOtherParticipants || hasOtherPresence;
 		calendarCommonFreeSlotsWrap.classList.toggle("hidden", !showPanel);
 		if (!showPanel) return;
 
@@ -27301,6 +27361,15 @@ self.onmessage = async (e) => {
 			});
 		});
 	}
+	/* ── Calendar Mode Tabs (Personal / Planning) ── */
+	if (calendarModeButtons && calendarModeButtons.length) {
+		calendarModeButtons.forEach((btn) => {
+			btn.addEventListener("click", () => {
+				const mode = btn.getAttribute("data-calendar-mode");
+				if (mode) setCalendarMode(mode);
+			});
+		});
+	}
 	/* ── View Dropdown toggle (mobile-safe) ── */
 	if (calendarViewDropdownBtn && calendarViewDropdownMenu) {
 		calendarViewDropdownBtn.addEventListener("click", (e) => {
@@ -27709,9 +27778,21 @@ self.onmessage = async (e) => {
 			if (parts.length !== 3) return;
 			const day = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
 			if (Number.isNaN(day.getTime())) return;
-			toggleDayAvailability(day);
-			renderCalendarPanel();
-			broadcastAvailability();
+			// Mode-based behavior
+			if (calendarMode === "planning") {
+				// Planning mode: toggle day availability (Doodle-style)
+				toggleDayAvailability(day);
+				renderCalendarPanel();
+				broadcastAvailability();
+			} else {
+				// Personal mode: navigate to day view
+				calendarState.cursor = day;
+				if (calendarState.view === "month") {
+					calendarState.view = "week";
+					updateCalendarViewButtons();
+				}
+				renderCalendarPanel();
+			}
 		});
 	}
 	if (calendarMySelections) {

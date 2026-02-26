@@ -1,6 +1,6 @@
 # Project overview
 
-Datum: 2026-02-24
+Datum: 2026-02-26
 
 Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische Analyse, keine Laufzeitauflösung).
 
@@ -52,6 +52,8 @@ Die "Gemeinsame Planung"-Funktion ermöglicht es mehreren Teilnehmern in einem g
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                        GEMEINSAME PLANUNG - WORKFLOW                        │
+│                                                                             │
+│  NEU: Tab-basierter Einstieg via "Gemeinsam planen" Tab (ab 2026-02-26)     │
 └─────────────────────────────────────────────────────────────────────────────┘
 
 ┌──────────────┐                                                    ┌──────────────┐
@@ -59,7 +61,11 @@ Die "Gemeinsame Planung"-Funktion ermöglicht es mehreren Teilnehmern in einem g
 │  (Browser)   │                                                    │  (Browser)   │
 └──────┬───────┘                                                    └──────┬───────┘
        │                                                                   │
-       │ 1. Klick auf "Verfügbarkeit teilen" Toggle                        │
+       │ 0. Klick auf "Gemeinsam planen" Tab (NEU)                         │
+       │    → setCalendarMode("planning")                                  │
+       │    → Auto-Enable: saveCommonFreeSlotsSharing(true)                │
+       ▼                                                                   │
+       │ 1. (ODER) Klick auf "Verfügbarkeit teilen" Toggle                 │
        │    (calendarCommonFreeToggle)                                     │
        ▼                                                                   │
 ┌──────────────────────────────────────┐                                   │
@@ -156,6 +162,8 @@ Die "Gemeinsame Planung"-Funktion ermöglicht es mehreren Teilnehmern in einem g
 
 | Variable | Typ | Beschreibung |
 |----------|-----|--------------|
+| `calendarMode` | `"personal" \| "planning"` | Aktueller Kalender-Modus (Tab-State) |
+| `CALENDAR_MODE_KEY` | `string` | localStorage-Key für Modus-Persistierung |
 | `commonFreeSlotsSharing` | `boolean` | Lokaler Toggle-Status (teilt der User?) |
 | `manualFreeSlots` | `Map<string, Set<string>>` | Lokal ausgewählte Tage: `"2026-02-24" → Set(["__day_available__"])` |
 | `availabilityByClient` | `Map<string, AvailabilityData>` | Empfangene Daten aller Teilnehmer inkl. self |
@@ -177,6 +185,10 @@ interface AvailabilityData {
 
 | Funktion | Datei | Zweck |
 |----------|-------|-------|
+| `loadCalendarMode()` | app.js | Lädt Modus aus localStorage |
+| `saveCalendarMode()` | app.js | Speichert Modus in localStorage |
+| `setCalendarMode(mode)` | app.js | Wechselt Modus, auto-enables Sharing im Planning-Modus |
+| `applyCalendarModeUI()` | app.js | Setzt data-Attribute auf body, updated Tab-States |
 | `saveCommonFreeSlotsSharing(bool)` | app.js | Aktiviert/deaktiviert Sharing-Toggle |
 | `broadcastAvailability()` | app.js | Sendet eigene Verfügbarkeit via WebSocket |
 | `handleAvailabilityState(msg)` | app.js | Empfängt Verfügbarkeit anderer Teilnehmer |
@@ -215,6 +227,92 @@ interface AvailabilityData {
   ]
 }
 ```
+
+---
+
+## Aktuelle Änderungen (2026-02-26)
+
+- **Kalender Modus-Trennung: Personal vs. Planning (Doodle-Style)** `#calendar` `#ux` `#tabs` `#planning`: Der Kalender hat jetzt zwei separate Modi mit Tab-Navigation für eine klarere UX-Trennung zwischen privater Kalenderverwaltung und gemeinsamer Terminplanung.
+
+  ### Konzept
+  
+  ```
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │  [📅 Mein Kalender]  [👥 Gemeinsam planen]   ← Tab-Navigation          │
+  ├─────────────────────────────────────────────────────────────────────────┤
+  │                                                                         │
+  │  PERSONAL MODE                    │   PLANNING MODE                     │
+  │  ─────────────────                │   ──────────────                    │
+  │  • Termine anzeigen               │   • Tage für Verfügbarkeit wählen   │
+  │  • Kalenderquellen verwalten      │   • Teilnehmer-Übersicht            │
+  │  • Bundesland/Feiertage           │   • Gemeinsame Tage finden          │
+  │  • Grid-Klick → Wochenansicht     │   • Grid-Klick → Toggle Verfügbar   │
+  │                                                                         │
+  └─────────────────────────────────────────────────────────────────────────┘
+  ```
+
+  ### Implementierte Änderungen
+  
+  1. **HTML: Tab-Navigation** (`index.html` ~L1673): Neue `#calendarModeTabs` Container mit zwei Buttons (`data-calendar-mode="personal"` und `data-calendar-mode="planning"`).
+  
+  2. **HTML: Sidebar-Sektionen mit Attributen** (`index.html`):
+     - `#calendarSidebarCalendarsSection` → `data-calendar-section="personal"`
+     - `#calendarSidebarFreeSlotsSection` → `data-calendar-section="personal"`
+     - `#calendarSidebarPlanningSection` → `data-calendar-section="planning"`
+  
+  3. **CSS: Modus-basierte Sichtbarkeit** (`styles/app.css` ~L7293):
+     - `.cal-mode-tabs` Container-Styles
+     - `.cal-mode-tab` und `.cal-mode-tab--active` Button-Styles
+     - `body[data-calendar-mode="planning"] [data-calendar-section="personal"]` → `display: none`
+     - `body[data-calendar-mode="planning"] [data-calendar-section="planning"]` → `display: block`
+     - Planning-Mode-Indikator auf Grid ("Klicke auf Tage...")
+     - Light-Theme Support
+  
+  4. **JavaScript: Mode State Management** (`app.js` ~L15721):
+     - `calendarMode` Variable (`"personal"` | `"planning"`)
+     - `CALENDAR_MODE_KEY` für localStorage-Persistierung
+     - `loadCalendarMode()` → Lädt beim Startup
+     - `saveCalendarMode()` → Speichert bei Änderung
+     - `setCalendarMode(mode)` → Wechselt Modus, auto-enabled Sharing im Planning-Modus
+     - `applyCalendarModeUI()` → Setzt `data-calendar-mode` auf body, updated Tab-States
+  
+  5. **JavaScript: Grid-Klick-Verhalten** (`app.js` ~L27780):
+     - Personal Mode: Klick auf Tag navigiert zur Wochenansicht
+     - Planning Mode: Klick auf Tag togglet Verfügbarkeit (wie bisher)
+  
+  6. **JavaScript: Event Handlers** (`app.js` ~L27360):
+     - Tab-Buttons rufen `setCalendarMode()` auf
+
+  ### Workflow-Erweiterung
+  
+  Der bestehende Availability-Workflow (siehe oben) bleibt vollständig erhalten. Die Tab-Trennung fügt nur einen neuen UI-Einstiegspunkt hinzu:
+  
+  ```
+  User wechselt zu "Gemeinsam planen" Tab
+       ↓
+  setCalendarMode("planning")
+       ↓
+  applyCalendarModeUI() → body bekommt data-calendar-mode="planning"
+       ↓
+  CSS versteckt Personal-Sektionen, zeigt Planning-Sektion
+       ↓
+  Auto-Enable: saveCommonFreeSlotsSharing(true) → Sharing wird aktiviert
+       ↓
+  renderCommonFreeSlots() → Panel wird sichtbar
+       ↓
+  Grid-Klicks togglen jetzt Verfügbarkeit
+  ```
+
+  ### Neue Funktionen
+  
+  | Funktion | Datei | Zweck |
+  |----------|-------|-------|
+  | `loadCalendarMode()` | app.js | Lädt gespeicherten Modus aus localStorage |
+  | `saveCalendarMode()` | app.js | Speichert Modus in localStorage |
+  | `setCalendarMode(mode)` | app.js | Wechselt Modus, updated UI, auto-enables Sharing |
+  | `applyCalendarModeUI()` | app.js | Setzt data-Attribute und Tab-States |
+
+  - Zuständige Dateien: `app.js`, `index.html`, `styles/app.css`.
 
 ---
 
