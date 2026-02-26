@@ -354,6 +354,8 @@
 	const calendarMySelectionsWrap = document.getElementById("calendarMySelectionsWrap");
 	const calendarMySelections = document.getElementById("calendarMySelections");
 	const calendarMySelectionsCount = document.getElementById("calendarMySelectionsCount");
+	const calendarMySelectionsEmpty = document.getElementById("calendarMySelectionsEmpty");
+	const calendarWaitingHint = document.getElementById("calendarWaitingHint");
 	const calendarRoomSelect = document.getElementById("calendarRoomSelect");
 	const calendarCommonFreeSlotsWrap = document.getElementById("calendarCommonFreeSlotsWrap");
 	const calendarCommonFreeToggle = document.getElementById("calendarCommonFreeToggle");
@@ -6335,6 +6337,12 @@
 				"calendar.mode.personal": "Mein Kalender",
 				"calendar.mode.planning": "Gemeinsam planen",
 				"calendar.mode.planning_hint": "Klicke auf Tage, um deine Verfügbarkeit zu markieren",
+				"calendar.wizard.step1": "Raum auswählen",
+				"calendar.wizard.step2": "Deine Verfügbarkeit",
+				"calendar.wizard.step2_hint": "Klicke auf Tage im Kalender",
+				"calendar.wizard.step3": "Gemeinsame Zeiten",
+				"calendar.wizard.no_selection": "Noch keine Tage ausgewählt",
+				"calendar.wizard.waiting": "Warte auf Teilnehmer...",
 				"calendar.common.title": "Gemeinsame freie Zeiten",
 				"calendar.common.toggle": "Verfügbarkeit teilen",
 				"calendar.common.sharing": "Wird geteilt",
@@ -6909,6 +6917,12 @@
 				"calendar.mode.personal": "My Calendar",
 				"calendar.mode.planning": "Plan together",
 				"calendar.mode.planning_hint": "Click on days to mark your availability",
+				"calendar.wizard.step1": "Select room",
+				"calendar.wizard.step2": "Your availability",
+				"calendar.wizard.step2_hint": "Click on days in the calendar",
+				"calendar.wizard.step3": "Common times",
+				"calendar.wizard.no_selection": "No days selected yet",
+				"calendar.wizard.waiting": "Waiting for participants...",
 				"calendar.common.title": "Common free slots",
 				"calendar.common.toggle": "Share availability",
 				"calendar.common.sharing": "Sharing",
@@ -19893,9 +19907,13 @@ self.onmessage = async (e) => {
 				: "";
 		}
 
+		// Toggle empty state message
+		if (calendarMySelectionsEmpty) {
+			calendarMySelectionsEmpty.classList.toggle("hidden", entries.length > 0);
+		}
+
 		if (!entries.length) {
-			calendarMySelections.innerHTML =
-				`<div class="text-[11px] text-slate-500">${escapeHtml(t("calendar.my_selections.empty"))}</div>`;
+			calendarMySelections.innerHTML = "";
 			return;
 		}
 
@@ -20615,6 +20633,12 @@ self.onmessage = async (e) => {
 					})
 					.join("");
 			}
+		}
+
+		// Show/hide waiting hint based on participants count
+		if (calendarWaitingHint) {
+			const hasOnlySelf = availabilityByClient.size <= 1 && availabilityByClient.has(clientId);
+			calendarWaitingHint.classList.toggle("hidden", !hasOnlySelf && availabilityByClient.size > 0);
 		}
 
 		if (!calendarCommonFreeSlots) return;

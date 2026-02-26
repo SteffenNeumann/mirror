@@ -1702,7 +1702,6 @@
 										<path d="M9 18l6-6-6-6" />
 									</svg>
 								</button>
-								<div id="calendarPlanningHint" data-i18n="calendar.mode.planning_hint">Klicke auf Tage, um deine Verfügbarkeit zu markieren</div>
 								<div
 									id="calendarGrid"
 									class="h-full min-h-0 overflow-auto rounded-xl border border-white/10 bg-slate-950/30 p-3"></div>
@@ -1767,84 +1766,79 @@
 									</div>
 
 									<!-- ═══ Section 3: Gemeinsame Planung (Planning Mode) ═══ -->
-									<div id="calendarSidebarPlanningSection" class="cal-sidebar-section" data-calendar-section="planning">
-										<div class="cal-sidebar-header">
-											<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cal-sidebar-header-icon"><path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-2v2" /><circle cx="9" cy="7" r="4" /><path d="M22 21v-2a4 4 0 00-3-3.87" /><path d="M16 3.13a4 4 0 010 7.75" /></svg>
-											<span data-i18n="calendar.sidebar.booking">Gemeinsame Planung</span>
-										</div>
-
-										<!-- Room selector (prominent) -->
-										<div id="calendarRoomWrap" class="cal-room-selector mt-2">
-											<label class="cal-room-label" for="calendarRoomSelect">
-												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cal-sidebar-header-icon shrink-0"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg>
-												<span class="text-[10px] font-medium uppercase tracking-wider text-slate-400" data-i18n="calendar.sidebar.room">Raum</span>
-											</label>
-											<!-- Custom dropdown (cross-browser themed) -->
-											<div id="calendarRoomSelect" class="cal-room-select" tabindex="0" role="listbox" aria-expanded="false">
-												<span class="cal-room-select__label"></span>
-												<div class="cal-room-select__menu" role="presentation"></div>
+									<div id="calendarSidebarPlanningSection" class="cal-sidebar-section cal-wizard" data-calendar-section="planning">
+										
+										<!-- ═══ STEP 1: Raum wählen ═══ -->
+										<div class="cal-wizard-step">
+											<div class="cal-wizard-step-header">
+												<span class="cal-wizard-step-num">1</span>
+												<span class="cal-wizard-step-title" data-i18n="calendar.wizard.step1">Raum auswählen</span>
 											</div>
-										</div>
-
-										<!-- My Selections -->
-										<div
-											id="calendarMySelectionsWrap"
-											class="cal-sidebar-card mt-2">
-											<div class="cal-card-head">
-												<span data-i18n="calendar.my_selections.title">Meine Auswahl</span>
-												<span class="cal-card-hint" id="calendarMySelectionsCount"></span>
-											</div>
-											<div
-												id="calendarMySelections"
-												class="mt-2 max-h-48 overflow-y-auto"></div>
-										</div>
-
-										<!-- Common Free Slots -->
-										<div
-											id="calendarCommonFreeSlotsWrap"
-											class="cal-sidebar-card mt-2 hidden">
-											<div class="cal-card-head">
-												<span data-i18n="calendar.common.title">Gemeinsame freie Zeiten</span>
-												<div class="relative">
-													<button
-														id="calendarCommonFreeToggle"
-														type="button"
-														class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-400 transition hover:bg-white/5 active:bg-white/10"
-														aria-label="Verfügbarkeit teilen"
-														aria-pressed="false"
-														data-i18n-title="calendar.common.toggle"
-														data-i18n-aria="calendar.common.toggle">
-														<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5">
-															<path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4-4v2" />
-															<circle cx="9" cy="7" r="4" />
-															<path d="M22 21v-2a4 4 0 00-3-3.87" />
-															<path d="M16 3.13a4 4 0 010 7.75" />
-														</svg>
-													</button>
-													<div id="calendarShareTooltip" class="cal-share-tooltip" role="tooltip">
-														<div class="cal-share-tooltip__box">
-															<strong data-i18n="calendar.common.tooltip_title">Verfügbarkeit teilen</strong>
-															<p data-i18n="calendar.common.tooltip_text">Aktiviere diese Option, um deine freien Zeiten mit allen Teilnehmern in diesem Raum zu teilen. So könnt ihr gemeinsam sehen, wann alle verfügbar sind, und schneller einen passenden Termin finden.</p>
-														</div>
-														<div class="cal-share-tooltip__arrow"></div>
-													</div>
-												</div>
-											</div>
-											<div
-												id="calendarCommonFreeParticipants"
-												class="mt-2 flex flex-wrap gap-1"></div>
-											<div
-												id="calendarCommonFreeSlots"
-												class="mt-2 space-y-1 text-[11px] text-slate-300"></div>
-											<!-- Availability Delete Actions (Dropdown) -->
-											<div id="calendarAvailabilityActions" class="mt-3 hidden">
-												<div id="calendarClearAvailabilitySelect" class="cal-room-select cal-clear-select" tabindex="0" role="listbox" aria-expanded="false">
-													<span class="cal-room-select__label" data-i18n="calendar.availability.clear_label">Daten löschen...</span>
-													<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="cal-room-select__chevron h-3 w-3 text-slate-400"><path d="m6 9 6 6 6-6"/></svg>
+											<div id="calendarRoomWrap" class="cal-wizard-step-content">
+												<div id="calendarRoomSelect" class="cal-room-select" tabindex="0" role="listbox" aria-expanded="false">
+													<span class="cal-room-select__label"></span>
+													<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cal-room-select__chevron h-3.5 w-3.5"><path d="m6 9 6 6 6-6"/></svg>
 													<div class="cal-room-select__menu" role="presentation"></div>
 												</div>
 											</div>
 										</div>
+
+										<!-- ═══ STEP 2: Verfügbarkeit markieren ═══ -->
+										<div class="cal-wizard-step">
+											<div class="cal-wizard-step-header">
+												<span class="cal-wizard-step-num">2</span>
+												<span class="cal-wizard-step-title" data-i18n="calendar.wizard.step2">Deine Verfügbarkeit</span>
+											</div>
+											<p class="cal-wizard-hint" data-i18n="calendar.wizard.step2_hint">Klicke auf Tage im Kalender</p>
+											<div id="calendarMySelectionsWrap" class="cal-wizard-step-content">
+												<div id="calendarMySelections" class="cal-wizard-selections"></div>
+												<div id="calendarMySelectionsEmpty" class="cal-wizard-empty" data-i18n="calendar.wizard.no_selection">Noch keine Tage ausgewählt</div>
+											</div>
+										</div>
+
+										<!-- ═══ STEP 3: Gemeinsame Zeiten ═══ -->
+										<div class="cal-wizard-step" id="calendarCommonFreeSlotsWrap">
+											<div class="cal-wizard-step-header">
+												<span class="cal-wizard-step-num">3</span>
+												<span class="cal-wizard-step-title" data-i18n="calendar.wizard.step3">Gemeinsame Zeiten</span>
+												<button
+													id="calendarCommonFreeToggle"
+													type="button"
+													class="cal-wizard-toggle"
+													aria-label="Verfügbarkeit teilen"
+													aria-pressed="false">
+													<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="h-3.5 w-3.5">
+														<circle cx="12" cy="12" r="10"/>
+														<path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/>
+														<path d="M12 17h.01"/>
+													</svg>
+												</button>
+												<div id="calendarShareTooltip" class="cal-share-tooltip" role="tooltip">
+													<div class="cal-share-tooltip__box">
+														<strong data-i18n="calendar.common.tooltip_title">Verfügbarkeit teilen</strong>
+														<p data-i18n="calendar.common.tooltip_text">Deine Verfügbarkeit wird automatisch mit allen Teilnehmern im Raum geteilt.</p>
+													</div>
+													<div class="cal-share-tooltip__arrow"></div>
+												</div>
+											</div>
+											<div class="cal-wizard-step-content">
+												<div id="calendarCommonFreeParticipants" class="cal-wizard-participants"></div>
+												<div id="calendarCommonFreeSlots" class="cal-wizard-slots"></div>
+												<div id="calendarWaitingHint" class="cal-wizard-waiting">
+													<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cal-wizard-waiting-icon"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+													<span data-i18n="calendar.wizard.waiting">Warte auf Teilnehmer...</span>
+												</div>
+											</div>
+											<!-- Delete Actions -->
+											<div id="calendarAvailabilityActions" class="cal-wizard-actions hidden">
+												<div id="calendarClearAvailabilitySelect" class="cal-room-select cal-clear-select" tabindex="0" role="listbox" aria-expanded="false">
+													<span class="cal-room-select__label" data-i18n="calendar.availability.clear_label">Daten löschen...</span>
+													<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="cal-room-select__chevron h-3 w-3"><path d="m6 9 6 6 6-6"/></svg>
+													<div class="cal-room-select__menu" role="presentation"></div>
+												</div>
+											</div>
+										</div>
+
 									</div>
 
 									<!-- ─── Footer: Settings ─── -->
