@@ -15761,6 +15761,8 @@ self.onmessage = async (e) => {
 	let calendarFocusedDayTimer = 0;
 	/** Map<clientId, { name, color, busy: Array<{start:number, end:number}> }> */
 	const availabilityByClient = new Map();
+	/** Sync status for availability: "idle" | "pending" | "synced" | "offline" | "error" */
+	let availabilitySyncStatus = "idle";
 	/** Map<dayKey(YYYY-MM-DD), Set<slotKey(startMs_endMs)>> – manually selected free slots */
 	let manualFreeSlots = new Map();
 	let googleCalendarConnected = false;
@@ -20077,6 +20079,8 @@ self.onmessage = async (e) => {
 			rangeEnd: rangeEnd.getTime(),
 		});
 		console.log("[AVAIL-DEBUG] Local optimistic update done, selectedDays:", selectedDays);
+		// Set sync status to pending (will be updated after ws.send)
+		availabilitySyncStatus = "pending";
 		// Re-render UI immediately with local data (before WebSocket response)
 		renderCommonFreeSlots();
 		if (calendarPanelActive) {
@@ -20085,6 +20089,9 @@ self.onmessage = async (e) => {
 		// Only send via WebSocket if sharing is enabled and connection is ready
 		if (!commonFreeSlotsSharing || !ws || ws.readyState !== 1) {
 			console.log("[AVAIL-DEBUG] WebSocket send SKIPPED - sharing:", commonFreeSlotsSharing, "ws:", ws?.readyState);
+			// Mark as offline (not synced to server)
+			availabilitySyncStatus = "offline";
+			renderCommonFreeSlots(); // Re-render to show offline icon
 			return;
 		}
 		// No isInSharedRoom guard - clients in "guest rooms" may not have the room
@@ -20110,8 +20117,14 @@ self.onmessage = async (e) => {
 		try {
 			ws.send(JSON.stringify(msgPayload));
 			console.log("[AVAIL-DEBUG] ws.send SUCCESS");
+			// Mark as synced - other participants will now see your selection
+			availabilitySyncStatus = "synced";
+			renderCommonFreeSlots(); // Re-render to show synced icon
 		} catch (err) {
 			console.error("[AVAIL-DEBUG] ws.send FAILED:", err);
+			// Mark as error
+			availabilitySyncStatus = "error";
+			renderCommonFreeSlots(); // Re-render to show error icon
 		}
 	}
 
@@ -20646,7 +20659,18 @@ self.onmessage = async (e) => {
 					const name = escapeHtml(p.name || "Guest");
 					const days = Array.isArray(p.selectedDays) ? p.selectedDays : [];
 					const isSelf = cid === clientId;
-					const selfBadge = isSelf ? ' <span class="participant-self-badge">(du)</span>' : "";
+					// Sync status icon for self: ✓ synced, ⟳ pending, ⚠ offline/error
+					let syncIcon = "";
+					if (isSelf) {
+						if (availabilitySyncStatus === "synced") {
+							syncIcon = '<span class="sync-icon sync-icon--synced" title="Synchronisiert">✓</span>';
+						} else if (availabilitySyncStatus === "pending") {
+							syncIcon = '<span class="sync-icon sync-icon--pending" title="Wird gesendet…">⟳</span>';
+						} else if (availabilitySyncStatus === "offline" || availabilitySyncStatus === "error") {
+							syncIcon = '<span class="sync-icon sync-icon--offline" title="Offline – nur lokal gespeichert">⚠</span>';
+						}
+					}
+					const selfBadge = isSelf ? ` <span class="participant-self-badge">(du)</span>${syncIcon}` : "";
 					
 					// Format day chips with click-to-navigate, highlight common days
 					const dayChips = days.slice(0, 8).map(dk => {

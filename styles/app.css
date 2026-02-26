@@ -6995,6 +6995,26 @@ body[data-theme="monoLight"] .block-arrange-drop-zone {
 	color: #64748b;
 	margin-left: 0.25rem;
 }
+/* Sync status icons next to self badge */
+.sync-icon {
+	font-size: 11px;
+	margin-left: 0.25rem;
+	display: inline-block;
+}
+.sync-icon--synced {
+	color: #10b981; /* green */
+}
+.sync-icon--pending {
+	color: #f59e0b; /* amber */
+	animation: spin 1s linear infinite;
+}
+.sync-icon--offline {
+	color: #ef4444; /* red */
+}
+@keyframes spin {
+	from { transform: rotate(0deg); }
+	to { transform: rotate(360deg); }
+}
 .participant-count {
 	font-size: 9px;
 	color: #64748b;
