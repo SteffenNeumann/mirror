@@ -20030,15 +20030,12 @@ self.onmessage = async (e) => {
 			commonFreeSlotsSharing,
 			wsState: ws ? ws.readyState : "no-ws",
 			clientId,
-			room
+			room,
+			calendarMode
 		});
-		if (!commonFreeSlotsSharing || !ws || ws.readyState !== 1) {
-			console.log("[AVAIL-DEBUG] broadcastAvailability SKIPPED - sharing:", commonFreeSlotsSharing, "ws:", ws?.readyState);
-			return;
-		}
-		// No isInSharedRoom guard - clients in "guest rooms" may not have the room
-		// explicitly marked as shared in localStorage, but can still share availability
-		// via WebSocket when other participants are present.
+		// Always compute local availability state for optimistic UI update,
+		// even if WebSocket is not connected or sharing is disabled.
+		// This ensures the sidebar shows selected days immediately.
 		const now = new Date();
 		const rangeStart = startOfDay(now);
 		const rangeEnd = addDays(rangeStart, 7);
@@ -20069,7 +20066,8 @@ self.onmessage = async (e) => {
 			}
 		}
 		const identity = loadIdentity();
-		// Also store own availability locally so intersection calculation includes self
+		// Always update local availability for immediate UI feedback (optimistic update)
+		// This runs regardless of WebSocket state or sharing toggle
 		availabilityByClient.set(String(clientId), {
 			name: identity.name || "Guest",
 			color: identity.color || "#94a3b8",
@@ -20078,6 +20076,20 @@ self.onmessage = async (e) => {
 			rangeStart: rangeStart.getTime(),
 			rangeEnd: rangeEnd.getTime(),
 		});
+		console.log("[AVAIL-DEBUG] Local optimistic update done, selectedDays:", selectedDays);
+		// Re-render UI immediately with local data (before WebSocket response)
+		renderCommonFreeSlots();
+		if (calendarPanelActive) {
+			renderCalendarPanel();
+		}
+		// Only send via WebSocket if sharing is enabled and connection is ready
+		if (!commonFreeSlotsSharing || !ws || ws.readyState !== 1) {
+			console.log("[AVAIL-DEBUG] WebSocket send SKIPPED - sharing:", commonFreeSlotsSharing, "ws:", ws?.readyState);
+			return;
+		}
+		// No isInSharedRoom guard - clients in "guest rooms" may not have the room
+		// explicitly marked as shared in localStorage, but can still share availability
+		// via WebSocket when other participants are present.
 		const msgPayload = {
 			type: "availability_state",
 			room,
@@ -20100,11 +20112,6 @@ self.onmessage = async (e) => {
 			console.log("[AVAIL-DEBUG] ws.send SUCCESS");
 		} catch (err) {
 			console.error("[AVAIL-DEBUG] ws.send FAILED:", err);
-		}
-		// Re-render to show updated intersection
-		renderCommonFreeSlots();
-		if (calendarPanelActive) {
-			renderCalendarPanel();
 		}
 	}
 
