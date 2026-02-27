@@ -160,6 +160,7 @@
 	const mainGrid = document.getElementById("mainGrid");
 	const psPanel = document.getElementById("psPanel");
 	const togglePersonalSpaceBtn = document.getElementById("togglePersonalSpace");
+	const psShowBtn = document.getElementById("psShowBtn");
 	const psCloseMobile = document.getElementById("psCloseMobile");
 	const toggleHeaderBtn = document.getElementById("toggleHeader");
 	const noteCloseMobile = document.getElementById("noteCloseMobile");
@@ -10338,13 +10339,11 @@
 			} catch {
 				// ignore
 			}
+		}
+		/* Show/hide psShowBtn (sidebar icon) when PS is collapsed/expanded */
+		if (psShowBtn) {
 			try {
-				const icon = togglePersonalSpaceBtn.querySelector(
-					'[data-role="psChevron"]'
-				);
-				if (icon && icon.classList) {
-					icon.classList.toggle("rotate-180", !psVisible);
-				}
+				psShowBtn.classList.toggle("hidden", psVisible);
 			} catch {
 				// ignore
 			}
@@ -27131,6 +27130,14 @@ self.onmessage = async (e) => {
 				return;
 			}
 			psVisible = !psVisible;
+			savePsVisible();
+			applyPsVisible();
+		});
+	}
+	/* psShowBtn – sidebar icon that appears when PS is collapsed */
+	if (psShowBtn) {
+		psShowBtn.addEventListener("click", () => {
+			psVisible = true;
 			savePsVisible();
 			applyPsVisible();
 		});

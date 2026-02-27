@@ -163,6 +163,9 @@ main.relative {
 #psPanel {
 	min-width: 0;
 }
+#mainGrid {
+	position: relative;
+}
 
 .bg-glow {
 	position: fixed;
@@ -329,11 +332,31 @@ body.glow-disabled .bg-glow {
 
 #toggleHeader:hover,
 #toggleHeader:focus-visible,
-#toggleHeader:active,
-#togglePersonalSpace:hover,
-#togglePersonalSpace:focus-visible,
-#togglePersonalSpace:active {
+#toggleHeader:active {
 	background-color: transparent;
+}
+
+#togglePersonalSpace {
+	border: none !important;
+	background: transparent !important;
+	padding: 0;
+	opacity: 1;
+}
+#togglePersonalSpace:hover,
+#togglePersonalSpace:focus-visible {
+	background: transparent !important;
+}
+
+/* PS Show Button – visible when PS is collapsed */
+#psShowBtn {
+	position: absolute;
+	top: 12px;
+	left: 12px;
+	z-index: 20;
+	border: none;
+}
+#psShowBtn:not(.hidden) {
+	display: inline-flex;
 }
 
 #psEditorTagsBar > div {
@@ -6019,19 +6042,14 @@ body[data-theme="monoDark"] #settingsGlowToggle {
 	color: #6e7681 !important;
 }
 
-#toggleHeader,
-#togglePersonalSpace {
+#toggleHeader {
 	background-color: transparent !important;
 }
 
 #toggleHeader:hover,
 #toggleHeader:focus-visible,
 #toggleHeader:active,
-#toggleHeader[aria-pressed="true"],
-#togglePersonalSpace:hover,
-#togglePersonalSpace:focus-visible,
-#togglePersonalSpace:active,
-#togglePersonalSpace[aria-pressed="true"] {
+#toggleHeader[aria-pressed="true"] {
 	background-color: transparent !important;
 }
 
