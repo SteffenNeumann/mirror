@@ -21061,7 +21061,7 @@ self.onmessage = async (e) => {
 			const dayEvents = events.filter(
 				(evt) => evt.start < dayEnd && evt.end > day
 			);
-			const visibleEvents = dayEvents.slice(0, 2).map((evt) => {
+			const visibleEvents = dayEvents.map((evt) => {
 				const time = evt.allDay ? t("calendar.allday") : formatTime(evt.start);
 				const title = evt.location
 					? `${time} · ${evt.title} · ${evt.location}`
@@ -21078,10 +21078,7 @@ self.onmessage = async (e) => {
 						</div>
 					</div>`;
 			});
-			const extra =
-				dayEvents.length > 2
-					? `<span class=\"text-[10px] text-slate-500\">${formatUi(t("calendar.month.more"), { n: dayEvents.length - 2 })}</span>`
-					: "";
+			const extra = "";
 			const isToday = startOfDay(day).getTime() === startOfDay(new Date()).getTime();
 			const isCurrentMonth = day.getMonth() === cursor.getMonth();
 			const isFocused = dk === calendarFocusedDayKey;
