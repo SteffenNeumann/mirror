@@ -915,6 +915,34 @@
 		return fresh;
 	})();
 
+	/**
+	 * earlyIdentitySync: Versucht VOR dem ersten connect() die Server-Identität
+	 * zu laden, damit auf neuen Geräten der gespeicherte Name sofort erscheint
+	 * statt eines zufällig generierten Namens.
+	 * Nur wenn der User eingeloggt ist (Auth-Cookie vorhanden), wird der Server
+	 * abgefragt. Ohne PS bleibt der zufällige Name bestehen.
+	 */
+	async function earlyIdentitySync() {
+		try {
+			const res = await fetch("/api/identity", { method: "GET" });
+			if (!res.ok) return; // nicht eingeloggt oder Serverfehler → skip
+			const data = await res.json();
+			if (!data || !data.ok || !data.identity) return;
+			const srv = data.identity;
+			const hasServerData = srv.name || srv.avatar || srv.color;
+			if (!hasServerData) return; // Server hat keine Identität → random bleibt
+			if (srv.name) identity.name = srv.name;
+			if (srv.avatar) identity.avatar = srv.avatar;
+			if (srv.color) identity.color = srv.color;
+			try {
+				localStorage.setItem(IDENTITY_KEY, JSON.stringify(identity));
+			} catch {}
+			console.log("[Identity] Early sync from server:", identity.name);
+		} catch {
+			// Netzwerkfehler → ignorieren, random bleibt
+		}
+	}
+
 	// ── Identity Modal ──
 	const identityModal = document.getElementById("identityModal");
 	const identityModalBackdrop = identityModal?.querySelector('[data-role="identityModalBackdrop"]');
@@ -25431,7 +25459,8 @@ self.onmessage = async (e) => {
 	// Initial
 	setStatus("offline", "Offline");
 	loadBuildStamp();
-	connect();
+	// Identität vom Server laden (wenn eingeloggt) → dann connect mit korrektem Namen
+	earlyIdentitySync().then(() => connect());
 	loadPsTagPrefs();
 	loadPsTagsCollapsed();
 	applyPsTagsCollapsed();
