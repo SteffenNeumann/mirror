@@ -21097,7 +21097,7 @@ self.onmessage = async (e) => {
 			const weekdayIdx = idx % 7;
 			const weekdayShort = weekdayLabels[weekdayIdx] || "";
 			return `
-				<div class="calendar-day-cell calendar-day-cell-month min-h-[88px] border ${borderClass} ${availClass}${commonClass} cursor-pointer select-none transition-colors${opacityClass}${todayClass}${focusedClass}" data-calendar-day="${dk}">
+				<div class="calendar-day-cell calendar-day-cell-month border ${borderClass} ${availClass}${commonClass} cursor-pointer select-none transition-colors${opacityClass}${todayClass}${focusedClass}" data-calendar-day="${dk}">
 					<div class="flex items-center justify-between gap-1">
 						<span class="calendar-cell-weekday text-[9px] text-slate-500 uppercase mr-0.5">${weekdayShort}</span>
 						<span class="calendar-day-number text-[11px] text-slate-400">${day.getDate()}</span>
