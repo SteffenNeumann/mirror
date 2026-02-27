@@ -856,11 +856,14 @@
 			const res = await fetch("/api/identity", { method: "GET" });
 			if (!res.ok) return;
 			const data = await res.json();
-			if (data && data.ok && data.identity) {
+			if (!data || !data.ok) return;
+
+			let identityChanged = false;
+			if (data.identity) {
 				const serverIdentity = data.identity;
 				const hasServerData = serverIdentity.name || serverIdentity.avatar || serverIdentity.color;
 				if (hasServerData) {
-					// Server has identity - merge/override local
+					// Server has identity - override local with server values
 					if (serverIdentity.name) identity.name = serverIdentity.name;
 					if (serverIdentity.avatar) identity.avatar = serverIdentity.avatar;
 					if (serverIdentity.color) identity.color = serverIdentity.color;
@@ -868,13 +871,34 @@
 					try {
 						localStorage.setItem(IDENTITY_KEY, JSON.stringify(identity));
 					} catch {}
-					// Update presence
-					if (typeof updatePresenceUI === "function") updatePresenceUI();
+					identityChanged = true;
 					console.log("[Identity] Synced from server:", identity.name);
 				} else {
-					// Server has no identity - push local to server
+					// Server has empty identity - push local to server
 					await saveIdentityToServer(identity);
-					console.log("[Identity] Pushed to server:", identity.name);
+					console.log("[Identity] Pushed to server (empty):", identity.name);
+				}
+			} else {
+				// Server has no identity at all - push local to server
+				await saveIdentityToServer(identity);
+				console.log("[Identity] Pushed to server (new):", identity.name);
+			}
+
+			// After sync: update presence UI and re-broadcast to room
+			if (identityChanged) {
+				if (typeof updatePresenceUI === "function") updatePresenceUI();
+				// Re-send hello to broadcast updated identity to room
+				if (typeof sendMessage === "function" && typeof room !== "undefined" && room) {
+					sendMessage({
+						type: "hello",
+						room,
+						clientId,
+						mode: typeof isCrdtAvailable === "function" && isCrdtAvailable() ? "crdt" : "lww",
+						name: identity.name,
+						color: identity.color,
+						avatar: identity.avatar,
+						ts: Date.now(),
+					});
 				}
 			}
 		} catch (err) {
