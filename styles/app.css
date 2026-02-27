@@ -1999,7 +1999,7 @@ body[data-theme="monoDark"] .excel-iframe {
 	flex-wrap: nowrap;
 	white-space: nowrap;
 	position: relative;
-	padding-bottom: 0.5rem;
+	padding-bottom: 0.75rem;
 	min-width: 0;
 	color: var(--accent-text);
 	font-size: 1.1rem;
@@ -2033,7 +2033,7 @@ body[data-theme="monoDark"] .excel-iframe {
 .md-content li.task-list-item.checked {
 	opacity: 1;
 	color: inherit;
-	padding-bottom: 2rem;
+	padding-bottom: 2.25rem;
 }
 .md-content ul.task-list li.task-list-item.checked *,
 .md-content ol.task-list li.task-list-item.checked *,
