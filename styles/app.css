@@ -2001,7 +2001,7 @@ body[data-theme="monoDark"] .excel-iframe {
 	position: relative;
 	padding-bottom: 1rem;
 	min-width: 0;
-	color: var(--accent-text);
+	color: inherit;
 	font-size: 1.1rem;
 }
 .md-content ul.task-list li label,
@@ -3547,13 +3547,6 @@ body[data-theme="coffeeLight"] #mdPreview {
 	box-shadow: none !important;
 }
 
-/* Fix task-list font color in coffeeLight (--accent-text is #fff, meant for accent backgrounds) */
-body[data-theme="coffeeLight"] .md-content ul.task-list li,
-body[data-theme="coffeeLight"] .md-content ol.task-list li,
-body[data-theme="coffeeLight"] .md-content li.task-list-item {
-	color: #3b2a21 !important;
-}
-
 body[data-theme="coffeeLight"] #toggleComments,
 body[data-theme="coffeeLight"] #psMetaToggle,
 body[data-theme="coffeeLight"] #clearMirror,
@@ -4436,13 +4429,6 @@ body[data-theme="bitterLight"] #previewPanel {
 body[data-theme="bitterLight"] #mdPreview {
 	background-color: inherit !important;
 	box-shadow: none !important;
-}
-
-/* Fix task-list font color in bitterLight (--accent-text is #fff, meant for accent backgrounds) */
-body[data-theme="bitterLight"] .md-content ul.task-list li,
-body[data-theme="bitterLight"] .md-content ol.task-list li,
-body[data-theme="bitterLight"] .md-content li.task-list-item {
-	color: #0d0c10 !important;
 }
 
 body[data-theme="bitterLight"] #toggleComments,
@@ -5476,13 +5462,6 @@ body[data-theme="monoLight"] #previewPanel {
 body[data-theme="monoLight"] #mdPreview {
 	background-color: inherit !important;
 	box-shadow: none !important;
-}
-
-/* Fix task-list font color in monoLight (--accent-text is #fff, meant for accent backgrounds) */
-body[data-theme="monoLight"] .md-content ul.task-list li,
-body[data-theme="monoLight"] .md-content ol.task-list li,
-body[data-theme="monoLight"] .md-content li.task-list-item {
-	color: #24292f !important;
 }
 
 body[data-theme="monoLight"] #toggleComments,
