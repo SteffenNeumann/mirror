@@ -1,5 +1,5 @@
 // Mirror Service Worker — Offline-First Cache + Offline Notes Sync Queue
-const CACHE_NAME = "mirror-v17";
+const CACHE_NAME = "mirror-v18";
 const PRECACHE_URLS = [
 	"/",
 	"/index.html",
@@ -61,6 +61,9 @@ self.addEventListener("fetch", (event) => {
 
 	// Upload files: network-only
 	if (url.pathname.startsWith("/uploads/")) return;
+
+	// gitstamp: always network (never serve stale build info)
+	if (url.pathname === "/gitstamp.txt") return;
 
 	// CDN assets: cache-first (stale-while-revalidate)
 	const isCdn = url.origin !== self.location.origin;
