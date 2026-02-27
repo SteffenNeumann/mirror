@@ -5949,50 +5949,71 @@ wss.on("connection", (ws, req) => {
 		}
 	}
 
-	// Load availability from DB if in-memory is empty, then send to client
+	// Load availability from DB if in-memory is empty, then send to client.
+	// IMPORTANT: Only restore DB entries for clients currently connected to this room.
+	// This prevents stale "ghost" participants from appearing in the planning section.
 	let availMap = roomAvailabilityState.get(rk);
 	if (!availMap || availMap.size === 0) {
-		// Try to load from database (entries updated in last 30 days)
-		const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
-		try {
-			const rows = stmtRoomAvailabilityGetByRoom.all(rk, thirtyDaysAgo);
-			if (rows && rows.length > 0) {
-				availMap = getRoomAvailabilityState(rk);
-				// Deduplicate by name: keep only the most recent entry per name
-				const byName = new Map();
-				for (const row of rows) {
-					const name = row.name || "Guest";
-					const existing = byName.get(name);
-					if (!existing || row.updated_at > existing.updated_at) {
-						byName.set(name, row);
+		// Collect client IDs of currently connected sockets in this room
+		const connectedClientIds = new Set();
+		for (const s of sockets) {
+			if (s.clientId) connectedClientIds.add(String(s.clientId));
+		}
+		// Only load from DB if there are other connected clients whose data we can restore
+		if (connectedClientIds.size > 0) {
+			const thirtyDaysAgo = Date.now() - 30 * 24 * 60 * 60 * 1000;
+			try {
+				const rows = stmtRoomAvailabilityGetByRoom.all(rk, thirtyDaysAgo);
+				if (rows && rows.length > 0) {
+					availMap = getRoomAvailabilityState(rk);
+					// Deduplicate by name: keep only the most recent entry per name
+					const byName = new Map();
+					for (const row of rows) {
+						// Skip entries from clients not currently connected
+						if (!connectedClientIds.has(row.client_id)) continue;
+						const name = row.name || "Guest";
+						const existing = byName.get(name);
+						if (!existing || row.updated_at > existing.updated_at) {
+							byName.set(name, row);
+						}
 					}
-				}
-				for (const row of byName.values()) {
-					try {
-						availMap.set(row.client_id, {
-							name: row.name || "Guest",
-							color: row.color || "#94a3b8",
-							selectedDays: JSON.parse(row.selected_days_json || "[]"),
-							busy: JSON.parse(row.busy_json || "[]"),
-							rangeStart: row.range_start || 0,
-							rangeEnd: row.range_end || 0,
-						});
-					} catch {
-						// Skip invalid rows
+					for (const row of byName.values()) {
+						try {
+							availMap.set(row.client_id, {
+								name: row.name || "Guest",
+								color: row.color || "#94a3b8",
+								selectedDays: JSON.parse(row.selected_days_json || "[]"),
+								busy: JSON.parse(row.busy_json || "[]"),
+								rangeStart: row.range_start || 0,
+								rangeEnd: row.range_end || 0,
+							});
+						} catch {
+							// Skip invalid rows
+						}
 					}
+					console.log("[AVAIL-DB] Loaded", byName.size, "availability entries from DB for room", rk, "(deduped from", rows.length, ", filtered to connected clients)");
 				}
-				console.log("[AVAIL-DB] Loaded", byName.size, "availability entries from DB for room", rk, "(deduped from", rows.length, ")");
+			} catch (dbErr) {
+				console.error("[AVAIL-DB] Failed to load availability from DB:", dbErr.message);
 			}
-		} catch (dbErr) {
-			console.error("[AVAIL-DB] Failed to load availability from DB:", dbErr.message);
+		} else {
+			console.log("[AVAIL-DB] Skipping DB load for room", rk, "- no other connected clients with clientId");
 		}
 	}
 	if (availMap && availMap.size > 0) {
-		const participants = buildDeduplicatedParticipants(availMap);
-		try {
-			ws.send(JSON.stringify({ type: "availability_state", room, participants }));
-		} catch {
-			// ignore
+		// Filter to only currently connected clients before sending
+		const connectedIds = new Set();
+		for (const s of sockets) {
+			if (s.clientId) connectedIds.add(String(s.clientId));
+		}
+		const filteredParticipants = buildDeduplicatedParticipants(availMap)
+			.filter(p => connectedIds.has(p.clientId));
+		if (filteredParticipants.length > 0) {
+			try {
+				ws.send(JSON.stringify({ type: "availability_state", room, participants: filteredParticipants }));
+			} catch {
+				// ignore
+			}
 		}
 	}
 
@@ -6765,19 +6786,28 @@ wss.on("connection", (ws, req) => {
 			}
 			const reqAvail = roomAvailabilityState.get(rk);
 			if (reqAvail && reqAvail.size > 0) {
-				const participants = Array.from(reqAvail.entries()).map(([cid, entry]) => ({
-					clientId: cid,
-					name: entry.name,
-					color: entry.color,
-					busy: entry.busy,
-					selectedDays: entry.selectedDays || [],
-					rangeStart: entry.rangeStart || 0,
-					rangeEnd: entry.rangeEnd || 0,
-				}));
-				try {
-					ws.send(JSON.stringify({ type: "availability_state", room, participants }));
-				} catch {
-					// ignore
+				// Only send availability for currently connected clients
+				const connectedIds = new Set();
+				for (const s of sockets) {
+					if (s.clientId) connectedIds.add(String(s.clientId));
+				}
+				const participants = Array.from(reqAvail.entries())
+					.filter(([cid]) => connectedIds.has(cid))
+					.map(([cid, entry]) => ({
+						clientId: cid,
+						name: entry.name,
+						color: entry.color,
+						busy: entry.busy,
+						selectedDays: entry.selectedDays || [],
+						rangeStart: entry.rangeStart || 0,
+						rangeEnd: entry.rangeEnd || 0,
+					}));
+				if (participants.length > 0) {
+					try {
+						ws.send(JSON.stringify({ type: "availability_state", room, participants }));
+					} catch {
+						// ignore
+					}
 				}
 			}
 			return;

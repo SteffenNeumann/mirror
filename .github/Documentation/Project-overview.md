@@ -230,6 +230,17 @@ interface AvailabilityData {
 
 ---
 
+## Aktuelle Änderungen (2026-02-27)
+
+- **Fix: Planungssektion zeigt nur noch Teilnehmer des aktuellen Raums** `#calendar` `#availability` `#bug` `#room-scoping`: Die Teilnehmerliste in der Planungssektion ("Gemeinsame Zeit finden") zeigte bisher ALLE User, die jemals Verfügbarkeit geteilt hatten — unabhängig davon, ob sie aktuell im selektierten Raum verbunden sind. Ursache: Beim initialen WebSocket-Verbindungsaufbau wurden veraltete Availability-Einträge aus der Datenbank (bis zu 30 Tage alt) geladen und als aktive Teilnehmer dargestellt.
+  1. **Server: Initial DB-Load filtert nach verbundenen Clients** (`server.js` ~L5952): Beim Laden von Availability-Daten aus der DB werden jetzt nur Einträge für `client_id`s berücksichtigt, die aktuell eine aktive WebSocket-Verbindung im Raum haben. Wenn keine anderen Clients verbunden sind, wird das DB-Loading übersprungen.
+  2. **Server: Initial-State-Send filtert nach verbundenen Clients** (`server.js` ~L6007): Der initiale Availability-State, der an neu verbindende Clients gesendet wird, wird gegen die aktuell verbundenen Socket-ClientIds gefiltert.
+  3. **Server: `request_state`-Handler filtert nach verbundenen Clients** (`server.js` ~L6788): Auch bei expliziten State-Requests werden nur Availability-Daten für aktuell verbundene Clients zurückgegeben.
+  - Zuständige Funktionen: Initial-Connection-Handler, `request_state`-Handler (Server).
+  - Zuständige Dateien: `server.js`.
+
+---
+
 ## Aktuelle Änderungen (2026-02-26)
 
 - **Kalender Modus-Trennung: Personal vs. Planning (Doodle-Style)** `#calendar` `#ux` `#tabs` `#planning`: Der Kalender hat jetzt zwei separate Modi mit Tab-Navigation für eine klarere UX-Trennung zwischen privater Kalenderverwaltung und gemeinsamer Terminplanung.
