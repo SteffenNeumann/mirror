@@ -12471,7 +12471,7 @@
 		ul.task-list li,ol.task-list li,li.task-list-item{display:flex;gap:.55rem;align-items:flex-start;flex-wrap:nowrap;white-space:nowrap;position:relative;padding-bottom:0.75rem;min-width:0;transition:transform 1.8s ease;will-change:transform;color:var(--accent-text);font-size:1.1rem;font-weight:400;}
 		ul.task-list li label,ol.task-list li label,li.task-list-item label{font-weight:400;flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
 		ul.task-list li *,ol.task-list li *,li.task-list-item *{font-weight:400 !important;}
-		ul.task-list li.task-list-item.checked,ol.task-list li.task-list-item.checked,li.task-list-item.checked{opacity:1;color:inherit;padding-bottom:2.25rem;}
+		ul.task-list li.task-list-item.checked,ol.task-list li.task-list-item.checked,li.task-list-item.checked{opacity:1;color:inherit;padding-bottom:2.75rem;}
 		ul.task-list li.task-list-item.checked label,ol.task-list li.task-list-item.checked label,li.task-list-item.checked label{text-decoration:line-through;text-decoration-thickness:1.5px;text-decoration-color:var(--accent-strong);}
 		ul.task-list li.task-list-item.checked label *,ol.task-list li.task-list-item.checked label *,li.task-list-item.checked label *{text-decoration:line-through;text-decoration-thickness:1.5px;text-decoration-color:var(--accent-strong);}
 		ul.task-list li.task-list-item.checked input[type=checkbox],ol.task-list li.task-list-item.checked input[type=checkbox],li.task-list-item.checked input[type=checkbox]{opacity:1;}

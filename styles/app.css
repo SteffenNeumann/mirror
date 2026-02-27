@@ -2033,7 +2033,7 @@ body[data-theme="monoDark"] .excel-iframe {
 .md-content li.task-list-item.checked {
 	opacity: 1;
 	color: inherit;
-	padding-bottom: 2.25rem;
+	padding-bottom: 2.75rem;
 }
 .md-content ul.task-list li.task-list-item.checked *,
 .md-content ol.task-list li.task-list-item.checked *,
@@ -2058,7 +2058,7 @@ body[data-theme="monoDark"] .excel-iframe {
 .md-content ol.task-list li > .task-closed-at,
 .md-content li.task-list-item > .task-closed-at {
 	position: absolute;
-	left: calc(2.3rem);
+	left: 1.75rem;
 	top: 1.5rem;
 	margin-left: 0;
 	white-space: nowrap;
