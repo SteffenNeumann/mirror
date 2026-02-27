@@ -163,9 +163,6 @@ main.relative {
 #psPanel {
 	min-width: 0;
 }
-#mainGrid {
-	position: relative;
-}
 
 .bg-glow {
 	position: fixed;
@@ -349,11 +346,9 @@ body.glow-disabled .bg-glow {
 
 /* PS Show Button – visible when PS is collapsed */
 #psShowBtn {
-	position: absolute;
-	top: 12px;
-	left: 12px;
-	z-index: 20;
 	border: none;
+	background: transparent !important;
+	padding: 0;
 }
 #psShowBtn:not(.hidden) {
 	display: inline-flex;
