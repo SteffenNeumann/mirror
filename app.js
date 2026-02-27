@@ -5899,6 +5899,16 @@
 				"header.favorite_toggle": "Favorit hinzufügen/entfernen",
 				"header.room_prefix": "Raum:",
 				"header.crdt_toggle": "CRDT-Markierung ausblenden",
+				"tooltip.status": "Verbindungsstatus",
+				"tooltip.ps_open": "Personal Space öffnen",
+				"tooltip.header_toggle": "Header ein-/ausblenden",
+				"tooltip.room_input": "Raum-Name eingeben zum Beitreten",
+				"tooltip.join": "Dem eingegebenen Raum beitreten",
+				"tooltip.new_room": "Neuen privaten Raum erstellen",
+				"tooltip.share_room": "Raum-Link in die Zwischenablage kopieren",
+				"tooltip.favorites": "Gespeicherte Favoriten-Räume auswählen",
+				"tooltip.favorite_toggle": "Raum als Favorit speichern/entfernen",
+				"tooltip.crdt_toggle": "CRDT-Markierungen ein-/ausblenden",
 				"tabs.tooltip.private": "Privater Raum · Zugriff nur mit Schlüssel",
 				"tabs.tooltip.public": "Öffentlicher Raum · Kein Schlüssel erforderlich",
 				"tabs.tooltip.shared": "Geteilter Raum · Link wurde geteilt",
@@ -6491,6 +6501,16 @@
 				"header.favorite_toggle": "Add/remove favorite",
 				"header.room_prefix": "Room:",
 				"header.crdt_toggle": "Hide CRDT markers",
+				"tooltip.status": "Connection status",
+				"tooltip.ps_open": "Open Personal Space",
+				"tooltip.header_toggle": "Show/hide header",
+				"tooltip.room_input": "Enter room name to join",
+				"tooltip.join": "Join the entered room",
+				"tooltip.new_room": "Create a new private room",
+				"tooltip.share_room": "Copy room link to clipboard",
+				"tooltip.favorites": "Select saved favorite rooms",
+				"tooltip.favorite_toggle": "Save/remove room as favorite",
+				"tooltip.crdt_toggle": "Show/hide CRDT markers",
 				"tabs.tooltip.private": "Private room · Access requires key",
 				"tabs.tooltip.public": "Public room · No key required",
 				"tabs.tooltip.shared": "Shared room · Link was shared",
@@ -7081,6 +7101,7 @@
 			applyI18nAttribute("data-i18n-placeholder", "placeholder");
 			applyI18nAttribute("data-i18n-title", "title");
 			applyI18nAttribute("data-i18n-aria", "aria-label");
+			applyI18nAttribute("data-i18n-tooltip", "data-tooltip");
 		}
 
 		function syncUiLangButtons() {
