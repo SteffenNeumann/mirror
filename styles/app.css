@@ -8342,7 +8342,7 @@ body[data-theme="monoLight"] .cal-sel-badge {
 	border-left-width: 0;
 }
 .calendar-day-cell-month {
-	min-height: 150px;
+	height: 150px;
 	display: flex;
 	flex-direction: column;
 	overflow: hidden;
