@@ -2058,7 +2058,7 @@ body[data-theme="monoDark"] .excel-iframe {
 .md-content ol.task-list li > .task-closed-at,
 .md-content li.task-list-item > .task-closed-at {
 	position: absolute;
-	left: 1.75rem;
+	left: 2.2rem;
 	top: 1.5rem;
 	margin-left: 0;
 	white-space: nowrap;
