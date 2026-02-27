@@ -5898,7 +5898,7 @@
 				"header.favorites_placeholder": "Favoriten…",
 				"header.favorite_toggle": "Favorit hinzufügen/entfernen",
 				"header.room_prefix": "Raum:",
-				"header.crdt_toggle": "CRDT-Markierung ausblenden",
+				"header.crdt_toggle": "Änderungen anderer ausblenden",
 				"tooltip.status": "Verbindungsstatus",
 				"tooltip.ps_open": "Personal Space öffnen",
 				"tooltip.header_toggle": "Header ein-/ausblenden",
@@ -5908,7 +5908,7 @@
 				"tooltip.share_room": "Raum-Link in die Zwischenablage kopieren",
 				"tooltip.favorites": "Gespeicherte Favoriten-Räume auswählen",
 				"tooltip.favorite_toggle": "Raum als Favorit speichern/entfernen",
-				"tooltip.crdt_toggle": "CRDT-Markierungen ein-/ausblenden",
+				"tooltip.crdt_toggle": "Änderungen anderer Nutzer hervorheben oder ausblenden",
 				"tabs.tooltip.private": "Privater Raum · Zugriff nur mit Schlüssel",
 				"tabs.tooltip.public": "Öffentlicher Raum · Kein Schlüssel erforderlich",
 				"tabs.tooltip.shared": "Geteilter Raum · Link wurde geteilt",
@@ -6500,7 +6500,7 @@
 				"header.favorites_placeholder": "Favorites…",
 				"header.favorite_toggle": "Add/remove favorite",
 				"header.room_prefix": "Room:",
-				"header.crdt_toggle": "Hide CRDT markers",
+				"header.crdt_toggle": "Hide other users' changes",
 				"tooltip.status": "Connection status",
 				"tooltip.ps_open": "Open Personal Space",
 				"tooltip.header_toggle": "Show/hide header",
@@ -6510,7 +6510,7 @@
 				"tooltip.share_room": "Copy room link to clipboard",
 				"tooltip.favorites": "Select saved favorite rooms",
 				"tooltip.favorite_toggle": "Save/remove room as favorite",
-				"tooltip.crdt_toggle": "Show/hide CRDT markers",
+				"tooltip.crdt_toggle": "Highlight or hide changes made by other users",
 				"tabs.tooltip.private": "Private room · Access requires key",
 				"tabs.tooltip.public": "Public room · No key required",
 				"tabs.tooltip.shared": "Shared room · Link was shared",
@@ -11308,11 +11308,11 @@
 		);
 		toggleCrdtMarksBtn.setAttribute(
 			"title",
-			enabled ? "CRDT-Markierung ausblenden" : "CRDT-Markierung einblenden"
+			enabled ? "Änderungen anderer ausblenden" : "Änderungen anderer hervorheben"
 		);
 		toggleCrdtMarksBtn.setAttribute(
 			"aria-label",
-			enabled ? "CRDT-Markierung ausblenden" : "CRDT-Markierung einblenden"
+			enabled ? "Änderungen anderer ausblenden" : "Änderungen anderer hervorheben"
 		);
 		toggleCrdtMarksBtn.classList.toggle("text-fuchsia-200", enabled);
 		toggleCrdtMarksBtn.classList.toggle("text-slate-400", !enabled);
