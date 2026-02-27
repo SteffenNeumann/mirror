@@ -3084,13 +3084,15 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	border-radius: 10px;
 	border: 1px solid var(--calendar-tooltip-border);
 	background: var(--calendar-tooltip-bg);
+	backdrop-filter: blur(16px);
+	-webkit-backdrop-filter: blur(16px);
 	color: var(--calendar-tooltip-text);
 	font-size: 11px;
 	line-height: 1.4;
 	white-space: normal;
 	text-align: left;
 	box-shadow: var(--calendar-tooltip-shadow);
-	z-index: 30;
+	z-index: 100;
 }
 
 .calendar-event[data-tooltip]::before {
@@ -3104,7 +3106,7 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	border-left: 1px solid var(--calendar-tooltip-border);
 	border-bottom: 1px solid var(--calendar-tooltip-border);
 	transform: translate(-50%, -6px) rotate(45deg);
-	z-index: 29;
+	z-index: 99;
 }
 
 .calendar-event[data-tooltip]:hover::after,
@@ -8355,13 +8357,22 @@ body[data-theme="monoLight"] .cal-sel-badge {
 	scrollbar-width: none;          /* Firefox */
 	-ms-overflow-style: none;       /* IE/Edge */
 }
+.calendar-day-cell-month > .mt-1:hover {
+	overflow: visible;
+}
 .calendar-day-cell-month > .mt-1::-webkit-scrollbar {
 	display: none;                  /* Chrome/Safari */
 }
 /* Clip event text, full content shown via hover tooltip */
 .calendar-day-cell-month .calendar-event {
+	position: relative;
 	overflow: hidden;
 	max-width: 100%;
+}
+/* Allow tooltip to escape cell overflow on hover */
+.calendar-day-cell-month .calendar-event:hover {
+	overflow: visible;
+	z-index: 50;
 }
 
 .calendar-day-today {
