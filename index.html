@@ -1273,10 +1273,10 @@
 										<button
 											id="psNavBack"
 											type="button"
-											class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10 disabled:pointer-events-none disabled:opacity-40"
-											title="Back"
+											class="inline-flex items-center justify-center rounded-lg bg-transparent px-1.5 py-1.5 text-slate-300 transition hover:bg-white/5 active:bg-white/10 disabled:pointer-events-none disabled:opacity-40"
+											data-tooltip="Zurück"
+											data-i18n-tooltip="editor.nav_back"
 											aria-label="Back"
-											data-i18n-title="editor.nav_back"
 											data-i18n-aria="editor.nav_back"
 											disabled>
 											<svg
@@ -1293,10 +1293,10 @@
 										<button
 											id="psNavForward"
 											type="button"
-											class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10 disabled:pointer-events-none disabled:opacity-40"
-											title="Forward"
+											class="inline-flex items-center justify-center rounded-lg bg-transparent px-1.5 py-1.5 text-slate-300 transition hover:bg-white/5 active:bg-white/10 disabled:pointer-events-none disabled:opacity-40"
+											data-tooltip="Vorwärts"
+											data-i18n-tooltip="editor.nav_forward"
 											aria-label="Forward"
-											data-i18n-title="editor.nav_forward"
 											data-i18n-aria="editor.nav_forward"
 											disabled>
 											<svg
@@ -1313,16 +1313,18 @@
 										<button
 											id="togglePreview"
 											type="button"
-											class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10">
+											data-tooltip="Vorschau ein-/ausblenden"
+											data-i18n-tooltip="tooltip.toggle_preview"
+											class="rounded-lg bg-transparent px-3 py-1.5 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10">
 											<span data-i18n="editor.preview">Preview</span>
 										</button>
 										<button
 											id="openUploadModal"
 											type="button"
-											class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10"
-											title="Datei hochladen"
+											class="rounded-lg bg-transparent px-3 py-1.5 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+											data-tooltip="Datei hochladen"
+											data-i18n-tooltip="tooltip.upload"
 											aria-label="Datei hochladen"
-											data-i18n-title="editor.upload"
 											data-i18n-aria="editor.upload">
 											<span data-i18n="editor.upload">Upload</span>
 										</button>
@@ -1356,10 +1358,10 @@
 											<button
 												id="toggleFullPreview"
 												type="button"
-												class="hidden lg:inline-flex h-8 items-center justify-center rounded-lg border border-white/10 bg-transparent px-2.5 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10"
-												title="Full preview"
+												class="hidden lg:inline-flex items-center justify-center rounded-lg bg-transparent px-3 py-1.5 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+												data-tooltip="Vollbild-Vorschau"
+												data-i18n-tooltip="tooltip.full_preview"
 												aria-label="Full preview"
-												data-i18n-title="preview.full"
 												data-i18n-aria="preview.full"
 												aria-pressed="false">
 												<span data-i18n="preview.full">Full preview</span>
