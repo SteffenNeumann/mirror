@@ -416,7 +416,7 @@
 									<input
 										id="roomInput"
 										list="roomOptions"
-										class="w-44 sm:w-48 rounded-lg border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-100 placeholder:text-slate-500 outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25"
+										class="w-44 sm:w-48 rounded-lg bg-slate-950/40 px-3 py-1.5 text-xs text-slate-100 placeholder:text-slate-500 outline-none ring-1 ring-transparent transition focus:ring-fuchsia-400/25"
 										placeholder="Room (e.g. KubernetesRoom123)"
 										data-i18n-placeholder="header.room_placeholder" />
 									<datalist id="roomOptions"></datalist>
@@ -424,32 +424,32 @@
 								<button
 									id="joinRoom"
 									type="button"
-									class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-100 transition hover:bg-white/5 active:bg-white/10">
+									class="rounded-lg bg-transparent px-3 py-1.5 text-xs text-slate-100 transition hover:bg-white/5 active:bg-white/10">
 									<span data-i18n="header.join">Join</span>
 								</button>
 								<button
 									id="newRoom"
 									type="button"
-									class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-200 transition hover:bg-white/5 active:bg-white/10">
+									class="rounded-lg bg-transparent px-3 py-1.5 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10">
 									<span data-i18n="header.new">New</span>
 								</button>
 								<button
 									id="copyLink"
 									type="button"
-									class="rounded-lg border border-white/10 bg-transparent px-3 py-2 text-sm text-slate-100 transition hover:bg-white/5 active:bg-white/10">
+									class="rounded-lg bg-transparent px-3 py-1.5 text-xs text-slate-100 transition hover:bg-white/5 active:bg-white/10">
 									<span data-i18n="header.share_room">Share room</span>
 								</button>
 								<div class="flex items-center gap-2">
 									<label for="favoritesSelect" class="sr-only" data-i18n="header.favorites_label">Favorites</label>
 									<select
 										id="favoritesSelect"
-										class="w-44 sm:w-56 rounded-lg border border-white/10 bg-slate-950/40 px-3 py-2 text-sm text-slate-100 outline-none ring-1 ring-transparent transition focus:border-white/20 focus:ring-fuchsia-400/25">
+										class="w-44 sm:w-56 rounded-lg bg-slate-950/40 px-3 py-1.5 text-xs text-slate-100 outline-none ring-1 ring-transparent transition focus:ring-fuchsia-400/25">
 										<option value="" data-i18n="header.favorites_placeholder">Favorites…</option>
 									</select>
 									<button
 										id="toggleFavorite"
 										type="button"
-										class="inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-100 transition hover:bg-white/5 active:bg-white/10"
+										class="inline-flex h-7 w-7 items-center justify-center rounded-lg bg-transparent text-slate-100 transition hover:bg-white/5 active:bg-white/10"
 										title="Add/remove favorite"
 										aria-label="Add/remove favorite"
 										data-i18n-title="header.favorite_toggle"
@@ -461,7 +461,7 @@
 											stroke-width="2"
 											stroke-linecap="round"
 											stroke-linejoin="round"
-											class="h-5 w-5">
+											class="h-3.5 w-3.5">
 											<path
 												d="M12 17.3l-6.18 3.25 1.18-6.88L2 8.9l6.9-1L12 1.8l3.1 6.1 6.9 1-5 4.77 1.18 6.88z" />
 										</svg>
@@ -493,7 +493,7 @@
 									<button
 										id="toggleCrdtMarks"
 										type="button"
-										class="inline-flex h-6 w-6 items-center justify-center rounded-md border border-white/10 bg-transparent text-slate-400 transition hover:bg-white/5 active:bg-white/10"
+										class="inline-flex h-5 w-5 items-center justify-center rounded-md bg-transparent text-slate-400 transition hover:bg-white/5 active:bg-white/10"
 											title="CRDT-Markierung ausblenden"
 											aria-label="CRDT-Markierung ausblenden"
 											data-i18n-title="header.crdt_toggle"
