@@ -715,6 +715,16 @@ function initDb() {
 		console.warn("[initDb] title_hash backfill error:", e);
 	}
 
+	// Migration: add task_closed_json column for server-side task completion timestamps
+	const hasTaskClosedJson = noteCols.some((c) => String(c && c.name) === "task_closed_json");
+	if (!hasTaskClosedJson) {
+		try {
+			db.exec("ALTER TABLE notes ADD COLUMN task_closed_json TEXT");
+		} catch {
+			// ignore
+		}
+	}
+
 	// Auto-dedup: remove duplicate notes with same user_id + title_hash + content_hash
 	try {
 		const dupeRows = db.prepare(`
@@ -772,30 +782,30 @@ function initDb() {
 		"INSERT INTO users(email, created_at) VALUES(?, ?) ON CONFLICT(email) DO NOTHING"
 	);
 	stmtNoteInsert = db.prepare(
-		"INSERT INTO notes(id, user_id, text, kind, content_hash, title_hash, tags_json, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)"
+		"INSERT INTO notes(id, user_id, text, kind, content_hash, title_hash, tags_json, task_closed_json, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 	);
 	stmtNoteGetByIdUser = db.prepare(
-		"SELECT id, text, kind, content_hash, tags_json, created_at, updated_at FROM notes WHERE id = ? AND user_id = ?"
+		"SELECT id, text, kind, content_hash, tags_json, task_closed_json, created_at, updated_at FROM notes WHERE id = ? AND user_id = ?"
 	);
 	stmtNoteGetById = db.prepare(
 		"SELECT id, user_id FROM notes WHERE id = ?"
 	);
 	stmtNoteGetByHashUser = db.prepare(
-		"SELECT id, text, kind, tags_json, created_at, updated_at FROM notes WHERE user_id = ? AND content_hash = ? LIMIT 1"
+		"SELECT id, text, kind, tags_json, task_closed_json, created_at, updated_at FROM notes WHERE user_id = ? AND content_hash = ? LIMIT 1"
 	);
 	stmtNoteGetByTitleHashUser = db.prepare(
-		"SELECT id, text, kind, tags_json, created_at, updated_at FROM notes WHERE user_id = ? AND title_hash = ? LIMIT 1"
+		"SELECT id, text, kind, tags_json, task_closed_json, created_at, updated_at FROM notes WHERE user_id = ? AND title_hash = ? LIMIT 1"
 	);
 	stmtNoteUpdate = db.prepare(
-		"UPDATE notes SET text = ?, kind = ?, content_hash = ?, title_hash = ?, tags_json = ?, updated_at = ? WHERE id = ? AND user_id = ?"
+		"UPDATE notes SET text = ?, kind = ?, content_hash = ?, title_hash = ?, tags_json = ?, task_closed_json = ?, updated_at = ? WHERE id = ? AND user_id = ?"
 	);
 	stmtNoteDelete = db.prepare("DELETE FROM notes WHERE id = ? AND user_id = ?");
 	stmtNotesDeleteAll = db.prepare("DELETE FROM notes WHERE user_id = ?");
 	stmtNotesByUser = db.prepare(
-		"SELECT id, text, kind, tags_json, created_at, updated_at FROM notes WHERE user_id = ? ORDER BY created_at DESC LIMIT 500"
+		"SELECT id, text, kind, tags_json, task_closed_json, created_at, updated_at FROM notes WHERE user_id = ? ORDER BY created_at DESC LIMIT 500"
 	);
 	stmtNotesByUserAndTag = db.prepare(
-		"SELECT id, text, kind, tags_json, created_at, updated_at FROM notes WHERE user_id = ? AND tags_json LIKE ? ORDER BY created_at DESC LIMIT 500"
+		"SELECT id, text, kind, tags_json, task_closed_json, created_at, updated_at FROM notes WHERE user_id = ? AND tags_json LIKE ? ORDER BY created_at DESC LIMIT 500"
 	);
 	stmtTagsByUser = db.prepare(
 		"SELECT tags_json FROM notes WHERE user_id = ? ORDER BY created_at DESC LIMIT 500"
@@ -1669,8 +1679,8 @@ function getOrCreateUserId(email) {
 
 function listNotes(userId, tag) {
 	initDb();
-	if (!tag) {
-		return stmtNotesByUser.all(userId).map((r) => ({
+	const mapNote = (r) => {
+		const note = {
 			id: r.id,
 			text: r.text,
 			kind: r.kind,
@@ -1680,20 +1690,22 @@ function listNotes(userId, tag) {
 				typeof r.updated_at === "number" && Number.isFinite(r.updated_at)
 					? r.updated_at
 					: r.created_at,
-		}));
+		};
+		if (r.task_closed_json) {
+			try {
+				const parsed = JSON.parse(r.task_closed_json);
+				if (parsed && typeof parsed === "object" && Object.keys(parsed).length > 0) {
+					note.taskClosedTs = parsed;
+				}
+			} catch { /* ignore */ }
+		}
+		return note;
+	};
+	if (!tag) {
+		return stmtNotesByUser.all(userId).map(mapNote);
 	}
 	const like = `%"${String(tag).replace(/"/g, "")}"%`;
-	return stmtNotesByUserAndTag.all(userId, like).map((r) => ({
-		id: r.id,
-		text: r.text,
-		kind: r.kind,
-		tags: parseTagsJson(r.tags_json),
-		createdAt: r.created_at,
-		updatedAt:
-			typeof r.updated_at === "number" && Number.isFinite(r.updated_at)
-				? r.updated_at
-				: r.created_at,
-	}));
+	return stmtNotesByUserAndTag.all(userId, like).map(mapNote);
 }
 
 function purgeExpiredTrash() {
@@ -4445,6 +4457,7 @@ const server = http.createServer(async (req, res) => {
 						contentHash,
 						titleHash,
 						JSON.stringify(note.tags),
+						null,
 						note.createdAt,
 						note.updatedAt
 					);
@@ -4685,6 +4698,25 @@ const server = http.createServer(async (req, res) => {
 					let tags;
 					let override = false;
 					const existingTags = parseTagsJson(existing.tags_json);
+
+					// Handle taskClosedTs (task completion timestamps)
+					const hasTaskClosedTs = body && Object.prototype.hasOwnProperty.call(body, "taskClosedTs");
+					let taskClosedJson = existing.task_closed_json || null;
+					if (hasTaskClosedTs && body.taskClosedTs && typeof body.taskClosedTs === "object" && !Array.isArray(body.taskClosedTs)) {
+						// Merge incoming timestamps with existing ones
+						let existingTs = {};
+						try { existingTs = taskClosedJson ? JSON.parse(taskClosedJson) : {}; } catch { existingTs = {}; }
+						if (!existingTs || typeof existingTs !== "object") existingTs = {};
+						const merged = { ...existingTs };
+						for (const [k, v] of Object.entries(body.taskClosedTs)) {
+							if (v === null || v === undefined) {
+								delete merged[k];
+							} else if (typeof v === "number" && Number.isFinite(v)) {
+								merged[k] = v;
+							}
+						}
+						taskClosedJson = Object.keys(merged).length > 0 ? JSON.stringify(merged) : null;
+					}
 					if (hasTags) {
 						const split = splitManualOverrideTags(
 							body && body.tags ? body.tags : []
@@ -4723,11 +4755,13 @@ const server = http.createServer(async (req, res) => {
 						contentHash,
 						titleHash,
 						JSON.stringify(tags),
+						taskClosedJson,
 						updatedAt,
 						noteId,
 						userId
 					);
-					json(res, 200, {
+					const taskClosedTsParsed = taskClosedJson ? (() => { try { return JSON.parse(taskClosedJson); } catch { return undefined; } })() : undefined;
+					const resp = {
 						ok: true,
 						note: {
 							id: noteId,
@@ -4737,7 +4771,9 @@ const server = http.createServer(async (req, res) => {
 							createdAt: existing.created_at,
 							updatedAt,
 						},
-					});
+					};
+					if (taskClosedTsParsed && Object.keys(taskClosedTsParsed).length > 0) resp.note.taskClosedTs = taskClosedTsParsed;
+					json(res, 200, resp);
 				})
 				.catch(() => json(res, 400, { ok: false, error: "invalid_json" }));
 			return;
@@ -4841,6 +4877,7 @@ const server = http.createServer(async (req, res) => {
 					contentHash,
 					computeNoteTitleHash(textVal),
 					JSON.stringify(tags),
+					null,
 					createdAt,
 					updatedAt
 				);
@@ -5023,6 +5060,7 @@ const server = http.createServer(async (req, res) => {
 								contentHash,
 								computeNoteTitleHash(textVal),
 								JSON.stringify(tagsFinal),
+								existing.task_closed_json || null,
 								updatedAt,
 								noteId,
 								userId
@@ -5051,6 +5089,7 @@ const server = http.createServer(async (req, res) => {
 							contentHash,
 							computeNoteTitleHash(textVal),
 							JSON.stringify(tagsFinal),
+							null,
 							createdAt,
 							updatedAt
 						);
