@@ -8313,6 +8313,9 @@ body[data-theme="monoLight"] .cal-sel-badge {
 	overflow: hidden;
 	background: transparent;
 }
+.calendar-month-grid {
+	grid-auto-rows: 1fr;
+}
 .calendar-month-weekdays {
 	border: none;
 	border-radius: 0;
@@ -8340,6 +8343,16 @@ body[data-theme="monoLight"] .cal-sel-badge {
 }
 .calendar-day-cell-month {
 	min-height: 94px;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+.calendar-day-cell-month > .mt-1 {
+	flex: 1 1 0;
+	min-height: 0;
+	overflow-y: auto;
+	scrollbar-width: thin;
+	scrollbar-color: rgba(148,163,184,0.3) transparent;
 }
 
 .calendar-day-today {
