@@ -5909,7 +5909,8 @@
 				"tooltip.favorites": "Gespeicherte Favoriten-Räume auswählen",
 				"tooltip.favorite_toggle": "Raum als Favorit speichern/entfernen",
 				"tooltip.crdt_toggle": "Änderungen anderer Nutzer hervorheben oder ausblenden",
-				"tooltip.presence": "Aktive Nutzer in diesem Raum",
+				"tooltip.presence": "Raum-Namen eingeben oder ändern",
+				"tooltip.profile_edit": "Klicken um Profil zu bearbeiten",
 				"tabs.tooltip.private": "Privater Raum · Zugriff nur mit Schlüssel",
 				"tabs.tooltip.public": "Öffentlicher Raum · Kein Schlüssel erforderlich",
 				"tabs.tooltip.shared": "Geteilter Raum · Link wurde geteilt",
@@ -6512,7 +6513,8 @@
 				"tooltip.favorites": "Select saved favorite rooms",
 				"tooltip.favorite_toggle": "Save/remove room as favorite",
 				"tooltip.crdt_toggle": "Highlight or hide changes made by other users",
-				"tooltip.presence": "Active users in this room",
+				"tooltip.presence": "Enter or change room name",
+				"tooltip.profile_edit": "Click to edit profile",
 				"tabs.tooltip.private": "Private room · Access requires key",
 				"tabs.tooltip.public": "Public room · No key required",
 				"tabs.tooltip.shared": "Shared room · Link was shared",
@@ -21767,7 +21769,8 @@ self.onmessage = async (e) => {
 				"inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-2 py-1 text-[11px] text-slate-200" +
 				(isOwnUser ? " presence-chip-own" : "");
 			if (isOwnUser) {
-				chip.title = "Klicken um Profil zu bearbeiten";
+				chip.setAttribute("data-tooltip", t("tooltip.profile_edit"));
+				chip.style.cursor = "pointer";
 				chip.addEventListener("click", () => {
 					if (typeof openIdentityModal === "function") openIdentityModal();
 				});
