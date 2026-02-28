@@ -11798,6 +11798,86 @@
 			} catch {
 				// ignore
 			}
+			// Inline Highlights: ==text== or =={color}text== -> <mark> with optional color
+			try {
+				const HIGHLIGHT_COLOR_RE = /^\{([a-zA-Z]+|#[0-9a-fA-F]{3,8})\}/;
+				const HIGHLIGHT_NAMED_COLORS = {
+					red: "rgba(239,68,68,.25)", green: "rgba(34,197,94,.25)",
+					blue: "rgba(59,130,246,.25)", yellow: "rgba(250,204,21,.35)",
+					orange: "rgba(249,115,22,.25)", purple: "rgba(168,85,247,.25)",
+					pink: "rgba(236,72,153,.25)", cyan: "rgba(6,182,212,.25)",
+				};
+				const HIGHLIGHT_TEXT_COLORS = {
+					red: "rgba(252,165,165,1)", green: "rgba(134,239,172,1)",
+					blue: "rgba(147,197,253,1)", yellow: "inherit",
+					orange: "rgba(253,186,116,1)", purple: "rgba(216,180,254,1)",
+					pink: "rgba(249,168,212,1)", cyan: "rgba(103,232,249,1)",
+				};
+				const HIGHLIGHT_LIGHT_COLORS = {
+					red: "rgba(239,68,68,.18)", green: "rgba(34,197,94,.18)",
+					blue: "rgba(59,130,246,.18)", yellow: "rgba(250,204,21,.30)",
+					orange: "rgba(249,115,22,.18)", purple: "rgba(168,85,247,.18)",
+					pink: "rgba(236,72,153,.18)", cyan: "rgba(6,182,212,.18)",
+				};
+				const HIGHLIGHT_LIGHT_TEXT_COLORS = {
+					red: "rgba(185,28,28,1)", green: "rgba(21,128,61,1)",
+					blue: "rgba(29,78,216,1)", yellow: "inherit",
+					orange: "rgba(194,65,12,1)", purple: "rgba(126,34,206,1)",
+					pink: "rgba(190,24,93,1)", cyan: "rgba(14,116,144,1)",
+				};
+				const tokenizeHighlight = (state, silent) => {
+					const start = state.pos;
+					if (state.src.charCodeAt(start) !== 0x3D) return false; // =
+					if (state.src.charCodeAt(start + 1) !== 0x3D) return false; // =
+					let pos = start + 2;
+					const max = state.posMax;
+					let color = "";
+					// Check for optional {color} prefix
+					const rest = state.src.slice(pos, max);
+					const cm = rest.match(HIGHLIGHT_COLOR_RE);
+					if (cm) {
+						color = cm[1];
+						pos += cm[0].length;
+					}
+					// Find closing ==
+					const contentStart = pos;
+					while (pos < max - 1) {
+						if (state.src.charCodeAt(pos) === 0x3D && state.src.charCodeAt(pos + 1) === 0x3D) {
+							break;
+						}
+						pos++;
+					}
+					if (pos >= max - 1) return false;
+					const content = state.src.slice(contentStart, pos);
+					if (!content) return false;
+					if (!silent) {
+						const token = state.push("highlight_mark", "", 0);
+						token.content = content;
+						token.meta = { color: color };
+					}
+					state.pos = pos + 2;
+					return true;
+				};
+				md.inline.ruler.before("emphasis", "highlight_mark", tokenizeHighlight);
+				md.renderer.rules.highlight_mark = (tokens, idx) => {
+					const token = tokens[idx];
+					const content = md.utils.escapeHtml(token.content || "");
+					const rawColor = String((token.meta && token.meta.color) || "").toLowerCase();
+					if (!rawColor) {
+						return `<mark>${content}</mark>`;
+					}
+					if (rawColor.startsWith("#")) {
+						return `<mark style="background:${md.utils.escapeHtml(rawColor)}30;color:inherit;">${content}</mark>`;
+					}
+					const bg = HIGHLIGHT_NAMED_COLORS[rawColor];
+					if (bg) {
+						return `<mark class="mark-${md.utils.escapeHtml(rawColor)}">${content}</mark>`;
+					}
+					return `<mark>${content}</mark>`;
+				};
+			} catch {
+				// ignore
+			}
 			// Links in neuer Tab + sicher
 			const defaultRender =
 				md.renderer.rules.link_open ||
@@ -12483,6 +12563,15 @@
 		.pw-field:hover .pw-toggle,.pw-field:hover .pw-copy,.pw-field.pw-revealed .pw-toggle,.pw-field.pw-revealed .pw-copy{opacity:1;}
 		.pw-toggle svg,.pw-copy svg{width:.85rem;height:.85rem;display:block;}
 		.pw-toggle:hover,.pw-copy:hover{background:${previewPreBg};}
+		mark{background:${isLightSyntax ? "rgba(250,204,21,.30)" : "rgba(250,204,21,.35)"};color:inherit;padding:.05em .2em;border-radius:.25em;}
+		mark.mark-red{background:${isLightSyntax ? "rgba(239,68,68,.18)" : "rgba(239,68,68,.25)"};color:${isLightSyntax ? "rgba(185,28,28,1)" : "rgba(252,165,165,1)"};}
+		mark.mark-green{background:${isLightSyntax ? "rgba(34,197,94,.18)" : "rgba(34,197,94,.25)"};color:${isLightSyntax ? "rgba(21,128,61,1)" : "rgba(134,239,172,1)"};}
+		mark.mark-blue{background:${isLightSyntax ? "rgba(59,130,246,.18)" : "rgba(59,130,246,.25)"};color:${isLightSyntax ? "rgba(29,78,216,1)" : "rgba(147,197,253,1)"};}
+		mark.mark-yellow{background:${isLightSyntax ? "rgba(250,204,21,.30)" : "rgba(250,204,21,.35)"};color:inherit;}
+		mark.mark-orange{background:${isLightSyntax ? "rgba(249,115,22,.18)" : "rgba(249,115,22,.25)"};color:${isLightSyntax ? "rgba(194,65,12,1)" : "rgba(253,186,116,1)"};}
+		mark.mark-purple{background:${isLightSyntax ? "rgba(168,85,247,.18)" : "rgba(168,85,247,.25)"};color:${isLightSyntax ? "rgba(126,34,206,1)" : "rgba(216,180,254,1)"};}
+		mark.mark-pink{background:${isLightSyntax ? "rgba(236,72,153,.18)" : "rgba(236,72,153,.25)"};color:${isLightSyntax ? "rgba(190,24,93,1)" : "rgba(249,168,212,1)"};}
+		mark.mark-cyan{background:${isLightSyntax ? "rgba(6,182,212,.18)" : "rgba(6,182,212,.25)"};color:${isLightSyntax ? "rgba(14,116,144,1)" : "rgba(103,232,249,1)"};}
 		.meta-yaml{margin:0 0 12px 0;font-size:11px;line-height:1.4;color:${previewMetaText};background:${previewMetaBg};border:1px solid ${previewMetaBorder};border-radius:10px;padding:8px 10px;white-space:pre-wrap;}
 		*{scrollbar-width:thin;scrollbar-color:transparent transparent;}
 		*::-webkit-scrollbar{width:10px;height:10px;}

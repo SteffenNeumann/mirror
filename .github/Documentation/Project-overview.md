@@ -230,6 +230,49 @@ interface AvailabilityData {
 
 ---
 
+## Aktuelle Änderungen (2026-02-28)
+
+- **Farbige Text-Markierungen (Highlight-Syntax)** `#markdown` `#highlight` `#preview` `#ux`: Textpassagen können jetzt im Markdown farblich markiert werden. Die Syntax `==text==` erzeugt eine gelbe Markierung (Standard), `=={farbe}text==` eine farbige Markierung mit benannter oder benutzerdefinierter Farbe.
+
+  ### Syntax
+
+  | Markdown-Eingabe | Ergebnis |
+  |---|---|
+  | `==markierter Text==` | Gelbe Markierung (Standard) |
+  | `=={red}roter Text==` | Rote Markierung |
+  | `=={green}grüner Text==` | Grüne Markierung |
+  | `=={blue}blauer Text==` | Blaue Markierung |
+  | `=={orange}orange==` | Orange Markierung |
+  | `=={purple}lila==` | Lila Markierung |
+  | `=={pink}pink==` | Pinke Markierung |
+  | `=={cyan}türkis==` | Türkise Markierung |
+  | `=={#ff9900}custom==` | Benutzerdefinierte Hex-Farbe |
+
+  ### Implementierung
+
+  1. **markdown-it Inline-Rule `highlight_mark`** (`app.js` ~L11800): Neuer Tokenizer (analog zum bestehenden `password`-Tokenizer für `||secret||`). Erkennt `==...==`-Syntax mit optionalem `{farbe}`-Prefix. Erzeugt `highlight_mark`-Tokens mit `meta.color`-Property.
+  2. **Renderer-Rule `highlight_mark`** (`app.js` ~L11860): Rendert `<mark>`-Tags. Ohne Farbe: Standard-`<mark>`. Mit benannter Farbe: `<mark class="mark-{farbe}">`. Mit Hex-Farbe: `<mark style="background:...">`.
+  3. **Preview-iframe CSS** (`app.js` ~L12558): Theme-aware Styles für `mark` und `.mark-{farbe}`-Klassen. Dark-Themes nutzen helle Textfarben mit transparentem Hintergrund, Light-Themes dunklere Textfarben mit geringerem Hintergrund-Opacity.
+  4. **`=`-Zeichen bereits im Terminator**: Das Gleichheitszeichen (0x3D) war bereits im `isTerminatorOrPipe`-Switch registriert, daher greift der Highlight-Tokenizer korrekt.
+
+  ### Verfügbare Farben
+
+  | Farbe | Dark-Theme BG | Dark-Theme Text | Light-Theme BG | Light-Theme Text |
+  |-------|---------------|-----------------|-----------------|-------------------|
+  | (Standard) | `rgba(250,204,21,.35)` | inherit | `rgba(250,204,21,.30)` | inherit |
+  | red | `rgba(239,68,68,.25)` | `rgba(252,165,165,1)` | `rgba(239,68,68,.18)` | `rgba(185,28,28,1)` |
+  | green | `rgba(34,197,94,.25)` | `rgba(134,239,172,1)` | `rgba(34,197,94,.18)` | `rgba(21,128,61,1)` |
+  | blue | `rgba(59,130,246,.25)` | `rgba(147,197,253,1)` | `rgba(59,130,246,.18)` | `rgba(29,78,216,1)` |
+  | orange | `rgba(249,115,22,.25)` | `rgba(253,186,116,1)` | `rgba(249,115,22,.18)` | `rgba(194,65,12,1)` |
+  | purple | `rgba(168,85,247,.25)` | `rgba(216,180,254,1)` | `rgba(168,85,247,.18)` | `rgba(126,34,206,1)` |
+  | pink | `rgba(236,72,153,.25)` | `rgba(249,168,212,1)` | `rgba(236,72,153,.18)` | `rgba(190,24,93,1)` |
+  | cyan | `rgba(6,182,212,.25)` | `rgba(103,232,249,1)` | `rgba(6,182,212,.18)` | `rgba(14,116,144,1)` |
+
+  - Zuständige Funktionen: `tokenizeHighlight` (inline-rule), `highlight_mark` renderer-rule, `ensureMarkdown`.
+  - Zuständige Dateien: `app.js`.
+
+---
+
 ## Aktuelle Änderungen (2026-02-27)
 
 - **Fix: Presence-Name vom Server laden statt pro Device random generieren** `#presence` `#identity` `#cross-device` `#fix`: Auf neuen Geräten wurde bisher ein zufälliger Name (z.B. "Cosmic Hawk") in der `presenceList` angezeigt, obwohl der User bereits einen Namen im Personal Space gespeichert hatte. Der zufällige Name war sichtbar, bis `refreshPersonalSpace()` → `syncIdentityFromServer()` die Identität vom Server nachlud — oft mehrere Sekunden nach dem WebSocket-Connect. Auf Geräten, die den Browser-localStorage nicht teilten, wurde der zufällige Name dauerhaft angezeigt bis der User manuell seine Identität änderte.
