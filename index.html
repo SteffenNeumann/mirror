@@ -855,6 +855,25 @@
 												<span data-i18n="menu.comment">Comment</span>
 											</button>
 											<div class="mx-1 h-6 w-px bg-white/10"></div>
+											<!-- Highlight: marker button + color dots -->
+											<button
+												type="button"
+												data-selection-action="highlight"
+												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
+												title="Highlight selection (yellow)"
+												data-i18n-title="menu.highlight_tip">
+												<span class="highlight-btn-icon">🖍</span>
+											</button>
+											<div class="highlight-colors flex items-center gap-0.5 px-0.5">
+												<button type="button" data-selection-action="highlight-color" data-highlight-color="red" class="highlight-dot" style="background:#ef4444" title="Rot"></button>
+												<button type="button" data-selection-action="highlight-color" data-highlight-color="green" class="highlight-dot" style="background:#22c55e" title="Grün"></button>
+												<button type="button" data-selection-action="highlight-color" data-highlight-color="blue" class="highlight-dot" style="background:#3b82f6" title="Blau"></button>
+												<button type="button" data-selection-action="highlight-color" data-highlight-color="orange" class="highlight-dot" style="background:#f97316" title="Orange"></button>
+												<button type="button" data-selection-action="highlight-color" data-highlight-color="purple" class="highlight-dot" style="background:#a855f7" title="Lila"></button>
+												<button type="button" data-selection-action="highlight-color" data-highlight-color="pink" class="highlight-dot" style="background:#ec4899" title="Pink"></button>
+												<button type="button" data-selection-action="highlight-color" data-highlight-color="cyan" class="highlight-dot" style="background:#06b6d4" title="Türkis"></button>
+											</div>
+											<div class="mx-1 h-6 w-px bg-white/10"></div>
 											<button
 												type="button"
 												data-selection-action="sort"

@@ -2811,6 +2811,7 @@
 		"menu.code_tip",
 		"menu.link_tip",
 		"menu.comment_tip",
+		"menu.highlight_tip",
 		"menu.sort_az_tip",
 	];
 
@@ -4140,6 +4141,13 @@
 					// ignore
 				}
 				break;
+			case "highlight":
+				wrapSelectionToggle(textarea, "==", "==");
+				break;
+			case "highlight-color": {
+				// Color is set via a separate handler — should not reach here normally
+				break;
+			}
 
 			case "quote":
 				togglePrefixSelectionLines(textarea, "> ", "quote");
@@ -4231,6 +4239,91 @@
 		updateTableMenuVisibility();
 		updateSelectionMenu();
 		updateEditorMetaScroll();
+		if (!changed) scheduleSend();
+		schedulePsAutoSave();
+		setSelectionMenuOpen(false);
+	}
+
+	function applyHighlightColor(color) {
+		if (!textarea) return;
+		const before = String(textarea.value || "");
+		const start = Number(textarea.selectionStart || 0);
+		const end = Number(textarea.selectionEnd || 0);
+		if (end <= start) return;
+		const selected = before.slice(start, end);
+		// Check if already wrapped with ==...== and unwrap first
+		const highlightRe = /^==(?:\{[^}]*\})?(.+)==$/s;
+		const existingMatch = selected.match(highlightRe);
+		let inner = selected;
+		let actualStart = start;
+		let actualEnd = end;
+		if (existingMatch) {
+			// Already highlighted inline — replace with new color
+			inner = existingMatch[1];
+		} else {
+			// Check if surrounding text has == wrappers
+			const outerStart = start - 2;
+			const outerEnd = end + 2;
+			if (
+				outerStart >= 0 &&
+				outerEnd <= before.length &&
+				before.slice(outerStart, start) === "==" &&
+				before.slice(end, outerEnd) === "=="
+			) {
+				// Check for optional {color} prefix inside opening ==
+				const afterOpen = before.slice(start);
+				const colorPrefixMatch = afterOpen.match(/^\{[^}]*\}/);
+				actualStart = outerStart;
+				actualEnd = outerEnd;
+				if (colorPrefixMatch) {
+					inner = before.slice(start + colorPrefixMatch[0].length, end);
+				} else {
+					inner = selected;
+				}
+			}
+		}
+		const colorPrefix = color ? `{${color}}` : "";
+		const wrapped = `==${colorPrefix}${inner}==`;
+		textarea.value = before.slice(0, actualStart) + wrapped + before.slice(actualEnd);
+		// Select inner content
+		const newInnerStart = actualStart + 2 + colorPrefix.length;
+		textarea.selectionStart = newInnerStart;
+		textarea.selectionEnd = newInnerStart + inner.length;
+		const after = String(textarea.value || "");
+		const changed = before !== after;
+		try { textarea.focus(); } catch { /* ignore */ }
+		if (changed) {
+			metaLeft.textContent = "Formatting";
+			metaRight.textContent = nowIso();
+			const canSyncRoom = shouldSyncRoomContentNow();
+			if (canSyncRoom) {
+				if (isCrdtEnabled()) {
+					updateCrdtFromTextarea();
+				} else {
+					scheduleSend();
+				}
+			}
+			setTyping(true);
+			scheduleTypingStop();
+			scheduleSelectionSend();
+			const noteId = getRoomTabNoteIdForRoom(room, key);
+			const activePsNoteId = getActiveRoomTabNoteId();
+			if (canSyncRoom) {
+				updateRoomTabTextLocal(room, key, textarea.value);
+				if (noteId) updateLocalNoteText(noteId, textarea.value);
+				scheduleRoomTabSync({
+					room,
+					key,
+					text: resolveRoomTabSnapshotText(noteId, String(textarea.value || "")),
+					lastUsed: Date.now(),
+				});
+			}
+			if (activePsNoteId && activePsNoteId !== noteId) {
+				updateLocalNoteText(activePsNoteId, textarea.value);
+			}
+		}
+		updatePreview();
+		updateSelectionMenu();
 		if (!changed) scheduleSend();
 		schedulePsAutoSave();
 		setSelectionMenuOpen(false);
@@ -6035,6 +6128,7 @@
 				"menu.link_tip": "Auswahl in einen Link umwandeln.",
 				"menu.comment": "Kommentar",
 				"menu.comment_tip": "Kommentar zur Auswahl hinzufügen.",
+				"menu.highlight_tip": "Auswahl farblich markieren (==text==).",
 				"menu.sort_az": "Sortieren A–Z",
 				"menu.sort_az_tip": "Ausgewählte Zeilen A–Z sortieren.",
 				"menu.code_lang_label": "Sprache",
@@ -6639,6 +6733,7 @@
 				"menu.link_tip": "Convert the selection into a link.",
 				"menu.comment": "Comment",
 				"menu.comment_tip": "Add a comment to the selection.",
+				"menu.highlight_tip": "Highlight selection with color (==text==).",
 				"menu.sort_az": "Sort A–Z",
 				"menu.sort_az_tip": "Sort selected lines A–Z.",
 				"menu.code_lang_label": "Language",
@@ -24740,6 +24835,13 @@ self.onmessage = async (e) => {
 		selectionMenu.querySelectorAll("[data-selection-action]").forEach((btn) => {
 			const handle = () => {
 				const action = String(btn.getAttribute("data-selection-action") || "");
+				if (action === "highlight-color") {
+					const color = String(btn.getAttribute("data-highlight-color") || "").toLowerCase();
+					if (color && textarea) {
+						applyHighlightColor(color);
+					}
+					return;
+				}
 				applySelectionAction(action);
 			};
 			btn.addEventListener("pointerdown", (ev) => {

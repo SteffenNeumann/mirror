@@ -271,6 +271,27 @@ interface AvailabilityData {
   - Zuständige Funktionen: `tokenizeHighlight` (inline-rule), `highlight_mark` renderer-rule, `ensureMarkdown`.
   - Zuständige Dateien: `app.js`.
 
+- **Highlight-Farbpalette im Selection-Menü** `#selectionMenu` `#highlight` `#ux`: Die farbige Textmarkierung ist jetzt direkt im Selection-Menü (Text markieren → Popup) verfügbar. Ein 🖍-Button setzt gelbe Standard-Markierung, daneben eine Farbpalette mit 7 Farb-Dots für direkte farbige Markierung.
+
+  ### Integration im Selection-Menü
+
+  ```
+  [ B ] [ I ] [ S ] [ PW ] [ " ] [ • List ] [ 1. List ] [ ☐ Task ] [ --- ] [ </> ] [ Link ] [ Comment ]
+  ──────────────────────────────────────────────────────────────────────────────────────
+  [ 🖍 ] [ 🔴 🟢 🔵 🟠 🟣 🩷 🩵 ]  |  [ Sort A–Z ] [ ? ]
+  ```
+
+  ### Implementierung
+
+  1. **HTML: Highlight-Buttons** (`index.html` ~L857): Neuer 🖍-Button mit `data-selection-action="highlight"` für gelbe Standard-Markierung (`==text==`). Daneben 7 Farb-Dots mit `data-selection-action="highlight-color"` und `data-highlight-color="{farbe}"` für farbspezifische Markierung (`=={farbe}text==`).
+  2. **JS: `applyHighlightColor(color)`** (`app.js` ~L4250): Neue Funktion, die selektierten Text mit `=={farbe}...==` umschließt. Erkennt bereits existierende `==`-Markierungen und ersetzt die Farbe statt doppelt zu wrappen. Handhabt sowohl inline-gewrappten als auch umgebend-gewrappten Text.
+  3. **JS: Event-Handler erweitert** (`app.js` ~L24755): Der selectionMenu Event-Delegator erkennt `highlight-color`-Actions und ruft `applyHighlightColor()` mit dem `data-highlight-color`-Attribut auf.
+  4. **JS: `applySelectionAction` erweitert** (`app.js` ~L4145): Neue Cases `highlight` (Standard-gelb via `wrapSelectionToggle`) und `highlight-color`.
+  5. **CSS: `.highlight-dot` Styles** (`styles/app.css` ~L92): 18×18px runde Farb-Buttons mit Hover-Animation (scale + border). Light-Theme-Overrides für Hover-Effekte.
+  6. **i18n**: Neuer String `menu.highlight_tip` für DE („Auswahl farblich markieren") und EN („Highlight selection with color").
+  - Zuständige Funktionen: `applyHighlightColor` (neu), `applySelectionAction`, selectionMenu Event-Handler.
+  - Zuständige Dateien: `app.js`, `index.html`, `styles/app.css`.
+
 ---
 
 ## Aktuelle Änderungen (2026-02-27)
