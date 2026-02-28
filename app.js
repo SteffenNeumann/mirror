@@ -27268,7 +27268,14 @@ self.onmessage = async (e) => {
 			if (textarea) textarea.value = "";
 			mobilePsOpen = mobileNoteReturn === "ps";
 			mobileNoteReturn = "editor";
+			// Ensure PS panel is visible when returning to it on mobile
+			if (mobilePsOpen && !psVisible) {
+				psVisible = true;
+				savePsVisible();
+				applyPsVisible();
+			}
 			updatePreview();
+			applyPersonalSpaceFiltersAndRender();
 			syncMobileFocusState();
 		});
 	}
