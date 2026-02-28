@@ -27268,17 +27268,18 @@ self.onmessage = async (e) => {
 			psEditingNoteKind = "";
 			if (psMainHint) psMainHint.classList.add("hidden");
 			if (textarea) textarea.value = "";
-			// On mobile, always return to PS panel when closing a note
+			updatePreview();
+
+			// Mobile: direkt PS-Panel einblenden, Editor ausblenden
 			mobilePsOpen = true;
 			mobileNoteReturn = "editor";
-			if (!psVisible) {
-				psVisible = true;
-				savePsVisible();
-				applyPsVisible();
-			}
-			updatePreview();
+			psVisible = true;
+			savePsVisible();
+			applyPsVisible();
+			if (psPanel) psPanel.classList.remove("hidden");
+			document.body.classList.remove("mobile-note-open", "mobile-editor-open", "mobile-preview-open", "mobile-calendar-open");
+			document.body.classList.add("mobile-ps-open");
 			applyPersonalSpaceFiltersAndRender();
-			syncMobileFocusState();
 		});
 	}
 	if (psToggleTags) {
