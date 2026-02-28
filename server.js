@@ -2654,7 +2654,7 @@ const server = http.createServer(async (req, res) => {
 		}
 		let body;
 		try {
-			body = await readJsonBody(req, 4096);
+			body = await readJsonWithLimit(req, 4096);
 		} catch {
 			json(res, 400, { ok: false, error: "invalid_body" });
 			return;
