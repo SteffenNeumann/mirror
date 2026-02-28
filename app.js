@@ -833,12 +833,14 @@
 
 	async function saveIdentityToServer(identity) {
 		if (!psState || !psState.authed) return;
+		const name = String(identity.name || "").trim();
+		if (!name) return; // Server requires a name
 		try {
 			const res = await fetch("/api/identity", {
 				method: "PUT",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({
-					name: identity.name || "",
+					name,
 					avatar: identity.avatar || "",
 					color: identity.color || "",
 				}),
@@ -27266,10 +27268,10 @@ self.onmessage = async (e) => {
 			psEditingNoteKind = "";
 			if (psMainHint) psMainHint.classList.add("hidden");
 			if (textarea) textarea.value = "";
-			mobilePsOpen = mobileNoteReturn === "ps";
+			// On mobile, always return to PS panel when closing a note
+			mobilePsOpen = true;
 			mobileNoteReturn = "editor";
-			// Ensure PS panel is visible when returning to it on mobile
-			if (mobilePsOpen && !psVisible) {
+			if (!psVisible) {
 				psVisible = true;
 				savePsVisible();
 				applyPsVisible();
