@@ -14560,7 +14560,7 @@ ${highlightThemeCss}
 						if (isSameRoom) {
 							// Already in the target room, load note directly
 							const note = findNoteById(id);
-							if (note) applyNoteToEditor(note);
+							if (note) applyNoteToEditor(note, true);
 						} else {
 							// Different room, navigate with pending note
 							pendingCalendarNoteId = id;
@@ -14572,7 +14572,7 @@ ${highlightThemeCss}
 					const note = findNoteById(id);
 					if (!note) return;
 					setCalendarPanelActive(false);
-					applyNoteToEditor(note);
+					applyNoteToEditor(note, true);
 					return;
 				}
 				if (
@@ -14584,7 +14584,7 @@ ${highlightThemeCss}
 				}
 				const note = findNoteById(id);
 				if (!note) return;
-				applyNoteToEditor(note);
+				applyNoteToEditor(note, true);
 			});
 
 			row.addEventListener("contextmenu", (ev) => {
