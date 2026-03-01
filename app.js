@@ -8526,7 +8526,13 @@
 				const key = buildAutoImportKey(file);
 				if (psAutoImportSeen.has(key)) continue;
 				const text = await file.text();
-				await importPersonalSpaceNotesFromText(text, "merge");
+				const fname = String(entry.name || "").toLowerCase();
+				if (fname.endsWith(".json")) {
+					await importPersonalSpaceNotesFromText(text, "merge");
+				} else {
+					const notes = chunkTextIntoNotes(text, entry.name || "import.md");
+					if (notes.length) await importPersonalSpaceNotes(notes, "merge");
+				}
 				psAutoImportSeen.set(key, Date.now());
 				imported += 1;
 			}
