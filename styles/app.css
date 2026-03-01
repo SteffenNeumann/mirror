@@ -199,6 +199,37 @@ body {
 	transform: scale(1.02);
 }
 
+/* ── Grab handle for dragging the selection menu ── */
+.sel-grab {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	height: 14px;
+	cursor: grab;
+	user-select: none;
+	-webkit-user-select: none;
+	background: transparent;
+	border-bottom: 1px solid var(--sel-divider);
+	transition: background 0.15s ease;
+}
+.sel-grab:hover {
+	background: var(--sel-hover-bg);
+}
+.sel-grab:active {
+	cursor: grabbing;
+}
+.sel-grab-dots {
+	font-size: 10px;
+	letter-spacing: 2px;
+	color: var(--sel-text-muted);
+	line-height: 1;
+	pointer-events: none;
+}
+.sel-menu.sel-dragging {
+	opacity: 0.92;
+	transition: opacity 0.1s ease;
+}
+
 #calendarTitle {
 	color: var(--accent-text-soft) !important;
 }

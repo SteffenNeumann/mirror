@@ -3112,6 +3112,10 @@
 		selectionMenuOpen = Boolean(open);
 		if (!selectionMenu || !selectionMenu.classList) return;
 		selectionMenu.classList.toggle("hidden", !selectionMenuOpen);
+		if (!selectionMenuOpen) {
+			selMenuDragManual = false;
+			selectionMenu.classList.remove("sel-dragging");
+		}
 	}
 
 	function getSelectionRange() {
@@ -4401,6 +4405,9 @@
 		setSelectionMenuOpen(false);
 	}
 
+	/** When true, the user dragged the menu manually — skip auto-positioning */
+	let selMenuDragManual = false;
+
 	function updateSelectionMenu() {
 		if (!selectionMenu || !textarea) return;
 		if (slashMenuOpen || wikiMenuOpen) {
@@ -4417,6 +4424,7 @@
 			return;
 		}
 		setSelectionMenuOpen(true);
+		if (selMenuDragManual) return; // user positioned manually
 		const caretPos =
 			textarea.selectionDirection === "backward" ? range.start : range.end;
 		positionFloatingMenu(selectionMenu, textarea, caretPos, 2);
@@ -24931,6 +24939,49 @@ self.onmessage = async (e) => {
 				handle();
 			});
 		});
+	}
+
+	/* ── selectionMenu grab-handle drag ── */
+	{
+		const grabEl = document.getElementById("selMenuGrab");
+		if (grabEl && selectionMenu) {
+			let dragging = false;
+			let startX = 0;
+			let startY = 0;
+			let origLeft = 0;
+			let origTop = 0;
+
+			const onPointerMove = (ev) => {
+				if (!dragging) return;
+				const dx = ev.clientX - startX;
+				const dy = ev.clientY - startY;
+				selectionMenu.style.left = `${Math.round(origLeft + dx)}px`;
+				selectionMenu.style.top = `${Math.round(origTop + dy)}px`;
+			};
+
+			const onPointerUp = () => {
+				if (!dragging) return;
+				dragging = false;
+				selectionMenu.classList.remove("sel-dragging");
+				document.removeEventListener("pointermove", onPointerMove);
+				document.removeEventListener("pointerup", onPointerUp);
+			};
+
+			grabEl.addEventListener("pointerdown", (ev) => {
+				if (!ev) return;
+				ev.preventDefault();
+				ev.stopPropagation();
+				dragging = true;
+				selMenuDragManual = true;
+				startX = ev.clientX;
+				startY = ev.clientY;
+				origLeft = parseFloat(selectionMenu.style.left) || 0;
+				origTop = parseFloat(selectionMenu.style.top) || 0;
+				selectionMenu.classList.add("sel-dragging");
+				document.addEventListener("pointermove", onPointerMove);
+				document.addEventListener("pointerup", onPointerUp);
+			});
+		}
 	}
 
 	document.addEventListener("click", (ev) => {
