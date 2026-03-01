@@ -23,6 +23,13 @@
 		inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 	--selection-menu-bg: rgba(2, 6, 23, 0.85);
 	--selection-menu-border: rgba(255, 255, 255, 0.1);
+	--sel-text: rgba(226, 232, 240, 0.9);
+	--sel-text-muted: rgba(226, 232, 240, 0.5);
+	--sel-text-hover: #fff;
+	--sel-hover-bg: rgba(255, 255, 255, 0.08);
+	--sel-sep: rgba(255, 255, 255, 0.08);
+	--sel-divider: rgba(255, 255, 255, 0.06);
+	--sel-dot-ring: rgba(255, 255, 255, 0.45);
 	--dropdown-accent: var(--accent-strong);
 	--dropdown-accent-bg: rgba(255, 255, 255, 0.05);
 	--dropdown-text: rgba(203, 213, 225, 0.9);
@@ -82,93 +89,94 @@ body {
 	box-shadow: 0 0 8px rgba(100, 116, 139, 0.5), 0 0 14px rgba(100, 116, 139, 0.3);
 }
 
-/* ── Selection Menu – modern 2-row layout ── */
+/* ── Selection Menu – modern 2-row layout (theme-adaptive) ── */
 .sel-menu {
 	background-color: var(--selection-menu-bg);
 	border-color: var(--selection-menu-border);
 	min-width: 0;
 	width: max-content;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px var(--selection-menu-border);
 }
 .sel-row {
 	display: flex;
 	align-items: center;
 	gap: 2px;
-	padding: 4px 6px;
+	padding: 5px 6px;
 }
 .sel-row-format {
-	border-bottom: 1px solid rgba(255,255,255,0.06);
+	border-bottom: 1px solid var(--sel-divider);
 }
 .sel-btn {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	height: 28px;
-	min-width: 28px;
-	padding: 0 6px;
-	border-radius: 6px;
+	height: 30px;
+	min-width: 30px;
+	padding: 0 7px;
+	border-radius: 7px;
 	border: none;
 	background: transparent;
-	color: rgba(226,232,240,0.9);
-	font-size: 12px;
+	color: var(--sel-text);
+	font-size: 12.5px;
 	font-weight: 500;
 	cursor: pointer;
-	transition: background 0.12s ease, color 0.12s ease, transform 0.1s ease;
+	transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
 	line-height: 1;
 	white-space: nowrap;
 }
 .sel-btn:hover {
-	background: rgba(255,255,255,0.08);
-	color: #fff;
+	background: var(--sel-hover-bg);
+	color: var(--sel-text-hover);
 }
 .sel-btn:active {
-	transform: scale(0.93);
-	background: rgba(255,255,255,0.12);
+	transform: scale(0.92);
 }
 .sel-btn-muted {
-	color: rgba(226,232,240,0.5);
-	font-size: 11px;
+	color: var(--sel-text-muted);
+	font-size: 11.5px;
 }
 .sel-btn-muted:hover {
-	color: rgba(226,232,240,0.85);
+	color: var(--sel-text);
 }
 .sel-btn-highlight {
-	font-size: 14px;
-	padding: 0 4px;
+	font-size: 15px;
+	padding: 0 5px;
 }
 .sel-btn-remove {
-	color: rgba(239,68,68,0.6);
+	color: rgba(239, 68, 68, 0.55);
 	font-size: 13px;
 	font-weight: 700;
+	min-width: 28px;
 }
 .sel-btn-remove:hover {
 	color: #ef4444;
-	background: rgba(239,68,68,0.12);
+	background: rgba(239, 68, 68, 0.1);
 }
 .sel-sep {
 	display: block;
 	width: 1px;
 	height: 18px;
 	margin: 0 3px;
-	background: rgba(255,255,255,0.08);
+	background: var(--sel-sep);
 	flex-shrink: 0;
 }
 .sel-colors {
 	display: flex;
 	align-items: center;
-	gap: 3px;
+	gap: 4px;
 }
 .sel-dot {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
-	width: 22px;
-	height: 22px;
+	width: 24px;
+	height: 24px;
 	border-radius: 50%;
 	border: 2px solid transparent;
 	background: transparent;
 	cursor: pointer;
 	padding: 0;
-	transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+	transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
 	flex-shrink: 0;
 }
 .sel-dot-fill {
@@ -176,58 +184,19 @@ body {
 	width: 14px;
 	height: 14px;
 	border-radius: 50%;
+	transition: width 0.12s ease, height 0.12s ease;
 }
 .sel-dot:hover {
-	transform: scale(1.2);
-	border-color: rgba(255,255,255,0.45);
-	box-shadow: 0 0 8px rgba(255,255,255,0.1);
+	transform: scale(1.18);
+	border-color: var(--sel-dot-ring);
+	box-shadow: 0 0 8px rgba(0, 0, 0, 0.08);
+}
+.sel-dot:hover .sel-dot-fill {
+	width: 15px;
+	height: 15px;
 }
 .sel-dot:active {
-	transform: scale(1.05);
-}
-
-/* ── Light theme overrides for selection menu ── */
-body[data-theme="monoLight"] .sel-menu,
-body[data-theme="coffeeLight"] .sel-menu,
-body[data-theme="bitterLight"] .sel-menu {
-	border-color: rgba(0,0,0,0.12);
-}
-body[data-theme="monoLight"] .sel-btn,
-body[data-theme="coffeeLight"] .sel-btn,
-body[data-theme="bitterLight"] .sel-btn {
-	color: rgba(30,41,59,0.85);
-}
-body[data-theme="monoLight"] .sel-btn:hover,
-body[data-theme="coffeeLight"] .sel-btn:hover,
-body[data-theme="bitterLight"] .sel-btn:hover {
-	background: rgba(0,0,0,0.06);
-	color: #1e293b;
-}
-body[data-theme="monoLight"] .sel-btn-muted,
-body[data-theme="coffeeLight"] .sel-btn-muted,
-body[data-theme="bitterLight"] .sel-btn-muted {
-	color: rgba(30,41,59,0.45);
-}
-body[data-theme="monoLight"] .sel-btn-remove:hover,
-body[data-theme="coffeeLight"] .sel-btn-remove:hover,
-body[data-theme="bitterLight"] .sel-btn-remove:hover {
-	background: rgba(239,68,68,0.1);
-}
-body[data-theme="monoLight"] .sel-row-format,
-body[data-theme="coffeeLight"] .sel-row-format,
-body[data-theme="bitterLight"] .sel-row-format {
-	border-bottom-color: rgba(0,0,0,0.07);
-}
-body[data-theme="monoLight"] .sel-sep,
-body[data-theme="coffeeLight"] .sel-sep,
-body[data-theme="bitterLight"] .sel-sep {
-	background: rgba(0,0,0,0.1);
-}
-body[data-theme="monoLight"] .sel-dot:hover,
-body[data-theme="coffeeLight"] .sel-dot:hover,
-body[data-theme="bitterLight"] .sel-dot:hover {
-	border-color: rgba(0,0,0,0.35);
-	box-shadow: 0 0 6px rgba(0,0,0,0.08);
+	transform: scale(1.02);
 }
 
 #calendarTitle {
@@ -3449,6 +3418,13 @@ body[data-theme="coffeeLight"] {
 	--calendar-tooltip-shadow: none;
 	--selection-menu-bg: #fffaf4;
 	--selection-menu-border: #d9c7bc;
+	--sel-text: #3b2a21;
+	--sel-text-muted: rgba(59, 42, 33, 0.5);
+	--sel-text-hover: #2a1a12;
+	--sel-hover-bg: rgba(176, 112, 73, 0.08);
+	--sel-sep: rgba(176, 112, 73, 0.15);
+	--sel-divider: rgba(176, 112, 73, 0.1);
+	--sel-dot-ring: rgba(59, 42, 33, 0.35);
 	--dropdown-accent: #b07049;
 	--dropdown-accent-bg: rgba(176, 112, 73, 0.08);
 	--dropdown-text: #3b2a21;
@@ -3988,6 +3964,13 @@ body[data-theme="coffeeDark"] {
 	--panel-bg: #1d160f;
 	--selection-menu-bg: #18120e;
 	--selection-menu-border: #3b2820;
+	--sel-text: #e8d9cc;
+	--sel-text-muted: rgba(232, 217, 204, 0.5);
+	--sel-text-hover: #f5ece3;
+	--sel-hover-bg: rgba(201, 155, 119, 0.1);
+	--sel-sep: rgba(201, 155, 119, 0.15);
+	--sel-divider: rgba(201, 155, 119, 0.1);
+	--sel-dot-ring: rgba(201, 155, 119, 0.45);
 	--comment-item-bg: #261b16;
 	--calendar-event-bg: rgba(24, 18, 14, 0.82);
 	--calendar-tooltip-bg: #1d160f;
@@ -4324,6 +4307,13 @@ body[data-theme="bitterLight"] {
 	--calendar-tooltip-shadow: none;
 	--selection-menu-bg: #f7f6f4;
 	--selection-menu-border: #d8d2cb;
+	--sel-text: #0d0c10;
+	--sel-text-muted: rgba(13, 12, 16, 0.45);
+	--sel-text-hover: #000;
+	--sel-hover-bg: rgba(0, 0, 0, 0.05);
+	--sel-sep: rgba(0, 0, 0, 0.1);
+	--sel-divider: rgba(0, 0, 0, 0.07);
+	--sel-dot-ring: rgba(0, 0, 0, 0.35);
 	--dropdown-accent: #c42000;
 	--dropdown-accent-bg: rgba(196, 32, 0, 0.06);
 	--dropdown-text: #0d0c10;
@@ -4862,6 +4852,13 @@ body[data-theme="bitterDark"] {
 	--panel-bg: #101014;
 	--selection-menu-bg: #0d0c10;
 	--selection-menu-border: #2a2a30;
+	--sel-text: #f0e8df;
+	--sel-text-muted: rgba(240, 232, 223, 0.5);
+	--sel-text-hover: #faf5f0;
+	--sel-hover-bg: rgba(255, 59, 31, 0.08);
+	--sel-sep: rgba(255, 59, 31, 0.12);
+	--sel-divider: rgba(255, 59, 31, 0.08);
+	--sel-dot-ring: rgba(240, 232, 223, 0.45);
 	--comment-item-bg: #151518;
 	--calendar-event-bg: rgba(13, 12, 16, 0.9);
 	--calendar-tooltip-bg: #151518;
@@ -5280,6 +5277,13 @@ body[data-theme="monoLight"] {
 	--calendar-tooltip-shadow: none;
 	--selection-menu-bg: #f6f8fa;
 	--selection-menu-border: #d0d7de;
+	--sel-text: #24292f;
+	--sel-text-muted: rgba(36, 41, 47, 0.5);
+	--sel-text-hover: #1b1f23;
+	--sel-hover-bg: rgba(0, 0, 0, 0.04);
+	--sel-sep: rgba(27, 31, 36, 0.12);
+	--sel-divider: rgba(27, 31, 36, 0.08);
+	--sel-dot-ring: rgba(27, 31, 36, 0.35);
 	--dropdown-accent: var(--mono-accent);
 	--dropdown-accent-bg: rgba(9, 105, 218, 0.06);
 	--dropdown-text: #24292f;
@@ -5867,6 +5871,13 @@ body[data-theme="monoDark"] {
 	--panel-bg: #10141a;
 	--selection-menu-bg: #0d1117;
 	--selection-menu-border: #30363d;
+	--sel-text: #c9d1d9;
+	--sel-text-muted: rgba(201, 209, 217, 0.5);
+	--sel-text-hover: #e6edf3;
+	--sel-hover-bg: rgba(0, 121, 212, 0.08);
+	--sel-sep: rgba(48, 54, 61, 0.6);
+	--sel-divider: rgba(48, 54, 61, 0.5);
+	--sel-dot-ring: rgba(201, 209, 217, 0.45);
 	--comment-item-bg: #1f2937;
 	--scrollbar-thumb: rgba(148, 163, 184, 0.3);
 	--scrollbar-thumb-hover: rgba(148, 163, 184, 0.45);
