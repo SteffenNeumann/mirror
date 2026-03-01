@@ -82,42 +82,152 @@ body {
 	box-shadow: 0 0 8px rgba(100, 116, 139, 0.5), 0 0 14px rgba(100, 116, 139, 0.3);
 }
 
-#selectionMenu {
+/* ── Selection Menu – modern 2-row layout ── */
+.sel-menu {
 	background-color: var(--selection-menu-bg);
 	border-color: var(--selection-menu-border);
+	min-width: 0;
+	width: max-content;
 }
-
-/* ── Highlight color dots in selection menu ── */
-.highlight-dot {
-	width: 18px;
+.sel-row {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	padding: 4px 6px;
+}
+.sel-row-format {
+	border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.sel-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	height: 28px;
+	min-width: 28px;
+	padding: 0 6px;
+	border-radius: 6px;
+	border: none;
+	background: transparent;
+	color: rgba(226,232,240,0.9);
+	font-size: 12px;
+	font-weight: 500;
+	cursor: pointer;
+	transition: background 0.12s ease, color 0.12s ease, transform 0.1s ease;
+	line-height: 1;
+	white-space: nowrap;
+}
+.sel-btn:hover {
+	background: rgba(255,255,255,0.08);
+	color: #fff;
+}
+.sel-btn:active {
+	transform: scale(0.93);
+	background: rgba(255,255,255,0.12);
+}
+.sel-btn-muted {
+	color: rgba(226,232,240,0.5);
+	font-size: 11px;
+}
+.sel-btn-muted:hover {
+	color: rgba(226,232,240,0.85);
+}
+.sel-btn-highlight {
+	font-size: 14px;
+	padding: 0 4px;
+}
+.sel-btn-remove {
+	color: rgba(239,68,68,0.6);
+	font-size: 13px;
+	font-weight: 700;
+}
+.sel-btn-remove:hover {
+	color: #ef4444;
+	background: rgba(239,68,68,0.12);
+}
+.sel-sep {
+	display: block;
+	width: 1px;
 	height: 18px;
+	margin: 0 3px;
+	background: rgba(255,255,255,0.08);
+	flex-shrink: 0;
+}
+.sel-colors {
+	display: flex;
+	align-items: center;
+	gap: 3px;
+}
+.sel-dot {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
 	border-radius: 50%;
 	border: 2px solid transparent;
+	background: transparent;
 	cursor: pointer;
+	padding: 0;
 	transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
 	flex-shrink: 0;
 }
-.highlight-dot:hover {
-	transform: scale(1.25);
-	border-color: rgba(255, 255, 255, 0.5);
-	box-shadow: 0 0 6px rgba(255, 255, 255, 0.15);
+.sel-dot-fill {
+	display: block;
+	width: 14px;
+	height: 14px;
+	border-radius: 50%;
 }
-.highlight-dot:active {
-	transform: scale(1.1);
+.sel-dot:hover {
+	transform: scale(1.2);
+	border-color: rgba(255,255,255,0.45);
+	box-shadow: 0 0 8px rgba(255,255,255,0.1);
 }
-.highlight-colors {
-	border-radius: 8px;
-	padding: 2px 4px;
+.sel-dot:active {
+	transform: scale(1.05);
 }
-.highlight-btn-icon {
-	font-size: 14px;
-	line-height: 1;
+
+/* ── Light theme overrides for selection menu ── */
+body[data-theme="monoLight"] .sel-menu,
+body[data-theme="coffeeLight"] .sel-menu,
+body[data-theme="bitterLight"] .sel-menu {
+	border-color: rgba(0,0,0,0.12);
 }
-body[data-theme="monoLight"] .highlight-dot:hover,
-body[data-theme="coffeeLight"] .highlight-dot:hover,
-body[data-theme="bitterLight"] .highlight-dot:hover {
-	border-color: rgba(0, 0, 0, 0.4);
-	box-shadow: 0 0 6px rgba(0, 0, 0, 0.1);
+body[data-theme="monoLight"] .sel-btn,
+body[data-theme="coffeeLight"] .sel-btn,
+body[data-theme="bitterLight"] .sel-btn {
+	color: rgba(30,41,59,0.85);
+}
+body[data-theme="monoLight"] .sel-btn:hover,
+body[data-theme="coffeeLight"] .sel-btn:hover,
+body[data-theme="bitterLight"] .sel-btn:hover {
+	background: rgba(0,0,0,0.06);
+	color: #1e293b;
+}
+body[data-theme="monoLight"] .sel-btn-muted,
+body[data-theme="coffeeLight"] .sel-btn-muted,
+body[data-theme="bitterLight"] .sel-btn-muted {
+	color: rgba(30,41,59,0.45);
+}
+body[data-theme="monoLight"] .sel-btn-remove:hover,
+body[data-theme="coffeeLight"] .sel-btn-remove:hover,
+body[data-theme="bitterLight"] .sel-btn-remove:hover {
+	background: rgba(239,68,68,0.1);
+}
+body[data-theme="monoLight"] .sel-row-format,
+body[data-theme="coffeeLight"] .sel-row-format,
+body[data-theme="bitterLight"] .sel-row-format {
+	border-bottom-color: rgba(0,0,0,0.07);
+}
+body[data-theme="monoLight"] .sel-sep,
+body[data-theme="coffeeLight"] .sel-sep,
+body[data-theme="bitterLight"] .sel-sep {
+	background: rgba(0,0,0,0.1);
+}
+body[data-theme="monoLight"] .sel-dot:hover,
+body[data-theme="coffeeLight"] .sel-dot:hover,
+body[data-theme="bitterLight"] .sel-dot:hover {
+	border-color: rgba(0,0,0,0.35);
+	box-shadow: 0 0 6px rgba(0,0,0,0.08);
 }
 
 #calendarTitle {

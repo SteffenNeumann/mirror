@@ -2812,6 +2812,7 @@
 		"menu.link_tip",
 		"menu.comment_tip",
 		"menu.highlight_tip",
+		"menu.highlight_remove_tip",
 		"menu.sort_az_tip",
 	];
 
@@ -4148,6 +4149,10 @@
 				// Color is set via a separate handler — should not reach here normally
 				break;
 			}
+			case "highlight-remove": {
+				removeHighlightFromSelection(textarea);
+				break;
+			}
 
 			case "quote":
 				togglePrefixSelectionLines(textarea, "> ", "quote");
@@ -4325,6 +4330,73 @@
 		updatePreview();
 		updateSelectionMenu();
 		if (!changed) scheduleSend();
+		schedulePsAutoSave();
+		setSelectionMenuOpen(false);
+	}
+
+	/**
+	 * Remove ==…== highlight wrapper (with optional {color} prefix) from selection.
+	 */
+	function removeHighlightFromSelection(el) {
+		if (!el) return;
+		const before = String(el.value || "");
+		const start = Number(el.selectionStart || 0);
+		const end = Number(el.selectionEnd || 0);
+		if (end <= start) return;
+
+		const selected = before.slice(start, end);
+		// Case 1: selection itself contains the full ==...== wrapper
+		const inlineRe = /^==(?:\{[^}]*\})?(.+)==$/s;
+		const inlineMatch = selected.match(inlineRe);
+		if (inlineMatch) {
+			const inner = inlineMatch[1];
+			el.value = before.slice(0, start) + inner + before.slice(end);
+			el.selectionStart = start;
+			el.selectionEnd = start + inner.length;
+		} else {
+			// Case 2: == wrappers are outside the selection
+			const openRe = /==(?:\{[^}]*\})?$/;
+			const leftCtx = before.slice(Math.max(0, start - 30), start);
+			const openMatch = leftCtx.match(openRe);
+			const rightCtx = before.slice(end, Math.min(before.length, end + 4));
+			const closeMatch = rightCtx.match(/^==/);
+			if (openMatch && closeMatch) {
+				const wrapStart = start - openMatch[0].length;
+				const wrapEnd = end + 2;
+				const inner = before.slice(start, end);
+				el.value = before.slice(0, wrapStart) + inner + before.slice(wrapEnd);
+				el.selectionStart = wrapStart;
+				el.selectionEnd = wrapStart + inner.length;
+			} else {
+				// Nothing to remove
+				return;
+			}
+		}
+		// Sync changes
+		const after = String(el.value || "");
+		if (before === after) return;
+		try { el.focus(); } catch { /* ignore */ }
+		metaLeft.textContent = "Formatting";
+		metaRight.textContent = nowIso();
+		const canSyncRoom = shouldSyncRoomContentNow();
+		if (canSyncRoom) {
+			if (isCrdtEnabled()) { updateCrdtFromTextarea(); } else { scheduleSend(); }
+		}
+		setTyping(true);
+		scheduleTypingStop();
+		scheduleSelectionSend();
+		const noteId = getRoomTabNoteIdForRoom(room, key);
+		const activePsNoteId = getActiveRoomTabNoteId();
+		if (canSyncRoom) {
+			updateRoomTabTextLocal(room, key, el.value);
+			if (noteId) updateLocalNoteText(noteId, el.value);
+			scheduleRoomTabSync({ room, key, text: resolveRoomTabSnapshotText(noteId, String(el.value || "")), lastUsed: Date.now() });
+		}
+		if (activePsNoteId && activePsNoteId !== noteId) {
+			updateLocalNoteText(activePsNoteId, el.value);
+		}
+		updatePreview();
+		updateSelectionMenu();
 		schedulePsAutoSave();
 		setSelectionMenuOpen(false);
 	}
@@ -6129,6 +6201,7 @@
 				"menu.comment": "Kommentar",
 				"menu.comment_tip": "Kommentar zur Auswahl hinzufügen.",
 				"menu.highlight_tip": "Auswahl farblich markieren (==text==).",
+				"menu.highlight_remove_tip": "Markierung entfernen.",
 				"menu.sort_az": "Sortieren A–Z",
 				"menu.sort_az_tip": "Ausgewählte Zeilen A–Z sortieren.",
 				"menu.code_lang_label": "Sprache",
@@ -6734,6 +6807,7 @@
 				"menu.comment": "Comment",
 				"menu.comment_tip": "Add a comment to the selection.",
 				"menu.highlight_tip": "Highlight selection with color (==text==).",
+				"menu.highlight_remove_tip": "Remove highlight.",
 				"menu.sort_az": "Sort A–Z",
 				"menu.sort_az_tip": "Sort selected lines A–Z.",
 				"menu.code_lang_label": "Language",

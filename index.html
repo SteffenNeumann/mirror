@@ -753,145 +753,41 @@
 									</div>
 									<div
 										id="selectionMenu"
-										class="absolute z-40 hidden min-w-[240px] overflow-hidden rounded-xl border border-white/10 bg-slate-950/85 shadow-soft backdrop-blur">
-										<div class="flex flex-wrap items-center gap-1 p-1">
-											<button
-												type="button"
-												data-selection-action="bold"
-												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Make the selected text bold"
-												data-i18n-title="menu.bold_tip">
-												<strong>B</strong>
-											</button>
-											<button
-												type="button"
-												data-selection-action="italic"
-												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Italicize the selected text"
-												data-i18n-title="menu.italic_tip">
-												<em>I</em>
-											</button>
-											<button
-												type="button"
-												data-selection-action="strike"
-												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Strike through the selected text"
-												data-i18n-title="menu.strike_tip">
-												<span class="line-through">S</span>
-											</button>
-											<button
-												type="button"
-												data-selection-action="password"
-												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Hide the selected text as a password token"
-												aria-label="Hide the selected text as a password token"
-												data-i18n-title="menu.password_hide_tip"
-												data-i18n-aria="menu.password_hide_tip">
-												<span data-i18n="menu.password">PW</span>
-											</button>
-
-											<button
-												type="button"
-												data-selection-action="quote"
-												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Turn the selection into a quote block"
-												data-i18n-title="menu.blockquote_tip">
-												“
-											</button>
-											<button
-												type="button"
-												data-selection-action="ul"
-												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Turn lines into a bulleted list"
-												data-i18n-title="menu.bullet_tip">
-												<span data-i18n="menu.bullet_label">• List</span>
-											</button>
-											<button
-												type="button"
-												data-selection-action="ol"
-												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Turn lines into a numbered list"
-												data-i18n-title="menu.numbered_tip">
-												<span data-i18n="menu.numbered_label">1. List</span>
-											</button>
-											<button
-												type="button"
-												data-selection-action="todo"
-												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Turn lines into a task list with checkboxes"
-												data-i18n-title="menu.task_tip">
-												<span data-i18n="menu.task_label">☐ Task</span>
-											</button>
-											<button
-												type="button"
-												data-selection-action="divider"
-												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Insert a divider line"
-												data-i18n-title="menu.divider_tip">
-												---
-											</button>
-											<button
-												type="button"
-												data-selection-action="code"
-												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Wrap the selection in a code block"
-												data-i18n-title="menu.code_tip">
-												&lt;/&gt;
-											</button>
-											<button
-												type="button"
-												data-selection-action="link"
-												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Convert the selection into a link"
-												data-i18n-title="menu.link_tip">
-												<span data-i18n="menu.link">Link</span>
-											</button>
-											<button
-												type="button"
-												data-selection-action="comment"
-												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Add a comment to the selection"
-												data-i18n-title="menu.comment_tip">
-												<span data-i18n="menu.comment">Comment</span>
-											</button>
-											<div class="mx-1 h-6 w-px bg-white/10"></div>
-											<!-- Highlight: marker button + color dots -->
-											<button
-												type="button"
-												data-selection-action="highlight"
-												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Highlight selection (yellow)"
-												data-i18n-title="menu.highlight_tip">
-												<span class="highlight-btn-icon">🖍</span>
-											</button>
-											<div class="highlight-colors flex items-center gap-0.5 px-0.5">
-												<button type="button" data-selection-action="highlight-color" data-highlight-color="red" class="highlight-dot" style="background:#ef4444" title="Rot"></button>
-												<button type="button" data-selection-action="highlight-color" data-highlight-color="green" class="highlight-dot" style="background:#22c55e" title="Grün"></button>
-												<button type="button" data-selection-action="highlight-color" data-highlight-color="blue" class="highlight-dot" style="background:#3b82f6" title="Blau"></button>
-												<button type="button" data-selection-action="highlight-color" data-highlight-color="orange" class="highlight-dot" style="background:#f97316" title="Orange"></button>
-												<button type="button" data-selection-action="highlight-color" data-highlight-color="purple" class="highlight-dot" style="background:#a855f7" title="Lila"></button>
-												<button type="button" data-selection-action="highlight-color" data-highlight-color="pink" class="highlight-dot" style="background:#ec4899" title="Pink"></button>
-												<button type="button" data-selection-action="highlight-color" data-highlight-color="cyan" class="highlight-dot" style="background:#06b6d4" title="Türkis"></button>
+										class="sel-menu absolute z-40 hidden overflow-hidden rounded-xl border border-white/10 bg-slate-950/85 shadow-soft backdrop-blur">
+										<!-- Row 1: Format actions -->
+										<div class="sel-row sel-row-format">
+											<button type="button" data-selection-action="bold" class="sel-btn" title="Make the selected text bold" data-i18n-title="menu.bold_tip"><strong>B</strong></button>
+											<button type="button" data-selection-action="italic" class="sel-btn" title="Italicize the selected text" data-i18n-title="menu.italic_tip"><em>I</em></button>
+											<button type="button" data-selection-action="strike" class="sel-btn" title="Strike through the selected text" data-i18n-title="menu.strike_tip"><span class="line-through">S</span></button>
+											<button type="button" data-selection-action="code" class="sel-btn" title="Wrap the selection in a code block" data-i18n-title="menu.code_tip">&lt;/&gt;</button>
+											<button type="button" data-selection-action="link" class="sel-btn" title="Convert the selection into a link" data-i18n-title="menu.link_tip"><span data-i18n="menu.link">Link</span></button>
+											<span class="sel-sep"></span>
+											<button type="button" data-selection-action="quote" class="sel-btn" title="Turn the selection into a quote block" data-i18n-title="menu.blockquote_tip">"</button>
+											<button type="button" data-selection-action="ul" class="sel-btn" title="Turn lines into a bulleted list" data-i18n-title="menu.bullet_tip">•</button>
+											<button type="button" data-selection-action="ol" class="sel-btn" title="Turn lines into a numbered list" data-i18n-title="menu.numbered_tip">1.</button>
+											<button type="button" data-selection-action="todo" class="sel-btn" title="Turn lines into a task list with checkboxes" data-i18n-title="menu.task_tip">☐</button>
+											<button type="button" data-selection-action="divider" class="sel-btn" title="Insert a divider line" data-i18n-title="menu.divider_tip">—</button>
+											<span class="sel-sep"></span>
+											<button type="button" data-selection-action="password" class="sel-btn sel-btn-muted" title="Hide the selected text as a password token" data-i18n-title="menu.password_hide_tip"><span data-i18n="menu.password">PW</span></button>
+											<button type="button" data-selection-action="comment" class="sel-btn sel-btn-muted" title="Add a comment to the selection" data-i18n-title="menu.comment_tip">💬</button>
+											<button type="button" data-selection-action="sort" class="sel-btn sel-btn-muted" title="Sort selected lines A-Z" data-i18n-title="menu.sort_az_tip">↕</button>
+											<button type="button" data-selection-action="help" class="sel-btn sel-btn-muted" title="Open formatting help" data-i18n-title="menu.help_tip">?</button>
+										</div>
+										<!-- Row 2: Highlight colors -->
+										<div class="sel-row sel-row-highlight">
+											<button type="button" data-selection-action="highlight" class="sel-btn sel-btn-highlight" title="Highlight selection (yellow)" data-i18n-title="menu.highlight_tip">🖍</button>
+											<span class="sel-sep"></span>
+											<div class="sel-colors">
+												<button type="button" data-selection-action="highlight-color" data-highlight-color="red" class="sel-dot" title="Rot"><span class="sel-dot-fill" style="background:#ef4444"></span></button>
+												<button type="button" data-selection-action="highlight-color" data-highlight-color="orange" class="sel-dot" title="Orange"><span class="sel-dot-fill" style="background:#f97316"></span></button>
+												<button type="button" data-selection-action="highlight-color" data-highlight-color="green" class="sel-dot" title="Grün"><span class="sel-dot-fill" style="background:#22c55e"></span></button>
+												<button type="button" data-selection-action="highlight-color" data-highlight-color="blue" class="sel-dot" title="Blau"><span class="sel-dot-fill" style="background:#3b82f6"></span></button>
+												<button type="button" data-selection-action="highlight-color" data-highlight-color="purple" class="sel-dot" title="Lila"><span class="sel-dot-fill" style="background:#a855f7"></span></button>
+												<button type="button" data-selection-action="highlight-color" data-highlight-color="pink" class="sel-dot" title="Pink"><span class="sel-dot-fill" style="background:#ec4899"></span></button>
+												<button type="button" data-selection-action="highlight-color" data-highlight-color="cyan" class="sel-dot" title="Türkis"><span class="sel-dot-fill" style="background:#06b6d4"></span></button>
 											</div>
-											<div class="mx-1 h-6 w-px bg-white/10"></div>
-											<button
-												type="button"
-												data-selection-action="sort"
-												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Sort selected lines A–Z"
-												data-i18n-title="menu.sort_az_tip">
-												<span data-i18n="menu.sort_az">Sort A–Z</span>
-											</button>
-											<button
-												type="button"
-												data-selection-action="help"
-												class="inline-flex h-8 items-center justify-center rounded-lg border border-white/10 px-2 text-xs text-slate-200 transition hover:bg-white/5"
-												title="Open formatting help"
-												aria-label="Open formatting help"
-												data-i18n-title="menu.help_tip"
-												data-i18n-aria="menu.help_tip">
-												?
-											</button>
+											<span class="sel-sep"></span>
+											<button type="button" data-selection-action="highlight-remove" class="sel-btn sel-btn-remove" title="Markierung entfernen" data-i18n-title="menu.highlight_remove_tip">✕</button>
 										</div>
 									</div>
 									<div
