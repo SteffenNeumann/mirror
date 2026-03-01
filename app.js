@@ -3113,7 +3113,6 @@
 		if (!selectionMenu || !selectionMenu.classList) return;
 		selectionMenu.classList.toggle("hidden", !selectionMenuOpen);
 		if (!selectionMenuOpen) {
-			selMenuDragManual = false;
 			selectionMenu.classList.remove("sel-dragging");
 		}
 	}
@@ -4411,15 +4410,18 @@
 	function updateSelectionMenu() {
 		if (!selectionMenu || !textarea) return;
 		if (slashMenuOpen || wikiMenuOpen) {
+			selMenuDragManual = false;
 			setSelectionMenuOpen(false);
 			return;
 		}
 		if (document.activeElement !== textarea) {
+			selMenuDragManual = false;
 			setSelectionMenuOpen(false);
 			return;
 		}
 		const range = getSelectionRange();
 		if (!range) {
+			selMenuDragManual = false;
 			setSelectionMenuOpen(false);
 			return;
 		}
