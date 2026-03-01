@@ -2717,39 +2717,15 @@ const server = http.createServer(async (req, res) => {
 			json(res, 401, { ok: false, error: "not_connected" });
 			return;
 		}
-		try {
-			const apiRes = await fetch(
-				"https://www.googleapis.com/calendar/v3/users/me/calendarList?maxResults=250",
-				{
-					headers: {
-						Authorization: `Bearer ${token.access_token}`,
-					},
-				}
-			);
-			if (!apiRes.ok) {
-				let detail = "";
-				try { detail = await apiRes.text(); } catch {}
-				console.error(`[google] GET calendars failed: ${apiRes.status} ${detail.slice(0, 500)}`);
-				const proxyStatus = apiRes.status >= 400 && apiRes.status < 500 ? apiRes.status : 502;
-				json(res, proxyStatus, { ok: false, error: "google_api_error", status: apiRes.status, message: detail.slice(0, 200) });
-				return;
-			}
-			const data = await apiRes.json();
-			const calendars = Array.isArray(data && data.items)
-				? data.items.map((item) => ({
-						id: String(item.id || "").trim(),
-						summary: String(item.summary || "").trim(),
-						primary: Boolean(item.primary),
-						accessRole: String(item.accessRole || "").trim(),
-					}))
-				: [];
-			json(res, 200, { ok: true, calendars });
-			return;
-		} catch (err) {
-			console.error(`[google] GET calendars exception:`, err && err.message ? err.message : err);
-			json(res, 500, { ok: false, error: "google_api_failed" });
-			return;
-		}
+		// With calendar.events.owned scope, calendarList API is not available.
+		// Return primary calendar only.
+		json(res, 200, {
+			ok: true,
+			calendars: [
+				{ id: "primary", summary: "Hauptkalender", primary: true, accessRole: "owner" },
+			],
+		});
+		return;
 	}
 
 	if (url.pathname === "/api/calendar/google/auth" && req.method === "GET") {
@@ -2770,7 +2746,7 @@ const server = http.createServer(async (req, res) => {
 		params.set("access_type", "offline");
 		params.set("prompt", "consent");
 		params.set("include_granted_scopes", "true");
-		params.set("scope", "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.calendarlist.readonly");
+		params.set("scope", "https://www.googleapis.com/auth/calendar.events.owned");
 		params.set("state", state);
 		redirect(
 			res,
