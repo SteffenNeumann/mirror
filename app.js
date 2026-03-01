@@ -5714,7 +5714,7 @@
 	const PS_AUTO_IMPORT_ENABLED_KEY = "mirror_ps_auto_import_enabled";
 	const PS_AUTO_IMPORT_INTERVAL_KEY = "mirror_ps_auto_import_interval";
 	const PS_AUTO_IMPORT_LAST_KEY = "mirror_ps_auto_import_last_ts";
-	const PS_AUTO_IMPORT_SEEN_KEY = "mirror_ps_auto_import_seen_v1";
+	const PS_AUTO_IMPORT_SEEN_KEY = "mirror_ps_auto_import_seen_v2";
 	const AUTO_INITIAL_DELAY_MS = 15000; // 15s after startup before first auto-run
 	const PS_MANUAL_TAGS_MARKER = "__manual_tags__";
 	const PS_PINNED_TAG = "pinned";
@@ -8526,15 +8526,18 @@
 				const key = buildAutoImportKey(file);
 				if (psAutoImportSeen.has(key)) continue;
 				const text = await file.text();
+				let success = false;
 				const fname = String(entry.name || "").toLowerCase();
 				if (fname.endsWith(".json")) {
-					await importPersonalSpaceNotesFromText(text, "merge");
+					success = await importPersonalSpaceNotesFromText(text, "merge");
 				} else {
 					const notes = chunkTextIntoNotes(text, entry.name || "import.md");
-					if (notes.length) await importPersonalSpaceNotes(notes, "merge");
+					if (notes.length) success = await importPersonalSpaceNotes(notes, "merge");
 				}
-				psAutoImportSeen.set(key, Date.now());
-				imported += 1;
+				if (success) {
+					psAutoImportSeen.set(key, Date.now());
+					imported += 1;
+				}
 			}
 			saveAutoImportSeen();
 			setAutoImportLastTs();
@@ -16085,7 +16088,7 @@ self.onmessage = async (e) => {
 			parsed = JSON.parse(String(text || ""));
 		} catch {
 			toast("Import: invalid JSON file.", "error");
-			return;
+			return false;
 		}
 		const notes = Array.isArray(parsed)
 			? parsed
@@ -16096,9 +16099,9 @@ self.onmessage = async (e) => {
 			: [];
 		if (!Array.isArray(notes)) {
 			toast("Import: no notes found.", "error");
-			return;
+			return false;
 		}
-		await importPersonalSpaceNotes(notes, mode);
+		return await importPersonalSpaceNotes(notes, mode);
 	}
 
 	async function importPersonalSpaceFile(file, mode) {
