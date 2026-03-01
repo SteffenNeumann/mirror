@@ -5630,16 +5630,17 @@
 		const options = opts && typeof opts === "object" ? opts : {};
 		const delay = Number(options.delay) || 0;
 		const timeout = Number(options.timeout) || 1200;
+		const label = options.label || "deferred task";
 		const run = () => {
 			try {
 				const result = task();
 				if (result && typeof result.catch === "function") {
-					result.catch(() => {
-						// ignore deferred startup failures
+					result.catch((err) => {
+						console.warn(`[Mirror] Deferred startup failed (${label}):`, err);
 					});
 				}
-			} catch {
-				// ignore deferred startup failures
+			} catch (err) {
+				console.warn(`[Mirror] Deferred startup failed (${label}):`, err);
 			}
 		};
 		window.setTimeout(() => {
@@ -5709,9 +5710,12 @@
 	const PS_META_VISIBLE_KEY = "mirror_ps_meta_visible";
 	const PS_AUTO_BACKUP_ENABLED_KEY = "mirror_ps_auto_backup_enabled";
 	const PS_AUTO_BACKUP_INTERVAL_KEY = "mirror_ps_auto_backup_interval";
+	const PS_AUTO_BACKUP_LAST_KEY = "mirror_ps_auto_backup_last_ts";
 	const PS_AUTO_IMPORT_ENABLED_KEY = "mirror_ps_auto_import_enabled";
 	const PS_AUTO_IMPORT_INTERVAL_KEY = "mirror_ps_auto_import_interval";
+	const PS_AUTO_IMPORT_LAST_KEY = "mirror_ps_auto_import_last_ts";
 	const PS_AUTO_IMPORT_SEEN_KEY = "mirror_ps_auto_import_seen_v1";
+	const AUTO_INITIAL_DELAY_MS = 15000; // 15s after startup before first auto-run
 	const PS_MANUAL_TAGS_MARKER = "__manual_tags__";
 	const PS_PINNED_TAG = "pinned";
 	// Tags that should never appear from auto-classification.
@@ -6555,6 +6559,7 @@
 				"offline.synced": "Offline-Änderungen synchronisiert.",
 				"offline.sync_failed": "Sync fehlgeschlagen für eine Offline-Änderung (Max. Versuche erreicht).",
 				"offline.saved_locally": "Offline gespeichert.",
+				"auto_access.permission_needed": "Ordnerzugriff abgelaufen. Bitte in den Einstellungen den Auto-Backup/Import-Ordner erneut erlauben.",
 				"settings.nav.shortcuts": "Tastenkürzel",
 				"settings.shortcuts.title": "Tastenkürzel",
 				"settings.shortcuts.desc": "Übersicht aller Tastenkombinationen für schnellen Zugriff.",
@@ -7149,6 +7154,7 @@
 				"offline.synced": "Offline changes synced.",
 				"offline.sync_failed": "Sync failed for an offline change (max retries reached).",
 				"offline.saved_locally": "Saved offline.",
+				"auto_access.permission_needed": "Folder access expired. Please re-grant Auto-Backup/Import folder permissions in Settings.",
 				"settings.nav.shortcuts": "Shortcuts",
 				"settings.shortcuts.title": "Keyboard Shortcuts",
 				"settings.shortcuts.desc": "Overview of all keyboard shortcuts for quick access.",
@@ -8149,6 +8155,24 @@
 	window.addEventListener("offline", () => {
 		toast(t("offline.now_offline") || "You are offline. Changes are saved locally.", "info");
 	});
+
+	// ─── Visibility-Change trigger for Auto-Backup/Import ──────────
+	document.addEventListener("visibilitychange", () => {
+		if (document.visibilityState !== "visible") return;
+		// Re-check if auto-backup/import is due after tab becomes visible again
+		if (psAutoBackupEnabled && supportsDirectoryAccess()) {
+			const backupElapsed = Date.now() - getAutoBackupLastTs();
+			if (backupElapsed >= autoIntervalToMs(psAutoBackupInterval)) {
+				scheduleAutoBackup(); // will fire after AUTO_INITIAL_DELAY_MS
+			}
+		}
+		if (psAutoImportEnabled && supportsDirectoryAccess()) {
+			const importElapsed = Date.now() - getAutoImportLastTs();
+			if (importElapsed >= autoIntervalToMs(psAutoImportInterval)) {
+				scheduleAutoImport(); // will fire after AUTO_INITIAL_DELAY_MS
+			}
+		}
+	});
 	// ─── End Offline Store ───────────────────────────────────────────
 
 	async function ensureDirPermission(handle, write) {
@@ -8162,10 +8186,13 @@
 		}
 		try {
 			const next = await handle.requestPermission(opts);
-			return next === "granted";
+			if (next === "granted") return true;
 		} catch {
-			return false;
+			// requestPermission requires user gesture — fails silently in background
 		}
+		// Notify user that re-granting permission is needed
+		toast(t("auto_access.permission_needed") || "Ordnerzugriff muss erneut erlaubt werden. Bitte die Einstellungen öffnen.", "warning");
+		return false;
 	}
 
 	function updateAutoBackupFolderLabel() {
@@ -8296,15 +8323,37 @@
 		return `${name}|${size}|${mod}`;
 	}
 
+	function getAutoBackupLastTs() {
+		try { return Number(localStorage.getItem(PS_AUTO_BACKUP_LAST_KEY)) || 0; } catch { return 0; }
+	}
+	function setAutoBackupLastTs() {
+		try { localStorage.setItem(PS_AUTO_BACKUP_LAST_KEY, String(Date.now())); } catch { /* ignore */ }
+	}
+	function getAutoImportLastTs() {
+		try { return Number(localStorage.getItem(PS_AUTO_IMPORT_LAST_KEY)) || 0; } catch { return 0; }
+	}
+	function setAutoImportLastTs() {
+		try { localStorage.setItem(PS_AUTO_IMPORT_LAST_KEY, String(Date.now())); } catch { /* ignore */ }
+	}
+
+	function computeNextAutoDelay(lastTs, interval) {
+		if (!lastTs) return AUTO_INITIAL_DELAY_MS;
+		const intervalMs = autoIntervalToMs(interval);
+		const elapsed = Date.now() - lastTs;
+		if (elapsed >= intervalMs) return AUTO_INITIAL_DELAY_MS;
+		return Math.max(intervalMs - elapsed, AUTO_INITIAL_DELAY_MS);
+	}
+
 	function scheduleAutoBackup() {
 		if (psAutoBackupTimer) window.clearTimeout(psAutoBackupTimer);
 		psAutoBackupTimer = 0;
 		if (!psAutoBackupEnabled || !psAutoBackupInterval) return;
 		if (!supportsDirectoryAccess()) return;
+		const delay = computeNextAutoDelay(getAutoBackupLastTs(), psAutoBackupInterval);
 		psAutoBackupTimer = window.setTimeout(async () => {
 			await runAutoBackup();
 			scheduleAutoBackup();
-		}, autoIntervalToMs(psAutoBackupInterval));
+		}, delay);
 	}
 
 	function scheduleAutoImport() {
@@ -8312,10 +8361,11 @@
 		psAutoImportTimer = 0;
 		if (!psAutoImportEnabled || !psAutoImportInterval) return;
 		if (!supportsDirectoryAccess()) return;
+		const delay = computeNextAutoDelay(getAutoImportLastTs(), psAutoImportInterval);
 		psAutoImportTimer = window.setTimeout(async () => {
 			await runAutoImport();
 			scheduleAutoImport();
-		}, autoIntervalToMs(psAutoImportInterval));
+		}, delay);
 	}
 
 	async function runAutoBackup() {
@@ -8355,6 +8405,7 @@
 			const writable = await fileHandle.createWritable();
 			await writable.write(text);
 			await writable.close();
+			setAutoBackupLastTs();
 			setAutoBackupStatus(`Backup gespeichert: ${filename}`);
 		} catch (e) {
 			const msg = e && e.message ? String(e.message) : "Fehler";
@@ -8410,6 +8461,7 @@
 				imported += 1;
 			}
 			saveAutoImportSeen();
+			setAutoImportLastTs();
 			setAutoImportStatus(
 				imported ? `Auto-Import: ${imported} Datei(en).` : "Keine neuen Dateien."
 			);
@@ -29357,13 +29409,13 @@ self.onmessage = async (e) => {
 
 		const mobile = isMobileViewport();
 		if (mobile) {
-			runDeferredStartupTask(() => initAutoBackup(), { delay: 140, timeout: 1800 });
-			runDeferredStartupTask(() => initAutoImport(), { delay: 220, timeout: 2200 });
-			runDeferredStartupTask(() => startPsPolling(), { delay: 260, timeout: 2200 });
-			runDeferredStartupTask(() => initAiDictation(), { delay: 320, timeout: 2200 });
-			runDeferredStartupTask(() => loadCommentsForRoom(), { delay: 420, timeout: 2500 });
-			runDeferredStartupTask(() => initBlockArrange(), { delay: 520, timeout: 2500 });
-			runDeferredStartupTask(() => syncRoomSlotsFromServer(), { delay: 640, timeout: 2500 });
+			runDeferredStartupTask(() => initAutoBackup(), { delay: 140, timeout: 1800, label: "initAutoBackup" });
+			runDeferredStartupTask(() => initAutoImport(), { delay: 220, timeout: 2200, label: "initAutoImport" });
+			runDeferredStartupTask(() => startPsPolling(), { delay: 260, timeout: 2200, label: "startPsPolling" });
+			runDeferredStartupTask(() => initAiDictation(), { delay: 320, timeout: 2200, label: "initAiDictation" });
+			runDeferredStartupTask(() => loadCommentsForRoom(), { delay: 420, timeout: 2500, label: "loadCommentsForRoom" });
+			runDeferredStartupTask(() => initBlockArrange(), { delay: 520, timeout: 2500, label: "initBlockArrange" });
+			runDeferredStartupTask(() => syncRoomSlotsFromServer(), { delay: 640, timeout: 2500, label: "syncRoomSlotsFromServer" });
 			return;
 		}
 
