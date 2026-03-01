@@ -8251,7 +8251,7 @@
 		btn.className = "ml-1 rounded border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-xs text-amber-300 hover:bg-amber-400/20 transition cursor-pointer";
 		btn.addEventListener("click", async () => {
 			if (!psAutoImportHandle) return;
-			const ok = await ensureDirPermission(psAutoImportHandle, false);
+			const ok = await ensureDirPermission(psAutoImportHandle, true);
 			if (ok) {
 				psAutoImportNeedsPermission = false;
 				setAutoImportStatus(t("auto_access.regrant_ok") || "Zugriff wiederhergestellt.");
@@ -8499,7 +8499,7 @@
 		psAutoImportInFlight = true;
 		try {
 			setAutoImportStatus("Suche nach neuen Dateien…");
-			const ok = await queryDirPermission(psAutoImportHandle, false);
+			const ok = await queryDirPermission(psAutoImportHandle, true);
 			if (!ok) {
 				showAutoImportPermissionBtn();
 				return;
@@ -8520,6 +8520,7 @@
 				);
 			});
 			let imported = 0;
+			let deleted = 0;
 			for (const entry of candidates) {
 				if (imported >= AUTO_IMPORT_MAX_PER_RUN) break;
 				const file = await entry.getFile();
@@ -8537,13 +8538,23 @@
 				if (success) {
 					psAutoImportSeen.set(key, Date.now());
 					imported += 1;
+					// Datei nach erfolgreichem Import aus dem Ordner entfernen
+					try {
+						await psAutoImportHandle.removeEntry(entry.name);
+						deleted += 1;
+					} catch (delErr) {
+						console.warn("[AutoImport] Datei konnte nicht entfernt werden:", entry.name, delErr);
+					}
 				}
 			}
 			saveAutoImportSeen();
 			setAutoImportLastTs();
-			setAutoImportStatus(
-				imported ? `Auto-Import: ${imported} Datei(en).` : "Keine neuen Dateien."
-			);
+			if (imported) {
+				const delInfo = deleted === imported ? " (aus Ordner entfernt)" : deleted > 0 ? ` (${deleted} entfernt)` : "";
+				setAutoImportStatus(`Auto-Import: ${imported} Datei(en) importiert${delInfo}.`);
+			} else {
+				setAutoImportStatus("Keine neuen Dateien.");
+			}
 		} catch (e) {
 			const msg = e && e.message ? String(e.message) : "Fehler";
 			setAutoImportStatus(`Auto-Import fehlgeschlagen: ${msg}`);
@@ -8569,7 +8580,7 @@
 	async function pickAutoImportFolder() {
 		if (!supportsDirectoryAccess()) return;
 		try {
-			const handle = await window.showDirectoryPicker({ mode: "read" });
+			const handle = await window.showDirectoryPicker({ mode: "readwrite" });
 			psAutoImportHandle = handle;
 			updateAutoImportFolderLabel();
 			await writeFsHandle(AUTO_IMPORT_HANDLE_KEY, handle);
@@ -8604,7 +8615,7 @@
 		updateAutoImportFolderLabel();
 		// Pre-check permission so we can show re-grant button immediately
 		if (psAutoImportEnabled && psAutoImportHandle) {
-			const hasPermission = await queryDirPermission(psAutoImportHandle, false);
+			const hasPermission = await queryDirPermission(psAutoImportHandle, true);
 			if (!hasPermission) {
 				showAutoImportPermissionBtn();
 				return; // don't schedule — would fail anyway
