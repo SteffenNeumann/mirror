@@ -2770,7 +2770,7 @@ const server = http.createServer(async (req, res) => {
 		params.set("access_type", "offline");
 		params.set("prompt", "consent");
 		params.set("include_granted_scopes", "true");
-		params.set("scope", "https://www.googleapis.com/auth/calendar");
+		params.set("scope", "https://www.googleapis.com/auth/calendar.events https://www.googleapis.com/auth/calendar.calendarlist.readonly");
 		params.set("state", state);
 		redirect(
 			res,
