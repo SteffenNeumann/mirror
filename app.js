@@ -5773,11 +5773,13 @@
 	let psAutoBackupTimer = 0;
 	let psAutoBackupInFlight = false;
 	let psAutoBackupHandle = null;
+	let psAutoBackupNeedsPermission = false;
 	let psAutoImportEnabled = false;
 	let psAutoImportInterval = "daily";
 	let psAutoImportTimer = 0;
 	let psAutoImportInFlight = false;
 	let psAutoImportHandle = null;
+	let psAutoImportNeedsPermission = false;
 	let psAutoImportSeen = new Map();
 	const THEMES = {
 		fuchsia: {
@@ -6560,6 +6562,10 @@
 				"offline.sync_failed": "Sync fehlgeschlagen für eine Offline-Änderung (Max. Versuche erreicht).",
 				"offline.saved_locally": "Offline gespeichert.",
 				"auto_access.permission_needed": "Ordnerzugriff abgelaufen. Bitte in den Einstellungen den Auto-Backup/Import-Ordner erneut erlauben.",
+				"auto_access.permission_needed_short": "Ordnerzugriff abgelaufen. ",
+				"auto_access.regrant_btn": "Zugriff erlauben",
+				"auto_access.regrant_ok": "Zugriff wiederhergestellt.",
+				"auto_access.regrant_failed": "Zugriff verweigert. Bitte Ordner neu wählen.",
 				"settings.nav.shortcuts": "Tastenkürzel",
 				"settings.shortcuts.title": "Tastenkürzel",
 				"settings.shortcuts.desc": "Übersicht aller Tastenkombinationen für schnellen Zugriff.",
@@ -7155,6 +7161,10 @@
 				"offline.sync_failed": "Sync failed for an offline change (max retries reached).",
 				"offline.saved_locally": "Saved offline.",
 				"auto_access.permission_needed": "Folder access expired. Please re-grant Auto-Backup/Import folder permissions in Settings.",
+				"auto_access.permission_needed_short": "Folder access expired. ",
+				"auto_access.regrant_btn": "Grant access",
+				"auto_access.regrant_ok": "Access restored.",
+				"auto_access.regrant_failed": "Access denied. Please pick the folder again.",
 				"settings.nav.shortcuts": "Shortcuts",
 				"settings.shortcuts.title": "Keyboard Shortcuts",
 				"settings.shortcuts.desc": "Overview of all keyboard shortcuts for quick access.",
@@ -8175,6 +8185,17 @@
 	});
 	// ─── End Offline Store ───────────────────────────────────────────
 
+	async function queryDirPermission(handle, write) {
+		if (!handle || !handle.queryPermission) return false;
+		const opts = { mode: write ? "readwrite" : "read" };
+		try {
+			const current = await handle.queryPermission(opts);
+			return current === "granted";
+		} catch {
+			return false;
+		}
+	}
+
 	async function ensureDirPermission(handle, write) {
 		if (!handle || !handle.queryPermission) return false;
 		const opts = { mode: write ? "readwrite" : "read" };
@@ -8184,15 +8205,64 @@
 		} catch {
 			// ignore
 		}
+		// requestPermission requires user gesture — only succeeds when called from click handler etc.
 		try {
 			const next = await handle.requestPermission(opts);
 			if (next === "granted") return true;
 		} catch {
-			// requestPermission requires user gesture — fails silently in background
+			// fails without user gesture
 		}
-		// Notify user that re-granting permission is needed
-		toast(t("auto_access.permission_needed") || "Ordnerzugriff muss erneut erlaubt werden. Bitte die Einstellungen öffnen.", "warning");
 		return false;
+	}
+
+	function showAutoBackupPermissionBtn() {
+		psAutoBackupNeedsPermission = true;
+		if (!psAutoBackupStatus) return;
+		psAutoBackupStatus.innerHTML = "";
+		const msg = document.createElement("span");
+		msg.textContent = t("auto_access.permission_needed_short") || "Ordnerzugriff abgelaufen. ";
+		const btn = document.createElement("button");
+		btn.textContent = t("auto_access.regrant_btn") || "Zugriff erlauben";
+		btn.className = "ml-1 rounded border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-xs text-amber-300 hover:bg-amber-400/20 transition cursor-pointer";
+		btn.addEventListener("click", async () => {
+			if (!psAutoBackupHandle) return;
+			const ok = await ensureDirPermission(psAutoBackupHandle, true);
+			if (ok) {
+				psAutoBackupNeedsPermission = false;
+				setAutoBackupStatus(t("auto_access.regrant_ok") || "Zugriff wiederhergestellt.");
+				void runAutoBackup();
+				scheduleAutoBackup();
+			} else {
+				setAutoBackupStatus(t("auto_access.regrant_failed") || "Zugriff verweigert. Bitte Ordner neu wählen.");
+			}
+		});
+		psAutoBackupStatus.appendChild(msg);
+		psAutoBackupStatus.appendChild(btn);
+	}
+
+	function showAutoImportPermissionBtn() {
+		psAutoImportNeedsPermission = true;
+		if (!psAutoImportStatus) return;
+		psAutoImportStatus.innerHTML = "";
+		const msg = document.createElement("span");
+		msg.textContent = t("auto_access.permission_needed_short") || "Ordnerzugriff abgelaufen. ";
+		const btn = document.createElement("button");
+		btn.textContent = t("auto_access.regrant_btn") || "Zugriff erlauben";
+		btn.className = "ml-1 rounded border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-xs text-amber-300 hover:bg-amber-400/20 transition cursor-pointer";
+		btn.addEventListener("click", async () => {
+			if (!psAutoImportHandle) return;
+			const ok = await ensureDirPermission(psAutoImportHandle, false);
+			if (ok) {
+				psAutoImportNeedsPermission = false;
+				setAutoImportStatus(t("auto_access.regrant_ok") || "Zugriff wiederhergestellt.");
+				void runAutoImport();
+				scheduleAutoImport();
+			} else {
+				setAutoImportStatus(t("auto_access.regrant_failed") || "Zugriff verweigert. Bitte Ordner neu wählen.");
+			}
+		});
+		psAutoImportStatus.appendChild(msg);
+		psAutoImportStatus.appendChild(btn);
 	}
 
 	function updateAutoBackupFolderLabel() {
@@ -8382,9 +8452,9 @@
 		psAutoBackupInFlight = true;
 		try {
 			setAutoBackupStatus("Backup wird erstellt…");
-			const ok = await ensureDirPermission(psAutoBackupHandle, true);
+			const ok = await queryDirPermission(psAutoBackupHandle, true);
 			if (!ok) {
-				setAutoBackupStatus("Ordnerzugriff erforderlich.");
+				showAutoBackupPermissionBtn();
 				return;
 			}
 			const payload = await fetchPersonalSpaceExport();
@@ -8429,9 +8499,9 @@
 		psAutoImportInFlight = true;
 		try {
 			setAutoImportStatus("Suche nach neuen Dateien…");
-			const ok = await ensureDirPermission(psAutoImportHandle, false);
+			const ok = await queryDirPermission(psAutoImportHandle, false);
 			if (!ok) {
-				setAutoImportStatus("Ordnerzugriff erforderlich.");
+				showAutoImportPermissionBtn();
 				return;
 			}
 			const entries = [];
@@ -8506,6 +8576,14 @@
 		loadAutoBackupSettings();
 		psAutoBackupHandle = await readFsHandle(AUTO_BACKUP_HANDLE_KEY);
 		updateAutoBackupFolderLabel();
+		// Pre-check permission so we can show re-grant button immediately
+		if (psAutoBackupEnabled && psAutoBackupHandle) {
+			const hasPermission = await queryDirPermission(psAutoBackupHandle, true);
+			if (!hasPermission) {
+				showAutoBackupPermissionBtn();
+				return; // don't schedule — would fail anyway
+			}
+		}
 		scheduleAutoBackup();
 	}
 
@@ -8515,6 +8593,14 @@
 		loadAutoImportSeen();
 		psAutoImportHandle = await readFsHandle(AUTO_IMPORT_HANDLE_KEY);
 		updateAutoImportFolderLabel();
+		// Pre-check permission so we can show re-grant button immediately
+		if (psAutoImportEnabled && psAutoImportHandle) {
+			const hasPermission = await queryDirPermission(psAutoImportHandle, false);
+			if (!hasPermission) {
+				showAutoImportPermissionBtn();
+				return; // don't schedule — would fail anyway
+			}
+		}
 		scheduleAutoImport();
 	}
 
