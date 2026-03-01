@@ -7783,10 +7783,34 @@
 		if (!Array.isArray(notes)) return;
 		try {
 			const db = await openOfflineDb();
+			// Step 1: Check for pending ops — if any exist, preserve dirty notes
+			const pendingOps = await new Promise((resolve) => {
+				const txOps = db.transaction(OFFLINE_STORE_OPS, "readonly");
+				const req = txOps.objectStore(OFFLINE_STORE_OPS).getAll();
+				req.onsuccess = () => resolve(req.result || []);
+				req.onerror = () => resolve([]);
+			});
+			// Step 2: Read existing dirty notes that are not yet synced
+			let dirtyNotes = [];
+			if (pendingOps.length > 0) {
+				const existingNotes = await new Promise((resolve) => {
+					const txRead = db.transaction(OFFLINE_STORE_NOTES, "readonly");
+					const req = txRead.objectStore(OFFLINE_STORE_NOTES).getAll();
+					req.onsuccess = () => resolve(req.result || []);
+					req.onerror = () => resolve([]);
+				});
+				// Collect IDs referenced by pending ops (tempId for create, noteId for update/delete)
+				const pendingIds = new Set();
+				for (const op of pendingOps) {
+					if (op.tempId) pendingIds.add(String(op.tempId));
+					if (op.noteId) pendingIds.add(String(op.noteId));
+				}
+				dirtyNotes = existingNotes.filter((n) => n && n.id && (n.dirty || pendingIds.has(String(n.id))));
+			}
+			// Step 3: Write server notes + merge dirty notes (preserving offline-created notes)
+			const serverIds = new Set(notes.filter((n) => n && n.id).map((n) => String(n.id)));
 			const tx = db.transaction(OFFLINE_STORE_NOTES, "readwrite");
 			const store = tx.objectStore(OFFLINE_STORE_NOTES);
-			// Full-sync: clear all existing entries first, then put server notes.
-			// This removes ghost entries (deleted on server but still in IndexedDB).
 			store.clear();
 			for (const n of notes) {
 				if (!n || !n.id) continue;
@@ -7801,7 +7825,25 @@
 					dirty: false,
 				});
 			}
+			// Re-insert dirty notes that are NOT in server notes (offline-created, not yet synced)
+			for (const dn of dirtyNotes) {
+				if (!serverIds.has(String(dn.id))) {
+					store.put({
+						id: String(dn.id),
+						text: String(dn.text || ""),
+						tags: Array.isArray(dn.tags) ? dn.tags : [],
+						kind: String(dn.kind || ""),
+						createdAt: Number(dn.createdAt || Date.now()),
+						updatedAt: Number(dn.updatedAt || Date.now()),
+						deletedAt: dn.deletedAt || null,
+						dirty: true,
+					});
+				}
+			}
 			await new Promise((res, rej) => { tx.oncomplete = res; tx.onerror = rej; });
+			if (dirtyNotes.length > 0) {
+				console.log(`[offline] putNotes: preserved ${dirtyNotes.filter((d) => !serverIds.has(String(d.id))).length} dirty notes during full-sync`);
+			}
 		} catch (e) { console.warn("[offline] putNotes failed:", e); }
 	}
 
@@ -15686,7 +15728,8 @@ self.onmessage = async (e) => {
 		}
 
 		// Mirror notes to IndexedDB when online (full-sync: also clears deleted notes)
-		if (!isOffline && psState.authed && Array.isArray(psState.notes)) {
+		// Skip full-sync while offline replay is in progress to avoid race conditions
+		if (!isOffline && psState.authed && Array.isArray(psState.notes) && !offlineSyncInFlight) {
 			void offlinePutNotes(psState.notes);
 			void offlineSaveMeta("email", psState.email || "");
 		}
@@ -15707,6 +15750,24 @@ self.onmessage = async (e) => {
 				.map((n) => ensureNoteUpdatedAt(n))
 				.filter((n) => !n || !n.deletedAt)
 		);
+
+		// Merge dirty offline notes into psState.notes so they remain visible in the UI
+		// while pending ops are waiting to be replayed
+		if (!isOffline && psState.authed) {
+			try {
+				const pendingOps = await offlineGetAllOps();
+				if (pendingOps.length > 0) {
+					const offlineNotes = await offlineGetAllNotes();
+					const existingIds = new Set(psState.notes.map((n) => String(n && n.id ? n.id : "")));
+					for (const on of offlineNotes) {
+						if (on && on.dirty && on.id && !on.deletedAt && !existingIds.has(String(on.id))) {
+							psState.notes.unshift(on);
+							existingIds.add(String(on.id));
+						}
+					}
+				}
+			} catch (e) { console.warn("[offline] merge dirty notes into UI failed:", e); }
+		}
 
 		// Merge server-side taskClosedTs into localStorage cache
 		mergeServerTaskClosedTimestamps(psState.notes);
