@@ -240,6 +240,14 @@ interface AvailabilityData {
   - Zuständige Funktionen: `syncPreviewScrollFromEditor`, `syncEditorScrollFromPreview`, `attachPreviewScrollSync`, `getPreviewScrollElement`, `getScrollRatioY`, `getScrollableYMax`.
   - Zuständige Dateien: `app.js`.
 
+- **Excalidraw/Tabellen strikt an aktive Notiz-ID gebunden** `#apps` `#excalidraw` `#excel` `#note-scoping` `#room-sync`: Wenn eine Notiz geladen ist, arbeiten Excalidraw (`id="toggleExcalidraw"`) und Tabellen (`id="toggleExcel"`) jetzt mit der aktuellen Notiz-ID als Scope. Dadurch bleibt bearbeiteter Inhalt pro Notiz isoliert; beim Erstellen/Wechseln auf eine neue Notiz wird eine neue App-Instanz (eigener Scope) verwendet.
+  1. **Scope-Priorität angepasst** (`app.js` ~L23919, ~L23935): `getExcalidrawNoteId()` und `getExcelNoteId()` priorisieren zuerst `psEditingNoteId`; Room-Scope bleibt Fallback für Fälle ohne aktive Notiz.
+  2. **Excel-Sheet-ID auf aktiven Scope umgestellt** (`app.js` ~L23985): `buildExcelSheetId()` erzeugt IDs jetzt aus dem aktiven App-Scope (Notiz-basiert), statt immer nur `room-key` zu verwenden.
+  3. **Note-Sync ohne erzwungenes Pinned-Room-Remap** (`app.js` ~L24436, ~L24452): `syncExcalidrawForNote()` und `syncExcelForNote()` übernehmen den übergebenen Notizkontext direkt und laden damit den korrekten notizspezifischen Zustand.
+  4. **WebSocket-Mapping mit Legacy-Kompatibilität** (`app.js` ~L23153, ~L23182, ~L23327): Eingehende `excalidraw_state`/`excel_state`/`excalidraw_scene` Daten werden auf Notiz-ID fokussiert; ältere room-scope Payloads werden weiterhin auf die gepinnte Notiz zurückgemappt.
+  - Zuständige Funktionen: `getExcalidrawNoteId`, `getExcelNoteId`, `buildExcelSheetId`, `syncExcalidrawForNote`, `syncExcelForNote`.
+  - Zuständige Dateien: `app.js`.
+
 ---
 
 ## Aktuelle Änderungen (2026-02-28)

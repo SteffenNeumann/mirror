@@ -23160,8 +23160,8 @@ self.onmessage = async (e) => {
 				for (const it of items) {
 					const rawNoteId = String(it && it.noteId ? it.noteId : "").trim();
 					const noteId =
-						pinnedNoteId && rawNoteId === pinnedNoteId && pinnedScope
-							? pinnedScope
+						pinnedNoteId && rawNoteId === pinnedScope
+							? pinnedNoteId
 							: rawNoteId;
 					if (!noteId) continue;
 					const visible = Boolean(it && it.visible);
@@ -23189,8 +23189,8 @@ self.onmessage = async (e) => {
 				for (const it of items) {
 					const rawNoteId = String(it && it.noteId ? it.noteId : "").trim();
 					const noteId =
-						pinnedNoteId && rawNoteId === pinnedNoteId && pinnedScope
-							? pinnedScope
+						pinnedNoteId && rawNoteId === pinnedScope
+							? pinnedNoteId
 							: rawNoteId;
 					if (!noteId) continue;
 					const visible = Boolean(it && it.visible);
@@ -23334,8 +23334,8 @@ self.onmessage = async (e) => {
 				for (const it of items) {
 					const rawNoteId = String(it && it.noteId ? it.noteId : "").trim();
 					const noteId =
-						pinnedNoteId && rawNoteId === pinnedNoteId && pinnedScope
-							? pinnedScope
+						pinnedNoteId && rawNoteId === pinnedScope
+							? pinnedNoteId
 							: rawNoteId;
 					const scene = typeof it === "object" && typeof it.scene === "string" ? it.scene : "";
 					if (!noteId || !scene) continue;
@@ -23917,13 +23917,11 @@ self.onmessage = async (e) => {
 	};
 
 	const getExcalidrawNoteId = () => {
-		const pinned = getRoomPinnedEntry(room, key);
-		if (pinned) return getExcalidrawRoomScope();
-		// In shared rooms, always use room scope so all participants
-		// resolve the same noteId for app state sync
-		if (isRoomMarkedShared(room, key)) return getExcalidrawRoomScope();
 		const noteId = String(psEditingNoteId || "").trim();
 		if (noteId) return noteId;
+		const pinned = getRoomPinnedEntry(room, key);
+		if (pinned) return getExcalidrawRoomScope();
+		if (isRoomMarkedShared(room, key)) return getExcalidrawRoomScope();
 		return getExcalidrawRoomScope();
 	};
 
@@ -23935,11 +23933,11 @@ self.onmessage = async (e) => {
 	};
 
 	const getExcelNoteId = () => {
+		const noteId = String(psEditingNoteId || "").trim();
+		if (noteId) return noteId;
 		const pinned = getRoomPinnedEntry(room, key);
 		if (pinned) return getExcelRoomScope();
 		if (isRoomMarkedShared(room, key)) return getExcelRoomScope();
-		const noteId = String(psEditingNoteId || "").trim();
-		if (noteId) return noteId;
 		return getExcelRoomScope();
 	};
 
@@ -23966,9 +23964,9 @@ self.onmessage = async (e) => {
 		if (!targetId || targetId !== String(pinned.noteId || "").trim()) return "";
 		switch (kind) {
 			case "excalidraw":
-				return getExcalidrawRoomScope();
+				return "";
 			case "excel":
-				return getExcelRoomScope();
+				return "";
 			case "linear":
 				return getLinearRoomScope();
 			default:
@@ -23985,13 +23983,16 @@ self.onmessage = async (e) => {
 	};
 
 	const buildExcelSheetId = () => {
-		const roomName = normalizeRoom(room);
-		if (roomName) {
-			const keyName = normalizeKey(key);
-			return keyName ? `${roomName}-${keyName}` : roomName;
+		const activeId = String(getExcelNoteId() || "").trim();
+		if (activeId) {
+			if (activeId.startsWith("room:")) {
+				return activeId
+					.slice(5)
+					.replace(/:/g, "-")
+					.replace(/[^a-zA-Z0-9._-]/g, "-") || "default";
+			}
+			return `note-${activeId}`;
 		}
-		const fallbackNoteId = String(psEditingNoteId || "").trim();
-		if (fallbackNoteId) return `note-${fallbackNoteId}`;
 		return "default";
 	};
 
@@ -24433,8 +24434,7 @@ self.onmessage = async (e) => {
 	}
 
 	const syncExcalidrawForNote = (noteId) => {
-		const pinnedScope = resolvePinnedAppScope(noteId, "excalidraw");
-		const activeId = pinnedScope || String(noteId || "").trim() || getExcalidrawNoteId();
+		const activeId = String(noteId || "").trim() || getExcalidrawNoteId();
 		const savedVisible = activeId
 			? Boolean(excalidrawVisibleByNote.get(activeId))
 			: false;
@@ -24450,8 +24450,7 @@ self.onmessage = async (e) => {
 	};
 
 	const syncExcelForNote = (noteId) => {
-		const pinnedScope = resolvePinnedAppScope(noteId, "excel");
-		const activeId = pinnedScope || String(noteId || "").trim() || getExcelNoteId();
+		const activeId = String(noteId || "").trim() || getExcelNoteId();
 		setExcelEmbedUrl();
 		const savedVisible = activeId
 			? Boolean(excelVisibleByNote.get(activeId))
