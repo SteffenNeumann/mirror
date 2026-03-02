@@ -29951,12 +29951,7 @@ self.onmessage = async (e) => {
 			if (psSearchInput) { psSearchInput.value = "has:link"; psSearchQuery = "has:link"; savePsSearchQuery(); applyPersonalSpaceFiltersAndRender(); }
 		}});
 		items.push({ id: "query_builder", group: "search", icon: "🧩", label: t("cmd.action.query_builder"), shortcut: null, action() {
-			window.setTimeout(() => {
-				openQueryBuilder();
-				window.setTimeout(() => {
-					if (!qbModal || !qbModal.isConnected) openQueryBuilder();
-				}, 180);
-			}, 180);
+			openQueryBuilder();
 		}});
 
 		return items;
@@ -30115,9 +30110,10 @@ self.onmessage = async (e) => {
 		const item = cmdFilteredItems[idx];
 		if (!item || typeof item.action !== "function") return;
 		closeCmdPalette();
+		const delayMs = item.id === "query_builder" ? 1000 : 0;
 		window.setTimeout(() => {
 			try { item.action(); } catch (e) { console.warn("[cmd-palette] action error:", e); }
-		}, 0);
+		}, delayMs);
 	}
 
 	/* ── Event handlers ── */
