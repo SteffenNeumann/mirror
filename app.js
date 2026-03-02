@@ -23982,8 +23982,8 @@ self.onmessage = async (e) => {
 		return "";
 	};
 
-	const buildExcelSheetId = () => {
-		const activeId = String(getExcelNoteId() || "").trim();
+	const buildExcelSheetId = (noteId) => {
+		const activeId = String(noteId || "").trim() || String(getExcelNoteId() || "").trim();
 		if (activeId) {
 			if (activeId.startsWith("room:")) {
 				return activeId
@@ -23996,10 +23996,10 @@ self.onmessage = async (e) => {
 		return "default";
 	};
 
-	const setExcelEmbedUrl = () => {
+	const setExcelEmbedUrl = (noteId) => {
 		const base = getExcelBaseUrl();
 		if (!base || !excelFrame) return;
-		const sheetId = buildExcelSheetId();
+		const sheetId = buildExcelSheetId(noteId);
 		const cleanBase = base.replace(/\/+$/, "");
 		const nextUrl = `${cleanBase}/${encodeURIComponent(sheetId)}`;
 		const currentUrl = String(excelFrame.getAttribute("src") || "").trim();
@@ -24451,7 +24451,7 @@ self.onmessage = async (e) => {
 
 	const syncExcelForNote = (noteId) => {
 		const activeId = String(noteId || "").trim() || getExcelNoteId();
-		setExcelEmbedUrl();
+		setExcelEmbedUrl(activeId);
 		const savedVisible = activeId
 			? Boolean(excelVisibleByNote.get(activeId))
 			: false;
@@ -24949,7 +24949,7 @@ self.onmessage = async (e) => {
 
 	if (toggleExcelBtn && excelEmbed) {
 		toggleExcelBtn.addEventListener("click", () => {
-			setExcelEmbedUrl();
+			setExcelEmbedUrl(getExcelNoteId());
 			setExcelVisible(!excelVisible);
 		});
 	}

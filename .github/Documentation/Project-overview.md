@@ -248,6 +248,13 @@ interface AvailabilityData {
   - Zuständige Funktionen: `getExcalidrawNoteId`, `getExcelNoteId`, `buildExcelSheetId`, `syncExcalidrawForNote`, `syncExcelForNote`.
   - Zuständige Dateien: `app.js`.
 
+- **Fix: Excel-Änderungen bleiben pro Notiz stabil erhalten** `#excel` `#persistence` `#bugfix` `#note-scoping`: Nach der Scope-Umstellung wurde beim Notizwechsel teils die falsche Sheet-URL gesetzt, wodurch Einträge scheinbar „nicht gespeichert“ wirkten. Die URL-Ermittlung verwendet jetzt konsequent den explizit synchronisierten Ziel-Scope.
+  1. **Expliziter Scope für Sheet-ID/URL** (`app.js` ~L23985, ~L24000): `buildExcelSheetId(noteId)` und `setExcelEmbedUrl(noteId)` akzeptieren jetzt eine Ziel-Notiz-ID.
+  2. **Sync mit Ziel-Notiz statt implizitem Global-State** (`app.js` ~L24452): `syncExcelForNote(noteId)` übergibt den berechneten `activeId` direkt an `setExcelEmbedUrl(activeId)`.
+  3. **Toggle nutzt aktuellen Scope explizit** (`app.js` ~L24950): Beim Öffnen der Tabelle wird `setExcelEmbedUrl(getExcelNoteId())` verwendet, um unbeabsichtigte Sheet-Wechsel zu vermeiden.
+  - Zuständige Funktionen: `buildExcelSheetId`, `setExcelEmbedUrl`, `syncExcelForNote`.
+  - Zuständige Dateien: `app.js`.
+
 ---
 
 ## Aktuelle Änderungen (2026-02-28)
