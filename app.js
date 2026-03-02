@@ -27554,7 +27554,11 @@ self.onmessage = async (e) => {
 	}
 
 	function openQueryBuilder() {
-		if (qbOverlay) { closeQueryBuilder(); return; }
+		if (qbOverlay && qbModal) { closeQueryBuilder(); return; }
+		if ((qbOverlay && !qbOverlay.isConnected) || (qbModal && !qbModal.isConnected)) {
+			qbOverlay = null;
+			qbModal = null;
+		}
 
 		resetQbState();
 
@@ -29038,7 +29042,7 @@ self.onmessage = async (e) => {
 		return String(raw || "")
 			.replace(/Cmd\/Ctrl/g, isMac ? "⌘" : "Ctrl")
 			.replace(/Alt/g, isMac ? "⌥" : "Alt")
-			.replace(/Shift/g, isMac ? "⇧" : "Shift");
+			.replace(/Shift/g, "Shift");
 	}
 
 	function renderShortcutsList() {
@@ -30104,7 +30108,9 @@ self.onmessage = async (e) => {
 		const item = cmdFilteredItems[idx];
 		if (!item || typeof item.action !== "function") return;
 		closeCmdPalette();
-		try { item.action(); } catch (e) { console.warn("[cmd-palette] action error:", e); }
+		window.setTimeout(() => {
+			try { item.action(); } catch (e) { console.warn("[cmd-palette] action error:", e); }
+		}, 0);
 	}
 
 	/* ── Event handlers ── */
