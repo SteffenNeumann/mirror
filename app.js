@@ -6583,6 +6583,10 @@
 				"shortcuts.copy_desc": "Kopiert den gesamten Editor-Inhalt in die Zwischenablage.",
 				"shortcuts.upload": "Upload-Dialog öffnen",
 				"shortcuts.upload_desc": "Öffnet den Dialog zum Hochladen von Dateien.",
+				"shortcuts.cmd_palette": "Command Palette",
+				"shortcuts.cmd_palette_desc": "Öffnet das globale Such- und Befehlsfenster.",
+				"shortcuts.arrange": "Blöcke anordnen",
+				"shortcuts.arrange_desc": "Öffnet die Block-Anordnungsansicht.",
 				"toast.shortcut_new_note": "Neue Notiz erstellt.",
 				"toast.shortcut_saved": "Notiz gespeichert.",
 				"toast.shortcut_copied": "Inhalt kopiert.",
@@ -7232,6 +7236,10 @@
 				"shortcuts.copy_desc": "Copies the entire editor content to clipboard.",
 				"shortcuts.upload": "Open Upload Dialog",
 				"shortcuts.upload_desc": "Opens the file upload dialog.",
+				"shortcuts.cmd_palette": "Command Palette",
+				"shortcuts.cmd_palette_desc": "Opens the global search and command panel.",
+				"shortcuts.arrange": "Arrange Blocks",
+				"shortcuts.arrange_desc": "Opens the block arrangement view.",
 				"toast.shortcut_new_note": "New note created.",
 				"toast.shortcut_saved": "Note saved.",
 				"toast.shortcut_copied": "Content copied.",
@@ -28988,6 +28996,8 @@ self.onmessage = async (e) => {
 		{ id: "focusRoom",    keys: "Cmd/Ctrl+K",         i18nLabel: "shortcuts.focus_room",    i18nDesc: "shortcuts.focus_room_desc" },
 		{ id: "copy",         keys: "Alt+C",              i18nLabel: "shortcuts.copy",           i18nDesc: "shortcuts.copy_desc" },
 		{ id: "upload",       keys: "Alt+U",              i18nLabel: "shortcuts.upload",         i18nDesc: "shortcuts.upload_desc" },
+		{ id: "cmdPalette",  keys: "Cmd/Ctrl+Shift+P",   i18nLabel: "shortcuts.cmd_palette",    i18nDesc: "shortcuts.cmd_palette_desc" },
+		{ id: "arrange",     keys: "Cmd/Ctrl+Shift+A",   i18nLabel: "shortcuts.arrange",        i18nDesc: "shortcuts.arrange_desc" },
 	];
 
 	const isMac = /mac|iphone|ipad|ipod/i.test(navigator.platform || navigator.userAgent || "");
@@ -29699,7 +29709,6 @@ self.onmessage = async (e) => {
 	let cmdFilteredItems = [];
 
 	/* ── Helpers ── */
-	const isMac = /Mac|iPhone|iPad/.test(navigator.platform || "");
 	const cmdModLabel = isMac ? "⌘" : "Ctrl";
 
 	function cmdEscapeHtml(s) {
