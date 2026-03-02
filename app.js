@@ -29028,7 +29028,7 @@ self.onmessage = async (e) => {
 		{ id: "focusRoom",    keys: "Cmd/Ctrl+K",         i18nLabel: "shortcuts.focus_room",    i18nDesc: "shortcuts.focus_room_desc" },
 		{ id: "copy",         keys: "Alt+C",              i18nLabel: "shortcuts.copy",           i18nDesc: "shortcuts.copy_desc" },
 		{ id: "upload",       keys: "Alt+U",              i18nLabel: "shortcuts.upload",         i18nDesc: "shortcuts.upload_desc" },
-		{ id: "cmdPalette",   keys: "Cmd/Ctrl+Shift+P",  i18nLabel: "shortcuts.cmd_palette",    i18nDesc: "shortcuts.cmd_palette_desc" },
+		{ id: "cmdPalette",   keys: "Alt+Shift+P",       i18nLabel: "shortcuts.cmd_palette",    i18nDesc: "shortcuts.cmd_palette_desc", descFallback: "Öffnet das globale Such- und Befehlsfenster." },
 		{ id: "arrange",     keys: "Cmd/Ctrl+Shift+A",   i18nLabel: "shortcuts.arrange",        i18nDesc: "shortcuts.arrange_desc" },
 	];
 
@@ -29055,7 +29055,7 @@ self.onmessage = async (e) => {
 			label.textContent = t(sc.i18nLabel);
 			const desc = document.createElement("div");
 			desc.className = "mt-0.5 text-xs text-slate-400";
-			desc.textContent = t(sc.i18nDesc);
+			desc.textContent = t(sc.i18nDesc, sc.descFallback || "");
 			left.appendChild(label);
 			left.appendChild(desc);
 			const kbd = document.createElement("kbd");
@@ -30148,12 +30148,12 @@ self.onmessage = async (e) => {
 		cmdPaletteBackdrop.addEventListener("click", () => closeCmdPalette());
 	}
 
-	/* Global shortcut: Cmd/Ctrl+Shift+P (fallback: Alt+Shift+K) */
+	/* Global shortcut: Alt+Shift+P (fallback: Cmd/Ctrl+Shift+P) */
 	window.addEventListener("keydown", (ev) => {
 		if (!ev) return;
 		const mod = ev.metaKey || ev.ctrlKey;
-		const openPrimary = mod && ev.shiftKey && !ev.altKey && ev.code === "KeyP";
-		const openFallback = !mod && ev.altKey && ev.shiftKey && ev.code === "KeyK";
+		const openPrimary = !mod && ev.altKey && ev.shiftKey && ev.code === "KeyP";
+		const openFallback = mod && ev.shiftKey && !ev.altKey && ev.code === "KeyP";
 		if (openPrimary || openFallback) {
 			ev.preventDefault();
 			ev.stopPropagation();
