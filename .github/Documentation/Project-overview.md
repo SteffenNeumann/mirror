@@ -255,6 +255,12 @@ interface AvailabilityData {
   - Zuständige Funktionen: `buildExcelSheetId`, `setExcelEmbedUrl`, `syncExcelForNote`.
   - Zuständige Dateien: `app.js`.
 
+- **Fix: Kein Fallback mehr auf leeres Default-Sheet** `#excel` `#persistence` `#bugfix`: Beim schnellen Notizwechsel konnte der Scope kurzzeitig leer sein; dadurch wurde auf ein `default`-Sheet gewechselt, was wie Datenverlust aussah. Dieser Fallback ist entfernt.
+  1. **Leerer Scope wird verworfen** (`app.js` ~L23985): `buildExcelSheetId(noteId)` gibt bei leerem Scope jetzt `""` zurück statt `"default"`.
+  2. **URL-Update nur mit gültiger Sheet-ID** (`app.js` ~L24000): `setExcelEmbedUrl(noteId)` bricht bei leerer Sheet-ID ab und behält die zuletzt gültige URL.
+  - Zuständige Funktionen: `buildExcelSheetId`, `setExcelEmbedUrl`.
+  - Zuständige Dateien: `app.js`.
+
 ---
 
 ## Aktuelle Änderungen (2026-02-28)

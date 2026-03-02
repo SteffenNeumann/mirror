@@ -23984,22 +23984,23 @@ self.onmessage = async (e) => {
 
 	const buildExcelSheetId = (noteId) => {
 		const activeId = String(noteId || "").trim() || String(getExcelNoteId() || "").trim();
-		if (activeId) {
-			if (activeId.startsWith("room:")) {
-				return activeId
+		if (!activeId) return "";
+		if (activeId.startsWith("room:")) {
+			return (
+				activeId
 					.slice(5)
 					.replace(/:/g, "-")
-					.replace(/[^a-zA-Z0-9._-]/g, "-") || "default";
-			}
-			return `note-${activeId}`;
+					.replace(/[^a-zA-Z0-9._-]/g, "-") || ""
+			);
 		}
-		return "default";
+		return `note-${activeId}`;
 	};
 
 	const setExcelEmbedUrl = (noteId) => {
 		const base = getExcelBaseUrl();
 		if (!base || !excelFrame) return;
 		const sheetId = buildExcelSheetId(noteId);
+		if (!sheetId) return;
 		const cleanBase = base.replace(/\/+$/, "");
 		const nextUrl = `${cleanBase}/${encodeURIComponent(sheetId)}`;
 		const currentUrl = String(excelFrame.getAttribute("src") || "").trim();
