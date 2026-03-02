@@ -27554,10 +27554,12 @@ self.onmessage = async (e) => {
 	}
 
 	function openQueryBuilder() {
-		if (qbOverlay && qbModal) { closeQueryBuilder(); return; }
 		if ((qbOverlay && !qbOverlay.isConnected) || (qbModal && !qbModal.isConnected)) {
 			qbOverlay = null;
 			qbModal = null;
+		}
+		if (qbOverlay && qbModal) {
+			return;
 		}
 
 		resetQbState();
@@ -29950,6 +29952,9 @@ self.onmessage = async (e) => {
 		}});
 		items.push({ id: "query_builder", group: "search", icon: "🧩", label: t("cmd.action.query_builder"), shortcut: null, action() {
 			openQueryBuilder();
+			window.setTimeout(() => {
+				if (!qbModal || !qbModal.isConnected) openQueryBuilder();
+			}, 140);
 		}});
 
 		return items;
