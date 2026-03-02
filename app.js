@@ -6729,6 +6729,7 @@
 				"cmd.action.search_tasks_open": "Offene Aufgaben suchen",
 				"cmd.action.search_tasks_done": "Erledigte Aufgaben suchen",
 				"cmd.action.search_has_links": "Notizen mit Links suchen",
+				"cmd.action.query_builder": "Query Builder öffnen",
 				"cmd.tag_active": "aktiv",
 			},
 
@@ -7397,6 +7398,7 @@
 				"cmd.action.search_tasks_open": "Search open tasks",
 				"cmd.action.search_tasks_done": "Search completed tasks",
 				"cmd.action.search_has_links": "Search notes with links",
+				"cmd.action.query_builder": "Open Query Builder",
 				"cmd.tag_active": "active",
 			},
 		};
@@ -29898,6 +29900,9 @@ self.onmessage = async (e) => {
 		}});
 		items.push({ id: "search_has_links", group: "search", icon: "🔗", label: t("cmd.action.search_has_links"), shortcut: null, action() {
 			if (psSearchInput) { psSearchInput.value = "has:link"; psSearchQuery = "has:link"; savePsSearchQuery(); applyPersonalSpaceFiltersAndRender(); }
+		}});
+		items.push({ id: "query_builder", group: "search", icon: "🧩", label: t("cmd.action.query_builder"), shortcut: null, action() {
+			openQueryBuilder();
 		}});
 
 		return items;
