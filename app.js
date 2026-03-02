@@ -27553,13 +27553,20 @@ self.onmessage = async (e) => {
 		return [];
 	}
 
-	function openQueryBuilder() {
+	function openQueryBuilder(forceReopen = false) {
 		if ((qbOverlay && !qbOverlay.isConnected) || (qbModal && !qbModal.isConnected)) {
 			qbOverlay = null;
 			qbModal = null;
 		}
 		if (qbOverlay && qbModal) {
-			return;
+			if (forceReopen) {
+				// Force-close stale instance before reopening
+				document.removeEventListener("keydown", handleQbEscape);
+				if (qbOverlay) { qbOverlay.remove(); qbOverlay = null; }
+				if (qbModal) { qbModal.remove(); qbModal = null; }
+			} else {
+				return;
+			}
 		}
 
 		resetQbState();
@@ -27597,7 +27604,12 @@ self.onmessage = async (e) => {
 		// Create overlay
 		qbOverlay = document.createElement("div");
 		qbOverlay.className = "qb-overlay";
-		qbOverlay.addEventListener("click", closeQueryBuilder);
+		// Phantom-Click-Schutz: Klicks innerhalb von 350ms nach dem Öffnen ignorieren
+		const qbOpenedAt = Date.now();
+		qbOverlay.addEventListener("click", () => {
+			if (Date.now() - qbOpenedAt < 350) return;
+			closeQueryBuilder();
+		});
 
 		// Create modal
 		qbModal = document.createElement("div");
@@ -29951,7 +29963,7 @@ self.onmessage = async (e) => {
 			if (psSearchInput) { psSearchInput.value = "has:link"; psSearchQuery = "has:link"; savePsSearchQuery(); applyPersonalSpaceFiltersAndRender(); }
 		}});
 		items.push({ id: "query_builder", group: "search", icon: "🧩", label: t("cmd.action.query_builder"), shortcut: null, action() {
-			openQueryBuilder();
+			openQueryBuilder(true);
 		}});
 
 		return items;
@@ -30110,10 +30122,9 @@ self.onmessage = async (e) => {
 		const item = cmdFilteredItems[idx];
 		if (!item || typeof item.action !== "function") return;
 		closeCmdPalette();
-		const delayMs = item.id === "query_builder" ? 1000 : 0;
 		window.setTimeout(() => {
 			try { item.action(); } catch (e) { console.warn("[cmd-palette] action error:", e); }
-		}, delayMs);
+		}, 0);
 	}
 
 	/* ── Event handlers ── */
