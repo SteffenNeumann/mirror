@@ -6661,6 +6661,56 @@
 				"calendar.view.month": "Monat",
 				"calendar.kw": "KW {n}",
 				"calendar.weekdays": "Mo,Di,Mi,Do,Fr,Sa,So",
+				"cmd.placeholder": "Suche Befehle, Notizen, Einstellungen…",
+				"cmd.esc_hint": "ESC",
+				"cmd.navigate": "Navigieren",
+				"cmd.select": "Auswählen",
+				"cmd.close": "Schließen",
+				"cmd.no_results": "Keine Treffer.",
+				"cmd.results_count": "{n} Ergebnisse",
+				"cmd.filter.all": "Alle",
+				"cmd.filter.commands": "Befehle",
+				"cmd.filter.notes": "Notizen",
+				"cmd.filter.rooms": "Räume",
+				"cmd.filter.settings": "Einstellungen",
+				"cmd.group.commands": "Befehle",
+				"cmd.group.notes": "Notizen",
+				"cmd.group.rooms": "Favoriten & Räume",
+				"cmd.group.settings": "Einstellungen",
+				"cmd.group.format": "Formatierung",
+				"cmd.action.new_note": "Neue Notiz erstellen",
+				"cmd.action.new_room": "Neuen Raum erstellen",
+				"cmd.action.share_room": "Raum teilen",
+				"cmd.action.toggle_preview": "Vorschau ein-/ausblenden",
+				"cmd.action.full_preview": "Vollbild-Vorschau",
+				"cmd.action.upload": "Datei hochladen",
+				"cmd.action.settings": "Einstellungen öffnen",
+				"cmd.action.copy_text": "Text kopieren",
+				"cmd.action.toggle_comments": "Kommentare ein-/ausblenden",
+				"cmd.action.arrange_blocks": "Blöcke anordnen",
+				"cmd.action.toggle_calendar": "Kalender öffnen",
+				"cmd.action.toggle_excalidraw": "Excalidraw öffnen",
+				"cmd.action.toggle_excel": "Tabelle öffnen",
+				"cmd.action.toggle_linear": "Linear öffnen",
+				"cmd.action.ask_ai": "KI fragen",
+				"cmd.action.format_bold": "Fett",
+				"cmd.action.format_italic": "Kursiv",
+				"cmd.action.format_strike": "Durchgestrichen",
+				"cmd.action.format_code": "Codeblock",
+				"cmd.action.format_link": "Link einfügen",
+				"cmd.action.format_quote": "Zitat",
+				"cmd.action.format_ul": "Aufzählungsliste",
+				"cmd.action.format_ol": "Nummerierte Liste",
+				"cmd.action.format_task": "Aufgabenliste",
+				"cmd.action.format_hr": "Trennlinie",
+				"cmd.action.theme": "Theme wechseln",
+				"cmd.action.lang_de": "Sprache: Deutsch",
+				"cmd.action.lang_en": "Sprache: English",
+				"cmd.action.export": "Export/Import",
+				"cmd.action.toggle_ps": "Personal Space ein-/ausklappen",
+				"cmd.action.toggle_favorite": "Favorit hinzufügen/entfernen",
+				"cmd.action.save_note": "Notiz speichern",
+				"cmd.action.permalink": "Permanent-Link",
 			},
 
 			en: {
@@ -7260,6 +7310,56 @@
 				"calendar.view.month": "Month",
 				"calendar.kw": "CW {n}",
 				"calendar.weekdays": "Mon,Tue,Wed,Thu,Fri,Sat,Sun",
+				"cmd.placeholder": "Search commands, notes, settings…",
+				"cmd.esc_hint": "ESC",
+				"cmd.navigate": "Navigate",
+				"cmd.select": "Select",
+				"cmd.close": "Close",
+				"cmd.no_results": "No results.",
+				"cmd.results_count": "{n} results",
+				"cmd.filter.all": "All",
+				"cmd.filter.commands": "Commands",
+				"cmd.filter.notes": "Notes",
+				"cmd.filter.rooms": "Rooms",
+				"cmd.filter.settings": "Settings",
+				"cmd.group.commands": "Commands",
+				"cmd.group.notes": "Notes",
+				"cmd.group.rooms": "Favorites & Rooms",
+				"cmd.group.settings": "Settings",
+				"cmd.group.format": "Formatting",
+				"cmd.action.new_note": "Create new note",
+				"cmd.action.new_room": "Create new room",
+				"cmd.action.share_room": "Share room",
+				"cmd.action.toggle_preview": "Toggle preview",
+				"cmd.action.full_preview": "Full preview",
+				"cmd.action.upload": "Upload file",
+				"cmd.action.settings": "Open settings",
+				"cmd.action.copy_text": "Copy text",
+				"cmd.action.toggle_comments": "Toggle comments",
+				"cmd.action.arrange_blocks": "Arrange blocks",
+				"cmd.action.toggle_calendar": "Open calendar",
+				"cmd.action.toggle_excalidraw": "Open Excalidraw",
+				"cmd.action.toggle_excel": "Open spreadsheet",
+				"cmd.action.toggle_linear": "Open Linear",
+				"cmd.action.ask_ai": "Ask AI",
+				"cmd.action.format_bold": "Bold",
+				"cmd.action.format_italic": "Italic",
+				"cmd.action.format_strike": "Strikethrough",
+				"cmd.action.format_code": "Code block",
+				"cmd.action.format_link": "Insert link",
+				"cmd.action.format_quote": "Blockquote",
+				"cmd.action.format_ul": "Bullet list",
+				"cmd.action.format_ol": "Numbered list",
+				"cmd.action.format_task": "Task list",
+				"cmd.action.format_hr": "Horizontal rule",
+				"cmd.action.theme": "Change theme",
+				"cmd.action.lang_de": "Language: Deutsch",
+				"cmd.action.lang_en": "Language: English",
+				"cmd.action.export": "Export/Import",
+				"cmd.action.toggle_ps": "Toggle Personal Space",
+				"cmd.action.toggle_favorite": "Toggle favorite",
+				"cmd.action.save_note": "Save note",
+				"cmd.action.permalink": "Permanent link",
 			},
 		};
 
@@ -29582,6 +29682,385 @@ self.onmessage = async (e) => {
 			});
 		}
 	}
+
+	/* ═══════════════════════════════════════════════════════════════════════
+	   Command Palette  (Shift+Cmd/Ctrl+P)
+	   ═══════════════════════════════════════════════════════════════════════ */
+	const cmdPalette = document.getElementById("cmdPalette");
+	const cmdPaletteBackdrop = document.querySelector('[data-role="cmdPaletteBackdrop"]');
+	const cmdPaletteInput = document.getElementById("cmdPaletteInput");
+	const cmdPaletteResults = document.getElementById("cmdPaletteResults");
+	const cmdPaletteFilters = document.getElementById("cmdPaletteFilters");
+	const cmdPaletteCount = document.getElementById("cmdPaletteCount");
+
+	let cmdPaletteOpen = false;
+	let cmdActiveIndex = -1;
+	let cmdActiveFilter = "all";
+	let cmdFilteredItems = [];
+
+	/* ── Helpers ── */
+	const isMac = /Mac|iPhone|iPad/.test(navigator.platform || "");
+	const cmdModLabel = isMac ? "⌘" : "Ctrl";
+
+	function cmdEscapeHtml(s) {
+		return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+	}
+
+	function cmdHighlightMatch(text, query) {
+		if (!query) return cmdEscapeHtml(text);
+		const escaped = cmdEscapeHtml(text);
+		const qLow = query.toLowerCase();
+		const tLow = escaped.toLowerCase();
+		const idx = tLow.indexOf(qLow);
+		if (idx < 0) return escaped;
+		return escaped.slice(0, idx) + "<mark>" + escaped.slice(idx, idx + query.length) + "</mark>" + escaped.slice(idx + query.length);
+	}
+
+	/* ── Build commands registry ── */
+	function getCmdItems() {
+		const items = [];
+		const mac = isMac;
+
+		/* --- Commands --- */
+		items.push({ id: "new_note", group: "commands", icon: "📝", label: t("cmd.action.new_note"), shortcut: null, action() { if (psNewNote) psNewNote.click(); } });
+		items.push({ id: "new_room", group: "commands", icon: "🚪", label: t("cmd.action.new_room"), shortcut: null, action() { if (newRoomBtn) newRoomBtn.click(); } });
+		items.push({ id: "share_room", group: "commands", icon: "🔗", label: t("cmd.action.share_room"), shortcut: null, action() { if (copyLinkBtn) copyLinkBtn.click(); } });
+		items.push({ id: "toggle_preview", group: "commands", icon: "👁", label: t("cmd.action.toggle_preview"), shortcut: mac ? ["⌘", "P"] : ["Ctrl", "P"], action() { setPreviewVisible(!previewOpen); } });
+		items.push({ id: "full_preview", group: "commands", icon: "⛶", label: t("cmd.action.full_preview"), shortcut: null, action() { if (!previewOpen) setPreviewVisible(true); setFullPreview(!fullPreview); } });
+		items.push({ id: "upload", group: "commands", icon: "📎", label: t("cmd.action.upload"), shortcut: null, action() { openUploadModal(); } });
+		items.push({ id: "settings", group: "commands", icon: "⚙", label: t("cmd.action.settings"), shortcut: [cmdModLabel, ","], action() { setSettingsOpen(true); } });
+		items.push({ id: "copy_text", group: "commands", icon: "📋", label: t("cmd.action.copy_text"), shortcut: null, action() { if (copyMirrorBtn) copyMirrorBtn.click(); } });
+		items.push({ id: "toggle_comments", group: "commands", icon: "💬", label: t("cmd.action.toggle_comments"), shortcut: null, action() { if (toggleCommentsBtn) toggleCommentsBtn.click(); } });
+		items.push({ id: "arrange_blocks", group: "commands", icon: "☰", label: t("cmd.action.arrange_blocks"), shortcut: [cmdModLabel, "⇧", "A"], action() { openBlockArrange(); } });
+		items.push({ id: "toggle_excalidraw", group: "commands", icon: "🎨", label: t("cmd.action.toggle_excalidraw"), shortcut: null, action() { if (toggleExcalidrawBtn) toggleExcalidrawBtn.click(); } });
+		items.push({ id: "toggle_excel", group: "commands", icon: "📊", label: t("cmd.action.toggle_excel"), shortcut: null, action() { if (toggleExcelBtn) toggleExcelBtn.click(); } });
+		items.push({ id: "toggle_linear", group: "commands", icon: "📐", label: t("cmd.action.toggle_linear"), shortcut: null, action() { if (toggleLinearBtn) toggleLinearBtn.click(); } });
+		items.push({ id: "ask_ai", group: "commands", icon: "🤖", label: t("cmd.action.ask_ai"), shortcut: null, action() { if (aiAssistBtn) aiAssistBtn.click(); } });
+		items.push({ id: "toggle_ps", group: "commands", icon: "📁", label: t("cmd.action.toggle_ps"), shortcut: null, action() { if (togglePersonalSpaceBtn) togglePersonalSpaceBtn.click(); } });
+		items.push({ id: "toggle_favorite", group: "commands", icon: "⭐", label: t("cmd.action.toggle_favorite"), shortcut: null, action() { if (toggleFavoriteBtn) toggleFavoriteBtn.click(); } });
+		items.push({ id: "save_note", group: "commands", icon: "💾", label: t("cmd.action.save_note"), shortcut: [cmdModLabel, "S"], action() { schedulePsAutoSave(); } });
+		items.push({ id: "permalink", group: "commands", icon: "📌", label: t("cmd.action.permalink"), shortcut: null, action() { if (togglePermanentLinkBtn) togglePermanentLinkBtn.click(); } });
+
+		/* --- Format --- */
+		items.push({ id: "fmt_bold", group: "format", icon: "B", label: t("cmd.action.format_bold"), shortcut: [cmdModLabel, "B"], action() { applySelectionAction("bold"); } });
+		items.push({ id: "fmt_italic", group: "format", icon: "I", label: t("cmd.action.format_italic"), shortcut: [cmdModLabel, "I"], action() { applySelectionAction("italic"); } });
+		items.push({ id: "fmt_strike", group: "format", icon: "S", label: t("cmd.action.format_strike"), shortcut: null, action() { applySelectionAction("strike"); } });
+		items.push({ id: "fmt_code", group: "format", icon: "</>", label: t("cmd.action.format_code"), shortcut: null, action() { applySelectionAction("code"); } });
+		items.push({ id: "fmt_link", group: "format", icon: "🔗", label: t("cmd.action.format_link"), shortcut: null, action() { applySelectionAction("link"); } });
+		items.push({ id: "fmt_quote", group: "format", icon: "❝", label: t("cmd.action.format_quote"), shortcut: null, action() { applySelectionAction("quote"); } });
+		items.push({ id: "fmt_ul", group: "format", icon: "•", label: t("cmd.action.format_ul"), shortcut: null, action() { applySelectionAction("ul"); } });
+		items.push({ id: "fmt_ol", group: "format", icon: "1.", label: t("cmd.action.format_ol"), shortcut: null, action() { applySelectionAction("ol"); } });
+		items.push({ id: "fmt_task", group: "format", icon: "☐", label: t("cmd.action.format_task"), shortcut: null, action() { applySelectionAction("task"); } });
+		items.push({ id: "fmt_hr", group: "format", icon: "—", label: t("cmd.action.format_hr"), shortcut: null, action() { applySelectionAction("hr"); } });
+
+		/* --- Settings --- */
+		items.push({ id: "settings_theme", group: "settings", icon: "🎨", label: t("cmd.action.theme"), shortcut: null, action() { openSettingsAt("themes"); } });
+		items.push({ id: "settings_lang_de", group: "settings", icon: "🇩🇪", label: t("cmd.action.lang_de"), shortcut: null, action() { setUiLanguage("de"); } });
+		items.push({ id: "settings_lang_en", group: "settings", icon: "🇬🇧", label: t("cmd.action.lang_en"), shortcut: null, action() { setUiLanguage("en"); } });
+		items.push({ id: "settings_export", group: "settings", icon: "📦", label: t("cmd.action.export"), shortcut: null, action() { openSettingsAt("export"); } });
+
+		/* --- Notes (dynamic) --- */
+		if (psState && psState.authed && Array.isArray(psState.notes)) {
+			const notes = psState.notes.filter(n => n && !n.deletedAt);
+			for (const note of notes.slice(0, 50)) {
+				const preview = String(note.text || "").slice(0, 80).replace(/\n/g, " ").trim() || "(empty)";
+				items.push({
+					id: "note_" + String(note.id || ""),
+					group: "notes",
+					icon: "📄",
+					label: preview,
+					meta: note.tags && note.tags.length ? note.tags.slice(0, 3).join(", ") : null,
+					action() {
+						const noteId = String(note.id || "");
+						if (noteId) {
+							const el = psList ? psList.querySelector(`[data-note-id="${noteId}"]`) : null;
+							if (el) el.click();
+						}
+					}
+				});
+			}
+		}
+
+		/* --- Rooms (favorites, dynamic) --- */
+		try {
+			const favs = loadFavorites();
+			for (const fav of favs.slice(0, 20)) {
+				const roomName = String(fav.room || fav || "");
+				if (!roomName) continue;
+				items.push({
+					id: "room_" + roomName,
+					group: "rooms",
+					icon: "🚪",
+					label: roomName,
+					meta: fav.key ? "🔒" : null,
+					action() {
+						const hash = buildShareHash(roomName, fav.key || "");
+						location.hash = hash;
+					}
+				});
+			}
+		} catch { /* ignore */ }
+
+		return items;
+	}
+
+	/* ── Mapping: group → filter category ── */
+	function getCmdGroupFilter(group) {
+		const map = { commands: "commands", format: "commands", notes: "notes", rooms: "rooms", settings: "settings" };
+		return map[group] || "commands";
+	}
+
+	/* ── Filter & search ── */
+	function filterCmdItems(allItems, query, filter) {
+		let items = allItems;
+		if (filter && filter !== "all") {
+			items = items.filter(item => getCmdGroupFilter(item.group) === filter);
+		}
+		if (query) {
+			const q = query.toLowerCase();
+			items = items.filter(item => {
+				const label = String(item.label || "").toLowerCase();
+				const meta = String(item.meta || "").toLowerCase();
+				const id = String(item.id || "").toLowerCase();
+				return label.includes(q) || meta.includes(q) || id.includes(q);
+			});
+			/* Sort: exact prefix first, then includes */
+			items.sort((a, b) => {
+				const aL = String(a.label || "").toLowerCase();
+				const bL = String(b.label || "").toLowerCase();
+				const aPre = aL.startsWith(q) ? 0 : 1;
+				const bPre = bL.startsWith(q) ? 0 : 1;
+				return aPre - bPre;
+			});
+		}
+		return items;
+	}
+
+	/* ── Render results ── */
+	function renderCmdResults(query) {
+		if (!cmdPaletteResults) return;
+		const allItems = getCmdItems();
+		const items = filterCmdItems(allItems, query, cmdActiveFilter);
+		cmdFilteredItems = items;
+
+		const noResultsText = t("cmd.no_results", "No results.");
+		cmdPaletteResults.setAttribute("data-empty-text", noResultsText);
+
+		if (items.length === 0) {
+			cmdPaletteResults.innerHTML = "";
+			if (cmdPaletteCount) cmdPaletteCount.textContent = "";
+			cmdActiveIndex = -1;
+			return;
+		}
+
+		/* Group headers */
+		const groupLabels = {
+			commands: t("cmd.group.commands"),
+			format: t("cmd.group.format"),
+			notes: t("cmd.group.notes"),
+			rooms: t("cmd.group.rooms"),
+			settings: t("cmd.group.settings"),
+		};
+
+		let html = "";
+		let currentGroup = "";
+		for (let i = 0; i < items.length; i++) {
+			const item = items[i];
+			if (item.group !== currentGroup) {
+				currentGroup = item.group;
+				html += `<div class="cmd-group-header">${cmdEscapeHtml(groupLabels[currentGroup] || currentGroup)}</div>`;
+			}
+			const activeClass = i === cmdActiveIndex ? " cmd-item--active" : "";
+			let shortcutHtml = "";
+			if (item.shortcut && item.shortcut.length) {
+				shortcutHtml = '<span class="cmd-item-shortcut">' + item.shortcut.map(k => `<kbd>${cmdEscapeHtml(k)}</kbd>`).join("") + "</span>";
+			}
+			let metaHtml = "";
+			if (item.meta) {
+				metaHtml = `<span class="cmd-item-meta">${cmdEscapeHtml(item.meta)}</span>`;
+			}
+			html += `<div class="cmd-item${activeClass}" role="option" data-cmd-idx="${i}" aria-selected="${i === cmdActiveIndex ? "true" : "false"}">`;
+			html += `<span class="cmd-item-icon">${cmdEscapeHtml(item.icon)}</span>`;
+			html += `<span class="cmd-item-label">${cmdHighlightMatch(item.label, query)}</span>`;
+			html += metaHtml;
+			html += shortcutHtml;
+			html += `</div>`;
+		}
+		cmdPaletteResults.innerHTML = html;
+		if (cmdPaletteCount) {
+			cmdPaletteCount.textContent = formatUi(t("cmd.results_count", "{n} results"), { n: items.length });
+		}
+	}
+
+	/* ── Render filter chips ── */
+	function renderCmdFilters() {
+		if (!cmdPaletteFilters) return;
+		const filters = [
+			{ key: "all", label: t("cmd.filter.all"), icon: "⚡" },
+			{ key: "commands", label: t("cmd.filter.commands"), icon: "▶" },
+			{ key: "notes", label: t("cmd.filter.notes"), icon: "📄" },
+			{ key: "rooms", label: t("cmd.filter.rooms"), icon: "🚪" },
+			{ key: "settings", label: t("cmd.filter.settings"), icon: "⚙" },
+		];
+		let html = "";
+		for (const f of filters) {
+			const active = cmdActiveFilter === f.key ? " cmd-filter-chip--active" : "";
+			html += `<button type="button" class="cmd-filter-chip${active}" data-cmd-filter="${f.key}"><span class="chip-icon">${f.icon}</span>${cmdEscapeHtml(f.label)}</button>`;
+		}
+		cmdPaletteFilters.innerHTML = html;
+	}
+
+	/* ── Navigate items ── */
+	function cmdSetActiveIndex(idx) {
+		cmdActiveIndex = idx;
+		const items = cmdPaletteResults ? cmdPaletteResults.querySelectorAll(".cmd-item") : [];
+		items.forEach((el, i) => {
+			const isActive = i === idx;
+			el.classList.toggle("cmd-item--active", isActive);
+			el.setAttribute("aria-selected", isActive ? "true" : "false");
+			if (isActive) el.scrollIntoView({ block: "nearest" });
+		});
+	}
+
+	/* ── Open / Close ── */
+	function setCmdPaletteOpen(open) {
+		if (!cmdPalette) return;
+		cmdPaletteOpen = Boolean(open);
+		cmdPalette.classList.toggle("hidden", !cmdPaletteOpen);
+		cmdPalette.classList.toggle("flex", cmdPaletteOpen);
+		cmdPalette.setAttribute("aria-hidden", cmdPaletteOpen ? "false" : "true");
+		try { document.body.style.overflow = cmdPaletteOpen ? "hidden" : ""; } catch { /* ignore */ }
+		if (cmdPaletteOpen) {
+			cmdActiveIndex = 0;
+			cmdActiveFilter = "all";
+			if (cmdPaletteInput) { cmdPaletteInput.value = ""; cmdPaletteInput.placeholder = t("cmd.placeholder"); }
+			renderCmdFilters();
+			renderCmdResults("");
+			cmdSetActiveIndex(0);
+			window.setTimeout(() => { if (cmdPaletteInput) cmdPaletteInput.focus(); }, 10);
+		} else {
+			if (cmdPaletteInput) cmdPaletteInput.value = "";
+			cmdFilteredItems = [];
+			cmdActiveIndex = -1;
+		}
+	}
+
+	function openCmdPalette() { setCmdPaletteOpen(true); }
+	function closeCmdPalette() { setCmdPaletteOpen(false); }
+
+	/* ── Execute selected item ── */
+	function executeCmdItem(idx) {
+		const item = cmdFilteredItems[idx];
+		if (!item || typeof item.action !== "function") return;
+		closeCmdPalette();
+		try { item.action(); } catch (e) { console.warn("[cmd-palette] action error:", e); }
+	}
+
+	/* ── Event handlers ── */
+	if (cmdPaletteInput) {
+		cmdPaletteInput.addEventListener("input", () => {
+			const q = String(cmdPaletteInput.value || "").trim();
+			cmdActiveIndex = 0;
+			renderCmdResults(q);
+			cmdSetActiveIndex(0);
+		});
+
+		cmdPaletteInput.addEventListener("keydown", (ev) => {
+			if (!cmdPaletteOpen) return;
+			if (ev.key === "ArrowDown") {
+				ev.preventDefault();
+				const next = cmdActiveIndex < cmdFilteredItems.length - 1 ? cmdActiveIndex + 1 : 0;
+				cmdSetActiveIndex(next);
+			} else if (ev.key === "ArrowUp") {
+				ev.preventDefault();
+				const prev = cmdActiveIndex > 0 ? cmdActiveIndex - 1 : cmdFilteredItems.length - 1;
+				cmdSetActiveIndex(prev);
+			} else if (ev.key === "Enter") {
+				ev.preventDefault();
+				if (cmdActiveIndex >= 0 && cmdActiveIndex < cmdFilteredItems.length) {
+					executeCmdItem(cmdActiveIndex);
+				}
+			} else if (ev.key === "Escape") {
+				ev.preventDefault();
+				closeCmdPalette();
+			} else if (ev.key === "Tab") {
+				ev.preventDefault();
+				/* Tab cycles through filters */
+				const filterKeys = ["all", "commands", "notes", "rooms", "settings"];
+				const curIdx = filterKeys.indexOf(cmdActiveFilter);
+				const nextIdx = (curIdx + 1) % filterKeys.length;
+				cmdActiveFilter = filterKeys[nextIdx];
+				renderCmdFilters();
+				const q = String(cmdPaletteInput.value || "").trim();
+				cmdActiveIndex = 0;
+				renderCmdResults(q);
+				cmdSetActiveIndex(0);
+			}
+		});
+	}
+
+	if (cmdPaletteResults) {
+		cmdPaletteResults.addEventListener("click", (ev) => {
+			const target = ev && ev.target ? ev.target : null;
+			if (!(target instanceof Element)) return;
+			const item = target.closest(".cmd-item");
+			if (!item) return;
+			const idx = parseInt(item.getAttribute("data-cmd-idx") || "-1", 10);
+			if (idx >= 0) executeCmdItem(idx);
+		});
+
+		cmdPaletteResults.addEventListener("mousemove", (ev) => {
+			const target = ev && ev.target ? ev.target : null;
+			if (!(target instanceof Element)) return;
+			const item = target.closest(".cmd-item");
+			if (!item) return;
+			const idx = parseInt(item.getAttribute("data-cmd-idx") || "-1", 10);
+			if (idx >= 0 && idx !== cmdActiveIndex) cmdSetActiveIndex(idx);
+		});
+	}
+
+	if (cmdPaletteFilters) {
+		cmdPaletteFilters.addEventListener("click", (ev) => {
+			const target = ev && ev.target ? ev.target : null;
+			if (!(target instanceof Element)) return;
+			const chip = target.closest(".cmd-filter-chip");
+			if (!chip) return;
+			const filter = chip.getAttribute("data-cmd-filter") || "all";
+			cmdActiveFilter = filter;
+			renderCmdFilters();
+			const q = String(cmdPaletteInput ? cmdPaletteInput.value : "").trim();
+			cmdActiveIndex = 0;
+			renderCmdResults(q);
+			cmdSetActiveIndex(0);
+			if (cmdPaletteInput) cmdPaletteInput.focus();
+		});
+	}
+
+	if (cmdPaletteBackdrop) {
+		cmdPaletteBackdrop.addEventListener("click", () => closeCmdPalette());
+	}
+
+	/* Global shortcut: Shift+Cmd/Ctrl+P */
+	window.addEventListener("keydown", (ev) => {
+		if (!ev) return;
+		if ((ev.metaKey || ev.ctrlKey) && ev.shiftKey && ev.key.toLowerCase() === "p") {
+			ev.preventDefault();
+			ev.stopPropagation();
+			if (cmdPaletteOpen) {
+				closeCmdPalette();
+			} else {
+				/* Don't open if another modal is blocking */
+				if (modalRoot && !modalRoot.classList.contains("hidden")) return;
+				if (settingsOpen) return;
+				openCmdPalette();
+			}
+		}
+		/* Escape to close */
+		if (ev.key === "Escape" && cmdPaletteOpen) {
+			ev.preventDefault();
+			closeCmdPalette();
+		}
+	}, true);
 
 	function initStartupTasks() {
 		setupScrollbarReveal();

@@ -3423,6 +3423,54 @@
 			</button>
 		</div>
 
+		<!-- ── Command Palette ── -->
+		<div
+			id="cmdPalette"
+			class="fixed inset-0 z-[300] hidden items-start justify-center"
+			aria-hidden="true">
+			<div
+				data-role="cmdPaletteBackdrop"
+				class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"></div>
+			<div
+				id="cmdPaletteDialog"
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby="cmdPaletteTitle"
+				class="cmd-palette-dialog relative mt-[12vh] flex w-full max-w-[640px] flex-col overflow-hidden rounded-2xl border shadow-soft backdrop-blur">
+				<div class="cmd-palette-header flex items-center gap-3 px-4 py-3">
+					<svg class="cmd-palette-icon h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+						<circle cx="11" cy="11" r="8"/>
+						<path d="M21 21l-4.35-4.35"/>
+					</svg>
+					<input
+						id="cmdPaletteInput"
+						type="text"
+						autocomplete="off"
+						spellcheck="false"
+						class="cmd-palette-input flex-1 bg-transparent text-sm outline-none"
+						data-i18n-placeholder="cmd.placeholder" />
+					<span class="cmd-palette-hint text-[10px] font-medium opacity-50" data-i18n="cmd.esc_hint">ESC</span>
+				</div>
+				<div id="cmdPaletteFilters" class="cmd-palette-filters flex flex-wrap gap-1.5 px-4 pb-2">
+				</div>
+				<div class="cmd-palette-divider"></div>
+				<div
+					id="cmdPaletteResults"
+					class="cmd-palette-results flex-1 overflow-y-auto px-2 py-2"
+					role="listbox"
+					aria-label="Results">
+				</div>
+				<div class="cmd-palette-footer flex items-center justify-between gap-2 px-4 py-2">
+					<div class="cmd-palette-footer-keys flex items-center gap-3">
+						<span class="cmd-palette-key-hint"><kbd>↑↓</kbd> <span data-i18n="cmd.navigate">Navigate</span></span>
+						<span class="cmd-palette-key-hint"><kbd>↵</kbd> <span data-i18n="cmd.select">Select</span></span>
+						<span class="cmd-palette-key-hint"><kbd>esc</kbd> <span data-i18n="cmd.close">Close</span></span>
+					</div>
+					<span id="cmdPaletteCount" class="cmd-palette-count text-[11px] opacity-40"></span>
+				</div>
+			</div>
+		</div>
+
 		<!-- Markdown Preview libs (client-side, no build step) -->
 		<script defer src="https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js"></script>
 		<script defer src="https://cdn.jsdelivr.net/npm/markdown-it-task-lists@2.1.1/dist/markdown-it-task-lists.min.js"></script>

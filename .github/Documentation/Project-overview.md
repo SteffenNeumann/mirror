@@ -232,6 +232,102 @@ interface AvailabilityData {
 
 ## Aktuelle Änderungen (2026-03-02)
 
+- **Globales Command Palette (Shift+Cmd/Ctrl+P)** `#ux` `#command-palette` `#search` `#keyboard`: Neues globales modales Suchfenster im VS-Code-/Spotlight-Stil. Öffnet sich mit `Shift+Cmd+P` (Mac) bzw. `Shift+Ctrl+P` (Windows/Linux) über allen anderen Panels.
+
+  ### Funktionsumfang
+
+  ```
+  ┌─────────────────────────────────────────────────────────────┐
+  │  🔍  Suche Befehle, Notizen, Einstellungen…        ESC     │
+  ├─────────────────────────────────────────────────────────────┤
+  │  [⚡ Alle] [▶ Befehle] [📄 Notizen] [🚪 Räume] [⚙ Einst.] │
+  ├─────────────────────────────────────────────────────────────┤
+  │  BEFEHLE                                                     │
+  │  📝  Neue Notiz erstellen                                    │
+  │  🚪  Neuen Raum erstellen                                    │
+  │  👁  Vorschau ein-/ausblenden              ⌘ P              │
+  │  ⚙  Einstellungen öffnen                  ⌘ ,              │
+  │  📎  Datei hochladen                                         │
+  │  ...                                                         │
+  │  FORMATIERUNG                                                │
+  │  B   Fett                                  ⌘ B              │
+  │  I   Kursiv                                ⌘ I              │
+  │  ...                                                         │
+  │  NOTIZEN                                                     │
+  │  📄  Erste Notiz-Vorschau…                 tag1, tag2       │
+  │  ...                                                         │
+  │  FAVORITEN & RÄUME                                           │
+  │  🚪  KubernetesRoom123                     🔒               │
+  │  ...                                                         │
+  │  EINSTELLUNGEN                                               │
+  │  🎨  Theme wechseln                                          │
+  │  🇩🇪  Sprache: Deutsch                                       │
+  │  🇬🇧  Sprache: English                                       │
+  │  ...                                                         │
+  ├─────────────────────────────────────────────────────────────┤
+  │  ↑↓ Navigieren   ↵ Auswählen   esc Schließen   23 Treffer  │
+  └─────────────────────────────────────────────────────────────┘
+  ```
+
+  ### Features
+  - **Fuzzy-Suche**: Echtzeit-Filterung über Befehle, Notizen, Favoriten-Räume und Einstellungen
+  - **Filter-Chips**: Schnellfilter per Klick oder Tab-Taste (Alle, Befehle, Notizen, Räume, Einstellungen)
+  - **Keyboard-Navigation**: ↑↓ zum Navigieren, Enter zum Ausführen, Escape zum Schließen, Tab zum Filterwechsel
+  - **Match-Highlighting**: Suchbegriff wird in Ergebnissen farblich markiert
+  - **Gruppen-Header**: Ergebnisse nach Kategorien gruppiert mit Überschriften
+  - **Shortcut-Anzeige**: Tastenkürzel werden bei Befehlen angezeigt
+  - **Theme-Aware**: Vollständige Unterstützung aller Themes (Dark + Light: coffeeLight, bitterLight, monoLight)
+  - **i18n**: Vollständig zweisprachig (DE/EN)
+  - **Responsive**: Mobile-optimiertes Layout
+  - **Animation**: Sanftes Einblenden mit scale+translate
+
+  ### Implementierung
+
+  1. **HTML: Command Palette Modal** (`index.html` ~L3449): Neues `#cmdPalette` Overlay mit Backdrop, Dialog, Input, Filter-Bereich, Ergebnis-Liste und Footer mit Keyboard-Hints.
+  2. **CSS: `.cmd-palette-*` Styles** (`styles/app.css` ~L9562): Vollständige Styles für Dialog, Input, Filter-Chips, Ergebnis-Items, Gruppen-Header, Footer und Keyboard-Hints. Light-Theme-Overrides für coffeeLight, bitterLight, monoLight. Mobile-Responsive mit `@media (max-width: 640px)`.
+  3. **JS: Command Registry** (`app.js` ~L29688): `getCmdItems()` baut dynamisch alle verfügbare Befehle zusammen:
+     - Befehle (Neue Notiz, Neuer Raum, Vorschau, Upload, Settings, Kopieren, Kommentare, Apps, KI, etc.)
+     - Formatierung (Bold, Italic, Strike, Code, Link, Quote, Listen, Tasks, HR)
+     - Einstellungen (Theme, Sprache DE/EN, Export)
+     - Notizen (dynamisch aus `psState.notes`, max 50)
+     - Räume (dynamisch aus `loadFavorites()`, max 20)
+  4. **JS: Filter & Search** (`app.js` ~L29770): `filterCmdItems()` filtert nach aktiver Kategorie und Suchbegriff (case-insensitive, Prefix-Priorität).
+  5. **JS: Render** (`app.js` ~L29790): `renderCmdResults()` erzeugt HTML mit Gruppen-Headern, Icons, Labels mit Match-Highlighting, Shortcuts und Meta-Infos.
+  6. **JS: Keyboard Handler** (`app.js` ~L29890): Globaler `keydown`-Listener für Shift+Cmd/Ctrl+P zum Öffnen/Schließen. Input-Handler für ↑↓ Navigation, Enter Ausführung, Escape Schließen, Tab Filterwechsel.
+  7. **i18n: 50+ neue Strings** (`app.js` ~DE L6665, ~EN L7364): Vollständiger DE/EN Stringsatz für Placeholder, Filter-Labels, Gruppen-Header, Befehls-Labels und Keyboard-Hints.
+
+  ### Verfügbare Befehle
+
+  | Befehl | Gruppe | Shortcut | Aktion |
+  |--------|--------|----------|--------|
+  | Neue Notiz erstellen | Befehle | — | `psNewNote.click()` |
+  | Neuen Raum erstellen | Befehle | — | `newRoomBtn.click()` |
+  | Raum teilen | Befehle | — | `copyLinkBtn.click()` |
+  | Vorschau ein-/ausblenden | Befehle | ⌘P | `setPreviewVisible()` |
+  | Vollbild-Vorschau | Befehle | — | `setFullPreview()` |
+  | Datei hochladen | Befehle | — | `openUploadModal()` |
+  | Einstellungen öffnen | Befehle | ⌘, | `setSettingsOpen(true)` |
+  | Text kopieren | Befehle | — | `copyMirrorBtn.click()` |
+  | Kommentare ein-/ausblenden | Befehle | — | `toggleCommentsBtn.click()` |
+  | Blöcke anordnen | Befehle | ⌘⇧A | `openBlockArrange()` |
+  | Excalidraw öffnen | Befehle | — | `toggleExcalidrawBtn.click()` |
+  | Tabelle öffnen | Befehle | — | `toggleExcelBtn.click()` |
+  | Linear öffnen | Befehle | — | `toggleLinearBtn.click()` |
+  | KI fragen | Befehle | — | `aiAssistBtn.click()` |
+  | Personal Space ein-/ausklappen | Befehle | — | `togglePersonalSpaceBtn.click()` |
+  | Favorit hinzufügen/entfernen | Befehle | — | `toggleFavoriteBtn.click()` |
+  | Notiz speichern | Befehle | ⌘S | `schedulePsAutoSave()` |
+  | Permanent-Link | Befehle | — | `togglePermanentLinkBtn.click()` |
+  | Fett/Kursiv/Strike/Code/Link/Quote/Listen/Tasks/HR | Formatierung | diverse | `applySelectionAction()` |
+  | Theme wechseln | Einstellungen | — | `openSettingsAt("themes")` |
+  | Sprache DE/EN | Einstellungen | — | `setUiLanguage()` |
+  | Export/Import | Einstellungen | — | `openSettingsAt("export")` |
+  | [Notiz-Titel] | Notizen | — | Öffnet Notiz in PS |
+  | [Raum-Name] | Räume | — | Navigiert zum Raum |
+
+  - Zuständige Funktionen: `getCmdItems`, `filterCmdItems`, `renderCmdResults`, `renderCmdFilters`, `cmdSetActiveIndex`, `setCmdPaletteOpen`, `openCmdPalette`, `closeCmdPalette`, `executeCmdItem`, `cmdHighlightMatch`, `cmdEscapeHtml`.
+  - Zuständige Dateien: `app.js`, `index.html`, `styles/app.css`.
+
 - **Bidirektionales Parallel-Scrolling zwischen Editor und Preview** `#mirror` `#mdPreview` `#ux` `#preview` `#scroll`: Beim Scrollen im Editor (`id="mirror"`) wird die Markdown-Vorschau (`id="mdPreview"`) proportional mitgescrollt. Zusätzlich funktioniert es jetzt auch umgekehrt (Preview → Editor, vice versa).
   1. **Neue Scroll-Sync-Funktionen** (`app.js` ~L22512): `syncPreviewScrollFromEditor()` und `syncEditorScrollFromPreview()` berechnen je Seite die vertikale Scroll-Position über eine Verhältnislogik (`scrollTop / (scrollHeight - clientHeight)`) und übertragen diese auf die jeweils andere Seite.
   2. **Loop-Guard gegen Endlosschleifen** (`app.js` ~L22483): Zwei Locks (`syncFromEditorScrollLock`, `syncFromPreviewScrollLock`) verhindern Ping-Pong-Events beim gegenseitigen Setzen von `scrollTop`.
