@@ -27778,6 +27778,11 @@ self.onmessage = async (e) => {
 		document.addEventListener("keydown", handleQbEscape);
 	}
 
+	// CustomEvent bridge: allows Command Palette (different scope) to trigger QB
+	document.addEventListener("mirror:open-query-builder", () => {
+		openQueryBuilder(true);
+	});
+
 	function renderQbSelectedTags() {
 		if (!qbModal) return;
 		const container = qbModal.querySelector(".qb-selected-tags");
@@ -29963,7 +29968,7 @@ self.onmessage = async (e) => {
 			if (psSearchInput) { psSearchInput.value = "has:link"; psSearchQuery = "has:link"; savePsSearchQuery(); applyPersonalSpaceFiltersAndRender(); }
 		}});
 		items.push({ id: "query_builder", group: "search", icon: "🧩", label: t("cmd.action.query_builder"), shortcut: null, action() {
-			openQueryBuilder(true);
+			document.dispatchEvent(new CustomEvent("mirror:open-query-builder"));
 		}});
 
 		return items;
