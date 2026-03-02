@@ -29951,10 +29951,12 @@ self.onmessage = async (e) => {
 			if (psSearchInput) { psSearchInput.value = "has:link"; psSearchQuery = "has:link"; savePsSearchQuery(); applyPersonalSpaceFiltersAndRender(); }
 		}});
 		items.push({ id: "query_builder", group: "search", icon: "🧩", label: t("cmd.action.query_builder"), shortcut: null, action() {
-			openQueryBuilder();
 			window.setTimeout(() => {
-				if (!qbModal || !qbModal.isConnected) openQueryBuilder();
-			}, 140);
+				openQueryBuilder();
+				window.setTimeout(() => {
+					if (!qbModal || !qbModal.isConnected) openQueryBuilder();
+				}, 180);
+			}, 180);
 		}});
 
 		return items;
