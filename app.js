@@ -29028,7 +29028,7 @@ self.onmessage = async (e) => {
 		{ id: "focusRoom",    keys: "Cmd/Ctrl+K",         i18nLabel: "shortcuts.focus_room",    i18nDesc: "shortcuts.focus_room_desc" },
 		{ id: "copy",         keys: "Alt+C",              i18nLabel: "shortcuts.copy",           i18nDesc: "shortcuts.copy_desc" },
 		{ id: "upload",       keys: "Alt+U",              i18nLabel: "shortcuts.upload",         i18nDesc: "shortcuts.upload_desc" },
-		{ id: "cmdPalette",  keys: "Alt+Shift+K",        i18nLabel: "shortcuts.cmd_palette",    i18nDesc: "shortcuts.cmd_palette_desc" },
+		{ id: "cmdPalette",   keys: "Cmd/Ctrl+Shift+P",  i18nLabel: "shortcuts.cmd_palette",    i18nDesc: "shortcuts.cmd_palette_desc" },
 		{ id: "arrange",     keys: "Cmd/Ctrl+Shift+A",   i18nLabel: "shortcuts.arrange",        i18nDesc: "shortcuts.arrange_desc" },
 	];
 
@@ -30148,10 +30148,13 @@ self.onmessage = async (e) => {
 		cmdPaletteBackdrop.addEventListener("click", () => closeCmdPalette());
 	}
 
-	/* Global shortcut: Alt+Shift+K */
+	/* Global shortcut: Cmd/Ctrl+Shift+P (fallback: Alt+Shift+K) */
 	window.addEventListener("keydown", (ev) => {
 		if (!ev) return;
-		if (ev.altKey && ev.shiftKey && ev.key.toLowerCase() === "k") {
+		const mod = ev.metaKey || ev.ctrlKey;
+		const openPrimary = mod && ev.shiftKey && !ev.altKey && ev.code === "KeyP";
+		const openFallback = !mod && ev.altKey && ev.shiftKey && ev.code === "KeyK";
+		if (openPrimary || openFallback) {
 			ev.preventDefault();
 			ev.stopPropagation();
 			if (cmdPaletteOpen) {
