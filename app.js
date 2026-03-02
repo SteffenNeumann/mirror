@@ -29757,6 +29757,49 @@ self.onmessage = async (e) => {
 		return escaped.slice(0, idx) + "<mark>" + escaped.slice(idx, idx + query.length) + "</mark>" + escaped.slice(idx + query.length);
 	}
 
+	function cmdIconMarkup(token, cls = "") {
+		const klass = cls ? ` class="${cmdEscapeHtml(cls)}"` : "";
+		const icons = {
+			"⚡": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+			"▶": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 6l10 6-10 6V6Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+			"📝": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h8l6 6v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V5Z" stroke="currentColor" stroke-width="1.8"/><path d="M14 3v6h6" stroke="currentColor" stroke-width="1.8"/><path d="M8 13h8M8 17h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+			"🚪": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 21V4a1 1 0 0 1 .8-1L16 1v20L5.8 22a1 1 0 0 1-.8-1Z" stroke="currentColor" stroke-width="1.8"/><path d="M11 12h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>`,
+			"🔗": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10 13a5 5 0 0 1 0-7l1-1a5 5 0 1 1 7 7l-1 1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M14 11a5 5 0 0 1 0 7l-1 1a5 5 0 1 1-7-7l1-1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+			"👁": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6Z" stroke="currentColor" stroke-width="1.8"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/></svg>`,
+			"⛶": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M21 16v5h-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+			"📎": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M21.4 11.1l-8.5 8.5a6 6 0 1 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 1 1-2.8-2.8l8.5-8.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+			"⚙": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 15a1 1 0 0 0 .2 1.1l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1 1 0 0 0-1.1-.2 1 1 0 0 0-.6.9V20a2 2 0 1 1-4 0v-.2a1 1 0 0 0-.6-.9 1 1 0 0 0-1.1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1 1 0 0 0 .2-1.1 1 1 0 0 0-.9-.6H4a2 2 0 1 1 0-4h.2a1 1 0 0 0 .9-.6 1 1 0 0 0-.2-1.1l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1 1 0 0 0 1.1.2 1 1 0 0 0 .6-.9V4a2 2 0 1 1 4 0v.2a1 1 0 0 0 .6.9 1 1 0 0 0 1.1-.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1 1 0 0 0-.2 1.1 1 1 0 0 0 .9.6H20a2 2 0 1 1 0 4h-.2a1 1 0 0 0-.9.6Z" stroke="currentColor" stroke-width="1.2"/></svg>`,
+			"📋": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="7" y="4" width="13" height="17" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M4 8v11a2 2 0 0 0 2 2h10" stroke="currentColor" stroke-width="1.8"/><path d="M9 8h8M9 12h8M9 16h5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+			"💬": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M7 18l-4 3V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7Z" stroke="currentColor" stroke-width="1.8"/></svg>`,
+			"☰": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+			"🎨": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18h1.3a2.7 2.7 0 0 0 0-5.4H12a2.6 2.6 0 0 1 0-5.2h4.2A4.8 4.8 0 0 0 21 5.6 9 9 0 0 0 12 3Z" stroke="currentColor" stroke-width="1.8"/></svg>`,
+			"📊": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 20h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><rect x="6" y="11" width="3" height="7" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="11" y="7" width="3" height="11" rx="1" stroke="currentColor" stroke-width="1.8"/><rect x="16" y="4" width="3" height="14" rx="1" stroke="currentColor" stroke-width="1.8"/></svg>`,
+			"📐": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 20 20 4M6 20h14M4 18l2 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+			"🤖": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="5" y="8" width="14" height="10" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M12 4v3M8 12h.01M16 12h.01M9 16h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+			"📁": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z" stroke="currentColor" stroke-width="1.8"/></svg>`,
+			"⭐": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.2 6.4 20.2l1.1-6.2L3 9.6l6.2-.9L12 3Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>`,
+			"💾": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 4h11l3 3v13H5V4Z" stroke="currentColor" stroke-width="1.8"/><path d="M8 4v5h7V4M8 20v-6h8v6" stroke="currentColor" stroke-width="1.8"/></svg>`,
+			"📌": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M14 3l7 7-3 1-4 4 1 5-2 1-2-5-4-4-3 1 7-7" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>`,
+			"B": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 5h5a3 3 0 0 1 0 6H8V5Zm0 6h6a3.5 3.5 0 0 1 0 7H8v-7Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>`,
+			"I": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M10 5h8M6 19h8M14 5 10 19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+			"S": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M16 6H9a3 3 0 0 0 0 6h6a3 3 0 1 1 0 6H8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+			"</>": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8 7 3 12l5 5M16 7l5 5-5 5M14 4l-4 16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+			"❝": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 7H5v6h4V7Zm10 0h-4v6h4V7Z" stroke="currentColor" stroke-width="1.8"/><path d="M5 13v2a2 2 0 0 0 2 2h1M15 13v2a2 2 0 0 0 2 2h1" stroke="currentColor" stroke-width="1.8"/></svg>`,
+			"•": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="6" cy="7" r="1.8" fill="currentColor"/><circle cx="6" cy="12" r="1.8" fill="currentColor"/><circle cx="6" cy="17" r="1.8" fill="currentColor"/><path d="M10 7h9M10 12h9M10 17h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+			"1.": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 8h2v8M10 8h10M10 12h10M10 16h10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+			"☐": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.8"/></svg>`,
+			"—": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 12h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+			"🇩🇪": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M4 9.7h16M4 14.3h16" stroke="currentColor" stroke-width="1.8"/></svg>`,
+			"🇬🇧": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M4 5l16 14M20 5 4 19M12 5v14M4 12h16" stroke="currentColor" stroke-width="1.4"/></svg>`,
+			"📦": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 4 7v10l8 4 8-4V7l-8-4Z" stroke="currentColor" stroke-width="1.8"/><path d="M4 7l8 4 8-4M12 11v10" stroke="currentColor" stroke-width="1.8"/></svg>`,
+			"✕": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>`,
+			"📂": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 8a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8Z" stroke="currentColor" stroke-width="1.8"/><path d="M3 10h18" stroke="currentColor" stroke-width="1.8"/></svg>`,
+			"☑": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 12l3 3 5-6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+			"🧩": `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 4h4a2 2 0 0 1 2 2v1a2 2 0 1 0 4 0v3h-2a2 2 0 1 0 0 4h2v4a2 2 0 0 1-2 2h-4v-2a2 2 0 1 0-4 0v2H6a2 2 0 0 1-2-2v-4h2a2 2 0 1 0 0-4H4V6a2 2 0 0 1 2-2h3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>`
+		};
+		return icons[token] || `<svg${klass} viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.8"/></svg>`;
+	}
+
 	/* ── Build commands registry ── */
 	function getCmdItems() {
 		const items = [];
@@ -29986,7 +30029,7 @@ self.onmessage = async (e) => {
 				metaHtml = `<span class="cmd-item-meta">${cmdEscapeHtml(item.meta)}</span>`;
 			}
 			html += `<div class="cmd-item${activeClass}" role="option" data-cmd-idx="${i}" aria-selected="${i === cmdActiveIndex ? "true" : "false"}">`;
-			html += `<span class="cmd-item-icon">${cmdEscapeHtml(item.icon)}</span>`;
+			html += `<span class="cmd-item-icon">${cmdIconMarkup(item.icon, "cmd-svg-icon cmd-svg-icon--item")}</span>`;
 			html += `<span class="cmd-item-label">${cmdHighlightMatch(item.label, query)}</span>`;
 			html += metaHtml;
 			html += shortcutHtml;
@@ -30013,7 +30056,7 @@ self.onmessage = async (e) => {
 		let html = "";
 		for (const f of filters) {
 			const active = cmdActiveFilter === f.key ? " cmd-filter-chip--active" : "";
-			html += `<button type="button" class="cmd-filter-chip${active}" data-cmd-filter="${f.key}"><span class="chip-icon">${f.icon}</span>${cmdEscapeHtml(f.label)}</button>`;
+			html += `<button type="button" class="cmd-filter-chip${active}" data-cmd-filter="${f.key}"><span class="chip-icon">${cmdIconMarkup(f.icon, "cmd-svg-icon cmd-svg-icon--chip")}</span>${cmdEscapeHtml(f.label)}</button>`;
 		}
 		cmdPaletteFilters.innerHTML = html;
 	}

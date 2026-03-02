@@ -9623,8 +9623,22 @@ body[data-theme="bitterDark"] .ps-search-help-arrow {
 	font-size: 13px;
 	line-height: 1;
 	color: var(--accent-text-soft, rgba(244,114,182,0.85));
-	filter: grayscale(1) saturate(0) brightness(1.15);
 	opacity: 0.9;
+}
+
+.cmd-svg-icon {
+	display: block;
+	width: 14px;
+	height: 14px;
+	color: currentColor;
+}
+.cmd-svg-icon--item {
+	width: 15px;
+	height: 15px;
+}
+.cmd-svg-icon--chip {
+	width: 13px;
+	height: 13px;
 }
 
 /* ── Divider ── */
@@ -9694,13 +9708,11 @@ body[data-theme="bitterDark"] .ps-search-help-arrow {
 	color: var(--accent-text-soft, rgba(244,114,182,0.95));
 	font-size: 14px;
 	flex-shrink: 0;
-	filter: grayscale(1) saturate(0) brightness(1.15);
 	opacity: 0.9;
 }
 .cmd-item--active .cmd-item-icon {
 	background: var(--accent-bg-hover, rgba(217,70,239,0.2));
 	color: var(--accent-text, rgba(253,242,255,0.98));
-	filter: grayscale(1) saturate(0) brightness(1.25);
 }
 .cmd-item-label {
 	flex: 1;
