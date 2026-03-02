@@ -13662,6 +13662,7 @@ ${highlightThemeCss}
 		} catch {
 			doc = null;
 		}
+		if (doc) attachPreviewScrollSync();
 		if (!doc || previewCheckboxDoc === doc) return;
 		previewCheckboxDoc = doc;
 
@@ -22482,6 +22483,89 @@ self.onmessage = async (e) => {
 		cursorOverlayContent.style.transform = `translate(${-x}px, ${-y}px)`;
 	}
 
+	let syncFromEditorScrollLock = false;
+	let syncFromPreviewScrollLock = false;
+	let previewScrollSyncDoc = null;
+
+	function getScrollableYMax(el) {
+		if (!el) return 0;
+		return Math.max(0, Number(el.scrollHeight || 0) - Number(el.clientHeight || 0));
+	}
+
+	function getScrollRatioY(el) {
+		const max = getScrollableYMax(el);
+		if (max <= 0) return 0;
+		return Math.max(0, Math.min(1, Number(el.scrollTop || 0) / max));
+	}
+
+	function getPreviewScrollElement() {
+		if (!mdPreview) return null;
+		try {
+			const doc = mdPreview.contentDocument || null;
+			if (!doc) return null;
+			return doc.scrollingElement || doc.documentElement || doc.body || null;
+		} catch {
+			return null;
+		}
+	}
+
+	function syncPreviewScrollFromEditor() {
+		if (!textarea || syncFromPreviewScrollLock) return;
+		const previewScrollEl = getPreviewScrollElement();
+		if (!previewScrollEl) return;
+		const targetRatio = getScrollRatioY(textarea);
+		const max = getScrollableYMax(previewScrollEl);
+		syncFromEditorScrollLock = true;
+		previewScrollEl.scrollTop = max * targetRatio;
+		window.requestAnimationFrame(() => {
+			syncFromEditorScrollLock = false;
+		});
+	}
+
+	function syncEditorScrollFromPreview() {
+		if (!textarea || syncFromEditorScrollLock) return;
+		const previewScrollEl = getPreviewScrollElement();
+		if (!previewScrollEl) return;
+		const targetRatio = getScrollRatioY(previewScrollEl);
+		const max = getScrollableYMax(textarea);
+		syncFromPreviewScrollLock = true;
+		textarea.scrollTop = max * targetRatio;
+		window.requestAnimationFrame(() => {
+			syncFromPreviewScrollLock = false;
+		});
+	}
+
+	function attachPreviewScrollSync() {
+		if (!mdPreview) return;
+		let doc = null;
+		let win = null;
+		try {
+			doc = mdPreview.contentDocument || null;
+			win = mdPreview.contentWindow || null;
+		} catch {
+			doc = null;
+			win = null;
+		}
+		if (!doc || previewScrollSyncDoc === doc) return;
+		previewScrollSyncDoc = doc;
+		doc.addEventListener("scroll", syncEditorScrollFromPreview, {
+			capture: true,
+			passive: true,
+		});
+		if (win && win.addEventListener) {
+			win.addEventListener("scroll", syncEditorScrollFromPreview, {
+				passive: true,
+			});
+		}
+		const scrollEl = doc.scrollingElement || doc.documentElement || doc.body || null;
+		if (scrollEl && scrollEl.addEventListener) {
+			scrollEl.addEventListener("scroll", syncEditorScrollFromPreview, {
+				passive: true,
+			});
+		}
+		syncPreviewScrollFromEditor();
+	}
+
 	function buildAttributionHtml() {
 		if (!ytext) return "";
 		const delta = ytext.toDelta();
@@ -25343,6 +25427,7 @@ self.onmessage = async (e) => {
 		syncAttributionOverlayScroll();
 		syncCommentOverlayScroll();
 		syncCursorOverlayScroll();
+		syncPreviewScrollFromEditor();
 	});
 
 	textarea.addEventListener("keyup", () => {
@@ -26880,6 +26965,7 @@ self.onmessage = async (e) => {
 	}
 	if (mdPreview) {
 		mdPreview.addEventListener("load", () => {
+			attachPreviewScrollSync();
 			attachPreviewCheckboxWriteback();
 		});
 	}

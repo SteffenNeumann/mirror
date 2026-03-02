@@ -230,6 +230,18 @@ interface AvailabilityData {
 
 ---
 
+## Aktuelle Änderungen (2026-03-02)
+
+- **Bidirektionales Parallel-Scrolling zwischen Editor und Preview** `#mirror` `#mdPreview` `#ux` `#preview` `#scroll`: Beim Scrollen im Editor (`id="mirror"`) wird die Markdown-Vorschau (`id="mdPreview"`) proportional mitgescrollt. Zusätzlich funktioniert es jetzt auch umgekehrt (Preview → Editor, vice versa).
+  1. **Neue Scroll-Sync-Funktionen** (`app.js` ~L22512): `syncPreviewScrollFromEditor()` und `syncEditorScrollFromPreview()` berechnen je Seite die vertikale Scroll-Position über eine Verhältnislogik (`scrollTop / (scrollHeight - clientHeight)`) und übertragen diese auf die jeweils andere Seite.
+  2. **Loop-Guard gegen Endlosschleifen** (`app.js` ~L22483): Zwei Locks (`syncFromEditorScrollLock`, `syncFromPreviewScrollLock`) verhindern Ping-Pong-Events beim gegenseitigen Setzen von `scrollTop`.
+  3. **Robuste Preview-Event-Anbindung** (`app.js` ~L22538): Die Rückrichtung (Preview → Editor) hört auf `contentDocument`, `contentWindow` und das effektive `scrollingElement`, damit unterschiedliche Browser-/Iframe-Scrollpfade zuverlässig abgedeckt sind.
+  4. **Event-Hooks ergänzt** (`app.js` ~L25409, ~L26953, ~L13662): Editor-`scroll` triggert Preview-Sync; bei Preview-`load` wird der Sync angebunden; zusätzlich wird die Anbindung auch beim Checkbox-Writeback-Setup im Preview sichergestellt.
+  - Zuständige Funktionen: `syncPreviewScrollFromEditor`, `syncEditorScrollFromPreview`, `attachPreviewScrollSync`, `getPreviewScrollElement`, `getScrollRatioY`, `getScrollableYMax`.
+  - Zuständige Dateien: `app.js`.
+
+---
+
 ## Aktuelle Änderungen (2026-02-28)
 
 - **Farbige Text-Markierungen (Highlight-Syntax)** `#markdown` `#highlight` `#preview` `#ux`: Textpassagen können jetzt im Markdown farblich markiert werden. Die Syntax `==text==` erzeugt eine gelbe Markierung (Standard), `=={farbe}text==` eine farbige Markierung mit benannter oder benutzerdefinierter Farbe.
