@@ -6677,11 +6677,15 @@
 				"cmd.filter.notes": "Notizen",
 				"cmd.filter.rooms": "Räume",
 				"cmd.filter.settings": "Einstellungen",
+				"cmd.filter.tags": "Tags",
+				"cmd.filter.search": "Suche",
 				"cmd.group.commands": "Befehle",
 				"cmd.group.notes": "Notizen",
 				"cmd.group.rooms": "Favoriten & Räume",
 				"cmd.group.settings": "Einstellungen",
 				"cmd.group.format": "Formatierung",
+				"cmd.group.tags": "Tags",
+				"cmd.group.search": "Suche",
 				"cmd.action.new_note": "Neue Notiz erstellen",
 				"cmd.action.new_room": "Neuen Raum erstellen",
 				"cmd.action.share_room": "Raum teilen",
@@ -6715,6 +6719,17 @@
 				"cmd.action.toggle_favorite": "Favorit hinzufügen/entfernen",
 				"cmd.action.save_note": "Notiz speichern",
 				"cmd.action.permalink": "Permanent-Link",
+				"cmd.action.tag_toggle": "Tag umschalten",
+				"cmd.action.tag_clear": "Alle Tag-Filter zurücksetzen",
+				"cmd.action.tag_show_panel": "Tag-Panel öffnen",
+				"cmd.action.focus_search": "Suche fokussieren",
+				"cmd.action.clear_search": "Suche leeren",
+				"cmd.action.search_pinned": "Nur angeheftete Notizen",
+				"cmd.action.search_comments": "Nur Notizen mit Kommentaren",
+				"cmd.action.search_tasks_open": "Offene Aufgaben suchen",
+				"cmd.action.search_tasks_done": "Erledigte Aufgaben suchen",
+				"cmd.action.search_has_links": "Notizen mit Links suchen",
+				"cmd.tag_active": "aktiv",
 			},
 
 			en: {
@@ -7330,11 +7345,15 @@
 				"cmd.filter.notes": "Notes",
 				"cmd.filter.rooms": "Rooms",
 				"cmd.filter.settings": "Settings",
+				"cmd.filter.tags": "Tags",
+				"cmd.filter.search": "Search",
 				"cmd.group.commands": "Commands",
 				"cmd.group.notes": "Notes",
 				"cmd.group.rooms": "Favorites & Rooms",
 				"cmd.group.settings": "Settings",
 				"cmd.group.format": "Formatting",
+				"cmd.group.tags": "Tags",
+				"cmd.group.search": "Search",
 				"cmd.action.new_note": "Create new note",
 				"cmd.action.new_room": "Create new room",
 				"cmd.action.share_room": "Share room",
@@ -7368,6 +7387,17 @@
 				"cmd.action.toggle_favorite": "Toggle favorite",
 				"cmd.action.save_note": "Save note",
 				"cmd.action.permalink": "Permanent link",
+				"cmd.action.tag_toggle": "Toggle tag",
+				"cmd.action.tag_clear": "Clear all tag filters",
+				"cmd.action.tag_show_panel": "Open tag panel",
+				"cmd.action.focus_search": "Focus search",
+				"cmd.action.clear_search": "Clear search",
+				"cmd.action.search_pinned": "Pinned notes only",
+				"cmd.action.search_comments": "Notes with comments only",
+				"cmd.action.search_tasks_open": "Search open tasks",
+				"cmd.action.search_tasks_done": "Search completed tasks",
+				"cmd.action.search_has_links": "Search notes with links",
+				"cmd.tag_active": "active",
 			},
 		};
 
@@ -29810,12 +29840,72 @@ self.onmessage = async (e) => {
 			}
 		} catch { /* ignore */ }
 
+		/* --- Tags (dynamic) --- */
+		try {
+			const allTags = (psState && Array.isArray(psState.tags)) ? psState.tags.filter(t => t && String(t) !== PS_PINNED_TAG) : [];
+			if (allTags.length > 0) {
+				/* Tag management commands */
+				items.push({ id: "tag_clear", group: "tags", icon: "✕", label: t("cmd.action.tag_clear"), shortcut: null, action() {
+					psActiveTags = new Set();
+					savePsTagPrefs();
+					renderPsTags(psState.tags || []);
+					applyPersonalSpaceFiltersAndRender();
+				}});
+				items.push({ id: "tag_show_panel", group: "tags", icon: "📂", label: t("cmd.action.tag_show_panel"), shortcut: null, action() {
+					if (psToggleTags) psToggleTags.click();
+				}});
+				/* Individual tags */
+				for (const tag of allTags.slice(0, 60)) {
+					const tagStr = String(tag);
+					const isActive = psActiveTags && psActiveTags.has(tagStr);
+					items.push({
+						id: "tag_" + tagStr,
+						group: "tags",
+						icon: "🏷️",
+						label: "#" + tagStr,
+						meta: isActive ? t("cmd.tag_active", "aktiv") : null,
+						action() {
+							const next = new Set(psActiveTags || []);
+							if (next.has(tagStr)) next.delete(tagStr); else next.add(tagStr);
+							psActiveTags = next;
+							savePsTagPrefs();
+							renderPsTags(psState.tags || []);
+							applyPersonalSpaceFiltersAndRender();
+						}
+					});
+				}
+			}
+		} catch { /* ignore */ }
+
+		/* --- Search commands --- */
+		items.push({ id: "search_focus", group: "search", icon: "🔍", label: t("cmd.action.focus_search"), shortcut: null, action() {
+			if (psSearchInput) { psSearchInput.focus(); psSearchInput.select(); }
+		}});
+		items.push({ id: "search_clear", group: "search", icon: "✕", label: t("cmd.action.clear_search"), shortcut: null, action() {
+			if (psSearchInput) { psSearchInput.value = ""; psSearchQuery = ""; savePsSearchQuery(); applyPersonalSpaceFiltersAndRender(); }
+		}});
+		items.push({ id: "search_pinned", group: "search", icon: "📌", label: t("cmd.action.search_pinned"), shortcut: null, action() {
+			if (psSearchInput) { psSearchInput.value = "pinned:yes"; psSearchQuery = "pinned:yes"; savePsSearchQuery(); applyPersonalSpaceFiltersAndRender(); }
+		}});
+		items.push({ id: "search_comments", group: "search", icon: "💬", label: t("cmd.action.search_comments"), shortcut: null, action() {
+			if (psSearchInput) { psSearchInput.value = "has:comment"; psSearchQuery = "has:comment"; savePsSearchQuery(); applyPersonalSpaceFiltersAndRender(); }
+		}});
+		items.push({ id: "search_tasks_open", group: "search", icon: "☐", label: t("cmd.action.search_tasks_open"), shortcut: null, action() {
+			if (psSearchInput) { psSearchInput.value = "task:open"; psSearchQuery = "task:open"; savePsSearchQuery(); applyPersonalSpaceFiltersAndRender(); }
+		}});
+		items.push({ id: "search_tasks_done", group: "search", icon: "☑", label: t("cmd.action.search_tasks_done"), shortcut: null, action() {
+			if (psSearchInput) { psSearchInput.value = "task:done"; psSearchQuery = "task:done"; savePsSearchQuery(); applyPersonalSpaceFiltersAndRender(); }
+		}});
+		items.push({ id: "search_has_links", group: "search", icon: "🔗", label: t("cmd.action.search_has_links"), shortcut: null, action() {
+			if (psSearchInput) { psSearchInput.value = "has:link"; psSearchQuery = "has:link"; savePsSearchQuery(); applyPersonalSpaceFiltersAndRender(); }
+		}});
+
 		return items;
 	}
 
 	/* ── Mapping: group → filter category ── */
 	function getCmdGroupFilter(group) {
-		const map = { commands: "commands", format: "commands", notes: "notes", rooms: "rooms", settings: "settings" };
+		const map = { commands: "commands", format: "commands", notes: "notes", rooms: "rooms", settings: "settings", tags: "tags", search: "search" };
 		return map[group] || "commands";
 	}
 
@@ -29868,6 +29958,8 @@ self.onmessage = async (e) => {
 			format: t("cmd.group.format"),
 			notes: t("cmd.group.notes"),
 			rooms: t("cmd.group.rooms"),
+			tags: t("cmd.group.tags"),
+			search: t("cmd.group.search"),
 			settings: t("cmd.group.settings"),
 		};
 
@@ -29909,6 +30001,8 @@ self.onmessage = async (e) => {
 			{ key: "commands", label: t("cmd.filter.commands"), icon: "▶" },
 			{ key: "notes", label: t("cmd.filter.notes"), icon: "📄" },
 			{ key: "rooms", label: t("cmd.filter.rooms"), icon: "🚪" },
+			{ key: "tags", label: t("cmd.filter.tags"), icon: "🏷️" },
+			{ key: "search", label: t("cmd.filter.search"), icon: "🔍" },
 			{ key: "settings", label: t("cmd.filter.settings"), icon: "⚙" },
 		];
 		let html = "";
