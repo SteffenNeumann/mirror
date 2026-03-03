@@ -15949,14 +15949,18 @@ self.onmessage = async (e) => {
 			if (aiText) addAiChatEntry("ai", aiText, chatContextKey);
 			if (aiText) clearAiPromptAfterResponse(promptForChat);
 		} catch (e) {
-			const msg = e && e.message ? String(e.message) : "Error";
+			const isOverloaded = (e && e.status === 503) ||
+				(e && e.message && /ai_overloaded|overload/i.test(String(e.message)));
+			const msg = isOverloaded
+				? "Anthropic API überlastet – bitte in Kürze erneut versuchen."
+				: (e && e.message ? String(e.message) : "Error");
 			setPreviewRunOutput({
 				status: "AI error",
 				output: "",
 				error: msg,
 				source: "ai",
 			});
-			toast(`AI failed: ${msg}`, "error");
+			toast(isOverloaded ? `⚠️ ${msg}` : `AI failed: ${msg}`, isOverloaded ? "info" : "error");
 		} finally {
 			setRunOutputProcessing(false);
 		}

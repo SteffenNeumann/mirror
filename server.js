@@ -5486,12 +5486,32 @@ const server = http.createServer(async (req, res) => {
 						let chosenModel = "";
 						let data = null;
 						let activeKey = effectiveApiKey;
+
+						// Retry-with-backoff for transient 529 Overloaded responses.
+						const MAX_529_RETRIES = 3;
+						const BACKOFF_529_MS = [2000, 4000, 8000];
+
 						for (const model of candidates) {
 							chosenModel = String(model || "").trim();
 							if (!chosenModel) continue;
-							const out = await callAnthropic(chosenModel, userPrompt, activeKey);
+
+							let out = await callAnthropic(chosenModel, userPrompt, activeKey);
 							lastStatus = out.r.status;
 							data = out.data;
+
+							// --- 529 Overloaded: retry with exponential backoff ---
+							if (lastStatus === 529) {
+								for (let attempt = 0; attempt < MAX_529_RETRIES; attempt++) {
+									const wait = BACKOFF_529_MS[attempt] || 8000;
+									console.warn(`[ai] 529 overloaded, retry ${attempt + 1}/${MAX_529_RETRIES} in ${wait}ms`);
+									await new Promise((r) => setTimeout(r, wait));
+									out = await callAnthropic(chosenModel, userPrompt, activeKey);
+									lastStatus = out.r.status;
+									data = out.data;
+									if (lastStatus !== 529) break;
+								}
+							}
+
 							if (out.r.ok) return { ok: true, data, model: chosenModel };
 							lastErrMsg =
 								(data && data.error && data.error.message) ||
@@ -5658,10 +5678,14 @@ const server = http.createServer(async (req, res) => {
 						const combined = await runWithModelFallback(combinePrompt);
 						if (!combined.ok || !combined.data) {
 							const lastErrMsg = combined.errMsg || "ai_failed";
-							json(res, 502, {
+							const isOverloaded = (combined.status === 529) ||
+								/overload/i.test(String(lastErrMsg));
+							json(res, isOverloaded ? 503 : 502, {
 								ok: false,
-								error: "ai_failed",
-								message: lastErrMsg,
+								error: isOverloaded ? "ai_overloaded" : "ai_failed",
+								message: isOverloaded
+									? "Anthropic API überlastet – bitte in Kürze erneut versuchen."
+									: lastErrMsg,
 								reqId,
 							});
 							return;
@@ -5674,31 +5698,37 @@ const server = http.createServer(async (req, res) => {
 						if (!out.ok || !out.data) {
 							const lastStatus = out.status || 502;
 							const lastErrMsg = out.errMsg || "ai_failed";
-							try {
-								console.warn("[ai] upstream_error", {
-									reqId,
-									status: lastStatus,
-									errMsg: lastErrMsg || `AI HTTP ${lastStatus}`,
-									mode,
-									lang,
-									kind,
-									ip,
-									email,
-								});
-							} catch {
-								// ignore logging errors
-							}
+						const isOverloaded = lastStatus === 529 ||
+							/overload/i.test(String(lastErrMsg));
+						try {
+							console.warn("[ai] upstream_error", {
+								reqId,
+								status: lastStatus,
+								errMsg: lastErrMsg || `AI HTTP ${lastStatus}`,
+								mode,
+								lang,
+								kind,
+								ip,
+								email,
+							});
+						} catch {
+							// ignore logging errors
+						}
+						if (isOverloaded) {
+							json(res, 503, {
+								ok: false,
+								error: "ai_overloaded",
+								message: "Anthropic API überlastet – bitte in Kürze erneut versuchen.",
+								reqId,
+							});
+						} else {
 							json(res, 502, {
 								ok: false,
 								error: "ai_failed",
 								message: lastErrMsg || `AI HTTP ${lastStatus}`,
 								reqId,
 							});
-							return;
 						}
-
-						// One retry for run-mode if the model returns an explanation instead of the required Output/Error/Fix format.
-						if (mode === "run" && kind === "code") {
 							const firstText = extractText(out.data);
 							if (shouldRetryRunOutput(firstText)) {
 								const strictRunInstruction =
