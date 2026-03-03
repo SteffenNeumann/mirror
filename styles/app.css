@@ -9579,6 +9579,7 @@ body[data-theme="monoLight"] #cmdPalette [data-role="cmdPaletteBackdrop"] {
 	font-size: 15px;
 	font-weight: 500;
 	caret-color: var(--accent-strong, rgba(217,70,239,0.6));
+	background: var(--panel-solid-bg, #0f0a1a);
 }
 .cmd-palette-input::placeholder {
 	color: rgba(148,163,184,0.45);
@@ -9810,6 +9811,7 @@ body[data-theme="coffeeLight"] .cmd-palette-input,
 body[data-theme="bitterLight"] .cmd-palette-input,
 body[data-theme="monoLight"] .cmd-palette-input {
 	color: rgba(30,30,30,0.92);
+	background: var(--panel-solid-bg, #f3ebe2);
 }
 body[data-theme="coffeeLight"] .cmd-palette-input::placeholder,
 body[data-theme="bitterLight"] .cmd-palette-input::placeholder,
