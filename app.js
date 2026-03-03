@@ -29185,7 +29185,7 @@ self.onmessage = async (e) => {
 		if (openQueryBuilderShortcut) {
 			ev.preventDefault();
 			ev.stopPropagation();
-			openQueryBuilder(true);
+			document.dispatchEvent(new CustomEvent("mirror:open-query-builder"));
 			return;
 		}
 	}, true);  // capture phase – fires BEFORE textarea processes the key
