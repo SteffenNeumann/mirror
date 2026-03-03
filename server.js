@@ -5444,12 +5444,13 @@ const server = http.createServer(async (req, res) => {
 
 					const temperature = mode === "run" && kind === "code" ? 0 : 0.3;
 
-					async function callAnthropic(model, userPrompt) {
+					async function callAnthropic(model, userPrompt, keyOverride) {
+						const useKey = keyOverride || effectiveApiKey;
 						const r = await fetch("https://api.anthropic.com/v1/messages", {
 							method: "POST",
 							headers: {
 								"content-type": "application/json",
-								"x-api-key": effectiveApiKey,
+								"x-api-key": useKey,
 								"anthropic-version": "2023-06-01",
 							},
 							body: JSON.stringify({
@@ -5475,15 +5476,20 @@ const server = http.createServer(async (req, res) => {
 						...dynamicTop,
 					]);
 
+					// If user sent their own key and it fails with 401, silently retry with
+					// the server key so a single expired personal key doesn't break everything.
+					const userKeyFailed = { flag: false };
+
 					async function runWithModelFallback(userPrompt) {
 						let lastStatus = 0;
 						let lastErrMsg = "";
 						let chosenModel = "";
 						let data = null;
+						let activeKey = effectiveApiKey;
 						for (const model of candidates) {
 							chosenModel = String(model || "").trim();
 							if (!chosenModel) continue;
-							const out = await callAnthropic(chosenModel, userPrompt);
+							const out = await callAnthropic(chosenModel, userPrompt, activeKey);
 							lastStatus = out.r.status;
 							data = out.data;
 							if (out.r.ok) return { ok: true, data, model: chosenModel };
@@ -5491,6 +5497,26 @@ const server = http.createServer(async (req, res) => {
 								(data && data.error && data.error.message) ||
 								(data && data.message) ||
 								`AI HTTP ${out.r.status}`;
+							// If user supplied their own key and it returned 401/403,
+							// fall back to server key and retry the same model once.
+							if (
+								(out.r.status === 401 || out.r.status === 403) &&
+								apiKeyRaw &&
+								ANTHROPIC_API_KEY &&
+								activeKey !== ANTHROPIC_API_KEY
+							) {
+								console.warn(`[ai] user key rejected (${out.r.status}), retrying with server key`);
+								userKeyFailed.flag = true;
+								activeKey = ANTHROPIC_API_KEY;
+								const retry = await callAnthropic(chosenModel, userPrompt, activeKey);
+								lastStatus = retry.r.status;
+								data = retry.data;
+								if (retry.r.ok) return { ok: true, data, model: chosenModel };
+								lastErrMsg =
+									(retry.data && retry.data.error && retry.data.error.message) ||
+									(retry.data && retry.data.message) ||
+									`AI HTTP ${retry.r.status}`;
+							}
 							const isModel404 =
 								out.r.status === 404 && /\bmodel\b/i.test(String(lastErrMsg));
 							if (!isModel404) break;
