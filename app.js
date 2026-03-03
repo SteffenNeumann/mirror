@@ -29180,8 +29180,8 @@ self.onmessage = async (e) => {
 			return;
 		}
 
-		// Alt+Shift+B / ⌥⇧B → Query Builder
-		const openQueryBuilderShortcut = alt && !mod && shift && code === "KeyB" && !isInput;
+		// Alt+Shift+B / ⌥⇧B → Query Builder (allowed even from search input – intentional)
+		const openQueryBuilderShortcut = alt && !mod && shift && code === "KeyB";
 		if (openQueryBuilderShortcut) {
 			ev.preventDefault();
 			ev.stopPropagation();
