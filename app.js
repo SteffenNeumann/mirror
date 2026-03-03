@@ -6584,7 +6584,7 @@
 				"shortcuts.upload": "Upload-Dialog öffnen",
 				"shortcuts.upload_desc": "Öffnet den Dialog zum Hochladen von Dateien.",
 				"shortcuts.query_builder": "Query Builder öffnen",
-				"shortcuts.query_builder_desc": "Öffnet den Query Builder für strukturierte Notizsuche (auf Mac auch ⌘⇧Q).",
+				"shortcuts.query_builder_desc": "Öffnet den Query Builder für strukturierte Notizsuche (⌥⇧B / Alt+Shift+B).",
 				"shortcuts.cmd_palette": "Command Palette",
 				"shortcuts.cmd_palette_desc": "Öffnet das globale Such- und Befehlsfenster.",
 				"shortcuts.arrange": "Blöcke anordnen",
@@ -7255,7 +7255,7 @@
 				"shortcuts.upload": "Open Upload Dialog",
 				"shortcuts.upload_desc": "Opens the file upload dialog.",
 				"shortcuts.query_builder": "Open Query Builder",
-				"shortcuts.query_builder_desc": "Opens the query builder for structured note search (on Mac also ⌘⇧Q).",
+				"shortcuts.query_builder_desc": "Opens the query builder for structured note search (⌥⇧B / Alt+Shift+B).",
 				"shortcuts.cmd_palette": "Command Palette",
 				"shortcuts.cmd_palette_desc": "Opens the global search and command panel.",
 				"shortcuts.arrange": "Arrange Blocks",
@@ -29055,7 +29055,7 @@ self.onmessage = async (e) => {
 		{ id: "focusRoom",    keys: "Cmd/Ctrl+K",         i18nLabel: "shortcuts.focus_room",    i18nDesc: "shortcuts.focus_room_desc" },
 		{ id: "copy",         keys: "Alt+C",              i18nLabel: "shortcuts.copy",           i18nDesc: "shortcuts.copy_desc" },
 		{ id: "upload",       keys: "Alt+U",              i18nLabel: "shortcuts.upload",         i18nDesc: "shortcuts.upload_desc" },
-		{ id: "queryBuilder", keys: "Alt+Q / Cmd/Ctrl+Shift+Q", i18nLabel: "shortcuts.query_builder",  i18nDesc: "shortcuts.query_builder_desc" },
+		{ id: "queryBuilder", keys: "Alt+Shift+B",       i18nLabel: "shortcuts.query_builder",  i18nDesc: "shortcuts.query_builder_desc" },
 		{ id: "cmdPalette",   keys: "Alt+Shift+P",       i18nLabel: "shortcuts.cmd_palette",    i18nDesc: "shortcuts.cmd_palette_desc", descFallback: "Öffnet das globale Such- und Befehlsfenster." },
 		{ id: "arrange",     keys: "Cmd/Ctrl+Shift+A",   i18nLabel: "shortcuts.arrange",        i18nDesc: "shortcuts.arrange_desc" },
 	];
@@ -29180,10 +29180,9 @@ self.onmessage = async (e) => {
 			return;
 		}
 
-		// Alt+Q (all) or Cmd+Shift+Q (macOS) → Query Builder
-		const openQueryBuilderAlt = alt && !mod && !shift && code === "KeyQ" && !isInput;
-		const openQueryBuilderMac = isMac && mod && !alt && shift && code === "KeyQ" && !isInput;
-		if (openQueryBuilderAlt || openQueryBuilderMac) {
+		// Alt+Shift+B / ⌥⇧B → Query Builder
+		const openQueryBuilderShortcut = alt && !mod && shift && code === "KeyB" && !isInput;
+		if (openQueryBuilderShortcut) {
 			ev.preventDefault();
 			ev.stopPropagation();
 			openQueryBuilder(true);
@@ -29982,7 +29981,7 @@ self.onmessage = async (e) => {
 		items.push({ id: "search_has_links", group: "search", icon: "🔗", label: t("cmd.action.search_has_links"), shortcut: null, action() {
 			if (psSearchInput) { psSearchInput.value = "has:link"; psSearchQuery = "has:link"; savePsSearchQuery(); applyPersonalSpaceFiltersAndRender(); }
 		}});
-		items.push({ id: "query_builder", group: "search", icon: "🧩", label: t("cmd.action.query_builder"), shortcut: isMac ? ["⌘", "⇧", "Q"] : ["Alt", "Q"], action() {
+		items.push({ id: "query_builder", group: "search", icon: "🧩", label: t("cmd.action.query_builder"), shortcut: [isMac ? "⌥" : "Alt", "⇧", "B"], action() {
 			document.dispatchEvent(new CustomEvent("mirror:open-query-builder"));
 		}});
 
