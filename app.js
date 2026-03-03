@@ -29055,7 +29055,7 @@ self.onmessage = async (e) => {
 		{ id: "focusRoom",    keys: "Cmd/Ctrl+K",         i18nLabel: "shortcuts.focus_room",    i18nDesc: "shortcuts.focus_room_desc" },
 		{ id: "copy",         keys: "Alt+C",              i18nLabel: "shortcuts.copy",           i18nDesc: "shortcuts.copy_desc" },
 		{ id: "upload",       keys: "Alt+U",              i18nLabel: "shortcuts.upload",         i18nDesc: "shortcuts.upload_desc" },
-		{ id: "queryBuilder", keys: "Alt+Q",              i18nLabel: "shortcuts.query_builder",  i18nDesc: "shortcuts.query_builder_desc" },
+		{ id: "queryBuilder", keys: "Alt+Q / Cmd/Ctrl+Shift+Q", i18nLabel: "shortcuts.query_builder",  i18nDesc: "shortcuts.query_builder_desc" },
 		{ id: "cmdPalette",   keys: "Alt+Shift+P",       i18nLabel: "shortcuts.cmd_palette",    i18nDesc: "shortcuts.cmd_palette_desc", descFallback: "Öffnet das globale Such- und Befehlsfenster." },
 		{ id: "arrange",     keys: "Cmd/Ctrl+Shift+A",   i18nLabel: "shortcuts.arrange",        i18nDesc: "shortcuts.arrange_desc" },
 	];
@@ -29180,8 +29180,10 @@ self.onmessage = async (e) => {
 			return;
 		}
 
-		// Alt+Q → Query Builder (use ev.code for macOS compatibility)
-		if (alt && !mod && !shift && code === "KeyQ" && !isInput) {
+		// Alt+Q (all) or Cmd+Shift+Q (macOS) → Query Builder
+		const openQueryBuilderAlt = alt && !mod && !shift && code === "KeyQ" && !isInput;
+		const openQueryBuilderMac = isMac && mod && !alt && shift && code === "KeyQ" && !isInput;
+		if (openQueryBuilderAlt || openQueryBuilderMac) {
 			ev.preventDefault();
 			ev.stopPropagation();
 			openQueryBuilder(true);
@@ -29980,7 +29982,7 @@ self.onmessage = async (e) => {
 		items.push({ id: "search_has_links", group: "search", icon: "🔗", label: t("cmd.action.search_has_links"), shortcut: null, action() {
 			if (psSearchInput) { psSearchInput.value = "has:link"; psSearchQuery = "has:link"; savePsSearchQuery(); applyPersonalSpaceFiltersAndRender(); }
 		}});
-		items.push({ id: "query_builder", group: "search", icon: "🧩", label: t("cmd.action.query_builder"), shortcut: [isMac ? "⌥" : "Alt", "Q"], action() {
+		items.push({ id: "query_builder", group: "search", icon: "🧩", label: t("cmd.action.query_builder"), shortcut: isMac ? ["⌘", "⇧", "Q"] : ["Alt", "Q"], action() {
 			document.dispatchEvent(new CustomEvent("mirror:open-query-builder"));
 		}});
 
