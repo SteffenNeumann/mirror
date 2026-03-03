@@ -9700,14 +9700,15 @@ body[data-theme="monoLight"] #cmdPalette [data-role="cmdPaletteBackdrop"] {
 	font-size: 13px;
 	user-select: none;
 }
-.cmd-item:hover,
-.cmd-item--active {
+
+.cmd-item:hover {
 	background: var(--accent-bg-soft, rgba(217,70,239,0.1));
 	color: var(--accent-text, rgba(253,242,255,0.98));
 }
 .cmd-item--active {
-	background: var(--accent-bg, rgba(217,70,239,0.15));
-	box-shadow: inset 0 0 0 1px var(--accent-border, rgba(217,70,239,0.3));
+	background: rgba(255,255,255,0.06);
+	box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+	color: var(--accent-text, rgba(253,242,255,0.98));
 }
 .cmd-item-icon {
 	display: flex;
@@ -9821,11 +9822,16 @@ body[data-theme="monoLight"] .cmd-item {
 	color: rgba(30,30,30,0.75);
 }
 body[data-theme="coffeeLight"] .cmd-item:hover,
-body[data-theme="coffeeLight"] .cmd-item--active,
 body[data-theme="bitterLight"] .cmd-item:hover,
-body[data-theme="bitterLight"] .cmd-item--active,
 body[data-theme="monoLight"] .cmd-item:hover,
+body[data-theme="monoLight"] .cmd-item:hover {
+	color: rgba(30,30,30,0.92);
+}
+body[data-theme="coffeeLight"] .cmd-item--active,
+body[data-theme="bitterLight"] .cmd-item--active,
 body[data-theme="monoLight"] .cmd-item--active {
+	background: rgba(0,0,0,0.04);
+	box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
 	color: rgba(30,30,30,0.92);
 }
 body[data-theme="coffeeLight"] .cmd-group-header,
