@@ -9823,7 +9823,6 @@ body[data-theme="monoLight"] .cmd-item {
 }
 body[data-theme="coffeeLight"] .cmd-item:hover,
 body[data-theme="bitterLight"] .cmd-item:hover,
-body[data-theme="monoLight"] .cmd-item:hover,
 body[data-theme="monoLight"] .cmd-item:hover {
 	color: rgba(30,30,30,0.92);
 }
