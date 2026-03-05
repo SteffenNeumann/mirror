@@ -1820,9 +1820,9 @@
 		return `[${name}](${safeUrl})`;
 	}
 
-	function isAllowedUploadType(file) {
-		const mime = file ? String(file.type || "") : "";
-		return mime.startsWith("image/") || mime.startsWith("video/") || mime === "application/pdf";
+	function isAllowedUploadType(_file) {
+		// Allow all file types — server enforces size limit
+		return true;
 	}
 
 	function updateUploadPreview(file) {

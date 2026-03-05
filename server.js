@@ -1027,24 +1027,63 @@ function getSigningSecret() {
 	return signingSecret;
 }
 
+const EXT_TO_MIME = new Map([
+	// Web assets
+	[".html",        "text/html; charset=utf-8"],
+	[".js",          "text/javascript; charset=utf-8"],
+	[".mjs",         "text/javascript; charset=utf-8"],
+	[".css",         "text/css; charset=utf-8"],
+	[".json",        "application/json; charset=utf-8"],
+	[".webmanifest", "application/manifest+json; charset=utf-8"],
+	// Images
+	[".svg",         "image/svg+xml"],
+	[".png",         "image/png"],
+	[".jpg",         "image/jpeg"],
+	[".jpeg",        "image/jpeg"],
+	[".webp",        "image/webp"],
+	[".gif",         "image/gif"],
+	[".avif",        "image/avif"],
+	[".heic",        "image/heic"],
+	[".ico",         "image/x-icon"],
+	// Documents
+	[".pdf",         "application/pdf"],
+	[".txt",         "text/plain; charset=utf-8"],
+	[".md",          "text/markdown; charset=utf-8"],
+	[".csv",         "text/csv; charset=utf-8"],
+	[".xml",         "application/xml"],
+	// Microsoft Office
+	[".doc",         "application/msword"],
+	[".docx",        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
+	[".xls",         "application/vnd.ms-excel"],
+	[".xlsx",        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
+	[".xlsm",        "application/vnd.ms-excel.sheet.macroenabled.12"],
+	[".ppt",         "application/vnd.ms-powerpoint"],
+	[".pptx",        "application/vnd.openxmlformats-officedocument.presentationml.presentation"],
+	// OpenDocument
+	[".odt",         "application/vnd.oasis.opendocument.text"],
+	[".ods",         "application/vnd.oasis.opendocument.spreadsheet"],
+	[".odp",         "application/vnd.oasis.opendocument.presentation"],
+	// Video
+	[".mp4",         "video/mp4"],
+	[".webm",        "video/webm"],
+	[".ogg",         "video/ogg"],
+	[".ogv",         "video/ogg"],
+	[".mov",         "video/quicktime"],
+	[".avi",         "video/x-msvideo"],
+	// Audio
+	[".mp3",         "audio/mpeg"],
+	[".wav",         "audio/wav"],
+	[".weba",        "audio/webm"],
+	// Archives
+	[".zip",         "application/zip"],
+	[".7z",          "application/x-7z-compressed"],
+	[".gz",          "application/gzip"],
+	[".tar",         "application/x-tar"],
+]);
+
 function mimeTypeForPath(filePath) {
 	const ext = extname(filePath).toLowerCase();
-	if (ext === ".html") return "text/html; charset=utf-8";
-	if (ext === ".js") return "text/javascript; charset=utf-8";
-	if (ext === ".mjs") return "text/javascript; charset=utf-8";
-	if (ext === ".css") return "text/css; charset=utf-8";
-	if (ext === ".json") return "application/json; charset=utf-8";
-	if (ext === ".webmanifest") return "application/manifest+json; charset=utf-8";
-	if (ext === ".svg") return "image/svg+xml";
-	if (ext === ".png") return "image/png";
-	if (ext === ".jpg" || ext === ".jpeg") return "image/jpeg";
-	if (ext === ".pdf") return "application/pdf";
-	if (ext === ".ico") return "image/x-icon";
-	if (ext === ".mp4") return "video/mp4";
-	if (ext === ".webm") return "video/webm";
-	if (ext === ".ogg" || ext === ".ogv") return "video/ogg";
-	if (ext === ".mov") return "video/quicktime";
-	return "application/octet-stream";
+	return EXT_TO_MIME.get(ext) ?? "application/octet-stream";
 }
 
 function safeJsonParse(raw) {
@@ -1266,24 +1305,64 @@ function decodeDataUrl(input) {
 	return { mime, buf };
 }
 
-function isAllowedUploadMime(mime) {
-	const m = String(mime || "").toLowerCase();
-	return m.startsWith("image/") || m.startsWith("video/") || m === "application/pdf";
+function isAllowedUploadMime(_mime) {
+	// Allow all file types — size and filename are checked separately
+	return true;
 }
 
+const MIME_TO_EXT = new Map([
+	// Images
+	["image/png",                    ".png"],
+	["image/jpeg",                   ".jpg"],
+	["image/webp",                   ".webp"],
+	["image/gif",                    ".gif"],
+	["image/svg+xml",                ".svg"],
+	["image/avif",                   ".avif"],
+	["image/heic",                   ".heic"],
+	// Video
+	["video/mp4",                    ".mp4"],
+	["video/webm",                   ".webm"],
+	["video/ogg",                    ".ogg"],
+	["video/quicktime",              ".mov"],
+	["video/x-msvideo",              ".avi"],
+	// Audio
+	["audio/mpeg",                   ".mp3"],
+	["audio/ogg",                    ".ogg"],
+	["audio/wav",                    ".wav"],
+	["audio/webm",                   ".weba"],
+	// Documents
+	["application/pdf",              ".pdf"],
+	["text/plain",                   ".txt"],
+	["text/markdown",                ".md"],
+	["text/x-markdown",              ".md"],
+	["text/csv",                     ".csv"],
+	["text/html",                    ".html"],
+	// Microsoft Office
+	["application/msword",                                                          ".doc"],
+	["application/vnd.openxmlformats-officedocument.wordprocessingml.document",     ".docx"],
+	["application/vnd.ms-excel",                                                    ".xls"],
+	["application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",           ".xlsx"],
+	["application/vnd.ms-excel.sheet.macroenabled.12",                             ".xlsm"],
+	["application/vnd.ms-powerpoint",                                               ".ppt"],
+	["application/vnd.openxmlformats-officedocument.presentationml.presentation",  ".pptx"],
+	// OpenDocument
+	["application/vnd.oasis.opendocument.text",         ".odt"],
+	["application/vnd.oasis.opendocument.spreadsheet",  ".ods"],
+	["application/vnd.oasis.opendocument.presentation", ".odp"],
+	// Archives
+	["application/zip",              ".zip"],
+	["application/x-7z-compressed", ".7z"],
+	["application/gzip",            ".gz"],
+	["application/x-gzip",         ".gz"],
+	["application/x-tar",          ".tar"],
+	// Code / Data
+	["application/json",            ".json"],
+	["application/xml",             ".xml"],
+	["text/xml",                    ".xml"],
+]);
+
 function extForMime(mime) {
-	const m = String(mime || "").toLowerCase();
-	if (m === "application/pdf") return ".pdf";
-	if (m === "image/png") return ".png";
-	if (m === "image/jpeg") return ".jpg";
-	if (m === "image/webp") return ".webp";
-	if (m === "image/gif") return ".gif";
-	if (m === "image/svg+xml") return ".svg";
-	if (m === "video/mp4") return ".mp4";
-	if (m === "video/webm") return ".webm";
-	if (m === "video/ogg") return ".ogg";
-	if (m === "video/quicktime") return ".mov";
-	return "";
+	return MIME_TO_EXT.get(String(mime || "").toLowerCase()) ?? "";
 }
 
 function uniq(arr) {
