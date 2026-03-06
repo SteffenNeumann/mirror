@@ -1322,9 +1322,10 @@ body.code-lang-active #clearMirror {
 	z-index: 3;
 }
 #searchHighlightContent {
-	white-space: pre-wrap;
-	word-break: break-word;
+	white-space: pre;
+	word-break: normal;
 	color: transparent;
+	overflow-wrap: normal;
 }
 .search-hl {
 	background: rgba(250, 204, 21, 0.32);
@@ -6291,9 +6292,11 @@ body[data-theme] #noteShareModal [role="dialog"] {
 	align-items: center;
 	gap: 4px;
 	padding: 4px 8px;
-	border-radius: 0;
-	border: none;
-	background: transparent;
+	border-radius: 10px;
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	background: rgba(2, 6, 23, 0.88);
+	backdrop-filter: blur(24px) saturate(1.5);
+	box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
 }
 
 .editor-search-icon {
@@ -6353,9 +6356,10 @@ body[data-theme] #noteShareModal [role="dialog"] {
 body[data-theme="coffeeLight"] .editor-search-inner,
 body[data-theme="bitterLight"] .editor-search-inner,
 body[data-theme="monoLight"] .editor-search-inner {
-	background: transparent;
-	border: none;
-	box-shadow: none;
+	background: rgba(240, 240, 245, 0.92);
+	border-color: rgba(0, 0, 0, 0.1);
+	box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+	backdrop-filter: blur(24px) saturate(1.5);
 }
 body[data-theme="coffeeLight"] .editor-search-input,
 body[data-theme="bitterLight"] .editor-search-input,
