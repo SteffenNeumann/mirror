@@ -3311,19 +3311,19 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	overflow-y: visible;
 }
 
-[data-tooltip]:not(.calendar-event) {
+[data-tooltip]:not(.calendar-event):not(.toolbox-btn):not(.toolbox-trigger) {
 	position: relative;
 }
 
-[data-tooltip]:not(.calendar-event)::after,
-[data-tooltip]:not(.calendar-event)::before {
+[data-tooltip]:not(.calendar-event):not(.toolbox-btn):not(.toolbox-trigger)::after,
+[data-tooltip]:not(.calendar-event):not(.toolbox-btn):not(.toolbox-trigger)::before {
 	opacity: 0;
 	transform: translate(-50%, -6px);
 	pointer-events: none;
 	transition: opacity 0.15s ease, transform 0.15s ease;
 }
 
-[data-tooltip]:not(.calendar-event)::after {
+[data-tooltip]:not(.calendar-event):not(.toolbox-btn):not(.toolbox-trigger)::after {
 	content: attr(data-tooltip);
 	position: absolute;
 	left: 50%;
@@ -3344,7 +3344,7 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	z-index: 80;
 }
 
-[data-tooltip]:not(.calendar-event)::before {
+[data-tooltip]:not(.calendar-event):not(.toolbox-btn):not(.toolbox-trigger)::before {
 	content: "";
 	position: absolute;
 	left: 50%;
@@ -3358,8 +3358,8 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	z-index: 79;
 }
 
-[data-tooltip]:not(.calendar-event):hover::after,
-[data-tooltip]:not(.calendar-event):hover::before {
+[data-tooltip]:not(.calendar-event):not(.toolbox-btn):not(.toolbox-trigger):hover::after,
+[data-tooltip]:not(.calendar-event):not(.toolbox-btn):not(.toolbox-trigger):hover::before {
 	opacity: 1;
 	transform: translate(-50%, 0);
 }
