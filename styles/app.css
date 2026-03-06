@@ -6308,7 +6308,7 @@ body[data-theme] #noteShareModal [role="dialog"] {
 
 .editor-search-input {
 	width: 180px;
-	background: transparent;
+	background: inherit;
 	border: none;
 	outline: none;
 	font-size: 13px;
