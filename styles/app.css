@@ -6401,10 +6401,10 @@ body[data-theme] #noteShareModal [role="dialog"] {
 body[data-theme="coffeeLight"] .toolbox-trigger,
 body[data-theme="bitterLight"] .toolbox-trigger,
 body[data-theme="monoLight"] .toolbox-trigger {
-	border-color: rgba(0, 0, 0, 0.12);
-	background: rgba(255, 255, 255, 0.7);
+	border-color: rgba(0, 0, 0, 0.14);
+	background: rgba(240, 240, 245, 0.85);
 	color: rgba(30, 41, 59, 0.7);
-	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 body[data-theme="coffeeLight"] .toolbox-trigger:hover,
 body[data-theme="bitterLight"] .toolbox-trigger:hover,
@@ -6423,9 +6423,10 @@ body[data-theme="monoLight"] .editor-toolbox[aria-expanded="true"] .toolbox-trig
 body[data-theme="coffeeLight"] .toolbox-panel,
 body[data-theme="bitterLight"] .toolbox-panel,
 body[data-theme="monoLight"] .toolbox-panel {
-	background: rgba(255, 255, 255, 0.88);
-	border-color: rgba(0, 0, 0, 0.1);
-	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+	background: rgba(240, 240, 245, 0.92);
+	border-color: rgba(0, 0, 0, 0.14);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
+	backdrop-filter: blur(20px) saturate(1.4);
 }
 body[data-theme="coffeeLight"] .toolbox-btn,
 body[data-theme="bitterLight"] .toolbox-btn,
@@ -6447,7 +6448,7 @@ body[data-theme="monoLight"] .toolbox-btn[aria-pressed="true"] {
 body[data-theme="coffeeLight"] .toolbox-sep,
 body[data-theme="bitterLight"] .toolbox-sep,
 body[data-theme="monoLight"] .toolbox-sep {
-	background: rgba(0, 0, 0, 0.1);
+	background: rgba(0, 0, 0, 0.15);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
