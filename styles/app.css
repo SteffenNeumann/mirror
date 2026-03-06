@@ -6271,6 +6271,7 @@ body[data-theme] #noteShareModal [role="dialog"] {
 	display: flex;
 	align-items: center;
 	gap: 0;
+	overflow: visible;
 }
 
 /* ── Trigger Button ── */
@@ -6319,18 +6320,18 @@ body[data-theme] #noteShareModal [role="dialog"] {
 	background: rgba(2, 6, 23, 0.82);
 	backdrop-filter: blur(24px) saturate(1.5);
 	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
-	transform-origin: right center;
+	flex-shrink: 0;
 	transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
 		transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
 		visibility 0s 0.25s;
 	opacity: 0;
-	transform: scaleX(0.3) translateX(20px);
+	transform: translateX(40px);
 	visibility: hidden;
 	pointer-events: none;
 }
 .editor-toolbox[aria-expanded="true"] .toolbox-panel {
 	opacity: 1;
-	transform: scaleX(1) translateX(0);
+	transform: translateX(0);
 	visibility: visible;
 	pointer-events: auto;
 	transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
