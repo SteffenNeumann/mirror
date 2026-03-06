@@ -10703,9 +10703,6 @@
 	function setPsMetaVisible(next) {
 		psMetaVisible = Boolean(next);
 		if (psMetaToggle) {
-			psMetaToggle.classList.toggle("bg-white/10", psMetaVisible);
-			psMetaToggle.classList.toggle("text-slate-100", psMetaVisible);
-			psMetaToggle.classList.toggle("text-slate-200", !psMetaVisible);
 			try {
 				psMetaToggle.setAttribute(
 					"aria-pressed",
@@ -12147,8 +12144,9 @@
 			document.body.classList.toggle("code-lang-active", show);
 		}
 		if (codeLangWrap.classList) codeLangWrap.classList.toggle("hidden", !show);
-		if (psMetaToggle && psMetaToggle.classList) {
-			psMetaToggle.classList.toggle("hidden", show);
+		if (psMetaToggle && psMetaToggle.style) {
+			psMetaToggle.style.opacity = show ? "0.3" : "";
+			psMetaToggle.style.pointerEvents = show ? "none" : "";
 		}
 		if (psMetaYaml && psMetaYaml.classList) {
 			psMetaYaml.classList.toggle("hidden", show || !psMetaVisible);
