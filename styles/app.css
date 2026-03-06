@@ -6260,6 +6260,197 @@ body[data-theme] #noteShareModal [role="dialog"] {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
+   EDITOR TOOLBOX
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.editor-toolbox {
+	position: absolute;
+	bottom: 8px;
+	right: 8px;
+	z-index: 30;
+	display: flex;
+	align-items: center;
+	gap: 0;
+}
+
+/* ── Trigger Button ── */
+.toolbox-trigger {
+	position: relative;
+	z-index: 2;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 36px;
+	height: 36px;
+	border-radius: 10px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: rgba(255, 255, 255, 0.05);
+	color: rgba(226, 232, 240, 0.8);
+	backdrop-filter: blur(24px) saturate(1.5);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+	cursor: pointer;
+	transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.2s;
+	flex-shrink: 0;
+}
+.toolbox-trigger:hover {
+	background: rgba(255, 255, 255, 0.1);
+	color: #fff;
+	border-color: rgba(255, 255, 255, 0.18);
+}
+.toolbox-trigger:active {
+	background: rgba(255, 255, 255, 0.15);
+	transform: scale(0.95);
+}
+.editor-toolbox[aria-expanded="true"] .toolbox-trigger {
+	background: var(--accent-bg, rgba(217, 70, 239, 0.15));
+	border-color: var(--accent-border, rgba(217, 70, 239, 0.3));
+	color: var(--accent-text, #fff);
+}
+
+/* ── Panel (expanded toolbar) ── */
+.toolbox-panel {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 6px;
+	margin-right: 4px;
+	border-radius: 12px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: rgba(2, 6, 23, 0.82);
+	backdrop-filter: blur(24px) saturate(1.5);
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+	transform-origin: right center;
+	transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+		transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+		visibility 0s 0.25s;
+	opacity: 0;
+	transform: scaleX(0.3) translateX(20px);
+	visibility: hidden;
+	pointer-events: none;
+}
+.editor-toolbox[aria-expanded="true"] .toolbox-panel {
+	opacity: 1;
+	transform: scaleX(1) translateX(0);
+	visibility: visible;
+	pointer-events: auto;
+	transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+		transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+		visibility 0s 0s;
+}
+
+/* ── Tool Buttons inside panel ── */
+.toolbox-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 8px;
+	border: none;
+	background: transparent;
+	color: rgba(226, 232, 240, 0.75);
+	cursor: pointer;
+	transition: background 0.15s, color 0.15s, transform 0.15s;
+	flex-shrink: 0;
+	padding: 0;
+}
+.toolbox-btn:hover {
+	background: rgba(255, 255, 255, 0.1);
+	color: #fff;
+}
+.toolbox-btn:active {
+	background: rgba(255, 255, 255, 0.15);
+	transform: scale(0.92);
+}
+.toolbox-btn[aria-pressed="true"] {
+	background: var(--accent-bg, rgba(217, 70, 239, 0.15));
+	color: var(--accent-text, #fff);
+}
+
+/* ── Separator ── */
+.toolbox-sep {
+	display: block;
+	width: 1px;
+	height: 20px;
+	margin: 0 2px;
+	background: rgba(255, 255, 255, 0.08);
+	border-radius: 1px;
+	flex-shrink: 0;
+}
+
+/* ── Mobile: smaller items ── */
+@media (max-width: 639px) {
+	.toolbox-panel {
+		gap: 2px;
+		padding: 3px 4px;
+	}
+	.toolbox-btn {
+		width: 28px;
+		height: 28px;
+	}
+	.toolbox-btn svg {
+		width: 14px;
+		height: 14px;
+	}
+	.toolbox-sep {
+		height: 16px;
+	}
+}
+
+/* ── Light Theme overrides ── */
+body[data-theme="coffeeLight"] .toolbox-trigger,
+body[data-theme="bitterLight"] .toolbox-trigger,
+body[data-theme="monoLight"] .toolbox-trigger {
+	border-color: rgba(0, 0, 0, 0.12);
+	background: rgba(255, 255, 255, 0.7);
+	color: rgba(30, 41, 59, 0.7);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+body[data-theme="coffeeLight"] .toolbox-trigger:hover,
+body[data-theme="bitterLight"] .toolbox-trigger:hover,
+body[data-theme="monoLight"] .toolbox-trigger:hover {
+	background: rgba(255, 255, 255, 0.85);
+	color: rgba(30, 41, 59, 0.9);
+}
+body[data-theme="coffeeLight"] .editor-toolbox[aria-expanded="true"] .toolbox-trigger,
+body[data-theme="bitterLight"] .editor-toolbox[aria-expanded="true"] .toolbox-trigger,
+body[data-theme="monoLight"] .editor-toolbox[aria-expanded="true"] .toolbox-trigger {
+	background: var(--accent-bg, rgba(217, 70, 239, 0.12));
+	border-color: var(--accent-border, rgba(217, 70, 239, 0.25));
+	color: var(--accent-text-soft, rgba(168, 85, 247, 0.9));
+}
+
+body[data-theme="coffeeLight"] .toolbox-panel,
+body[data-theme="bitterLight"] .toolbox-panel,
+body[data-theme="monoLight"] .toolbox-panel {
+	background: rgba(255, 255, 255, 0.88);
+	border-color: rgba(0, 0, 0, 0.1);
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+body[data-theme="coffeeLight"] .toolbox-btn,
+body[data-theme="bitterLight"] .toolbox-btn,
+body[data-theme="monoLight"] .toolbox-btn {
+	color: rgba(30, 41, 59, 0.6);
+}
+body[data-theme="coffeeLight"] .toolbox-btn:hover,
+body[data-theme="bitterLight"] .toolbox-btn:hover,
+body[data-theme="monoLight"] .toolbox-btn:hover {
+	background: rgba(0, 0, 0, 0.06);
+	color: rgba(30, 41, 59, 0.9);
+}
+body[data-theme="coffeeLight"] .toolbox-btn[aria-pressed="true"],
+body[data-theme="bitterLight"] .toolbox-btn[aria-pressed="true"],
+body[data-theme="monoLight"] .toolbox-btn[aria-pressed="true"] {
+	background: var(--accent-bg, rgba(217, 70, 239, 0.1));
+	color: var(--accent-text-soft, rgba(168, 85, 247, 0.9));
+}
+body[data-theme="coffeeLight"] .toolbox-sep,
+body[data-theme="bitterLight"] .toolbox-sep,
+body[data-theme="monoLight"] .toolbox-sep {
+	background: rgba(0, 0, 0, 0.1);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
    BLOCK ARRANGE MODE
    ══════════════════════════════════════════════════════════════════════════════ */
 

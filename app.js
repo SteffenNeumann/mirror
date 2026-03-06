@@ -6550,6 +6550,7 @@
 				"linear.status.no_key": "Kein API-Key gesetzt.",
 				"linear.status.loading": "Linear lädt…",
 				"linear.status.failed": "Linear nicht erreichbar.",
+				"editor.toolbox": "Werkzeuge",
 				"editor.permalink": "Permanent-Link",
 				"editor.permalink_active": "Permanent-Link aktiv",
 				"toast.permalink_activated": "Permanent-Link aktiviert.",
@@ -7221,6 +7222,7 @@
 				"linear.status.no_key": "No API key set.",
 				"linear.status.loading": "Loading Linear…",
 				"linear.status.failed": "Linear unavailable.",
+				"editor.toolbox": "Tools",
 				"editor.permalink": "Permanent Link",
 				"editor.permalink_active": "Permanent Link active",
 				"toast.permalink_activated": "Permanent Link activated.",
@@ -26631,6 +26633,32 @@ self.onmessage = async (e) => {
 				scheduleSend();
 			})();
 		});
+	}
+
+	/* ── Editor Toolbox toggle ── */
+	{
+		const toolbox = document.getElementById("editorToolbox");
+		const toolboxTrigger = document.getElementById("toolboxTrigger");
+		if (toolbox && toolboxTrigger) {
+			const setToolboxOpen = (open) => {
+				toolbox.setAttribute("aria-expanded", open ? "true" : "false");
+			};
+			toolboxTrigger.addEventListener("click", (e) => {
+				e.stopPropagation();
+				const isOpen = toolbox.getAttribute("aria-expanded") === "true";
+				setToolboxOpen(!isOpen);
+			});
+			document.addEventListener("pointerdown", (e) => {
+				if (toolbox.getAttribute("aria-expanded") !== "true") return;
+				if (toolbox.contains(e.target)) return;
+				setToolboxOpen(false);
+			});
+			document.addEventListener("keydown", (e) => {
+				if (e.key === "Escape" && toolbox.getAttribute("aria-expanded") === "true") {
+					setToolboxOpen(false);
+				}
+			});
+		}
 	}
 
 	function canAutoSavePsNote() {
