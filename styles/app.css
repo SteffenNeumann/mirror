@@ -1318,6 +1318,22 @@ body.code-lang-active #clearMirror {
 	word-break: break-word;
 	color: transparent;
 }
+#searchHighlightOverlay {
+	z-index: 3;
+}
+#searchHighlightContent {
+	white-space: pre-wrap;
+	word-break: break-word;
+	color: transparent;
+}
+.search-hl {
+	background: rgba(250, 204, 21, 0.32);
+	border-radius: 2px;
+}
+.search-hl-current {
+	background: rgba(250, 204, 21, 0.72);
+	border-radius: 2px;
+}
 #cursorOverlay {
 	z-index: 6;
 }

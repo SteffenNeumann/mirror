@@ -128,6 +128,8 @@
 	);
 	const commentOverlay = document.getElementById("commentOverlay");
 	const commentOverlayContent = document.getElementById("commentOverlayContent");
+	const searchHighlightOverlay = document.getElementById("searchHighlightOverlay");
+	const searchHighlightContent = document.getElementById("searchHighlightContent");
 	const excalidrawEmbed = document.getElementById("excalidrawEmbed");
 	const excalidrawFrame = excalidrawEmbed
 		? excalidrawEmbed.querySelector("iframe")
@@ -3461,6 +3463,13 @@
 		const x = Number(textarea.scrollLeft || 0);
 		const y = Number(textarea.scrollTop || 0);
 		commentOverlayContent.style.transform = `translate(${-x}px, ${-y}px)`;
+	}
+
+	function syncSearchHighlightScroll() {
+		if (!searchHighlightContent || !textarea) return;
+		const x = Number(textarea.scrollLeft || 0);
+		const y = Number(textarea.scrollTop || 0);
+		searchHighlightContent.style.transform = `translate(${-x}px, ${-y}px)`;
 	}
 
 	function updateCommentOverlay() {
@@ -25561,6 +25570,7 @@ self.onmessage = async (e) => {
 		updateEditorMetaScroll();
 		syncAttributionOverlayScroll();
 		syncCommentOverlayScroll();
+		syncSearchHighlightScroll();
 		syncCursorOverlayScroll();
 		syncPreviewScrollFromEditor();
 	});
@@ -26685,13 +26695,45 @@ self.onmessage = async (e) => {
 				searchCurrentIdx = -1;
 				if (searchCount) searchCount.textContent = "";
 				if (searchInput) searchInput.value = "";
+				updateSearchHighlight();
 			}
+		}
+
+		function buildSearchHighlightHtml(text, query, matches, currentIdx) {
+			if (!matches.length || !query) return "";
+			const qLen = query.length;
+			let out = "";
+			let cursor = 0;
+			for (let i = 0; i < matches.length; i++) {
+				const pos = matches[i];
+				out += escapeHtml(text.slice(cursor, pos));
+				const cls = i === currentIdx ? "search-hl search-hl-current" : "search-hl";
+				out += `<span class="${cls}">${escapeHtml(text.slice(pos, pos + qLen))}</span>`;
+				cursor = pos + qLen;
+			}
+			out += escapeHtml(text.slice(cursor));
+			return out;
+		}
+
+		function updateSearchHighlight() {
+			if (!searchHighlightOverlay || !searchHighlightContent) return;
+			if (!searchOpen || searchMatches.length === 0) {
+				searchHighlightOverlay.classList.add("hidden");
+				searchHighlightContent.textContent = "";
+				return;
+			}
+			const text = String(textarea && textarea.value ? textarea.value : "");
+			const query = searchInput ? searchInput.value : "";
+			const html = buildSearchHighlightHtml(text, query, searchMatches, searchCurrentIdx);
+			searchHighlightContent.innerHTML = html;
+			searchHighlightOverlay.classList.remove("hidden");
+			syncSearchHighlightScroll();
 		}
 
 		function findMatches(query) {
 			searchMatches = [];
 			searchCurrentIdx = -1;
-			if (!query || !textarea) { updateSearchCount(); return; }
+			if (!query || !textarea) { updateSearchCount(); updateSearchHighlight(); return; }
 			const text = textarea.value || "";
 			const q = query.toLowerCase();
 			let idx = 0;
@@ -26704,7 +26746,8 @@ self.onmessage = async (e) => {
 			}
 			if (searchMatches.length > 0) searchCurrentIdx = 0;
 			updateSearchCount();
-			goToCurrentMatch();
+			updateSearchHighlight();
+			scrollToCurrentMatch();
 		}
 
 		function updateSearchCount() {
@@ -26717,33 +26760,29 @@ self.onmessage = async (e) => {
 			}
 		}
 
-		function goToCurrentMatch() {
+		function scrollToCurrentMatch() {
 			if (!textarea || searchCurrentIdx < 0 || searchCurrentIdx >= searchMatches.length) return;
 			const pos = searchMatches[searchCurrentIdx];
-			const q = searchInput ? searchInput.value.length : 0;
-			textarea.focus();
-			textarea.setSelectionRange(pos, pos + q);
-			/* scroll into view */
 			const linesBefore = (textarea.value || "").slice(0, pos).split("\n").length;
 			const lineHeight = parseFloat(getComputedStyle(textarea).lineHeight) || 24;
 			const scrollTarget = (linesBefore - 3) * lineHeight;
 			textarea.scrollTop = Math.max(0, scrollTarget);
-			/* refocus search input without losing textarea selection */
-			setTimeout(() => { if (searchInput && searchOpen) searchInput.focus(); }, 0);
 		}
 
 		function searchMoveNext() {
 			if (searchMatches.length === 0) return;
 			searchCurrentIdx = (searchCurrentIdx + 1) % searchMatches.length;
 			updateSearchCount();
-			goToCurrentMatch();
+			updateSearchHighlight();
+			scrollToCurrentMatch();
 		}
 
 		function searchMovePrev() {
 			if (searchMatches.length === 0) return;
 			searchCurrentIdx = (searchCurrentIdx - 1 + searchMatches.length) % searchMatches.length;
 			updateSearchCount();
-			goToCurrentMatch();
+			updateSearchHighlight();
+			scrollToCurrentMatch();
 		}
 
 		function toggleEditorSearch() {
