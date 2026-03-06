@@ -22546,17 +22546,28 @@ self.onmessage = async (e) => {
 		const text = String(target && target.getAttribute("data-tooltip") || "");
 		if (!text) return;
 		ensureTabTooltipLayer();
-		if (!tabTooltipLayer || !tabTooltipBox) return;
+		if (!tabTooltipLayer || !tabTooltipBox || !tabTooltipArrow) return;
 		tabTooltipBox.textContent = text;
 		const rect = target.getBoundingClientRect();
 		const left = rect.left + rect.width / 2;
 		tabTooltipLayer.style.left = `${left}px`;
 		tabTooltipLayer.style.top = "0px";
+		tabTooltipArrow.style.left = "";
 		requestAnimationFrame(() => {
 			if (!tabTooltipLayer || !tabTooltipBox) return;
+			const bw = tabTooltipBox.offsetWidth || 0;
 			const height = tabTooltipBox.offsetHeight || 0;
 			const top = rect.top - height - 10;
+			const vw = window.innerWidth;
+			const margin = 8;
+			let finalLeft = left;
+			const halfW = bw / 2;
+			if (finalLeft + halfW > vw - margin) finalLeft = vw - margin - halfW;
+			if (finalLeft - halfW < margin) finalLeft = margin + halfW;
+			tabTooltipLayer.style.left = `${finalLeft}px`;
 			tabTooltipLayer.style.top = `${top}px`;
+			const arrowOffset = left - finalLeft;
+			tabTooltipArrow.style.left = `calc(50% + ${arrowOffset}px)`;
 			tabTooltipLayer.classList.add("is-visible");
 		});
 	}
@@ -23991,56 +24002,6 @@ self.onmessage = async (e) => {
 		togglePermanentLinkBtn.addEventListener("contextmenu", (ev) => {
 			ev.preventDefault();
 		});
-		let permalinkTooltipTimer = null;
-		let permalinkTooltipEl = null;
-		function showPermalinkTooltip() {
-			hidePermalinkTooltip();
-			const el = document.createElement("div");
-			el.className = "tab-tooltip-layer";
-			const box = document.createElement("div");
-			box.className = "tab-tooltip-layer__box";
-			box.style.maxWidth = "360px";
-			box.style.minWidth = "280px";
-			box.style.padding = "8px 12px";
-			box.textContent = t("permalink.info.message");
-			const arrow = document.createElement("div");
-			arrow.className = "tab-tooltip-layer__arrow";
-			el.appendChild(box);
-			el.appendChild(arrow);
-			document.body.appendChild(el);
-			permalinkTooltipEl = el;
-			const rect = togglePermanentLinkBtn.getBoundingClientRect();
-			const left = rect.left + rect.width / 2;
-			el.style.left = `${left}px`;
-			el.style.top = "0px";
-			requestAnimationFrame(() => {
-				if (!permalinkTooltipEl) return;
-				const bw = box.offsetWidth || 0;
-				const h = box.offsetHeight || 0;
-				const top = rect.top - h - 10;
-				// Clamp horizontally so tooltip stays within viewport
-				const vw = window.innerWidth;
-				const margin = 8;
-				let finalLeft = left;
-				const halfW = bw / 2;
-				if (finalLeft + halfW > vw - margin) finalLeft = vw - margin - halfW;
-				if (finalLeft - halfW < margin) finalLeft = margin + halfW;
-				el.style.left = `${finalLeft}px`;
-				el.style.top = `${top}px`;
-				// Shift arrow to point at the button center
-				const arrowOffset = left - finalLeft;
-				arrow.style.left = `calc(50% + ${arrowOffset}px)`;
-				el.classList.add("is-visible");
-			});
-		}
-		function hidePermalinkTooltip() {
-			if (permalinkTooltipTimer) { clearTimeout(permalinkTooltipTimer); permalinkTooltipTimer = null; }
-			if (permalinkTooltipEl) { permalinkTooltipEl.remove(); permalinkTooltipEl = null; }
-		}
-		togglePermanentLinkBtn.addEventListener("mouseenter", () => {
-			permalinkTooltipTimer = setTimeout(showPermalinkTooltip, 500);
-		});
-		togglePermanentLinkBtn.addEventListener("mouseleave", hidePermalinkTooltip);
 	}
 
 	let excalidrawVisible = false;
@@ -26663,6 +26624,19 @@ self.onmessage = async (e) => {
 				if (e.key === "Escape" && toolbox.getAttribute("aria-expanded") === "true") {
 					setToolboxOpen(false);
 				}
+			});
+			/* ── Toolbox custom tooltips (tab-tooltip-layer) ── */
+			let toolboxTooltipTimer = null;
+			const toolboxBtns = toolbox.querySelectorAll(".toolbox-btn, .toolbox-trigger");
+			toolboxBtns.forEach((btn) => {
+				btn.addEventListener("mouseenter", () => {
+					if (toolboxTooltipTimer) clearTimeout(toolboxTooltipTimer);
+					toolboxTooltipTimer = setTimeout(() => showTabTooltip(btn), 400);
+				});
+				btn.addEventListener("mouseleave", () => {
+					if (toolboxTooltipTimer) { clearTimeout(toolboxTooltipTimer); toolboxTooltipTimer = null; }
+					hideTabTooltip();
+				});
 			});
 		}
 	}
