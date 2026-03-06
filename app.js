@@ -4409,7 +4409,7 @@
 
 	function updateSelectionMenu() {
 		if (!selectionMenu || !textarea) return;
-		if (slashMenuOpen || wikiMenuOpen) {
+		if (slashMenuOpen || wikiMenuOpen || (window._mirrorEditorSearch && window._mirrorEditorSearch.isOpen())) {
 			selMenuDragManual = false;
 			setSelectionMenuOpen(false);
 			return;
@@ -26778,7 +26778,7 @@ self.onmessage = async (e) => {
 		if (searchClose) searchClose.addEventListener("click", () => setEditorSearchOpen(false));
 
 		/* expose for global shortcut and command palette */
-		window._mirrorEditorSearch = { toggle: toggleEditorSearch, open() { setEditorSearchOpen(true); } };
+		window._mirrorEditorSearch = { toggle: toggleEditorSearch, open() { setEditorSearchOpen(true); }, isOpen() { return searchOpen; } };
 	}
 
 	function canAutoSavePsNote() {
