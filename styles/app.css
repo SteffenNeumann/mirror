@@ -6260,6 +6260,123 @@ body[data-theme] #noteShareModal [role="dialog"] {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
+   EDITOR SEARCH BAR
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+.editor-search-bar {
+	position: absolute;
+	top: 56px;
+	right: 8px;
+	z-index: 35;
+}
+
+.editor-search-inner {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 4px 8px;
+	border-radius: 12px;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	background: rgba(2, 6, 23, 0.88);
+	backdrop-filter: blur(24px) saturate(1.5);
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.editor-search-icon {
+	width: 14px;
+	height: 14px;
+	flex-shrink: 0;
+	color: rgba(148, 163, 184, 0.6);
+}
+
+.editor-search-input {
+	width: 180px;
+	background: transparent;
+	border: none;
+	outline: none;
+	font-size: 13px;
+	color: rgba(226, 232, 240, 0.95);
+	font-family: inherit;
+	padding: 2px 0;
+}
+.editor-search-input::placeholder {
+	color: rgba(148, 163, 184, 0.4);
+}
+
+.editor-search-count {
+	font-size: 11px;
+	color: rgba(148, 163, 184, 0.5);
+	white-space: nowrap;
+	min-width: 40px;
+	text-align: center;
+	flex-shrink: 0;
+}
+
+.editor-search-nav {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 26px;
+	height: 26px;
+	border-radius: 6px;
+	border: none;
+	background: transparent;
+	color: rgba(226, 232, 240, 0.6);
+	cursor: pointer;
+	transition: background 0.15s, color 0.15s;
+	flex-shrink: 0;
+	padding: 0;
+}
+.editor-search-nav:hover {
+	background: rgba(255, 255, 255, 0.1);
+	color: #fff;
+}
+.editor-search-nav:active {
+	background: rgba(255, 255, 255, 0.15);
+}
+
+/* ── Light Theme overrides ── */
+body[data-theme="coffeeLight"] .editor-search-inner,
+body[data-theme="bitterLight"] .editor-search-inner,
+body[data-theme="monoLight"] .editor-search-inner {
+	background: rgba(240, 240, 245, 0.92);
+	border-color: rgba(0, 0, 0, 0.14);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
+	backdrop-filter: blur(20px) saturate(1.4);
+}
+body[data-theme="coffeeLight"] .editor-search-input,
+body[data-theme="bitterLight"] .editor-search-input,
+body[data-theme="monoLight"] .editor-search-input {
+	color: rgba(30, 41, 59, 0.9);
+}
+body[data-theme="coffeeLight"] .editor-search-input::placeholder,
+body[data-theme="bitterLight"] .editor-search-input::placeholder,
+body[data-theme="monoLight"] .editor-search-input::placeholder {
+	color: rgba(100, 116, 139, 0.5);
+}
+body[data-theme="coffeeLight"] .editor-search-count,
+body[data-theme="bitterLight"] .editor-search-count,
+body[data-theme="monoLight"] .editor-search-count {
+	color: rgba(100, 116, 139, 0.6);
+}
+body[data-theme="coffeeLight"] .editor-search-nav,
+body[data-theme="bitterLight"] .editor-search-nav,
+body[data-theme="monoLight"] .editor-search-nav {
+	color: rgba(30, 41, 59, 0.5);
+}
+body[data-theme="coffeeLight"] .editor-search-nav:hover,
+body[data-theme="bitterLight"] .editor-search-nav:hover,
+body[data-theme="monoLight"] .editor-search-nav:hover {
+	background: rgba(0, 0, 0, 0.06);
+	color: rgba(30, 41, 59, 0.9);
+}
+body[data-theme="coffeeLight"] .editor-search-icon,
+body[data-theme="bitterLight"] .editor-search-icon,
+body[data-theme="monoLight"] .editor-search-icon {
+	color: rgba(100, 116, 139, 0.5);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
    EDITOR TOOLBOX
    ══════════════════════════════════════════════════════════════════════════════ */
 

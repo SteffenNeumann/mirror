@@ -6557,6 +6557,12 @@
 				"editor.toggle_meta": "Meta anzeigen/ausblenden",
 				"editor.permalink": "Permanent-Link",
 				"editor.permalink_active": "Permanent-Link aktiv",
+				"editor.search": "Textsuche",
+				"editor.search_placeholder": "Suchen…",
+				"editor.search_prev": "Vorheriger Treffer",
+				"editor.search_next": "Nächster Treffer",
+				"editor.search_close": "Suche schließen",
+				"editor.search_no_results": "0 / 0",
 				"toast.permalink_activated": "Permanent-Link aktiviert.",
 				"toast.permalink_deactivated": "Permanent-Link deaktiviert.",
 				"permalink.info.title": "Permanent-Link",
@@ -6594,6 +6600,8 @@
 				"shortcuts.cmd_palette_desc": "Öffnet das globale Such- und Befehlsfenster.",
 				"shortcuts.arrange": "Blöcke anordnen",
 				"shortcuts.arrange_desc": "Öffnet die Block-Anordnungsansicht.",
+				"shortcuts.editor_search": "Textsuche",
+				"shortcuts.editor_search_desc": "Öffnet die Suche im Editor-Textfeld.",
 				"toast.shortcut_new_note": "Neue Notiz erstellt.",
 				"toast.shortcut_saved": "Notiz gespeichert.",
 				"toast.shortcut_copied": "Inhalt kopiert.",
@@ -6726,6 +6734,7 @@
 				"cmd.action.toggle_favorite": "Favorit hinzufügen/entfernen",
 				"cmd.action.save_note": "Notiz speichern",
 				"cmd.action.permalink": "Permanent-Link",
+				"cmd.action.editor_search": "Textsuche im Editor",
 				"cmd.action.tag_toggle": "Tag umschalten",
 				"cmd.action.tag_clear": "Alle Tag-Filter zurücksetzen",
 				"cmd.action.tag_show_panel": "Tag-Panel öffnen",
@@ -7233,6 +7242,12 @@
 				"editor.toggle_meta": "Toggle metadata",
 				"editor.permalink": "Permanent Link",
 				"editor.permalink_active": "Permanent Link active",
+				"editor.search": "Find in text",
+				"editor.search_placeholder": "Search…",
+				"editor.search_prev": "Previous match",
+				"editor.search_next": "Next match",
+				"editor.search_close": "Close search",
+				"editor.search_no_results": "0 / 0",
 				"toast.permalink_activated": "Permanent Link activated.",
 				"toast.permalink_deactivated": "Permanent Link deactivated.",
 				"permalink.info.title": "Permanent Link",
@@ -7270,6 +7285,8 @@
 				"shortcuts.cmd_palette_desc": "Opens the global search and command panel.",
 				"shortcuts.arrange": "Arrange Blocks",
 				"shortcuts.arrange_desc": "Opens the block arrangement view.",
+				"shortcuts.editor_search": "Find in text",
+				"shortcuts.editor_search_desc": "Opens the search in the editor text field.",
 				"toast.shortcut_new_note": "New note created.",
 				"toast.shortcut_saved": "Note saved.",
 				"toast.shortcut_copied": "Content copied.",
@@ -7402,6 +7419,7 @@
 				"cmd.action.toggle_favorite": "Toggle favorite",
 				"cmd.action.save_note": "Save note",
 				"cmd.action.permalink": "Permanent link",
+				"cmd.action.editor_search": "Find in editor text",
 				"cmd.action.tag_toggle": "Toggle tag",
 				"cmd.action.tag_clear": "Clear all tag filters",
 				"cmd.action.tag_show_panel": "Open tag panel",
@@ -26641,6 +26659,128 @@ self.onmessage = async (e) => {
 		}
 	}
 
+	/* ── Editor Text Search ── */
+	{
+		const searchBar = document.getElementById("editorSearchBar");
+		const searchInput = document.getElementById("editorSearchInput");
+		const searchCount = document.getElementById("editorSearchCount");
+		const searchPrev = document.getElementById("editorSearchPrev");
+		const searchNext = document.getElementById("editorSearchNext");
+		const searchClose = document.getElementById("editorSearchClose");
+		const searchToggleBtn = document.getElementById("editorSearchToggle");
+
+		let searchMatches = [];
+		let searchCurrentIdx = -1;
+		let searchOpen = false;
+
+		function setEditorSearchOpen(open) {
+			searchOpen = open;
+			if (!searchBar) return;
+			searchBar.classList.toggle("hidden", !open);
+			if (searchToggleBtn) searchToggleBtn.setAttribute("aria-pressed", open ? "true" : "false");
+			if (open) {
+				if (searchInput) { searchInput.focus(); searchInput.select(); }
+			} else {
+				searchMatches = [];
+				searchCurrentIdx = -1;
+				if (searchCount) searchCount.textContent = "";
+				if (searchInput) searchInput.value = "";
+			}
+		}
+
+		function findMatches(query) {
+			searchMatches = [];
+			searchCurrentIdx = -1;
+			if (!query || !textarea) { updateSearchCount(); return; }
+			const text = textarea.value || "";
+			const q = query.toLowerCase();
+			let idx = 0;
+			const tLow = text.toLowerCase();
+			while (idx < tLow.length) {
+				const pos = tLow.indexOf(q, idx);
+				if (pos < 0) break;
+				searchMatches.push(pos);
+				idx = pos + 1;
+			}
+			if (searchMatches.length > 0) searchCurrentIdx = 0;
+			updateSearchCount();
+			goToCurrentMatch();
+		}
+
+		function updateSearchCount() {
+			if (!searchCount) return;
+			if (searchMatches.length === 0) {
+				const q = searchInput ? searchInput.value.trim() : "";
+				searchCount.textContent = q ? t("editor.search_no_results", "0 / 0") : "";
+			} else {
+				searchCount.textContent = `${searchCurrentIdx + 1} / ${searchMatches.length}`;
+			}
+		}
+
+		function goToCurrentMatch() {
+			if (!textarea || searchCurrentIdx < 0 || searchCurrentIdx >= searchMatches.length) return;
+			const pos = searchMatches[searchCurrentIdx];
+			const q = searchInput ? searchInput.value.length : 0;
+			textarea.focus();
+			textarea.setSelectionRange(pos, pos + q);
+			/* scroll into view */
+			const linesBefore = (textarea.value || "").slice(0, pos).split("\n").length;
+			const lineHeight = parseFloat(getComputedStyle(textarea).lineHeight) || 24;
+			const scrollTarget = (linesBefore - 3) * lineHeight;
+			textarea.scrollTop = Math.max(0, scrollTarget);
+			/* refocus search input without losing textarea selection */
+			setTimeout(() => { if (searchInput && searchOpen) searchInput.focus(); }, 0);
+		}
+
+		function searchMoveNext() {
+			if (searchMatches.length === 0) return;
+			searchCurrentIdx = (searchCurrentIdx + 1) % searchMatches.length;
+			updateSearchCount();
+			goToCurrentMatch();
+		}
+
+		function searchMovePrev() {
+			if (searchMatches.length === 0) return;
+			searchCurrentIdx = (searchCurrentIdx - 1 + searchMatches.length) % searchMatches.length;
+			updateSearchCount();
+			goToCurrentMatch();
+		}
+
+		function toggleEditorSearch() {
+			setEditorSearchOpen(!searchOpen);
+			if (searchOpen && searchInput) {
+				const q = searchInput.value.trim();
+				if (q) findMatches(q);
+			}
+		}
+
+		if (searchToggleBtn) {
+			searchToggleBtn.addEventListener("click", () => toggleEditorSearch());
+		}
+
+		if (searchInput) {
+			searchInput.addEventListener("input", () => {
+				findMatches(searchInput.value.trim());
+			});
+			searchInput.addEventListener("keydown", (ev) => {
+				if (ev.key === "Enter") {
+					ev.preventDefault();
+					if (ev.shiftKey) searchMovePrev(); else searchMoveNext();
+				} else if (ev.key === "Escape") {
+					ev.preventDefault();
+					setEditorSearchOpen(false);
+				}
+			});
+		}
+
+		if (searchNext) searchNext.addEventListener("click", () => searchMoveNext());
+		if (searchPrev) searchPrev.addEventListener("click", () => searchMovePrev());
+		if (searchClose) searchClose.addEventListener("click", () => setEditorSearchOpen(false));
+
+		/* expose for global shortcut and command palette */
+		window._mirrorEditorSearch = { toggle: toggleEditorSearch, open() { setEditorSearchOpen(true); } };
+	}
+
 	function canAutoSavePsNote() {
 		if (offlineSyncInFlight) return false;
 		return Boolean(psState && psState.authed && textarea);
@@ -29070,6 +29210,7 @@ self.onmessage = async (e) => {
 		{ id: "queryBuilder", keys: "Alt+Shift+B",       i18nLabel: "shortcuts.query_builder",  i18nDesc: "shortcuts.query_builder_desc" },
 		{ id: "cmdPalette",   keys: "Alt+Shift+P",       i18nLabel: "shortcuts.cmd_palette",    i18nDesc: "shortcuts.cmd_palette_desc", descFallback: "Öffnet das globale Such- und Befehlsfenster." },
 		{ id: "arrange",     keys: "Cmd/Ctrl+Shift+A",   i18nLabel: "shortcuts.arrange",        i18nDesc: "shortcuts.arrange_desc" },
+		{ id: "editorSearch", keys: "Cmd/Ctrl+F",        i18nLabel: "shortcuts.editor_search",  i18nDesc: "shortcuts.editor_search_desc" },
 	];
 
 	const isMac = /mac|iphone|ipad|ipod/i.test(navigator.platform || navigator.userAgent || "");
@@ -29173,6 +29314,14 @@ self.onmessage = async (e) => {
 				roomInput.focus();
 				roomInput.select();
 			}
+			return;
+		}
+
+		// Cmd/Ctrl+F → Editor-Textsuche
+		if (mod && !alt && !shift && key === "f") {
+			ev.preventDefault();
+			ev.stopPropagation();
+			if (window._mirrorEditorSearch) window._mirrorEditorSearch.toggle();
 			return;
 		}
 
@@ -29873,6 +30022,7 @@ self.onmessage = async (e) => {
 		items.push({ id: "toggle_favorite", group: "commands", icon: "⭐", label: t("cmd.action.toggle_favorite"), shortcut: null, action() { if (toggleFavoriteBtn) toggleFavoriteBtn.click(); } });
 		items.push({ id: "save_note", group: "commands", icon: "💾", label: t("cmd.action.save_note"), shortcut: [cmdModLabel, "S"], action() { schedulePsAutoSave(); } });
 		items.push({ id: "permalink", group: "commands", icon: "📌", label: t("cmd.action.permalink"), shortcut: null, action() { if (togglePermanentLinkBtn) togglePermanentLinkBtn.click(); } });
+		items.push({ id: "editor_search", group: "commands", icon: "🔍", label: t("cmd.action.editor_search"), shortcut: [cmdModLabel, "F"], action() { if (window._mirrorEditorSearch) window._mirrorEditorSearch.open(); } });
 
 		/* --- Format --- */
 		items.push({ id: "fmt_bold", group: "format", icon: "B", label: t("cmd.action.format_bold"), shortcut: [cmdModLabel, "B"], action() { applySelectionAction("bold"); } });

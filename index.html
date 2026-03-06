@@ -842,6 +842,33 @@
 											class="pointer-events-none absolute left-2 right-12 top-2 hidden rounded-lg border border-white/5 bg-slate-950/40 px-2 py-1 text-[10px] leading-snug text-slate-400 backdrop-blur">
 											<pre class="whitespace-pre-wrap font-mono"></pre>
 									</div>
+									<!-- Editor Search Bar -->
+									<div id="editorSearchBar" class="editor-search-bar hidden" role="search" aria-label="Textsuche">
+										<div class="editor-search-inner">
+											<svg class="editor-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+												<circle cx="11" cy="11" r="8" />
+												<path d="M21 21l-4.35-4.35" />
+											</svg>
+											<input
+												id="editorSearchInput"
+												type="text"
+												autocomplete="off"
+												spellcheck="false"
+												placeholder="Suchen…"
+												data-i18n-placeholder="editor.search_placeholder"
+												class="editor-search-input" />
+											<span id="editorSearchCount" class="editor-search-count"></span>
+											<button id="editorSearchPrev" type="button" class="editor-search-nav" aria-label="Vorheriger Treffer" data-i18n-aria="editor.search_prev">
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M18 15l-6-6-6 6"/></svg>
+											</button>
+											<button id="editorSearchNext" type="button" class="editor-search-nav" aria-label="Nächster Treffer" data-i18n-aria="editor.search_next">
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M6 9l6 6 6-6"/></svg>
+											</button>
+											<button id="editorSearchClose" type="button" class="editor-search-nav" aria-label="Suche schließen" data-i18n-aria="editor.search_close">
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3.5 w-3.5"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+											</button>
+										</div>
+									</div>
 									<!-- Editor Toolbox -->
 									<div id="editorToolbox" class="editor-toolbox" aria-expanded="false">
 										<div id="toolboxPanel" class="toolbox-panel">
@@ -931,6 +958,20 @@
 												</svg>
 											</button>
 											<span class="toolbox-sep"></span>
+											<button
+												id="editorSearchToggle"
+												type="button"
+												class="toolbox-btn"
+												data-tooltip="Textsuche"
+												aria-label="Textsuche"
+												data-i18n-tooltip="editor.search"
+												data-i18n-aria="editor.search"
+												aria-pressed="false">
+												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4">
+													<circle cx="11" cy="11" r="8" />
+													<path d="M21 21l-4.35-4.35" />
+												</svg>
+											</button>
 											<button
 												id="clearMirror"
 												type="button"
