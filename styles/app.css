@@ -2581,8 +2581,10 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	body.mobile-editor-open #editorPanel {
 		position: fixed;
 		inset: 0;
+		bottom: auto;
 		width: 100vw;
 		height: 100vh;
+		height: 100dvh;
 		z-index: 70;
 		pointer-events: auto;
 		border-radius: 0;
@@ -6426,6 +6428,8 @@ body[data-theme="monoLight"] .editor-search-icon {
 	backdrop-filter: blur(24px) saturate(1.5);
 	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 	cursor: pointer;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
 	transition: background 0.2s, color 0.2s, border-color 0.2s, transform 0.2s;
 	flex-shrink: 0;
 }
@@ -6487,6 +6491,8 @@ body[data-theme="monoLight"] .editor-search-icon {
 	background: transparent;
 	color: rgba(226, 232, 240, 0.75);
 	cursor: pointer;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
 	transition: background 0.15s, color 0.15s, transform 0.15s;
 	flex-shrink: 0;
 	padding: 0;
