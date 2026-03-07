@@ -3457,6 +3457,7 @@ body.preview-only #editorPreviewGrid > div:first-child {
 body[data-theme="coffeeLight"] {
 	color-scheme: light;
 	background-color: #f8f1e9;
+	--panel-solid-bg: rgba(248, 241, 233, 0.92);
 	color: #3b2a21;
 	--scrollbar-thumb: rgba(176, 112, 73, 0.2);
 	--scrollbar-thumb-hover: rgba(176, 112, 73, 0.3);
@@ -4013,6 +4014,7 @@ body[data-theme="coffeeDark"] {
 	color: #e8d9cc;
 	--coffee-accent: #c99b77;
 	--panel-bg: #1d160f;
+	--panel-solid-bg: rgba(29, 22, 15, 0.9);
 	--selection-menu-bg: #18120e;
 	--selection-menu-border: #3b2820;
 	--sel-text: #e8d9cc;
@@ -4346,6 +4348,7 @@ body[data-theme="coffeeDark"] .md-content .pw-mask {
 body[data-theme="bitterLight"] {
 	color-scheme: light;
 	background-color: #f7f6f4;
+	--panel-solid-bg: rgba(247, 246, 244, 0.92);
 	color: #0d0c10;
 	--scrollbar-thumb: rgba(21, 21, 24, 0.25);
 	--scrollbar-thumb-hover: rgba(21, 21, 24, 0.35);
@@ -4901,6 +4904,7 @@ body[data-theme="bitterDark"] {
 	color: #f0e8df;
 	--bitter-accent: #ff3b1f;
 	--panel-bg: #101014;
+	--panel-solid-bg: rgba(16, 16, 20, 0.9);
 	--selection-menu-bg: #0d0c10;
 	--selection-menu-border: #2a2a30;
 	--sel-text: #f0e8df;
@@ -5315,6 +5319,7 @@ body[data-theme="bitterDark"] #settingsGlowToggle {
 body[data-theme="monoLight"] {
 	color-scheme: light;
 	background-color: #f6f8fa;
+	--panel-solid-bg: rgba(246, 248, 250, 0.92);
 	color: #24292f;
 	--mono-accent: #0969da;
 	--scrollbar-thumb: rgba(148, 163, 184, 0.3);
@@ -5920,6 +5925,7 @@ body[data-theme="monoDark"] {
 	color: #c9d1d9;
 	--mono-accent: #0079d4;
 	--panel-bg: #10141a;
+	--panel-solid-bg: rgba(16, 20, 26, 0.9);
 	--selection-menu-bg: #0d1117;
 	--selection-menu-border: #30363d;
 	--sel-text: #c9d1d9;
@@ -6458,7 +6464,7 @@ body[data-theme="monoLight"] .editor-search-icon {
 	margin-right: 4px;
 	border-radius: 12px;
 	border: 1px solid rgba(255, 255, 255, 0.1);
-	background: rgba(2, 6, 23, 0.82);
+	background: var(--panel-solid-bg, rgba(2, 6, 23, 0.82));
 	backdrop-filter: blur(24px) saturate(1.5);
 	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 	flex-shrink: 0;
@@ -6567,7 +6573,6 @@ body[data-theme="monoLight"] .editor-toolbox[aria-expanded="true"] .toolbox-trig
 body[data-theme="coffeeLight"] .toolbox-panel,
 body[data-theme="bitterLight"] .toolbox-panel,
 body[data-theme="monoLight"] .toolbox-panel {
-	background: rgba(240, 240, 245, 0.92);
 	border-color: rgba(0, 0, 0, 0.14);
 	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
 	backdrop-filter: blur(20px) saturate(1.4);
