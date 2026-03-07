@@ -6303,7 +6303,7 @@ body[data-theme] #noteShareModal [role="dialog"] {
 	padding: 4px 8px;
 	border-radius: 10px;
 	border: 1px solid rgba(255, 255, 255, 0.08);
-	background: rgba(2, 6, 23, 0.88);
+	background: var(--panel-solid-bg, rgba(2, 6, 23, 0.88));
 	backdrop-filter: blur(24px) saturate(1.5);
 	box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
 }
@@ -6317,8 +6317,8 @@ body[data-theme] #noteShareModal [role="dialog"] {
 
 .editor-search-input {
 	width: 180px;
-	background: inherit !important;
-	background-color: inherit !important;
+	background: transparent !important;
+	background-color: transparent !important;
 	-webkit-appearance: none;
 	appearance: none;
 	border: none;
@@ -6368,7 +6368,6 @@ body[data-theme] #noteShareModal [role="dialog"] {
 body[data-theme="coffeeLight"] .editor-search-inner,
 body[data-theme="bitterLight"] .editor-search-inner,
 body[data-theme="monoLight"] .editor-search-inner {
-	background: rgba(240, 240, 245, 0.92);
 	border-color: rgba(0, 0, 0, 0.1);
 	box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
 	backdrop-filter: blur(24px) saturate(1.5);
@@ -6377,6 +6376,8 @@ body[data-theme="coffeeLight"] .editor-search-input,
 body[data-theme="bitterLight"] .editor-search-input,
 body[data-theme="monoLight"] .editor-search-input {
 	color: rgba(30, 41, 59, 0.9);
+	background: var(--panel-solid-bg) !important;
+	-webkit-box-shadow: 0 0 0 1000px var(--panel-solid-bg) inset !important;
 }
 body[data-theme="coffeeLight"] .editor-search-input::placeholder,
 body[data-theme="bitterLight"] .editor-search-input::placeholder,
