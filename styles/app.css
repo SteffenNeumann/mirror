@@ -3405,19 +3405,20 @@ body.preview-only #editorPreviewGrid > div:first-child {
 }
 
 .tab-tooltip-layer__box {
-	max-width: 240px;
-	min-width: 160px;
-	padding: 6px 10px;
-	border-radius: 10px;
+	max-width: 220px;
+	min-width: 0;
+	width: max-content;
+	padding: 5px 9px;
+	border-radius: 8px;
 	border: 1px solid var(--calendar-tooltip-border);
 	background: var(--calendar-tooltip-bg);
 	color: var(--calendar-tooltip-text);
 	font-size: 11px;
 	line-height: 1.4;
-	white-space: normal;
-	text-align: left;
+	white-space: nowrap;
+	text-align: center;
 	box-shadow: var(--calendar-tooltip-shadow);
-	opacity: 0.85;
+	opacity: 0.9;
 }
 
 .tab-tooltip-layer__arrow {
