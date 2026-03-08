@@ -2788,6 +2788,7 @@
 		} catch {
 			// ignore
 		}
+		el.dispatchEvent(new Event("input", { bubbles: true }));
 	}
 
 	async function showSlashHelp() {
