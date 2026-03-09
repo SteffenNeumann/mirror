@@ -383,8 +383,8 @@ body[data-theme="emerald"] .bg-blob {
 #toggleComments,
 #psEditorTagsBar,
 #psEditorTagsBar > div {
-	background: rgba(2, 6, 23, 0.75) !important;
-	border-color: rgba(255, 255, 255, 0.12) !important;
+	background: var(--panel-solid-bg, rgba(2, 6, 23, 0.75)) !important;
+	border-color: var(--accent-border, rgba(255, 255, 255, 0.12)) !important;
 	border-radius: 12px;
 	backdrop-filter: blur(18px) saturate(160%);
 	-webkit-backdrop-filter: blur(18px) saturate(160%);
@@ -393,8 +393,8 @@ body[data-theme="emerald"] .bg-blob {
 
 #psEditorTagsBar input,
 #psEditorTagsBar select {
-	background: rgba(2, 6, 23, 0.75) !important;
-	border-color: rgba(255, 255, 255, 0.12) !important;
+	background: transparent !important;
+	border-color: transparent !important;
 }
 
 #copyMirror,
@@ -6290,18 +6290,7 @@ body[data-theme="emerald"] #aiUsePreviewBtn[aria-pressed="true"] span:first-chil
 	background-color: var(--ai-preview-dot-on) !important;
 }
 
-/* ── Dropdown / Tags bar ── */
-body[data-theme="emerald"] #psEditorTagsBar > div {
-	background-color: rgba(2, 18, 8, 0.78) !important;
-	border-color: rgba(34, 197, 94, 0.18) !important;
-}
-
-body[data-theme="emerald"] #psEditorTagsBar input,
-body[data-theme="emerald"] #psEditorTagsBar select {
-	background: rgba(2, 18, 8, 0.78) !important;
-	border-color: rgba(34, 197, 94, 0.25) !important;
-	color: #dcfce7 !important;
-}
+/* ── Dropdown / Tags bar ── (removed emerald-specific overrides, now uses --panel-solid-bg) */
 
 /* ── Room tabs ── */
 body[data-theme="emerald"] #roomTabs .border-fuchsia-400\/40 {
@@ -6693,15 +6682,18 @@ body[data-theme="monoLight"] .editor-search-icon {
 }
 
 /* ── Tool Buttons inside panel ── */
-.toolbox-btn {
+#toolboxPanel .toolbox-btn {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
 	width: 32px;
 	height: 32px;
 	border-radius: 8px;
-	border: none;
-	background: transparent;
+	border: none !important;
+	background: transparent !important;
+	box-shadow: none !important;
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
 	color: rgba(226, 232, 240, 0.75);
 	cursor: pointer;
 	touch-action: manipulation;
@@ -6710,16 +6702,16 @@ body[data-theme="monoLight"] .editor-search-icon {
 	flex-shrink: 0;
 	padding: 0;
 }
-.toolbox-btn:hover {
-	background: rgba(255, 255, 255, 0.1);
+#toolboxPanel .toolbox-btn:hover {
+	background: rgba(255, 255, 255, 0.1) !important;
 	color: #fff;
 }
-.toolbox-btn:active {
-	background: rgba(255, 255, 255, 0.15);
+#toolboxPanel .toolbox-btn:active {
+	background: rgba(255, 255, 255, 0.15) !important;
 	transform: scale(0.92);
 }
-.toolbox-btn[aria-pressed="true"] {
-	background: var(--accent-bg, rgba(217, 70, 239, 0.15));
+#toolboxPanel .toolbox-btn[aria-pressed="true"] {
+	background: var(--accent-bg, rgba(217, 70, 239, 0.15)) !important;
 	color: var(--accent-text, #fff);
 }
 
