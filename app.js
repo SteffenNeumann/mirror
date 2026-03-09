@@ -10552,12 +10552,11 @@
 		}
 		const del = document.createElement("button");
 		del.type = "button";
-		del.className = "ai-chat-delete absolute right-2 top-2 h-6 w-6 rounded-md text-xs text-slate-300 transition hover:bg-white/5 active:bg-white/10";
+		del.className = "ai-chat-delete absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-md text-slate-400 transition hover:bg-white/5 hover:text-slate-200 active:bg-white/10";
 		del.setAttribute("data-chat-delete", "true");
 		del.setAttribute("data-chat-id", entry.id);
-		del.setAttribute("data-i18n", "preview.chat_delete");
 		del.setAttribute("title", t("preview.chat_delete"));
-		del.textContent = "×";
+		del.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="pointer-events-none" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>`;
 		item.appendChild(del);
 		return item;
 	}
