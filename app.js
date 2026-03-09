@@ -22218,11 +22218,19 @@ self.onmessage = async (e) => {
 	}
 
 	async function removeUploadLinksFromNotes(fileName) {
-		if (!psState || !Array.isArray(psState.notes)) return;
-		const uploadUrl = `/uploads/${fileName}`;
+		// Build URL exactly as the server does (encodeURIComponent)
+		const uploadUrl = `/uploads/${encodeURIComponent(fileName)}`;
 		const escaped = uploadUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 		const pattern = new RegExp(`!?\\[[^\\]]*\\]\\(${escaped}\\)`, "g");
-		for (const note of psState.notes) {
+		// Always fetch notes fresh — psState.notes may be empty if PS was never opened
+		let notes = [];
+		try {
+			const res = await api("/api/notes");
+			notes = Array.isArray(res && res.notes) ? res.notes : [];
+		} catch {
+			return;
+		}
+		for (const note of notes) {
 			const text = String(note && note.text ? note.text : "");
 			if (!text.includes(uploadUrl)) continue;
 			const newText = text.replace(pattern, "");
@@ -22235,7 +22243,7 @@ self.onmessage = async (e) => {
 					}),
 				});
 				const saved = res && res.note ? res.note : null;
-				if (saved) {
+				if (saved && psState && Array.isArray(psState.notes)) {
 					psState.notes = psState.notes.map((n) =>
 						String(n && n.id ? n.id : "") === String(saved.id) ? saved : n
 					);
