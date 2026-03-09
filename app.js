@@ -5942,6 +5942,7 @@
 			label: "Emerald",
 			top: "rgba(34, 197, 94, 0.18)",
 			bottom: "rgba(21, 128, 61, 0.10)",
+			previewBg: "#020d06",
 			accentBgSoft: "rgba(34, 197, 94, 0.1)",
 			accentBg: "rgba(34, 197, 94, 0.15)",
 			accentBgHover: "rgba(34, 197, 94, 0.21)",
