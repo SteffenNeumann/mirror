@@ -6317,6 +6317,67 @@ body[data-theme="emerald"] #togglePermanentLink[aria-pressed="true"] {
 	color: var(--emerald-accent) !important;
 }
 
+/* ── bg-slate-950/* → dark green equivalent ── */
+body[data-theme="emerald"] .bg-slate-950\/10,
+body[data-theme="emerald"] .bg-slate-950\/20,
+body[data-theme="emerald"] .bg-slate-950\/25,
+body[data-theme="emerald"] .bg-slate-950\/30,
+body[data-theme="emerald"] .bg-slate-950\/40,
+body[data-theme="emerald"] .bg-slate-950\/60,
+body[data-theme="emerald"] .bg-slate-950\/70,
+body[data-theme="emerald"] .bg-slate-950\/80,
+body[data-theme="emerald"] .bg-slate-950\/90 {
+	background-color: rgba(2, 18, 8, 0.55) !important;
+}
+
+/* ── aiPrompt textarea ── */
+body[data-theme="emerald"] #aiPrompt {
+	background: rgba(2, 18, 8, 0.55) !important;
+	border-color: rgba(34, 197, 94, 0.2) !important;
+	color: #dcfce7 !important;
+}
+
+body[data-theme="emerald"] #aiPrompt:focus {
+	border-color: rgba(34, 197, 94, 0.45) !important;
+	box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2) !important;
+}
+
+/* ── aiMode select ── */
+body[data-theme="emerald"] #aiMode {
+	background: rgba(2, 18, 8, 0.55) !important;
+	border-color: rgba(34, 197, 94, 0.2) !important;
+	color: #dcfce7 !important;
+}
+
+body[data-theme="emerald"] #aiMode:focus {
+	border-color: rgba(34, 197, 94, 0.45) !important;
+	box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2) !important;
+}
+
+/* ── Preview + Comment panel ── */
+body[data-theme="emerald"] #previewPanel,
+body[data-theme="emerald"] #commentPanel {
+	background: rgba(2, 14, 6, 0.72) !important;
+	border-color: rgba(34, 197, 94, 0.12) !important;
+}
+
+/* ── AI conversation section ── */
+body[data-theme="emerald"] #aiConversationSection {
+	background: rgba(2, 14, 6, 0.5) !important;
+	border-color: rgba(34, 197, 94, 0.1) !important;
+}
+
+body[data-theme="emerald"] #aiChatHistory {
+	background: rgba(2, 18, 8, 0.5) !important;
+	border-color: rgba(34, 197, 94, 0.15) !important;
+}
+
+/* ── mdPreview iframe container bg ── */
+body[data-theme="emerald"] #previewPanel > .flex,
+body[data-theme="emerald"] #previewPanel > div {
+	background: transparent !important;
+}
+
 #commentPanel {
 	backdrop-filter: blur(18px) saturate(160%);
 	-webkit-backdrop-filter: blur(18px) saturate(160%);
