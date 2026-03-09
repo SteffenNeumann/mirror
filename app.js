@@ -2557,7 +2557,32 @@
 			return items;
 		}
 
-		// Priority 2: no category set → suggest cat: values
+		// Priority 2: no month set → suggest month tags
+		if (!psEditingNoteMonthTag) {
+			const seen = new Set();
+			const items = [];
+			for (const t of tags) {
+				const raw = String(t || "").trim();
+				if (!isMonthTag(raw)) continue;
+				const normalized = normalizeMonthTag(raw);
+				if (!normalized) continue;
+				if (seen.has(normalized)) continue;
+				seen.add(normalized);
+				if (prefix && !normalized.startsWith(prefix)) continue;
+				items.push(normalized);
+				if (items.length >= 8) break;
+			}
+			// Fallback: all 12 months if no existing month tags
+			if (!items.length) {
+				for (const m of PS_MONTH_TAGS) {
+					if (!prefix || m.startsWith(prefix)) items.push(m);
+					if (items.length >= 8) break;
+				}
+			}
+			return items;
+		}
+
+		// Priority 3: no category set → suggest cat: values
 		if (!psEditingNoteCategory) {
 			const seen = new Set();
 			const items = [];
@@ -2688,6 +2713,9 @@
 		if (isYearTag(first)) {
 			headerLabel = "Jahr";
 			getPrefix = () => '<span class="text-slate-400 text-[10px]">📅</span>';
+		} else if (isMonthTag(first)) {
+			headerLabel = "Monat";
+			getPrefix = () => '<span class="text-slate-400 text-[10px]">🗓</span>';
 		} else if (first.startsWith("cat:")) {
 			headerLabel = "Kategorie";
 			getPrefix = () => '<span class="text-slate-400 text-[10px]">🗂</span>';
