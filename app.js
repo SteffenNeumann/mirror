@@ -22211,8 +22211,38 @@ self.onmessage = async (e) => {
 			});
 			toast("Upload gelöscht.", "success");
 			loadUploadsManage();
+			await removeUploadLinksFromNotes(safeName);
 		} catch {
 			toast("Upload konnte nicht gelöscht werden.", "error");
+		}
+	}
+
+	async function removeUploadLinksFromNotes(fileName) {
+		if (!psState || !Array.isArray(psState.notes)) return;
+		const uploadUrl = `/uploads/${fileName}`;
+		const escaped = uploadUrl.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+		const pattern = new RegExp(`!?\\[[^\\]]*\\]\\(${escaped}\\)`, "g");
+		for (const note of psState.notes) {
+			const text = String(note && note.text ? note.text : "");
+			if (!text.includes(uploadUrl)) continue;
+			const newText = text.replace(pattern, "");
+			try {
+				const res = await api(`/api/notes/${encodeURIComponent(note.id)}`, {
+					method: "PUT",
+					body: JSON.stringify({
+						text: newText,
+						tags: Array.isArray(note.tags) ? note.tags : [],
+					}),
+				});
+				const saved = res && res.note ? res.note : null;
+				if (saved) {
+					psState.notes = psState.notes.map((n) =>
+						String(n && n.id ? n.id : "") === String(saved.id) ? saved : n
+					);
+				}
+			} catch {
+				// silently ignore per-note errors
+			}
 		}
 	}
 
