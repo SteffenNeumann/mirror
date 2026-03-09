@@ -2527,12 +2527,83 @@
 	function buildPsEditorTagsSuggestItems() {
 		if (!psEditorTagsInput) return [];
 		const tags = Array.isArray(psState && psState.tags) ? psState.tags : [];
-		if (!tags.length) return [];
 		const { token } = getPsEditorTagTokenBounds(psEditorTagsInput);
 		const prefix = String(token || "")
 			.trim()
 			.replace(/^#/, "")
 			.toLowerCase();
+
+		// Priority 1: no year set → suggest years
+		if (!psEditingNoteYearTag) {
+			const seen = new Set();
+			const items = [];
+			for (const t of tags) {
+				const raw = String(t || "").trim();
+				if (!isYearTag(raw)) continue;
+				if (seen.has(raw)) continue;
+				seen.add(raw);
+				if (prefix && !raw.startsWith(prefix)) continue;
+				items.push(raw);
+				if (items.length >= 8) break;
+			}
+			// Fallback: suggest current year (and adjacent) if no existing year tags match
+			if (!items.length) {
+				const cy = String(new Date().getFullYear());
+				const candidates = [cy, String(new Date().getFullYear() - 1)];
+				for (const y of candidates) {
+					if (!prefix || y.startsWith(prefix)) items.push(y);
+				}
+			}
+			return items;
+		}
+
+		// Priority 2: no category set → suggest cat: values
+		if (!psEditingNoteCategory) {
+			const seen = new Set();
+			const items = [];
+			for (const t of tags) {
+				const raw = String(t || "").trim();
+				if (!raw.startsWith("cat:")) continue;
+				const val = raw.slice(4);
+				if (!val) continue;
+				const lower = val.toLowerCase();
+				if (seen.has(lower)) continue;
+				seen.add(lower);
+				// match against "val" or "cat:val" prefix
+				if (prefix) {
+					const strippedPrefix = prefix.startsWith("cat:") ? prefix.slice(4) : prefix;
+					if (!lower.startsWith(strippedPrefix)) continue;
+				}
+				items.push("cat:" + val);
+				if (items.length >= 8) break;
+			}
+			return items;
+		}
+
+		// Priority 3: no subcategory set → suggest sub: values
+		if (!psEditingNoteSubcategory) {
+			const seen = new Set();
+			const items = [];
+			for (const t of tags) {
+				const raw = String(t || "").trim();
+				if (!raw.startsWith("sub:")) continue;
+				const val = raw.slice(4);
+				if (!val) continue;
+				const lower = val.toLowerCase();
+				if (seen.has(lower)) continue;
+				seen.add(lower);
+				if (prefix) {
+					const strippedPrefix = prefix.startsWith("sub:") ? prefix.slice(4) : prefix;
+					if (!lower.startsWith(strippedPrefix)) continue;
+				}
+				items.push("sub:" + val);
+				if (items.length >= 8) break;
+			}
+			return items;
+		}
+
+		// Priority 4: all main tags set → suggest regular tags
+		if (!tags.length) return [];
 		const existing = new Set(normalizeManualTags(psEditorTagsInput.value));
 		if (prefix) existing.delete(prefix);
 		const items = [];
@@ -2608,19 +2679,40 @@
 		psEditorTagsSuggestOpen = true;
 		psEditorTagsSuggestItems = items;
 		psEditorTagsSuggestIndex = activeIndex;
-		psEditorTagsSuggest.innerHTML = items
-			.map((tag, idx) => {
-				const active = idx === activeIndex;
-				const btnClass = active
-					? "bg-white/10 text-white"
-					: "text-slate-200 hover:bg-white/5";
-				return `\n\t\t\t<button type="button" class="flex w-full items-center gap-2 px-2.5 py-1.5 text-left ${btnClass}" data-tag="${escapeHtmlAttr(
-					tag
-				)}" data-index="${idx}"><span class="text-slate-400">#</span><span class="font-medium">${escapeHtml(
-					tag
-				)}</span></button>`;
-			})
-			.join("");
+
+		// Detect suggestion mode from first item
+		const first = String(items[0] || "");
+		let headerLabel = "";
+		let getPrefix = () => '<span class="text-slate-400">#</span>';
+		let getLabel = (tag) => escapeHtml(tag);
+		if (isYearTag(first)) {
+			headerLabel = "Jahr";
+			getPrefix = () => '<span class="text-slate-400 text-[10px]">📅</span>';
+		} else if (first.startsWith("cat:")) {
+			headerLabel = "Kategorie";
+			getPrefix = () => '<span class="text-slate-400 text-[10px]">🗂</span>';
+			getLabel = (tag) => escapeHtml(tag); // show full "cat:value"
+		} else if (first.startsWith("sub:")) {
+			headerLabel = "Unterkategorie";
+			getPrefix = () => '<span class="text-slate-400 text-[10px]">📂</span>';
+			getLabel = (tag) => escapeHtml(tag); // show full "sub:value"
+		}
+
+		const header = headerLabel
+			? `<div class="px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-slate-500">${escapeHtml(headerLabel)}</div>`
+			: "";
+
+		psEditorTagsSuggest.innerHTML =
+			header +
+			items
+				.map((tag, idx) => {
+					const active = idx === activeIndex;
+					const btnClass = active
+						? "bg-white/10 text-white"
+						: "text-slate-200 hover:bg-white/5";
+					return `<button type="button" class="flex w-full items-center gap-2 px-2.5 py-1.5 text-left ${btnClass}" data-tag="${escapeHtmlAttr(tag)}" data-index="${idx}">${getPrefix()}<span class="font-medium">${getLabel(tag)}</span></button>`;
+				})
+				.join("");
 		psEditorTagsSuggest.classList.remove("hidden");
 		positionPsEditorTagsSuggest();
 	}
@@ -2707,19 +2799,9 @@
 			return;
 		}
 		if (!psEditorTagsInput) return;
-		// Add the tag as a pill
-		const normalized = String(tag || "").toLowerCase().replace(/\s+/g, "-").slice(0, 48);
-		if (normalized && !psEditingNoteTags.some(t => t.toLowerCase() === normalized)) {
-			psEditingNoteTags = [...psEditingNoteTags, normalized];
-		}
-		closePsEditorTagsSuggest();
-		psEditorTagsInput.value = "";
-		psEditingNoteTagsOverridden = true;
-		renderPsEditorTagsPills();
-		updatePsEditingTagsHint();
-		updateEditingNoteTagsLocal(psEditingNoteTags);
-		schedulePsTagsAutoSave();
-		updateEditorMetaYaml();
+		// Route through addTagFromInput so year/cat/sub tags are handled correctly
+		psEditorTagsInput.value = String(tag || "");
+		addTagFromInput();
 		psEditorTagsInput.focus();
 		updatePsEditorTagsSuggest(true);
 	}
