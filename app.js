@@ -22243,10 +22243,18 @@ self.onmessage = async (e) => {
 					}),
 				});
 				const saved = res && res.note ? res.note : null;
-				if (saved && psState && Array.isArray(psState.notes)) {
-					psState.notes = psState.notes.map((n) =>
-						String(n && n.id ? n.id : "") === String(saved.id) ? saved : n
-					);
+				if (saved) {
+					if (psState && Array.isArray(psState.notes)) {
+						psState.notes = psState.notes.map((n) =>
+							String(n && n.id ? n.id : "") === String(saved.id) ? saved : n
+						);
+					}
+					// If this note is currently open in the editor, update the textarea
+					if (String(psEditingNoteId || "") === String(saved.id)) {
+						if (textarea) textarea.value = String(saved.text || "");
+						psAutoSaveLastSavedText = String(saved.text || "");
+						updatePreview();
+					}
 				}
 			} catch {
 				// silently ignore per-note errors
