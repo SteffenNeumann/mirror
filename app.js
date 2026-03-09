@@ -13103,6 +13103,34 @@
 			};
 			const base = opts.isLightSyntax ? lightDefaults : darkDefaults;
 			switch (theme) {
+				case "fuchsia":
+					return {
+						...base,
+						preBg: "rgba(30,10,40,.65)",
+						preBorder: "rgba(217,70,239,.15)",
+						codeBg: "rgba(217,70,239,.1)",
+					};
+				case "cyan":
+					return {
+						...base,
+						preBg: "rgba(6,18,30,.65)",
+						preBorder: "rgba(14,165,233,.15)",
+						codeBg: "rgba(14,165,233,.1)",
+					};
+				case "emerald":
+					return {
+						...base,
+						preBg: "rgba(4,20,10,.65)",
+						preBorder: "rgba(34,197,94,.15)",
+						codeBg: "rgba(34,197,94,.1)",
+					};
+				case "violet":
+					return {
+						...base,
+						preBg: "rgba(16,8,36,.65)",
+						preBorder: "rgba(124,58,237,.15)",
+						codeBg: "rgba(124,58,237,.1)",
+					};
 				case "coffeeLight":
 					return {
 						...base,
@@ -13134,6 +13162,38 @@
 
 		function buildPreviewHighlightCss(theme) {
 			switch (theme) {
+				case "fuchsia":
+					return `
+					pre.hljs{background:rgba(30,10,40,.65);border-color:rgba(217,70,239,.15);}
+					pre.hljs code.hljs, code.hljs{color:#e2e8f0;}
+					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#e879f9;}
+					.hljs-string,.hljs-attr,.hljs-number{color:#f0abfc;}
+					.hljs-comment,.hljs-quote{color:rgba(244,114,182,.55);}
+					`;
+				case "cyan":
+					return `
+					pre.hljs{background:rgba(6,18,30,.65);border-color:rgba(14,165,233,.15);}
+					pre.hljs code.hljs, code.hljs{color:#e2e8f0;}
+					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#38bdf8;}
+					.hljs-string,.hljs-attr,.hljs-number{color:#67e8f9;}
+					.hljs-comment,.hljs-quote{color:rgba(103,232,249,.5);}
+					`;
+				case "emerald":
+					return `
+					pre.hljs{background:rgba(4,20,10,.65);border-color:rgba(34,197,94,.15);}
+					pre.hljs code.hljs, code.hljs{color:#e2e8f0;}
+					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#4ade80;}
+					.hljs-string,.hljs-attr,.hljs-number{color:#86efac;}
+					.hljs-comment,.hljs-quote{color:rgba(74,222,128,.5);}
+					`;
+				case "violet":
+					return `
+					pre.hljs{background:rgba(16,8,36,.65);border-color:rgba(124,58,237,.15);}
+					pre.hljs code.hljs, code.hljs{color:#e2e8f0;}
+					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#a78bfa;}
+					.hljs-string,.hljs-attr,.hljs-number{color:#c4b5fd;}
+					.hljs-comment,.hljs-quote{color:rgba(196,181,253,.5);}
+					`;
 				case "coffeeLight":
 					return `
 					pre.hljs{background:#f8f1e9;border-color:#f8f1e9;color:#3b2a21;}
