@@ -4335,6 +4335,38 @@ body[data-theme="coffeeDark"] .md-content pre {
 	border-color: #35261e;
 }
 
+body[data-theme="coffeeDark"] .md-content pre.hljs {
+	background: #1c1511 !important;
+	border-color: #35261e;
+	color: #e8d9cc;
+}
+
+body[data-theme="coffeeDark"] .md-content pre.hljs code.hljs {
+	color: #e8d9cc;
+}
+
+body[data-theme="coffeeDark"] .md-content code.hljs,
+body[data-theme="coffeeDark"] .md-content pre code.hljs {
+	color: #e8d9cc;
+	background: transparent !important;
+}
+
+/* Coffee Dark syntax highlights */
+body[data-theme="coffeeDark"] .md-content .hljs-keyword,
+body[data-theme="coffeeDark"] .md-content .hljs-selector-tag,
+body[data-theme="coffeeDark"] .md-content .hljs-title {
+	color: #c9a880;
+}
+body[data-theme="coffeeDark"] .md-content .hljs-string,
+body[data-theme="coffeeDark"] .md-content .hljs-attr,
+body[data-theme="coffeeDark"] .md-content .hljs-number {
+	color: #b8a38d;
+}
+body[data-theme="coffeeDark"] .md-content .hljs-comment,
+body[data-theme="coffeeDark"] .md-content .hljs-quote {
+	color: rgba(232, 217, 204, 0.5);
+}
+
 body[data-theme="coffeeDark"] .md-content code {
 	background: rgba(234, 208, 187, 0.1);
 }
@@ -6192,6 +6224,16 @@ body[data-theme="emerald"] {
 	--emerald-accent: #22c55e;
 	--emerald-accent-soft: rgba(34, 197, 94, 0.62);
 	--emerald-border: rgba(34, 197, 94, 0.45);
+	--selection-menu-bg: rgba(2, 18, 8, 0.90);
+	--selection-menu-border: rgba(34, 197, 94, 0.22);
+	--sel-text: rgba(220, 252, 231, 0.92);
+	--sel-text-muted: rgba(220, 252, 231, 0.48);
+	--sel-text-hover: #dcfce7;
+	--sel-hover-bg: rgba(34, 197, 94, 0.1);
+	--sel-sep: rgba(34, 197, 94, 0.14);
+	--sel-divider: rgba(34, 197, 94, 0.09);
+	--sel-dot-ring: rgba(34, 197, 94, 0.45);
+	--calendar-tooltip-text: rgba(220, 252, 231, 0.95);
 }
 
 /* ── Fuchsia → Green color remapping ── */
@@ -6365,6 +6407,20 @@ body[data-theme="emerald"] #aiChatHistory {
 body[data-theme="emerald"] #previewPanel > .flex,
 body[data-theme="emerald"] #previewPanel > div {
 	background: transparent !important;
+}
+
+/* ── Violet theme: selection menu + YAML meta vars ── */
+body[data-theme="violet"] {
+	--selection-menu-bg: rgba(13, 10, 28, 0.90);
+	--selection-menu-border: rgba(124, 58, 237, 0.22);
+	--sel-text: rgba(237, 233, 254, 0.92);
+	--sel-text-muted: rgba(237, 233, 254, 0.48);
+	--sel-text-hover: #ede9fe;
+	--sel-hover-bg: rgba(124, 58, 237, 0.1);
+	--sel-sep: rgba(124, 58, 237, 0.14);
+	--sel-divider: rgba(124, 58, 237, 0.09);
+	--sel-dot-ring: rgba(124, 58, 237, 0.45);
+	--calendar-tooltip-text: rgba(237, 233, 254, 0.95);
 }
 
 #commentPanel {
@@ -6775,21 +6831,21 @@ body[data-theme="monoLight"] .toolbox-panel {
 	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1), 0 1px 3px rgba(0, 0, 0, 0.06);
 	backdrop-filter: blur(20px) saturate(1.4);
 }
-body[data-theme="coffeeLight"] .toolbox-btn,
-body[data-theme="bitterLight"] .toolbox-btn,
-body[data-theme="monoLight"] .toolbox-btn {
-	color: rgba(30, 41, 59, 0.6);
+body[data-theme="coffeeLight"] #toolboxPanel .toolbox-btn,
+body[data-theme="bitterLight"] #toolboxPanel .toolbox-btn,
+body[data-theme="monoLight"] #toolboxPanel .toolbox-btn {
+	color: rgba(30, 41, 59, 0.82);
 }
-body[data-theme="coffeeLight"] .toolbox-btn:hover,
-body[data-theme="bitterLight"] .toolbox-btn:hover,
-body[data-theme="monoLight"] .toolbox-btn:hover {
-	background: rgba(0, 0, 0, 0.06);
-	color: rgba(30, 41, 59, 0.9);
+body[data-theme="coffeeLight"] #toolboxPanel .toolbox-btn:hover,
+body[data-theme="bitterLight"] #toolboxPanel .toolbox-btn:hover,
+body[data-theme="monoLight"] #toolboxPanel .toolbox-btn:hover {
+	background: rgba(0, 0, 0, 0.07) !important;
+	color: rgba(30, 41, 59, 0.95);
 }
-body[data-theme="coffeeLight"] .toolbox-btn[aria-pressed="true"],
-body[data-theme="bitterLight"] .toolbox-btn[aria-pressed="true"],
-body[data-theme="monoLight"] .toolbox-btn[aria-pressed="true"] {
-	background: var(--accent-bg, rgba(217, 70, 239, 0.1));
+body[data-theme="coffeeLight"] #toolboxPanel .toolbox-btn[aria-pressed="true"],
+body[data-theme="bitterLight"] #toolboxPanel .toolbox-btn[aria-pressed="true"],
+body[data-theme="monoLight"] #toolboxPanel .toolbox-btn[aria-pressed="true"] {
+	background: var(--accent-bg, rgba(217, 70, 239, 0.1)) !important;
 	color: var(--accent-text-soft, rgba(168, 85, 247, 0.9));
 }
 body[data-theme="coffeeLight"] .toolbox-sep,
