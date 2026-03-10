@@ -13218,6 +13218,14 @@
 					.hljs-string,.hljs-attr,.hljs-number{color:#ffb199;}
 					.hljs-comment,.hljs-quote{color:rgba(240,232,223,.55);}
 					`;
+				case "coffeeDark":
+					return `
+					pre.hljs, pre.hljs code.hljs{background:#1c1511!important;border-color:#35261e;color:#e8d9cc;}
+					pre code.hljs{background:transparent!important;}
+					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#c9a880;}
+					.hljs-string,.hljs-attr,.hljs-number{color:#b8a38d;}
+					.hljs-comment,.hljs-quote{color:rgba(232,217,204,.5);}
+					`;
 				default:
 					return "";
 			}
