@@ -14107,6 +14107,30 @@ ${highlightThemeCss}
 		};
 		doc.addEventListener("mouseleave", schedulePreviewExitSave, true);
 
+		/* Forward command palette shortcuts from within the preview iframe */
+		doc.addEventListener("keydown", (ev) => {
+			if (!ev) return;
+			const mod = ev.metaKey || ev.ctrlKey;
+			const openPrimary = !mod && ev.altKey && ev.shiftKey && ev.code === "KeyP";
+			const openFallback = mod && ev.shiftKey && !ev.altKey && ev.code === "KeyP";
+			if (openPrimary || openFallback) {
+				ev.preventDefault();
+				ev.stopPropagation();
+				if (cmdPaletteOpen) {
+					closeCmdPalette();
+				} else {
+					if (modalRoot && !modalRoot.classList.contains("hidden")) return;
+					if (settingsOpen) return;
+					openCmdPalette();
+				}
+				return;
+			}
+			if (ev.key === "Escape" && cmdPaletteOpen) {
+				ev.preventDefault();
+				closeCmdPalette();
+			}
+		}, true);
+
 		// Change event is sufficient for checkbox toggles.
 	}
 
