@@ -5777,37 +5777,41 @@ const server = http.createServer(async (req, res) => {
 						if (!out.ok || !out.data) {
 							const lastStatus = out.status || 502;
 							const lastErrMsg = out.errMsg || "ai_failed";
-						const isOverloaded = lastStatus === 529 ||
-							/overload/i.test(String(lastErrMsg));
-						try {
-							console.warn("[ai] upstream_error", {
-								reqId,
-								status: lastStatus,
-								errMsg: lastErrMsg || `AI HTTP ${lastStatus}`,
-								mode,
-								lang,
-								kind,
-								ip,
-								email,
-							});
-						} catch {
-							// ignore logging errors
+							const isOverloaded = lastStatus === 529 ||
+								/overload/i.test(String(lastErrMsg));
+							try {
+								console.warn("[ai] upstream_error", {
+									reqId,
+									status: lastStatus,
+									errMsg: lastErrMsg || `AI HTTP ${lastStatus}`,
+									mode,
+									lang,
+									kind,
+									ip,
+									email,
+								});
+							} catch {
+								// ignore logging errors
+							}
+							if (isOverloaded) {
+								json(res, 503, {
+									ok: false,
+									error: "ai_overloaded",
+									message: "Anthropic API überlastet – bitte in Kürze erneut versuchen.",
+									reqId,
+								});
+							} else {
+								json(res, 502, {
+									ok: false,
+									error: "ai_failed",
+									message: lastErrMsg || `AI HTTP ${lastStatus}`,
+									reqId,
+								});
+							}
+							return;
 						}
-						if (isOverloaded) {
-							json(res, 503, {
-								ok: false,
-								error: "ai_overloaded",
-								message: "Anthropic API überlastet – bitte in Kürze erneut versuchen.",
-								reqId,
-							});
-						} else {
-							json(res, 502, {
-								ok: false,
-								error: "ai_failed",
-								message: lastErrMsg || `AI HTTP ${lastStatus}`,
-								reqId,
-							});
-						}
+						// For run mode, retry if the output format is wrong
+						if (mode === "run" && kind === "code") {
 							const firstText = extractText(out.data);
 							if (shouldRetryRunOutput(firstText)) {
 								const strictRunInstruction =
