@@ -5432,6 +5432,108 @@
 		return true;
 	}
 
+	/**
+	 * Bereinigt und formatiert eingefügten Text beim Paste.
+	 * - Erhält Code-Blöcke (``` ... ```) unverändert
+	 * - Entfernt aufeinanderfolgende Leerzeilen (max. 1 bleibt)
+	 * - Fügt Leerzeilen vor/nach Markdown-Headings (## ...) ein
+	 * - Formatiert "Note:"-Zeilen als Blockquotes (> **Note:** ...)
+	 * - Normalisiert mehrfache Leerzeichen innerhalb einer Zeile
+	 * - Korrigiert Bullet-Einrückung unter nummerierten Listen
+	 * @param {string} text
+	 * @returns {string}
+	 */
+	function formatPastedText(text) {
+		if (!text) return text;
+
+		// Code-Blöcke sichern und durch Platzhalter ersetzen
+		const codeBlocks = [];
+		let processedText = text.replace(/```[\s\S]*?```/g, (match) => {
+			const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`;
+			codeBlocks.push(match);
+			return placeholder;
+		});
+
+		const lines = processedText.split("\n");
+		const out = [];
+		let prevEmpty = false;
+		let inList = false;
+
+		for (let i = 0; i < lines.length; i++) {
+			const raw = lines[i];
+			const trimmed = raw.trim();
+
+			// Leerzeile: aufeinanderfolgende zusammenführen
+			if (trimmed === "") {
+				if (prevEmpty) continue;
+				out.push("");
+				prevEmpty = true;
+				continue;
+			}
+			prevEmpty = false;
+
+			// Mehrfache Leerzeichen innerhalb der Zeile normalisieren
+			const normalized = trimmed.replace(/\s+/g, " ");
+
+			// Markdown-Heading (## Titel)
+			if (/^#{1,6}\s+.+/.test(normalized)) {
+				inList = false;
+				if (out.length > 0 && out[out.length - 1] !== "") out.push("");
+				out.push(normalized);
+				out.push("");
+				prevEmpty = true;
+				continue;
+			}
+
+			// "Note:"-Zeilen → Blockquote
+			if (/note:/i.test(normalized)) {
+				let line = normalized;
+				line = line.replace(/^(>|:::|\!\!\! note|- \[!NOTE\])\s*/i, "").trim();
+				line = line.replace(/^note:\s*/i, "").trim();
+				if (line.includes("**Note:**")) {
+					line = `> ${line}`;
+				} else {
+					line = line ? `> **Note:** ${line}` : `> **Note:**`;
+				}
+				if (out.length > 0 && !out[out.length - 1].startsWith(">") && out[out.length - 1] !== "") {
+					out.push("");
+				}
+				out.push(line);
+				continue;
+			}
+
+			// Listen-Eintrag
+			if (/^(\*|-|\+|\d+\.|\u2022|\u2219|\u25e6)\s+.+/.test(normalized)) {
+				if (!inList) {
+					inList = true;
+					if (out.length > 0 && out[out.length - 1] !== "") out.push("");
+				}
+				// Bullet direkt nach nummeriertem Listenpunkt → einrücken
+				const isBullet = /^(\*|-|\+|\u2022|\u2219|\u25e6)/.test(normalized);
+				if (isBullet && out.length > 0 && /^\d+\./.test(out[out.length - 1].trimStart())) {
+					out.push("    " + normalized);
+					continue;
+				}
+				out.push(normalized);
+				continue;
+			}
+
+			// Normaler Text
+			inList = false;
+			out.push(normalized);
+		}
+
+		let result = out.join("\n");
+
+		// Code-Blöcke wiederherstellen
+		codeBlocks.forEach((block, idx) => {
+			result = result.replace(`__CODE_BLOCK_${idx}__`, block);
+		});
+
+		// Leerzeilen am Anfang/Ende entfernen
+		return result.replace(/^\n+/, "").replace(/\n+$/, "");
+	}
+
 	function applySlashCommand(el) {
 		if (!el) return false;
 		const value = String(el.value || "");
@@ -25844,7 +25946,7 @@ self.onmessage = async (e) => {
 		if (!ev) return;
 		if (ev.key !== "Enter") return;
 		if (ev.shiftKey || ev.metaKey || ev.ctrlKey || ev.altKey) return;
-		
+
 		// Zuerst Slash-Commands prüfen
 		const slashApplied = applySlashCommand(textarea);
 		if (slashApplied) {
@@ -25855,7 +25957,7 @@ self.onmessage = async (e) => {
 			scheduleSend();
 			return;
 		}
-		
+
 		// Dann Markdown-Listen-Fortsetzung prüfen
 		const listApplied = handleMarkdownListContinuation(textarea);
 		if (listApplied) {
@@ -25864,6 +25966,23 @@ self.onmessage = async (e) => {
 			scheduleSend();
 			return;
 		}
+	});
+
+	textarea.addEventListener("paste", (ev) => {
+		const raw = ev.clipboardData && ev.clipboardData.getData("text/plain");
+		if (!raw) return;
+		ev.preventDefault();
+		const formatted = formatPastedText(raw);
+		const start = Number(textarea.selectionStart || 0);
+		const end = Number(textarea.selectionEnd || 0);
+		const before = String(textarea.value || "").slice(0, start);
+		const after = String(textarea.value || "").slice(end);
+		textarea.value = before + formatted + after;
+		const newCursor = start + formatted.length;
+		textarea.selectionStart = newCursor;
+		textarea.selectionEnd = newCursor;
+		// Input-Event manuell auslösen damit alle Sync-Listener reagieren
+		textarea.dispatchEvent(new Event("input", { bubbles: true }));
 	});
 
 	if (tableModalClose) {
