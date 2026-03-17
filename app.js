@@ -290,6 +290,7 @@
 	const settingsThemeList = document.getElementById("settingsThemeList");
 	const settingsGlowToggle = document.getElementById("settingsGlowToggle");
 	const taskAutoSortToggle = document.getElementById("taskAutoSort");
+	const pasteFormatToggle = document.getElementById("pasteFormatEnabled");
 	const settingsDateFormatSelect = document.getElementById("settingsDateFormat");
 	const settingsTimeFormatSelect = document.getElementById("settingsTimeFormat");
 	const mobileAutoNoteSecondsInput = document.getElementById(
@@ -5955,6 +5956,7 @@
 	const THEME_KEY = "mirror_theme";
 	const GLOW_ENABLED_KEY = "mirror_glow_enabled";
 	const TASK_AUTO_SORT_KEY = "mirror_task_auto_sort";
+	const PASTE_FORMAT_KEY = "mirror_paste_format_enabled";
 	const DATE_FORMAT_KEY = "mirror_date_format";
 	const TIME_FORMAT_KEY = "mirror_time_format";
 	const UI_LANG_KEY = "mirror_ui_lang";
@@ -5986,6 +5988,7 @@
 	let activeTheme = "fuchsia";
 	let glowEnabled = true;
 	let taskAutoSortEnabled = false;
+	let pasteFormatEnabled = true;
 	let dateFormat = "locale";
 	let timeFormat = "locale";
 	let mobileAutoNoteSeconds = 0;
@@ -6547,6 +6550,11 @@
 				"settings.tasks.desc":
 					"Offene Aufgaben beim Schließen der Vorschau automatisch nach oben sortieren.",
 				"settings.tasks.auto_sort": "Offene Einträge zuerst",
+				"settings.paste_format.title": "Paste-Bereinigung",
+				"settings.paste_format.desc":
+					"Eingefügten Text automatisch bereinigen: Leerzeilen reduzieren, Headings formatieren, Leerzeichen normalisieren.",
+				"settings.paste_format.label": "Paste-Bereinigung aktivieren",
+				"toast.paste_formatted": "Text bereinigt & formatiert",
 				"settings.datetime.title": "Datum & Zeit",
 				"settings.datetime.desc":
 					"Format für Datum und Uhrzeit im Personal Space.",
@@ -7241,6 +7249,11 @@
 				"settings.tasks.desc":
 					"Automatically move open tasks to the top when closing preview.",
 				"settings.tasks.auto_sort": "Open items first",
+				"settings.paste_format.title": "Paste cleanup",
+				"settings.paste_format.desc":
+					"Automatically clean pasted text: reduce blank lines, format headings, normalise spaces.",
+				"settings.paste_format.label": "Enable paste cleanup",
+				"toast.paste_formatted": "Text cleaned & formatted",
 				"settings.datetime.title": "Date & time",
 				"settings.datetime.desc":
 					"Date and time format for Personal Space.",
@@ -7967,6 +7980,32 @@
 			// ignore
 		}
 		applyTaskAutoSortUi();
+	}
+
+	function applyPasteFormatUi() {
+		if (!pasteFormatToggle) return;
+		pasteFormatToggle.checked = Boolean(pasteFormatEnabled);
+	}
+
+	function loadPasteFormatEnabled() {
+		try {
+			const raw = localStorage.getItem(PASTE_FORMAT_KEY);
+			// Default on (null = not set yet)
+			pasteFormatEnabled = raw === null ? true : raw === "1";
+		} catch {
+			pasteFormatEnabled = true;
+		}
+		applyPasteFormatUi();
+	}
+
+	function savePasteFormatEnabled(next) {
+		pasteFormatEnabled = Boolean(next);
+		try {
+			localStorage.setItem(PASTE_FORMAT_KEY, pasteFormatEnabled ? "1" : "0");
+		} catch {
+			// ignore
+		}
+		applyPasteFormatUi();
 	}
 
 	function loadAiPrompt() {
@@ -25969,6 +26008,7 @@ self.onmessage = async (e) => {
 	});
 
 	textarea.addEventListener("paste", (ev) => {
+		if (!pasteFormatEnabled) return;
 		const raw = ev.clipboardData && ev.clipboardData.getData("text/plain");
 		if (!raw) return;
 		ev.preventDefault();
@@ -25983,7 +26023,7 @@ self.onmessage = async (e) => {
 		textarea.selectionEnd = newCursor;
 		// Input-Event manuell auslösen damit alle Sync-Listener reagieren
 		textarea.dispatchEvent(new Event("input", { bubbles: true }));
-		toast("Text bereinigt & formatiert", "success");
+		toast(t("toast.paste_formatted"), "success");
 	});
 
 	if (tableModalClose) {
@@ -26621,6 +26661,7 @@ self.onmessage = async (e) => {
 	loadTheme();
 	loadGlowEnabled();
 	loadTaskAutoSortEnabled();
+	loadPasteFormatEnabled();
 	loadDateFormatSetting();
 	loadTimeFormatSetting();
 	loadAiApiConfig();
@@ -28686,6 +28727,11 @@ self.onmessage = async (e) => {
 	if (taskAutoSortToggle) {
 		taskAutoSortToggle.addEventListener("change", () => {
 			saveTaskAutoSortEnabled(Boolean(taskAutoSortToggle.checked));
+		});
+	}
+	if (pasteFormatToggle) {
+		pasteFormatToggle.addEventListener("change", () => {
+			savePasteFormatEnabled(Boolean(pasteFormatToggle.checked));
 		});
 	}
 	if (settingsDateFormatSelect) {
