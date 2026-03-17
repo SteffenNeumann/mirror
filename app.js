@@ -25983,6 +25983,7 @@ self.onmessage = async (e) => {
 		textarea.selectionEnd = newCursor;
 		// Input-Event manuell auslösen damit alle Sync-Listener reagieren
 		textarea.dispatchEvent(new Event("input", { bubbles: true }));
+		toast("Text bereinigt & formatiert", "success");
 	});
 
 	if (tableModalClose) {
