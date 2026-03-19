@@ -5456,11 +5456,19 @@ const server = http.createServer(async (req, res) => {
 					}
 				}
 
-				const system =
-					"You are Mirror's assistant. You can help with both code and normal text. " +
-					"Reply in the same language as the user's input (German/English). " +
-					"Use inclusive language unless the user explicitly asks otherwise. " +
-					"Be concrete and practical. Never reveal secrets/keys.";
+				const system = mode === "transform"
+					? "You are a text transformation engine. " +
+					  "Your ONLY job is to apply the user's transformation instruction to the given text and return the complete result. " +
+					  "OUTPUT RULES (mandatory, no exceptions): " +
+					  "1. Return ONLY the transformed text, nothing else. " +
+					  "2. No explanations, no comments, no headers, no summaries, no tables, no bullet points about what you changed. " +
+					  "3. No markdown code fences. " +
+					  "4. Preserve all original formatting, line breaks, and markdown syntax not directly affected by the instruction. " +
+					  "5. Start your reply with the first character of the transformed text."
+					: "You are Mirror's assistant. You can help with both code and normal text. " +
+					  "Reply in the same language as the user's input (German/English). " +
+					  "Use inclusive language unless the user explicitly asks otherwise. " +
+					  "Be concrete and practical. Never reveal secrets/keys.";
 
 				const modeInstructionBase =
 					mode === "fix"
