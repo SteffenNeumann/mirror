@@ -16341,8 +16341,12 @@ self.onmessage = async (e) => {
 			// transform mode: auto-apply AI output directly into the editor
 			if (mode === "transform" && aiText && textarea) {
 				textarea.value = aiText;
+				if (isCrdtEnabled()) {
+					updateCrdtFromTextarea();
+				} else {
+					scheduleSend();
+				}
 				updatePreview();
-				scheduleSend();
 				schedulePsAutoSave();
 				toast(t("toast.ai_transform_applied") || "✏️ Änderungen übernommen.", "success");
 			}
