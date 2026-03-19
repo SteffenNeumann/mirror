@@ -6402,6 +6402,7 @@
 				"preview.ai_mode.improve": "Verbessern",
 				"preview.ai_mode.run": "Code ausführen",
 				"preview.ai_mode.summarize": "Zusammenfassen",
+				"preview.ai_mode.transform": "✏️ Bearbeiten & Anwenden",
 				"preview.ai_mode.image": "🎨 Bild generieren",
 				"preview.ask": "Fragen",
 				"preview.prompt_clear": "Prompt leeren",
@@ -6414,6 +6415,7 @@
 				"preview.chat_delete": "Chat löschen",
 				"preview.chat_output": "Chat",
 				"toast.dictation_started": "Diktat gestartet.",
+				"toast.ai_transform_applied": "✏️ Änderungen übernommen.",
 				"preview.replace_title": "Editor durch KI-Ausgabe ersetzen",
 				"preview.replace": "Ersetzen",
 				"preview.append_title": "KI-Ausgabe ans Ende anfügen",
@@ -7104,6 +7106,7 @@
 				"preview.ai_mode.improve": "Improve",
 				"preview.ai_mode.run": "Run code",
 				"preview.ai_mode.summarize": "Summarize",
+				"preview.ai_mode.transform": "✏️ Edit & Apply",
 				"preview.ai_mode.image": "🎨 Generate image",
 				"preview.ask": "Ask",
 				"preview.prompt_clear": "Clear prompt",
@@ -7116,6 +7119,7 @@
 				"preview.chat_delete": "Delete chat",
 				"preview.chat_output": "Chat",
 				"toast.dictation_started": "Dictation started.",
+				"toast.ai_transform_applied": "✏️ Changes applied.",
 				"preview.replace_title": "Replace editor with AI output",
 				"preview.replace": "Replace",
 				"preview.append_title": "Append AI output to editor",
@@ -16144,7 +16148,7 @@ self.onmessage = async (e) => {
 		)
 			.trim()
 			.toLowerCase();
-		if (v === "fix" || v === "improve" || v === "run" || v === "summarize" || v === "image")
+		if (v === "fix" || v === "improve" || v === "run" || v === "summarize" || v === "transform" || v === "image")
 			return v;
 		return "explain";
 	}
@@ -16269,9 +16273,10 @@ self.onmessage = async (e) => {
 			);
 			return;
 		}
-		let kind = mode === "run" ? "code" : hasCode ? "code" : "text";
-		let payloadText = kind === "code" ? code : editorText;
-		let payloadLang = kind === "code" ? lang || "" : "text";
+		// transform mode always works on the full editor text
+		let kind = (mode === "run") ? "code" : (mode === "transform") ? "text" : hasCode ? "code" : "text";
+		let payloadText = (mode === "transform") ? editorText : kind === "code" ? code : editorText;
+		let payloadLang = (mode === "transform") ? "text" : kind === "code" ? lang || "" : "text";
 		let promptForRequest = prompt;
 		const aiConfig = getAiApiConfig();
 		if (mode !== "run" && !usePreview) {
@@ -16333,6 +16338,14 @@ self.onmessage = async (e) => {
 			if (promptForChat) addAiChatEntry("user", promptForChat, chatContextKey);
 			if (aiText) addAiChatEntry("ai", aiText, chatContextKey);
 			if (aiText) clearAiPromptAfterResponse(promptForChat);
+			// transform mode: auto-apply AI output directly into the editor
+			if (mode === "transform" && aiText && textarea) {
+				textarea.value = aiText;
+				updatePreview();
+				scheduleSend();
+				schedulePsAutoSave();
+				toast(t("toast.ai_transform_applied") || "✏️ Änderungen übernommen.", "success");
+			}
 		} catch (e) {
 			const isOverloaded = (e && e.status === 503) ||
 				(e && e.message && /ai_overloaded|overload/i.test(String(e.message)));

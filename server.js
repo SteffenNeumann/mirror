@@ -5397,7 +5397,8 @@ const server = http.createServer(async (req, res) => {
 					modeRaw === "fix" ||
 					modeRaw === "improve" ||
 					modeRaw === "run" ||
-					modeRaw === "summarize"
+					modeRaw === "summarize" ||
+					modeRaw === "transform"
 						? modeRaw
 						: "explain";
 				const lang = String(body && body.lang ? body.lang : "")
@@ -5478,6 +5479,11 @@ const server = http.createServer(async (req, res) => {
 						? kind === "code"
 							? "Summarize what this code does. Include: purpose, inputs/outputs, key logic, risks, and 2-3 improvement ideas."
 							: "Summarize the text. Include: core points, decisions, next steps (if any), and key entities. Use bullet points."
+						: mode === "transform"
+						? "You are a text transformation engine. The user will give you an instruction describing what changes to make to the text. " +
+						  "Apply the changes and return ONLY the complete modified text — no explanations, no comments, no markdown code fences, no preamble, no summary. " +
+						  "Preserve all formatting, structure, line breaks, and markdown syntax that is not directly affected by the change. " +
+						  "If the instruction is unclear, apply the most natural interpretation. Never refuse — always return the full transformed text."
 						: kind === "code"
 						? "Explain what this code does and how it works. Mention important details and edge cases."
 						: "If the input contains a question or instruction, answer it. Otherwise explain the content clearly.";
