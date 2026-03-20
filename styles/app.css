@@ -9575,40 +9575,159 @@ body[data-theme="monoDark"] .calendar-day-today .calendar-day-number {
 	background: var(--accent-strong-hover, rgba(217, 70, 239, 0.6));
 }
 
+/* ── QB Tag Browser ── */
 .qb-tag-browser {
 	display: flex;
 	flex-direction: column;
-	gap: 6px;
+	gap: 2px;
 }
 
-.qb-tag-group {
+.qb-tag-search-wrap {
+	position: relative;
 	display: flex;
-	flex-direction: column;
-	gap: 4px;
+	align-items: center;
+	margin-bottom: 6px;
 }
 
-.qb-tag-group-label {
+.qb-tag-search-icon {
+	position: absolute;
+	left: 10px;
+	width: 13px;
+	height: 13px;
+	color: var(--accent-text-soft, rgba(148, 163, 184, 0.5));
+	pointer-events: none;
+}
+
+.qb-tag-search {
+	width: 100%;
+	padding: 7px 32px 7px 30px;
+	border-radius: 8px;
+	border: 1px solid var(--modal-border, rgba(255, 255, 255, 0.08));
+	background: rgba(255, 255, 255, 0.04);
+	color: var(--accent-text, rgba(253, 242, 255, 0.95));
+	font-size: 12px;
+	outline: none;
+	transition: border-color 0.15s ease;
+}
+
+.qb-tag-search:focus {
+	border-color: rgba(217, 70, 239, 0.4);
+}
+
+.qb-tag-search::placeholder {
+	color: var(--accent-text-soft, rgba(148, 163, 184, 0.4));
+}
+
+.qb-tag-search-clear {
+	position: absolute;
+	right: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 18px;
+	height: 18px;
+	border-radius: 50%;
+	border: none;
+	background: rgba(255, 255, 255, 0.1);
+	color: var(--accent-text-soft, rgba(148, 163, 184, 0.6));
+	cursor: pointer;
+	transition: background 0.15s ease;
+}
+
+.qb-tag-search-clear:hover {
+	background: rgba(255, 255, 255, 0.18);
+}
+
+.qb-tag-empty {
+	font-size: 12px;
+	color: var(--accent-text-soft, rgba(148, 163, 184, 0.4));
+	padding: 4px 2px;
+}
+
+/* Accordion groups */
+.qb-accordion {
+	border-radius: 8px;
+	overflow: hidden;
+	border: 1px solid transparent;
+	transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.qb-accordion.is-open {
+	border-color: var(--modal-border, rgba(255, 255, 255, 0.07));
+	background: rgba(255, 255, 255, 0.02);
+}
+
+.qb-accordion-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	width: 100%;
+	padding: 6px 8px;
+	border: none;
+	background: transparent;
+	cursor: pointer;
+	border-radius: 8px;
+	transition: background 0.15s ease;
+	gap: 6px;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.qb-accordion-header:hover {
+	background: rgba(255, 255, 255, 0.05);
+}
+
+.qb-accordion-label {
+	font-size: 11px;
+	font-weight: 600;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	color: var(--accent-text-soft, rgba(148, 163, 184, 0.6));
+}
+
+.qb-accordion-meta {
+	display: flex;
+	align-items: center;
+	gap: 5px;
+	margin-left: auto;
+}
+
+.qb-accordion-count {
+	font-size: 10px;
+	color: var(--accent-text-soft, rgba(148, 163, 184, 0.35));
+	font-variant-numeric: tabular-nums;
+}
+
+.qb-accordion-active-badge {
 	font-size: 10px;
 	font-weight: 700;
-	text-transform: uppercase;
-	letter-spacing: 0.06em;
-	color: var(--accent-text-soft, rgba(148, 163, 184, 0.5));
-	padding: 2px 0;
+	color: #d946ef;
+	background: rgba(217, 70, 239, 0.15);
+	border-radius: 10px;
+	padding: 1px 5px;
 }
 
-.qb-tag-subgroup {
-	display: flex;
-	flex-direction: column;
-	gap: 3px;
-	padding-left: 8px;
-	border-left: 2px solid rgba(255, 255, 255, 0.06);
-}
-
-.qb-tag-subgroup-label {
-	font-size: 10px;
-	font-weight: 600;
-	letter-spacing: 0.04em;
+.qb-accordion-chevron {
+	width: 13px;
+	height: 13px;
 	color: var(--accent-text-soft, rgba(148, 163, 184, 0.4));
+	transition: transform 0.2s ease;
+	flex-shrink: 0;
+}
+
+.qb-accordion.is-open .qb-accordion-chevron {
+	transform: rotate(180deg);
+}
+
+.qb-accordion-body {
+	max-height: 0;
+	overflow: hidden;
+	transition: max-height 0.22s ease;
+	padding: 0 8px;
+}
+
+.qb-accordion.is-open .qb-accordion-body {
+	max-height: 400px;
 }
 
 .qb-date-row {
@@ -9769,13 +9888,19 @@ body[data-theme="monoLight"] .qb-date-input {
 	color: rgba(15, 23, 42, 0.98) !important;
 }
 
-body[data-theme="monoLight"] .qb-tag-group-label,
-body[data-theme="monoLight"] .qb-tag-subgroup-label {
-	color: rgba(51, 65, 85, 0.45) !important;
+body[data-theme="monoLight"] .qb-accordion-label {
+	color: rgba(51, 65, 85, 0.5) !important;
 }
 
-body[data-theme="monoLight"] .qb-tag-subgroup {
-	border-left-color: rgba(0, 0, 0, 0.1) !important;
+body[data-theme="monoLight"] .qb-accordion.is-open {
+	border-color: rgba(0, 0, 0, 0.1) !important;
+	background: rgba(0, 0, 0, 0.02) !important;
+}
+
+body[data-theme="monoLight"] .qb-tag-search {
+	background: rgba(0, 0, 0, 0.04) !important;
+	border-color: rgba(0, 0, 0, 0.12) !important;
+	color: rgba(15, 23, 42, 0.98) !important;
 }
 
 body[data-theme="monoLight"] .qb-chip {
@@ -9884,13 +10009,19 @@ body[data-theme="coffeeLight"] .qb-date-input {
 	color: rgba(50, 32, 18, 0.98) !important;
 }
 
-body[data-theme="coffeeLight"] .qb-tag-group-label,
-body[data-theme="coffeeLight"] .qb-tag-subgroup-label {
-	color: rgba(92, 62, 41, 0.45) !important;
+body[data-theme="coffeeLight"] .qb-accordion-label {
+	color: rgba(92, 62, 41, 0.5) !important;
 }
 
-body[data-theme="coffeeLight"] .qb-tag-subgroup {
-	border-left-color: rgba(0, 0, 0, 0.08) !important;
+body[data-theme="coffeeLight"] .qb-accordion.is-open {
+	border-color: rgba(0, 0, 0, 0.08) !important;
+	background: rgba(0, 0, 0, 0.015) !important;
+}
+
+body[data-theme="coffeeLight"] .qb-tag-search {
+	background: rgba(0, 0, 0, 0.04) !important;
+	border-color: rgba(0, 0, 0, 0.1) !important;
+	color: rgba(50, 32, 18, 0.98) !important;
 }
 
 body[data-theme="coffeeLight"] .qb-chip {
@@ -9999,13 +10130,19 @@ body[data-theme="bitterLight"] .qb-date-input {
 	color: rgba(27, 27, 32, 0.98) !important;
 }
 
-body[data-theme="bitterLight"] .qb-tag-group-label,
-body[data-theme="bitterLight"] .qb-tag-subgroup-label {
-	color: rgba(52, 52, 60, 0.45) !important;
+body[data-theme="bitterLight"] .qb-accordion-label {
+	color: rgba(52, 52, 60, 0.5) !important;
 }
 
-body[data-theme="bitterLight"] .qb-tag-subgroup {
-	border-left-color: rgba(0, 0, 0, 0.08) !important;
+body[data-theme="bitterLight"] .qb-accordion.is-open {
+	border-color: rgba(0, 0, 0, 0.08) !important;
+	background: rgba(0, 0, 0, 0.015) !important;
+}
+
+body[data-theme="bitterLight"] .qb-tag-search {
+	background: rgba(0, 0, 0, 0.04) !important;
+	border-color: rgba(0, 0, 0, 0.1) !important;
+	color: rgba(27, 27, 32, 0.98) !important;
 }
 
 body[data-theme="bitterLight"] .qb-chip {

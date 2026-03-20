@@ -28140,6 +28140,8 @@ self.onmessage = async (e) => {
 	/* ── Query Builder Modal ── */
 	let qbOverlay = null;
 	let qbModal = null;
+	let qbTagBrowserState = new Set(); // tracks which accordion groups are open
+	let qbTagFilter = "";              // search filter text
 	let qbState = {
 		tags: [],
 		taskOpen: false,
@@ -28174,6 +28176,8 @@ self.onmessage = async (e) => {
 			updatedAfter: "",
 			updatedBefore: ""
 		};
+		qbTagBrowserState = new Set();
+		qbTagFilter = "";
 	}
 
 	function buildQueryFromState() {
@@ -28468,92 +28472,116 @@ self.onmessage = async (e) => {
 		if (!container) return;
 
 		const availableTags = getAvailableTags();
-		if (availableTags.length === 0) {
-			container.innerHTML = "";
-			return;
-		}
 
-		// Group by first "/" segment
+		// Filter by search text
+		const filter = qbTagFilter.toLowerCase();
+		const filtered = filter
+			? availableTags.filter(t => t.toLowerCase().includes(filter))
+			: availableTags;
+
+		// Group by ":" or "/" prefix (whichever comes first)
 		const groups = {};
 		const ungrouped = [];
-		availableTags.forEach(tag => {
-			const slashIdx = tag.indexOf("/");
-			if (slashIdx > 0) {
-				const group = tag.slice(0, slashIdx);
-				if (!groups[group]) groups[group] = [];
-				groups[group].push(tag);
+		filtered.forEach(tag => {
+			const ci = tag.indexOf(":");
+			const si = tag.indexOf("/");
+			let sep = -1;
+			if (ci > 0 && (si < 0 || ci < si)) sep = ci;
+			else if (si > 0) sep = si;
+			if (sep > 0) {
+				const g = tag.slice(0, sep);
+				if (!groups[g]) groups[g] = [];
+				groups[g].push(tag);
 			} else {
 				ungrouped.push(tag);
 			}
 		});
 
-		let html = "";
+		const hasGroups = Object.keys(groups).length > 0;
 
-		// Ungrouped tags (no "/" prefix)
-		if (ungrouped.length > 0) {
-			html += `<div class="qb-tag-group">
-				<div class="qb-chips">
-					${ungrouped.map(tag => {
-						const active = qbState.tags.includes(tag);
-						return `<button type="button" class="qb-chip qb-tag-chip${active ? " is-active" : ""}" data-tag="${tag}">#${tag}</button>`;
-					}).join("")}
+		function chipHtml(tag, label) {
+			const active = qbState.tags.includes(tag);
+			return `<button type="button" class="qb-chip qb-tag-chip${active ? " is-active" : ""}" data-tag="${tag}">#${label}</button>`;
+		}
+
+		function accordionHtml(groupKey, displayLabel, tags, labelFn) {
+			const isOpen = qbTagBrowserState.has(groupKey) || !!filter;
+			const activeCount = tags.filter(t => qbState.tags.includes(t)).length;
+			return `<div class="qb-accordion${isOpen ? " is-open" : ""}" data-group="${groupKey}">
+				<button type="button" class="qb-accordion-header" data-group="${groupKey}">
+					<span class="qb-accordion-label">${displayLabel}</span>
+					<span class="qb-accordion-meta">
+						${activeCount > 0 ? `<span class="qb-accordion-active-badge">${activeCount}</span>` : ""}
+						<span class="qb-accordion-count">${tags.length}</span>
+						<svg class="qb-accordion-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+					</span>
+				</button>
+				<div class="qb-accordion-body">
+					<div class="qb-chips" style="padding:6px 0 4px">
+						${tags.map(t => chipHtml(t, labelFn(t))).join("")}
+					</div>
 				</div>
 			</div>`;
 		}
 
-		// Grouped tags
-		Object.keys(groups).sort().forEach(group => {
-			const tags = groups[group];
-			// Check for sub-groups within this group
-			const subGroups = {};
-			const flat = [];
-			tags.forEach(tag => {
-				const rest = tag.slice(group.length + 1);
-				const subSlash = rest.indexOf("/");
-				if (subSlash > 0) {
-					const sub = rest.slice(0, subSlash);
-					if (!subGroups[sub]) subGroups[sub] = [];
-					subGroups[sub].push(tag);
-				} else {
-					flat.push(tag);
-				}
-			});
+		let html = `<div class="qb-tag-search-wrap">
+			<svg class="qb-tag-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+			<input class="qb-tag-search" type="text" placeholder="Tags filtern…" value="${filter.replace(/"/g, "&quot;")}">
+			${filter ? `<button type="button" class="qb-tag-search-clear" aria-label="Clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>` : ""}
+		</div>`;
 
-			let innerHtml = "";
-			// Flat tags directly under group
-			if (flat.length > 0) {
-				innerHtml += `<div class="qb-chips">
-					${flat.map(tag => {
-						const label = tag.slice(group.length + 1);
-						const active = qbState.tags.includes(tag);
-						return `<button type="button" class="qb-chip qb-tag-chip${active ? " is-active" : ""}" data-tag="${tag}">#${label}</button>`;
-					}).join("")}
-				</div>`;
+		if (filtered.length === 0) {
+			html += `<div class="qb-tag-empty">Keine Tags gefunden</div>`;
+		} else {
+			if (ungrouped.length > 0) {
+				html += accordionHtml("__ungrouped", hasGroups ? "Allgemein" : "Tags", ungrouped, t => t);
 			}
-			// Sub-grouped tags
-			Object.keys(subGroups).sort().forEach(sub => {
-				innerHtml += `<div class="qb-tag-subgroup">
-					<span class="qb-tag-subgroup-label">${sub}</span>
-					<div class="qb-chips">
-						${subGroups[sub].map(tag => {
-							const label = tag.slice(group.length + sub.length + 2);
-							const active = qbState.tags.includes(tag);
-							return `<button type="button" class="qb-chip qb-tag-chip${active ? " is-active" : ""}" data-tag="${tag}">#${label}</button>`;
-						}).join("")}
-					</div>
-				</div>`;
+			Object.keys(groups).sort().forEach(group => {
+				html += accordionHtml(group, group, groups[group], t => t.slice(group.length + 1));
 			});
-
-			html += `<div class="qb-tag-group">
-				<div class="qb-tag-group-label">${group}</div>
-				${innerHtml}
-			</div>`;
-		});
+		}
 
 		container.innerHTML = html;
 
+		// Search input
+		const searchEl = container.querySelector(".qb-tag-search");
+		if (searchEl) {
+			searchEl.addEventListener("input", e => {
+				qbTagFilter = e.target.value;
+				renderQbTagBrowser();
+			});
+			if (filter) {
+				searchEl.focus();
+				searchEl.setSelectionRange(searchEl.value.length, searchEl.value.length);
+			}
+		}
+		const clearBtn = container.querySelector(".qb-tag-search-clear");
+		if (clearBtn) {
+			clearBtn.addEventListener("click", () => {
+				qbTagFilter = "";
+				renderQbTagBrowser();
+			});
+		}
+
+		// Accordion toggle — direct DOM, no re-render (for smooth animation)
+		container.querySelectorAll(".qb-accordion-header").forEach(header => {
+			header.addEventListener("click", () => {
+				const groupKey = header.dataset.group;
+				const accordion = header.closest(".qb-accordion");
+				if (qbTagBrowserState.has(groupKey)) {
+					qbTagBrowserState.delete(groupKey);
+					accordion.classList.remove("is-open");
+				} else {
+					qbTagBrowserState.add(groupKey);
+					accordion.classList.add("is-open");
+				}
+			});
+		});
+
+		// Tag chip toggle
 		container.querySelectorAll(".qb-tag-chip").forEach(chip => {
-			chip.addEventListener("click", () => {
+			chip.addEventListener("click", e => {
+				e.stopPropagation();
 				const tag = chip.getAttribute("data-tag");
 				if (!tag) return;
 				if (qbState.tags.includes(tag)) {
