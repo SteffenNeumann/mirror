@@ -5384,7 +5384,8 @@ const server = http.createServer(async (req, res) => {
 
 		readJson(req)
 			.then(async (body) => {
-				const effectiveApiKey = ANTHROPIC_API_KEY;
+				const apiKeyRaw = String(body && body.apiKey ? body.apiKey : "").trim();
+				const effectiveApiKey = apiKeyRaw || ANTHROPIC_API_KEY;
 				if (!effectiveApiKey) {
 					json(res, 503, { ok: false, error: "ai_not_configured" });
 					return;
@@ -5568,12 +5569,16 @@ const server = http.createServer(async (req, res) => {
 						...dynamicTop,
 					]);
 
+					// If user sent their own key and it fails with 401, silently retry with
+					// the server key so a single expired personal key doesn't break everything.
+					const userKeyFailed = { flag: false };
+
 					async function runWithModelFallback(userPrompt) {
 						let lastStatus = 0;
 						let lastErrMsg = "";
 						let chosenModel = "";
 						let data = null;
-						const activeKey = effectiveApiKey;
+						let activeKey = effectiveApiKey;
 
 						// Retry-with-backoff for transient 529 Overloaded responses.
 						const MAX_529_RETRIES = 3;
@@ -5605,6 +5610,26 @@ const server = http.createServer(async (req, res) => {
 								(data && data.error && data.error.message) ||
 								(data && data.message) ||
 								`AI HTTP ${out.r.status}`;
+							// If user supplied their own key and it returned 401/403,
+							// fall back to server key and retry the same model once.
+							if (
+								(out.r.status === 401 || out.r.status === 403) &&
+								apiKeyRaw &&
+								ANTHROPIC_API_KEY &&
+								activeKey !== ANTHROPIC_API_KEY
+							) {
+								console.warn(`[ai] user key rejected (${out.r.status}), retrying with server key`);
+								userKeyFailed.flag = true;
+								activeKey = ANTHROPIC_API_KEY;
+								const retry = await callAnthropic(chosenModel, userPrompt, activeKey);
+								lastStatus = retry.r.status;
+								data = retry.data;
+								if (retry.r.ok) return { ok: true, data, model: chosenModel };
+								lastErrMsg =
+									(retry.data && retry.data.error && retry.data.error.message) ||
+									(retry.data && retry.data.message) ||
+									`AI HTTP ${retry.r.status}`;
+							}
 							const isModel404 =
 								out.r.status === 404 && /\bmodel\b/i.test(String(lastErrMsg));
 							if (!isModel404) break;

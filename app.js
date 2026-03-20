@@ -296,6 +296,7 @@
 	const mobileAutoNoteSecondsInput = document.getElementById(
 		"mobileAutoNoteSeconds"
 	);
+	const aiApiKeyInput = document.getElementById("aiApiKey");
 	const aiApiModelInput = document.getElementById("aiApiModel");
 	const aiApiSaveBtn = document.getElementById("aiApiSave");
 	const aiApiClearBtn = document.getElementById("aiApiClear");
@@ -5947,6 +5948,7 @@
 	const AI_PROMPT_KEY = "mirror_ai_prompt";
 	const AI_USE_PREVIEW_KEY = "mirror_ai_use_preview";
 	const AI_USE_ANSWER_KEY = "mirror_ai_use_answer";
+	const AI_API_KEY_KEY = "mirror_ai_api_key";
 	const AI_API_MODEL_KEY = "mirror_ai_api_model";
 	const LINEAR_API_KEY_KEY = "mirror_linear_api_key";
 	const LINEAR_PROJECTS_KEY = "mirror_linear_projects";
@@ -5965,6 +5967,7 @@
 	let aiPrompt = "";
 	let aiUsePreview = true;
 	let aiUseAnswer = true;
+	let aiApiKey = "";
 	let aiApiModel = "";
 	let linearApiKey = "";
 	let bflApiKey = "";
@@ -9095,27 +9098,32 @@
 
 	function loadAiApiConfig() {
 		try {
+			aiApiKey = String(localStorage.getItem(AI_API_KEY_KEY) || "");
 			aiApiModel = String(localStorage.getItem(AI_API_MODEL_KEY) || "");
-			// Clean up any previously stored key from localStorage
-			localStorage.removeItem("mirror_ai_api_key");
 		} catch {
+			aiApiKey = "";
 			aiApiModel = "";
 		}
+		if (aiApiKeyInput) aiApiKeyInput.value = aiApiKey ? "••••••••" : "";
 		if (aiApiModelInput) aiApiModelInput.value = aiApiModel;
 	}
 
-	function saveAiApiConfig(_key, nextModel) {
+	function saveAiApiConfig(nextKey, nextModel) {
+		aiApiKey = String(nextKey || "").trim();
 		aiApiModel = String(nextModel || "").trim();
 		try {
+			localStorage.setItem(AI_API_KEY_KEY, aiApiKey);
 			localStorage.setItem(AI_API_MODEL_KEY, aiApiModel);
 		} catch {
 			// ignore
 		}
+		if (aiApiKeyInput) aiApiKeyInput.value = aiApiKey ? "••••••••" : "";
 		if (aiApiModelInput) aiApiModelInput.value = aiApiModel;
 	}
 
 	function getAiApiConfig() {
 		return {
+			apiKey: String(aiApiKey || "").trim(),
 			model: String(aiApiModel || "").trim(),
 		};
 	}
@@ -9736,6 +9744,7 @@
 
 	async function loadAiStatus() {
 		if (!aiApiStatus) return;
+		const localKey = String(aiApiKey || "").trim();
 		try {
 			const res = await api("/api/ai/status");
 			const configured = Boolean(res && res.configured);
@@ -9745,7 +9754,9 @@
 			const localModel = String(aiApiModel || "").trim();
 			const effectiveModel = localModel || serverModel;
 			let parts = [];
-			if (configured) {
+			if (localKey) {
+				parts.push(t("settings.ai.status_local_key"));
+			} else if (configured) {
 				parts.push(t("settings.ai.status_server_key"));
 			} else {
 				aiApiStatus.textContent = t("settings.ai.status_not_configured");
@@ -10183,6 +10194,12 @@
 		}
 	}
 
+	function readAiApiKeyInput() {
+		if (!aiApiKeyInput) return aiApiKey;
+		const raw = String(aiApiKeyInput.value || "").trim();
+		if (!raw || raw === "••••••••") return aiApiKey;
+		return raw;
+	}
 
 	function normalizeAiModelInput(raw) {
 		const v = String(raw || "")
@@ -16303,6 +16320,7 @@ self.onmessage = async (e) => {
 				code: payloadText,
 				prompt: promptForRequest,
 			};
+			if (aiConfig.apiKey) body.apiKey = aiConfig.apiKey;
 			if (aiConfig.model) body.model = aiConfig.model;
 			const res = await api("/api/ai", {
 				method: "POST",
@@ -29563,6 +29581,11 @@ self.onmessage = async (e) => {
 			restoreTrashNote(id);
 		});
 	}
+	if (aiApiKeyInput) {
+		aiApiKeyInput.addEventListener("focus", () => {
+			if (aiApiKeyInput.value === "••••••••") aiApiKeyInput.value = "";
+		});
+	}
 	if (linearApiKeyInput) {
 		linearApiKeyInput.addEventListener("focus", () => {
 			if (linearApiKeyInput.value === "••••••••") {
@@ -29572,10 +29595,11 @@ self.onmessage = async (e) => {
 	}
 	if (aiApiSaveBtn) {
 		aiApiSaveBtn.addEventListener("click", () => {
+			const nextKey = readAiApiKeyInput();
 			const nextModel = normalizeAiModelInput(
 				aiApiModelInput ? aiApiModelInput.value : ""
 			);
-			saveAiApiConfig("", nextModel);
+			saveAiApiConfig(nextKey, nextModel);
 			loadAiStatus();
 			toast(t("toast.ai_saved"), "success");
 		});
@@ -29589,6 +29613,7 @@ self.onmessage = async (e) => {
 	if (aiApiClearBtn) {
 		aiApiClearBtn.addEventListener("click", () => {
 			saveAiApiConfig("", "");
+			if (aiApiKeyInput) aiApiKeyInput.value = "";
 			if (aiApiModelInput) aiApiModelInput.value = "";
 			loadAiStatus();
 			toast(t("toast.ai_cleared"), "success");
