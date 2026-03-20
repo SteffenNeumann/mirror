@@ -9575,32 +9575,40 @@ body[data-theme="monoDark"] .calendar-day-today .calendar-day-number {
 	background: var(--accent-strong-hover, rgba(217, 70, 239, 0.6));
 }
 
-.qb-tag-select {
-	width: 100%;
-	padding: 8px 12px;
-	border-radius: 10px;
-	border: 1px solid var(--modal-border, rgba(255, 255, 255, 0.1));
-	background: rgba(255, 255, 255, 0.05);
-	color: var(--accent-text, rgba(253, 242, 255, 0.95));
-	font-size: 12px;
-	cursor: pointer;
-	transition: all 0.15s ease;
-	appearance: none;
-	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(148,163,184,0.6)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-	background-repeat: no-repeat;
-	background-position: right 12px center;
-	padding-right: 32px;
+.qb-tag-browser {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
 }
 
-.qb-tag-select:hover,
-.qb-tag-select:focus {
-	border-color: rgba(255, 255, 255, 0.18);
-	outline: none;
+.qb-tag-group {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
 }
 
-.qb-tag-select option {
-	background: var(--panel-solid-bg, #0f0a1a);
-	color: var(--accent-text, rgba(253, 242, 255, 0.95));
+.qb-tag-group-label {
+	font-size: 10px;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	color: var(--accent-text-soft, rgba(148, 163, 184, 0.5));
+	padding: 2px 0;
+}
+
+.qb-tag-subgroup {
+	display: flex;
+	flex-direction: column;
+	gap: 3px;
+	padding-left: 8px;
+	border-left: 2px solid rgba(255, 255, 255, 0.06);
+}
+
+.qb-tag-subgroup-label {
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.04em;
+	color: var(--accent-text-soft, rgba(148, 163, 184, 0.4));
 }
 
 .qb-date-row {
@@ -9755,11 +9763,19 @@ body[data-theme="monoLight"] .ps-search-help-box {
 }
 
 body[data-theme="monoLight"] #identityModal input,
-body[data-theme="monoLight"] .qb-tag-select,
 body[data-theme="monoLight"] .qb-date-input {
 	background: rgba(0, 0, 0, 0.04) !important;
 	border-color: rgba(0, 0, 0, 0.12) !important;
 	color: rgba(15, 23, 42, 0.98) !important;
+}
+
+body[data-theme="monoLight"] .qb-tag-group-label,
+body[data-theme="monoLight"] .qb-tag-subgroup-label {
+	color: rgba(51, 65, 85, 0.45) !important;
+}
+
+body[data-theme="monoLight"] .qb-tag-subgroup {
+	border-left-color: rgba(0, 0, 0, 0.1) !important;
 }
 
 body[data-theme="monoLight"] .qb-chip {
@@ -9862,11 +9878,19 @@ body[data-theme="coffeeLight"] .ps-search-help-box {
 }
 
 body[data-theme="coffeeLight"] #identityModal input,
-body[data-theme="coffeeLight"] .qb-tag-select,
 body[data-theme="coffeeLight"] .qb-date-input {
 	background: rgba(0, 0, 0, 0.04) !important;
 	border-color: rgba(0, 0, 0, 0.1) !important;
 	color: rgba(50, 32, 18, 0.98) !important;
+}
+
+body[data-theme="coffeeLight"] .qb-tag-group-label,
+body[data-theme="coffeeLight"] .qb-tag-subgroup-label {
+	color: rgba(92, 62, 41, 0.45) !important;
+}
+
+body[data-theme="coffeeLight"] .qb-tag-subgroup {
+	border-left-color: rgba(0, 0, 0, 0.08) !important;
 }
 
 body[data-theme="coffeeLight"] .qb-chip {
@@ -9969,11 +9993,19 @@ body[data-theme="bitterLight"] .ps-search-help-box {
 }
 
 body[data-theme="bitterLight"] #identityModal input,
-body[data-theme="bitterLight"] .qb-tag-select,
 body[data-theme="bitterLight"] .qb-date-input {
 	background: rgba(0, 0, 0, 0.04) !important;
 	border-color: rgba(0, 0, 0, 0.1) !important;
 	color: rgba(27, 27, 32, 0.98) !important;
+}
+
+body[data-theme="bitterLight"] .qb-tag-group-label,
+body[data-theme="bitterLight"] .qb-tag-subgroup-label {
+	color: rgba(52, 52, 60, 0.45) !important;
+}
+
+body[data-theme="bitterLight"] .qb-tag-subgroup {
+	border-left-color: rgba(0, 0, 0, 0.08) !important;
 }
 
 body[data-theme="bitterLight"] .qb-chip {
@@ -10076,7 +10108,6 @@ body[data-theme="bitterDark"] .ps-search-help-box {
 }
 
 body[data-theme="bitterDark"] #identityModal input,
-body[data-theme="bitterDark"] .qb-tag-select,
 body[data-theme="bitterDark"] .qb-date-input {
 	background: rgba(255, 255, 255, 0.06) !important;
 	border-color: rgba(255, 255, 255, 0.1) !important;

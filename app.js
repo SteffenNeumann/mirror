@@ -28270,9 +28270,7 @@ self.onmessage = async (e) => {
 			if (updatedBeforeMatch) qbState.updatedBefore = updatedBeforeMatch[1];
 		}
 
-		const availableTags = getAvailableTags();
-		const tagOptions = availableTags.map(tag => `<option value="${tag}">#${tag}</option>`).join("");
-
+	
 		// Create overlay
 		qbOverlay = document.createElement("div");
 		qbOverlay.className = "qb-overlay";
@@ -28300,10 +28298,7 @@ self.onmessage = async (e) => {
 						<svg class="qb-section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
 						<span data-i18n="qb.tags">Tags</span>
 					</div>
-					<select class="qb-tag-select" id="qbTagSelect">
-						<option value="" data-i18n="qb.select_tag">Select tag…</option>
-						${tagOptions}
-					</select>
+					<div class="qb-tag-browser" id="qbTagBrowser"></div>
 					<div class="qb-chips qb-selected-tags" style="margin-top:8px"></div>
 				</div>
 
@@ -28387,23 +28382,10 @@ self.onmessage = async (e) => {
 		// Render selected tags
 		renderQbSelectedTags();
 		renderQbChips();
+		renderQbTagBrowser();
 
 		// Event listeners
 		qbModal.querySelector(".qb-close").addEventListener("click", closeQueryBuilder);
-
-		// Tag select
-		const tagSelect = qbModal.querySelector("#qbTagSelect");
-		if (tagSelect) {
-			tagSelect.addEventListener("change", () => {
-				const val = tagSelect.value;
-				if (val && !qbState.tags.includes(val)) {
-					qbState.tags.push(val);
-					renderQbSelectedTags();
-					updateQbPreview();
-				}
-				tagSelect.value = "";
-			});
-		}
 
 		// Chip toggles
 		qbModal.querySelectorAll(".qb-chip[data-qb]").forEach(chip => {
@@ -28473,6 +28455,113 @@ self.onmessage = async (e) => {
 			chip.addEventListener("click", () => {
 				const tag = chip.getAttribute("data-qb-tag");
 				qbState.tags = qbState.tags.filter(t => t !== tag);
+				renderQbSelectedTags();
+				renderQbTagBrowser();
+				updateQbPreview();
+			});
+		});
+	}
+
+	function renderQbTagBrowser() {
+		if (!qbModal) return;
+		const container = qbModal.querySelector("#qbTagBrowser");
+		if (!container) return;
+
+		const availableTags = getAvailableTags();
+		if (availableTags.length === 0) {
+			container.innerHTML = "";
+			return;
+		}
+
+		// Group by first "/" segment
+		const groups = {};
+		const ungrouped = [];
+		availableTags.forEach(tag => {
+			const slashIdx = tag.indexOf("/");
+			if (slashIdx > 0) {
+				const group = tag.slice(0, slashIdx);
+				if (!groups[group]) groups[group] = [];
+				groups[group].push(tag);
+			} else {
+				ungrouped.push(tag);
+			}
+		});
+
+		let html = "";
+
+		// Ungrouped tags (no "/" prefix)
+		if (ungrouped.length > 0) {
+			html += `<div class="qb-tag-group">
+				<div class="qb-chips">
+					${ungrouped.map(tag => {
+						const active = qbState.tags.includes(tag);
+						return `<button type="button" class="qb-chip qb-tag-chip${active ? " is-active" : ""}" data-tag="${tag}">#${tag}</button>`;
+					}).join("")}
+				</div>
+			</div>`;
+		}
+
+		// Grouped tags
+		Object.keys(groups).sort().forEach(group => {
+			const tags = groups[group];
+			// Check for sub-groups within this group
+			const subGroups = {};
+			const flat = [];
+			tags.forEach(tag => {
+				const rest = tag.slice(group.length + 1);
+				const subSlash = rest.indexOf("/");
+				if (subSlash > 0) {
+					const sub = rest.slice(0, subSlash);
+					if (!subGroups[sub]) subGroups[sub] = [];
+					subGroups[sub].push(tag);
+				} else {
+					flat.push(tag);
+				}
+			});
+
+			let innerHtml = "";
+			// Flat tags directly under group
+			if (flat.length > 0) {
+				innerHtml += `<div class="qb-chips">
+					${flat.map(tag => {
+						const label = tag.slice(group.length + 1);
+						const active = qbState.tags.includes(tag);
+						return `<button type="button" class="qb-chip qb-tag-chip${active ? " is-active" : ""}" data-tag="${tag}">#${label}</button>`;
+					}).join("")}
+				</div>`;
+			}
+			// Sub-grouped tags
+			Object.keys(subGroups).sort().forEach(sub => {
+				innerHtml += `<div class="qb-tag-subgroup">
+					<span class="qb-tag-subgroup-label">${sub}</span>
+					<div class="qb-chips">
+						${subGroups[sub].map(tag => {
+							const label = tag.slice(group.length + sub.length + 2);
+							const active = qbState.tags.includes(tag);
+							return `<button type="button" class="qb-chip qb-tag-chip${active ? " is-active" : ""}" data-tag="${tag}">#${label}</button>`;
+						}).join("")}
+					</div>
+				</div>`;
+			});
+
+			html += `<div class="qb-tag-group">
+				<div class="qb-tag-group-label">${group}</div>
+				${innerHtml}
+			</div>`;
+		});
+
+		container.innerHTML = html;
+
+		container.querySelectorAll(".qb-tag-chip").forEach(chip => {
+			chip.addEventListener("click", () => {
+				const tag = chip.getAttribute("data-tag");
+				if (!tag) return;
+				if (qbState.tags.includes(tag)) {
+					qbState.tags = qbState.tags.filter(t => t !== tag);
+				} else {
+					qbState.tags.push(tag);
+				}
+				renderQbTagBrowser();
 				renderQbSelectedTags();
 				updateQbPreview();
 			});
