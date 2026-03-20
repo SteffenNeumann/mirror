@@ -265,6 +265,7 @@ let stmtUserSettingsGet;
 let stmtUserSettingsUpsert;
 let stmtUserLinearKeyUpsert;
 let stmtUserBflKeyUpsert;
+let stmtUserAnthropicKeyUpsert;
 let stmtUserIdentityUpsert;
 let stmtGoogleTokenGet;
 let stmtGoogleTokenUpsert;
@@ -635,6 +636,38 @@ function initDb() {
 		}
 	}
 
+	// Anthropic API key columns migration
+	const hasAnthropicCiphertext = settingsCols.some(
+		(c) => String(c && c.name) === "anthropic_api_key_ciphertext"
+	);
+	const hasAnthropicIv = settingsCols.some(
+		(c) => String(c && c.name) === "anthropic_api_key_iv"
+	);
+	const hasAnthropicTag = settingsCols.some(
+		(c) => String(c && c.name) === "anthropic_api_key_tag"
+	);
+	if (!hasAnthropicCiphertext) {
+		try {
+			db.exec("ALTER TABLE user_settings ADD COLUMN anthropic_api_key_ciphertext TEXT");
+		} catch {
+			// ignore
+		}
+	}
+	if (!hasAnthropicIv) {
+		try {
+			db.exec("ALTER TABLE user_settings ADD COLUMN anthropic_api_key_iv TEXT");
+		} catch {
+			// ignore
+		}
+	}
+	if (!hasAnthropicTag) {
+		try {
+			db.exec("ALTER TABLE user_settings ADD COLUMN anthropic_api_key_tag TEXT");
+		} catch {
+			// ignore
+		}
+	}
+
 	// Identity columns migration
 	const hasIdentityName = settingsCols.some(
 		(c) => String(c && c.name) === "identity_name"
@@ -936,7 +969,7 @@ function initDb() {
 		"DELETE FROM shared_rooms WHERE user_id = ?"
 	);
 	stmtUserSettingsGet = db.prepare(
-		"SELECT calendar_json, linear_api_key_ciphertext, linear_api_key_iv, linear_api_key_tag, bfl_api_key_ciphertext, bfl_api_key_iv, bfl_api_key_tag, identity_name, identity_avatar, identity_color, updated_at FROM user_settings WHERE user_id = ?"
+		"SELECT calendar_json, linear_api_key_ciphertext, linear_api_key_iv, linear_api_key_tag, bfl_api_key_ciphertext, bfl_api_key_iv, bfl_api_key_tag, anthropic_api_key_ciphertext, anthropic_api_key_iv, anthropic_api_key_tag, identity_name, identity_avatar, identity_color, updated_at FROM user_settings WHERE user_id = ?"
 	);
 	stmtUserSettingsUpsert = db.prepare(
 		"INSERT INTO user_settings(user_id, calendar_json, updated_at) VALUES(?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET calendar_json = excluded.calendar_json, updated_at = excluded.updated_at"
@@ -946,6 +979,9 @@ function initDb() {
 	);
 	stmtUserBflKeyUpsert = db.prepare(
 		"INSERT INTO user_settings(user_id, calendar_json, bfl_api_key_ciphertext, bfl_api_key_iv, bfl_api_key_tag, updated_at) VALUES(?, ?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET bfl_api_key_ciphertext = excluded.bfl_api_key_ciphertext, bfl_api_key_iv = excluded.bfl_api_key_iv, bfl_api_key_tag = excluded.bfl_api_key_tag, updated_at = excluded.updated_at"
+	);
+	stmtUserAnthropicKeyUpsert = db.prepare(
+		"INSERT INTO user_settings(user_id, calendar_json, anthropic_api_key_ciphertext, anthropic_api_key_iv, anthropic_api_key_tag, updated_at) VALUES(?, ?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET anthropic_api_key_ciphertext = excluded.anthropic_api_key_ciphertext, anthropic_api_key_iv = excluded.anthropic_api_key_iv, anthropic_api_key_tag = excluded.anthropic_api_key_tag, updated_at = excluded.updated_at"
 	);
 	stmtUserIdentityUpsert = db.prepare(
 		"INSERT INTO user_settings(user_id, calendar_json, identity_name, identity_avatar, identity_color, updated_at) VALUES(?, ?, ?, ?, ?, ?) ON CONFLICT(user_id) DO UPDATE SET identity_name = excluded.identity_name, identity_avatar = excluded.identity_avatar, identity_color = excluded.identity_color, updated_at = excluded.updated_at"
@@ -2134,6 +2170,48 @@ function saveUserBflApiKey(userId, apiKey) {
 	const encrypted = encryptLinearApiKey(nextKey);
 	if (!encrypted.ok) return encrypted;
 	stmtUserBflKeyUpsert.run(
+		userId,
+		calendarJson,
+		String(encrypted.ciphertext || ""),
+		String(encrypted.iv || ""),
+		String(encrypted.tag || ""),
+		now
+	);
+	return { ok: true };
+}
+
+function getUserAnthropicApiKey(userId) {
+	const row = getUserSettingsRow(userId);
+	if (!row) return { ok: true, key: "" };
+	const ciphertext = String(row.anthropic_api_key_ciphertext || "");
+	const iv = String(row.anthropic_api_key_iv || "");
+	const tag = String(row.anthropic_api_key_tag || "");
+	if (!ciphertext || !iv || !tag) return { ok: true, key: "" };
+	const decrypted = decryptLinearApiKey(ciphertext, iv, tag);
+	if (!decrypted.ok) return { ok: false, error: decrypted.error };
+	return { ok: true, key: String(decrypted.value || "") };
+}
+
+function saveUserAnthropicApiKey(userId, apiKey) {
+	const nextKey = String(apiKey || "").trim();
+	const now = Date.now();
+	const row = getUserSettingsRow(userId);
+	const calendarJson = row && row.calendar_json
+		? String(row.calendar_json)
+		: JSON.stringify({
+			sources: [],
+			defaultView: "month",
+			localEvents: [],
+			googleCalendarId: "primary",
+			outlookCalendarId: "primary",
+		});
+	if (!nextKey) {
+		stmtUserAnthropicKeyUpsert.run(userId, calendarJson, "", "", "", now);
+		return { ok: true };
+	}
+	const encrypted = encryptLinearApiKey(nextKey);
+	if (!encrypted.ok) return encrypted;
+	stmtUserAnthropicKeyUpsert.run(
 		userId,
 		calendarJson,
 		String(encrypted.ciphertext || ""),
@@ -4049,6 +4127,53 @@ const server = http.createServer(async (req, res) => {
 		return;
 	}
 
+	if (url.pathname === "/api/anthropic-key" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		const userId = getOrCreateUserId(email);
+		const keyRes = getUserAnthropicApiKey(userId);
+		if (!keyRes.ok) {
+			json(res, 500, { ok: false, error: keyRes.error || "anthropic_key_read_failed" });
+			return;
+		}
+		const key = String(keyRes.key || "").trim();
+		json(res, 200, { ok: true, apiKey: key, configured: Boolean(key) });
+		return;
+	}
+
+	if (url.pathname === "/api/anthropic-key" && req.method === "POST") {
+		const email = getAuthedEmail(req);
+		if (!email) {
+			json(res, 401, { ok: false, error: "unauthorized" });
+			return;
+		}
+		readJson(req)
+			.then((body) => {
+				const userId = getOrCreateUserId(email);
+				const apiKey = String(body && body.apiKey ? body.apiKey : "").trim();
+				const saveRes = saveUserAnthropicApiKey(userId, apiKey);
+				if (!saveRes.ok) {
+					json(res, 500, {
+						ok: false,
+						error: saveRes.error || "anthropic_key_save_failed",
+					});
+					return;
+				}
+				json(res, 200, { ok: true });
+			})
+			.catch((e) => {
+				if (String(e && e.message) === "body_too_large") {
+					json(res, 413, { ok: false, error: "body_too_large" });
+					return;
+				}
+				json(res, 400, { ok: false, error: "invalid_json" });
+			});
+		return;
+	}
+
 	if (url.pathname === "/api/room-tabs" && req.method === "GET") {
 		const email = getAuthedEmail(req);
 		if (!email) {
@@ -5382,10 +5507,13 @@ const server = http.createServer(async (req, res) => {
 			return;
 		}
 
+		const userId = getOrCreateUserId(email);
+		const userKeyRes = getUserAnthropicApiKey(userId);
+		const userAnthropicKey = userKeyRes.ok ? String(userKeyRes.key || "").trim() : "";
+
 		readJson(req)
 			.then(async (body) => {
-				const apiKeyRaw = String(body && body.apiKey ? body.apiKey : "").trim();
-				const effectiveApiKey = apiKeyRaw || ANTHROPIC_API_KEY;
+				const effectiveApiKey = userAnthropicKey || ANTHROPIC_API_KEY;
 				if (!effectiveApiKey) {
 					json(res, 503, { ok: false, error: "ai_not_configured" });
 					return;
@@ -5569,11 +5697,7 @@ const server = http.createServer(async (req, res) => {
 						...dynamicTop,
 					]);
 
-					// If user sent their own key and it fails with 401, silently retry with
-					// the server key so a single expired personal key doesn't break everything.
-					const userKeyFailed = { flag: false };
-
-					async function runWithModelFallback(userPrompt) {
+				async function runWithModelFallback(userPrompt) {
 						let lastStatus = 0;
 						let lastErrMsg = "";
 						let chosenModel = "";
@@ -5610,16 +5734,14 @@ const server = http.createServer(async (req, res) => {
 								(data && data.error && data.error.message) ||
 								(data && data.message) ||
 								`AI HTTP ${out.r.status}`;
-							// If user supplied their own key and it returned 401/403,
-							// fall back to server key and retry the same model once.
+							// If user personal key returned 401/403, fall back to server key.
 							if (
 								(out.r.status === 401 || out.r.status === 403) &&
-								apiKeyRaw &&
+								userAnthropicKey &&
 								ANTHROPIC_API_KEY &&
 								activeKey !== ANTHROPIC_API_KEY
 							) {
 								console.warn(`[ai] user key rejected (${out.r.status}), retrying with server key`);
-								userKeyFailed.flag = true;
 								activeKey = ANTHROPIC_API_KEY;
 								const retry = await callAnthropic(chosenModel, userPrompt, activeKey);
 								lastStatus = retry.r.status;

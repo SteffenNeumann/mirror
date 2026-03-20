@@ -5948,7 +5948,6 @@
 	const AI_PROMPT_KEY = "mirror_ai_prompt";
 	const AI_USE_PREVIEW_KEY = "mirror_ai_use_preview";
 	const AI_USE_ANSWER_KEY = "mirror_ai_use_answer";
-	const AI_API_KEY_KEY = "mirror_ai_api_key";
 	const AI_API_MODEL_KEY = "mirror_ai_api_model";
 	const LINEAR_API_KEY_KEY = "mirror_linear_api_key";
 	const LINEAR_PROJECTS_KEY = "mirror_linear_projects";
@@ -9097,33 +9096,78 @@
 	}
 
 	function loadAiApiConfig() {
+		// Key is loaded from server on login (syncAnthropicApiKeyFromServer).
+		// Model override is still stored locally.
 		try {
-			aiApiKey = String(localStorage.getItem(AI_API_KEY_KEY) || "");
 			aiApiModel = String(localStorage.getItem(AI_API_MODEL_KEY) || "");
+			localStorage.removeItem("mirror_ai_api_key"); // clean up old localStorage key
 		} catch {
-			aiApiKey = "";
 			aiApiModel = "";
 		}
-		if (aiApiKeyInput) aiApiKeyInput.value = aiApiKey ? "••••••••" : "";
 		if (aiApiModelInput) aiApiModelInput.value = aiApiModel;
 	}
 
-	function saveAiApiConfig(nextKey, nextModel) {
-		aiApiKey = String(nextKey || "").trim();
+	async function saveAnthropicApiKeyToServer(nextKey, opts) {
+		const apiKey = String(nextKey || "").trim();
+		if (!psState || !psState.authed) {
+			if (!(opts && opts.silent)) {
+				toast(t("toast.ps_required") || "Please sign in to Personal Space first.", "error");
+			}
+			return false;
+		}
+		try {
+			await api("/api/anthropic-key", {
+				method: "POST",
+				body: JSON.stringify({ apiKey }),
+			});
+			aiApiKey = apiKey;
+			if (aiApiKeyInput) {
+				aiApiKeyInput.value = apiKey ? "••••••••" : "";
+			}
+			if (!(opts && opts.silent)) {
+				toast(
+					apiKey ? t("toast.ai_saved") : t("toast.ai_cleared"),
+					"success"
+				);
+			}
+			return true;
+		} catch {
+			if (!(opts && opts.silent)) {
+				toast(t("toast.ai_key_failed") || "Failed to save API key.", "error");
+			}
+			return false;
+		}
+	}
+
+	async function syncAnthropicApiKeyFromServer() {
+		if (!psState || !psState.authed) {
+			aiApiKey = "";
+			if (aiApiKeyInput) aiApiKeyInput.value = "";
+			return;
+		}
+		try {
+			const res = await api("/api/anthropic-key");
+			const serverKey = String(res && res.apiKey ? res.apiKey : "").trim();
+			aiApiKey = serverKey;
+			if (aiApiKeyInput) aiApiKeyInput.value = serverKey ? "••••••••" : "";
+		} catch {
+			// keep existing in-memory value
+		}
+	}
+
+	function saveAiApiConfig(_key, nextModel) {
+		// Key saving is handled by saveAnthropicApiKeyToServer(); this only saves the model override.
 		aiApiModel = String(nextModel || "").trim();
 		try {
-			localStorage.setItem(AI_API_KEY_KEY, aiApiKey);
 			localStorage.setItem(AI_API_MODEL_KEY, aiApiModel);
 		} catch {
 			// ignore
 		}
-		if (aiApiKeyInput) aiApiKeyInput.value = aiApiKey ? "••••••••" : "";
 		if (aiApiModelInput) aiApiModelInput.value = aiApiModel;
 	}
 
 	function getAiApiConfig() {
 		return {
-			apiKey: String(aiApiKey || "").trim(),
 			model: String(aiApiModel || "").trim(),
 		};
 	}
@@ -16320,7 +16364,6 @@ self.onmessage = async (e) => {
 				code: payloadText,
 				prompt: promptForRequest,
 			};
-			if (aiConfig.apiKey) body.apiKey = aiConfig.apiKey;
 			if (aiConfig.model) body.model = aiConfig.model;
 			const res = await api("/api/ai", {
 				method: "POST",
@@ -16517,6 +16560,7 @@ self.onmessage = async (e) => {
 		setPsEditorTagsVisible(true);
 		await syncLinearApiKeyFromServer();
 		await syncBflApiKeyFromServer();
+		await syncAnthropicApiKeyFromServer();
 		await syncIdentityFromServer();
 		syncCalendarSettingsFromServer();
 		const serverRoomPins = Array.isArray(psState.roomPins)
@@ -29594,14 +29638,14 @@ self.onmessage = async (e) => {
 		});
 	}
 	if (aiApiSaveBtn) {
-		aiApiSaveBtn.addEventListener("click", () => {
+		aiApiSaveBtn.addEventListener("click", async () => {
 			const nextKey = readAiApiKeyInput();
 			const nextModel = normalizeAiModelInput(
 				aiApiModelInput ? aiApiModelInput.value : ""
 			);
-			saveAiApiConfig(nextKey, nextModel);
+			saveAiApiConfig("", nextModel);
+			await saveAnthropicApiKeyToServer(nextKey);
 			loadAiStatus();
-			toast(t("toast.ai_saved"), "success");
 		});
 	}
 	if (linearApiSaveBtn) {
@@ -29611,12 +29655,11 @@ self.onmessage = async (e) => {
 		});
 	}
 	if (aiApiClearBtn) {
-		aiApiClearBtn.addEventListener("click", () => {
+		aiApiClearBtn.addEventListener("click", async () => {
 			saveAiApiConfig("", "");
-			if (aiApiKeyInput) aiApiKeyInput.value = "";
 			if (aiApiModelInput) aiApiModelInput.value = "";
+			await saveAnthropicApiKeyToServer("");
 			loadAiStatus();
-			toast(t("toast.ai_cleared"), "success");
 		});
 	}
 	if (linearApiClearBtn) {
