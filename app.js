@@ -28479,7 +28479,7 @@ self.onmessage = async (e) => {
 			? availableTags.filter(t => t.toLowerCase().includes(filter))
 			: availableTags;
 
-		// Group by ":" or "/" prefix (whichever comes first)
+		// Group by ":" or "/" prefix (whichever comes first), or by year (4-digit)
 		const groups = {};
 		const ungrouped = [];
 		filtered.forEach(tag => {
@@ -28492,6 +28492,9 @@ self.onmessage = async (e) => {
 				const g = tag.slice(0, sep);
 				if (!groups[g]) groups[g] = [];
 				groups[g].push(tag);
+			} else if (/^\d{4}$/.test(tag)) {
+				if (!groups["Jahr"]) groups["Jahr"] = [];
+				groups["Jahr"].push(tag);
 			} else {
 				ungrouped.push(tag);
 			}
