@@ -6322,6 +6322,7 @@
 				"qb.select_tag": "Tag wählen…",
 				"qb.tag_group_general": "Allgemein",
 				"qb.tag_group_year": "Jahr",
+				"qb.tag_group_month": "Monat",
 				"qb.tag_filter_placeholder": "Tags filtern…",
 				"qb.tag_empty": "Keine Tags gefunden",
 				"qb.preview": "Vorschau",
@@ -7030,6 +7031,7 @@
 				"qb.select_tag": "Select tag…",
 				"qb.tag_group_general": "General",
 				"qb.tag_group_year": "Year",
+				"qb.tag_group_month": "Month",
 				"qb.tag_filter_placeholder": "Filter tags…",
 				"qb.tag_empty": "No tags found",
 				"qb.preview": "Preview",
@@ -28504,6 +28506,10 @@ self.onmessage = async (e) => {
 				const yearKey = t("qb.tag_group_year", "Year");
 				if (!groups[yearKey]) groups[yearKey] = [];
 				groups[yearKey].push(tag);
+			} else if (/^(jan|feb|mar|apr|mai|may|jun|jul|aug|sep|okt|oct|nov|dez|dec)$/i.test(tag)) {
+				const monthKey = t("qb.tag_group_month", "Month");
+				if (!groups[monthKey]) groups[monthKey] = [];
+				groups[monthKey].push(tag);
 			} else {
 				ungrouped.push(tag);
 			}
