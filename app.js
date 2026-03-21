@@ -28555,7 +28555,8 @@ self.onmessage = async (e) => {
 				html += accordionHtml("__ungrouped", hasGroups ? t("qb.tag_group_general", "General") : "Tags", ungrouped, tag => tag);
 			}
 			Object.keys(groups).sort().forEach(group => {
-				html += accordionHtml(group, group, groups[group], t => t.slice(group.length + 1));
+				// Only strip prefix if tag actually starts with it (prefix groups like cat:, sub:)
+				html += accordionHtml(group, group, groups[group], tag => tag.startsWith(group) ? tag.slice(group.length + 1) : tag);
 			});
 		}
 
