@@ -6320,6 +6320,10 @@
 				"qb.updated_after": "Geändert nach",
 				"qb.updated_before": "Geändert vor",
 				"qb.select_tag": "Tag wählen…",
+				"qb.tag_group_general": "Allgemein",
+				"qb.tag_group_year": "Jahr",
+				"qb.tag_filter_placeholder": "Tags filtern…",
+				"qb.tag_empty": "Keine Tags gefunden",
 				"qb.preview": "Vorschau",
 				"qb.apply": "Anwenden",
 				"qb.reset": "Zurücksetzen",
@@ -7024,6 +7028,10 @@
 				"qb.updated_after": "Updated after",
 				"qb.updated_before": "Updated before",
 				"qb.select_tag": "Select tag…",
+				"qb.tag_group_general": "General",
+				"qb.tag_group_year": "Year",
+				"qb.tag_filter_placeholder": "Filter tags…",
+				"qb.tag_empty": "No tags found",
 				"qb.preview": "Preview",
 				"qb.apply": "Apply",
 				"qb.reset": "Reset",
@@ -28493,8 +28501,9 @@ self.onmessage = async (e) => {
 				if (!groups[g]) groups[g] = [];
 				groups[g].push(tag);
 			} else if (/^\d{4}$/.test(tag)) {
-				if (!groups["Jahr"]) groups["Jahr"] = [];
-				groups["Jahr"].push(tag);
+				const yearKey = t("qb.tag_group_year", "Year");
+				if (!groups[yearKey]) groups[yearKey] = [];
+				groups[yearKey].push(tag);
 			} else {
 				ungrouped.push(tag);
 			}
@@ -28529,15 +28538,15 @@ self.onmessage = async (e) => {
 
 		let html = `<div class="qb-tag-search-wrap">
 			<svg class="qb-tag-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-			<input class="qb-tag-search" type="text" placeholder="Tags filtern…" value="${filter.replace(/"/g, "&quot;")}">
+			<input class="qb-tag-search" type="text" placeholder="${t("qb.tag_filter_placeholder", "Filter tags…")}" value="${filter.replace(/"/g, "&quot;")}">
 			${filter ? `<button type="button" class="qb-tag-search-clear" aria-label="Clear"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:11px;height:11px"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>` : ""}
 		</div>`;
 
 		if (filtered.length === 0) {
-			html += `<div class="qb-tag-empty">Keine Tags gefunden</div>`;
+			html += `<div class="qb-tag-empty">${t("qb.tag_empty", "No tags found")}</div>`;
 		} else {
 			if (ungrouped.length > 0) {
-				html += accordionHtml("__ungrouped", hasGroups ? "Allgemein" : "Tags", ungrouped, t => t);
+				html += accordionHtml("__ungrouped", hasGroups ? t("qb.tag_group_general", "General") : "Tags", ungrouped, tag => tag);
 			}
 			Object.keys(groups).sort().forEach(group => {
 				html += accordionHtml(group, group, groups[group], t => t.slice(group.length + 1));
