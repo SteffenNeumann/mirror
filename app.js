@@ -250,6 +250,8 @@
 	);
 	const psCount = document.getElementById("psCount");
 	const psSearchInput = document.getElementById("psSearch");
+	const psPinnedToggle = document.getElementById("psPinnedToggle");
+	const psCommentsToggle = document.getElementById("psCommentsToggle");
 	const psSortMenuBtn = document.getElementById("psSortMenuBtn");
 	const psSortMenu = document.getElementById("psSortMenu");
 	const psList = document.getElementById("psList");
