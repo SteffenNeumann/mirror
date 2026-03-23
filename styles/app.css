@@ -593,6 +593,20 @@ body[data-theme="emerald"] .bg-blob {
 	padding: 0;
 }
 
+/* ── Search Icon (left inside search) ──────── */
+
+.ps-search-icon {
+	position: absolute;
+	left: 8px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 13px;
+	height: 13px;
+	color: rgba(148, 163, 184, 0.4);
+	pointer-events: none;
+	z-index: 2;
+}
+
 /* ── Sort Button (inline inside search) ──── */
 
 .ps-sort-inline-btn {
