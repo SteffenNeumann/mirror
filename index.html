@@ -137,6 +137,17 @@
 									data-i18n="ps.new_note">
 									New note
 								</button>
+								<button
+									id="psQueryBuilderBtn"
+									type="button"
+									class="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-slate-300 transition hover:bg-white/8 hover:text-slate-100 active:opacity-90"
+									data-i18n="ps.filter"
+									aria-label="Filter"
+									touch-action="manipulation"
+									style="-webkit-tap-highlight-color: transparent">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
+									Filter
+								</button>
 							</div>
 						</div>
 						<div id="psHint" class="mt-2 text-xs text-slate-400" hidden></div>
@@ -192,47 +203,6 @@
 									</div>
 								</div>
 								<div class="flex items-center gap-2 pr-1">
-									<button
-										id="psPinnedToggle"
-										type="button"
-										class="hidden inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
-										title="Pinned only"
-										aria-label="Pinned only"
-										data-i18n-title="ps.pinned_only"
-										data-i18n-aria="ps.pinned_only"
-										aria-pressed="false">
-										<svg
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											class="h-4 w-4">
-											<path d="M4 4v16" />
-											<path d="M4 4h12l-2 5 2 5H4" />
-										</svg>
-									</button>
-									<button
-										id="psCommentsToggle"
-										type="button"
-										class="hidden inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-transparent text-slate-300 transition hover:bg-white/5 active:bg-white/10"
-										title="Mit Kommentaren"
-										aria-label="Mit Kommentaren"
-										data-i18n-title="ps.comments_only"
-										data-i18n-aria="ps.comments_only"
-										aria-pressed="false">
-										<svg
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="2"
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											class="h-4 w-4">
-											<path d="M21 15a4 4 0 0 1-4 4H7l-4 3v-3a4 4 0 0 1-4-4V7a4 4 0 0 1 4-4h14a4 4 0 0 1 4 4z" />
-										</svg>
-									</button>
 									<div class="relative flex flex-1 items-center">
 										<div class="relative flex-1 min-w-0">
 											<input
@@ -240,14 +210,7 @@
 												type="search"
 												placeholder="Search..."
 												data-i18n-placeholder="ps.search"
-												class="w-full min-w-0 rounded-lg border border-white/10 bg-slate-950/30 px-2.5 py-1.5 pr-14 text-xs text-slate-200 shadow-soft backdrop-blur transition placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
-											<button
-												id="psSearchHelp"
-												type="button"
-												class="ps-search-help-btn"
-												aria-label="Search help">
-												<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-3 w-3"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-											</button>
+												class="w-full min-w-0 rounded-lg border border-white/10 bg-slate-950/30 px-2.5 py-1.5 pr-7 text-xs text-slate-200 shadow-soft backdrop-blur transition placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30" />
 											<button
 												id="psSortMenuBtn"
 												type="button"

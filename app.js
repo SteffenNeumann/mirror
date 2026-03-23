@@ -250,8 +250,6 @@
 	);
 	const psCount = document.getElementById("psCount");
 	const psSearchInput = document.getElementById("psSearch");
-	const psPinnedToggle = document.getElementById("psPinnedToggle");
-	const psCommentsToggle = document.getElementById("psCommentsToggle");
 	const psSortMenuBtn = document.getElementById("psSortMenuBtn");
 	const psSortMenu = document.getElementById("psSortMenu");
 	const psList = document.getElementById("psList");
@@ -6289,6 +6287,7 @@
 				"ps.add": "Personal Space hinzufügen",
 				"ps.add_hint": "Du erhältst einen Bestätigungslink per E-Mail.",
 				"ps.new_note": "Neue Notiz",
+				"ps.filter": "Filter",
 				"ps.tags": "Tags",
 				"ps.notes": "Notizen",
 				"ps.pinned_only": "Nur angepinnte",
@@ -6998,6 +6997,7 @@
 				"ps.add": "Add Personal Space",
 				"ps.add_hint": "You’ll receive a verification link by email.",
 				"ps.new_note": "New note",
+				"ps.filter": "Filter",
 				"ps.tags": "Tags",
 				"ps.notes": "Notes",
 				"ps.pinned_only": "Pinned only",
@@ -28089,62 +28089,10 @@ self.onmessage = async (e) => {
 		});
 	}
 
-	/* ── Search-Help tooltip (? icon) ── */
-	const psSearchHelpBtn = document.getElementById("psSearchHelp");
-	if (psSearchHelpBtn) {
-		let searchHelpTimer = null;
-		let searchHelpEl = null;
-		function showSearchHelp() {
-			hideSearchHelp();
-			const el = document.createElement("div");
-			el.className = "ps-search-help-layer";
-			const box = document.createElement("div");
-			box.className = "ps-search-help-box";
-			box.textContent = t("search.help");
-			const arrow = document.createElement("div");
-			arrow.className = "ps-search-help-arrow";
-			el.appendChild(arrow);
-			el.appendChild(box);
-			document.body.appendChild(el);
-			searchHelpEl = el;
-			requestAnimationFrame(() => {
-				if (!searchHelpEl) return;
-				const searchInput = document.getElementById("psSearch");
-				const anchor = searchInput ? searchInput.parentElement : psSearchHelpBtn;
-				const rect = anchor.getBoundingClientRect();
-				const bw = box.offsetWidth || 0;
-				const bh = box.offsetHeight || 0;
-				const gap = 8;
-				let posLeft = rect.right + gap;
-				let posTop = rect.top + rect.height / 2 - bh / 2;
-				/* clamp to viewport */
-				const vw = window.innerWidth;
-				const vh = window.innerHeight;
-				if (posLeft + bw + 8 > vw) posLeft = rect.left - bw - gap;
-				if (posTop < 8) posTop = 8;
-				if (posTop + bh + 8 > vh) posTop = vh - bh - 8;
-				el.style.left = `${posLeft}px`;
-				el.style.top = `${posTop}px`;
-				/* position arrow on the left edge, vertically centered on the anchor */
-				const arrowTop = rect.top + rect.height / 2 - posTop;
-				arrow.style.top = `${arrowTop}px`;
-				el.classList.add("is-visible");
-			});
-		}
-		function hideSearchHelp() {
-			if (searchHelpTimer) { clearTimeout(searchHelpTimer); searchHelpTimer = null; }
-			if (searchHelpEl) { searchHelpEl.remove(); searchHelpEl = null; }
-		}
-		psSearchHelpBtn.addEventListener("mouseenter", () => {
-			searchHelpTimer = setTimeout(showSearchHelp, 350);
-		});
-		psSearchHelpBtn.addEventListener("mouseleave", hideSearchHelp);
-		psSearchHelpBtn.addEventListener("click", (ev) => {
-			ev.preventDefault();
-			ev.stopPropagation();
-			hideSearchHelp();
-			openQueryBuilder();
-		});
+	/* ── Query Builder Button ── */
+	const psQueryBuilderBtn = document.getElementById("psQueryBuilderBtn");
+	if (psQueryBuilderBtn) {
+		psQueryBuilderBtn.addEventListener("click", () => openQueryBuilder());
 	}
 
 	/* ── Query Builder Modal ── */
@@ -28781,23 +28729,6 @@ self.onmessage = async (e) => {
 				ev.preventDefault();
 				closePsTagContextMenu();
 			}
-		});
-	}
-	if (psPinnedToggle) {
-		psPinnedToggle.addEventListener("click", async () => {
-			psPinnedOnly = !psPinnedOnly;
-			savePsPinnedOnly();
-			updatePsPinnedToggle();
-			applyPersonalSpaceFiltersAndRender();
-		});
-	}
-	if (psCommentsToggle) {
-		psCommentsToggle.addEventListener("click", async () => {
-			psCommentsOnly = !psCommentsOnly;
-			savePsCommentsOnly();
-			updatePsCommentsToggle();
-			if (psCommentsOnly && !psCommentIndexLoaded) await loadPsCommentIndex();
-			applyPersonalSpaceFiltersAndRender();
 		});
 	}
 	if (togglePersonalSpaceBtn) {
