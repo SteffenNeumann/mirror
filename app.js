@@ -6816,6 +6816,7 @@
 				"offline.synced": "Offline-Änderungen synchronisiert.",
 				"offline.sync_failed": "Sync fehlgeschlagen für eine Offline-Änderung (Max. Versuche erreicht).",
 				"offline.saved_locally": "Offline gespeichert.",
+				"ps.note_deleted_recreated": "Notiz wurde extern gelöscht – Inhalt als neue Notiz gesichert.",
 				"auto_access.permission_needed": "Ordnerzugriff abgelaufen. Bitte in den Einstellungen den Auto-Backup/Import-Ordner erneut erlauben.",
 				"auto_access.permission_needed_short": "Ordnerzugriff abgelaufen. ",
 				"auto_access.regrant_btn": "Zugriff erlauben",
@@ -7514,6 +7515,7 @@
 				"offline.synced": "Offline changes synced.",
 				"offline.sync_failed": "Sync failed for an offline change (max retries reached).",
 				"offline.saved_locally": "Saved offline.",
+				"ps.note_deleted_recreated": "Note was deleted remotely — content saved as a new note.",
 				"auto_access.permission_needed": "Folder access expired. Please re-grant Auto-Backup/Import folder permissions in Settings.",
 				"auto_access.permission_needed_short": "Folder access expired. ",
 				"auto_access.regrant_btn": "Grant access",
@@ -27605,7 +27607,7 @@ self.onmessage = async (e) => {
 				return true;
 			}
 			if (is404) {
-				// 404: Note deleted server-side — clean up
+				// 404: Note deleted server-side — clean up and recreate to preserve edits
 				console.warn("[saveSnapshot] not found, removing:", targetId);
 				if (psState && Array.isArray(psState.notes)) {
 					psState.notes = psState.notes.filter(
@@ -27621,13 +27623,22 @@ self.onmessage = async (e) => {
 				if (staleTab) {
 					setRoomTabNoteId(staleTab.room, staleTab.key, "");
 				}
-				if (String(psEditingNoteId || "").trim() === targetId) {
+				const wasEditing = String(psEditingNoteId || "").trim() === targetId;
+				if (wasEditing) {
 					psEditingNoteId = "";
 					psAutoSaveLastSavedNoteId = "";
 					psAutoSaveLastSavedText = "";
 					setPsAutoSaveStatus("");
 				}
 				applyPersonalSpaceFiltersAndRender();
+				// Recreate the note so no edits are lost (use auto:false to bypass the
+				// "auto + no id → skip" guard in savePersonalSpaceNote)
+				if (wasEditing && rawText.trim()) {
+					toast(t("ps.note_deleted_recreated") || "Notiz gelöscht – Inhalt als neue Notiz gesichert.", "info");
+					try {
+						await savePersonalSpaceNote(rawText, { auto: false });
+					} catch { /* content remains in textarea */ }
+				}
 				return false;
 			}
 			// Network error fallback: save offline if the API call failed
