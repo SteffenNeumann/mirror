@@ -5663,8 +5663,6 @@ const server = http.createServer(async (req, res) => {
 						? AI_MAX_OUTPUT_TOKENS
 						: 900;
 
-					const temperature = mode === "run" && kind === "code" ? 0 : 0.3;
-
 					async function callAnthropic(model, userPrompt, keyOverride) {
 						const useKey = keyOverride || effectiveApiKey;
 						const r = await fetch("https://api.anthropic.com/v1/messages", {
@@ -5676,7 +5674,6 @@ const server = http.createServer(async (req, res) => {
 							},
 							body: JSON.stringify({
 								model,
-								temperature,
 								max_tokens: maxTokens,
 								system,
 								messages: [{ role: "user", content: userPrompt }],
