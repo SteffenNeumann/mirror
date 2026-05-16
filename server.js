@@ -758,22 +758,44 @@ function initDb() {
 		}
 	}
 
-	// Auto-dedup: remove duplicate notes with same user_id + title_hash + content_hash
+	// Auto-dedup: remove duplicate notes with same user_id + title_hash + content_hash.
+	// IMPORTANT: only true 1:1 duplicates are removed. Notes sharing a title but
+	// differing in content are kept. Pinned notes are always kept.
 	try {
 		const dupeRows = db.prepare(`
-			SELECT n.id, n.user_id, n.title_hash, n.content_hash, n.text, n.tags_json, n.created_at, n.updated_at
+			SELECT n.id, n.user_id, n.kind, n.title_hash, n.content_hash, n.text, n.tags_json, n.created_at, n.updated_at
 			FROM notes n
 			WHERE n.title_hash IS NOT NULL AND n.title_hash <> ''
-			ORDER BY n.user_id, n.title_hash, n.updated_at DESC
+			ORDER BY n.user_id, n.title_hash, n.content_hash, n.updated_at DESC
 		`).all();
+		const isPinnedRow = (row) => {
+			try {
+				const tags = JSON.parse(row.tags_json || "[]");
+				if (!Array.isArray(tags)) return false;
+				return tags.some((t) => String(t || "").toLowerCase() === "pinned");
+			} catch { return false; }
+		};
 		const seen = new Map();
 		const toDelete = [];
 		for (const row of dupeRows) {
-			const key = `${row.user_id}::${row.title_hash}`;
+			// Key includes content_hash → only identical (title + content) notes collide.
+			const key = `${row.user_id}::${row.title_hash}::${row.content_hash || ""}`;
 			if (!seen.has(key)) {
 				seen.set(key, row);
+				continue;
+			}
+			const kept = seen.get(key);
+			// Never trash a pinned note. If the current row is pinned and the kept one
+			// is not, swap them so the pinned note survives.
+			const rowPinned = isPinnedRow(row);
+			const keptPinned = isPinnedRow(kept);
+			if (rowPinned && !keptPinned) {
+				toDelete.push(kept);
+				seen.set(key, row);
+			} else if (rowPinned && keptPinned) {
+				// Both pinned → keep both, do not trash.
+				continue;
 			} else {
-				// Same user + same title: duplicate → keep the first (newest by updated_at), trash the rest
 				toDelete.push(row);
 			}
 		}
@@ -786,12 +808,19 @@ function initDb() {
 				const now = Date.now();
 				for (const row of toDelete) {
 					try {
-						trashInsert.run(row.id, row.user_id, row.text, "", row.content_hash || "", row.tags_json || "[]", row.created_at, row.updated_at, now);
+						// Preserve the original kind so the trash UI can render/filter correctly.
+						const kindVal = String(row.kind || "note");
+						trashInsert.run(row.id, row.user_id, row.text, kindVal, row.content_hash || "", row.tags_json || "[]", row.created_at, row.updated_at, now);
 					} catch { /* ignore trash insert errors */ }
 					deleteStmt.run(row.id);
 				}
 			});
 			dedupTx();
+			// Detailed log so accidental deletions can be forensically traced.
+			for (const row of toDelete) {
+				const preview = String(row.text || "").replace(/\s+/g, " ").slice(0, 80);
+				console.log(`[initDb] Auto-dedup trashed note id=${row.id} user=${row.user_id} kind=${row.kind || "note"} updated_at=${row.updated_at} text="${preview}"`);
+			}
 			console.log(`[initDb] Auto-dedup: moved ${toDelete.length} duplicate notes to trash`);
 		}
 	} catch (e) {
