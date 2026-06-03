@@ -6113,6 +6113,34 @@
 			scrollbarThumbHover: "rgba(201, 155, 119, 0.3)",
 			scrollbarBorder: "rgba(16, 12, 10, 0.6)",
 		},
+		bronzeDark: {
+			label: "Bronze Dark",
+			top: "rgba(50, 48, 44, 0.9)",
+			bottom: "rgba(38, 38, 38, 0.92)",
+			previewBg: "#262626",
+			previewMetaBg: "rgba(74, 64, 56, 0.75)",
+			previewMetaBorder: "rgba(190, 146, 91, 0.38)",
+			previewMetaText: "rgba(232, 223, 211, 0.92)",
+			previewLink: "rgba(190, 146, 91, 0.9)",
+			accentBgSoft: "rgba(190, 146, 91, 0.12)",
+			accentBg: "rgba(190, 146, 91, 0.16)",
+			accentBgHover: "rgba(190, 146, 91, 0.22)",
+			accentBadgeBg: "rgba(190, 146, 91, 0.22)",
+			accentStrong: "rgba(190, 146, 91, 0.7)",
+			accentStrongHover: "rgba(190, 146, 91, 0.8)",
+			accentStrongActive: "rgba(190, 146, 91, 0.9)",
+			accentBorder: "rgba(190, 146, 91, 0.35)",
+			accentBorderStrong: "rgba(190, 146, 91, 0.48)",
+			accentText: "#fff",
+			accentTextSoft: "rgba(232, 208, 175, 0.92)",
+			accentRing: "rgba(190, 146, 91, 0.35)",
+			accentRingStrong: "rgba(190, 146, 91, 0.5)",
+			blockquoteBorder: "rgba(190, 146, 91, 0.32)",
+			blockquoteText: "rgba(232, 208, 175, 0.9)",
+			scrollbarThumb: "rgba(190, 146, 91, 0.2)",
+			scrollbarThumbHover: "rgba(190, 146, 91, 0.3)",
+			scrollbarBorder: "rgba(20, 18, 15, 0.6)",
+		},
 		bitterDark: {
 			label: "Bitter Dark",
 			top: "#0d0c10",
@@ -6266,6 +6294,7 @@
 		"emerald",
 		"violet",
 		"coffeeDark",
+		"bronzeDark",
 		"coffeeLight",
 		"bitterDark",
 		"bitterLight",
@@ -6278,6 +6307,7 @@
 		"monoDark",
 		"coffeeLight",
 		"coffeeDark",
+		"bronzeDark",
 		"bitterLight",
 		"bitterDark",
 	]);
@@ -9787,7 +9817,7 @@
 			/* solid panel bg per theme (no opacity) */
 			const solidBgs = {
 				fuchsia: "#0f0a1a", cyan: "#0a1018", emerald: "#0a1510", violet: "#0d0a18",
-				coffeeDark: "#1c1614", coffeeLight: "#f3ebe2",
+				coffeeDark: "#1c1614", bronzeDark: "#2c2924", coffeeLight: "#f3ebe2",
 				bitterDark: "#131216", bitterLight: "#efecea",
 				monoDark: "#161b22", monoLight: "#eef1f5"
 			};
@@ -9796,14 +9826,14 @@
 			const modalBackdrops = {
 				fuchsia: "rgba(15,10,26,0.6)", cyan: "rgba(10,16,24,0.6)",
 				emerald: "rgba(10,21,16,0.6)", violet: "rgba(13,10,24,0.6)",
-				coffeeDark: "rgba(16,12,10,0.6)", coffeeLight: "rgba(68,45,30,0.2)",
+				coffeeDark: "rgba(16,12,10,0.6)", bronzeDark: "rgba(20,18,15,0.6)", coffeeLight: "rgba(68,45,30,0.2)",
 				bitterDark: "rgba(13,12,16,0.6)", bitterLight: "rgba(21,21,24,0.2)",
 				monoDark: "rgba(22,27,34,0.6)", monoLight: "rgba(27,31,36,0.22)"
 			};
 			const modalBorders = {
 				fuchsia: "rgba(255,255,255,0.1)", cyan: "rgba(255,255,255,0.1)",
 				emerald: "rgba(255,255,255,0.1)", violet: "rgba(255,255,255,0.1)",
-				coffeeDark: "#35261e", coffeeLight: "#d9c7bc",
+				coffeeDark: "#35261e", bronzeDark: "#4a4038", coffeeLight: "#d9c7bc",
 				bitterDark: "#2a2a30", bitterLight: "#d8d2cb",
 				monoDark: "rgba(48,54,61,0.9)", monoLight: "#d0d7de"
 			};
@@ -13371,6 +13401,8 @@
 					return { ...base, fieldBg: "#f3e9df", fieldBorder: "#d9c7bc", fieldText: "#5b4436", valueText: "#3b2a21" };
 				case "coffeeDark":
 					return { ...base, fieldBg: "#1c1511", fieldBorder: "#35261e", fieldText: "#c7ae9d", valueText: "#e8d9cc" };
+				case "bronzeDark":
+					return { ...base, fieldBg: "#2c2924", fieldBorder: "#4a4038", fieldText: "#c5b8aa", valueText: "#e8dfd3" };
 				case "bitterLight":
 					return { ...base, fieldBg: "#f0eeeb", fieldBorder: "#d8d2cb", fieldText: "#2a292f", valueText: "#0d0c10" };
 				case "bitterDark":
@@ -13521,6 +13553,14 @@
 					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#c9a880;}
 					.hljs-string,.hljs-attr,.hljs-number{color:#b8a38d;}
 					.hljs-comment,.hljs-quote{color:rgba(232,217,204,.5);}
+					`;
+				case "bronzeDark":
+					return `
+					pre.hljs, pre.hljs code.hljs{background:#2c2924!important;border-color:#4a4038;color:#e8dfd3;}
+					pre code.hljs{background:transparent!important;}
+					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#d4a96a;}
+					.hljs-string,.hljs-attr,.hljs-number{color:#bfa888;}
+					.hljs-comment,.hljs-quote{color:rgba(232,223,211,.5);}
 					`;
 				default:
 					return "";
