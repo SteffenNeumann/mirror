@@ -4449,6 +4449,22 @@ body[data-theme="bronzeDark"] {
 	--dropdown-text-hover: #f5ede0;
 	--dropdown-hover-bg: rgba(190, 146, 91, 0.1);
 	--dropdown-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+	/* Standard accent-* bridge → Bronze (overrides fuchsia :root defaults) */
+	--accent-bg-soft:       rgba(190, 146, 91, 0.10);
+	--accent-bg:            rgba(190, 146, 91, 0.15);
+	--accent-bg-hover:      rgba(190, 146, 91, 0.20);
+	--accent-badge-bg:      rgba(190, 146, 91, 0.20);
+	--accent-strong:        rgba(190, 146, 91, 0.75);
+	--accent-strong-hover:  rgba(190, 146, 91, 0.85);
+	--accent-strong-active: rgba(190, 146, 91, 0.95);
+	--accent-border:        rgba(190, 146, 91, 0.30);
+	--accent-border-strong: rgba(190, 146, 91, 0.45);
+	--accent-text:          #e8dfd3;   /* warm cream — readable on bronze bg */
+	--accent-text-soft:     #be925b;   /* bronze as soft accent text */
+	--accent-ring:          rgba(190, 146, 91, 0.25);
+	--accent-ring-strong:   rgba(190, 146, 91, 0.40);
+	--blockquote-border:    rgba(190, 146, 91, 0.45);
+	--blockquote-text:      rgba(232, 223, 211, 0.90);
 }
 
 body[data-theme="bronzeDark"] .bg-glow {
@@ -4517,14 +4533,13 @@ body[data-theme="bronzeDark"] .bg-fuchsia-500\/15,
 body[data-theme="bronzeDark"] .bg-fuchsia-500\/20,
 body[data-theme="bronzeDark"] .bg-fuchsia-500\/25,
 body[data-theme="bronzeDark"] .bg-fuchsia-600\/20 {
-	background-color: transparent !important;
+	background-color: rgba(190, 146, 91, 0.15) !important;
 	color: var(--bronze-accent) !important;
 }
 
 body[data-theme="bronzeDark"] .hover\:bg-fuchsia-500\/20:hover,
 body[data-theme="bronzeDark"] .hover\:bg-fuchsia-500\/25:hover {
-	background-color: transparent !important;
-	color: var(--bronze-accent) !important;
+	background-color: rgba(190, 146, 91, 0.20) !important;
 }
 
 body[data-theme="bronzeDark"] .text-fuchsia-100,
