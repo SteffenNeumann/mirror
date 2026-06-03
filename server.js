@@ -839,6 +839,22 @@ function initDb() {
 		CREATE INDEX IF NOT EXISTS idx_saved_queries_user ON saved_queries(user_id, created_at ASC);
 	`);
 
+	db.exec(`
+		CREATE TABLE IF NOT EXISTS workflows (
+			id INTEGER PRIMARY KEY AUTOINCREMENT,
+			user_id INTEGER NOT NULL,
+			name TEXT NOT NULL,
+			method TEXT NOT NULL DEFAULT 'POST',
+			url TEXT NOT NULL,
+			headers_json TEXT NOT NULL DEFAULT '{}',
+			body_template TEXT NOT NULL DEFAULT '{{content}}',
+			created_at INTEGER NOT NULL,
+			updated_at INTEGER NOT NULL,
+			FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+		);
+		CREATE INDEX IF NOT EXISTS idx_workflows_user ON workflows(user_id, created_at ASC);
+	`);
+
 	stmtUserGet = db.prepare("SELECT id, email FROM users WHERE email = ?");
 	stmtUserInsert = db.prepare(
 		"INSERT INTO users(email, created_at) VALUES(?, ?) ON CONFLICT(email) DO NOTHING"
@@ -2559,6 +2575,62 @@ async function sendMagicLinkEmail(email, link) {
 		messageId: info && info.messageId ? String(info.messageId) : "",
 		response: info && info.response ? String(info.response) : "",
 	};
+}
+
+// ── SSRF protection: validate webhook target URLs ──────────────────────────
+const PRIVATE_IP_PATTERNS = [
+	/^127\./,
+	/^10\./,
+	/^172\.(1[6-9]|2\d|3[01])\./,
+	/^192\.168\./,
+	/^169\.254\./,
+	/^::1$/,
+	/^fc00:/,
+	/^fd[0-9a-f]{2}:/i,
+	/^0\.0\.0\.0$/,
+];
+function isPrivateIp(ip) {
+	return PRIVATE_IP_PATTERNS.some((r) => r.test(String(ip || "")));
+}
+async function validateWebhookUrl(rawUrl) {
+	let parsed;
+	try {
+		parsed = new URL(rawUrl);
+	} catch {
+		return { ok: false, reason: "invalid_url" };
+	}
+	if (parsed.protocol !== "https:") {
+		return { ok: false, reason: "https_required" };
+	}
+	if (isPrivateIp(parsed.hostname)) {
+		return { ok: false, reason: "private_ip_blocked" };
+	}
+	// DNS resolve check
+	try {
+		const { promises: dns } = await import("dns");
+		const addresses = await dns.resolve4(parsed.hostname).catch(() => []);
+		const addresses6 = await dns.resolve6(parsed.hostname).catch(() => []);
+		const all = [...addresses, ...addresses6];
+		if (all.some((a) => isPrivateIp(a))) {
+			return { ok: false, reason: "private_ip_blocked" };
+		}
+	} catch {
+		// DNS failure is not itself a blocking reason; proceed
+	}
+	return { ok: true };
+}
+
+// ── Per-user email rate limiter (10 emails per hour) ──────────────────────
+const sendMailRateMap = new Map(); // userId -> [timestamps]
+const SEND_MAIL_HOUR_LIMIT = 10;
+function checkSendMailRateLimit(userId) {
+	const now = Date.now();
+	const cutoff = now - 60 * 60 * 1000;
+	const times = (sendMailRateMap.get(userId) || []).filter((t) => t > cutoff);
+	if (times.length >= SEND_MAIL_HOUR_LIMIT) return false;
+	times.push(now);
+	sendMailRateMap.set(userId, times);
+	return true;
 }
 
 function clampRoom(room) {
@@ -6044,6 +6116,248 @@ const server = http.createServer(async (req, res) => {
 				}
 				json(res, 400, { ok: false, error: "invalid_json" });
 			});
+		return;
+	}
+
+	// ── Actions: SMTP status ────────────────────────────────────────────────
+	if (url.pathname === "/api/actions/smtp-status" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) { json(res, 401, { ok: false, error: "unauthorized" }); return; }
+		const configured = Boolean(
+			process.env.SMTP_HOST &&
+			process.env.SMTP_USER &&
+			process.env.SMTP_PASS &&
+			(process.env.MAIL_FROM || process.env.SMTP_FROM || process.env.SMTP_USER)
+		);
+		json(res, 200, { ok: true, configured });
+		return;
+	}
+
+	// ── Actions: send mail ───────────────────────────────────────────────────
+	if (url.pathname === "/api/actions/send-mail" && req.method === "POST") {
+		const email = getAuthedEmail(req);
+		if (!email) { json(res, 401, { ok: false, error: "unauthorized" }); return; }
+		if (!process.env.SMTP_HOST) {
+			json(res, 503, { ok: false, error: "smtp_not_configured" });
+			return;
+		}
+		readJsonWithLimit(req, 32 * 1024)
+			.then(async (body) => {
+				if (!body) { json(res, 400, { ok: false, error: "invalid_json" }); return; }
+				const userId = getOrCreateUserId(email);
+				if (!checkSendMailRateLimit(userId)) {
+					json(res, 429, { ok: false, error: "rate_limit_exceeded" });
+					return;
+				}
+				// Validate 'to' email address
+				const to = String(body.to || "").trim().toLowerCase();
+				if (!to || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) {
+					json(res, 400, { ok: false, error: "invalid_to" });
+					return;
+				}
+				// Sanitize subject: strip CR/LF, clamp length
+				const subject = String(body.subject || "Mirror note")
+					.replace(/[\r\n]/g, " ")
+					.slice(0, 200);
+				// Clamp body
+				const rawText = String(body.body || "").slice(0, 50000);
+				// Convert markdown to simple HTML for email
+				const htmlBody = rawText
+					.replace(/&/g, "&amp;")
+					.replace(/</g, "&lt;")
+					.replace(/>/g, "&gt;")
+					.replace(/\n/g, "<br>");
+				let nodemailer;
+				try {
+					nodemailer = (await import("nodemailer")).default;
+				} catch {
+					json(res, 500, { ok: false, error: "nodemailer_missing" });
+					return;
+				}
+				const from = process.env.MAIL_FROM || process.env.SMTP_FROM || process.env.SMTP_USER;
+				const transporter = nodemailer.createTransport({
+					host: process.env.SMTP_HOST,
+					port: Number(process.env.SMTP_PORT || 587),
+					secure: String(process.env.SMTP_SECURE || "").toLowerCase() === "true",
+					auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+				});
+				try {
+					await transporter.sendMail({
+						from,
+						to,
+						subject,
+						text: rawText,
+						html: `<div style="font-family:sans-serif;max-width:640px">${htmlBody}</div>`,
+					});
+					json(res, 200, { ok: true });
+				} catch (e) {
+					console.error("[send-mail] SMTP error:", e && e.message);
+					json(res, 502, { ok: false, error: "smtp_send_failed" });
+				}
+			})
+			.catch(() => json(res, 400, { ok: false, error: "invalid_json" }));
+		return;
+	}
+
+	// ── Workflows: CRUD ──────────────────────────────────────────────────────
+	if (url.pathname === "/api/workflows" && req.method === "GET") {
+		const email = getAuthedEmail(req);
+		if (!email) { json(res, 401, { ok: false, error: "unauthorized" }); return; }
+		const userId = getOrCreateUserId(email);
+		const rows = db.prepare("SELECT id, name, method, url, headers_json, body_template, created_at, updated_at FROM workflows WHERE user_id = ? ORDER BY created_at ASC").all(userId);
+		const workflows = rows.map((r) => ({
+			id: r.id,
+			name: r.name,
+			method: r.method,
+			url: r.url,
+			headers: safeJsonParse(r.headers_json) || {},
+			bodyTemplate: r.body_template,
+			createdAt: r.created_at,
+			updatedAt: r.updated_at,
+		}));
+		json(res, 200, { ok: true, workflows });
+		return;
+	}
+
+	if (url.pathname === "/api/workflows" && req.method === "POST") {
+		const email = getAuthedEmail(req);
+		if (!email) { json(res, 401, { ok: false, error: "unauthorized" }); return; }
+		readJsonWithLimit(req, 16 * 1024)
+			.then(async (body) => {
+				if (!body) { json(res, 400, { ok: false, error: "invalid_json" }); return; }
+				const name = String(body.name || "").trim().slice(0, 100);
+				const method = ["GET", "POST", "PUT", "PATCH"].includes(String(body.method || "POST")) ? String(body.method) : "POST";
+				const rawUrl = String(body.url || "").trim();
+				if (!name || !rawUrl) { json(res, 400, { ok: false, error: "missing_fields" }); return; }
+				const ssrf = await validateWebhookUrl(rawUrl);
+				if (!ssrf.ok) { json(res, 400, { ok: false, error: ssrf.reason }); return; }
+				const headers = typeof body.headers === "object" && body.headers && !Array.isArray(body.headers) ? body.headers : {};
+				const bodyTemplate = String(body.bodyTemplate || "{{content}}").slice(0, 4000);
+				const now = Date.now();
+				const userId = getOrCreateUserId(email);
+				const result = db.prepare("INSERT INTO workflows(user_id, name, method, url, headers_json, body_template, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?)").run(userId, name, method, rawUrl, JSON.stringify(headers), bodyTemplate, now, now);
+				json(res, 200, { ok: true, id: result.lastInsertRowid });
+			})
+			.catch(() => json(res, 400, { ok: false, error: "invalid_json" }));
+		return;
+	}
+
+	if (url.pathname.startsWith("/api/workflows/") && req.method !== "POST") {
+		const email = getAuthedEmail(req);
+		if (!email) { json(res, 401, { ok: false, error: "unauthorized" }); return; }
+		const wfId = parseInt(url.pathname.replace("/api/workflows/", ""), 10);
+		if (!Number.isFinite(wfId)) { json(res, 400, { ok: false, error: "invalid_id" }); return; }
+		const userId = getOrCreateUserId(email);
+		if (req.method === "DELETE") {
+			db.prepare("DELETE FROM workflows WHERE id = ? AND user_id = ?").run(wfId, userId);
+			json(res, 200, { ok: true });
+			return;
+		}
+		if (req.method === "PUT") {
+			readJsonWithLimit(req, 16 * 1024)
+				.then(async (body) => {
+					if (!body) { json(res, 400, { ok: false, error: "invalid_json" }); return; }
+					const existing = db.prepare("SELECT id FROM workflows WHERE id = ? AND user_id = ?").get(wfId, userId);
+					if (!existing) { json(res, 404, { ok: false, error: "not_found" }); return; }
+					const name = String(body.name || "").trim().slice(0, 100);
+					const method = ["GET", "POST", "PUT", "PATCH"].includes(String(body.method || "POST")) ? String(body.method) : "POST";
+					const rawUrl = String(body.url || "").trim();
+					if (!name || !rawUrl) { json(res, 400, { ok: false, error: "missing_fields" }); return; }
+					const ssrf = await validateWebhookUrl(rawUrl);
+					if (!ssrf.ok) { json(res, 400, { ok: false, error: ssrf.reason }); return; }
+					const headers = typeof body.headers === "object" && body.headers && !Array.isArray(body.headers) ? body.headers : {};
+					const bodyTemplate = String(body.bodyTemplate || "{{content}}").slice(0, 4000);
+					db.prepare("UPDATE workflows SET name=?, method=?, url=?, headers_json=?, body_template=?, updated_at=? WHERE id=? AND user_id=?").run(name, method, rawUrl, JSON.stringify(headers), bodyTemplate, Date.now(), wfId, userId);
+					json(res, 200, { ok: true });
+				})
+				.catch(() => json(res, 400, { ok: false, error: "invalid_json" }));
+			return;
+		}
+		json(res, 405, { ok: false, error: "method_not_allowed" });
+		return;
+	}
+
+	// ── Workflows: run (webhook proxy with SSRF protection) ─────────────────
+	if (url.pathname === "/api/workflows/run" && req.method === "POST") {
+		const email = getAuthedEmail(req);
+		if (!email) { json(res, 401, { ok: false, error: "unauthorized" }); return; }
+		readJsonWithLimit(req, 64 * 1024)
+			.then(async (body) => {
+				if (!body) { json(res, 400, { ok: false, error: "invalid_json" }); return; }
+				const userId = getOrCreateUserId(email);
+				const wfId = parseInt(String(body.workflowId || ""), 10);
+				const wf = Number.isFinite(wfId)
+					? db.prepare("SELECT * FROM workflows WHERE id = ? AND user_id = ?").get(wfId, userId)
+					: null;
+				if (!wf) { json(res, 404, { ok: false, error: "workflow_not_found" }); return; }
+				const ssrf = await validateWebhookUrl(wf.url);
+				if (!ssrf.ok) { json(res, 400, { ok: false, error: ssrf.reason }); return; }
+				// Resolve template variables
+				const vars = {
+					content: String(body.content || ""),
+					title: String(body.title || ""),
+					room: String(body.room || ""),
+					timestamp: new Date().toISOString(),
+					tags: String(body.tags || ""),
+				};
+				let payload = String(wf.body_template || "{{content}}");
+				for (const [k, v] of Object.entries(vars)) {
+					payload = payload.replaceAll(`{{${k}}}`, v);
+				}
+				// Build headers (filter out dangerous ones)
+				const FORBIDDEN_HEADERS = ["host", "cookie", "authorization", "x-mirror-auth"];
+				let userHeaders = {};
+				try {
+					userHeaders = JSON.parse(wf.headers_json || "{}");
+				} catch { userHeaders = {}; }
+				const safeHeaders = { "Content-Type": "application/json", "User-Agent": "Mirror-Webhook/1.0" };
+				for (const [k, v] of Object.entries(userHeaders)) {
+					if (!FORBIDDEN_HEADERS.includes(String(k).toLowerCase())) {
+						safeHeaders[String(k).slice(0, 80)] = String(v).slice(0, 500);
+					}
+				}
+				// Execute webhook with timeout + response size limit
+				const controller = new AbortController();
+				const timer = setTimeout(() => controller.abort(), 10000);
+				try {
+					const { default: fetchFn } = await import("node-fetch").catch(() => ({ default: globalThis.fetch }));
+					const fetchImpl = typeof fetchFn === "function" ? fetchFn : globalThis.fetch;
+					const fetchOpts = {
+						method: wf.method,
+						headers: safeHeaders,
+						signal: controller.signal,
+						redirect: "error",
+					};
+					if (wf.method !== "GET") fetchOpts.body = payload;
+					const resp = await fetchImpl(wf.url, fetchOpts);
+					clearTimeout(timer);
+					// Read up to 1MB of response
+					let respText = "";
+					try {
+						const buf = [];
+						let total = 0;
+						const reader = resp.body && resp.body.getReader ? resp.body.getReader() : null;
+						if (reader) {
+							while (true) {
+								const { done, value } = await reader.read();
+								if (done) break;
+								total += value.length;
+								if (total > 1024 * 1024) { respText = "[response truncated]"; break; }
+								buf.push(value);
+							}
+							if (!respText) respText = Buffer.concat(buf.map((v) => Buffer.from(v))).toString("utf8").slice(0, 2000);
+						} else {
+							respText = (await resp.text().catch(() => "")).slice(0, 2000);
+						}
+					} catch { respText = ""; }
+					json(res, 200, { ok: true, status: resp.status, response: respText });
+				} catch (e) {
+					clearTimeout(timer);
+					const reason = String(e && e.message || "").includes("abort") ? "timeout" : "fetch_failed";
+					json(res, 502, { ok: false, error: reason });
+				}
+			})
+			.catch(() => json(res, 400, { ok: false, error: "invalid_json" }));
 		return;
 	}
 
