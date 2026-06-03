@@ -10914,3 +10914,29 @@ body[data-theme="monoLight"] .cmd-palette-results:empty::after {
 #sendMailModal .action-modal-box textarea::placeholder { color: var(--sel-text-muted) !important; }
 #sendMailModal .action-modal-box input:focus,
 #sendMailModal .action-modal-box textarea:focus { border-color: var(--dropdown-accent) !important; outline: none; }
+
+/* ── Send button & Cancel button – use theme accent ── */
+#sendMailModal .action-modal-box #sendMailSubmit {
+background: var(--accent-strong) !important;
+border-color: transparent !important;
+color: var(--accent-text, #fff) !important;
+}
+#sendMailModal .action-modal-box #sendMailSubmit:hover {
+background: var(--accent-strong-hover) !important;
+}
+#sendMailModal .action-modal-box #sendMailSubmit:active {
+background: var(--accent-strong-active) !important;
+}
+/* Cancel & Esc buttons in action modals */
+#saveFileModal .action-modal-box button:not(.save-file-btn),
+#sendMailModal .action-modal-box #sendMailCancel,
+#shareToModal .action-modal-box button:not(.save-file-btn) {
+background: transparent !important;
+border-color: var(--selection-menu-border) !important;
+color: var(--sel-text) !important;
+}
+#saveFileModal .action-modal-box button:not(.save-file-btn):hover,
+#sendMailModal .action-modal-box #sendMailCancel:hover,
+#shareToModal .action-modal-box button:not(.save-file-btn):hover {
+background: var(--sel-hover-bg) !important;
+}
