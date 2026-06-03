@@ -10860,42 +10860,57 @@ body[data-theme="monoLight"] .cmd-palette-results:empty::after {
 .save-file-btn:hover { background: var(--dropdown-hover-bg, rgba(255,255,255,0.09)); color: var(--sel-text-hover, #fff); }
 .save-file-btn:active { opacity: 0.75; }
 
-/* ── Action modal dialog box – fully theme-aware ── */
-.action-modal-box {
-background: var(--selection-menu-bg, rgba(15, 10, 7, 0.92)) !important;
-border-color: var(--selection-menu-border, rgba(255,255,255,0.1)) !important;
-color: var(--sel-text, rgba(226,232,240,0.85));
-box-shadow: var(--dropdown-shadow, 0 8px 32px rgba(0,0,0,0.5)) !important;
-backdrop-filter: none !important;
--webkit-backdrop-filter: none !important;
+/* ── Action modal dialog box – fully theme-aware ──
+   Use #id .action-modal-box to get specificity (0,1,1,0) which beats
+   the light-theme Tailwind class overrides (0,0,2,1) */
+#saveFileModal .action-modal-box,
+#sendMailModal .action-modal-box,
+#shareToModal .action-modal-box {
+	background: var(--selection-menu-bg) !important;
+	border-color: var(--selection-menu-border) !important;
+	color: var(--sel-text);
+	box-shadow: var(--dropdown-shadow, 0 8px 32px rgba(0,0,0,0.5)) !important;
+	backdrop-filter: none !important;
+	-webkit-backdrop-filter: none !important;
 }
 /* Title & text */
-.action-modal-box h3,
-.action-modal-box .text-slate-100,
-.action-modal-box .text-slate-200 { color: var(--sel-text) !important; }
-.action-modal-box .text-slate-300,
-.action-modal-box .text-slate-400,
-.action-modal-box .text-slate-500 { color: var(--sel-text-muted) !important; }
+#saveFileModal .action-modal-box h3,
+#sendMailModal .action-modal-box h3,
+#shareToModal .action-modal-box h3,
+#saveFileModal .action-modal-box .text-slate-100,
+#sendMailModal .action-modal-box .text-slate-100,
+#shareToModal .action-modal-box .text-slate-100,
+#saveFileModal .action-modal-box .text-slate-200,
+#sendMailModal .action-modal-box .text-slate-200,
+#shareToModal .action-modal-box .text-slate-200 { color: var(--sel-text) !important; }
+#saveFileModal .action-modal-box .text-slate-300,
+#sendMailModal .action-modal-box .text-slate-300,
+#shareToModal .action-modal-box .text-slate-300,
+#saveFileModal .action-modal-box .text-slate-400,
+#sendMailModal .action-modal-box .text-slate-400,
+#shareToModal .action-modal-box .text-slate-400,
+#saveFileModal .action-modal-box .text-slate-500,
+#sendMailModal .action-modal-box .text-slate-500,
+#shareToModal .action-modal-box .text-slate-500 { color: var(--sel-text-muted) !important; }
 /* Borders */
-.action-modal-box .border-white\/10,
-.action-modal-box .border-t { border-color: var(--selection-menu-border) !important; }
-/* Buttons & interactive areas */
-.action-modal-box .hover\:bg-white\/5:hover,
-.action-modal-box .bg-white\/5 { background: var(--sel-hover-bg) !important; }
-/* Footer stripe */
-.action-modal-box .bg-slate-950\/30 { background: var(--sel-hover-bg) !important; }
+#saveFileModal .action-modal-box .border-white\/10,
+#sendMailModal .action-modal-box .border-white\/10,
+#shareToModal .action-modal-box .border-white\/10,
+#sendMailModal .action-modal-box .border-t { border-color: var(--selection-menu-border) !important; }
+/* Hover / interactive */
+#saveFileModal .action-modal-box .hover\:bg-white\/5:hover,
+#sendMailModal .action-modal-box .hover\:bg-white\/5:hover,
+#shareToModal .action-modal-box .hover\:bg-white\/5:hover { background: var(--sel-hover-bg) !important; }
+/* Footer stripe (sendMail) */
+#sendMailModal .action-modal-box .bg-slate-950\/30 { background: var(--sel-hover-bg) !important; }
 /* Inputs & textareas */
-.action-modal-box input,
-.action-modal-box textarea {
-background: var(--sel-hover-bg, rgba(255,255,255,0.04)) !important;
-color: var(--sel-text) !important;
-border-color: var(--selection-menu-border) !important;
+#sendMailModal .action-modal-box input,
+#sendMailModal .action-modal-box textarea {
+	background: var(--sel-hover-bg) !important;
+	color: var(--sel-text) !important;
+	border-color: var(--selection-menu-border) !important;
 }
-.action-modal-box input::placeholder,
-.action-modal-box textarea::placeholder { color: var(--sel-text-muted) !important; }
-.action-modal-box input:focus,
-.action-modal-box textarea:focus { border-color: var(--dropdown-accent) !important; outline: none; }
-/* SMTP warning – keep amber tones, just adjust opacity */
-.action-modal-box #sendMailSmtpWarning { opacity: 0.9; }
-/* Status text */
-.action-modal-box #sendMailStatus { color: var(--sel-text-muted) !important; }
+#sendMailModal .action-modal-box input::placeholder,
+#sendMailModal .action-modal-box textarea::placeholder { color: var(--sel-text-muted) !important; }
+#sendMailModal .action-modal-box input:focus,
+#sendMailModal .action-modal-box textarea:focus { border-color: var(--dropdown-accent) !important; outline: none; }
