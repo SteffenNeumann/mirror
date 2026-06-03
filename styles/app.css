@@ -10684,3 +10684,221 @@ body[data-theme="monoLight"] .cmd-palette-results:empty::after {
 		border-radius: 16px;
 	}
 }
+
+/* ────────────────────────────────────────────────────────
+   Action Panel & Action Trigger
+   ──────────────────────────────────────────────────────── */
+
+/* Second trigger button (Actions) — same look as .toolbox-trigger */
+.action-trigger {
+	margin-right: 4px;
+}
+.action-trigger[aria-pressed="true"] {
+	background: var(--accent-bg, rgba(217, 70, 239, 0.15));
+	border-color: var(--accent-border, rgba(217, 70, 239, 0.3));
+	color: var(--accent-text, #fff);
+}
+
+/* Floating action panel — slides up from the trigger */
+.action-panel {
+	position: absolute;
+	bottom: calc(100% + 8px);
+	right: 0;
+	width: 220px;
+	z-index: 50;
+	background: var(--panel-solid-bg, rgba(2, 6, 23, 0.92));
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 14px;
+	backdrop-filter: blur(24px) saturate(1.5);
+	-webkit-backdrop-filter: blur(24px) saturate(1.5);
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255,255,255,0.04);
+	padding: 6px;
+	opacity: 0;
+	transform: translateY(6px) scale(0.98);
+	visibility: hidden;
+	pointer-events: none;
+	transition:
+		opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+		transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+		visibility 0s 0.2s;
+}
+.action-panel.is-open {
+	opacity: 1;
+	transform: translateY(0) scale(1);
+	visibility: visible;
+	pointer-events: auto;
+	transition:
+		opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+		transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+		visibility 0s 0s;
+}
+
+.action-panel-inner {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.action-panel-group {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+}
+.action-panel-group + .action-panel-group {
+	border-top: 1px solid rgba(255,255,255,0.07);
+	padding-top: 4px;
+	margin-top: 2px;
+}
+
+.action-panel-label {
+	padding: 3px 8px 2px;
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: rgba(148, 163, 184, 0.6);
+}
+.action-panel-label--row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.action-manage-link {
+	font-size: 10px;
+	font-weight: 500;
+	color: rgba(217, 70, 239, 0.8);
+	background: none;
+	border: none;
+	cursor: pointer;
+	padding: 0;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+	transition: color 0.15s;
+}
+.action-manage-link:hover {
+	color: rgb(217, 70, 239);
+}
+
+/* Individual action row button */
+.action-item {
+	display: flex;
+	align-items: center;
+	gap: 9px;
+	width: 100%;
+	padding: 7px 8px;
+	border-radius: 9px;
+	border: none;
+	background: transparent;
+	color: rgba(226, 232, 240, 0.85);
+	font-size: 13px;
+	cursor: pointer;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+	transition: background 0.12s, color 0.12s;
+	text-align: left;
+}
+.action-item:hover {
+	background: rgba(255, 255, 255, 0.08);
+	color: #fff;
+}
+.action-item:active {
+	background: rgba(255, 255, 255, 0.13);
+	transform: scale(0.98);
+}
+
+/* Workflow rows inside action panel */
+.action-workflows-list {
+	display: flex;
+	flex-direction: column;
+	gap: 1px;
+	max-height: 160px;
+	overflow-y: auto;
+}
+.action-workflow-item {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	width: 100%;
+	padding: 6px 8px;
+	border-radius: 8px;
+	border: none;
+	background: transparent;
+	color: rgba(226, 232, 240, 0.75);
+	font-size: 12px;
+	cursor: pointer;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+	transition: background 0.12s, color 0.12s;
+	text-align: left;
+}
+.action-workflow-item:hover { background: rgba(255,255,255,0.08); color:#fff; }
+.action-workflow-item:active { background: rgba(255,255,255,0.13); }
+.action-workflows-empty {
+	padding: 6px 8px;
+	font-size: 11px;
+	color: rgba(148, 163, 184, 0.5);
+}
+
+/* ── Save file / Share to sub-modal buttons ── */
+.save-file-btn {
+	display: block;
+	width: 100%;
+	padding: 9px 12px;
+	border-radius: 10px;
+	border: 1px solid rgba(255,255,255,0.08);
+	background: rgba(255,255,255,0.04);
+	color: rgba(226,232,240,0.85);
+	font-size: 13px;
+	text-align: left;
+	cursor: pointer;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+	transition: background 0.12s, color 0.12s;
+}
+.save-file-btn:hover { background: rgba(255,255,255,0.09); color:#fff; }
+.save-file-btn:active { background: rgba(255,255,255,0.14); }
+
+/* Light theme overrides for action panel */
+body[data-theme="coffeeLight"] .action-panel,
+body[data-theme="bitterLight"] .action-panel,
+body[data-theme="monoLight"] .action-panel {
+	background: rgba(240, 235, 225, 0.97);
+	border-color: rgba(0,0,0,0.1);
+	box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+}
+body[data-theme="coffeeLight"] .action-item,
+body[data-theme="bitterLight"] .action-item,
+body[data-theme="monoLight"] .action-item,
+body[data-theme="coffeeLight"] .action-workflow-item,
+body[data-theme="bitterLight"] .action-workflow-item,
+body[data-theme="monoLight"] .action-workflow-item {
+	color: rgba(40, 30, 20, 0.85);
+}
+body[data-theme="coffeeLight"] .action-item:hover,
+body[data-theme="bitterLight"] .action-item:hover,
+body[data-theme="monoLight"] .action-item:hover,
+body[data-theme="coffeeLight"] .action-workflow-item:hover,
+body[data-theme="bitterLight"] .action-workflow-item:hover,
+body[data-theme="monoLight"] .action-workflow-item:hover {
+	background: rgba(0,0,0,0.07);
+	color: rgba(20,10,5,1);
+}
+body[data-theme="coffeeLight"] .action-panel-label,
+body[data-theme="bitterLight"] .action-panel-label,
+body[data-theme="monoLight"] .action-panel-label {
+	color: rgba(80,60,40,0.5);
+}
+body[data-theme="coffeeLight"] .save-file-btn,
+body[data-theme="bitterLight"] .save-file-btn,
+body[data-theme="monoLight"] .save-file-btn {
+	border-color: rgba(0,0,0,0.1);
+	background: rgba(0,0,0,0.04);
+	color: rgba(40,30,20,0.85);
+}
+body[data-theme="coffeeLight"] .save-file-btn:hover,
+body[data-theme="bitterLight"] .save-file-btn:hover,
+body[data-theme="monoLight"] .save-file-btn:hover {
+	background: rgba(0,0,0,0.09);
+	color: rgba(20,10,5,1);
+}

@@ -6511,8 +6511,50 @@
 				"settings.nav.integrations": "Integrationen",
 				"settings.nav.ai": "KI",
 				"settings.nav.uploads": "Uploads",
+				"settings.nav.workflows": "Workflows",
 				"settings.nav.faq": "FAQ",
 				"settings.nav.trash": "Papierkorb",
+				// Actions / Workflows
+				"actions.trigger_tooltip": "Inhalte verarbeiten",
+				"actions.builtin": "Aktionen",
+				"actions.send_mail": "E-Mail senden",
+				"actions.save_file": "Datei speichern",
+				"actions.share": "Teilen",
+				"actions.copy_formatted": "Formatiert kopieren",
+				"actions.workflows": "Workflows",
+				"actions.manage": "Verwalten",
+				"actions.workflows_empty": "Keine Workflows. In Einstellungen erstellen.",
+				"actions.mail_to": "An",
+				"actions.mail_subject": "Betreff",
+				"actions.mail_body": "Inhalt",
+				"actions.send": "Senden",
+				"actions.sending": "Sende…",
+				"actions.smtp_not_configured": "SMTP ist nicht konfiguriert. Bitte in server.js Umgebungsvariablen einstellen.",
+				"actions.save_as_md": "Als Markdown (.md)",
+				"actions.save_as_txt": "Als Text (.txt)",
+				"actions.save_as_html": "Als HTML (.html)",
+				"actions.save_as_pdf": "Drucken / Als PDF",
+				"actions.share_native": "Teilen via Browser",
+				"actions.share_whatsapp": "WhatsApp",
+				"actions.share_telegram": "Telegram",
+				"actions.share_email": "E-Mail",
+				"actions.mail_sent": "E-Mail gesendet.",
+				"actions.mail_rate_limit": "Zu viele E-Mails. Bitte warte kurz.",
+				"actions.copied": "Kopiert.",
+				"settings.workflows.title": "Workflows",
+				"settings.workflows.desc": "HTTP-Webhooks erstellen und verwalten.",
+				"settings.workflows.add": "+ Workflow hinzufügen",
+				"settings.workflows.empty": "Noch keine Workflows.",
+				"settings.workflows.editor_title": "Workflow bearbeiten",
+				"settings.workflows.name": "Name",
+				"settings.workflows.method": "Methode",
+				"settings.workflows.url": "URL (https://...)",
+				"settings.workflows.body_template": "Body-Template",
+				"settings.workflows.template_hint": "Variablen: {{content}} {{title}} {{room}} {{timestamp}} {{tags}}",
+				"settings.workflows.save": "Speichern",
+				"settings.workflows.delete_confirm": "Workflow löschen?",
+				"settings.workflows.run_success": "Workflow ausgeführt (Status {status})",
+				"settings.workflows.run_error": "Fehler beim Ausführen: {error}",
 				"settings.user.title": "Benutzer-Einstellungen",
 				"settings.user.desc": "Personal Space Identität und Abmeldung.",
 				"settings.user.signed_in": "Angemeldet als",
@@ -7222,8 +7264,50 @@
 				"settings.nav.integrations": "Integrations",
 				"settings.nav.ai": "AI",
 				"settings.nav.uploads": "Uploads",
+				"settings.nav.workflows": "Workflows",
 				"settings.nav.faq": "FAQ",
 				"settings.nav.trash": "Trash",
+				// Actions / Workflows
+				"actions.trigger_tooltip": "Process content",
+				"actions.builtin": "Actions",
+				"actions.send_mail": "Send Mail",
+				"actions.save_file": "Save File",
+				"actions.share": "Share to",
+				"actions.copy_formatted": "Copy Formatted",
+				"actions.workflows": "Workflows",
+				"actions.manage": "Manage",
+				"actions.workflows_empty": "No workflows. Create in Settings.",
+				"actions.mail_to": "To",
+				"actions.mail_subject": "Subject",
+				"actions.mail_body": "Body",
+				"actions.send": "Send",
+				"actions.sending": "Sending…",
+				"actions.smtp_not_configured": "SMTP is not configured. Set environment variables.",
+				"actions.save_as_md": "Save as Markdown (.md)",
+				"actions.save_as_txt": "Save as Text (.txt)",
+				"actions.save_as_html": "Save as HTML (.html)",
+				"actions.save_as_pdf": "Print / Save as PDF",
+				"actions.share_native": "Share via Browser",
+				"actions.share_whatsapp": "WhatsApp",
+				"actions.share_telegram": "Telegram",
+				"actions.share_email": "Email",
+				"actions.mail_sent": "Email sent.",
+				"actions.mail_rate_limit": "Too many emails. Please wait a moment.",
+				"actions.copied": "Copied.",
+				"settings.workflows.title": "Workflows",
+				"settings.workflows.desc": "Create and manage HTTP webhooks.",
+				"settings.workflows.add": "+ Add Workflow",
+				"settings.workflows.empty": "No workflows yet.",
+				"settings.workflows.editor_title": "Edit Workflow",
+				"settings.workflows.name": "Name",
+				"settings.workflows.method": "Method",
+				"settings.workflows.url": "URL (https://...)",
+				"settings.workflows.body_template": "Body Template",
+				"settings.workflows.template_hint": "Variables: {{content}} {{title}} {{room}} {{timestamp}} {{tags}}",
+				"settings.workflows.save": "Save",
+				"settings.workflows.delete_confirm": "Delete workflow?",
+				"settings.workflows.run_success": "Workflow completed (status {status})",
+				"settings.workflows.run_error": "Error running workflow: {error}",
 				"settings.user.title": "User Settings",
 				"settings.user.desc": "Personal Space identity and sign-out.",
 				"settings.user.signed_in": "Signed in as",
@@ -9797,6 +9881,9 @@
 		}
 		if (target === "shared") {
 			renderSharedRoomsManager();
+		}
+		if (target === "workflows") {
+			if (typeof window.__loadWorkflowsSettings === "function") window.__loadWorkflowsSettings();
 		}
 	}
 
@@ -27158,6 +27245,437 @@ self.onmessage = async (e) => {
 				});
 			});
 		}
+	}
+
+	/* ────────────────────────────────────────────────────────
+	   Action Panel (Content Actions & Workflows)
+	   ──────────────────────────────────────────────────────── */
+	{
+		const toolbox        = document.getElementById("editorToolbox");
+		const actionTrigger  = document.getElementById("actionTrigger");
+		const actionPanel    = document.getElementById("actionPanel");
+		const actionWfList   = document.getElementById("actionWorkflowsList");
+
+		// ── Send Mail modal elements
+		const sendMailModal    = document.getElementById("sendMailModal");
+		const sendMailClose    = document.getElementById("sendMailClose");
+		const sendMailTo       = document.getElementById("sendMailTo");
+		const sendMailSubject  = document.getElementById("sendMailSubject");
+		const sendMailBody     = document.getElementById("sendMailBody");
+		const sendMailError    = document.getElementById("sendMailStatus");
+		const sendMailSubmit   = document.getElementById("sendMailSubmit");
+		const smtpWarning      = document.getElementById("sendMailSmtpWarning");
+
+		// ── Save File modal elements
+		const saveFileModal  = document.getElementById("saveFileModal");
+		const saveFileClose  = document.getElementById("saveFileClose");
+
+		// ── Share To modal elements
+		const shareToModal   = document.getElementById("shareToModal");
+		const shareToClose   = document.getElementById("shareToClose");
+
+		if (!actionTrigger || !actionPanel) {
+			// DOM elements missing — skip safely
+		} else {
+
+		// ── Panel open/close ──
+		const setActionPanelOpen = (open) => {
+			actionPanel.classList.toggle("is-open", open);
+			actionTrigger.setAttribute("aria-pressed", open ? "true" : "false");
+			if (open) loadActionPanelWorkflows();
+		};
+		const closeActionPanel = () => setActionPanelOpen(false);
+
+		actionTrigger.addEventListener("click", (e) => {
+			e.stopPropagation();
+			setActionPanelOpen(!actionPanel.classList.contains("is-open"));
+			// Also close toolbox main panel if open
+			const tb = document.getElementById("editorToolbox");
+			if (tb) tb.setAttribute("aria-expanded", "false");
+		});
+
+		// Close on outside click (action panel is inside toolbox so containment works)
+		document.addEventListener("pointerdown", (e) => {
+			if (!actionPanel.classList.contains("is-open")) return;
+			if (toolbox && toolbox.contains(e.target)) return;
+			closeActionPanel();
+		});
+		document.addEventListener("keydown", (e) => {
+			if (e.key === "Escape" && actionPanel.classList.contains("is-open")) {
+				closeActionPanel();
+			}
+		});
+
+		// ── Helpers ──
+		function getEditorContent() {
+			const ta = document.getElementById("editor");
+			return ta ? ta.value : "";
+		}
+		function getEditorTitle() {
+			const el = document.getElementById("roomName") || document.getElementById("currentRoomDisplay");
+			return el ? el.textContent.trim() : (document.title || "Note");
+		}
+		function getEditorRoom() {
+			try { return window.__currentRoom || ""; } catch { return ""; }
+		}
+		function getEditorTags() {
+			const el = document.getElementById("psTagsDisplay") || document.getElementById("noteTagsDisplay");
+			return el ? el.textContent.trim() : "";
+		}
+		function slugify(str) {
+			return str.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "note";
+		}
+
+		// ── Load workflows into action panel ──
+		async function loadActionPanelWorkflows() {
+			if (!actionWfList) return;
+			actionWfList.innerHTML = `<span class="action-workflows-empty">${t("actions.workflows_empty","Keine Workflows")}</span>`;
+			try {
+				const res = await fetch("/api/workflows");
+				if (!res.ok) return;
+				const { workflows } = await res.json();
+				if (!workflows || workflows.length === 0) return;
+				actionWfList.innerHTML = "";
+				workflows.forEach((wf) => {
+					const btn = document.createElement("button");
+					btn.type = "button";
+					btn.className = "action-workflow-item";
+					btn.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5,3 19,12 5,21"/></svg>${escHtml(wf.name)}`;
+					btn.addEventListener("click", () => runWorkflowFromPanel(wf));
+					actionWfList.appendChild(btn);
+				});
+			} catch { /* network error — silently skip */ }
+		}
+
+		// ── Run workflow ──
+		async function runWorkflowFromPanel(wf) {
+			closeActionPanel();
+			try {
+				const res = await fetch("/api/workflows/run", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						workflowId: wf.id,
+						content: getEditorContent(),
+						title: getEditorTitle(),
+						room: getEditorRoom(),
+						tags: getEditorTags()
+					})
+				});
+				const data = await res.json();
+				if (!res.ok) throw new Error(data.error || res.status);
+				toast(t("settings.workflows.run_success","Workflow ausgeführt").replace("{status}", data.status), "success");
+			} catch (err) {
+				toast(t("settings.workflows.run_error","Fehler").replace("{error}", String(err.message || err)), "error");
+			}
+		}
+
+		// ── Manage workflows link ──
+		const manageBtn = document.getElementById("actionManageWorkflows");
+		if (manageBtn) {
+			manageBtn.addEventListener("click", () => {
+				closeActionPanel();
+				openSettingsAt("workflows");
+			});
+		}
+
+		// ── Send Mail ──
+		const sendMailBtn = document.getElementById("actionSendMail");
+		if (sendMailBtn && sendMailModal) {
+			sendMailBtn.addEventListener("click", async () => {
+				closeActionPanel();
+				// Check SMTP status first
+				try {
+					const res = await fetch("/api/actions/smtp-status");
+					const data = await res.json();
+					if (smtpWarning) smtpWarning.classList.toggle("hidden", data.ok !== false);
+				} catch { if (smtpWarning) smtpWarning.classList.remove("hidden"); }
+				// Pre-fill body
+				if (sendMailBody) sendMailBody.value = getEditorContent().slice(0, 4000);
+				if (sendMailSubject) sendMailSubject.value = getEditorTitle();
+				if (sendMailError) { sendMailError.textContent = ""; sendMailError.classList.add("hidden"); }
+				sendMailModal.classList.remove("hidden");
+				sendMailModal.classList.add("flex");
+				sendMailModal.setAttribute("aria-hidden", "false");
+				if (sendMailTo) sendMailTo.focus();
+			});
+		}
+		if (sendMailClose) {
+			sendMailClose.addEventListener("click", () => {
+				sendMailModal.classList.add("hidden");
+				sendMailModal.classList.remove("flex");
+				sendMailModal.setAttribute("aria-hidden", "true");
+			});
+		}
+		const sendMailCancel = document.getElementById("sendMailCancel");
+		if (sendMailCancel) {
+			sendMailCancel.addEventListener("click", () => {
+				sendMailModal.classList.add("hidden");
+				sendMailModal.classList.remove("flex");
+				sendMailModal.setAttribute("aria-hidden", "true");
+			});
+		}
+		if (sendMailSubmit) {
+			sendMailSubmit.addEventListener("click", async () => {
+				const to = (sendMailTo ? sendMailTo.value.trim() : "");
+				const subject = (sendMailSubject ? sendMailSubject.value.trim() : "");
+				const body = (sendMailBody ? sendMailBody.value : "");
+				if (!to) { if (sendMailError) { sendMailError.textContent = "Bitte E-Mail-Adresse angeben."; } return; }
+				sendMailSubmit.disabled = true;
+				sendMailSubmit.textContent = t("actions.sending","Sende…");
+				try {
+					const res = await fetch("/api/actions/send-mail", {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({ to, subject, body })
+					});
+					const data = await res.json();
+					if (!res.ok) throw new Error(data.error || res.status);
+					sendMailModal.classList.add("hidden");
+					sendMailModal.classList.remove("flex");
+					sendMailModal.setAttribute("aria-hidden", "true");
+					toast(t("actions.mail_sent","E-Mail gesendet."), "success");
+				} catch (err) {
+					if (sendMailError) {
+						sendMailError.textContent = String(err.message || err);
+					}
+				} finally {
+					sendMailSubmit.disabled = false;
+					sendMailSubmit.textContent = t("actions.send","Senden");
+				}
+			});
+		}
+
+		// ── Save File ──
+		const saveFileBtn = document.getElementById("actionSaveFile");
+		if (saveFileBtn && saveFileModal) {
+			saveFileBtn.addEventListener("click", () => { closeActionPanel(); saveFileModal.classList.remove("hidden"); saveFileModal.classList.add("flex"); saveFileModal.setAttribute("aria-hidden","false"); });
+		}
+		if (saveFileClose) {
+			saveFileClose.addEventListener("click", () => { saveFileModal.classList.add("hidden"); saveFileModal.classList.remove("flex"); saveFileModal.setAttribute("aria-hidden","true"); });
+		}
+		function downloadBlob(content, filename, mime) {
+			const blob = new Blob([content], { type: mime });
+			const url = URL.createObjectURL(blob);
+			const a = document.createElement("a");
+			a.href = url; a.download = filename; a.click();
+			setTimeout(() => URL.revokeObjectURL(url), 1000);
+		}
+		const saveMdBtn   = document.getElementById("saveFileMd");
+		const saveTxtBtn  = document.getElementById("saveFileTxt");
+		const saveHtmlBtn = document.getElementById("saveFileHtml");
+		const savePdfBtn  = document.getElementById("saveFilePdf");
+		if (saveMdBtn) saveMdBtn.addEventListener("click", () => {
+			saveFileModal.classList.add("hidden"); saveFileModal.classList.remove("flex"); saveFileModal.setAttribute("aria-hidden","true");
+			downloadBlob(getEditorContent(), `${slugify(getEditorTitle())}.md`, "text/markdown");
+		});
+		if (saveTxtBtn) saveTxtBtn.addEventListener("click", () => {
+			saveFileModal.classList.add("hidden"); saveFileModal.classList.remove("flex"); saveFileModal.setAttribute("aria-hidden","true");
+			downloadBlob(getEditorContent(), `${slugify(getEditorTitle())}.txt`, "text/plain");
+		});
+		if (saveHtmlBtn) saveHtmlBtn.addEventListener("click", () => {
+			saveFileModal.classList.add("hidden"); saveFileModal.classList.remove("flex"); saveFileModal.setAttribute("aria-hidden","true");
+			const iframe = document.getElementById("mdPreview");
+			const html = iframe && iframe.contentDocument
+				? iframe.contentDocument.documentElement.outerHTML
+				: `<pre>${escHtml(getEditorContent())}</pre>`;
+			downloadBlob(html, `${slugify(getEditorTitle())}.html`, "text/html");
+		});
+		if (savePdfBtn) savePdfBtn.addEventListener("click", () => {
+			saveFileModal.classList.add("hidden"); saveFileModal.classList.remove("flex"); saveFileModal.setAttribute("aria-hidden","true");
+			const iframe = document.getElementById("mdPreview");
+			if (iframe && iframe.contentWindow) { iframe.contentWindow.print(); }
+			else { window.print(); }
+		});
+
+		// ── Share To ──
+		const shareToBtn = document.getElementById("actionShareTo");
+		if (shareToBtn && shareToModal) {
+			shareToBtn.addEventListener("click", () => { closeActionPanel(); shareToModal.classList.remove("hidden"); shareToModal.classList.add("flex"); shareToModal.setAttribute("aria-hidden","false"); });
+		}
+		if (shareToClose) {
+			shareToClose.addEventListener("click", () => { shareToModal.classList.add("hidden"); shareToModal.classList.remove("flex"); shareToModal.setAttribute("aria-hidden","true"); });
+		}
+		const shareNativeBtn   = document.getElementById("shareToNative");
+		const shareWABtn       = document.getElementById("shareToWhatsApp");
+		const shareTGBtn       = document.getElementById("shareToTelegram");
+		const shareEmailBtn    = document.getElementById("shareToEmail");
+		if (shareNativeBtn) shareNativeBtn.addEventListener("click", async () => {
+			shareToModal.classList.add("hidden"); shareToModal.classList.remove("flex"); shareToModal.setAttribute("aria-hidden","true");
+			const text = getEditorContent();
+			if (navigator.share) {
+				try { await navigator.share({ title: getEditorTitle(), text }); }
+				catch { /* dismissed */ }
+			} else { toast("Web Share API nicht verfügbar.", "info"); }
+		});
+		if (shareWABtn) shareWABtn.addEventListener("click", () => {
+			shareToModal.classList.add("hidden"); shareToModal.classList.remove("flex"); shareToModal.setAttribute("aria-hidden","true");
+			const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(getEditorContent().slice(0,1000))}`;
+			window.open(url, "_blank", "noopener");
+		});
+		if (shareTGBtn) shareTGBtn.addEventListener("click", () => {
+			shareToModal.classList.add("hidden"); shareToModal.classList.remove("flex"); shareToModal.setAttribute("aria-hidden","true");
+			const url = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(getEditorTitle())}`;
+			window.open(url, "_blank", "noopener");
+		});
+		if (shareEmailBtn) shareEmailBtn.addEventListener("click", () => {
+			shareToModal.classList.add("hidden"); shareToModal.classList.remove("flex"); shareToModal.setAttribute("aria-hidden","true");
+			const url = `mailto:?subject=${encodeURIComponent(getEditorTitle())}&body=${encodeURIComponent(getEditorContent().slice(0,2000))}`;
+			window.location.href = url;
+		});
+
+		// ── Copy Formatted ──
+		const copyFmtBtn = document.getElementById("actionCopyFormatted");
+		if (copyFmtBtn) {
+			copyFmtBtn.addEventListener("click", async () => {
+				closeActionPanel();
+				const iframe = document.getElementById("mdPreview");
+				const htmlContent = iframe && iframe.contentDocument
+					? iframe.contentDocument.body.innerHTML
+					: "";
+				const plainText = getEditorContent();
+				try {
+					if (window.ClipboardItem && htmlContent) {
+						await navigator.clipboard.write([
+							new ClipboardItem({
+								"text/html": new Blob([htmlContent], { type: "text/html" }),
+								"text/plain": new Blob([plainText], { type: "text/plain" })
+							})
+						]);
+					} else {
+						await navigator.clipboard.writeText(plainText);
+					}
+					toast(t("actions.copied","Kopiert."), "success");
+				} catch { toast("Kopieren fehlgeschlagen.", "error"); }
+			});
+		}
+
+		} // end if actionTrigger && actionPanel
+	}
+
+	/* ── Workflows Settings Panel ── */
+	{
+		let workflowEditingId = null;
+
+		function loadWorkflowsSettings() {
+			const list    = document.getElementById("workflowsList");
+			const empty   = document.getElementById("workflowsEmpty");
+			const editor  = document.getElementById("workflowEditor");
+			if (!list) return;
+			if (editor) { editor.classList.add("hidden"); workflowEditingId = null; }
+			fetch("/api/workflows")
+				.then(r => r.ok ? r.json() : Promise.reject(r.status))
+				.then(({ workflows }) => {
+					list.innerHTML = "";
+					if (!workflows || workflows.length === 0) {
+						if (empty) empty.classList.remove("hidden");
+						return;
+					}
+					if (empty) empty.classList.add("hidden");
+					workflows.forEach(wf => {
+						const row = document.createElement("div");
+						row.className = "flex items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2";
+						row.innerHTML = `
+							<span class="flex-1 text-sm text-slate-200 truncate">${escHtml(wf.name)}</span>
+							<span class="text-xs text-slate-500 font-mono">${escHtml(wf.method)}</span>
+							<button data-wf-edit="${wf.id}" class="rounded px-2 py-1 text-xs text-slate-300 hover:text-white hover:bg-white/10 transition">✏️</button>
+							<button data-wf-delete="${wf.id}" data-wf-name="${escHtml(wf.name)}" class="rounded px-2 py-1 text-xs text-red-300 hover:text-red-100 hover:bg-red-400/15 transition">🗑️</button>`;
+						list.appendChild(row);
+					});
+					// edit buttons
+					list.querySelectorAll("[data-wf-edit]").forEach(btn => {
+						btn.addEventListener("click", () => openWorkflowEditor(Number(btn.dataset.wfEdit), workflows));
+					});
+					// delete buttons
+					list.querySelectorAll("[data-wf-delete]").forEach(btn => {
+						btn.addEventListener("click", async () => {
+							if (!confirm(t("settings.workflows.delete_confirm","Workflow löschen?"))) return;
+							try {
+								await fetch(`/api/workflows/${btn.dataset.wfDelete}`, { method: "DELETE" });
+								loadWorkflowsSettings();
+							} catch { toast("Löschen fehlgeschlagen.", "error"); }
+						});
+					});
+				})
+				.catch(() => { if (empty) { empty.textContent = "Fehler beim Laden."; empty.classList.remove("hidden"); } });
+		}
+
+		function openWorkflowEditor(id, workflows) {
+			const editor  = document.getElementById("workflowEditor");
+			const title   = document.getElementById("workflowEditorTitle");
+			const nameIn  = document.getElementById("wfName");
+			const methodIn= document.getElementById("wfMethod");
+			const urlIn   = document.getElementById("wfUrl");
+			const bodyIn  = document.getElementById("wfBodyTemplate");
+			const errEl   = document.getElementById("wfEditorError");
+			if (!editor) return;
+			workflowEditingId = id || null;
+			if (title) title.textContent = id ? t("settings.workflows.editor_title","Bearbeiten") : "+ " + t("settings.workflows.add","Workflow");
+			if (id && workflows) {
+				const wf = workflows.find(w => w.id === id);
+				if (wf) {
+					if (nameIn) nameIn.value = wf.name;
+					if (methodIn) methodIn.value = wf.method;
+					if (urlIn) urlIn.value = wf.url;
+					if (bodyIn) bodyIn.value = wf.bodyTemplate || "";
+				}
+			} else {
+				if (nameIn) nameIn.value = "";
+				if (methodIn) methodIn.value = "POST";
+				if (urlIn) urlIn.value = "";
+				if (bodyIn) bodyIn.value = '{"content":"{{content}}","title":"{{title}}","timestamp":"{{timestamp}}"}';
+			}
+			if (errEl) { errEl.textContent = ""; errEl.classList.add("hidden"); }
+			editor.classList.remove("hidden");
+			if (nameIn) nameIn.focus();
+		}
+
+		const addBtn    = document.getElementById("workflowsAddBtn");
+		const saveBtn   = document.getElementById("wfEditorSave");
+		const cancelBtn = document.getElementById("wfEditorCancel");
+
+		if (addBtn) addBtn.addEventListener("click", () => openWorkflowEditor(null, null));
+		if (cancelBtn) cancelBtn.addEventListener("click", () => {
+			const editor = document.getElementById("workflowEditor");
+			if (editor) editor.classList.add("hidden");
+			workflowEditingId = null;
+		});
+		if (saveBtn) saveBtn.addEventListener("click", async () => {
+			const nameIn   = document.getElementById("wfName");
+			const methodIn = document.getElementById("wfMethod");
+			const urlIn    = document.getElementById("wfUrl");
+			const bodyIn   = document.getElementById("wfBodyTemplate");
+			const errEl    = document.getElementById("wfEditorError");
+			const name     = nameIn ? nameIn.value.trim() : "";
+			const method   = methodIn ? methodIn.value : "POST";
+			const url      = urlIn ? urlIn.value.trim() : "";
+			const bodyTemplate = bodyIn ? bodyIn.value : "";
+			if (!name || !url) {
+				if (errEl) { errEl.textContent = "Name und URL sind erforderlich."; errEl.classList.remove("hidden"); }
+				return;
+			}
+			const endpoint = workflowEditingId ? `/api/workflows/${workflowEditingId}` : "/api/workflows";
+			const httpMethod = workflowEditingId ? "PUT" : "POST";
+			try {
+				const res = await fetch(endpoint, {
+					method: httpMethod,
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ name, method, url, headers: {}, bodyTemplate })
+				});
+				const data = await res.json();
+				if (!res.ok) throw new Error(data.error || res.status);
+				const editor = document.getElementById("workflowEditor");
+				if (editor) editor.classList.add("hidden");
+				workflowEditingId = null;
+				loadWorkflowsSettings();
+				toast(t("settings.workflows.save","Gespeichert"), "success");
+			} catch (err) {
+				if (errEl) { errEl.textContent = String(err.message || err); errEl.classList.remove("hidden"); }
+			}
+		});
+
+		// Expose for setActiveSettingsSection hook
+		window.__loadWorkflowsSettings = loadWorkflowsSettings;
 	}
 
 	/* ── Editor Text Search ── */
