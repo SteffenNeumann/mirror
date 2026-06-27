@@ -6573,8 +6573,9 @@
 				"actions.save_as_pdf": "Drucken / Als PDF",
 				"actions.share_native": "Teilen via Browser",
 				"actions.share_whatsapp": "WhatsApp",
-				"actions.share_telegram": "Telegram",
+				"actions.share_drafts": "An Drafts",
 				"actions.share_email": "E-Mail",
+				"actions.share_empty": "Notiz ist leer.",
 				"actions.mail_sent": "E-Mail gesendet.",
 				"actions.mail_rate_limit": "Zu viele E-Mails. Bitte warte kurz.",
 				"actions.copied": "Kopiert.",
@@ -7332,8 +7333,9 @@
 				"actions.save_as_pdf": "Print / Save as PDF",
 				"actions.share_native": "Share via Browser",
 				"actions.share_whatsapp": "WhatsApp",
-				"actions.share_telegram": "Telegram",
+				"actions.share_drafts": "To Drafts",
 				"actions.share_email": "Email",
+				"actions.share_empty": "Note is empty.",
 				"actions.mail_sent": "Email sent.",
 				"actions.mail_rate_limit": "Too many emails. Please wait a moment.",
 				"actions.copied": "Copied.",
@@ -27652,7 +27654,7 @@ self.onmessage = async (e) => {
 
 		// ── Helpers ──
 		function getEditorContent() {
-			const ta = document.getElementById("editor");
+			const ta = document.getElementById("mirror") || document.getElementById("editor");
 			return ta ? ta.value : "";
 		}
 		function getEditorTitle() {
@@ -27842,7 +27844,7 @@ self.onmessage = async (e) => {
 		}
 		const shareNativeBtn   = document.getElementById("shareToNative");
 		const shareWABtn       = document.getElementById("shareToWhatsApp");
-		const shareTGBtn       = document.getElementById("shareToTelegram");
+		const shareDraftsBtn   = document.getElementById("shareToDrafts");
 		const shareEmailBtn    = document.getElementById("shareToEmail");
 		if (shareNativeBtn) shareNativeBtn.addEventListener("click", async () => {
 			shareToModal.classList.add("hidden"); shareToModal.classList.remove("flex"); shareToModal.setAttribute("aria-hidden","true");
@@ -27857,10 +27859,14 @@ self.onmessage = async (e) => {
 			const url = `https://api.whatsapp.com/send?text=${encodeURIComponent(getEditorContent().slice(0,1000))}`;
 			window.open(url, "_blank", "noopener");
 		});
-		if (shareTGBtn) shareTGBtn.addEventListener("click", () => {
+		if (shareDraftsBtn) shareDraftsBtn.addEventListener("click", () => {
 			shareToModal.classList.add("hidden"); shareToModal.classList.remove("flex"); shareToModal.setAttribute("aria-hidden","true");
-			const url = `https://t.me/share/url?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(getEditorTitle())}`;
-			window.open(url, "_blank", "noopener");
+			const title = getEditorTitle();
+			const content = getEditorContent();
+			if (!content.trim()) { toast(t("actions.share_empty","Notiz ist leer."), "info"); return; }
+			const text = title ? `${title}\n\n${content}` : content;
+			// Drafts URL scheme — opens the local Drafts app with the note prefilled
+			window.location.href = `drafts://x-callback-url/create?text=${encodeURIComponent(text)}`;
 		});
 		if (shareEmailBtn) shareEmailBtn.addEventListener("click", () => {
 			shareToModal.classList.add("hidden"); shareToModal.classList.remove("flex"); shareToModal.setAttribute("aria-hidden","true");
