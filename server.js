@@ -206,7 +206,7 @@ const AI_MAX_OUTPUT_TOKENS = Number(process.env.AI_MAX_OUTPUT_TOKENS || 8192);
 const AI_TIMEOUT_MS = Number(process.env.AI_TIMEOUT_MS || 60000);
 const AI_RATE_WINDOW_MS = Number(process.env.AI_RATE_WINDOW_MS || 60_000);
 const AI_RATE_MAX = Number(process.env.AI_RATE_MAX || 10);
-const TRASH_RETENTION_DAYS = 30;
+const TRASH_RETENTION_DAYS = 365;
 const TRASH_RETENTION_MS = 1000 * 60 * 60 * 24 * TRASH_RETENTION_DAYS;
 
 let signingSecret = String(process.env.MIRROR_SECRET || "");

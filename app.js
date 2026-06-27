@@ -5931,6 +5931,7 @@
 	const PS_SORT_MODE_KEY = "mirror_ps_sort_mode";
 	const PS_NOTE_ACCESSED_KEY = "mirror_ps_note_accessed_v1";
 	const PS_META_VISIBLE_KEY = "mirror_ps_meta_visible";
+	const PS_BACKUP_HINT_DISMISSED_KEY = "mirror_ps_backup_hint_dismissed";
 	const PS_AUTO_BACKUP_ENABLED_KEY = "mirror_ps_auto_backup_enabled";
 	const PS_AUTO_BACKUP_INTERVAL_KEY = "mirror_ps_auto_backup_interval";
 	const PS_AUTO_BACKUP_LAST_KEY = "mirror_ps_auto_backup_last_ts";
@@ -6753,7 +6754,7 @@
 				"settings.integrations.bfl.api_link": "→ API-Key erstellen auf api.bfl.ai",
 				"settings.trash.title": "Papierkorb",
 				"settings.trash.desc":
-					"Gelöschte Notizen bleiben 30 Tage erhalten und können wiederhergestellt werden.",
+					"Gelöschte Notizen bleiben 365 Tage erhalten und können wiederhergestellt werden.",
 				"settings.trash.refresh": "Aktualisieren",
 				"settings.trash.empty": "Keine gelöschten Notizen.",
 				"settings.themes.title": "Themes",
@@ -6894,7 +6895,13 @@
 				"offline.synced": "Offline-Änderungen synchronisiert.",
 				"offline.sync_failed": "Sync fehlgeschlagen für eine Offline-Änderung (Max. Versuche erreicht).",
 				"offline.saved_locally": "Offline gespeichert.",
+				"offline.note_recreated": "Eine offline bearbeitete Notiz war serverseitig gelöscht und wurde als neue Notiz wiederhergestellt.",
+				"backup.hint_no_folder": "Kein Backup-Laufwerk gewählt — lokale Notizen sind nur online gesichert.",
+				"backup.hint_choose": "Ordner wählen",
+				"common.dismiss": "Schließen",
 				"ps.note_deleted_recreated": "Notiz wurde extern gelöscht – Inhalt als neue Notiz gesichert.",
+				"ps.save_failed": "Speichern fehlgeschlagen – Inhalt nicht gesichert.",
+				"ps.remote_conflict": "Diese Notiz wurde auf einem anderen Gerät geändert. Deine lokale Version ist gesichert.",
 				"auto_access.permission_needed": "Ordnerzugriff abgelaufen. Bitte in den Einstellungen den Auto-Backup/Import-Ordner erneut erlauben.",
 				"auto_access.permission_needed_short": "Ordnerzugriff abgelaufen. ",
 				"auto_access.regrant_btn": "Zugriff erlauben",
@@ -7496,7 +7503,7 @@
 				"settings.integrations.bfl.clear": "Clear",
 				"settings.integrations.bfl.api_link": "→ Create API key at api.bfl.ai",
 				"settings.trash.title": "Trash",
-				"settings.trash.desc": "Deleted notes are kept for 30 days and can be restored.",
+				"settings.trash.desc": "Deleted notes are kept for 365 days and can be restored.",
 				"settings.trash.refresh": "Refresh",
 				"settings.trash.empty": "No deleted notes.",
 				"settings.themes.title": "Themes",
@@ -7635,7 +7642,13 @@
 				"offline.synced": "Offline changes synced.",
 				"offline.sync_failed": "Sync failed for an offline change (max retries reached).",
 				"offline.saved_locally": "Saved offline.",
+				"offline.note_recreated": "An offline-edited note was deleted on the server and has been restored as a new note.",
+				"backup.hint_no_folder": "No backup folder selected — local notes are only stored online.",
+				"backup.hint_choose": "Choose folder",
+				"common.dismiss": "Dismiss",
 				"ps.note_deleted_recreated": "Note was deleted remotely — content saved as a new note.",
+				"ps.save_failed": "Save failed — content not stored.",
+				"ps.remote_conflict": "This note was changed on another device. Your local version has been backed up.",
 				"auto_access.permission_needed": "Folder access expired. Please re-grant Auto-Backup/Import folder permissions in Settings.",
 				"auto_access.permission_needed_short": "Folder access expired. ",
 				"auto_access.regrant_btn": "Grant access",
@@ -8383,23 +8396,23 @@
 				req.onsuccess = () => resolve(req.result || []);
 				req.onerror = () => resolve([]);
 			});
-			// Step 2: Read existing dirty notes that are not yet synced
-			let dirtyNotes = [];
-			if (pendingOps.length > 0) {
-				const existingNotes = await new Promise((resolve) => {
-					const txRead = db.transaction(OFFLINE_STORE_NOTES, "readonly");
-					const req = txRead.objectStore(OFFLINE_STORE_NOTES).getAll();
-					req.onsuccess = () => resolve(req.result || []);
-					req.onerror = () => resolve([]);
-				});
-				// Collect IDs referenced by pending ops (tempId for create, noteId for update/delete)
-				const pendingIds = new Set();
-				for (const op of pendingOps) {
-					if (op.tempId) pendingIds.add(String(op.tempId));
-					if (op.noteId) pendingIds.add(String(op.noteId));
-				}
-				dirtyNotes = existingNotes.filter((n) => n && n.id && (n.dirty || pendingIds.has(String(n.id))));
+			// Step 2: Read existing notes and preserve any that are unsynced.
+			// IMPORTANT: always preserve dirty notes, NOT only when pending ops exist —
+			// an op can be consumed/lost while the note is still dirty; clearing the
+			// store below would otherwise silently destroy the unsynced edit.
+			const existingNotes = await new Promise((resolve) => {
+				const txRead = db.transaction(OFFLINE_STORE_NOTES, "readonly");
+				const req = txRead.objectStore(OFFLINE_STORE_NOTES).getAll();
+				req.onsuccess = () => resolve(req.result || []);
+				req.onerror = () => resolve([]);
+			});
+			// Collect IDs referenced by pending ops (tempId for create, noteId for update/delete)
+			const pendingIds = new Set();
+			for (const op of pendingOps) {
+				if (op.tempId) pendingIds.add(String(op.tempId));
+				if (op.noteId) pendingIds.add(String(op.noteId));
 			}
+			const dirtyNotes = existingNotes.filter((n) => n && n.id && (n.dirty || pendingIds.has(String(n.id))));
 			// Step 3: Write server notes + merge dirty notes (preserving offline-created notes)
 			const serverIds = new Set(notes.filter((n) => n && n.id).map((n) => String(n.id)));
 			const tx = db.transaction(OFFLINE_STORE_NOTES, "readwrite");
@@ -8650,11 +8663,74 @@
 					const is409 = msg.includes("409") || msg.includes("duplicate");
 					const is5xx = /\b50[0-9]\b/.test(msg) || msg.includes("Bad Gateway") || msg.includes("Service Unavailable");
 
-					// 404/409: skip this op permanently (note deleted or duplicate)
-					if (is404 || is409) {
-						console.warn("[offline] replay op skipped (" + (is404 ? "deleted" : "duplicate") + "):", op.noteId || op.tempId);
+					// 409 (duplicate): content already exists server-side under another note — safe to drop the op.
+					if (is409) {
+						console.warn("[offline] replay op skipped (duplicate):", op.noteId || op.tempId);
 						await offlineDeleteSingleOp(opId);
 						continue;
+					}
+
+					// 404 (note deleted server-side): do NOT silently drop edits.
+					// For an update with content, recreate the note so the offline edit is preserved.
+					if (is404) {
+						const hasContent = op.type === "update" && op.text && op.text.trim();
+						if (!hasContent) {
+							// delete op, or empty update — nothing to preserve
+							console.warn("[offline] replay op skipped (deleted, no content):", op.noteId || op.tempId);
+							await offlineDeleteSingleOp(opId);
+							continue;
+						}
+						try {
+							const resR = await api("/api/notes", {
+								method: "POST",
+								body: JSON.stringify({ text: op.text, tags: op.tags || [] }),
+							});
+							const savedR = resR && resR.note ? resR.note : null;
+							if (savedR && savedR.id) {
+								await offlineDeleteNote(op.noteId);
+								await offlinePutNote({
+									id: String(savedR.id),
+									text: String(savedR.text || op.text),
+									tags: Array.isArray(savedR.tags) ? savedR.tags : (op.tags || []),
+									kind: String(savedR.kind || ""),
+									createdAt: Number(savedR.createdAt || Date.now()),
+									updatedAt: Number(savedR.updatedAt || Date.now()),
+									dirty: false,
+								});
+								if (psEditingNoteId === op.noteId) {
+									psEditingNoteId = String(savedR.id);
+									psAutoSaveLastSavedNoteId = psEditingNoteId;
+								}
+								await offlineDeleteSingleOp(opId);
+								successCount++;
+								toast(t("offline.note_recreated") || "An offline-edited note was restored as a new note.", "info");
+								continue;
+							}
+							// No note returned — treat as failure, keep op for retry below
+							throw new Error("recreate returned no note");
+						} catch (eR) {
+							const msgR = eR && eR.message ? String(eR.message) : "";
+							// If the recreate hit a duplicate, the content already exists — safe to drop.
+							if (msgR.includes("409") || msgR.includes("duplicate")) {
+								await offlineDeleteSingleOp(opId);
+								continue;
+							}
+							// Otherwise fall through to retry/backoff so the edit is NOT lost.
+							const nextR = retries + 1;
+							if (nextR >= OFFLINE_MAX_RETRIES) {
+								console.error("[offline] recreate max retries reached, discarding:", op.noteId, op);
+								await offlineDeleteSingleOp(opId);
+								toast(t("offline.sync_failed") || "Sync failed for an offline change.", "error");
+								continue;
+							}
+							op.retries = nextR;
+							op.lastError = "recreate: " + msgR;
+							op.lastRetryAt = Date.now();
+							await offlineUpdateOp(op);
+							offlineBackoffUntil = Date.now() + OFFLINE_BASE_DELAY_MS * Math.pow(2, nextR - 1);
+							transientFailure = true;
+							break;
+						}
 					}
 
 					// 5xx (transient server error): retry with backoff
@@ -8996,6 +9072,9 @@
 		psAutoBackupTimer = 0;
 		if (!psAutoBackupEnabled || !psAutoBackupInterval) return;
 		if (!supportsDirectoryAccess()) return;
+		// Mobile: skip directory-based auto-backup (the File System Access folder
+		// flow is desktop-only). The localStorage "black box" still runs everywhere.
+		if (isMobileViewport()) return;
 		const delay = computeNextAutoDelay(getAutoBackupLastTs(), psAutoBackupInterval);
 		psAutoBackupTimer = window.setTimeout(async () => {
 			await runAutoBackup();
@@ -9168,6 +9247,62 @@
 		}
 	}
 
+	function dismissBackupFolderHint() {
+		try {
+			localStorage.setItem(PS_BACKUP_HINT_DISMISSED_KEY, "1");
+		} catch {
+			/* ignore */
+		}
+		const el = document.getElementById("backupFolderHint");
+		if (el && el.parentNode) el.parentNode.removeChild(el);
+	}
+
+	// Punkt 4: at app start, if no backup folder is selected, show a dismissible
+	// hint. Desktop only — on mobile the directory backup is skipped entirely and
+	// the localStorage black box is the safety net, so no hint is shown there.
+	function maybeShowBackupFolderHint() {
+		if (document.getElementById("backupFolderHint")) return;
+		if (isMobileViewport()) return;
+		if (!supportsDirectoryAccess()) return;
+		if (!psState || !psState.authed) return;
+		if (psAutoBackupHandle) return; // a folder is already selected
+		try {
+			if (localStorage.getItem(PS_BACKUP_HINT_DISMISSED_KEY) === "1") return;
+		} catch {
+			/* ignore */
+		}
+		const banner = document.createElement("div");
+		banner.id = "backupFolderHint";
+		banner.className =
+			"fixed left-1/2 top-3 z-[60] flex max-w-[92vw] -translate-x-1/2 items-center gap-3 rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-2 text-sm text-amber-100 shadow-soft backdrop-blur";
+		const msg = document.createElement("span");
+		msg.textContent =
+			t("backup.hint_no_folder") ||
+			"Kein Backup-Laufwerk gewählt — lokale Notizen sind nur online gesichert.";
+		const choose = document.createElement("button");
+		choose.type = "button";
+		choose.className =
+			"rounded-lg border border-amber-300/40 bg-amber-400/20 px-2 py-1 text-xs font-medium text-amber-50 hover:bg-amber-400/30";
+		choose.style.touchAction = "manipulation";
+		choose.textContent = t("backup.hint_choose") || "Ordner wählen";
+		choose.addEventListener("click", async () => {
+			await pickAutoBackupFolder();
+			if (psAutoBackupHandle) dismissBackupFolderHint();
+		});
+		const close = document.createElement("button");
+		close.type = "button";
+		close.className =
+			"rounded-lg px-2 py-1 text-xs text-amber-200/80 hover:text-amber-50";
+		close.style.touchAction = "manipulation";
+		close.setAttribute("aria-label", t("common.dismiss") || "Schließen");
+		close.textContent = "✕";
+		close.addEventListener("click", dismissBackupFolderHint);
+		banner.appendChild(msg);
+		banner.appendChild(choose);
+		banner.appendChild(close);
+		document.body.appendChild(banner);
+	}
+
 	async function initAutoBackup() {
 		applyAutoAccessSupportUi();
 		loadAutoBackupSettings();
@@ -9181,6 +9316,7 @@
 				return; // don't schedule — would fail anyway
 			}
 		}
+		maybeShowBackupFolderHint();
 		scheduleAutoBackup();
 	}
 
@@ -10998,6 +11134,132 @@
 		psAutoSaveStatus.textContent = text;
 		psAutoSaveStatus.classList.toggle("hidden", !text);
 		updatePsSaveVisibility();
+	}
+
+	// Auto-save fires frequently, so failures must be surfaced WITHOUT spamming toasts.
+	// Show a real error toast at most once per window so the user can't miss a silent loss.
+	let psSaveFailToastAt = 0;
+	let psConflictToastAt = 0;
+	const PS_SAVE_FAIL_TOAST_MS = 15000;
+	function notifyPsSaveFailed(detail) {
+		setPsAutoSaveStatus("Speichern fehlgeschlagen");
+		const now = Date.now();
+		if (now - psSaveFailToastAt < PS_SAVE_FAIL_TOAST_MS) return;
+		psSaveFailToastAt = now;
+		const base = t("ps.save_failed") || "Speichern fehlgeschlagen – Inhalt nicht gesichert.";
+		toast(detail ? `${base} (${detail})` : base, "error");
+	}
+
+	// ─── Local backup "black box" ────────────────────────────────────────
+	// Always-on safety net, independent of server AND offline sync. Keeps the
+	// last N raw editor snapshots in localStorage so a note can be recovered
+	// even if EVERY save path fails. Runs on all platforms incl. mobile.
+	const PS_LOCAL_BACKUP_KEY = "mirror_ps_local_backup_v1";
+	const PS_LOCAL_BACKUP_MAX = 40;
+	let psLocalBackupTimer = 0;
+	let psLocalBackupLastText = "";
+
+	function readPsLocalBackups() {
+		try {
+			const raw = localStorage.getItem(PS_LOCAL_BACKUP_KEY);
+			const arr = raw ? JSON.parse(raw) : [];
+			return Array.isArray(arr) ? arr : [];
+		} catch {
+			return [];
+		}
+	}
+
+	function writePsLocalBackups(list) {
+		const trimmed = list.slice(-PS_LOCAL_BACKUP_MAX);
+		try {
+			localStorage.setItem(PS_LOCAL_BACKUP_KEY, JSON.stringify(trimmed));
+			return true;
+		} catch {
+			// Quota exceeded — keep only the most recent half and retry once.
+			try {
+				localStorage.setItem(
+					PS_LOCAL_BACKUP_KEY,
+					JSON.stringify(trimmed.slice(-Math.ceil(PS_LOCAL_BACKUP_MAX / 2)))
+				);
+				return true;
+			} catch {
+				return false;
+			}
+		}
+	}
+
+	function commitPsLocalBackup() {
+		if (!textarea) return;
+		// Only capture while a Personal Space user is signed in (avoids backing
+		// up shared room-only editing that isn't a PS note).
+		if (!psState || !psState.authed) return;
+		const text = String(textarea.value || "");
+		if (!text.trim()) return;
+		if (text === psLocalBackupLastText) return;
+		psLocalBackupLastText = text;
+		const noteId = String(psEditingNoteId || "");
+		const firstLine =
+			text.split("\n").map((l) => l.trim()).filter(Boolean)[0] || "";
+		const entry = {
+			text,
+			noteId,
+			ts: Date.now(),
+			title: firstLine.slice(0, 120),
+		};
+		const list = readPsLocalBackups();
+		const last = list.length ? list[list.length - 1] : null;
+		// Collapse consecutive snapshots of the same note into the latest one,
+		// so the ring holds distinct notes rather than keystroke-by-keystroke noise.
+		if (last && String(last.noteId || "") === noteId) {
+			list[list.length - 1] = entry;
+		} else {
+			list.push(entry);
+		}
+		writePsLocalBackups(list);
+	}
+
+	function schedulePsLocalBackup() {
+		if (psLocalBackupTimer) window.clearTimeout(psLocalBackupTimer);
+		psLocalBackupTimer = window.setTimeout(() => {
+			psLocalBackupTimer = 0;
+			// Never let the safety net throw into the edit path.
+			try {
+				commitPsLocalBackup();
+			} catch {
+				/* ignore */
+			}
+		}, 1200);
+	}
+
+	// Recovery API (exposed on window for power-user / console recovery).
+	function listPsLocalBackups() {
+		return readPsLocalBackups()
+			.slice()
+			.reverse()
+			.map((b, i) => ({
+				index: i,
+				when: new Date(Number(b.ts || 0)).toLocaleString(),
+				title: String(b.title || "(ohne Titel)"),
+				noteId: String(b.noteId || ""),
+				chars: String(b.text || "").length,
+			}));
+	}
+
+	async function restorePsLocalBackup(index) {
+		const list = readPsLocalBackups().slice().reverse();
+		const entry = list[Number(index) || 0];
+		if (!entry || !entry.text) {
+			toast("Keine Sicherung an diesem Index.", "error");
+			return false;
+		}
+		try {
+			await savePersonalSpaceNote(String(entry.text), { auto: false });
+			toast("Sicherung als neue Notiz wiederhergestellt.", "success");
+			return true;
+		} catch (e) {
+			notifyPsSaveFailed(e && e.message ? String(e.message) : "");
+			return false;
+		}
 	}
 
 	function updatePsSaveVisibility() {
@@ -16667,6 +16929,41 @@ self.onmessage = async (e) => {
 				}
 			} catch (e) { console.warn("[offline] merge dirty notes into UI failed:", e); }
 		}
+
+		// Fix F: non-destructive multi-device conflict warning.
+		// If a remote edit to the note we're currently editing arrived while we
+		// hold unsaved local changes, warn instead of letting last-write-wins
+		// silently diverge. The local version is captured in the black box, so
+		// nothing is lost — the editor textarea itself is not overwritten here.
+		try {
+			const editId = String(psEditingNoteId || "").trim();
+			if (editId && textarea) {
+				const serverNote = psState.notes.find(
+					(n) => String(n && n.id ? n.id : "") === editId
+				);
+				const editorText = String(textarea.value || "");
+				const baseline = String(psAutoSaveLastSavedText || "");
+				if (
+					serverNote &&
+					typeof serverNote.text === "string" &&
+					editorText.trim() &&
+					editorText !== baseline && // unsaved local edits exist
+					serverNote.text !== baseline && // server moved past our baseline
+					serverNote.text !== editorText // and differs from what we have
+				) {
+					try { commitPsLocalBackup(); } catch { /* ignore */ }
+					const now = Date.now();
+					if (now - psConflictToastAt > 30000) {
+						psConflictToastAt = now;
+						toast(
+							t("ps.remote_conflict") ||
+								"Diese Notiz wurde auf einem anderen Gerät geändert. Deine lokale Version ist gesichert.",
+							"info"
+						);
+					}
+				}
+			}
+		} catch { /* ignore */ }
 
 		// Merge server-side taskClosedTs into localStorage cache
 		mergeServerTaskClosedTimestamps(psState.notes);
@@ -26147,6 +26444,7 @@ self.onmessage = async (e) => {
 		updateSelectionMenu();
 		updateEditorMetaScroll();
 		schedulePsAutoSave();
+		schedulePsLocalBackup();
 	});
 
 	textarea.addEventListener("click", () => {
@@ -27722,6 +28020,9 @@ self.onmessage = async (e) => {
 
 		// Expose for setActiveSettingsSection hook
 		window.__loadWorkflowsSettings = loadWorkflowsSettings;
+		// Local-backup recovery API (console-accessible safety net)
+		window.mirrorLocalBackups = listPsLocalBackups;
+		window.mirrorRestoreBackup = restorePsLocalBackup;
 	}
 
 	/* ── Editor Text Search ── */
@@ -27921,7 +28222,8 @@ self.onmessage = async (e) => {
 				return true;
 			} catch (e) {
 				console.warn("[offline] save failed:", e);
-				if (auto) setPsAutoSaveStatus("Offline-Speichern fehlgeschlagen");
+				// Local IndexedDB save failed too → genuine total loss; the user must know.
+				notifyPsSaveFailed(e && e.message ? String(e.message) : "offline");
 				return false;
 			}
 		}
@@ -28092,9 +28394,8 @@ self.onmessage = async (e) => {
 				return true;
 			} catch (e) {
 				console.warn("[offline] snapshot save failed:", e);
-				if (String(psEditingNoteId || "").trim() === targetId) {
-					setPsAutoSaveStatus("Offline-Speichern fehlgeschlagen");
-				}
+				// Local IndexedDB save failed too → genuine total loss; the user must know.
+				notifyPsSaveFailed(e && e.message ? String(e.message) : "offline");
 				return false;
 			}
 		}
@@ -28195,13 +28496,46 @@ self.onmessage = async (e) => {
 					setPsAutoSaveStatus("");
 				}
 				applyPersonalSpaceFiltersAndRender();
-				// Recreate the note so no edits are lost (use auto:false to bypass the
-				// "auto + no id → skip" guard in savePersonalSpaceNote)
-				if (wasEditing && rawText.trim()) {
+				// Recreate the note so no edits are lost, regardless of whether the note
+				// is still the one being edited. A queued/flushed snapshot for a note the
+				// user already navigated away from (wasEditing === false) must ALSO be
+				// preserved — otherwise switching notes silently drops the prior edit.
+				if (rawText.trim()) {
 					toast(t("ps.note_deleted_recreated") || "Notiz gelöscht – Inhalt als neue Notiz gesichert.", "info");
-					try {
-						await savePersonalSpaceNote(rawText, { auto: false });
-					} catch { /* content remains in textarea */ }
+					if (wasEditing) {
+						// Currently editing this note: recreate via the normal path so editing
+						// state (psEditingNoteId, tags) is re-established. auto:false bypasses
+						// the "auto + no id → skip" guard in savePersonalSpaceNote.
+						try {
+							await savePersonalSpaceNote(rawText, { auto: false });
+						} catch (eRecreate) {
+							notifyPsSaveFailed(eRecreate && eRecreate.message ? String(eRecreate.message) : "");
+						}
+					} else {
+						// Not editing this note anymore: preserve its content as a NEW note
+						// using the snapshot's own tags, without touching the current editor.
+						try {
+							const resRe = await api("/api/notes", {
+								method: "POST",
+								body: JSON.stringify({
+									text: rawText,
+									tags: Array.isArray(tagsPayload) ? tagsPayload : [],
+								}),
+							});
+							const savedRe = resRe && resRe.note ? resRe.note : null;
+							if (savedRe && savedRe.id && psState && Array.isArray(psState.notes)) {
+								psState.notes = filterRealNotes([savedRe, ...psState.notes]);
+								applyPersonalSpaceFiltersAndRender();
+							}
+						} catch (eRe) {
+							// Online recreate failed — enqueue offline so the edit survives.
+							try {
+								await offlineSaveNote("", rawText, Array.isArray(tagsPayload) ? tagsPayload : []);
+							} catch {
+								notifyPsSaveFailed(eRe && eRe.message ? String(eRe.message) : "");
+							}
+						}
+					}
 				}
 				return false;
 			}
@@ -28214,10 +28548,9 @@ self.onmessage = async (e) => {
 					setPsAutoSaveStatus("Offline gespeichert");
 				}
 				return true;
-			} catch {
-				if (String(psEditingNoteId || "").trim() === targetId) {
-					setPsAutoSaveStatus("Speichern fehlgeschlagen");
-				}
+			} catch (eOff) {
+				// Both online and offline save failed — surface it so the edit isn't silently lost.
+				notifyPsSaveFailed(eOff && eOff.message ? String(eOff.message) : "");
 				return false;
 			}
 		}
@@ -28281,8 +28614,8 @@ self.onmessage = async (e) => {
 						queuedTags
 					);
 				}
-			} catch {
-				setPsAutoSaveStatus("Speichern fehlgeschlagen");
+			} catch (eAuto) {
+				notifyPsSaveFailed(eAuto && eAuto.message ? String(eAuto.message) : "");
 			} finally {
 				psAutoSaveInFlight = false;
 				if (
