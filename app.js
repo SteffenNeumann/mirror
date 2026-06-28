@@ -226,6 +226,7 @@
 	const psAutoBackupIntervalInput = document.getElementById(
 		"psAutoBackupInterval"
 	);
+	const psAutoBackupTimeInput = document.getElementById("psAutoBackupTime");
 	const psAutoBackupFolderBtn = document.getElementById("psAutoBackupFolder");
 	const psAutoBackupFolderLabel = document.getElementById(
 		"psAutoBackupFolderLabel"
@@ -5934,12 +5935,15 @@
 	const PS_BACKUP_HINT_DISMISSED_KEY = "mirror_ps_backup_hint_dismissed";
 	const PS_AUTO_BACKUP_ENABLED_KEY = "mirror_ps_auto_backup_enabled";
 	const PS_AUTO_BACKUP_INTERVAL_KEY = "mirror_ps_auto_backup_interval";
+	const PS_AUTO_BACKUP_TIME_KEY = "mirror_ps_auto_backup_time";
 	const PS_AUTO_BACKUP_LAST_KEY = "mirror_ps_auto_backup_last_ts";
 	const PS_AUTO_IMPORT_ENABLED_KEY = "mirror_ps_auto_import_enabled";
 	const PS_AUTO_IMPORT_INTERVAL_KEY = "mirror_ps_auto_import_interval";
 	const PS_AUTO_IMPORT_LAST_KEY = "mirror_ps_auto_import_last_ts";
 	const PS_AUTO_IMPORT_SEEN_KEY = "mirror_ps_auto_import_seen_v2";
 	const AUTO_INITIAL_DELAY_MS = 15000; // 15s after startup before first auto-run
+	const BACKUP_ON_LEAVE_MIN_GAP_MS = 5 * 60 * 1000; // throttle leave-backup to 5min
+	let psBackupLeaveAttached = false;
 	const PS_MANUAL_TAGS_MARKER = "__manual_tags__";
 	const PS_PINNED_TAG = "pinned";
 	// Tags that should never appear from auto-classification.
@@ -5995,6 +5999,7 @@
 	let mobileAutoNoteChecked = false;
 	let psAutoBackupEnabled = false;
 	let psAutoBackupInterval = "daily";
+	let psAutoBackupTime = "03:00";
 	let psAutoBackupTimer = 0;
 	let psAutoBackupInFlight = false;
 	let psAutoBackupHandle = null;
@@ -6668,6 +6673,7 @@
 				"settings.export.autobackup.daily": "Täglich",
 				"settings.export.autobackup.weekly": "Wöchentlich",
 				"settings.export.autobackup.monthly": "Monatlich",
+				"settings.export.autobackup.time": "Uhrzeit",
 				"settings.export.autobackup.choose_folder": "Ordner wählen",
 				"settings.export.autobackup.no_folder": "Kein Ordner gewählt",
 				"settings.export.autobackup.unsupported":
@@ -7424,6 +7430,7 @@
 				"settings.export.autobackup.daily": "Daily",
 				"settings.export.autobackup.weekly": "Weekly",
 				"settings.export.autobackup.monthly": "Monthly",
+				"settings.export.autobackup.time": "Time",
 				"settings.export.autobackup.choose_folder": "Choose folder",
 				"settings.export.autobackup.no_folder": "No folder selected",
 				"settings.export.autobackup.unsupported":
@@ -8942,6 +8949,7 @@
 			psAutoImportUnsupported.classList.toggle("hidden", supported);
 		if (psAutoBackupEnabledInput) psAutoBackupEnabledInput.disabled = !supported;
 		if (psAutoBackupIntervalInput) psAutoBackupIntervalInput.disabled = !supported;
+		if (psAutoBackupTimeInput) psAutoBackupTimeInput.disabled = !supported;
 		if (psAutoBackupFolderBtn) psAutoBackupFolderBtn.disabled = !supported;
 		if (psAutoImportEnabledInput) psAutoImportEnabledInput.disabled = !supported;
 		if (psAutoImportIntervalInput) psAutoImportIntervalInput.disabled = !supported;
@@ -8961,10 +8969,31 @@
 		} catch {
 			psAutoBackupInterval = "daily";
 		}
+		try {
+			psAutoBackupTime = normalizeBackupTime(
+				localStorage.getItem(PS_AUTO_BACKUP_TIME_KEY),
+				"03:00"
+			);
+		} catch {
+			psAutoBackupTime = "03:00";
+		}
 		if (psAutoBackupEnabledInput)
 			psAutoBackupEnabledInput.checked = psAutoBackupEnabled;
 		if (psAutoBackupIntervalInput)
 			psAutoBackupIntervalInput.value = String(psAutoBackupInterval || "daily");
+		if (psAutoBackupTimeInput)
+			psAutoBackupTimeInput.value = String(psAutoBackupTime || "03:00");
+	}
+
+	// Accepts "HH:MM" (24h); returns fallback if malformed/out of range.
+	function normalizeBackupTime(raw, fallback) {
+		const m = /^(\d{1,2}):(\d{2})$/.exec(String(raw || "").trim());
+		if (!m) return fallback;
+		const h = Number(m[1]);
+		const min = Number(m[2]);
+		if (!Number.isFinite(h) || !Number.isFinite(min) || h > 23 || min > 59)
+			return fallback;
+		return String(h).padStart(2, "0") + ":" + String(min).padStart(2, "0");
 	}
 
 	function saveAutoBackupSettings() {
@@ -8976,6 +9005,10 @@
 			localStorage.setItem(
 				PS_AUTO_BACKUP_INTERVAL_KEY,
 				String(psAutoBackupInterval || "daily")
+			);
+			localStorage.setItem(
+				PS_AUTO_BACKUP_TIME_KEY,
+				String(psAutoBackupTime || "03:00")
 			);
 		} catch {
 			// ignore
@@ -9061,11 +9094,42 @@
 		try { localStorage.setItem(PS_AUTO_IMPORT_LAST_KEY, String(Date.now())); } catch { /* ignore */ }
 	}
 
+	// Milliseconds from now until the next occurrence of "HH:MM" local time.
+	function msUntilNextTimeOfDay(hhmm) {
+		const m = /^(\d{1,2}):(\d{2})$/.exec(String(hhmm || "").trim());
+		if (!m) return autoIntervalToMs("daily");
+		const h = Math.min(23, Number(m[1]));
+		const min = Math.min(59, Number(m[2]));
+		const now = new Date();
+		const next = new Date(
+			now.getFullYear(),
+			now.getMonth(),
+			now.getDate(),
+			h,
+			min,
+			0,
+			0
+		);
+		if (next.getTime() <= now.getTime()) next.setDate(next.getDate() + 1);
+		return next.getTime() - now.getTime();
+	}
+
 	function computeNextAutoDelay(lastTs, interval) {
-		if (!lastTs) return AUTO_INITIAL_DELAY_MS;
 		const intervalMs = autoIntervalToMs(interval);
+		// Overdue (e.g. machine was off at the scheduled time) → catch up shortly
+		// after startup so a missed backup isn't skipped for a whole cycle.
+		if (lastTs && Date.now() - lastTs >= intervalMs) return AUTO_INITIAL_DELAY_MS;
+		// First-ever backup → run soon to establish a baseline.
+		if (!lastTs) return AUTO_INITIAL_DELAY_MS;
+		// Daily with a configured fixed time → anchor to that wall-clock time.
+		if (interval === "daily" && psAutoBackupTime) {
+			return Math.max(
+				msUntilNextTimeOfDay(psAutoBackupTime),
+				AUTO_INITIAL_DELAY_MS
+			);
+		}
+		// Relative fallback (weekly/monthly).
 		const elapsed = Date.now() - lastTs;
-		if (elapsed >= intervalMs) return AUTO_INITIAL_DELAY_MS;
 		return Math.max(intervalMs - elapsed, AUTO_INITIAL_DELAY_MS);
 	}
 
@@ -9082,6 +9146,48 @@
 			await runAutoBackup();
 			scheduleAutoBackup();
 		}, delay);
+	}
+
+	// Backup on leave/close. The black-box flush is synchronous and therefore
+	// reliable even on a hard tab close; the folder backup is async/best-effort
+	// (reliable on tab-switch/minimize, not guaranteed if the tab is killed).
+	function attachBackupOnLeave() {
+		if (psBackupLeaveAttached) return;
+		psBackupLeaveAttached = true;
+		const onHide = () => {
+			// 1) Guaranteed: synchronous localStorage black-box snapshot.
+			try {
+				if (psLocalBackupTimer) {
+					window.clearTimeout(psLocalBackupTimer);
+					psLocalBackupTimer = 0;
+				}
+				commitPsLocalBackup();
+			} catch {
+				/* never block unload */
+			}
+			// 2) Best-effort folder backup (throttled, desktop only).
+			try {
+				if (
+					psAutoBackupEnabled &&
+					psAutoBackupHandle &&
+					supportsDirectoryAccess() &&
+					!isMobileViewport() &&
+					psState &&
+					psState.authed
+				) {
+					const last = getAutoBackupLastTs();
+					if (!last || Date.now() - last >= BACKUP_ON_LEAVE_MIN_GAP_MS) {
+						void runAutoBackup();
+					}
+				}
+			} catch {
+				/* ignore */
+			}
+		};
+		document.addEventListener("visibilitychange", () => {
+			if (document.visibilityState === "hidden") onHide();
+		});
+		window.addEventListener("pagehide", onHide);
 	}
 
 	function scheduleAutoImport() {
@@ -9319,6 +9425,7 @@
 			}
 		}
 		maybeShowBackupFolderHint();
+		attachBackupOnLeave();
 		scheduleAutoBackup();
 	}
 
@@ -27498,6 +27605,14 @@ self.onmessage = async (e) => {
 				"daily"
 			);
 			psAutoBackupIntervalInput.value = String(psAutoBackupInterval || "daily");
+			saveAutoBackupSettings();
+			scheduleAutoBackup();
+		});
+	}
+	if (psAutoBackupTimeInput) {
+		psAutoBackupTimeInput.addEventListener("change", () => {
+			psAutoBackupTime = normalizeBackupTime(psAutoBackupTimeInput.value, "03:00");
+			psAutoBackupTimeInput.value = String(psAutoBackupTime || "03:00");
 			saveAutoBackupSettings();
 			scheduleAutoBackup();
 		});
