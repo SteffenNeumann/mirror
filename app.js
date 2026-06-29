@@ -2889,6 +2889,7 @@
 
 	function insertTextAtCursor(el, text) {
 		if (!el) return;
+		if (el === textarea) editorHistoryFlush(); // discrete undo step
 		const value = String(el.value || "");
 		const start = Math.max(0, Math.min(value.length, Number(el.selectionStart) || 0));
 		const end = Math.max(start, Math.min(value.length, Number(el.selectionEnd) || 0));
@@ -4414,6 +4415,7 @@
 		}
 		const colorPrefix = color ? `{${color}}` : "";
 		const wrapped = `==${colorPrefix}${inner}==`;
+		editorHistoryFlush(); // discrete undo step
 		textarea.value = before.slice(0, actualStart) + wrapped + before.slice(actualEnd);
 		// Select inner content
 		const newInnerStart = actualStart + 2 + colorPrefix.length;
@@ -15746,6 +15748,7 @@ ${highlightThemeCss}
 		syncPsEditorTagsInput(true);
 		if (!(opts && opts.skipText)) {
 			textarea.value = String(note.text || "");
+			editorHistoryReset(); // start a fresh undo history per loaded note
 			try {
 				textarea.focus();
 			} catch {
@@ -16901,6 +16904,7 @@ self.onmessage = async (e) => {
 			if (aiText) clearAiPromptAfterResponse(promptForChat);
 			// transform mode: auto-apply AI output directly into the editor
 			if (mode === "transform" && aiText && textarea) {
+				editorHistoryFlush(); // discrete undo step (AI transform is destructive)
 				textarea.value = aiText;
 				if (isCrdtEnabled()) {
 					updateCrdtFromTextarea();
@@ -23933,6 +23937,7 @@ self.onmessage = async (e) => {
 		suppressSend = true;
 		const cleaned = sanitizeLegacySnapshotText(text);
 		textarea.value = String(cleaned ?? "");
+		if (typeof editorHistoryReset === "function") editorHistoryReset(); // remote/sync update = fresh baseline
 		lastLocalText = textarea.value;
 		suppressSend = false;
 
@@ -26510,6 +26515,118 @@ self.onmessage = async (e) => {
 	window.addEventListener("scroll", hideTabTooltip, true);
 	window.addEventListener("resize", hideTabTooltip);
 
+	// ─── Editor Undo/Redo ────────────────────────────────────────────────
+	// #mirror is mutated by direct textarea.value assignment in many places
+	// (toolbox, AI transform, paste cleanup, slash/list ops), each of which
+	// wipes the browser's native undo stack. This unified history makes
+	// Cmd+Z / Cmd+Shift+Z work across ALL edits — typed and programmatic.
+	const EDITOR_HISTORY_MAX = 200;
+	let editorHistory = [];
+	let editorHistoryIdx = -1;
+	let editorHistoryTimer = 0;
+	let editorApplyingHistory = false;
+
+	function snapshotEditor() {
+		return {
+			text: String(textarea && textarea.value ? textarea.value : ""),
+			s: textarea ? Number(textarea.selectionStart) || 0 : 0,
+			e: textarea ? Number(textarea.selectionEnd) || 0 : 0,
+		};
+	}
+
+	function editorHistoryReset() {
+		if (editorHistoryTimer) {
+			window.clearTimeout(editorHistoryTimer);
+			editorHistoryTimer = 0;
+		}
+		editorHistory = [snapshotEditor()];
+		editorHistoryIdx = 0;
+	}
+
+	function editorHistoryPush() {
+		if (!textarea) return;
+		const snap = snapshotEditor();
+		if (!editorHistory.length) {
+			editorHistory = [snap];
+			editorHistoryIdx = 0;
+			return;
+		}
+		const cur = editorHistory[editorHistoryIdx];
+		if (cur && cur.text === snap.text) {
+			// Text unchanged → only track latest caret, don't create a step.
+			editorHistory[editorHistoryIdx] = snap;
+			return;
+		}
+		// Dropping the redo branch when a new edit diverges from history.
+		if (editorHistoryIdx < editorHistory.length - 1) {
+			editorHistory = editorHistory.slice(0, editorHistoryIdx + 1);
+		}
+		editorHistory.push(snap);
+		if (editorHistory.length > EDITOR_HISTORY_MAX) editorHistory.shift();
+		editorHistoryIdx = editorHistory.length - 1;
+	}
+
+	function editorHistoryFlush() {
+		if (editorHistoryTimer) {
+			window.clearTimeout(editorHistoryTimer);
+			editorHistoryTimer = 0;
+		}
+		if (!editorHistory.length) {
+			editorHistoryReset();
+			return;
+		}
+		editorHistoryPush();
+	}
+
+	function scheduleEditorHistory() {
+		if (editorApplyingHistory) return;
+		if (editorHistoryTimer) window.clearTimeout(editorHistoryTimer);
+		editorHistoryTimer = window.setTimeout(() => {
+			editorHistoryTimer = 0;
+			try {
+				editorHistoryPush();
+			} catch {
+				/* ignore */
+			}
+		}, 350);
+	}
+
+	function applyEditorSnapshot(snap) {
+		if (!textarea || !snap) return;
+		editorApplyingHistory = true;
+		try {
+			textarea.value = String(snap.text || "");
+			try {
+				textarea.setSelectionRange(Number(snap.s) || 0, Number(snap.e) || 0);
+			} catch {
+				/* ignore */
+			}
+			// Reuse the normal change pipeline (sync, preview, autosave, backup).
+			textarea.dispatchEvent(new Event("input", { bubbles: true }));
+		} finally {
+			editorApplyingHistory = false;
+		}
+	}
+
+	function editorUndo() {
+		if (!textarea) return false;
+		editorHistoryFlush(); // capture latest edits as a discrete step first
+		if (editorHistoryIdx <= 0) return false;
+		editorHistoryIdx--;
+		applyEditorSnapshot(editorHistory[editorHistoryIdx]);
+		return true;
+	}
+
+	function editorRedo() {
+		if (!textarea) return false;
+		if (editorHistoryIdx >= editorHistory.length - 1) return false;
+		editorHistoryIdx++;
+		applyEditorSnapshot(editorHistory[editorHistoryIdx]);
+		return true;
+	}
+
+	editorHistoryReset(); // baseline snapshot of the initial editor content
+
 	textarea.addEventListener("input", () => {
 		metaLeft.textContent = "Typing…";
 		const canSyncRoom = shouldSyncRoomContentNow();
@@ -26554,6 +26671,7 @@ self.onmessage = async (e) => {
 		updateEditorMetaScroll();
 		schedulePsAutoSave();
 		schedulePsLocalBackup();
+		scheduleEditorHistory();
 	});
 
 	textarea.addEventListener("click", () => {
@@ -26598,6 +26716,21 @@ self.onmessage = async (e) => {
 		if (handleWikiMenuKey(ev)) return;
 		if (handleSlashMenuKey(ev)) return;
 		if (!ev) return;
+		// Undo/Redo — works across typed AND programmatic edits.
+		// (block-arrange mode has its own Cmd+Z handler, so skip when open)
+		if (!blockArrangeOpen && (ev.metaKey || ev.ctrlKey) && !ev.altKey) {
+			const k = String(ev.key || "").toLowerCase();
+			if (k === "z" && !ev.shiftKey) {
+				ev.preventDefault();
+				editorUndo();
+				return;
+			}
+			if ((k === "z" && ev.shiftKey) || k === "y") {
+				ev.preventDefault();
+				editorRedo();
+				return;
+			}
+		}
 		if (ev.key !== "Enter") return;
 		if (ev.shiftKey || ev.metaKey || ev.ctrlKey || ev.altKey) return;
 
@@ -26632,6 +26765,7 @@ self.onmessage = async (e) => {
 		const end = Number(textarea.selectionEnd || 0);
 		const before = String(textarea.value || "").slice(0, start);
 		const after = String(textarea.value || "").slice(end);
+		editorHistoryFlush(); // discrete undo step for paste cleanup
 		textarea.value = before + formatted + after;
 		const newCursor = start + formatted.length;
 		textarea.selectionStart = newCursor;
