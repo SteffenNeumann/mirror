@@ -11635,6 +11635,10 @@ body.ng-sidebar-collapsed .ng-sidebar {
 .ng-leg-dot-sel {
 	background: var(--accent-strong, #d946ef);
 }
+.ng-leg-dot-tag {
+	background: transparent;
+	border: 1.5px solid var(--accent-text-soft, rgba(244, 114, 182, 0.9));
+}
 .ng-leg-line {
 	width: 16px;
 	height: 0;

@@ -15924,6 +15924,8 @@ ${highlightThemeCss}
 	}
 
 	function ngNodeRadius(node) {
+		if (node && node.kind === "tag")
+			return 2.6 + Math.sqrt((node && node.deg) || 0) * 1.4;
 		return 3.4 + Math.sqrt((node && node.deg) || 0) * 2.1;
 	}
 
@@ -15945,7 +15947,7 @@ ${highlightThemeCss}
 			if (!id) continue;
 			const title = getNoteTitle((n && n.text) || "") || "(ohne Titel)";
 			const tags = Array.isArray(n && n.tags) ? n.tags : [];
-			const node = { id, title, tags, deg: 0 };
+			const node = { id, title, tags, deg: 0, kind: "note" };
 			nodes.push(node);
 			nodeById.set(id, node);
 		}
@@ -15971,36 +15973,46 @@ ${highlightThemeCss}
 				links.push({ source: id, target: targetId, type: "wiki" });
 			}
 		}
-		if (ngState.tagEdges) {
-			const tagMap = new Map();
-			for (const node of nodes) {
-				for (const t of node.tags) {
-					const tag = String(t || "").trim().toLowerCase();
-					if (!tag) continue;
-					if (!tagMap.has(tag)) tagMap.set(tag, []);
-					tagMap.get(tag).push(node.id);
-				}
-			}
-			const CAP = 8;
-			for (const ids of tagMap.values()) {
-				if (ids.length < 2 || ids.length > CAP) continue;
-				for (let i = 0; i < ids.length; i++) {
-					for (let j = i + 1; j < ids.length; j++) {
-						const a = ids[i];
-						const b = ids[j];
-						const key = a < b ? a + ">" + b : b + ">" + a;
-						if (seen.has(key)) continue;
-						seen.add(key);
-						links.push({ source: a, target: b, type: "tag" });
-					}
-				}
-			}
-		}
+		// Note "degree" = wiki-link connections only (drives hub sizing + list
+		// badge); computed before tag nodes so tags don't inflate it.
 		for (const l of links) {
 			const a = nodeById.get(l.source);
 			const b = nodeById.get(l.target);
 			if (a) a.deg++;
 			if (b) b.deg++;
+		}
+		// Tags as first-class nodes: each tag becomes a node linked to every note
+		// that carries it (star topology, no hairball cliques).
+		if (ngState.tagEdges) {
+			const tagMap = new Map();
+			for (const node of nodes) {
+				for (const t of node.tags) {
+					const raw = String(t || "").trim();
+					if (!raw || /^__/.test(raw)) continue;
+					const key = raw.toLowerCase();
+					if (!tagMap.has(key))
+						tagMap.set(key, { label: raw, ids: [] });
+					tagMap.get(key).ids.push(node.id);
+				}
+			}
+			const TAG_MAX_NOTES = 40; // skip near-universal tags (too generic)
+			for (const [key, info] of tagMap) {
+				if (!info.ids.length || info.ids.length > TAG_MAX_NOTES) continue;
+				const tagId = "#tag:" + key;
+				if (nodeById.has(tagId)) continue;
+				const tagNode = {
+					id: tagId,
+					title: info.label,
+					tags: [],
+					deg: info.ids.length,
+					kind: "tag",
+				};
+				nodes.push(tagNode);
+				nodeById.set(tagId, tagNode);
+				for (const nid of info.ids) {
+					links.push({ source: nid, target: tagId, type: "tag" });
+				}
+			}
 		}
 		ngState.nodeById = nodeById;
 		return { nodes, links };
@@ -16054,23 +16066,39 @@ ${highlightThemeCss}
 		const isSel = node.id === ngState.selected;
 		const q = ngState.query;
 		const matchQ = q && node.title && node.title.toLowerCase().indexOf(q) >= 0;
+		const isTag = node.kind === "tag";
 		if (isSel) {
 			ctx.beginPath();
 			ctx.arc(node.x, node.y, r + 4, 0, 2 * Math.PI);
-			ctx.fillStyle = p.rgba(p.accent, 0.22);
+			ctx.fillStyle = p.rgba(isTag ? p.soft : p.accent, 0.22);
 			ctx.fill();
 		}
 		ctx.globalAlpha = active ? 1 : 0.14;
 		ctx.beginPath();
 		ctx.arc(node.x, node.y, r, 0, 2 * Math.PI);
-		const hub = (node.deg || 0) >= 4;
-		ctx.fillStyle = isSel
-			? p.rgba(p.accent, 1)
-			: p.rgba(p.accent, hub ? 0.92 : 0.58);
-		ctx.fill();
-		ctx.lineWidth = (matchQ ? 2 : 0.8) / scale;
-		ctx.strokeStyle = matchQ ? p.rgba(p.text, 0.95) : p.rgba(p.accent, 0.85);
-		ctx.stroke();
+		if (isTag) {
+			// Tag nodes: softer fill + ring, in the theme's soft-accent hue.
+			ctx.fillStyle = isSel
+				? p.rgba(p.soft, 0.85)
+				: p.rgba(p.soft, 0.28);
+			ctx.fill();
+			ctx.lineWidth = (matchQ ? 2 : 1) / scale;
+			ctx.strokeStyle = matchQ
+				? p.rgba(p.text, 0.95)
+				: p.rgba(p.soft, 0.8);
+			ctx.stroke();
+		} else {
+			const hub = (node.deg || 0) >= 4;
+			ctx.fillStyle = isSel
+				? p.rgba(p.accent, 1)
+				: p.rgba(p.accent, hub ? 0.92 : 0.58);
+			ctx.fill();
+			ctx.lineWidth = (matchQ ? 2 : 0.8) / scale;
+			ctx.strokeStyle = matchQ
+				? p.rgba(p.text, 0.95)
+				: p.rgba(p.accent, 0.85);
+			ctx.stroke();
+		}
 		const showLabel =
 			scale > 1.4 ||
 			isSel ||
@@ -16080,8 +16108,8 @@ ${highlightThemeCss}
 			matchQ;
 		if (showLabel) {
 			const fs = Math.max(11 / scale, 2.6);
-			ctx.font = "500 " + fs + "px " + p.fontFamily;
-			const label = node.title || "";
+			ctx.font = (isTag ? "500 " : "500 ") + fs + "px " + p.fontFamily;
+			const label = (isTag ? "#" : "") + (node.title || "");
 			const tw = ctx.measureText(label).width;
 			const ly = node.y + r + fs * 1.3;
 			ctx.globalAlpha = active ? 0.95 : 0.12;
@@ -16092,7 +16120,7 @@ ${highlightThemeCss}
 				tw + 6 / scale,
 				fs * 1.35
 			);
-			ctx.fillStyle = p.rgba(p.text, 0.95);
+			ctx.fillStyle = isTag ? p.rgba(p.soft, 0.95) : p.rgba(p.text, 0.95);
 			ctx.textAlign = "center";
 			ctx.textBaseline = "middle";
 			ctx.fillText(label, node.x, ly - fs * 0.35);
@@ -16160,7 +16188,9 @@ ${highlightThemeCss}
 	}
 
 	function ngSortedNodes() {
-		const nodes = ((ngState.data && ngState.data.nodes) || []).slice();
+		const nodes = ((ngState.data && ngState.data.nodes) || []).filter(
+			(n) => n.kind !== "tag"
+		);
 		if (ngState.sort === "az") {
 			nodes.sort((a, b) =>
 				String(a.title || "").localeCompare(
@@ -16490,7 +16520,9 @@ ${highlightThemeCss}
 	}
 
 	function ngPickDefaultSelection() {
-		const nodes = (ngState.data && ngState.data.nodes) || [];
+		const nodes = ((ngState.data && ngState.data.nodes) || []).filter(
+			(n) => n.kind !== "tag"
+		);
 		if (!nodes.length) return null;
 		let best = nodes[0];
 		for (const n of nodes) if ((n.deg || 0) > (best.deg || 0)) best = n;
