@@ -62,6 +62,27 @@ automatisch — touch-sicher; Öffnen via Karten-Button) · Global/Lokal · Such
 (Weiß-Ring-Hervorhebung) · Tag-Kanten-Toggle · Zoom-to-fit · Esc/✕ · Drag pinnt Knoten
 (`fx/fy`). Mobil default Lokal.
 
+### Notizliste (Sidebar / Split-View) — ab 2026-07-01
+
+Das Overlay ist ein Split-View: `.ng-body` enthält links `#ngSidebar` (300px,
+einklappbar via `body.ng-sidebar-collapsed`, in localStorage gemerkt) und rechts
+`.ng-canvas-wrap` (Canvas + Legende/Hinweis/Empty). Liste und Canvas sind zwei
+Ansichten **einer** Auswahl (`ngState.selected`).
+
+- **Zeile** (`ngRenderList`): Titel + Verbindungs-Badge (`deg`) + Meta (Tags · Datum).
+  Sortierung `deg` / `recent` / `az` (`ngSortedNodes`, gemerkt). Suche filtert die
+  Liste (`ngFilterList`) und dimmt parallel den Graphen.
+- **Auswahl-Funnel** `ngSetSelection(id, {source})`: Klick auf Zeile *oder* Knoten
+  (`ngOnClick`) laufen hier zusammen → kein Drift. Lokal-Modus baut die Nachbarschaft
+  neu auf + `ngFitView`; Global gleitet via `ngCenterOnNode` zum Knoten. Ausgewählte
+  Zeile klappt auf (`ngRowExpandHtml`: Tags, Links/Backlinks, „Notiz öffnen") — ersetzt
+  die frühere schwebende Vorschau-Karte. Hover in der Liste hebt den Knoten hervor
+  (Desktop, via `ngComputeHighlight`).
+- **Global/Lokal-Toggle bleibt.** Nach Sidebar-Toggle wird `ngResize()` aufgerufen,
+  damit force-graph die neue Canvas-Breite misst.
+- **Mobil:** Liste = Default-Vollbild; `#ngViewToggle` schaltet Liste↔Graph
+  (`ngSetMobileView`, `body.ng-mobile-graph`); Tap auf Notiz öffnet ihren lokalen Graphen.
+
 ### Zuständige Funktionen (app.js, alle `ng`-präfixiert, nach `openNoteFromWikiTarget`)
 
 | Funktion | Zweck | Abhängigkeiten |
