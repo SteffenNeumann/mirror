@@ -6,6 +6,84 @@ Hinweis: Abhängigkeiten sind Funktionsaufrufe innerhalb der Datei (statische An
 
 ---
 
+## Architektur: Notiz-Graph (Graph-Ansicht, Obsidian-Style) — ab 2026-07-01
+
+Vollbild-Overlay, das die Beziehungen zwischen Personal-Space-Notizen als
+kraftgerichteten Graphen darstellt. Reine Client-Ansicht über bereits vorhandene
+Daten — **kein Backend- oder DB-Schema-Change**. Geöffnet über `#psGraphBtn` in der
+PS-Toolbar; Markup in `#noteGraphOverlay` (Toolbar, `#noteGraphCanvas`, `#ngNote`
+Vorschau, `#ngLegend`, `#ngEmpty`).
+
+### Datenfluss
+
+```
+psState.notes
+  → filterRealNotes()                     (echte Notizen)
+  → ngBuildData()                         { nodes, links }
+      nodes: { id, title, tags, deg }     title via getNoteTitle()
+      links (wiki):  Regex /\[\[([^\[\]\n]+)\]\]/g  → Titel via buildNoteTitleIndex() → Ziel-ID
+      links (tag):   optional, geteilte Tags, gekappt (Tag von >8 Notizen übersprungen)
+  → ngViewData()                          Global = alles · Lokal = gewählter Knoten + 1-Hop-Nachbarn
+  → ForceGraph().graphData(view)          Canvas-Rendering
+```
+
+Knotengröße skaliert mit `deg` (Verlinkungsgrad → Hubs groß). Klick auf Knoten öffnet
+die Notiz via `findNoteById` → `applyNoteToEditor` (dieselbe Auflösung wie
+`openNoteFromWikiTarget`).
+
+### Rendering-Bibliothek
+
+`vasturiano/force-graph` (Canvas, kraftgerichtet) — vendored als
+`/vendor/force-graph.min.js` (UMD-Global `window.ForceGraph`), **lazy-load** beim
+ersten Öffnen (`ngEnsureLib`), **im Service Worker precached** (offline-fähig).
+Gewählt, weil Pan/Zoom/Drag/Pinch eingebaut sind und Knoten/Kanten selbst gezeichnet
+werden → Farben können pro Frame aus CSS-Variablen gelesen werden.
+
+### Theming (wichtig — nicht regressieren)
+
+Canvas erbt kein CSS, Farben kommen über `getComputedStyle` (`ngReadPalette`). Zwei Fallen:
+
+1. **`body color` ist SCHWARZ auf mehreren Dark-Themes** (fuchsia, cyan, emerald,
+   violet → `rgb(0,0,0)`; Textfarbe kommt dort aus Tailwind-Klassen, nicht vom Body).
+   → Label-/Textfarbe wird aus der **Hintergrund-Luminanz** abgeleitet (hell → dunkler
+   Text, dunkel → heller Text), nicht aus `cs.color`.
+2. **`--accent-text` ist `#fff` auf Light-Themes** (coffeeLight/bitterLight/monoLight) —
+   gedacht als Text *auf* Akzentfüllung, nicht auf dem hellen Glas-Panel. → CSS-Overrides
+   am Ende von `styles/app.css` erzwingen lesbare `.ng-title`/`.ng-note-title`/`.ng-empty-title`.
+
+Alles Übrige themt korrekt aus `--accent-strong` (Knoten-Ton + aktiver Segment-Button),
+`--accent-text-soft`, `--accent-border*`, `--accent-bg-soft`, `--panel-solid-bg`.
+Die `--accent-*` werden von `applyTheme` zur Laufzeit auf `documentElement` gesetzt.
+
+### Interaktionen
+
+Hover = Nachbarn hervorheben + Rest dimmen · Klick = Auswahl + Vorschau (öffnet NICHT
+automatisch — touch-sicher; Öffnen via Karten-Button) · Global/Lokal · Suche
+(Weiß-Ring-Hervorhebung) · Tag-Kanten-Toggle · Zoom-to-fit · Esc/✕ · Drag pinnt Knoten
+(`fx/fy`). Mobil default Lokal.
+
+### Zuständige Funktionen (app.js, alle `ng`-präfixiert, nach `openNoteFromWikiTarget`)
+
+| Funktion | Zweck | Abhängigkeiten |
+|---|---|---|
+| `openNoteGraph` / `closeNoteGraph` | Overlay auf/zu, Sim resume/pause | `ngEnsureLib`, `ngInit`, `ngApplyData`, `isMobileViewport` |
+| `ngEnsureLib` | force-graph lazy per `<script>` laden | — |
+| `ngBuildData` | `{nodes, links}` bauen (Wiki + Tag-Kanten, Grad) | `filterRealNotes`, `buildNoteTitleIndex`, `getNoteTitle` |
+| `ngViewData` | Global/Lokal-Filter | — |
+| `ngReadPalette` | Theme-Farben lesen (Luminanz-Fallback) | — |
+| `ngDrawNode` / `ngPaintArea` / `ngLinkColor` / `ngLinkWidth` | Canvas-Zeichnen | `ngReadPalette` |
+| `ngComputeHighlight` | Nachbar-Set für Hover/Auswahl | — |
+| `ngShowNotePreview` / `ngOpenNote` | Vorschaukarte / Notiz öffnen | `findNoteById`, `applyNoteToEditor` |
+| `ngWireControls` | Einmaliges Wiring (Seg/Suche/Toggle/Fit/Close/Esc/Resize) | — |
+
+### Konfiguration / Defaults
+
+- **Tag-Kanten default AUS** (nur Wiki-Links); bei „an" gekappt (`CAP = 8` Notizen/Tag) gegen Hairball.
+- **Nur Vollbild** in v1; Inline-Mini-Graph in der Notiz ist mögliche v2.
+- Cache: SW `mirror-v22` → `v23`, `app.js?v=2026-07-01-01`, `force-graph.min.js` precached.
+
+---
+
 ## Architektur: Shared Rooms für User ohne Personal Space
 
 User ohne Personal Space (PS) können vollständig an geteilten Räumen teilnehmen. Es gibt kein separates "Gastraum"-Konzept – stattdessen nutzt das System einen **Room-Scope** anstelle eines Note-Scopes:

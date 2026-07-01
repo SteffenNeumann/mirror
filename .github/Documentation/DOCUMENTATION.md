@@ -1,3 +1,26 @@
+# Dokumentation – Änderungen (2026-07-01)
+
+## Ziel
+- Obsidian-artige Graph-Ansicht: Beziehungen zwischen Personal-Space-Notizen visuell darstellen.
+
+## Änderungen
+- Neuer Button „Graph" in der PS-Toolbar (`#psGraphBtn`, neben Filter) öffnet ein Vollbild-Glas-Overlay (`#noteGraphOverlay`).
+- Graph baut Knoten aus `psState.notes` und Kanten aus vorhandenen `[[Wiki-Links]]` (+ optionalen, gekappten Tag-Kanten) — kein Backend-/DB-Change.
+- Gerendert mit vendored `force-graph` (`/vendor/force-graph.min.js`, Canvas, lazy-load beim ersten Öffnen, im Service Worker precached für Offline).
+- Farben werden live aus den Theme-Variablen (`--accent-*`, `--panel-solid-bg`) gelesen → funktioniert über alle Themes. Label-/Titelfarben sind luminanz-basiert (mehrere Dark-Themes liefern schwarze `body color`); Light-Themes erhalten explizite Titel-Kontrast-Overrides (dort ist `--accent-text: #fff`).
+- Interaktionen: Hover = Nachbarn hervorheben + Rest dimmen, Klick = Notiz-Vorschau mit „Öffnen", Global/Lokal-Umschaltung, Suche, Tag-Kanten-Toggle, Zoom-to-fit, Esc/✕. Mobil default Lokal.
+
+## Auswirkungen
+- **UI/UX:** Neues Overlay auf `z-index: 9997`; `body.note-graph-open` sperrt Scroll. Themed über alle 7+ Themes.
+- **Feature-Interaktionen:** Klick auf Knoten öffnet die Notiz im Editor (`findNoteById` → `applyNoteToEditor`); nutzt die bestehende Wiki-Link-Auflösung (`buildNoteTitleIndex`).
+- **Datenebene:** Keine. Reine Client-Ansicht über vorhandene Notizdaten.
+- **Cache:** Service Worker `mirror-v22` → `v23`; `app.js?v=` → `2026-07-01-01`; `force-graph.min.js` precached.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`
+- Ausgeführt: `node --check sw.js`
+- force-graph-Init-Kette, Rendering und Theming (coffeeLight/fuchsia/bronzeDark/mono/bitter) via isoliertem Playwright-Harness verifiziert (lokaler Full-App-Boot scheitert an `better-sqlite3` ABI vs. Node 26).
+
 # Dokumentation – Änderungen (2026-02-04)
 
 ## Ziel
