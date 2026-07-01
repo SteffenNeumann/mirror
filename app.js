@@ -15830,6 +15830,534 @@ ${highlightThemeCss}
 		applyNoteToEditor(note);
 	}
 
+	/* ── Note Graph View (Obsidian-style) — themed via --accent-* ── */
+	let ngInstance = null;
+	let ngLibPromise = null;
+	let ngWired = false;
+	const ngState = {
+		open: false,
+		mode: "global",
+		selected: null,
+		tagEdges: false,
+		query: "",
+		hover: null,
+		hlNodes: new Set(),
+		hlLinks: new Set(),
+		palette: null,
+		data: { nodes: [], links: [] },
+		nodeById: new Map(),
+	};
+
+	function ngEnsureLib() {
+		if (window.ForceGraph) return Promise.resolve(window.ForceGraph);
+		if (ngLibPromise) return ngLibPromise;
+		ngLibPromise = new Promise((resolve, reject) => {
+			const sc = document.createElement("script");
+			sc.src = "/vendor/force-graph.min.js?v=2026-07-01-01";
+			sc.async = true;
+			sc.onload = () => resolve(window.ForceGraph);
+			sc.onerror = () => reject(new Error("force-graph load failed"));
+			document.head.appendChild(sc);
+		});
+		return ngLibPromise;
+	}
+
+	function ngParseColor(str, fallback) {
+		const m = String(str || "").match(/rgba?\(([^)]+)\)/i);
+		if (!m) return fallback;
+		const parts = m[1].split(",").map((x) => parseFloat(x));
+		if (parts.length < 3 || parts.some((n) => Number.isNaN(n))) return fallback;
+		return {
+			r: parts[0],
+			g: parts[1],
+			b: parts[2],
+			a: parts.length > 3 ? parts[3] : 1,
+		};
+	}
+
+	function ngReadPalette() {
+		const cs = getComputedStyle(document.body);
+		const accent = ngParseColor(cs.getPropertyValue("--accent-strong"), {
+			r: 217,
+			g: 70,
+			b: 239,
+			a: 1,
+		});
+		const soft = ngParseColor(cs.getPropertyValue("--accent-text-soft"), {
+			r: 244,
+			g: 114,
+			b: 182,
+			a: 1,
+		});
+		const bg = ngParseColor(cs.backgroundColor, { r: 15, g: 14, b: 22, a: 1 });
+		const lum = (0.299 * bg.r + 0.587 * bg.g + 0.114 * bg.b) / 255;
+		const light = lum > 0.55;
+		// Body text color is unreliable across themes (black on several dark
+		// themes), so derive a guaranteed-readable label color from bg luminance.
+		const text = light
+			? { r: 38, g: 32, b: 45, a: 1 }
+			: { r: 232, g: 228, b: 240, a: 1 };
+		const rgba = (c, a) =>
+			"rgba(" +
+			Math.round(c.r) +
+			"," +
+			Math.round(c.g) +
+			"," +
+			Math.round(c.b) +
+			"," +
+			a +
+			")";
+		return {
+			accent,
+			soft,
+			text,
+			bg,
+			light,
+			fontFamily: cs.fontFamily || "sans-serif",
+			rgba,
+		};
+	}
+
+	function ngNodeRadius(node) {
+		return 3.4 + Math.sqrt((node && node.deg) || 0) * 2.1;
+	}
+
+	function ngLinkKey(l) {
+		const s = typeof l.source === "object" ? l.source.id : l.source;
+		const t = typeof l.target === "object" ? l.target.id : l.target;
+		return s < t ? s + ">" + t : t + ">" + s;
+	}
+
+	function ngBuildData() {
+		const raw = psState && Array.isArray(psState.notes) ? psState.notes : [];
+		const notes =
+			typeof filterRealNotes === "function" ? filterRealNotes(raw) : raw;
+		const index = buildNoteTitleIndex();
+		const nodes = [];
+		const nodeById = new Map();
+		for (const n of notes) {
+			const id = String((n && n.id) || "");
+			if (!id) continue;
+			const title = getNoteTitle((n && n.text) || "") || "(ohne Titel)";
+			const tags = Array.isArray(n && n.tags) ? n.tags : [];
+			const node = { id, title, tags, deg: 0 };
+			nodes.push(node);
+			nodeById.set(id, node);
+		}
+		const links = [];
+		const seen = new Set();
+		for (const n of notes) {
+			const id = String((n && n.id) || "");
+			if (!id) continue;
+			const text = String((n && n.text) || "");
+			if (!text.includes("[[")) continue;
+			const re = /\[\[([^\[\]\n]+)\]\]/g;
+			let m;
+			while ((m = re.exec(text))) {
+				const label = String(m[1] || "").trim().toLowerCase();
+				if (!label) continue;
+				const match = index.get(label);
+				const targetId = match && match.id ? String(match.id) : "";
+				if (!targetId || targetId === id || !nodeById.has(targetId)) continue;
+				const key =
+					id < targetId ? id + ">" + targetId : targetId + ">" + id;
+				if (seen.has(key)) continue;
+				seen.add(key);
+				links.push({ source: id, target: targetId, type: "wiki" });
+			}
+		}
+		if (ngState.tagEdges) {
+			const tagMap = new Map();
+			for (const node of nodes) {
+				for (const t of node.tags) {
+					const tag = String(t || "").trim().toLowerCase();
+					if (!tag) continue;
+					if (!tagMap.has(tag)) tagMap.set(tag, []);
+					tagMap.get(tag).push(node.id);
+				}
+			}
+			const CAP = 8;
+			for (const ids of tagMap.values()) {
+				if (ids.length < 2 || ids.length > CAP) continue;
+				for (let i = 0; i < ids.length; i++) {
+					for (let j = i + 1; j < ids.length; j++) {
+						const a = ids[i];
+						const b = ids[j];
+						const key = a < b ? a + ">" + b : b + ">" + a;
+						if (seen.has(key)) continue;
+						seen.add(key);
+						links.push({ source: a, target: b, type: "tag" });
+					}
+				}
+			}
+		}
+		for (const l of links) {
+			const a = nodeById.get(l.source);
+			const b = nodeById.get(l.target);
+			if (a) a.deg++;
+			if (b) b.deg++;
+		}
+		ngState.nodeById = nodeById;
+		return { nodes, links };
+	}
+
+	function ngViewData() {
+		const full = ngState.data;
+		if (ngState.mode !== "local" || !ngState.selected) return full;
+		const sel = ngState.selected;
+		const keep = new Set([sel]);
+		for (const l of full.links) {
+			const s = typeof l.source === "object" ? l.source.id : l.source;
+			const t = typeof l.target === "object" ? l.target.id : l.target;
+			if (s === sel) keep.add(t);
+			if (t === sel) keep.add(s);
+		}
+		return {
+			nodes: full.nodes.filter((n) => keep.has(n.id)),
+			links: full.links.filter((l) => {
+				const s = typeof l.source === "object" ? l.source.id : l.source;
+				const t = typeof l.target === "object" ? l.target.id : l.target;
+				return keep.has(s) && keep.has(t);
+			}),
+		};
+	}
+
+	function ngComputeHighlight(id) {
+		ngState.hlNodes = new Set();
+		ngState.hlLinks = new Set();
+		if (!id) return;
+		ngState.hlNodes.add(id);
+		const links = ngInstance
+			? ngInstance.graphData().links
+			: ngState.data.links;
+		for (const l of links) {
+			const s = typeof l.source === "object" ? l.source.id : l.source;
+			const t = typeof l.target === "object" ? l.target.id : l.target;
+			if (s === id || t === id) {
+				ngState.hlNodes.add(s);
+				ngState.hlNodes.add(t);
+				ngState.hlLinks.add(ngLinkKey(l));
+			}
+		}
+	}
+
+	function ngDrawNode(node, ctx, scale) {
+		const p = ngState.palette;
+		if (!p) return;
+		const r = ngNodeRadius(node);
+		const active = ngState.hlNodes.size === 0 || ngState.hlNodes.has(node.id);
+		const isSel = node.id === ngState.selected;
+		const q = ngState.query;
+		const matchQ = q && node.title && node.title.toLowerCase().indexOf(q) >= 0;
+		if (isSel) {
+			ctx.beginPath();
+			ctx.arc(node.x, node.y, r + 4, 0, 2 * Math.PI);
+			ctx.fillStyle = p.rgba(p.accent, 0.22);
+			ctx.fill();
+		}
+		ctx.globalAlpha = active ? 1 : 0.14;
+		ctx.beginPath();
+		ctx.arc(node.x, node.y, r, 0, 2 * Math.PI);
+		const hub = (node.deg || 0) >= 4;
+		ctx.fillStyle = isSel
+			? p.rgba(p.accent, 1)
+			: p.rgba(p.accent, hub ? 0.92 : 0.58);
+		ctx.fill();
+		ctx.lineWidth = (matchQ ? 2 : 0.8) / scale;
+		ctx.strokeStyle = matchQ ? p.rgba(p.text, 0.95) : p.rgba(p.accent, 0.85);
+		ctx.stroke();
+		const showLabel =
+			scale > 1.4 ||
+			isSel ||
+			node.id === ngState.hover ||
+			(ngState.hlNodes.size > 0 && ngState.hlNodes.has(node.id)) ||
+			(node.deg || 0) >= 4 ||
+			matchQ;
+		if (showLabel) {
+			const fs = Math.max(11 / scale, 2.6);
+			ctx.font = "500 " + fs + "px " + p.fontFamily;
+			const label = node.title || "";
+			const tw = ctx.measureText(label).width;
+			const ly = node.y + r + fs * 1.3;
+			ctx.globalAlpha = active ? 0.95 : 0.12;
+			ctx.fillStyle = p.rgba(p.bg, 0.82);
+			ctx.fillRect(
+				node.x - tw / 2 - 3 / scale,
+				ly - fs,
+				tw + 6 / scale,
+				fs * 1.35
+			);
+			ctx.fillStyle = p.rgba(p.text, 0.95);
+			ctx.textAlign = "center";
+			ctx.textBaseline = "middle";
+			ctx.fillText(label, node.x, ly - fs * 0.35);
+		}
+		ctx.globalAlpha = 1;
+	}
+
+	function ngPaintArea(node, color, ctx) {
+		ctx.fillStyle = color;
+		ctx.beginPath();
+		ctx.arc(node.x, node.y, ngNodeRadius(node) + 3, 0, 2 * Math.PI);
+		ctx.fill();
+	}
+
+	function ngLinkColor(l) {
+		const p = ngState.palette;
+		if (!p) return "rgba(150,150,150,0.2)";
+		const hot = ngState.hlLinks.has(ngLinkKey(l));
+		if (l.type === "tag") return p.rgba(p.accent, hot ? 0.5 : 0.16);
+		return hot ? p.rgba(p.text, 0.55) : p.rgba(p.text, 0.2);
+	}
+
+	function ngLinkWidth(l) {
+		return ngState.hlLinks.has(ngLinkKey(l))
+			? 2
+			: l.type === "tag"
+			? 0.7
+			: 1.1;
+	}
+
+	function ngUpdateEmpty(view) {
+		const empty = document.getElementById("ngEmpty");
+		if (!empty) return;
+		const noLinks = !view || !view.links || view.links.length === 0;
+		empty.hidden = !noLinks;
+	}
+
+	function ngApplyData() {
+		ngState.data = ngBuildData();
+		const view = ngViewData();
+		if (ngInstance) ngInstance.graphData(view);
+		ngComputeHighlight(ngState.selected || ngState.hover);
+		ngUpdateEmpty(view);
+	}
+
+	function ngShowNotePreview(id) {
+		const box = document.getElementById("ngNote");
+		if (!box) return;
+		const node = ngState.nodeById.get(id);
+		if (!node) return;
+		let out = 0;
+		let back = 0;
+		for (const l of ngState.data.links) {
+			if (l.type !== "wiki") continue;
+			const s = typeof l.source === "object" ? l.source.id : l.source;
+			const t = typeof l.target === "object" ? l.target.id : l.target;
+			if (s === id) out++;
+			if (t === id) back++;
+		}
+		const esc = (x) =>
+			String(x)
+				.replace(/&/g, "&amp;")
+				.replace(/</g, "&lt;")
+				.replace(/>/g, "&gt;");
+		const tags = (node.tags || []).slice(0, 6);
+		const tagHtml = tags
+			.map((t) => '<span class="ng-note-tag">' + esc(t) + "</span>")
+			.join("");
+		box.innerHTML =
+			'<div class="ng-note-title"><span class="ng-note-dot"></span>' +
+			esc(node.title) +
+			"</div>" +
+			(tagHtml ? '<div class="ng-note-tags">' + tagHtml + "</div>" : "") +
+			'<div class="ng-note-meta"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg> ' +
+			out +
+			' Links</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 7L7 17M15 17H7V9"/></svg> ' +
+			back +
+			" Backlinks</span></div>" +
+			'<button type="button" class="ng-note-open" id="ngNoteOpen">Notiz öffnen</button>';
+		box.hidden = false;
+		const openBtn = document.getElementById("ngNoteOpen");
+		if (openBtn) openBtn.addEventListener("click", () => ngOpenNote(id));
+	}
+
+	function ngHideNotePreview() {
+		const box = document.getElementById("ngNote");
+		if (box) box.hidden = true;
+	}
+
+	function ngOpenNote(id) {
+		const note = findNoteById(id);
+		if (!note) {
+			toast("Notiz nicht gefunden.", "info");
+			return;
+		}
+		closeNoteGraph();
+		applyNoteToEditor(note);
+	}
+
+	function ngOnHover(node) {
+		ngState.hover = node ? node.id : null;
+		if (!ngState.selected) ngComputeHighlight(ngState.hover);
+		const mount = document.getElementById("noteGraphCanvas");
+		if (mount) mount.style.cursor = node ? "pointer" : "grab";
+	}
+
+	function ngOnClick(node) {
+		if (!node) return;
+		ngState.selected = node.id;
+		if (ngState.mode === "local") {
+			ngApplyData();
+			ngComputeHighlight(node.id);
+			if (ngInstance) setTimeout(() => ngInstance.zoomToFit(400, 60), 60);
+		} else {
+			ngComputeHighlight(node.id);
+		}
+		ngShowNotePreview(node.id);
+	}
+
+	function ngOnBgClick() {
+		ngState.selected = null;
+		ngComputeHighlight(ngState.hover);
+		ngHideNotePreview();
+		if (ngState.mode === "local") ngApplyData();
+	}
+
+	function ngResize() {
+		if (!ngInstance) return;
+		const mount = document.getElementById("noteGraphCanvas");
+		if (!mount || !mount.clientWidth) return;
+		ngInstance.width(mount.clientWidth).height(mount.clientHeight);
+	}
+
+	function ngInit(FG) {
+		if (ngInstance) return ngInstance;
+		const mount = document.getElementById("noteGraphCanvas");
+		if (!mount) return null;
+		ngInstance = FG()(mount)
+			.backgroundColor("rgba(0,0,0,0)")
+			.nodeRelSize(1)
+			.nodeCanvasObjectMode(() => "replace")
+			.nodeCanvasObject(ngDrawNode)
+			.nodePointerAreaPaint(ngPaintArea)
+			.linkColor(ngLinkColor)
+			.linkWidth(ngLinkWidth)
+			.linkLineDash((l) => (l.type === "tag" ? [3, 3] : null))
+			.onNodeHover(ngOnHover)
+			.onNodeClick(ngOnClick)
+			.onBackgroundClick(ngOnBgClick)
+			.onNodeDragEnd((node) => {
+				node.fx = node.x;
+				node.fy = node.y;
+			});
+		if (ngInstance.d3Force("charge"))
+			ngInstance.d3Force("charge").strength(-150);
+		ngInstance.width(mount.clientWidth || 600).height(mount.clientHeight || 400);
+		return ngInstance;
+	}
+
+	function ngSyncModeButtons() {
+		const seg = document.getElementById("ngSeg");
+		if (!seg) return;
+		seg.querySelectorAll(".ng-segbtn").forEach((b) => {
+			b.classList.toggle(
+				"ng-on",
+				b.getAttribute("data-mode") === ngState.mode
+			);
+		});
+	}
+
+	function ngPickDefaultSelection() {
+		const nodes = (ngState.data && ngState.data.nodes) || [];
+		if (!nodes.length) return null;
+		let best = nodes[0];
+		for (const n of nodes) if ((n.deg || 0) > (best.deg || 0)) best = n;
+		return best ? best.id : null;
+	}
+
+	function ngWireControls() {
+		if (ngWired) return;
+		ngWired = true;
+		const seg = document.getElementById("ngSeg");
+		if (seg) {
+			seg.querySelectorAll(".ng-segbtn").forEach((b) => {
+				b.addEventListener("click", () => {
+					ngState.mode = b.getAttribute("data-mode") || "global";
+					ngSyncModeButtons();
+					if (ngState.mode === "local" && !ngState.selected) {
+						ngState.selected = ngPickDefaultSelection();
+						if (ngState.selected) ngShowNotePreview(ngState.selected);
+					}
+					ngApplyData();
+					if (ngInstance)
+						setTimeout(() => ngInstance.zoomToFit(400, 60), 60);
+				});
+			});
+		}
+		const search = document.getElementById("ngSearch");
+		if (search)
+			search.addEventListener("input", (e) => {
+				ngState.query = String(e.target.value || "").toLowerCase().trim();
+			});
+		const tagChk = document.getElementById("ngTagEdges");
+		if (tagChk)
+			tagChk.addEventListener("change", (e) => {
+				ngState.tagEdges = !!e.target.checked;
+				ngApplyData();
+				if (ngInstance)
+					setTimeout(() => ngInstance.zoomToFit(400, 60), 60);
+			});
+		const fit = document.getElementById("ngFit");
+		if (fit)
+			fit.addEventListener("click", () => {
+				if (ngInstance) ngInstance.zoomToFit(400, 60);
+			});
+		const close = document.getElementById("ngClose");
+		if (close) close.addEventListener("click", () => closeNoteGraph());
+		window.addEventListener("resize", () => {
+			if (ngState.open) ngResize();
+		});
+		document.addEventListener("keydown", (e) => {
+			if (e.key === "Escape" && ngState.open) closeNoteGraph();
+		});
+	}
+
+	function openNoteGraph() {
+		const overlay = document.getElementById("noteGraphOverlay");
+		if (!overlay) return;
+		ngWireControls();
+		overlay.classList.remove("hidden");
+		overlay.setAttribute("aria-hidden", "false");
+		document.body.classList.add("note-graph-open");
+		ngState.open = true;
+		if (isMobileViewport()) ngState.mode = "local";
+		ngSyncModeButtons();
+		ngEnsureLib()
+			.then((FG) => {
+				ngInit(FG);
+				ngState.palette = ngReadPalette();
+				ngState.data = ngBuildData();
+				if (ngState.mode === "local" && !ngState.selected) {
+					ngState.selected = ngPickDefaultSelection();
+					if (ngState.selected) ngShowNotePreview(ngState.selected);
+				}
+				ngApplyData();
+				if (ngInstance) {
+					ngInstance.resumeAnimation();
+					setTimeout(() => {
+						ngResize();
+						ngInstance.zoomToFit(500, 60);
+					}, 120);
+				}
+			})
+			.catch(() =>
+				toast("Graph-Bibliothek konnte nicht geladen werden.", "error")
+			);
+	}
+
+	function closeNoteGraph() {
+		const overlay = document.getElementById("noteGraphOverlay");
+		if (overlay) {
+			overlay.classList.add("hidden");
+			overlay.setAttribute("aria-hidden", "true");
+		}
+		document.body.classList.remove("note-graph-open");
+		ngState.open = false;
+		if (ngInstance) ngInstance.pauseAnimation();
+	}
+
+
 	function syncPsListHeight() {
 		if (!psPanel || !psList) return;
 		const panelRect = psPanel.getBoundingClientRect();
@@ -29258,6 +29786,11 @@ self.onmessage = async (e) => {
 	const psQueryBuilderBtn = document.getElementById("psQueryBuilderBtn");
 	if (psQueryBuilderBtn) {
 		psQueryBuilderBtn.addEventListener("click", () => openQueryBuilder());
+	}
+
+	const psGraphBtn = document.getElementById("psGraphBtn");
+	if (psGraphBtn) {
+		psGraphBtn.addEventListener("click", () => openNoteGraph());
 	}
 
 	/* ── Query Builder Modal ── */
