@@ -15846,7 +15846,12 @@ ${highlightThemeCss}
 		palette: null,
 		data: { nodes: [], links: [] },
 		nodeById: new Map(),
+		sort: "deg",
+		sidebarCollapsed: false,
+		mobileView: "list",
 	};
+	const NG_SIDEBAR_KEY = "mirror_ng_sidebar_collapsed";
+	const NG_SORT_KEY = "mirror_ng_sort";
 
 	function ngEnsureLib() {
 		if (window.ForceGraph) return Promise.resolve(window.ForceGraph);
@@ -16131,13 +16136,17 @@ ${highlightThemeCss}
 		if (ngInstance) ngInstance.graphData(view);
 		ngComputeHighlight(ngState.selected || ngState.hover);
 		ngUpdateEmpty(view);
+		ngRenderList();
 	}
 
-	function ngShowNotePreview(id) {
-		const box = document.getElementById("ngNote");
-		if (!box) return;
-		const node = ngState.nodeById.get(id);
-		if (!node) return;
+	function ngEsc(x) {
+		return String(x)
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;");
+	}
+
+	function ngWikiCounts(id) {
 		let out = 0;
 		let back = 0;
 		for (const l of ngState.data.links) {
@@ -16147,34 +16156,197 @@ ${highlightThemeCss}
 			if (s === id) out++;
 			if (t === id) back++;
 		}
-		const esc = (x) =>
-			String(x)
-				.replace(/&/g, "&amp;")
-				.replace(/</g, "&lt;")
-				.replace(/>/g, "&gt;");
-		const tags = (node.tags || []).slice(0, 6);
-		const tagHtml = tags
-			.map((t) => '<span class="ng-note-tag">' + esc(t) + "</span>")
-			.join("");
-		box.innerHTML =
-			'<div class="ng-note-title"><span class="ng-note-dot"></span>' +
-			esc(node.title) +
-			"</div>" +
-			(tagHtml ? '<div class="ng-note-tags">' + tagHtml + "</div>" : "") +
-			'<div class="ng-note-meta"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg> ' +
-			out +
-			' Links</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 7L7 17M15 17H7V9"/></svg> ' +
-			back +
-			" Backlinks</span></div>" +
-			'<button type="button" class="ng-note-open" id="ngNoteOpen">Notiz öffnen</button>';
-		box.hidden = false;
-		const openBtn = document.getElementById("ngNoteOpen");
-		if (openBtn) openBtn.addEventListener("click", () => ngOpenNote(id));
+		return { out, back };
 	}
 
-	function ngHideNotePreview() {
-		const box = document.getElementById("ngNote");
-		if (box) box.hidden = true;
+	function ngSortedNodes() {
+		const nodes = ((ngState.data && ngState.data.nodes) || []).slice();
+		if (ngState.sort === "az") {
+			nodes.sort((a, b) =>
+				String(a.title || "").localeCompare(
+					String(b.title || ""),
+					"de",
+					{ sensitivity: "base" }
+				)
+			);
+		} else if (ngState.sort === "recent") {
+			nodes.sort(
+				(a, b) => (b.createdAt || 0) - (a.createdAt || 0)
+			);
+		} else {
+			// deg desc, tie-break by title
+			nodes.sort(
+				(a, b) =>
+					(b.deg || 0) - (a.deg || 0) ||
+					String(a.title || "").localeCompare(String(b.title || ""))
+			);
+		}
+		return nodes;
+	}
+
+	// Expanded preview content shown inside the selected list row (replaces the
+	// old floating preview card).
+	function ngRowExpandHtml(id) {
+		const node = ngState.nodeById.get(id);
+		if (!node) return "";
+		const c = ngWikiCounts(id);
+		const tags = (node.tags || []).slice(0, 6);
+		const tagHtml = tags
+			.map((t) => '<span class="ng-note-tag">' + ngEsc(t) + "</span>")
+			.join("");
+		return (
+			'<div class="ng-item-expand">' +
+			(tagHtml
+				? '<div class="ng-note-tags">' + tagHtml + "</div>"
+				: "") +
+			'<div class="ng-note-meta"><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg> ' +
+			c.out +
+			' Links</span><span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 7L7 17M15 17H7V9"/></svg> ' +
+			c.back +
+			" Backlinks</span></div>" +
+			'<button type="button" class="ng-note-open" data-ngopen="1">Notiz öffnen</button>' +
+			"</div>"
+		);
+	}
+
+	function ngRowMeta(node) {
+		const parts = [];
+		const tags = (node.tags || []).filter(
+			(t) => t && !/^(cat:|sub:|__)/i.test(String(t))
+		);
+		if (tags.length) parts.push(tags.slice(0, 2).join(" "));
+		if (node.createdAt) {
+			try {
+				const d = new Date(node.createdAt);
+				if (!Number.isNaN(d.getTime()))
+					parts.push(
+						d.toLocaleDateString("de-DE", {
+							day: "numeric",
+							month: "short",
+						})
+					);
+			} catch {
+				// ignore
+			}
+		}
+		return parts.join(" · ");
+	}
+
+	function ngRenderList() {
+		const list = document.getElementById("ngList");
+		if (!list) return;
+		const nodes = ngSortedNodes();
+		let html = "";
+		for (const n of nodes) {
+			const meta = ngRowMeta(n);
+			html +=
+				'<button type="button" class="ng-item" role="option" data-id="' +
+				ngEsc(n.id) +
+				'">' +
+				'<span class="ng-item-row"><span class="ng-item-title">' +
+				ngEsc(n.title) +
+				"</span>" +
+				'<span class="ng-item-deg" title="Verbindungen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="1.6"/><circle cx="19" cy="8" r="1.6"/><circle cx="12" cy="18" r="1.6"/><path d="M6.4 6.8l4.4 9M17.4 9.2l-4.6 7M7 6.1h10"/></svg>' +
+				(n.deg || 0) +
+				"</span></span>" +
+				(meta
+					? '<span class="ng-item-meta">' + ngEsc(meta) + "</span>"
+					: "") +
+				"</button>";
+		}
+		list.innerHTML = html;
+		ngUpdateListSelection();
+		ngFilterList();
+	}
+
+	function ngFilterList() {
+		const list = document.getElementById("ngList");
+		if (!list) return;
+		const q = ngState.query;
+		let shown = 0;
+		const rows = list.querySelectorAll(".ng-item");
+		rows.forEach((row) => {
+			const id = row.getAttribute("data-id");
+			const node = ngState.nodeById.get(id);
+			const match =
+				!q ||
+				(node &&
+					String(node.title || "")
+						.toLowerCase()
+						.indexOf(q) >= 0);
+			row.hidden = !match;
+			if (match) shown++;
+		});
+		const count = document.getElementById("ngListCount");
+		if (count) count.textContent = shown ? String(shown) : "";
+	}
+
+	function ngUpdateListSelection() {
+		const list = document.getElementById("ngList");
+		if (!list) return;
+		list.querySelectorAll(".ng-item.ng-item-sel").forEach((row) => {
+			row.classList.remove("ng-item-sel");
+			row.setAttribute("aria-selected", "false");
+			const ex = row.querySelector(".ng-item-expand");
+			if (ex) ex.remove();
+		});
+		if (!ngState.selected) return;
+		const row = list.querySelector(
+			'.ng-item[data-id="' + (window.CSS && CSS.escape
+				? CSS.escape(ngState.selected)
+				: ngState.selected) + '"]'
+		);
+		if (!row) return;
+		row.classList.add("ng-item-sel");
+		row.setAttribute("aria-selected", "true");
+		row.insertAdjacentHTML("beforeend", ngRowExpandHtml(ngState.selected));
+		try {
+			row.scrollIntoView({ block: "nearest" });
+		} catch {
+			// ignore
+		}
+	}
+
+	function ngCenterOnNode(id) {
+		if (!ngInstance) return;
+		const n = (ngInstance.graphData().nodes || []).find(
+			(x) => x.id === id
+		);
+		if (n && typeof n.x === "number") {
+			ngInstance.centerAt(n.x, n.y, 500);
+			const k = ngInstance.zoom();
+			if (typeof k === "number" && k < 1) ngInstance.zoom(1.2, 500);
+		}
+	}
+
+	// Single funnel for selection from either the canvas or the list, so the two
+	// can never drift out of sync.
+	function ngSetSelection(id, opts) {
+		opts = opts || {};
+		ngState.selected = id || null;
+		if (ngState.mode === "local") {
+			ngApplyData();
+			if (id && ngInstance) setTimeout(() => ngFitView(400, 60), 60);
+		} else {
+			ngComputeHighlight(id || ngState.hover);
+			ngUpdateListSelection();
+			if (id && opts.source === "list") ngCenterOnNode(id);
+		}
+		if (id && opts.source === "list" && isMobileViewport())
+			ngSetMobileView("graph");
+	}
+
+	function ngSetMobileView(view) {
+		ngState.mobileView = view;
+		document.body.classList.toggle("ng-mobile-graph", view === "graph");
+		const lbl = document.querySelector("#ngViewToggle .ng-view-label");
+		if (lbl) lbl.textContent = view === "graph" ? "Liste" : "Graph";
+		if (view === "graph" && ngInstance) {
+			setTimeout(() => {
+				ngResize();
+				ngFitView(400, 60);
+			}, 60);
+		}
 	}
 
 	function ngOpenNote(id) {
@@ -16196,22 +16368,11 @@ ${highlightThemeCss}
 
 	function ngOnClick(node) {
 		if (!node) return;
-		ngState.selected = node.id;
-		if (ngState.mode === "local") {
-			ngApplyData();
-			ngComputeHighlight(node.id);
-			if (ngInstance) setTimeout(() => ngFitView(400, 60), 60);
-		} else {
-			ngComputeHighlight(node.id);
-		}
-		ngShowNotePreview(node.id);
+		ngSetSelection(node.id, { source: "canvas" });
 	}
 
 	function ngOnBgClick() {
-		ngState.selected = null;
-		ngComputeHighlight(ngState.hover);
-		ngHideNotePreview();
-		if (ngState.mode === "local") ngApplyData();
+		ngSetSelection(null, { source: "canvas" });
 	}
 
 	function ngResize() {
@@ -16276,6 +16437,58 @@ ${highlightThemeCss}
 		});
 	}
 
+	function ngSyncSortButtons() {
+		const sort = document.getElementById("ngSort");
+		if (!sort) return;
+		sort.querySelectorAll(".ng-sortbtn").forEach((b) => {
+			b.classList.toggle(
+				"ng-on",
+				b.getAttribute("data-sort") === ngState.sort
+			);
+		});
+	}
+
+	function ngSaveSort() {
+		try {
+			localStorage.setItem(NG_SORT_KEY, ngState.sort);
+		} catch {
+			// ignore
+		}
+	}
+
+	function ngLoadPrefs() {
+		try {
+			const s = localStorage.getItem(NG_SORT_KEY);
+			if (s === "deg" || s === "recent" || s === "az") ngState.sort = s;
+		} catch {
+			// ignore
+		}
+		try {
+			ngState.sidebarCollapsed =
+				localStorage.getItem(NG_SIDEBAR_KEY) === "1";
+		} catch {
+			// ignore
+		}
+	}
+
+	function ngSetSidebarCollapsed(collapsed) {
+		ngState.sidebarCollapsed = !!collapsed;
+		document.body.classList.toggle(
+			"ng-sidebar-collapsed",
+			ngState.sidebarCollapsed
+		);
+		try {
+			localStorage.setItem(
+				NG_SIDEBAR_KEY,
+				ngState.sidebarCollapsed ? "1" : "0"
+			);
+		} catch {
+			// ignore
+		}
+		// Canvas width changed — let force-graph re-measure after the transition.
+		setTimeout(() => ngResize(), 230);
+	}
+
 	function ngPickDefaultSelection() {
 		const nodes = (ngState.data && ngState.data.nodes) || [];
 		if (!nodes.length) return null;
@@ -16295,7 +16508,6 @@ ${highlightThemeCss}
 					ngSyncModeButtons();
 					if (ngState.mode === "local" && !ngState.selected) {
 						ngState.selected = ngPickDefaultSelection();
-						if (ngState.selected) ngShowNotePreview(ngState.selected);
 					}
 					ngApplyData();
 					if (ngInstance)
@@ -16307,6 +16519,7 @@ ${highlightThemeCss}
 		if (search)
 			search.addEventListener("input", (e) => {
 				ngState.query = String(e.target.value || "").toLowerCase().trim();
+				ngFilterList();
 			});
 		const tagChk = document.getElementById("ngTagEdges");
 		if (tagChk)
@@ -16323,6 +16536,65 @@ ${highlightThemeCss}
 			});
 		const close = document.getElementById("ngClose");
 		if (close) close.addEventListener("click", () => closeNoteGraph());
+
+		// Sidebar list: click + hover via delegation (one listener for N rows).
+		const list = document.getElementById("ngList");
+		if (list) {
+			list.addEventListener("click", (e) => {
+				const openBtn = e.target.closest("[data-ngopen]");
+				const row = e.target.closest(".ng-item");
+				if (!row) return;
+				const id = row.getAttribute("data-id");
+				if (openBtn) {
+					ngOpenNote(id);
+					return;
+				}
+				ngSetSelection(id, { source: "list" });
+			});
+			list.addEventListener("mouseover", (e) => {
+				if (isMobileViewport()) return;
+				const row = e.target.closest(".ng-item");
+				if (!row) return;
+				ngState.hover = row.getAttribute("data-id");
+				if (!ngState.selected) ngComputeHighlight(ngState.hover);
+			});
+			list.addEventListener("mouseout", (e) => {
+				if (isMobileViewport()) return;
+				if (!e.target.closest(".ng-item")) return;
+				ngState.hover = null;
+				if (!ngState.selected) ngComputeHighlight(null);
+			});
+		}
+
+		// Sort chips.
+		const sort = document.getElementById("ngSort");
+		if (sort) {
+			sort.querySelectorAll(".ng-sortbtn").forEach((b) => {
+				b.addEventListener("click", () => {
+					ngState.sort = b.getAttribute("data-sort") || "deg";
+					ngSyncSortButtons();
+					ngSaveSort();
+					ngRenderList();
+				});
+			});
+		}
+
+		// Sidebar collapse (desktop).
+		const sbToggle = document.getElementById("ngSidebarToggle");
+		if (sbToggle)
+			sbToggle.addEventListener("click", () => {
+				ngSetSidebarCollapsed(!ngState.sidebarCollapsed);
+			});
+
+		// Mobile Liste/Graph view toggle.
+		const viewToggle = document.getElementById("ngViewToggle");
+		if (viewToggle)
+			viewToggle.addEventListener("click", () => {
+				ngSetMobileView(
+					ngState.mobileView === "graph" ? "list" : "graph"
+				);
+			});
+
 		window.addEventListener("resize", () => {
 			if (ngState.open) ngResize();
 		});
@@ -16335,11 +16607,22 @@ ${highlightThemeCss}
 		const overlay = document.getElementById("noteGraphOverlay");
 		if (!overlay) return;
 		ngWireControls();
+		ngLoadPrefs();
+		document.body.classList.toggle(
+			"ng-sidebar-collapsed",
+			ngState.sidebarCollapsed
+		);
+		ngSyncSortButtons();
 		overlay.classList.remove("hidden");
 		overlay.setAttribute("aria-hidden", "false");
 		document.body.classList.add("note-graph-open");
 		ngState.open = true;
-		if (isMobileViewport()) ngState.mode = "local";
+		if (isMobileViewport()) {
+			ngState.mode = "local";
+			ngSetMobileView("list");
+		} else {
+			document.body.classList.remove("ng-mobile-graph");
+		}
 		ngSyncModeButtons();
 		ngEnsureLib()
 			.then((FG) => {
@@ -16348,7 +16631,6 @@ ${highlightThemeCss}
 				ngState.data = ngBuildData();
 				if (ngState.mode === "local" && !ngState.selected) {
 					ngState.selected = ngPickDefaultSelection();
-					if (ngState.selected) ngShowNotePreview(ngState.selected);
 				}
 				ngApplyData();
 				if (ngInstance) {
@@ -16371,6 +16653,7 @@ ${highlightThemeCss}
 			overlay.setAttribute("aria-hidden", "true");
 		}
 		document.body.classList.remove("note-graph-open");
+		document.body.classList.remove("ng-mobile-graph");
 		ngState.open = false;
 		if (ngInstance) ngInstance.pauseAnimation();
 	}

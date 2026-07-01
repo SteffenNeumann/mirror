@@ -11454,13 +11454,155 @@ background: var(--sel-hover-bg) !important;
 	width: 16px;
 	height: 16px;
 }
-.ng-canvas {
-	position: relative;
+.ng-body {
+	display: flex;
 	flex: 1 1 auto;
 	min-height: 0;
-	width: 100%;
+}
+.ng-canvas-wrap {
+	position: relative;
+	flex: 1 1 auto;
+	min-width: 0;
+	min-height: 0;
+	overflow: hidden;
+}
+.ng-canvas {
+	position: absolute;
+	inset: 0;
 	overflow: hidden;
 	touch-action: none;
+}
+.ng-sidebar {
+	flex: 0 0 300px;
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+	border-right: 1px solid var(--accent-border, rgba(255, 255, 255, 0.1));
+	background: var(--accent-bg-soft, rgba(255, 255, 255, 0.03));
+	transition: flex-basis 0.2s ease, opacity 0.15s ease;
+	overflow: hidden;
+}
+body.ng-sidebar-collapsed .ng-sidebar {
+	flex-basis: 0;
+	opacity: 0;
+	pointer-events: none;
+	border-right-color: transparent;
+}
+@media (min-width: 1024px) and (max-width: 1279px) {
+	.ng-sidebar {
+		flex-basis: 260px;
+	}
+}
+.ng-sidebar-head {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	padding: 10px 12px;
+	border-bottom: 1px solid var(--accent-border, rgba(255, 255, 255, 0.08));
+}
+.ng-sort {
+	display: flex;
+	gap: 2px;
+	padding: 2px;
+	border-radius: 8px;
+	border: 1px solid var(--accent-border, rgba(255, 255, 255, 0.1));
+	background: var(--accent-bg-soft, rgba(255, 255, 255, 0.03));
+}
+.ng-sortbtn {
+	border: 0;
+	background: transparent;
+	color: var(--accent-text-soft, rgba(226, 232, 240, 0.7));
+	font-size: 11px;
+	font-weight: 500;
+	padding: 3px 8px;
+	border-radius: 6px;
+	cursor: pointer;
+	white-space: nowrap;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+}
+.ng-sortbtn.ng-on {
+	background: var(--accent-strong, rgba(217, 70, 239, 0.7));
+	color: #fff;
+}
+.ng-list-count {
+	font-size: 11px;
+	color: var(--accent-text-soft, rgba(148, 163, 184, 0.6));
+	white-space: nowrap;
+}
+.ng-list {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding: 6px;
+}
+.ng-item {
+	display: block;
+	width: 100%;
+	text-align: left;
+	border: 0;
+	border-left: 2px solid transparent;
+	border-radius: 8px;
+	background: transparent;
+	color: inherit;
+	padding: 8px 10px;
+	margin: 0 0 2px;
+	cursor: pointer;
+	min-height: 44px;
+	content-visibility: auto;
+	contain-intrinsic-size: 44px;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+	transition: background 0.12s ease;
+}
+.ng-item:hover {
+	background: var(--accent-bg-soft, rgba(255, 255, 255, 0.05));
+}
+.ng-item.ng-item-sel {
+	background: var(--accent-bg, rgba(217, 70, 239, 0.12));
+	border-left-color: var(--accent-strong, #d946ef);
+}
+.ng-item-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+.ng-item-title {
+	flex: 1 1 auto;
+	min-width: 0;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	font-size: 13px;
+	font-weight: 500;
+	color: var(--sel-text, rgba(226, 232, 240, 0.95));
+}
+.ng-item-deg {
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	gap: 3px;
+	font-size: 11px;
+	color: var(--accent-text-soft, rgba(148, 163, 184, 0.7));
+}
+.ng-item-deg svg {
+	width: 12px;
+	height: 12px;
+}
+.ng-item-meta {
+	margin-top: 3px;
+	font-size: 11px;
+	color: var(--accent-text-soft, rgba(148, 163, 184, 0.65));
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+.ng-item-expand {
+	margin-top: 8px;
+	padding-top: 8px;
+	border-top: 1px solid var(--accent-border, rgba(255, 255, 255, 0.08));
 }
 .ng-legend {
 	position: absolute;
@@ -11617,21 +11759,52 @@ background: var(--sel-hover-bg) !important;
 body.note-graph-open {
 	overflow: hidden;
 }
+/* View-toggle is mobile-only; sidebar-toggle is desktop-only. */
+.ng-view-toggle {
+	display: none;
+	width: auto;
+	padding: 0 12px;
+	font-size: 12px;
+	font-weight: 500;
+}
 @media (max-width: 1023px) {
 	.ng-hint {
 		display: none;
 	}
-	.ng-note {
-		top: auto;
-		bottom: 14px;
-		right: 14px;
-		left: 14px;
-		width: auto;
-		max-width: none;
-	}
 	.ng-legend {
-		bottom: auto;
-		top: 64px;
+		bottom: 14px;
+	}
+	.ng-sidebar-toggle {
+		display: none;
+	}
+	.ng-view-toggle {
+		display: inline-flex;
+	}
+	/* Mobile = single-column: list is the default view, canvas is switched in. */
+	.ng-body {
+		flex-direction: column;
+		position: relative;
+	}
+	.ng-sidebar {
+		flex: 1 1 auto;
+		border-right: 0;
+		width: 100%;
+	}
+	.ng-canvas-wrap {
+		display: none;
+	}
+	body.ng-mobile-graph .ng-sidebar {
+		display: none;
+	}
+	body.ng-mobile-graph .ng-canvas-wrap {
+		display: block;
+	}
+	/* On mobile the list drives everything; hide the Global/Lokal toggle
+	   (Lokal is implied when you tap a note) and the tag-edge check. */
+	body:not(.ng-mobile-graph) #ngSeg,
+	body:not(.ng-mobile-graph) .ng-check,
+	body:not(.ng-mobile-graph) #ngFit {
+		display: none;
 	}
 }
 
