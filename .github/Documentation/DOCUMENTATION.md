@@ -1,3 +1,23 @@
+# Dokumentation – Änderungen (2026-07-01c)
+
+## Ziel
+- Tags im Notiz-Graphen sichtbar machen (als eigene Knoten).
+
+## Änderungen
+- Der „Tags"-Schalter (früher „Tag-Kanten") zeigt Tags jetzt als **eigene Knoten** statt Notiz-zu-Notiz-Kanten. Jeder Tag wird ein Knoten, der mit allen Notizen verbunden ist, die ihn tragen (Stern-Topologie → kein Hairball).
+- Tag-Knoten sind visuell abgesetzt: kleiner, weicher Ring in `--accent-text-soft`, Label mit `#`-Präfix; Kante Notiz→Tag gestrichelt.
+- Interne `__`-Tags werden ausgeschlossen; nahezu universelle Tags (auf > 40 Notizen) übersprungen. Notiz-`deg` (Hub-Größe + Listen-Badge) zählt weiterhin nur Wiki-Links, nicht Tags.
+- Tag-Knoten erscheinen nicht in der Notizliste; Klick auf einen Tag-Knoten hebt seine Notizen hervor (bzw. fokussiert sie im Lokal-Modus).
+
+## Auswirkungen
+- **UI/UX:** `ngBuildData` erzeugt Tag-Knoten (`kind:"tag"`), `ngDrawNode`/`ngNodeRadius` zeichnen sie abgesetzt; Legende zeigt einen Tag-Ring. Default weiterhin AUS.
+- **Datenebene:** Keine. Client-seitig aus vorhandenen `tags_json`.
+- **Cache:** SW `v25`→`v26`, `app.js?v`→`2026-07-01-04`.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`, `node --check sw.js`
+- Tag-Knoten-Rendering (Note vs. Tag, gestrichelte Kanten, `#`-Label) via Playwright-Harness verifiziert.
+
 # Dokumentation – Änderungen (2026-07-01b)
 
 ## Ziel
