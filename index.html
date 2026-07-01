@@ -26,7 +26,7 @@
 
 		<!-- Preload critical assets -->
 		<link rel="preload" href="/styles/app.css" as="style" />
-		<link rel="preload" href="/app.js?v=2026-06-29-01" as="script" />
+		<link rel="preload" href="/app.js?v=2026-07-01-01" as="script" />
 		<link rel="prefetch" href="/vendor/yjs.bundle.js" as="script" />
 
 		<!-- DNS prefetch for CDNs -->
@@ -145,6 +145,16 @@
 									style="touch-action: manipulation; -webkit-tap-highlight-color: transparent">
 									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><line x1="4" y1="6" x2="20" y2="6"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="11" y1="18" x2="13" y2="18"/></svg>
 									<span data-i18n="ps.filter">Filter</span>
+								</button>
+								<button
+									id="psGraphBtn"
+									type="button"
+									class="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-sm text-slate-300 transition hover:bg-white/10 hover:text-slate-100 active:opacity-90"
+									aria-label="Graph-Ansicht"
+									data-tooltip="Graph-Ansicht: Verbindungen zwischen Notizen"
+									style="touch-action: manipulation; -webkit-tap-highlight-color: transparent">
+									<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 shrink-0"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="8" r="2"/><circle cx="12" cy="18" r="2"/><path d="M6.7 6.9l4.6 9.4M17.4 9.4l-4.7 7.2M7 6.2h10"/></svg>
+									<span data-i18n="ps.graph">Graph</span>
 								</button>
 							</div>
 						</div>
@@ -2994,6 +3004,38 @@
 			</div>
 		</div>
 
+		<!-- Note Graph View (Obsidian-style) -->
+		<div id="noteGraphOverlay" class="ng-overlay hidden" aria-hidden="true" role="dialog" aria-modal="true" aria-label="Notiz-Graph">
+			<div class="ng-toolbar">
+				<div class="ng-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="8" r="2"/><circle cx="12" cy="18" r="2"/><path d="M6.7 6.9l4.6 9.4M17.4 9.4l-4.7 7.2M7 6.2h10"/></svg><span data-i18n="ps.graph.title">Graph-Ansicht</span></div>
+				<div class="ng-seg" id="ngSeg">
+					<button type="button" class="ng-segbtn ng-on" data-mode="global" data-i18n="ps.graph.global">Global</button>
+					<button type="button" class="ng-segbtn" data-mode="local" data-i18n="ps.graph.local">Lokal</button>
+				</div>
+				<div class="ng-search">
+					<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+					<input id="ngSearch" type="text" autocomplete="off" spellcheck="false" placeholder="Notiz suchen…" data-i18n-placeholder="ps.graph.search" />
+				</div>
+				<label class="ng-check"><input type="checkbox" id="ngTagEdges" /><span data-i18n="ps.graph.tagedges">Tag-Kanten</span></label>
+				<button type="button" class="ng-tool" id="ngFit" aria-label="Einpassen" data-tooltip="Einpassen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+				<button type="button" class="ng-tool" id="ngClose" aria-label="Schließen" data-tooltip="Schließen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+			</div>
+			<div id="noteGraphCanvas" class="ng-canvas"></div>
+			<div id="ngLegend" class="ng-legend">
+				<span class="ng-leg"><span class="ng-leg-dot"></span><span data-i18n="ps.graph.leg_note">Notiz</span></span>
+				<span class="ng-leg"><span class="ng-leg-dot ng-leg-dot-sel"></span><span data-i18n="ps.graph.leg_sel">Ausgewählt</span></span>
+				<span class="ng-leg"><span class="ng-leg-line"></span><span data-i18n="ps.graph.leg_link">Link</span></span>
+				<span class="ng-leg"><span class="ng-leg-line ng-leg-line-tag"></span><span data-i18n="ps.graph.leg_tag">Tag</span></span>
+			</div>
+			<div id="ngHint" class="ng-hint" data-i18n="ps.graph.hint">Hover = Nachbarn · Klick = Vorschau · Ziehen = verschieben · Rad = Zoom</div>
+			<div id="ngNote" class="ng-note" hidden></div>
+			<div id="ngEmpty" class="ng-empty" hidden>
+				<div class="ng-empty-glyph"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="2"/><circle cx="19" cy="8" r="2"/><circle cx="12" cy="18" r="2"/><path d="M6.7 6.9l4.6 9.4M17.4 9.4l-4.7 7.2M7 6.2h10"/></svg></div>
+				<div class="ng-empty-title" data-i18n="ps.graph.empty_title">Noch keine Verbindungen</div>
+				<div class="ng-empty-text" data-i18n="ps.graph.empty_text">Verlinke Notizen mit [[…]] oder aktiviere Tag-Kanten, um Verbindungen zu sehen.</div>
+			</div>
+		</div>
+
 		<div
 			id="modalRoot"
 			class="fixed inset-0 z-[200] hidden items-center justify-center p-4"
@@ -3665,7 +3707,7 @@
 		<script defer src="https://cdn.jsdelivr.net/npm/markdown-it-task-lists@2.1.1/dist/markdown-it-task-lists.min.js"></script>
 		<script defer src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
 		<script defer fetchpriority="low" src="/vendor/yjs.bundle.js"></script>
-		<script defer src="/app.js?v=2026-06-29-01"></script>
+		<script defer src="/app.js?v=2026-07-01-01"></script>
 		<script>
 			if ("serviceWorker" in navigator) {
 				window.addEventListener("load", function () {

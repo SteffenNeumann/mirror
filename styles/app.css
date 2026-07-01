@@ -11305,3 +11305,350 @@ color: var(--sel-text) !important;
 #shareToModal .action-modal-box button:not(.save-file-btn):hover {
 background: var(--sel-hover-bg) !important;
 }
+
+/* ─────────────────────────────────────────────
+   Note Graph View (Obsidian-style) — themed via --accent-* / --panel-solid-bg
+   ───────────────────────────────────────────── */
+.ng-overlay {
+	position: fixed;
+	inset: 0;
+	z-index: 9997;
+	display: flex;
+	flex-direction: column;
+	background: var(--panel-solid-bg, rgba(2, 6, 23, 0.82));
+	backdrop-filter: blur(24px) saturate(1.5);
+	-webkit-backdrop-filter: blur(24px) saturate(1.5);
+	opacity: 1;
+	visibility: visible;
+	transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+.ng-overlay.hidden {
+	display: flex !important;
+	opacity: 0;
+	visibility: hidden;
+	pointer-events: none;
+}
+@media (min-width: 1024px) {
+	.ng-overlay {
+		inset: 24px;
+		border-radius: 20px;
+		border: 1px solid var(--accent-border, rgba(255, 255, 255, 0.12));
+		overflow: hidden;
+	}
+}
+.ng-toolbar {
+	position: relative;
+	z-index: 2;
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	padding: 10px 12px;
+	border-bottom: 1px solid var(--accent-border, rgba(255, 255, 255, 0.1));
+	background: var(--accent-bg-soft, rgba(255, 255, 255, 0.04));
+	flex-wrap: wrap;
+}
+.ng-title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--accent-text, rgba(253, 242, 255, 0.95));
+	white-space: nowrap;
+}
+.ng-title svg {
+	width: 18px;
+	height: 18px;
+	color: var(--accent-text-soft, #d946ef);
+}
+.ng-seg {
+	display: flex;
+	padding: 2px;
+	border-radius: 9px;
+	border: 1px solid var(--accent-border, rgba(255, 255, 255, 0.12));
+	background: var(--accent-bg-soft, rgba(255, 255, 255, 0.04));
+}
+.ng-segbtn {
+	border: 0;
+	background: transparent;
+	color: var(--accent-text-soft, rgba(226, 232, 240, 0.7));
+	font-size: 12px;
+	font-weight: 500;
+	padding: 4px 12px;
+	border-radius: 7px;
+	cursor: pointer;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+	transition: background 0.15s ease, color 0.15s ease;
+}
+.ng-segbtn.ng-on {
+	background: var(--accent-strong, rgba(217, 70, 239, 0.7));
+	color: #fff;
+}
+.ng-search {
+	position: relative;
+	flex: 1 1 160px;
+	min-width: 120px;
+}
+.ng-search svg {
+	position: absolute;
+	left: 9px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 15px;
+	height: 15px;
+	color: var(--accent-text-soft, rgba(148, 163, 184, 0.7));
+	pointer-events: none;
+}
+.ng-search input {
+	width: 100%;
+	box-sizing: border-box;
+	height: 32px;
+	padding: 0 10px 0 30px;
+	border-radius: 8px;
+	border: 1px solid var(--accent-border, rgba(255, 255, 255, 0.12));
+	background: var(--accent-bg-soft, rgba(0, 0, 0, 0.2));
+	color: var(--accent-text, rgba(226, 232, 240, 0.95));
+	font-size: 13px;
+	outline: none;
+}
+.ng-search input:focus {
+	border-color: var(--accent-border-strong, rgba(217, 70, 239, 0.4));
+}
+.ng-check {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 12px;
+	color: var(--accent-text-soft, rgba(226, 232, 240, 0.8));
+	cursor: pointer;
+	white-space: nowrap;
+	user-select: none;
+}
+.ng-check input {
+	width: 15px;
+	height: 15px;
+	accent-color: var(--accent-strong, #d946ef);
+	cursor: pointer;
+}
+.ng-tool {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	flex-shrink: 0;
+	border-radius: 8px;
+	border: 1px solid var(--accent-border, rgba(255, 255, 255, 0.12));
+	background: var(--accent-bg-soft, rgba(255, 255, 255, 0.04));
+	color: var(--accent-text, rgba(226, 232, 240, 0.9));
+	cursor: pointer;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+	transition: background 0.15s ease;
+}
+.ng-tool:hover {
+	background: var(--accent-bg-hover, rgba(255, 255, 255, 0.1));
+}
+.ng-tool svg {
+	width: 16px;
+	height: 16px;
+}
+.ng-canvas {
+	position: relative;
+	flex: 1 1 auto;
+	min-height: 0;
+	width: 100%;
+	overflow: hidden;
+	touch-action: none;
+}
+.ng-legend {
+	position: absolute;
+	left: 14px;
+	bottom: 14px;
+	z-index: 2;
+	display: flex;
+	flex-wrap: wrap;
+	gap: 12px;
+	padding: 8px 12px;
+	border-radius: 10px;
+	border: 1px solid var(--accent-border, rgba(255, 255, 255, 0.1));
+	background: var(--accent-bg-soft, rgba(2, 6, 23, 0.55));
+	backdrop-filter: blur(12px);
+	-webkit-backdrop-filter: blur(12px);
+}
+.ng-leg {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	font-size: 11px;
+	color: var(--accent-text-soft, rgba(226, 232, 240, 0.75));
+}
+.ng-leg-dot {
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
+	background: var(--accent-text-soft, rgba(226, 232, 240, 0.6));
+}
+.ng-leg-dot-sel {
+	background: var(--accent-strong, #d946ef);
+}
+.ng-leg-line {
+	width: 16px;
+	height: 0;
+	border-top: 2px solid var(--accent-text-soft, rgba(226, 232, 240, 0.5));
+}
+.ng-leg-line-tag {
+	border-top: 2px dashed var(--accent-strong, rgba(217, 70, 239, 0.6));
+}
+.ng-hint {
+	position: absolute;
+	right: 14px;
+	bottom: 14px;
+	z-index: 2;
+	max-width: 260px;
+	text-align: right;
+	font-size: 11px;
+	line-height: 1.5;
+	color: var(--accent-text-soft, rgba(148, 163, 184, 0.6));
+	pointer-events: none;
+}
+.ng-note {
+	position: absolute;
+	top: 14px;
+	right: 14px;
+	z-index: 3;
+	width: 240px;
+	max-width: calc(100% - 28px);
+	padding: 14px;
+	border-radius: 12px;
+	border: 1px solid var(--accent-border-strong, rgba(255, 255, 255, 0.15));
+	background: var(--panel-solid-bg, rgba(24, 20, 33, 0.94));
+	backdrop-filter: blur(18px) saturate(150%);
+	-webkit-backdrop-filter: blur(18px) saturate(150%);
+}
+.ng-note-title {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	margin-bottom: 8px;
+	font-size: 14px;
+	font-weight: 600;
+	color: var(--accent-text, rgba(242, 236, 250, 0.98));
+}
+.ng-note-dot {
+	width: 9px;
+	height: 9px;
+	border-radius: 50%;
+	background: var(--accent-strong, #d946ef);
+	flex-shrink: 0;
+}
+.ng-note-tags {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+	margin-bottom: 10px;
+}
+.ng-note-tag {
+	font-size: 10px;
+	padding: 2px 7px;
+	border-radius: 20px;
+	background: var(--accent-bg, rgba(217, 70, 239, 0.15));
+	color: var(--accent-text-soft, rgba(244, 114, 182, 0.95));
+}
+.ng-note-meta {
+	display: flex;
+	gap: 12px;
+	margin-bottom: 12px;
+	font-size: 11px;
+	color: var(--accent-text-soft, rgba(148, 163, 184, 0.75));
+}
+.ng-note-meta svg {
+	width: 12px;
+	height: 12px;
+	vertical-align: -1px;
+}
+.ng-note-open {
+	width: 100%;
+	height: 32px;
+	border: 0;
+	border-radius: 8px;
+	background: var(--accent-strong, #d946ef);
+	color: #fff;
+	font-size: 12px;
+	font-weight: 600;
+	cursor: pointer;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+}
+.ng-note-open:hover {
+	background: var(--accent-strong-hover, rgba(217, 70, 239, 0.85));
+}
+.ng-empty {
+	position: absolute;
+	inset: 0;
+	z-index: 2;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: 10px;
+	padding: 24px;
+	text-align: center;
+	pointer-events: none;
+}
+.ng-empty-glyph svg {
+	width: 56px;
+	height: 56px;
+	color: var(--accent-text-soft, rgba(217, 70, 239, 0.5));
+	opacity: 0.5;
+}
+.ng-empty-title {
+	font-size: 15px;
+	font-weight: 600;
+	color: var(--accent-text, rgba(226, 232, 240, 0.9));
+}
+.ng-empty-text {
+	font-size: 12px;
+	max-width: 320px;
+	line-height: 1.6;
+	color: var(--accent-text-soft, rgba(148, 163, 184, 0.7));
+}
+body.note-graph-open {
+	overflow: hidden;
+}
+@media (max-width: 1023px) {
+	.ng-hint {
+		display: none;
+	}
+	.ng-note {
+		top: auto;
+		bottom: 14px;
+		right: 14px;
+		left: 14px;
+		width: auto;
+		max-width: none;
+	}
+	.ng-legend {
+		bottom: auto;
+		top: 64px;
+	}
+}
+
+/* Light-theme text contrast: --accent-text is #fff on light themes (meant for
+   text on accent fills), so force readable titles on the glass panel. */
+body[data-theme="coffeeLight"] .ng-title,
+body[data-theme="coffeeLight"] .ng-note-title,
+body[data-theme="coffeeLight"] .ng-empty-title {
+	color: #3b2a21;
+}
+body[data-theme="bitterLight"] .ng-title,
+body[data-theme="bitterLight"] .ng-note-title,
+body[data-theme="bitterLight"] .ng-empty-title {
+	color: #0d0c10;
+}
+body[data-theme="monoLight"] .ng-title,
+body[data-theme="monoLight"] .ng-note-title,
+body[data-theme="monoLight"] .ng-empty-title {
+	color: #24292f;
+}
