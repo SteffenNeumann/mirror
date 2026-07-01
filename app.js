@@ -16200,7 +16200,7 @@ ${highlightThemeCss}
 		if (ngState.mode === "local") {
 			ngApplyData();
 			ngComputeHighlight(node.id);
-			if (ngInstance) setTimeout(() => ngInstance.zoomToFit(400, 60), 60);
+			if (ngInstance) setTimeout(() => ngFitView(400, 60), 60);
 		} else {
 			ngComputeHighlight(node.id);
 		}
@@ -16221,12 +16221,30 @@ ${highlightThemeCss}
 		ngInstance.width(mount.clientWidth).height(mount.clientHeight);
 	}
 
+	// zoomToFit fills the viewport with the visible nodes, which over-zooms
+	// hard when only 1-2 nodes are shown (local mode). Clamp the auto-fit zoom
+	// so nodes stay a sensible size; manual wheel zoom can still go higher.
+	function ngFitView(dur, pad) {
+		if (!ngInstance) return;
+		ngInstance.zoomToFit(dur || 0, pad != null ? pad : 60);
+		const MAX_FIT_ZOOM = 1.8;
+		setTimeout(() => {
+			if (!ngInstance) return;
+			const k = ngInstance.zoom();
+			if (typeof k === "number" && k > MAX_FIT_ZOOM) {
+				ngInstance.zoom(MAX_FIT_ZOOM, 250);
+			}
+		}, (dur || 0) + 40);
+	}
+
 	function ngInit(FG) {
 		if (ngInstance) return ngInstance;
 		const mount = document.getElementById("noteGraphCanvas");
 		if (!mount) return null;
 		ngInstance = FG()(mount)
 			.backgroundColor("rgba(0,0,0,0)")
+			.minZoom(0.15)
+			.maxZoom(8)
 			.nodeRelSize(1)
 			.nodeCanvasObjectMode(() => "replace")
 			.nodeCanvasObject(ngDrawNode)
@@ -16281,7 +16299,7 @@ ${highlightThemeCss}
 					}
 					ngApplyData();
 					if (ngInstance)
-						setTimeout(() => ngInstance.zoomToFit(400, 60), 60);
+						setTimeout(() => ngFitView(400, 60), 60);
 				});
 			});
 		}
@@ -16296,12 +16314,12 @@ ${highlightThemeCss}
 				ngState.tagEdges = !!e.target.checked;
 				ngApplyData();
 				if (ngInstance)
-					setTimeout(() => ngInstance.zoomToFit(400, 60), 60);
+					setTimeout(() => ngFitView(400, 60), 60);
 			});
 		const fit = document.getElementById("ngFit");
 		if (fit)
 			fit.addEventListener("click", () => {
-				if (ngInstance) ngInstance.zoomToFit(400, 60);
+				if (ngInstance) ngFitView(400, 60);
 			});
 		const close = document.getElementById("ngClose");
 		if (close) close.addEventListener("click", () => closeNoteGraph());
@@ -16337,7 +16355,7 @@ ${highlightThemeCss}
 					ngInstance.resumeAnimation();
 					setTimeout(() => {
 						ngResize();
-						ngInstance.zoomToFit(500, 60);
+						ngFitView(500, 60);
 					}, 120);
 				}
 			})
