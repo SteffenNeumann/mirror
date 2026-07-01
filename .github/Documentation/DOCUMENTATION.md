@@ -1,3 +1,26 @@
+# Dokumentation – Änderungen (2026-07-01b)
+
+## Ziel
+- Graph-Ansicht: linke Notizliste (Obsidian-Split-View) + Zoom-Fix.
+
+## Änderungen
+- **Zoom-Fix:** Klick auf einen Knoten im Lokal-Modus zoomte extrem rein (1–2 Knoten füllten den Viewport). Neuer `ngFitView()` clampt den Auto-Fit-Zoom auf 1.8×; manuelles Zoomen bleibt (`minZoom 0.15` / `maxZoom 8`).
+- **Notizliste (Sidebar):** Links im Overlay eine Liste aller Notizen (`#ngSidebar`, 300px, einklappbar + in localStorage gemerkt). Zeile = Titel + Verbindungs-Badge (`deg`) + Meta (Tags · Datum). Sortierung Verbindungen/Neueste/A–Z (gemerkt).
+- **Auswahl-Funnel `ngSetSelection()`:** Klick auf Zeile oder Knoten wählt dieselbe Notiz — Zwei-Wege-Sync; Lokal = Nachbarschaft neu aufbauen, Global = zum Knoten gleiten. Hover in Liste hebt Knoten hervor (Desktop).
+- **Vorschau-Karte entfernt** — Inhalt (Tags, Links/Backlinks, „Notiz öffnen") klappt jetzt in der ausgewählten Zeile auf.
+- **Suche** (bestehende Toolbar) filtert jetzt die Liste **und** dimmt den Graphen.
+- **Global/Lokal-Toggle bleibt.** **Mobil:** Liste ist Default-Ansicht, „Liste/Graph"-Umschalter; Tap auf Notiz öffnet ihren lokalen Graphen.
+
+## Auswirkungen
+- **UI/UX:** Overlay wird Split-View (`.ng-body` = Sidebar + `.ng-canvas-wrap`). Themed über `--accent-*` / `--sel-text`.
+- **Feature-Interaktionen:** Liste und Canvas teilen eine Auswahlquelle (`ngState.selected`); `ngResize()` nach Sidebar-Toggle, damit force-graph neu misst.
+- **Datenebene:** Keine. Alles Client-seitig aus `ngBuildData()`.
+- **Cache:** SW `v23`→`v25`, `app.js?v`→`2026-07-01-03`.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`, `node --check sw.js`
+- Layout + Theming (Desktop dark, coffeeLight, Mobile Liste/Graph, Sidebar-Collapse-Reflow) via Playwright-Harness verifiziert.
+
 # Dokumentation – Änderungen (2026-07-01)
 
 ## Ziel
