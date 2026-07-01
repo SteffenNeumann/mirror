@@ -15849,6 +15849,8 @@ ${highlightThemeCss}
 		sort: "deg",
 		sidebarCollapsed: false,
 		mobileView: "list",
+		hubThreshold: 4,
+		topHubId: null,
 	};
 	const NG_SIDEBAR_KEY = "mirror_ng_sidebar_collapsed";
 	const NG_SORT_KEY = "mirror_ng_sort";
@@ -15925,8 +15927,75 @@ ${highlightThemeCss}
 
 	function ngNodeRadius(node) {
 		if (node && node.kind === "tag")
-			return 2.6 + Math.sqrt((node && node.deg) || 0) * 1.4;
-		return 3.4 + Math.sqrt((node && node.deg) || 0) * 2.1;
+			return 2.9 + Math.sqrt((node && node.deg) || 0) * 1.15;
+		return 4.2 + Math.sqrt((node && node.deg) || 0) * 1.9;
+	}
+
+	// A tiny O(n²) collision force (avoids adding d3 as a dependency). Runs only
+	// during the cooldown ticks, then the sim freezes — cheap for typical note
+	// counts. Nudges velocities apart when two nodes' collision radii overlap.
+	function ngCollideForce(strength) {
+		let nodes = [];
+		const str = strength == null ? 0.9 : strength;
+		function force(alpha) {
+			const n = nodes.length;
+			for (let i = 0; i < n; i++) {
+				const a = nodes[i];
+				const ra = a.__col || 8;
+				for (let j = i + 1; j < n; j++) {
+					const b = nodes[j];
+					const rr = ra + (b.__col || 8);
+					let dx = b.x + (b.vx || 0) - (a.x + (a.vx || 0));
+					let dy = b.y + (b.vy || 0) - (a.y + (a.vy || 0));
+					let d2 = dx * dx + dy * dy;
+					if (d2 >= rr * rr) continue;
+					if (d2 === 0) {
+						dx = (i - j) || 0.5;
+						dy = 0.5;
+						d2 = dx * dx + dy * dy;
+					}
+					const d = Math.sqrt(d2);
+					const l = ((rr - d) / d) * alpha * str * 0.5;
+					const ox = dx * l;
+					const oy = dy * l;
+					a.vx = (a.vx || 0) - ox;
+					a.vy = (a.vy || 0) - oy;
+					b.vx = (b.vx || 0) + ox;
+					b.vy = (b.vy || 0) + oy;
+				}
+			}
+		}
+		force.initialize = (n) => {
+			nodes = n || [];
+		};
+		return force;
+	}
+
+	// Per-node geometry + hub stats, computed once per data change (never per
+	// frame). Populates __r (visual half-extent), __side (tag tiles), __col
+	// (collision radius incl. label breathing room) and __label (ellipsized).
+	function ngPrecompute(nodes) {
+		let maxDeg = 0;
+		let topId = null;
+		let topDeg = -1;
+		for (const n of nodes) {
+			const half = ngNodeRadius(n);
+			n.__r = half;
+			if (n.kind === "tag") {
+				n.__side = half * 2;
+			} else {
+				if ((n.deg || 0) > maxDeg) maxDeg = n.deg || 0;
+				if ((n.deg || 0) > topDeg) {
+					topDeg = n.deg || 0;
+					topId = n.id;
+				}
+			}
+			n.__col = half + 10;
+			const t = String(n.title || "");
+			n.__label = t.length > 26 ? t.slice(0, 25) + "…" : t;
+		}
+		ngState.hubThreshold = Math.max(4, Math.ceil(maxDeg * 0.6));
+		ngState.topHubId = topDeg > 0 ? topId : null;
 	}
 
 	function ngLinkKey(l) {
@@ -16058,72 +16127,171 @@ ${highlightThemeCss}
 		}
 	}
 
+	function ngRoundRect(ctx, x, y, w, h, r) {
+		if (ctx.roundRect) {
+			ctx.beginPath();
+			ctx.roundRect(x, y, w, h, r);
+			return;
+		}
+		ctx.beginPath();
+		ctx.moveTo(x + r, y);
+		ctx.arcTo(x + w, y, x + w, y + h, r);
+		ctx.arcTo(x + w, y + h, x, y + h, r);
+		ctx.arcTo(x, y + h, x, y, r);
+		ctx.arcTo(x, y, x + w, y, r);
+		ctx.closePath();
+	}
+
 	function ngDrawNode(node, ctx, scale) {
 		const p = ngState.palette;
 		if (!p) return;
-		const r = ngNodeRadius(node);
-		const active = ngState.hlNodes.size === 0 || ngState.hlNodes.has(node.id);
+		const isTag = node.kind === "tag";
+		const r = node.__r || ngNodeRadius(node);
+		const focused = ngState.hlNodes.size > 0;
+		const active = !focused || ngState.hlNodes.has(node.id);
 		const isSel = node.id === ngState.selected;
 		const q = ngState.query;
 		const matchQ = q && node.title && node.title.toLowerCase().indexOf(q) >= 0;
-		const isTag = node.kind === "tag";
-		if (isSel) {
-			ctx.beginPath();
-			ctx.arc(node.x, node.y, r + 4, 0, 2 * Math.PI);
-			ctx.fillStyle = p.rgba(isTag ? p.soft : p.accent, 0.22);
-			ctx.fill();
-		}
-		ctx.globalAlpha = active ? 1 : 0.14;
-		ctx.beginPath();
-		ctx.arc(node.x, node.y, r, 0, 2 * Math.PI);
+		const isHub = !isTag && (node.deg || 0) >= ngState.hubThreshold;
+		const isTop = !isTag && node.id === ngState.topHubId;
+		// Search matches must stay visible even in a dimmed field.
+		let ga = active ? 1 : 0.12;
+		if (matchQ) ga = Math.max(ga, 0.85);
+		ctx.globalAlpha = ga;
+
 		if (isTag) {
-			// Tag nodes: softer fill + ring, in the theme's soft-accent hue.
+			const side = node.__side || r * 2;
+			const rad = Math.min(side * 0.28, 3.5);
+			// selection glow (soft square)
+			if (isSel) {
+				ngRoundRect(
+					ctx,
+					node.x - side / 2 - 3 / scale,
+					node.y - side / 2 - 3 / scale,
+					side + 6 / scale,
+					side + 6 / scale,
+					rad + 2 / scale
+				);
+				ctx.fillStyle = p.rgba(p.soft, 0.22);
+				ctx.fill();
+			}
+			ngRoundRect(ctx, node.x - side / 2, node.y - side / 2, side, side, rad);
 			ctx.fillStyle = isSel
 				? p.rgba(p.soft, 0.85)
-				: p.rgba(p.soft, 0.28);
+				: p.rgba(p.soft, p.light ? 0.16 : 0.22);
 			ctx.fill();
-			ctx.lineWidth = (matchQ ? 2 : 1) / scale;
+			ctx.lineWidth = (matchQ ? 2 : isSel ? 2 : 1) / scale;
 			ctx.strokeStyle = matchQ
 				? p.rgba(p.text, 0.95)
-				: p.rgba(p.soft, 0.8);
+				: p.rgba(p.soft, isSel ? 1 : 0.75);
 			ctx.stroke();
+			if (side * scale > 12) {
+				ctx.font = "600 " + side * 0.62 + "px " + p.fontFamily;
+				ctx.textAlign = "center";
+				ctx.textBaseline = "middle";
+				ctx.fillStyle = isSel
+					? p.rgba(p.bg, 0.9)
+					: p.rgba(p.soft, 0.95);
+				ctx.fillText("#", node.x, node.y + side * 0.04);
+			}
 		} else {
-			const hub = (node.deg || 0) >= 4;
-			ctx.fillStyle = isSel
+			// selection glow (blur disc + crisp ring)
+			if (isSel) {
+				ctx.beginPath();
+				ctx.arc(node.x, node.y, r + 4, 0, 2 * Math.PI);
+				ctx.fillStyle = p.rgba(p.accent, 0.22);
+				ctx.fill();
+				ctx.beginPath();
+				ctx.arc(node.x, node.y, r + 3, 0, 2 * Math.PI);
+				ctx.lineWidth = 1.5 / scale;
+				ctx.strokeStyle = p.rgba(p.accent, 0.8);
+				ctx.stroke();
+			}
+			// base disc
+			ctx.beginPath();
+			ctx.arc(node.x, node.y, r, 0, 2 * Math.PI);
+			ctx.fillStyle = isTop
 				? p.rgba(p.accent, 1)
-				: p.rgba(p.accent, hub ? 0.92 : 0.58);
+				: p.rgba(p.accent, isHub ? 0.92 : 0.62);
 			ctx.fill();
-			ctx.lineWidth = (matchQ ? 2 : 0.8) / scale;
+			// inner top-lit sheen (depth without gradients), skip when tiny
+			if (r * scale > 10 && !isTop) {
+				ctx.beginPath();
+				ctx.arc(node.x, node.y - r * 0.28, r * 0.62, 0, 2 * Math.PI);
+				ctx.fillStyle = p.light
+					? p.rgba(p.bg, 0.18)
+					: p.rgba(p.text, 0.1);
+				ctx.fill();
+			}
+			// darkened core "well" for the single top hub
+			if (isTop) {
+				ctx.beginPath();
+				ctx.arc(node.x, node.y, r * 0.6, 0, 2 * Math.PI);
+				ctx.lineWidth = 1.5 / scale;
+				ctx.strokeStyle = p.rgba(p.bg, p.light ? 0.2 : 0.3);
+				ctx.stroke();
+			}
+			// ring
+			ctx.beginPath();
+			ctx.arc(node.x, node.y, r, 0, 2 * Math.PI);
+			ctx.lineWidth = (matchQ ? 2 : isTop ? 2.5 : isHub ? 2 : 1) / scale;
 			ctx.strokeStyle = matchQ
 				? p.rgba(p.text, 0.95)
-				: p.rgba(p.accent, 0.85);
+				: isHub || isSel
+				? p.rgba(p.accent, 1)
+				: p.light
+				? p.rgba(p.accent, 0.55)
+				: p.rgba(p.text, 0.22);
 			ctx.stroke();
 		}
+
+		// ── label ──
+		const emph = isSel || node.id === ngState.hover;
+		const bigGraph =
+			(ngState.data && ngState.data.nodes ? ngState.data.nodes.length : 0) >
+			120;
+		const zoomShow = bigGraph ? scale > 2.4 : scale > 1.6;
 		const showLabel =
-			scale > 1.4 ||
 			isSel ||
 			node.id === ngState.hover ||
-			(ngState.hlNodes.size > 0 && ngState.hlNodes.has(node.id)) ||
-			(node.deg || 0) >= 4 ||
-			matchQ;
+			(focused && ngState.hlNodes.has(node.id)) ||
+			isHub ||
+			matchQ ||
+			zoomShow;
 		if (showLabel) {
-			const fs = Math.max(11 / scale, 2.6);
-			ctx.font = (isTag ? "500 " : "500 ") + fs + "px " + p.fontFamily;
-			const label = (isTag ? "#" : "") + (node.title || "");
-			const tw = ctx.measureText(label).width;
-			const ly = node.y + r + fs * 1.3;
-			ctx.globalAlpha = active ? 0.95 : 0.12;
-			ctx.fillStyle = p.rgba(p.bg, 0.82);
-			ctx.fillRect(
-				node.x - tw / 2 - 3 / scale,
-				ly - fs,
-				tw + 6 / scale,
-				fs * 1.35
-			);
-			ctx.fillStyle = isTag ? p.rgba(p.soft, 0.95) : p.rgba(p.text, 0.95);
+			let fs = 12 / scale;
+			if (fs < 3.0) fs = 3.0;
+			if (fs > 15 / scale) fs = 15 / scale;
+			ctx.font =
+				(isTag || emph || isHub ? "600 " : "500 ") +
+				fs +
+				"px " +
+				p.fontFamily;
 			ctx.textAlign = "center";
 			ctx.textBaseline = "middle";
-			ctx.fillText(label, node.x, ly - fs * 0.35);
+			const label = (isTag ? "#" : "") + (node.__label || node.title || "");
+			const halfH = isTag ? (node.__side || r * 2) / 2 : r;
+			const ly = node.y + halfH + fs * 0.9 + fs * 0.5;
+			if (active) {
+				const tw = ctx.measureText(label).width;
+				const padX = 4 / scale;
+				const boxH = fs * 1.5;
+				const boxW = tw + padX * 2;
+				ngRoundRect(
+					ctx,
+					node.x - boxW / 2,
+					ly - boxH / 2,
+					boxW,
+					boxH,
+					fs * 0.5
+				);
+				ctx.fillStyle = p.rgba(p.bg, p.light ? 0.72 : 0.8);
+				ctx.fill();
+			}
+			ctx.fillStyle = isTag
+				? p.rgba(p.soft, p.light ? 1 : 0.95)
+				: p.rgba(p.text, 1);
+			ctx.fillText(label, node.x, ly);
 		}
 		ctx.globalAlpha = 1;
 	}
@@ -16137,18 +16305,27 @@ ${highlightThemeCss}
 
 	function ngLinkColor(l) {
 		const p = ngState.palette;
-		if (!p) return "rgba(150,150,150,0.2)";
+		if (!p) return "rgba(150,150,150,0.15)";
 		const hot = ngState.hlLinks.has(ngLinkKey(l));
-		if (l.type === "tag") return p.rgba(p.accent, hot ? 0.5 : 0.16);
-		return hot ? p.rgba(p.text, 0.55) : p.rgba(p.text, 0.2);
+		const focused = ngState.hlNodes.size > 0;
+		let base;
+		let alpha;
+		if (l.type === "tag") {
+			base = p.soft;
+			alpha = hot ? 0.55 : 0.12;
+		} else {
+			base = p.text;
+			alpha = hot ? 0.6 : 0.16;
+		}
+		// Dim the non-focused edges so the selection's connections stand out.
+		if (focused && !hot) alpha *= 0.4;
+		return p.rgba(base, alpha);
 	}
 
 	function ngLinkWidth(l) {
-		return ngState.hlLinks.has(ngLinkKey(l))
-			? 2
-			: l.type === "tag"
-			? 0.7
-			: 1.1;
+		const hot = ngState.hlLinks.has(ngLinkKey(l));
+		if (hot) return l.type === "tag" ? 1.4 : 1.8;
+		return l.type === "tag" ? 0.7 : 1;
 	}
 
 	function ngUpdateEmpty(view) {
@@ -16160,8 +16337,12 @@ ${highlightThemeCss}
 
 	function ngApplyData() {
 		ngState.data = ngBuildData();
+		ngPrecompute(ngState.data.nodes);
 		const view = ngViewData();
-		if (ngInstance) ngInstance.graphData(view);
+		if (ngInstance) {
+			ngInstance.graphData(view);
+			if (ngInstance.d3ReheatSimulation) ngInstance.d3ReheatSimulation();
+		}
 		ngComputeHighlight(ngState.selected || ngState.hover);
 		ngUpdateEmpty(view);
 		ngRenderList();
@@ -16443,6 +16624,7 @@ ${highlightThemeCss}
 			.linkColor(ngLinkColor)
 			.linkWidth(ngLinkWidth)
 			.linkLineDash((l) => (l.type === "tag" ? [3, 3] : null))
+			.linkCurvature((l) => (l.type === "tag" ? 0.12 : 0))
 			.onNodeHover(ngOnHover)
 			.onNodeClick(ngOnClick)
 			.onBackgroundClick(ngOnBgClick)
@@ -16450,8 +16632,23 @@ ${highlightThemeCss}
 				node.fx = node.x;
 				node.fy = node.y;
 			});
-		if (ngInstance.d3Force("charge"))
-			ngInstance.d3Force("charge").strength(-150);
+		// Force tuning for a calm, evenly-spaced, non-overlapping layout.
+		const charge = ngInstance.d3Force("charge");
+		if (charge) {
+			charge.strength((n) => -60 - (n.__r || ngNodeRadius(n)) * 8);
+			if (charge.distanceMax) charge.distanceMax(600);
+		}
+		const link = ngInstance.d3Force("link");
+		if (link) {
+			if (link.distance)
+				link.distance((l) => (l.type === "tag" ? 46 : 30));
+			if (link.strength)
+				link.strength((l) => (l.type === "tag" ? 0.25 : 0.6));
+		}
+		if (ngInstance.d3Force) ngInstance.d3Force("collide", ngCollideForce(0.9));
+		if (ngInstance.d3AlphaDecay) ngInstance.d3AlphaDecay(0.045);
+		if (ngInstance.d3VelocityDecay) ngInstance.d3VelocityDecay(0.45);
+		if (ngInstance.cooldownTicks) ngInstance.cooldownTicks(120);
 		ngInstance.width(mount.clientWidth || 600).height(mount.clientHeight || 400);
 		return ngInstance;
 	}
