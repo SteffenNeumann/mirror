@@ -1,3 +1,25 @@
+# Dokumentation – Änderungen (2026-07-01d)
+
+## Ziel
+- Visuelles Redesign der Graph-Ansicht (Ausrichtung, Typografie, Knotendesign).
+
+## Änderungen
+- **Knotendesign:** Notizen = Kreise mit dezenter Tiefe (Top-Sheen + 1px-Ring); Tags = abgerundete Kacheln mit `#`-Glyphe — durch die Form sofort unterscheidbar (statt nur Füllung vs. Ring). Dynamischer Hub: der am stärksten verlinkte Knoten (`ngState.topHubId`, Schwelle `hubThreshold = max(4, ceil(maxDeg*0.6))`) bekommt hellen Kern, „Well" und schwereren Ring.
+- **Typografie:** Labels als Pille (roundRect-Halo), Mindestgröße ~12px on-screen, Ellipsis ab 26 Zeichen, Anzeige-Regeln gegen Gewusel (bei > 120 Knoten nur Hub/Auswahl/Hover/Treffer-Labels bis Zoom 2.4).
+- **Layout (d3-force):** größenskalierte Ladung + `distanceMax`, getrennte Link-Distanzen (Wiki 30 / Tag 46), eigene **Kollisions-Force** (kein d3-Import) gegen Überlappung inkl. Label-Platz, schnelleres Einschwingen (`d3AlphaDecay 0.045`, `velocityDecay 0.45`, `cooldownTicks 120`), `d3ReheatSimulation` bei Datenänderung.
+- **Kanten:** ruhiger (niedrigerer Kontrast), Fokus-Dimming (nicht-fokussierte Kanten ×0.4), Tag-Kanten leicht gekurvt.
+- **Zustände:** Hover/Selektion dimmt Rest auf 0.12; Auswahl = Blur + crisper Ring; Suchtreffer bleiben sichtbar.
+- Alle Werte aus dem Theme-Palette-Objekt → alle Themes automatisch; Light-Theme-Kontrast (dunklerer Note-Ring, opakeres Halo) berücksichtigt.
+
+## Auswirkungen
+- **UI/UX:** Deutlich aufgeräumteres, „designtes" Erscheinungsbild. Rein Canvas (`ngDrawNode`/`ngInit`/`ngApplyData`), keine HTML/CSS-Struktur geändert.
+- **Performance:** Geometrie/Labels/Hub in `ngPrecompute` (einmal pro Datenänderung), nicht pro Frame; Sim friert nach Cooldown ein.
+- **Cache:** SW `v26`→`v27`, `app.js?v`→`2026-07-01-05`.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`, `node --check sw.js`
+- Neues Rendering + Kollisions-Layout via Playwright-Harness auf Dark (fuchsia) und Light (coffeeLight) verifiziert.
+
 # Dokumentation – Änderungen (2026-07-01c)
 
 ## Ziel
