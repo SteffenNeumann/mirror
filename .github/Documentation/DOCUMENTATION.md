@@ -1,3 +1,24 @@
+# Dokumentation – Änderungen (2026-07-02b)
+
+## Ziel
+- Einstellbares Markdown-Highlighting + Editor-Schriftart (JetBrains Mono) im Eingabebereich `#mirror`.
+
+## Änderungen
+- **JetBrains Mono** self-hosted (`/vendor/jetbrains-mono-var.woff2`, Variable Font, `@font-face`, SW-precached). Neue CSS-Vars `--editor-font/-size/-lh` werden von Textarea **und allen Overlays** gemeinsam genutzt (identische Metrik = Ausrichtung).
+- **Markdown-Quell-Highlighting** als 4. Overlay (`#mdHighlightOverlay`): Tokenizer (`buildMdHighlightHtml`/`mdInline`) färbt Überschriften+Marker, Bold/Italic, Inline-/Fenced-Code, Links `[t](url)`, `[[Wikilinks]]`, Blockquote, Listen, `---`, Tasks. Textarea-Text wird transparent (`-webkit-text-fill-color`), Caret bleibt via `caret-color`. Reuse des bestehenden Scroll-Sync-Musters.
+- **5 Theme-Variablen** `--md-heading/-marker/-link/-code/-muted` (Dark-Defaults „Editorial-Blau" + Light-Overrides für AA-Kontrast). **3 Presets** via Body-Klasse: Editorial-Blau (Default), Theme-Akzent (`--accent-*`), Gedämpft.
+- **Settings → „Editor"**: Schriftart (System Sans / JetBrains Mono / System Mono), Markdown-Hervorhebung An/Aus (Default aus, erzwingt Monospace), Farbschema-Presets. Persistenz `mirror_editor_font` / `mirror_md_highlight` / `mirror_md_preset`.
+
+## Auswirkungen
+- **UI/UX:** Opt-in, Default unverändert (Sans, Highlighting aus). Alles CSS-Var-gesteuert → alle Themes.
+- **Datenebene:** Keine. Rein clientseitig (Overlay + localStorage).
+- **Performance:** Tokenize debounced (60 ms) + nur wenn aktiv; Monospace hält Ausrichtung (feste Advance-Breite über Gewicht/Kursiv).
+- **Cache:** SW `v30`→`v31`, `app.js?v`→`2026-07-02-04`, Font precached.
+
+## Tests (Smoke)
+- Ausgeführt: `node --check app.js`, `node --check sw.js`; Tokenizer-Unit-Smoke (keine Platzhalter-Reste).
+- Editor-Rendering (JetBrains Mono + Editorial-Blau) auf Dark (monoDark) und Light (coffeeLight) via Playwright-Harness verifiziert.
+
 # Dokumentation – Änderungen (2026-07-01d)
 
 ## Ziel

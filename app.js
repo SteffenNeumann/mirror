@@ -130,6 +130,8 @@
 	const commentOverlayContent = document.getElementById("commentOverlayContent");
 	const searchHighlightOverlay = document.getElementById("searchHighlightOverlay");
 	const searchHighlightContent = document.getElementById("searchHighlightContent");
+	const mdHighlightOverlay = document.getElementById("mdHighlightOverlay");
+	const mdHighlightContent = document.getElementById("mdHighlightContent");
 	const excalidrawEmbed = document.getElementById("excalidrawEmbed");
 	const excalidrawFrame = excalidrawEmbed
 		? excalidrawEmbed.querySelector("iframe")
@@ -3586,7 +3588,334 @@
 		searchHighlightContent.style.transform = `translate(${-x}px, ${-y}px)`;
 	}
 
+	/* ── Editor: font preference + Markdown source highlighting ── */
+	const EDITOR_FONT_KEY = "mirror_editor_font";
+	const MD_HIGHLIGHT_KEY = "mirror_md_highlight";
+	const MD_PRESET_KEY = "mirror_md_preset";
+	const MD_SENT = "";
+	let editorFontPref = "sans";
+	let mdHighlightOn = false;
+	let mdPreset = "editorial";
+	let mdHighlightTimer = null;
+
+	function mdEsc(s) {
+		return String(s == null ? "" : s)
+			.replace(/&/g, "&amp;")
+			.replace(/</g, "&lt;")
+			.replace(/>/g, "&gt;");
+	}
+
+	// Inline tokens on an already HTML-escaped line. Code / links / bold are
+	// stashed as sentinels first so later rules can't reach inside them.
+	function mdInline(escaped) {
+		const stash = [];
+		const keep = (html) => {
+			stash.push(html);
+			return MD_SENT + (stash.length - 1) + MD_SENT;
+		};
+		let s = String(escaped);
+		s = s.replace(/`([^`]+)`/g, (m, c) =>
+			keep(
+				'<span class="md-marker">`</span><span class="md-code">' +
+					c +
+					'</span><span class="md-marker">`</span>'
+			)
+		);
+		s = s.replace(/\[\[([^\][]+)\]\]/g, (m, t) =>
+			keep(
+				'<span class="md-marker">[[</span><span class="md-wikilink">' +
+					t +
+					'</span><span class="md-marker">]]</span>'
+			)
+		);
+		s = s.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (m, t, u) =>
+			keep(
+				'<span class="md-marker">[</span><span class="md-link">' +
+					t +
+					'</span><span class="md-marker">](</span><span class="md-url">' +
+					u +
+					'</span><span class="md-marker">)</span>'
+			)
+		);
+		s = s.replace(/(\*\*|__)(?=\S)([\s\S]+?)\1/g, (m, mk, t) =>
+			keep(
+				'<span class="md-marker">' +
+					mk +
+					'</span><span class="md-bold">' +
+					t +
+					'</span><span class="md-marker">' +
+					mk +
+					"</span>"
+			)
+		);
+		s = s.replace(
+			/(^|[^*_])([*_])(?=\S)([^*_]+?)\2/g,
+			(m, pre, mk, t) =>
+				pre +
+				keep(
+					'<span class="md-marker">' +
+						mk +
+						'</span><span class="md-italic">' +
+						t +
+						'</span><span class="md-marker">' +
+						mk +
+						"</span>"
+				)
+		);
+		s = s.replace(/(https?:\/\/[^\s<]+)/g, (m) =>
+			keep('<span class="md-link">' + m + "</span>")
+		);
+		s = s.replace(new RegExp(MD_SENT + "(\\d+)" + MD_SENT, "g"), (m, i) =>
+			stash[Number(i)]
+		);
+		return s;
+	}
+
+	function buildMdHighlightHtml(value) {
+		const lines = String(value == null ? "" : value).split("\n");
+		let inFence = false;
+		const out = [];
+		for (const raw of lines) {
+			const esc = mdEsc(raw);
+			const fence = raw.match(/^(\s*)(```|~~~)(.*)$/);
+			if (fence) {
+				inFence = !inFence;
+				out.push(
+					mdEsc(fence[1]) +
+						'<span class="md-marker">' +
+						mdEsc(fence[2]) +
+						"</span>" +
+						'<span class="md-code">' +
+						mdEsc(fence[3]) +
+						"</span>"
+				);
+				continue;
+			}
+			if (inFence) {
+				out.push('<span class="md-code">' + esc + "</span>");
+				continue;
+			}
+			let m = raw.match(/^(\s*)(#{1,6})(\s+)(.*)$/);
+			if (m) {
+				const lvl = m[2].length;
+				const cls = lvl === 1 ? "md-h1" : lvl === 2 ? "md-h2" : "md-h3";
+				out.push(
+					mdEsc(m[1]) +
+						'<span class="md-marker">' +
+						m[2] +
+						"</span>" +
+						mdEsc(m[3]) +
+						'<span class="' +
+						cls +
+						'">' +
+						mdInline(mdEsc(m[4])) +
+						"</span>"
+				);
+				continue;
+			}
+			if (/^\s*([-*_])\1{2,}\s*$/.test(raw)) {
+				out.push('<span class="md-hr">' + esc + "</span>");
+				continue;
+			}
+			m = raw.match(/^(\s*>+\s?)(.*)$/);
+			if (m) {
+				out.push(
+					'<span class="md-marker">' +
+						mdEsc(m[1]) +
+						"</span>" +
+						'<span class="md-quote">' +
+						mdInline(mdEsc(m[2])) +
+						"</span>"
+				);
+				continue;
+			}
+			m = raw.match(/^(\s*[-*+]\s+)(\[[ xX]\])(\s+)(.*)$/);
+			if (m) {
+				const done = /[xX]/.test(m[2]);
+				out.push(
+					'<span class="md-marker">' +
+						mdEsc(m[1]) +
+						"</span>" +
+						'<span class="' +
+						(done ? "md-code" : "md-marker") +
+						'">' +
+						mdEsc(m[2]) +
+						"</span>" +
+						mdEsc(m[3]) +
+						(done
+							? '<span class="md-task-done">' +
+							  mdInline(mdEsc(m[4])) +
+							  "</span>"
+							: mdInline(mdEsc(m[4])))
+				);
+				continue;
+			}
+			m = raw.match(/^(\s*)([-*+]|\d+\.)(\s+)(.*)$/);
+			if (m) {
+				out.push(
+					mdEsc(m[1]) +
+						'<span class="md-marker">' +
+						mdEsc(m[2]) +
+						"</span>" +
+						mdEsc(m[3]) +
+						mdInline(mdEsc(m[4]))
+				);
+				continue;
+			}
+			out.push(mdInline(esc));
+		}
+		return out.join("\n");
+	}
+
+	function syncMdHighlightScroll() {
+		if (!mdHighlightContent || !textarea) return;
+		const x = Number(textarea.scrollLeft || 0);
+		const y = Number(textarea.scrollTop || 0);
+		mdHighlightContent.style.transform = `translate(${-x}px, ${-y}px)`;
+	}
+
+	function renderMdHighlight() {
+		if (!mdHighlightOverlay || !mdHighlightContent || !textarea) return;
+		if (!mdHighlightOn) {
+			mdHighlightContent.textContent = "";
+			return;
+		}
+		mdHighlightContent.innerHTML = buildMdHighlightHtml(
+			String(textarea.value || "")
+		);
+		syncMdHighlightScroll();
+	}
+
+	function scheduleMdHighlight() {
+		if (!mdHighlightOn) return;
+		if (mdHighlightTimer) return;
+		mdHighlightTimer = setTimeout(() => {
+			mdHighlightTimer = null;
+			renderMdHighlight();
+		}, 60);
+	}
+
+	function applyEditorFont() {
+		if (!document.body) return;
+		document.body.classList.toggle(
+			"editor-font-mono",
+			editorFontPref === "mono"
+		);
+		document.body.classList.toggle(
+			"editor-font-systemmono",
+			editorFontPref === "systemmono"
+		);
+	}
+
+	function syncEditorPrefButtons() {
+		const sel = document.getElementById("editorFontSelect");
+		if (sel && sel.value !== editorFontPref) sel.value = editorFontPref;
+		const tog = document.getElementById("editorMdToggle");
+		if (tog) {
+			tog.setAttribute("aria-pressed", mdHighlightOn ? "true" : "false");
+			tog.textContent = mdHighlightOn ? "An" : "Aus";
+			tog.classList.toggle("bg-fuchsia-500/20", mdHighlightOn);
+			tog.classList.toggle("border-fuchsia-400/40", mdHighlightOn);
+		}
+		document
+			.querySelectorAll("#editorPresetGroup .md-preset-btn")
+			.forEach((b) => {
+				b.classList.toggle(
+					"active",
+					b.getAttribute("data-md-preset") === mdPreset
+				);
+			});
+	}
+
+	function applyMdHighlight() {
+		if (document.body) {
+			document.body.classList.toggle("md-highlight-on", mdHighlightOn);
+			document.body.classList.toggle(
+				"md-preset-editorial",
+				mdPreset === "editorial"
+			);
+			document.body.classList.toggle(
+				"md-preset-accent",
+				mdPreset === "accent"
+			);
+			document.body.classList.toggle(
+				"md-preset-muted",
+				mdPreset === "muted"
+			);
+		}
+		renderMdHighlight();
+		syncEditorPrefButtons();
+	}
+
+	function setEditorFontPref(next) {
+		editorFontPref =
+			next === "mono" || next === "systemmono" ? next : "sans";
+		try {
+			localStorage.setItem(EDITOR_FONT_KEY, editorFontPref);
+		} catch {
+			// ignore
+		}
+		applyEditorFont();
+		syncEditorPrefButtons();
+	}
+
+	function setMdHighlight(on) {
+		mdHighlightOn = Boolean(on);
+		try {
+			localStorage.setItem(MD_HIGHLIGHT_KEY, mdHighlightOn ? "1" : "0");
+		} catch {
+			// ignore
+		}
+		if (mdHighlightOn && editorFontPref === "sans") setEditorFontPref("mono");
+		applyMdHighlight();
+	}
+
+	function setMdPreset(next) {
+		mdPreset = next === "accent" || next === "muted" ? next : "editorial";
+		try {
+			localStorage.setItem(MD_PRESET_KEY, mdPreset);
+		} catch {
+			// ignore
+		}
+		applyMdHighlight();
+	}
+
+	function loadEditorPrefs() {
+		try {
+			const f = localStorage.getItem(EDITOR_FONT_KEY);
+			if (f === "sans" || f === "mono" || f === "systemmono")
+				editorFontPref = f;
+			mdHighlightOn = localStorage.getItem(MD_HIGHLIGHT_KEY) === "1";
+			const p = localStorage.getItem(MD_PRESET_KEY);
+			if (p === "editorial" || p === "accent" || p === "muted")
+				mdPreset = p;
+		} catch {
+			// ignore
+		}
+		if (mdHighlightOn && editorFontPref === "sans") editorFontPref = "mono";
+		applyEditorFont();
+		applyMdHighlight();
+	}
+
+	function wireEditorPrefs() {
+		const sel = document.getElementById("editorFontSelect");
+		if (sel)
+			sel.addEventListener("change", (e) =>
+				setEditorFontPref(String(e.target.value || "sans"))
+			);
+		const tog = document.getElementById("editorMdToggle");
+		if (tog)
+			tog.addEventListener("click", () => setMdHighlight(!mdHighlightOn));
+		const group = document.getElementById("editorPresetGroup");
+		if (group)
+			group.addEventListener("click", (e) => {
+				const b = e.target.closest("[data-md-preset]");
+				if (b) setMdPreset(b.getAttribute("data-md-preset"));
+			});
+	}
+
 	function updateCommentOverlay() {
+		scheduleMdHighlight();
 		if (!commentOverlay || !commentOverlayContent) return;
 		const scopeId = getCommentScopeId();
 		if (!scopeId || commentActiveNoteId !== scopeId || !commentItems.length) {
@@ -27818,6 +28147,7 @@ self.onmessage = async (e) => {
 		syncAttributionOverlayScroll();
 		syncCommentOverlayScroll();
 		syncSearchHighlightScroll();
+		syncMdHighlightScroll();
 		syncCursorOverlayScroll();
 		syncPreviewScrollFromEditor();
 	});
@@ -28526,6 +28856,8 @@ self.onmessage = async (e) => {
 	applyPsVisible();
 	renderThemeList();
 	loadTheme();
+	loadEditorPrefs();
+	wireEditorPrefs();
 	loadGlowEnabled();
 	loadTaskAutoSortEnabled();
 	loadPasteFormatEnabled();

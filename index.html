@@ -26,7 +26,7 @@
 
 		<!-- Preload critical assets -->
 		<link rel="preload" href="/styles/app.css" as="style" />
-		<link rel="preload" href="/app.js?v=2026-07-02-03" as="script" />
+		<link rel="preload" href="/app.js?v=2026-07-02-04" as="script" />
 		<link rel="prefetch" href="/vendor/yjs.bundle.js" as="script" />
 
 		<!-- DNS prefetch for CDNs -->
@@ -544,6 +544,11 @@
 											id="searchHighlightOverlay"
 											class="pointer-events-none absolute inset-0 hidden overflow-hidden rounded-xl px-4 pt-20 pb-12 pr-11 font-sans text-base leading-relaxed text-slate-100">
 											<div id="searchHighlightContent"></div>
+										</div>
+										<div
+											id="mdHighlightOverlay"
+											class="pointer-events-none absolute inset-0 hidden overflow-hidden rounded-xl px-4 pt-20 pb-12 pr-11 font-sans text-base leading-relaxed text-slate-100">
+											<div id="mdHighlightContent"></div>
 										</div>
 										<div
 											id="excalidrawEmbed"
@@ -2021,6 +2026,13 @@
 						</button>
 						<button
 							type="button"
+							data-settings-nav="editor"
+							class="rounded-lg bg-transparent px-3 py-2 text-left text-xs text-slate-200 transition hover:bg-white/5"
+							data-i18n="settings.nav.editor">
+							Editor
+						</button>
+						<button
+							type="button"
 							data-settings-nav="calendar"
 							class="rounded-lg bg-transparent px-3 py-2 text-left text-xs text-slate-200 transition hover:bg-white/5"
 							data-i18n="settings.nav.calendar">
@@ -2744,6 +2756,51 @@
 									</button>
 								</div>
 								<div id="settingsThemeList" class="grid gap-2 sm:grid-cols-2"></div>
+							</div>
+						</section>
+
+						<section data-settings-section="editor" class="hidden space-y-3">
+							<div>
+								<h4 class="text-sm font-semibold text-slate-100" data-i18n="settings.editor.title">Editor</h4>
+								<p class="mt-1 text-xs text-slate-400" data-i18n="settings.editor.desc">
+									Schriftart und Markdown-Hervorhebung im Eingabebereich. Lokal gespeichert.
+								</p>
+							</div>
+							<div class="space-y-3">
+								<div class="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+									<div>
+										<div class="text-xs font-medium text-slate-200" data-i18n="settings.editor.font.title">Schriftart</div>
+										<div class="text-[11px] text-slate-400" data-i18n="settings.editor.font.desc">Editor-Schrift wählen.</div>
+									</div>
+									<select id="editorFontSelect" class="rounded-lg border border-white/10 bg-slate-950/40 px-2 py-1.5 text-xs text-slate-100 outline-none transition focus:border-white/20">
+										<option value="sans" data-i18n="settings.editor.font.sans">System Sans</option>
+										<option value="mono" data-i18n="settings.editor.font.mono">JetBrains Mono</option>
+										<option value="systemmono" data-i18n="settings.editor.font.systemmono">System Mono</option>
+									</select>
+								</div>
+								<div class="flex items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+									<div>
+										<div class="text-xs font-medium text-slate-200" data-i18n="settings.editor.md.title">Markdown-Hervorhebung</div>
+										<div class="text-[11px] text-slate-400" data-i18n="settings.editor.md.desc">Färbt die Quell-Syntax (Überschriften, Links, Code …). Nutzt eine Monospace-Schrift.</div>
+									</div>
+									<button
+										id="editorMdToggle"
+										type="button"
+										class="inline-flex shrink-0 items-center rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-slate-200 transition hover:bg-white/10"
+										aria-pressed="false"
+										data-i18n="settings.editor.md.off">
+										Aus
+									</button>
+								</div>
+								<div id="editorPresetRow" class="rounded-lg border border-white/10 bg-white/5 px-3 py-2">
+									<div class="text-xs font-medium text-slate-200" data-i18n="settings.editor.preset.title">Farbschema</div>
+									<div class="mb-2 text-[11px] text-slate-400" data-i18n="settings.editor.preset.desc">Nur bei aktivierter Hervorhebung.</div>
+									<div id="editorPresetGroup" class="inline-flex flex-wrap gap-1 rounded-lg border border-white/10 bg-slate-950/30 p-1">
+										<button type="button" data-md-preset="editorial" class="md-preset-btn rounded-md px-3 py-1 text-xs transition" data-i18n="settings.editor.preset.editorial">Editorial-Blau</button>
+										<button type="button" data-md-preset="accent" class="md-preset-btn rounded-md px-3 py-1 text-xs transition" data-i18n="settings.editor.preset.accent">Theme-Akzent</button>
+										<button type="button" data-md-preset="muted" class="md-preset-btn rounded-md px-3 py-1 text-xs transition" data-i18n="settings.editor.preset.muted">Gedämpft</button>
+									</div>
+								</div>
 							</div>
 						</section>
 
@@ -3723,7 +3780,7 @@
 		<script defer src="https://cdn.jsdelivr.net/npm/markdown-it-task-lists@2.1.1/dist/markdown-it-task-lists.min.js"></script>
 		<script defer src="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js"></script>
 		<script defer fetchpriority="low" src="/vendor/yjs.bundle.js"></script>
-		<script defer src="/app.js?v=2026-07-02-03"></script>
+		<script defer src="/app.js?v=2026-07-02-04"></script>
 		<script>
 			if ("serviceWorker" in navigator) {
 				window.addEventListener("load", function () {
