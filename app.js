@@ -15931,6 +15931,18 @@ ${highlightThemeCss}
 		return 4.2 + Math.sqrt((node && node.deg) || 0) * 1.9;
 	}
 
+	// Graded theme shade: step 1 (hub) = full accent hue, step 0 (leaf) =
+	// accent muted halfway toward the background, so node color steps with
+	// connection count while staying entirely in the theme.
+	function ngShade(base, target, step) {
+		const t = 0.5 * (1 - (step || 0));
+		return {
+			r: base.r + (target.r - base.r) * t,
+			g: base.g + (target.g - base.g) * t,
+			b: base.b + (target.b - base.b) * t,
+		};
+	}
+
 	// A tiny O(n²) collision force (avoids adding d3 as a dependency). Runs only
 	// during the cooldown ticks, then the sim freezes — cheap for typical note
 	// counts. Nudges velocities apart when two nodes' collision radii overlap.
@@ -15976,6 +15988,7 @@ ${highlightThemeCss}
 	// (collision radius incl. label breathing room) and __label (ellipsized).
 	function ngPrecompute(nodes) {
 		let maxDeg = 0;
+		let maxTagDeg = 0;
 		let topId = null;
 		let topDeg = -1;
 		for (const n of nodes) {
@@ -15983,6 +15996,7 @@ ${highlightThemeCss}
 			n.__r = half;
 			if (n.kind === "tag") {
 				n.__side = half * 2;
+				if ((n.deg || 0) > maxTagDeg) maxTagDeg = n.deg || 0;
 			} else {
 				if ((n.deg || 0) > maxDeg) maxDeg = n.deg || 0;
 				if ((n.deg || 0) > topDeg) {
@@ -15996,6 +16010,19 @@ ${highlightThemeCss}
 		}
 		ngState.hubThreshold = Math.max(4, Math.ceil(maxDeg * 0.6));
 		ngState.topHubId = topDeg > 0 ? topId : null;
+		ngState.maxDeg = maxDeg;
+		// Graded per-node shade (quantized to 5 steps for a clean "stepped" feel).
+		const p = ngState.palette;
+		for (const n of nodes) {
+			const isTag = n.kind === "tag";
+			const md = isTag ? maxTagDeg : maxDeg;
+			let step = md > 0 ? (n.deg || 0) / md : 0;
+			step = Math.round(step * 4) / 4;
+			n.__step = step;
+			if (p) {
+				n.__shade = ngShade(isTag ? p.soft : p.accent, p.bg, step);
+			}
+		}
 	}
 
 	function ngLinkKey(l) {
@@ -16178,7 +16205,7 @@ ${highlightThemeCss}
 			ngRoundRect(ctx, node.x - side / 2, node.y - side / 2, side, side, rad);
 			ctx.fillStyle = isSel
 				? p.rgba(p.soft, 0.85)
-				: p.rgba(p.soft, p.light ? 0.16 : 0.22);
+				: p.rgba(node.__shade || p.soft, p.light ? 0.22 : 0.3);
 			ctx.fill();
 			ctx.lineWidth = (matchQ ? 2 : isSel ? 2 : 1) / scale;
 			ctx.strokeStyle = matchQ
@@ -16207,12 +16234,12 @@ ${highlightThemeCss}
 				ctx.strokeStyle = p.rgba(p.accent, 0.8);
 				ctx.stroke();
 			}
-			// base disc
+			// base disc — graded theme shade by connection count
 			ctx.beginPath();
 			ctx.arc(node.x, node.y, r, 0, 2 * Math.PI);
-			ctx.fillStyle = isTop
+			ctx.fillStyle = isSel
 				? p.rgba(p.accent, 1)
-				: p.rgba(p.accent, isHub ? 0.92 : 0.62);
+				: p.rgba(node.__shade || p.accent, isTop ? 1 : 0.95);
 			ctx.fill();
 			// inner top-lit sheen (depth without gradients), skip when tiny
 			if (r * scale > 10 && !isTop) {
