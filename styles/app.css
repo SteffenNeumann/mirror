@@ -11829,3 +11829,146 @@ body[data-theme="monoLight"] .ng-note-title,
 body[data-theme="monoLight"] .ng-empty-title {
 	color: #24292f;
 }
+
+/* ─────────────────────────────────────────────
+   Editor: JetBrains Mono font + Markdown source highlighting
+   ───────────────────────────────────────────── */
+@font-face {
+	font-family: "JetBrains Mono";
+	src: url("/vendor/jetbrains-mono-var.woff2?v=2026-07-02-04") format("woff2");
+	font-weight: 100 800;
+	font-style: normal;
+	font-display: swap;
+}
+:root {
+	--editor-mono: "JetBrains Mono", ui-monospace, "SF Mono", "Cascadia Code",
+		"Roboto Mono", Menlo, Consolas, "Liberation Mono", monospace;
+	--editor-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+		Inter, Arial, "Noto Sans", sans-serif;
+	--editor-size: 1rem;
+	--editor-lh: 1.625;
+	/* Markdown token palette (Editorial-Blau default, dark) */
+	--md-heading: #4a9eff;
+	--md-marker: #6b7280;
+	--md-link: #56b6c2;
+	--md-code: #98c379;
+	--md-muted: #8a94a6;
+}
+/* Textarea + every overlay must share IDENTICAL metrics so they stay aligned. */
+#mirror,
+#attributionOverlay,
+#commentOverlay,
+#searchHighlightOverlay,
+#mdHighlightOverlay {
+	font-family: var(--editor-font);
+	font-size: var(--editor-size);
+	line-height: var(--editor-lh);
+	letter-spacing: 0;
+	tab-size: 2;
+}
+body.editor-font-mono {
+	--editor-font: var(--editor-mono);
+	--editor-size: 0.9375rem;
+	--editor-lh: 1.6;
+}
+body.editor-font-systemmono {
+	--editor-font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+		"Liberation Mono", monospace;
+	--editor-size: 0.9375rem;
+	--editor-lh: 1.6;
+}
+/* Markdown highlight overlay: colored source text under the transparent textarea. */
+#mdHighlightOverlay {
+	z-index: 2;
+}
+#mdHighlightContent {
+	white-space: pre;
+	word-break: normal;
+	overflow-wrap: normal;
+}
+body.md-highlight-on #mdHighlightOverlay {
+	display: block;
+}
+body.md-highlight-on #mirror {
+	-webkit-text-fill-color: transparent;
+	caret-color: var(--accent-strong, #d946ef);
+}
+body.md-highlight-on #mirror::placeholder {
+	-webkit-text-fill-color: var(--md-marker);
+	color: var(--md-marker);
+}
+/* Light themes: deeper, AA-contrast token colors on light editor bg. */
+body[data-theme="coffeeLight"],
+body[data-theme="bitterLight"],
+body[data-theme="monoLight"] {
+	--md-heading: #1a5fb4;
+	--md-marker: #7a7f88;
+	--md-link: #0e7490;
+	--md-code: #4d7c1f;
+	--md-muted: #6b7280;
+}
+/* Preset: Theme-Akzent — headings/links follow the theme accent. */
+body.md-preset-accent {
+	--md-heading: var(--accent-strong, #4a9eff);
+	--md-link: var(--accent-text-soft, #56b6c2);
+}
+/* Preset: Gedämpft — everything muted; headings carry weight, not hue. */
+body.md-preset-muted {
+	--md-heading: var(--md-muted);
+	--md-link: var(--md-muted);
+	--md-code: var(--md-muted);
+}
+/* Token spans. NOTE: never change font-size (would break textarea alignment);
+   monospace keeps a fixed advance width across weight/italic, so those are safe. */
+#mdHighlightContent .md-h1 {
+	color: var(--md-heading);
+	font-weight: 700;
+}
+#mdHighlightContent .md-h2,
+#mdHighlightContent .md-h3 {
+	color: var(--md-heading);
+	font-weight: 600;
+}
+#mdHighlightContent .md-marker {
+	color: var(--md-marker);
+}
+#mdHighlightContent .md-link,
+#mdHighlightContent .md-wikilink {
+	color: var(--md-link);
+}
+#mdHighlightContent .md-url {
+	color: var(--md-muted);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+#mdHighlightContent .md-code {
+	color: var(--md-code);
+}
+#mdHighlightContent .md-quote {
+	color: var(--md-muted);
+}
+#mdHighlightContent .md-hr {
+	color: var(--md-marker);
+}
+#mdHighlightContent .md-bold {
+	font-weight: 700;
+}
+#mdHighlightContent .md-italic {
+	font-style: italic;
+}
+#mdHighlightContent .md-task-done {
+	color: var(--md-muted);
+	text-decoration: line-through;
+}
+/* Preset selector buttons. */
+.md-preset-btn {
+	color: var(--accent-text-soft, rgba(226, 232, 240, 0.7));
+	background: transparent;
+	border: 0;
+	cursor: pointer;
+	font-family: inherit;
+}
+.md-preset-btn.active {
+	background: var(--accent-strong, rgba(217, 70, 239, 0.7));
+	color: #fff;
+}
