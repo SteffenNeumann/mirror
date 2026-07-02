@@ -3597,6 +3597,8 @@
 	let mdHighlightOn = false;
 	let mdPreset = "editorial";
 	let mdHighlightTimer = null;
+	let mdDirtyTimer = null;
+	let mdLastValue = null;
 
 	function mdEsc(s) {
 		return String(s == null ? "" : s)
@@ -3778,11 +3780,12 @@
 		if (!mdHighlightOverlay || !mdHighlightContent || !textarea) return;
 		if (!mdHighlightOn) {
 			mdHighlightContent.textContent = "";
+			mdLastValue = null;
 			return;
 		}
-		mdHighlightContent.innerHTML = buildMdHighlightHtml(
-			String(textarea.value || "")
-		);
+		const value = String(textarea.value || "");
+		mdLastValue = value;
+		mdHighlightContent.innerHTML = buildMdHighlightHtml(value);
 		syncMdHighlightScroll();
 	}
 
@@ -3793,6 +3796,23 @@
 			mdHighlightTimer = null;
 			renderMdHighlight();
 		}, 60);
+	}
+
+	// Safety-net poll: many programmatic edits set textarea.value without an
+	// input event (e.g. code-lang switch, formatting), which would leave the
+	// highlight overlay stale. While highlighting is on, re-render on any change.
+	function startMdDirtyWatch() {
+		if (mdDirtyTimer) return;
+		mdDirtyTimer = setInterval(() => {
+			if (!mdHighlightOn || !textarea) return;
+			if (String(textarea.value || "") !== mdLastValue) renderMdHighlight();
+		}, 140);
+	}
+	function stopMdDirtyWatch() {
+		if (mdDirtyTimer) {
+			clearInterval(mdDirtyTimer);
+			mdDirtyTimer = null;
+		}
 	}
 
 	function applyEditorFont() {
@@ -3844,6 +3864,8 @@
 			);
 		}
 		renderMdHighlight();
+		if (mdHighlightOn) startMdDirtyWatch();
+		else stopMdDirtyWatch();
 		syncEditorPrefButtons();
 	}
 
