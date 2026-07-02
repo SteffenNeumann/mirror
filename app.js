@@ -16626,7 +16626,9 @@ ${highlightThemeCss}
 
 	function ngOnHover(node) {
 		ngState.hover = node ? node.id : null;
-		if (!ngState.selected) ngComputeHighlight(ngState.hover);
+		// Hover always previews the hovered node's neighbors; leaving restores
+		// the current selection's highlight (or clears it when none is set).
+		ngComputeHighlight(node ? node.id : ngState.selected);
 		const mount = document.getElementById("noteGraphCanvas");
 		if (mount) mount.style.cursor = node ? "pointer" : "grab";
 	}
@@ -16669,6 +16671,10 @@ ${highlightThemeCss}
 		if (!mount) return null;
 		ngInstance = FG()(mount)
 			.backgroundColor("rgba(0,0,0,0)")
+			// Keep redrawing after the layout settles so hover/selection
+			// highlight repaints (force-graph otherwise pauses the render loop
+			// once the sim is idle). Paused entirely on close via pauseAnimation.
+			.autoPauseRedraw(false)
 			.minZoom(0.15)
 			.maxZoom(8)
 			.nodeRelSize(1)
@@ -16839,13 +16845,13 @@ ${highlightThemeCss}
 				const row = e.target.closest(".ng-item");
 				if (!row) return;
 				ngState.hover = row.getAttribute("data-id");
-				if (!ngState.selected) ngComputeHighlight(ngState.hover);
+				ngComputeHighlight(ngState.hover);
 			});
 			list.addEventListener("mouseout", (e) => {
 				if (isMobileViewport()) return;
 				if (!e.target.closest(".ng-item")) return;
 				ngState.hover = null;
-				if (!ngState.selected) ngComputeHighlight(null);
+				ngComputeHighlight(ngState.selected);
 			});
 		}
 
