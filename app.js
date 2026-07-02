@@ -15870,16 +15870,43 @@ ${highlightThemeCss}
 	}
 
 	function ngParseColor(str, fallback) {
-		const m = String(str || "").match(/rgba?\(([^)]+)\)/i);
-		if (!m) return fallback;
-		const parts = m[1].split(",").map((x) => parseFloat(x));
-		if (parts.length < 3 || parts.some((n) => Number.isNaN(n))) return fallback;
-		return {
-			r: parts[0],
-			g: parts[1],
-			b: parts[2],
-			a: parts.length > 3 ? parts[3] : 1,
-		};
+		const s = String(str || "").trim();
+		// rgb() / rgba()
+		const m = s.match(/rgba?\(([^)]+)\)/i);
+		if (m) {
+			const parts = m[1].split(",").map((x) => parseFloat(x));
+			if (
+				parts.length >= 3 &&
+				!parts.slice(0, 3).some((n) => Number.isNaN(n))
+			) {
+				return {
+					r: parts[0],
+					g: parts[1],
+					b: parts[2],
+					a: parts.length > 3 ? parts[3] : 1,
+				};
+			}
+		}
+		// hex #rgb / #rgba / #rrggbb / #rrggbbaa (several themes use hex accents)
+		const hx = s.match(/^#([0-9a-f]{3,8})$/i);
+		if (hx) {
+			let h = hx[1];
+			if (h.length === 3 || h.length === 4) {
+				h = h
+					.split("")
+					.map((c) => c + c)
+					.join("");
+			}
+			if (h.length === 6 || h.length === 8) {
+				const r = parseInt(h.slice(0, 2), 16);
+				const g = parseInt(h.slice(2, 4), 16);
+				const b = parseInt(h.slice(4, 6), 16);
+				const a = h.length === 8 ? parseInt(h.slice(6, 8), 16) / 255 : 1;
+				if (![r, g, b].some((n) => Number.isNaN(n)))
+					return { r, g, b, a };
+			}
+		}
+		return fallback;
 	}
 
 	function ngReadPalette() {
