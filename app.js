@@ -7252,6 +7252,7 @@
 				"permalink.info.message": "Pinnt den aktuellen Inhalt (Notiz oder Text) dauerhaft an diesen Raum-Tab. Gäste sehen automatisch den gepinnten Inhalt, wenn sie den Raum betreten. Erneut klicken, um den Pin zu entfernen. Eingebettete Apps (Excalidraw, Excel, Linear) werden mitgeteilt.",
 				"offline.now_offline": "Du bist offline. Änderungen werden lokal gespeichert.",
 				"offline.back_online": "Wieder online — synchronisiere…",
+				"offline.banner": "Offline – lokale Ansicht",
 				"offline.synced": "Offline-Änderungen synchronisiert.",
 				"offline.sync_failed": "Sync fehlgeschlagen für eine Offline-Änderung (Max. Versuche erreicht).",
 				"offline.saved_locally": "Offline gespeichert.",
@@ -8001,6 +8002,7 @@
 				"permalink.info.message": "Pins the current content (note or text) permanently to this room tab. Guests automatically see the pinned content when they enter the room. Click again to remove the pin. Embedded apps (Excalidraw, Excel, Linear) are shared as well.",
 				"offline.now_offline": "You are offline. Changes are saved locally.",
 				"offline.back_online": "Back online — syncing…",
+				"offline.banner": "Offline – local view",
 				"offline.synced": "Offline changes synced.",
 				"offline.sync_failed": "Sync failed for an offline change (max retries reached).",
 				"offline.saved_locally": "Saved offline.",
@@ -9172,14 +9174,50 @@
 		return typeof navigator !== "undefined" && navigator.onLine === false;
 	}
 
+	// Persistent offline indicator (pill at top-center). Complements the toasts:
+	// the toast fires once on transition, the banner stays up while offline so it
+	// is clear the app is showing a local-only view.
+	let offlineBannerEl = null;
+	function ensureOfflineBanner() {
+		if (offlineBannerEl && document.body.contains(offlineBannerEl)) return offlineBannerEl;
+		const el = document.createElement("div");
+		el.id = "offlineBanner";
+		el.setAttribute("role", "status");
+		el.setAttribute("aria-live", "polite");
+		const dot = document.createElement("span");
+		dot.className = "offline-dot";
+		const label = document.createElement("span");
+		label.className = "offline-label";
+		el.appendChild(dot);
+		el.appendChild(label);
+		document.body.appendChild(el);
+		offlineBannerEl = el;
+		return el;
+	}
+	function updateOfflineBanner() {
+		const el = ensureOfflineBanner();
+		const label = el.querySelector(".offline-label");
+		if (label) label.textContent = t("offline.banner") || "Offline – local view";
+		el.classList.toggle("is-visible", isAppOffline());
+	}
+
 	window.addEventListener("online", () => {
+		updateOfflineBanner();
 		toast(t("offline.back_online") || "Back online — syncing…", "success");
 		void replayOfflineOps();
 	});
 
 	window.addEventListener("offline", () => {
+		updateOfflineBanner();
 		toast(t("offline.now_offline") || "You are offline. Changes are saved locally.", "info");
 	});
+
+	// Reflect initial connectivity on boot (e.g. app opened while already offline)
+	if (document.readyState === "loading") {
+		document.addEventListener("DOMContentLoaded", updateOfflineBanner, { once: true });
+	} else {
+		updateOfflineBanner();
+	}
 
 	// ─── Visibility-Change trigger for Auto-Backup/Import ──────────
 	document.addEventListener("visibilitychange", () => {
@@ -14108,8 +14146,8 @@
 				: "rgba(2,6,23,.35)"
 			: "rgba(2,6,23,.1)";
 		const highlightCssUrl = isLightSyntax
-			? "https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github.min.css"
-			: "https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css";
+			? "/vendor/github.min.css?v=2026-07-13-01"
+			: "/vendor/github-dark.min.css?v=2026-07-13-01";
 		const highlightThemeCss = buildPreviewHighlightCss(activeTheme);
 
 		function getPreviewFieldColors(theme, opts) {
