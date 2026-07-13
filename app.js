@@ -11806,6 +11806,18 @@
 		if (!currentNoteId) return;
 		const currentText = String(textarea && textarea.value ? textarea.value : "");
 		if (!currentText.trim()) return;
+		// Only flush when there is a genuine pending change. Without this guard,
+		// merely opening a note and clicking away re-saves its UNCHANGED text
+		// (queuedText falls back to currentText) → server PUT bumps updatedAt →
+		// the note wrongly jumps to the top of the "Geändert" sort.
+		const hasQueued = Boolean(psAutoSaveQueuedText);
+		if (
+			!hasQueued &&
+			psAutoSaveLastSavedNoteId === currentNoteId &&
+			currentText === psAutoSaveLastSavedText
+		) {
+			return;
+		}
 		if (psAutoSaveTimer) {
 			window.clearTimeout(psAutoSaveTimer);
 			psAutoSaveTimer = 0;
