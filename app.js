@@ -9184,11 +9184,19 @@
 		el.id = "offlineBanner";
 		el.setAttribute("role", "status");
 		el.setAttribute("aria-live", "polite");
-		const dot = document.createElement("span");
-		dot.className = "offline-dot";
+		// Struck-through cloud (offline) icon — inline SVG, inherits currentColor.
+		const icon = document.createElement("span");
+		icon.className = "offline-icon";
+		icon.setAttribute("aria-hidden", "true");
+		icon.innerHTML =
+			'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" ' +
+			'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" ' +
+			'stroke-linejoin="round">' +
+			'<path d="M7.5 18a4 4 0 0 1-.6-7.96 5 5 0 0 1 9.24-1.32M18.5 12.1A3.5 3.5 0 0 1 18 18H9"/>' +
+			'<line x1="3" y1="3" x2="21" y2="21"/></svg>';
 		const label = document.createElement("span");
 		label.className = "offline-label";
-		el.appendChild(dot);
+		el.appendChild(icon);
 		el.appendChild(label);
 		document.body.appendChild(el);
 		offlineBannerEl = el;
@@ -13432,6 +13440,57 @@
 		scheduleSend();
 	}
 
+	// Preview-only libraries (markdown-it + task-lists plugin + highlight.js) are
+	// not part of the initial mobile load — they are injected on demand the first
+	// time the preview is rendered, and idle-prefetched shortly after boot so they
+	// are usually ready by then. They stay SW-precached, so the fetch is instant
+	// and works offline. `md` stays null until they load; ensureMarkdown() returns
+	// null in the meantime and updatePreview() shows its graceful fallback.
+	const MD_LIB_VERSION = "2026-07-13-01";
+	let mdLibsPromise = null;
+	function loadScriptOnce(src) {
+		return new Promise((resolve, reject) => {
+			const existing = document.querySelector(
+				`script[data-mirror-lib="${src}"]`
+			);
+			if (existing) {
+				if (existing.dataset.loaded === "1") return resolve();
+				existing.addEventListener("load", () => resolve());
+				existing.addEventListener("error", reject);
+				return;
+			}
+			const s = document.createElement("script");
+			s.src = src;
+			s.async = true;
+			s.setAttribute("data-mirror-lib", src);
+			s.addEventListener("load", () => {
+				s.dataset.loaded = "1";
+				resolve();
+			});
+			s.addEventListener("error", reject);
+			document.head.appendChild(s);
+		});
+	}
+	function ensureMarkdownLibs() {
+		if (typeof window.markdownit === "function" && window.hljs) {
+			return Promise.resolve();
+		}
+		if (mdLibsPromise) return mdLibsPromise;
+		const v = `?v=${MD_LIB_VERSION}`;
+		// markdown-it before its task-lists plugin; highlight.js can load in parallel.
+		mdLibsPromise = Promise.all([
+			loadScriptOnce(`/vendor/markdown-it.min.js${v}`).then(() =>
+				loadScriptOnce(`/vendor/markdown-it-task-lists.min.js${v}`)
+			),
+			loadScriptOnce(`/vendor/highlight.min.js${v}`),
+		]).catch((err) => {
+			// Allow a later retry if the network hiccups (e.g. first-ever offline)
+			mdLibsPromise = null;
+			throw err;
+		});
+		return mdLibsPromise;
+	}
+
 	function ensureMarkdown() {
 		if (md) return md;
 		if (typeof window.markdownit !== "function") return null;
@@ -13934,9 +13993,16 @@
 			togglePreview.textContent = previewOpen ? "Hide preview" : "Preview";
 		}
 		if (previewOpen) {
-			const renderer = ensureMarkdown();
-			if (!renderer) {
-				toast("Markdown preview: library not loaded (CDN).", "error");
+			if (!ensureMarkdown()) {
+				// Libraries not loaded yet — kick off the lazy load and re-render
+				// when ready. updatePreview() below shows the fallback meanwhile.
+				ensureMarkdownLibs()
+					.then(() => {
+						if (previewOpen) updatePreview();
+					})
+					.catch(() => {
+						toast("Markdown preview: library failed to load.", "error");
+					});
 			}
 			updatePreview();
 			window.setTimeout(() => {
@@ -33709,6 +33775,9 @@ self.onmessage = async (e) => {
 			runDeferredStartupTask(() => loadCommentsForRoom(), { delay: 420, timeout: 2500, label: "loadCommentsForRoom" });
 			runDeferredStartupTask(() => initBlockArrange(), { delay: 520, timeout: 2500, label: "initBlockArrange" });
 			runDeferredStartupTask(() => syncRoomSlotsFromServer(), { delay: 640, timeout: 2500, label: "syncRoomSlotsFromServer" });
+			// Warm the preview-only markdown/highlight libs during idle time so the
+			// first preview open is instant, without slowing the initial paint.
+			runDeferredStartupTask(() => ensureMarkdownLibs(), { delay: 900, timeout: 4000, label: "prefetchMarkdownLibs" });
 			return;
 		}
 
@@ -33719,6 +33788,7 @@ self.onmessage = async (e) => {
 		void loadCommentsForRoom();
 		initBlockArrange();
 		void syncRoomSlotsFromServer();
+		runDeferredStartupTask(() => ensureMarkdownLibs(), { delay: 900, timeout: 4000, label: "prefetchMarkdownLibs" });
 	}
 	initStartupTasks();
 })();
