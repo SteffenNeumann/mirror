@@ -1,25 +1,22 @@
 // Mirror Service Worker — Offline-First Cache + Offline Notes Sync Queue
-const CACHE_NAME = "mirror-v34";
+const CACHE_NAME = "mirror-v35";
 const PRECACHE_URLS = [
 	"/",
 	"/index.html",
-	"/app.js?v=2026-07-02-05",
+	"/app.js?v=2026-07-13-01",
 	"/styles/app.css",
+	"/vendor/tailwind.min.js?v=2026-07-13-01",
+	"/vendor/markdown-it.min.js?v=2026-07-13-01",
+	"/vendor/markdown-it-task-lists.min.js?v=2026-07-13-01",
+	"/vendor/highlight.min.js?v=2026-07-13-01",
+	"/vendor/github-dark.min.css?v=2026-07-13-01",
+	"/vendor/github.min.css?v=2026-07-13-01",
 	"/vendor/yjs.bundle.js",
 	"/vendor/yjs-init.js",
 	"/vendor/force-graph.min.js?v=2026-07-01-01",
 	"/vendor/jetbrains-mono-var.woff2?v=2026-07-02-04",
 	"/excalidraw-embed.html",
 	"/manifest.json",
-];
-
-// CDN assets to cache on first use (stale-while-revalidate)
-const CDN_CACHE_URLS = [
-	"https://cdn.tailwindcss.com",
-	"https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js",
-	"https://cdn.jsdelivr.net/npm/markdown-it-task-lists@2.1.1/dist/markdown-it-task-lists.min.js",
-	"https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/highlight.min.js",
-	"https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css",
 ];
 
 // --- Install: pre-cache critical assets ---
@@ -67,22 +64,19 @@ self.addEventListener("fetch", (event) => {
 	// gitstamp: always network (never serve stale build info)
 	if (url.pathname === "/gitstamp.txt") return;
 
-	// CDN assets: cache-first (stale-while-revalidate)
-	const isCdn = url.origin !== self.location.origin;
-
+	// Static assets: cache-first (stale-while-revalidate). All app assets are
+	// same-origin (self-hosted under /vendor), so we only cache same-origin GETs.
 	event.respondWith(
 		caches.open(CACHE_NAME).then((cache) =>
 			cache.match(event.request).then((cachedResponse) => {
 				const fetchPromise = fetch(event.request)
 					.then((networkResponse) => {
-						// Cache same-origin + CDN successful responses
-						if (networkResponse.ok) {
-							const shouldCache =
-								url.origin === self.location.origin ||
-								CDN_CACHE_URLS.some((u) => event.request.url.startsWith(u));
-							if (shouldCache) {
-								cache.put(event.request, networkResponse.clone());
-							}
+						// Cache successful same-origin responses for offline use
+						if (
+							networkResponse.ok &&
+							url.origin === self.location.origin
+						) {
+							cache.put(event.request, networkResponse.clone());
 						}
 						return networkResponse;
 					})
