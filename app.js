@@ -20110,6 +20110,11 @@ self.onmessage = async (e) => {
 		if (idx < 0) return;
 		const text = String(textVal ?? "");
 		const base = psState.notes[idx];
+		// Only bump updatedAt on a real content change. Merely opening/selecting a
+		// note re-applies its identical text via the room sync echo — that must NOT
+		// re-stamp "modified", otherwise every viewed note jumps to the top of the
+		// "Geändert" sort.
+		if (String(base.text ?? "") === text) return;
 		const updated = {
 			...base,
 			text,
