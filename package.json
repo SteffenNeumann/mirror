@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "node server.js",
-    "start": "node server.js"
+    "start": "node server.js",
+    "build:css": "tailwindcss -c tailwind.config.cjs -i styles/tailwind.input.css -o vendor/tailwind-built.css --minify"
   },
   "dependencies": {
     "better-sqlite3": "^11.8.1",
@@ -16,6 +17,7 @@
   "devDependencies": {
     "@flydotio/dockerfile": "^0.7.10",
     "@playwright/test": "^1.58.2",
-    "@types/node": "^25.5.0"
+    "@types/node": "^25.5.0",
+    "tailwindcss": "^3.4.17"
   }
 }

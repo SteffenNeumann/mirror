@@ -1,5 +1,6 @@
 # ToDo’s  
 
+- [ ] Ladezeit erster Zugriff ~10s (Cold-Start): Fly-Maschine schläft bei Leerlauf (`fly.toml`: `auto_stop_machines='suspend'`, `min_machines_running=0`) → erster Request weckt sie. App selbst lädt warm in ~250ms. Fix-Optionen: `min_machines_running=1` (immer warm, ~5$/Mon) ODER Keep-Alive-Ping ODER Client-Gewicht senken (app.js 1.15MB roh / Tailwind-Runtime 398KB). Beobachten (Steffen), dann entscheiden. (2026-07-13)
 - [ ] Google Kalender integration vervollstandigen( [https://console.cloud.google.com/auth/branding?
 - [ ] Themes anpassen(light Themes)
 - [ ] Tasks in Akzentfarbe
