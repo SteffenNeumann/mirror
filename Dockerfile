@@ -20,9 +20,10 @@ FROM base AS build
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y build-essential node-gyp pkg-config python-is-python3
 
-# Install node modules
+# Install node modules — include devDependencies (tailwindcss) for the CSS build.
+# NODE_ENV=production (set on the base image) would otherwise make npm ci skip them.
 COPY package-lock.json package.json ./
-RUN npm ci
+RUN npm ci --include=dev
 
 # Copy application code
 COPY . .
@@ -31,7 +32,8 @@ COPY . .
 # Scans index.html + app.js for used classes; output goes to vendor/tailwind-built.css
 # which is served statically. Keeps the dev workflow build-free — this runs only
 # at deploy time, so new Tailwind classes are always picked up automatically.
-RUN npm run build:css
+# Prune devDependencies afterwards so the final image stays lean.
+RUN npm run build:css && npm prune --omit=dev
 
 
 # Final stage for app image
