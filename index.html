@@ -25,22 +25,16 @@
 		</style>
 
 		<!-- Preload critical assets -->
+		<link rel="preload" href="/vendor/tailwind-built.css?v=2026-07-14-01" as="style" />
 		<link rel="preload" href="/styles/app.css" as="style" />
-		<link rel="preload" href="/app.js?v=2026-07-13-02" as="script" />
-		<link rel="preload" href="/vendor/tailwind.min.js?v=2026-07-13-01" as="script" />
+		<link rel="preload" href="/app.js?v=2026-07-14-01" as="script" />
 		<link rel="prefetch" href="/vendor/yjs.bundle.js" as="script" />
 
-		<!-- Tailwind (self-hosted for offline) - loaded async to not block first paint -->
-		<script>
-			(function(){
-				var s=document.createElement('script');
-				s.src='/vendor/tailwind.min.js?v=2026-07-13-01';
-				s.onload=function(){
-					tailwind.config={theme:{extend:{fontFamily:{sans:["ui-sans-serif","system-ui","-apple-system","Segoe UI","Roboto","Inter","Arial","Noto Sans","sans-serif"]},boxShadow:{soft:"0 10px 30px rgba(0,0,0,.25)"}}}};
-				};
-				document.head.appendChild(s);
-			})();
-		</script>
+		<!-- Tailwind: precompiled static CSS (built from index.html + app.js by the
+		     Docker build step; see tailwind.config.cjs). Replaces the ~400KB Play-CDN
+		     runtime JIT compiler for a much faster mobile load. Loaded before app.css
+		     so app.css keeps overriding utilities. -->
+		<link rel="stylesheet" href="/vendor/tailwind-built.css?v=2026-07-14-01" />
 		<link
 			rel="stylesheet"
 			href="/vendor/github-dark.min.css?v=2026-07-13-01"
@@ -3776,7 +3770,7 @@
 		     by app.js (ensureMarkdownLibs) to speed up initial mobile load. They
 		     stay SW-precached so the lazy load is instant + offline-capable. -->
 		<script defer fetchpriority="low" src="/vendor/yjs.bundle.js"></script>
-		<script defer src="/app.js?v=2026-07-13-02"></script>
+		<script defer src="/app.js?v=2026-07-14-01"></script>
 		<script>
 			if ("serviceWorker" in navigator) {
 				window.addEventListener("load", function () {

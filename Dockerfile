@@ -27,6 +27,12 @@ RUN npm ci
 # Copy application code
 COPY . .
 
+# Precompile Tailwind to a static stylesheet (replaces the Play-CDN runtime).
+# Scans index.html + app.js for used classes; output goes to vendor/tailwind-built.css
+# which is served statically. Keeps the dev workflow build-free — this runs only
+# at deploy time, so new Tailwind classes are always picked up automatically.
+RUN npm run build:css
+
 
 # Final stage for app image
 FROM base
