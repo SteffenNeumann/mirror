@@ -27,7 +27,7 @@
 		<!-- Preload critical assets -->
 		<link rel="preload" href="/vendor/tailwind-built.css?v=2026-07-14-01" as="style" />
 		<link rel="preload" href="/styles/app.css" as="style" />
-		<link rel="preload" href="/app.js?v=2026-07-14-02" as="script" />
+		<link rel="preload" href="/app.js?v=2026-07-14-03" as="script" />
 		<link rel="prefetch" href="/vendor/yjs.bundle.js" as="script" />
 
 		<!-- Tailwind: precompiled static CSS (built from index.html + app.js by the
@@ -3770,9 +3770,20 @@
 		     by app.js (ensureMarkdownLibs) to speed up initial mobile load. They
 		     stay SW-precached so the lazy load is instant + offline-capable. -->
 		<script defer fetchpriority="low" src="/vendor/yjs.bundle.js"></script>
-		<script defer src="/app.js?v=2026-07-14-02"></script>
+		<script defer src="/app.js?v=2026-07-14-03"></script>
 		<script>
 			if ("serviceWorker" in navigator) {
+				// Auto-reload once when an UPDATED service worker takes control, so
+				// new deploys apply without a manual refresh. Guard on an existing
+				// controller so the first-ever install (which also fires
+				// controllerchange via clients.claim) does not trigger a reload loop.
+				var swHadController = !!navigator.serviceWorker.controller;
+				var swRefreshing = false;
+				navigator.serviceWorker.addEventListener("controllerchange", function () {
+					if (!swHadController || swRefreshing) return;
+					swRefreshing = true;
+					window.location.reload();
+				});
 				window.addEventListener("load", function () {
 					setTimeout(function () {
 						navigator.serviceWorker.register("/sw.js").catch(function (e) {

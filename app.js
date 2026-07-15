@@ -19063,6 +19063,45 @@ self.onmessage = async (e) => {
 	let autoSelectedRoomName = "";
 	let autoSelectedKey = "";
 
+	// Fix A: restore the last room used on THIS device from localStorage before
+	// minting a new random room. This is the primary fix for the mobile PWA
+	// (start_url "/") creating a brand-new room on every launch: localStorage
+	// survives PWA relaunches and needs no login/server round-trip, so the user
+	// always returns to their last room. Reads keys by literal string because the
+	// ROOM_TABS_KEY / RECENT_KEY consts are declared just below (TDZ up here).
+	function readLastLocalRoomSync() {
+		const pickFrom = (raw) => {
+			try {
+				const arr = JSON.parse(raw || "[]");
+				if (!Array.isArray(arr) || !arr.length) return null;
+				let best = null;
+				let bestScore = -1;
+				for (const it of arr) {
+					if (!it || !it.room) continue;
+					const score = Number(it.lastUsed) || Number(it.addedAt) || 0;
+					if (score >= bestScore) {
+						bestScore = score;
+						best = it;
+					}
+				}
+				if (!best || !best.room) return null;
+				const r = normalizeRoom(best.room);
+				if (!r) return null;
+				return { room: r, key: normalizeKey(best.key) };
+			} catch {
+				return null;
+			}
+		};
+		try {
+			return (
+				pickFrom(localStorage.getItem("mirror_room_tabs_v1")) ||
+				pickFrom(localStorage.getItem("mirror_recent_rooms"))
+			);
+		} catch {
+			return null;
+		}
+	}
+
 	let { room, key } = parseRoomAndKeyFromHash();
 	if (!room) {
 		const favs = dedupeFavorites(loadFavorites());
@@ -19072,18 +19111,26 @@ self.onmessage = async (e) => {
 			key = startupFav.key;
 			startupApplied = true;
 		} else {
-			room = randomRoom();
-			key = randomKey();
-			autoSelectedRoom = true;
-			autoSelectedRoomName = room;
-			autoSelectedKey = key;
-			try {
-				localStorage.setItem(
-					AUTO_ROOM_KEY,
-					JSON.stringify({ room, key })
-				);
-			} catch {
-				// ignore
+			const lastLocal = readLastLocalRoomSync();
+			if (lastLocal && lastLocal.room) {
+				// Return to the last room used on this device (not a throwaway —
+				// leave autoSelectedRoom false so it is kept as-is).
+				room = lastLocal.room;
+				key = lastLocal.key;
+			} else {
+				room = randomRoom();
+				key = randomKey();
+				autoSelectedRoom = true;
+				autoSelectedRoomName = room;
+				autoSelectedKey = key;
+				try {
+					localStorage.setItem(
+						AUTO_ROOM_KEY,
+						JSON.stringify({ room, key })
+					);
+				} catch {
+					// ignore
+				}
 			}
 		}
 		location.hash = buildShareHash(room, key);

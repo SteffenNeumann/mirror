@@ -1,9 +1,9 @@
 // Mirror Service Worker — Offline-First Cache + Offline Notes Sync Queue
-const CACHE_NAME = "mirror-v41";
+const CACHE_NAME = "mirror-v42";
 const PRECACHE_URLS = [
 	"/",
 	"/index.html",
-	"/app.js?v=2026-07-14-02",
+	"/app.js?v=2026-07-14-03",
 	"/styles/app.css",
 	"/vendor/tailwind-built.css?v=2026-07-14-01",
 	"/vendor/markdown-it.min.js?v=2026-07-13-01",
