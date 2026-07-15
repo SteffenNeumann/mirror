@@ -28,12 +28,12 @@ RUN npm ci --include=dev
 # Copy application code
 COPY . .
 
-# Precompile Tailwind to a static stylesheet (replaces the Play-CDN runtime).
-# Scans index.html + app.js for used classes; output goes to vendor/tailwind-built.css
-# which is served statically. Keeps the dev workflow build-free — this runs only
-# at deploy time, so new Tailwind classes are always picked up automatically.
+# Build step (deploy-time only; keeps the dev workflow build-free):
+#  - build:css  precompiles Tailwind to a static stylesheet (vendor/tailwind-built.css),
+#               replacing the Play-CDN runtime. Scans index.html + app.js for classes.
+#  - build:js   minifies app.js in place (~1.16MB -> ~640KB) for faster mobile parse.
 # Prune devDependencies afterwards so the final image stays lean.
-RUN npm run build:css && npm prune --omit=dev
+RUN npm run build && npm prune --omit=dev
 
 
 # Final stage for app image

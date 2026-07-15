@@ -455,11 +455,95 @@
 
 	let skipStartupTabRestore = null;
 
+	// Fix B: pick the signed-in account's most-recently-used room from the server
+	// room tabs, excluding the throwaway auto-room we may have just created.
+	// Returns { room, key } or null. Read from psState.roomTabs (populated by
+	// /api/personal-space/me), so it must be called after the PS load.
+	function getMostRecentServerRoom(excludeRoom, excludeKey) {
+		if (!psState || !psState.authed) return null;
+		const exRoom = normalizeRoom(excludeRoom);
+		const exKey = normalizeKey(excludeKey);
+		const tabs = (Array.isArray(psState.roomTabs) ? psState.roomTabs : [])
+			.filter((t) => t && t.room)
+			.filter((t) => !(t.room === exRoom && t.key === exKey));
+		if (!tabs.length) return null;
+		let best = tabs[0];
+		for (const t of tabs) {
+			const ts = Number(t.lastUsed) || Number(t.addedAt) || 0;
+			const bs = Number(best.lastUsed) || Number(best.addedAt) || 0;
+			if (ts >= bs) best = t;
+		}
+		return { room: normalizeRoom(best.room), key: normalizeKey(best.key) };
+	}
+
 	function maybeApplyStartupFavoriteFromPs() {
 		if (startupApplied) return;
 		const favs = dedupeFavorites(loadFavorites());
 		const startupFav = favs.find((f) => f.isStartup);
 		if (!startupFav) {
+			// Fix B — account-authoritative room restore. On mobile the PWA
+			// (start_url "/") launches without a URL hash, so without this the app
+			// mints a NEW random room on every launch even when signed in. If we
+			// just created a throwaway auto-room but the account already has rooms,
+			// jump to the account's most-recent room and drop the throwaway (local
+			// + server) so empty rooms don't accumulate.
+			if (autoSelectedRoom && psState && psState.authed) {
+				const serverRecent = getMostRecentServerRoom(
+					autoSelectedRoomName,
+					autoSelectedKey
+				);
+				if (
+					serverRecent &&
+					serverRecent.room &&
+					!(
+						serverRecent.room === autoSelectedRoomName &&
+						serverRecent.key === autoSelectedKey
+					)
+				) {
+					// Drop the throwaway auto-room from local tabs + server.
+					const tabs = dedupeRoomTabs(loadRoomTabs());
+					const keep = tabs.filter(
+						(t) =>
+							!(
+								t.room === autoSelectedRoomName &&
+								t.key === autoSelectedKey
+							)
+					);
+					if (keep.length !== tabs.length) {
+						saveRoomTabs(keep);
+						removeRoomTabFromState(
+							autoSelectedRoomName,
+							autoSelectedKey
+						);
+						removeNoteRoomBindingByRoom(
+							autoSelectedRoomName,
+							autoSelectedKey
+						);
+						api("/api/room-tabs", {
+							method: "DELETE",
+							body: JSON.stringify({
+								room: autoSelectedRoomName,
+								key: autoSelectedKey,
+							}),
+						}).catch(() => {
+							// ignore
+						});
+					}
+					autoSelectedRoom = false;
+					try {
+						localStorage.removeItem(AUTO_ROOM_KEY);
+					} catch {
+						// ignore
+					}
+					startupApplied = true;
+					renderRoomTabs();
+					location.hash = buildShareHash(
+						serverRecent.room,
+						serverRecent.key
+					);
+					return;
+				}
+			}
 			if (autoSelectedRoom) {
 				const tabs = dedupeRoomTabs(loadRoomTabs());
 				const exists = tabs.some(
