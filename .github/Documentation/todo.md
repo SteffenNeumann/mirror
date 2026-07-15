@@ -1,6 +1,6 @@
 # ToDo’s  
 
-- [ ] Ladezeit erster Zugriff ~10s (Cold-Start): Fly-Maschine schläft bei Leerlauf (`fly.toml`: `auto_stop_machines='suspend'`, `min_machines_running=0`) → erster Request weckt sie. App selbst lädt warm in ~250ms. Rest-Fix nur noch server-seitig: `min_machines_running=1` (immer warm, ~5$/Mon) ODER Keep-Alive-Ping. Beobachten (Steffen), dann entscheiden. (2026-07-13)
+- [x] Cold-Start (~5s weißer Bildschirm 1. Zugriff): Keep-Alive-Ping via GitHub Actions (`.github/workflows/keep-alive.yml`, alle 5 Min, intern 60s-Takt) hält Fly-Maschine warm. Public Repo → Actions kostenlos. HINWEIS: Fly-Compute für eine warme Maschine kostet ~gleich viel wie `min_machines_running=1` (~5$/Mon) — nur das Pingen ist gratis. (2026-07-15)
 - [x] Client-Ladegewicht mobil gesenkt: markdown-it/highlight.js lazy (~248KB), Tailwind-Runtime → vorkompiliertes statisches CSS (398KB→30KB, kein Runtime-JIT). (2026-07-14, PR #19/#20)
 - [ ] Google Kalender integration vervollstandigen( [https://console.cloud.google.com/auth/branding?
 - [ ] Themes anpassen(light Themes)
