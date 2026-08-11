@@ -20,6 +20,7 @@
 	const metaRight = document.getElementById("metaRight");
 	const presenceSummary = document.getElementById("presenceSummary");
 	const presenceList = document.getElementById("presenceList");
+	const presenceCompact = document.getElementById("presenceCompact");
 	const typingIndicator = document.getElementById("typingIndicator");
 	const crdtStatus = document.getElementById("crdtStatus");
 	const toggleCrdtMarksBtn = document.getElementById("toggleCrdtMarks");
@@ -784,6 +785,79 @@
 		return `${base}-${Date.now().toString(36)}`;
 	}
 
+	// Geräteklasse dieser Session — rein clientseitig, damit man in der
+	// Präsenzliste erkennt, welcher Chip das eigene Handy bzw. der Rechner ist.
+	function detectDeviceKind() {
+		try {
+			const ua = navigator.userAgent || "";
+			const touchPoints = Number(navigator.maxTouchPoints) || 0;
+			// iPadOS 13+ meldet sich als "Macintosh", verrät sich aber über Touch
+			const isTablet =
+				/ipad/i.test(ua) ||
+				(/android/i.test(ua) && !/mobile/i.test(ua)) ||
+				(/macintosh/i.test(ua) && touchPoints > 1);
+			if (isTablet) return "tablet";
+			const uaData = navigator.userAgentData;
+			if (uaData && typeof uaData.mobile === "boolean") {
+				return uaData.mobile ? "mobile" : "desktop";
+			}
+			if (/iphone|ipod|android|windows phone/i.test(ua)) return "mobile";
+			// Touch + schmaler Viewport nur dann als Handy werten, wenn die UA
+			// kein Desktop-OS nennt — sonst gilt ein Windows-Touch-Notebook in
+			// Firefox (kein userAgentData) fälschlich als Handy.
+			const desktopOs = /windows nt|x11|cros|linux x86/i.test(ua);
+			if (!desktopOs && touchPoints > 0 && window.innerWidth <= 1023) {
+				return "mobile";
+			}
+		} catch {
+			// ignore
+		}
+		return "desktop";
+	}
+
+	const deviceKind = detectDeviceKind();
+
+	function deviceKindLabel(kind) {
+		if (kind === "mobile") return t("device.mobile");
+		if (kind === "tablet") return t("device.tablet");
+		return t("device.desktop");
+	}
+
+	const DEVICE_ICON_PATHS = {
+		mobile: [
+			"M7 2h10a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z",
+			"M11 18h2",
+		],
+		tablet: [
+			"M5 2h14a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z",
+			"M10 18h4",
+		],
+		desktop: ["M3 4h18v12H3z", "M2 20h20", "M9 16l-1 4", "M15 16l1 4"],
+	};
+
+	function createDeviceIcon(kind) {
+		const paths = DEVICE_ICON_PATHS[kind] || DEVICE_ICON_PATHS.desktop;
+		const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+		svg.setAttribute("viewBox", "0 0 24 24");
+		svg.setAttribute("fill", "none");
+		svg.setAttribute("stroke", "currentColor");
+		svg.setAttribute("stroke-width", "2");
+		svg.setAttribute("stroke-linecap", "round");
+		svg.setAttribute("stroke-linejoin", "round");
+		svg.setAttribute("aria-hidden", "true");
+		svg.setAttribute("class", "h-3 w-3 shrink-0");
+		svg.style.opacity = "0.7";
+		for (const d of paths) {
+			const path = document.createElementNS(
+				"http://www.w3.org/2000/svg",
+				"path"
+			);
+			path.setAttribute("d", d);
+			svg.appendChild(path);
+		}
+		return svg;
+	}
+
 	const tabId = createClientId();
 	let clientId = createClientId();
 	const clientIdChannel =
@@ -990,6 +1064,7 @@
 						name: identity.name,
 						color: identity.color,
 						avatar: identity.avatar,
+						device: deviceKind,
 						ts: Date.now(),
 					});
 				}
@@ -1155,6 +1230,7 @@
 				name: identity.name,
 				avatar: identity.avatar,
 				color: identity.color,
+				device: deviceKind,
 				typing: false,
 				selection: typeof lastSelection !== "undefined" ? lastSelection : null,
 			});
@@ -1169,6 +1245,7 @@
 				name: identity.name,
 				color: identity.color,
 				avatar: identity.avatar,
+				device: deviceKind,
 				ts: Date.now(),
 			});
 		}
@@ -6975,6 +7052,13 @@
 				"slash.item.code_py": "Codeblock (PY)",
 				"presence.one": "{count} Nutzer online",
 				"presence.many": "{count} Nutzer online",
+				"presence.self": "{name} (du · {device})",
+				"presence.typing_short": "tippt",
+				"presence.compact": "{count} online",
+				"presence.compact_aria": "Nutzerliste einblenden",
+				"device.mobile": "Handy",
+				"device.tablet": "Tablet",
+				"device.desktop": "Computer",
 				"typing.one": "{name} tippt…",
 				"typing.many": "{count} Personen tippen…",
 				"settings.open": "Einstellungen öffnen",
@@ -7737,6 +7821,13 @@
 				"slash.item.code_py": "Code block (PY)",
 				"presence.one": "{count} user online",
 				"presence.many": "{count} users online",
+				"presence.self": "{name} (you · {device})",
+				"presence.typing_short": "typing",
+				"presence.compact": "{count} online",
+				"presence.compact_aria": "Show user list",
+				"device.mobile": "Phone",
+				"device.tablet": "Tablet",
+				"device.desktop": "Computer",
 				"typing.one": "{name} is typing…",
 				"typing.many": "{count} people are typing…",
 				"settings.open": "Open settings",
@@ -8368,6 +8459,9 @@
 			document.documentElement.setAttribute("lang", uiLang === "en" ? "en" : "de");
 			applyUiTranslations();
 			syncUiLangButtons();
+			// Präsenz-Chips und Kurzzeile werden imperativ gebaut und von
+			// applyUiTranslations nicht erfasst — sonst bleiben sie alt-sprachig.
+			if (typeof updatePresenceUI === "function") updatePresenceUI();
 			applyGlowEnabled();
 			renderFaq();
 			updateLinearProjectSelectOptions(getLinearNoteId());
@@ -25004,10 +25098,34 @@ self.onmessage = async (e) => {
 		else statusDot.classList.add("bg-slate-500");
 	}
 
+	const HEADER_COLLAPSED_KEY = "mirror_header_collapsed_v1";
+	let headerCollapsedState = false;
+
+	function loadHeaderCollapsed() {
+		try {
+			const raw = localStorage.getItem(HEADER_COLLAPSED_KEY);
+			if (raw === "1") return true;
+			if (raw === "0") return false;
+		} catch {
+			// ignore
+		}
+		return isMobileViewport();
+	}
+
+	function saveHeaderCollapsed(collapsed) {
+		try {
+			localStorage.setItem(HEADER_COLLAPSED_KEY, collapsed ? "1" : "0");
+		} catch {
+			// ignore
+		}
+	}
+
 	function setHeaderCollapsed(collapsed) {
+		headerCollapsedState = Boolean(collapsed);
 		headerDetailEls.forEach((el) => {
 			el.classList.toggle("hidden", collapsed);
 		});
+		updatePresenceCompact();
 		if (!toggleHeaderBtn) return;
 		toggleHeaderBtn.setAttribute("aria-expanded", collapsed ? "false" : "true");
 		const icon = toggleHeaderBtn.querySelector("[data-role=\"headerChevron\"]");
@@ -25207,7 +25325,38 @@ self.onmessage = async (e) => {
 			});
 	}
 
+	// Kurzfassung der Präsenz für den eingeklappten Header — damit auf Mobil
+	// immer sichtbar bleibt, wer online ist und auf welchem Gerät man selbst sitzt.
+	function updatePresenceCompact() {
+		if (!presenceCompact) return;
+		if (!headerCollapsedState) {
+			presenceCompact.classList.add("hidden");
+			return;
+		}
+		presenceCompact.classList.remove("hidden");
+		presenceCompact.innerHTML = "";
+		const count = presenceState.size;
+		const label = document.createElement("span");
+		label.textContent = formatUi(t("presence.compact"), { count });
+		presenceCompact.appendChild(label);
+		const sep = document.createElement("span");
+		sep.className = "opacity-40";
+		sep.textContent = "·";
+		presenceCompact.appendChild(sep);
+		presenceCompact.appendChild(createDeviceIcon(deviceKind));
+		const device = document.createElement("span");
+		device.textContent = deviceKindLabel(deviceKind);
+		presenceCompact.appendChild(device);
+		// Sichtbaren Text in den Accessible Name aufnehmen (WCAG 2.5.3),
+		// damit Sprachsteuerung den Button über das Gelesene ansprechen kann.
+		presenceCompact.setAttribute(
+			"aria-label",
+			`${label.textContent} · ${device.textContent} — ${t("presence.compact_aria")}`
+		);
+	}
+
 	function updatePresenceUI() {
+		updatePresenceCompact();
 		if (!presenceSummary || !presenceList) return;
 		const users = Array.from(presenceState.values());
 		const count = users.length;
@@ -25255,10 +25404,23 @@ self.onmessage = async (e) => {
 			dot.className = "inline-block h-2 w-2 rounded-full";
 			dot.style.background = user.color || "#94a3b8";
 			const label = document.createElement("span");
-			label.textContent =
-				isOwnUser ? `${user.name} (du)` : user.name;
+			const deviceLabel = user.device ? deviceKindLabel(user.device) : "";
+			label.textContent = isOwnUser
+				? formatUi(t("presence.self"), {
+						name: user.name,
+						// Für den eigenen Chip ist die lokal erkannte Klasse immer
+						// korrekt — nie auf einen generischen Default zurückfallen.
+						device: deviceLabel || deviceKindLabel(deviceKind),
+					})
+				: user.name;
 			chip.appendChild(avatar);
 			chip.appendChild(dot);
+			// Geräte-Icon vor dem Namen: macht eigene Sessions unterscheidbar,
+			// wenn Handy und Rechner denselben Kontonamen tragen.
+			if (user.device) {
+				chip.appendChild(createDeviceIcon(user.device));
+				if (!isOwnUser) chip.title = `${user.name} · ${deviceLabel}`;
+			}
 			chip.appendChild(label);
 			if (user.selection && typeof user.selection.start === "number") {
 				const sel = document.createElement("span");
@@ -25270,7 +25432,7 @@ self.onmessage = async (e) => {
 			if (user.typing) {
 				const typing = document.createElement("span");
 				typing.className = "text-[10px] text-fuchsia-300";
-				typing.textContent = "• tippt";
+				typing.textContent = `• ${t("presence.typing_short")}`;
 				chip.appendChild(typing);
 			}
 			presenceList.appendChild(chip);
@@ -25918,6 +26080,7 @@ self.onmessage = async (e) => {
 			name: identity.name,
 			avatar: identity.avatar,
 			color: identity.color,
+			device: deviceKind,
 			typing: false,
 			selection: lastSelection,
 		});
@@ -25948,6 +26111,7 @@ self.onmessage = async (e) => {
 				name: identity.name,
 				color: identity.color,
 				avatar: identity.avatar,
+				device: deviceKind,
 				ts: Date.now(),
 			});
 			const currentExcalNote = getExcalidrawNoteId();
@@ -26049,6 +26213,7 @@ self.onmessage = async (e) => {
 						name: String(user.name || "Guest"),
 						avatar: String(user.avatar || "🙂"),
 						color: String(user.color || "#94a3b8"),
+						device: String(user.device || ""),
 						typing: Boolean(user.typing),
 						selection: user.selection || null,
 					});
@@ -29098,11 +29263,17 @@ self.onmessage = async (e) => {
 	});
 
 	if (toggleHeaderBtn) {
-		let headerCollapsed = isMobileViewport();
-		setHeaderCollapsed(headerCollapsed);
+		setHeaderCollapsed(loadHeaderCollapsed());
 		toggleHeaderBtn.addEventListener("click", () => {
-			headerCollapsed = !headerCollapsed;
-			setHeaderCollapsed(headerCollapsed);
+			const next = !headerCollapsedState;
+			setHeaderCollapsed(next);
+			saveHeaderCollapsed(next);
+		});
+	}
+	if (presenceCompact) {
+		presenceCompact.addEventListener("click", () => {
+			setHeaderCollapsed(false);
+			saveHeaderCollapsed(false);
 		});
 	}
 	if (toggleCrdtMarksBtn) {

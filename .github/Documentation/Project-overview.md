@@ -329,6 +329,28 @@ interface AvailabilityData {
 
 ---
 
+## Aktuelle Änderungen (2026-08-11)
+
+- **Geräte-Anzeige in der Präsenzliste + Präsenz auf Mobil wieder sichtbar** `#presence` `#mobile` `#i18n` `#ux`:
+
+  **Problem 1 — Präsenz auf Mobil unsichtbar.** Seit `035b333` (2026-01-20) startet der Header eingeklappt (`headerCollapsed = isMobileViewport()`). `setHeaderCollapsed()` setzt `hidden` auf alle `[data-header-detail="true"]`-Elemente — und `#presenceSummary` + `#presenceList` liegen in genau so einem Container ([index.html](../../index.html) Header-Block). Auf dem Handy war die Anzeige „N Nutzer online" damit vor dem ersten Paint weg. Verschärfend: `#toggleHeader` nutzt ein Desktop-Hover-Muster (`opacity-0` → `group-hover:opacity-100`) ohne Touch-Fallback und war auf Touch-Geräten faktisch unsichtbar; der Aufklapp-Zustand wurde nicht persistiert und fiel bei jedem Reload/Raumwechsel zurück.
+
+  **Problem 2 — eigene Geräte ununterscheidbar.** Seit `earlyIdentitySync()` (`3bdfec7`) laden alle Geräte dieselbe kontobezogene Identität (Name/Avatar/Farbe) vom Server. Handy und Rechner erschienen als zwei optisch identische Chips; nur der `(du)`-Marker verriet die eigene Session — nicht aber, welches Gerät das war.
+
+  **Lösung — Geräteklasse durch die gesamte Presence-Kette:**
+  1. `detectDeviceKind()` (`app.js`, direkt vor `createClientId`-Nutzung) klassifiziert clientseitig in `mobile` / `tablet` / `desktop`. Reihenfolge ist wichtig: Tablet-Erkennung **zuerst** (iPadOS 13+ meldet sich als `Macintosh` und verrät sich nur über `maxTouchPoints > 1`), dann `navigator.userAgentData.mobile`, dann UA-Regex, dann Touch+Viewport-Fallback. Kein Server-seitiges UA-Parsing, keine neue Dependency.
+  2. Feld `device` läuft durch **vier Whitelists**, die es sonst still verschlucken würden: `hello`-Payload (3 Sendestellen: `connect()`, nach `syncIdentityFromServer`, nach `saveIdentityFromModal`) → `server.js` `hello`-Handler (baut das Presence-Objekt feldweise neu, validiert jetzt gegen `["mobile","tablet","desktop"]`) → Client-`presence_state`-Handler (baut ebenfalls feldweise neu) → `updatePresenceUI()`.
+  3. `createDeviceIcon(kind)` rendert ein Inline-SVG (`currentColor`, theme-neutral) statt Emoji — Telefon/Tablet/Laptop sind so eindeutig unterscheidbar. Eigener Chip zeigt `Name (du · Handy)`, fremde Chips bekommen ein `title` mit Gerätelabel.
+  4. Neue Kurzzeile `#presenceCompact` **außerhalb** des `data-header-detail`-Containers: bei eingeklapptem Header immer sichtbar (`1 online · 💻 Computer`), klickbar zum Aufklappen. Bei ausgeklapptem Header ausgeblendet (die volle Chip-Liste ersetzt sie).
+  5. Aufklapp-Zustand persistiert in `localStorage` unter `mirror_header_collapsed_v1` (`"1"`/`"0"`); ohne gespeicherten Wert bleibt der bisherige Default `isMobileViewport()`. `#toggleHeader` wird per `@media (hover: none)` auf Touch dauerhaft sichtbar.
+  6. i18n DE+EN: `presence.self`, `presence.typing_short`, `presence.compact`, `presence.compact_aria`, `device.mobile|tablet|desktop`. Die bisher hartcodierten deutschen Strings `(du)` und `• tippt` wurden dabei in die i18n-Tabelle überführt.
+
+  **Grenzen:** `clientId` wird bei jedem (Re-)Connect neu vergeben und identifiziert eine WebSocket-Session, kein Gerät — nach einem Netzwechsel können kurzzeitig zwei Chips desselben Geräts stehen, bis der Server die tote Session aufräumt (bestehendes Verhalten). Nicht eingeloggte Gast-Sessions behalten ihren Zufallsnamen, bekommen das Geräte-Icon aber trotzdem.
+
+  **Verifiziert:** `detectDeviceKind()` gegen 14 echte User-Agents (iPhone, iPad klassisch, iPadOS-13+-als-Macintosh, Android-Phone Chrome/Firefox, Android-Tablet, macOS breit/schmal, Windows, Windows-Touch-Laptop Chrome **und Firefox**, Linux-X11-Touch, ChromeOS-Touch, Firefox-iOS) — alle korrekt. Der Touch-Fallback braucht dafür einen Desktop-OS-Ausschluss: ohne ihn galt ein Windows-Touch-Notebook in Firefox (kein `navigator.userAgentData`) bei schmalem Fenster fälschlich als Handy. Browser: Chip-Rendering, Kurzzeile, Persistenz `"0"`/`"1"`, Klick-zum-Aufklappen, Touch-Sichtbarkeit des Toggles, DE+EN.
+
+---
+
 ## Aktuelle Änderungen (2026-03-02)
 
 - **Globales Command Palette (Shift+Cmd/Ctrl+P)** `#ux` `#command-palette` `#search` `#keyboard`: Neues globales modales Suchfenster im VS-Code-/Spotlight-Stil. Öffnet sich mit `Shift+Cmd+P` (Mac) bzw. `Shift+Ctrl+P` (Windows/Linux) über allen anderen Panels.

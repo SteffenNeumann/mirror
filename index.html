@@ -27,7 +27,7 @@
 		<!-- Preload critical assets -->
 		<link rel="preload" href="/vendor/tailwind-built.css?v=2026-07-14-01" as="style" />
 		<link rel="preload" href="/styles/app.css" as="style" />
-		<link rel="preload" href="/app.js?v=2026-07-14-03" as="script" />
+		<link rel="preload" href="/app.js?v=2026-08-11-01" as="script" />
 		<link rel="prefetch" href="/vendor/yjs.bundle.js" as="script" />
 
 		<!-- Tailwind: precompiled static CSS (built from index.html + app.js by the
@@ -467,6 +467,11 @@
 										<span id="roomLabel" class="font-medium text-slate-100"></span>
 									</div>
 							</div>
+							<button
+								id="presenceCompact"
+								type="button"
+								class="mt-1 hidden flex items-center justify-start gap-1 text-[11px] text-slate-400 transition hover:text-slate-200 sm:justify-end"
+								aria-label="Nutzerliste einblenden"></button>
 							<div
 								class="mt-1 flex flex-col items-start gap-1 text-[11px] text-slate-400 sm:items-end"
 								data-header-detail="true">
@@ -3770,7 +3775,7 @@
 		     by app.js (ensureMarkdownLibs) to speed up initial mobile load. They
 		     stay SW-precached so the lazy load is instant + offline-capable. -->
 		<script defer fetchpriority="low" src="/vendor/yjs.bundle.js"></script>
-		<script defer src="/app.js?v=2026-07-14-03"></script>
+		<script defer src="/app.js?v=2026-08-11-01"></script>
 		<script>
 			if ("serviceWorker" in navigator) {
 				// Auto-reload once when an UPDATED service worker takes control, so

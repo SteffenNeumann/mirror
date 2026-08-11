@@ -12061,3 +12061,24 @@ body[data-theme="monoLight"] #codeLang option {
 		color: var(--accent-text, #e2e8f0);
 	}
 }
+
+/* Header-Toggle & Präsenz-Kurzzeile auf Touch-Geräten sichtbar machen.
+   #toggleHeader nutzt ein Desktop-Hover-Muster (opacity-0 → group-hover),
+   das auf Touch nie greift — der Button war dort faktisch unsichtbar. */
+@media (hover: none) {
+	#toggleHeader {
+		opacity: 1;
+		min-height: 40px;
+		min-width: 40px;
+	}
+}
+#toggleHeader,
+#presenceCompact {
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+}
+#presenceCompact {
+	min-height: 36px;
+	padding: 0.25rem 0;
+	cursor: pointer;
+}
