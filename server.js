@@ -6659,11 +6659,16 @@ wss.on("connection", (ws, req) => {
 			const name = String(msg.name || "Guest").slice(0, 40);
 			const color = String(msg.color || "#94a3b8").slice(0, 32);
 			const avatar = String(msg.avatar || "🙂").slice(0, 8);
+			const rawDevice = String(msg.device || "").trim();
+			const device = ["mobile", "tablet", "desktop"].includes(rawDevice)
+				? rawDevice
+				: "";
 			const presence = {
 				clientId,
 				name,
 				color,
 				avatar,
+				device,
 				typing: false,
 				selection: null,
 				updatedAt: Date.now(),
