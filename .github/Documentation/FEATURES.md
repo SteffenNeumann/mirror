@@ -125,3 +125,10 @@ This list is intentionally broad. It’s an idea backlog for future iterations.
 - P1: markdown preview + export
 - P2: persistence (SQLite/Redis) + history
 - P3: CRDT/OT + cursor/presence
+
+## Notiz-Graph (offene Ideen, aus der Umsetzung 2026-07-01)
+
+- Inline-Mini-Graph direkt in der Notizansicht
+- Einfärben nach Tag/Kategorie (aktuell monochromer Akzent — am theme-treuesten)
+- i18n-Strings für `ps.graph.*` (das Markup hat bereits `data-i18n`-Keys, die Locale-Tabellen fehlen)
+- Knotenpositionen über Moduswechsel/Tag-Toggle hinweg erhalten (aktuell wird neu simuliert)

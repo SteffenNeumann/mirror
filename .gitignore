@@ -3,6 +3,9 @@ node_modules/
 *.log
 .env
 
+# Memory: private Angaben (Repo ist öffentlich)
+.claude/memory/local.md
+
 # Local persistence
 data/
 *.sqlite

@@ -1,65 +1,71 @@
-# Mirror – Claude Project Instructions
+# Mirror – Arbeitsregeln
 
-## Memory & Context
+**Mirror** ist ein kollaborativer Echtzeit-Editor mit Personal Space (Notizen),
+Kalender und Planungs-Tools. Produktion: <https://mymirror.myinterdesk.net>
 
-- **Always read** `.claude/memory/MEMORY.md` at the start of every new chat for project state, recent decisions, and key patterns.
-- **After every completed task**, update `MEMORY.md` with relevant learnings, decisions, and changes.
-- Memory path: `/Users/steffen/.claude/projects/-Users-steffen-Documents-GitHub-mirror/memory/MEMORY.md`
+Diese Datei enthält **nur Regeln**. Wie die App gebaut ist, steht an genau einer
+Stelle: [`.github/Documentation/ARCHITECTURE.md`](.github/Documentation/ARCHITECTURE.md).
 
-## Project Overview
+## Zuerst lesen
 
-**Mirror** is a real-time collaborative web app — a shared editor, personal note space (Personal Space / PS), calendar, and planning tool.
+1. **`.claude/memory/MEMORY.md`** — Projektstand, Entscheidungen, Erfahrungen aus
+   früheren Aufgaben und die stehenden Fallen. Immer zu Beginn eines Chats.
+2. **`.github/Documentation/ARCHITECTURE.md`** — Ist-Zustand der Architektur.
 
-- **URL**: https://mymirror.myinterdesk.net
-- **Deployment**: Fly.io (`mirror-snowy-sound-8093`, region `fra`)
-- **Mode**: Suspend mode with health-check to reduce 502s
+## Dokumentation: was gehört wohin
 
-## Stack
+Jede Datei hat **eine** Lebensdauer. Wer das mischt, produziert Dateien, die niemand
+mehr liest — genau deshalb wurde die 221 KB große `Project-overview.md` aufgeteilt.
 
-| Layer | Technology |
-|---|---|
-| Frontend | Vanilla JS (`app.js`), HTML (`index.html`), CSS (`styles/app.css`) |
-| Styling | Tailwind (utility classes) + custom CSS in `app.css` |
-| Backend | Node.js (`server.js`), ES modules |
-| Real-time | WebSocket (`ws` library) + Yjs CRDT (`yjs`) |
-| Database | SQLite via `better-sqlite3` at `/data/mirror.sqlite` |
-| Deploy | Fly.io + Docker, persistent volume at `/data` |
-| Embeds | Excalidraw (`excalidraw-embed.html`), EtherCalc, Linear |
-
-## Key Files
-
-| File | Role |
-|---|---|
-| `app.js` | All frontend logic (~27k+ lines) |
-| `index.html` | Full UI markup |
-| `styles/app.css` | All custom CSS, theme overrides, mobile layout |
-| `server.js` | WebSocket server, SQLite API, file serving |
-| `fly.toml` | Fly.io deployment config |
-| `sw.js` | Service Worker for PWA |
-
-## Architecture Notes
-
-- **Single-file frontend**: All JS in `app.js`, all CSS in `styles/app.css` — no build step, no bundler.
-- **Themes**: 6 themes (`coffeeLight`, `coffeeDark`, `bitterLight`, `bitterDark`, `monoLight`, `monoDark`) via `body[data-theme="..."]` selectors. CSS variables: `--accent-bg`, `--accent-border`, `--accent-text`, `--accent-text-soft`.
-- **Mobile layout**: Driven by JS-toggled body classes (`mobile-editor-open`, `mobile-note-open`, `mobile-ps-open`, `mobile-preview-open`, `mobile-calendar-open`). Mobile breakpoint: `max-width: 1023px`.
-- **Personal Space (PS)**: SQLite-backed note system with tags, pinning, YAML frontmatter, categories.
-- **Toolbox**: Editor toolbar (`#editorToolbox`, `.toolbox-trigger`, `.toolbox-btn`) at bottom-right of editor.
-- **CRDT**: Yjs-based real-time sync with awareness (cursors, presence).
-
-## Development Guidelines
-
-- No build step — edit source files directly.
-- Keep JS in `app.js`, CSS in `styles/app.css`, markup in `index.html`.
-- Always use `touch-action: manipulation` + `-webkit-tap-highlight-color: transparent` for mobile buttons.
-- Use `100dvh` (with `100vh` fallback) for full-screen mobile panels.
-- Z-index scale: overlays 30, panels 40, mobile full-screen 70, modals 9998–9999.
-- After changes: `git add`, commit, `git push` (Fly.io auto-deploys from main).
-- Update `gitstamp` / `gitstamp.txt` when bumping the app version cache.
-
-## Available Roles / Skills
-
-| Skill | Invocation | Description |
+| Datei | Verhalten | Budget |
 |---|---|---|
-| App Developer | `/app-dev` | Full-stack development (frontend + backend) |
-| UI Designer | `/ui-designer` | Visual design, new components, CSS/Tailwind |
-| Mirror Dev | `/mirror-dev` | Both roles combined |
+| `CLAUDE.md` (diese) | Regeln, **wird ersetzt** | 5 KB |
+| `.github/Documentation/ARCHITECTURE.md` | Ist-Zustand, **wird ersetzt** | 15 KB |
+| `.claude/memory/MEMORY.md` | Index, eine Zeile pro Aufgabe | 17 KB |
+| `.claude/memory/<datum>-<thema>.md` | Details je Aufgabe | 6 KB |
+| `.github/Documentation/DOCUMENTATION.md` | Changelog, wächst | – |
+| `.github/Documentation/FUNCTIONS.md` | Nachschlagewerk (`#tags`), wächst | – |
+| `.github/Documentation/FEATURES.md`, `todo.md` | Backlog | – |
+
+`scripts/check-doc-budgets.sh` prüft die Budgets, die CI führt es bei jedem Push aus.
+Reißt ein Budget: **auslagern statt kürzen** — Details in eine Topic-Datei, alte
+Log-Einträge nach `.claude/memory/ARCHIVE-<jahr>.md`.
+
+**Nichts Privates in versionierte Dateien** — das Repo ist öffentlich. Konten,
+Adressen, Zugangsdaten gehören in `.claude/memory/local.md` (gitignoriert).
+
+## Nach jeder erledigten Aufgabe
+
+1. `MEMORY.md` um **eine Zeile** ergänzen (+ Topic-Datei, wenn es Details gibt)
+2. Neue Features in `DOCUMENTATION.md` dokumentieren
+3. `ARCHITECTURE.md` anpassen, **falls sich der Ist-Zustand geändert hat**
+
+## Entwicklung
+
+- **Kein Build-Schritt in der Entwicklung** — Quelldateien direkt editieren. Tailwind
+  und die `app.js`-Minifizierung laufen nur im Docker-Build.
+- JS gehört nach `app.js`, CSS nach `styles/app.css`, Markup nach `index.html`.
+- Mobile-Regeln, Z-Index-Skala, Theme-Variablen und die bekannten Fallen stehen in
+  `ARCHITECTURE.md` — vor UI-Arbeit dort nachsehen, nicht raten.
+
+## Commit-Workflow
+
+**Stehende Freigabe (User, 2026-07-01):** commit, push, PR erstellen **und** nach `main`
+mergen ist dauerhaft freigegeben — nicht nachfragen, durchführen, danach Deploy und
+Produktion verifizieren.
+
+- Für neue Arbeit **immer** frisch abzweigen:
+  `git fetch origin main && git checkout -b <neu> origin/main`
+- Vor jedem Commit `gitstamp.txt` aktualisieren (`YYYY-MM-DD HH:MM:SS <short-hash>`).
+- **Cache-Busting** bei sichtbaren Frontend-Änderungen ist Pflicht und dreiteilig:
+  `?v=` in `index.html` (Preload **und** Script-Tag), dieselbe Version in
+  `sw.js` → `PRECACHE_URLS`, plus `CACHE_NAME` bumpen. `gitstamp` allein reicht nicht.
+- `git reset --hard` / `--force` sind blockiert → Cleanup nicht-destruktiv über
+  `git stash push` + `git merge --ff-only origin/main`.
+- **Worktree-Falle:** In Worktree-Sessions Edits **und** git nur mit absoluten
+  Worktree-Pfaden. Nach dem Commit `git show --stat HEAD` prüfen — sonst fehlt `app.js`
+  im Commit, obwohl alles richtig aussah.
+
+## Rollen / Skills
+
+`/app-dev` (Full-Stack), `/ui-designer` (Visual/CSS), `/mirror-dev` (beides).

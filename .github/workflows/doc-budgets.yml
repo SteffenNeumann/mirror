@@ -1,0 +1,30 @@
+name: Doc Budgets
+
+# Die Dateien, die eine KI bei jeder Session liest, müssen klein genug bleiben,
+# um vollständig gelesen zu werden. Ohne diese Prüfung wachsen sie unbemerkt zu
+# (so wurde Project-overview.md 221 KB groß) und veralten dann still.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "CLAUDE.md"
+      - ".claude/memory/**"
+      - ".github/Documentation/ARCHITECTURE.md"
+      - "scripts/check-doc-budgets.sh"
+      - ".github/workflows/doc-budgets.yml"
+  pull_request:
+    paths:
+      - "CLAUDE.md"
+      - ".claude/memory/**"
+      - ".github/Documentation/ARCHITECTURE.md"
+      - "scripts/check-doc-budgets.sh"
+      - ".github/workflows/doc-budgets.yml"
+
+jobs:
+  budgets:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Größenbudgets prüfen
+        run: bash scripts/check-doc-budgets.sh
