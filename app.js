@@ -3753,9 +3753,14 @@
 	const EDITOR_FONT_KEY = "mirror_editor_font";
 	const MD_HIGHLIGHT_KEY = "mirror_md_highlight";
 	const MD_PRESET_KEY = "mirror_md_preset";
+	const COLOR_CHIPS_KEY = "mirror_color_chips";
 	const MD_SENT = "";
 	let editorFontPref = "sans";
 	let mdHighlightOn = false;
+	// Farb-Chips in der Vorschau (/FF6115/ bzw. #FF6115). Default an; die
+	// markdown-it Core-Rule liest die Variable bei jedem Render neu, ein
+	// Umschalten wirkt daher ohne Neuaufbau der md-Instanz.
+	let colorChipsOn = true;
 	let mdPreset = "editorial";
 	let mdHighlightTimer = null;
 	let mdDirtyTimer = null;
@@ -3998,6 +4003,13 @@
 			tog.classList.toggle("bg-fuchsia-500/20", mdHighlightOn);
 			tog.classList.toggle("border-fuchsia-400/40", mdHighlightOn);
 		}
+		const chipTog = document.getElementById("previewColorChipsToggle");
+		if (chipTog) {
+			chipTog.setAttribute("aria-pressed", colorChipsOn ? "true" : "false");
+			chipTog.textContent = colorChipsOn ? "An" : "Aus";
+			chipTog.classList.toggle("bg-fuchsia-500/20", colorChipsOn);
+			chipTog.classList.toggle("border-fuchsia-400/40", colorChipsOn);
+		}
 		document
 			.querySelectorAll("#editorPresetGroup .md-preset-btn")
 			.forEach((b) => {
@@ -4053,6 +4065,27 @@
 		applyMdHighlight();
 	}
 
+	function setColorChips(on) {
+		colorChipsOn = Boolean(on);
+		try {
+			localStorage.setItem(COLOR_CHIPS_KEY, colorChipsOn ? "1" : "0");
+		} catch {
+			// ignore
+		}
+		syncEditorPrefButtons();
+		// Vorschau + PS-Karten neu rendern, damit der Schalter sofort wirkt.
+		try {
+			updatePreview();
+		} catch {
+			// ignore
+		}
+		try {
+			applyPersonalSpaceFiltersAndRender();
+		} catch {
+			// ignore
+		}
+	}
+
 	function setMdPreset(next) {
 		mdPreset = next === "accent" || next === "muted" ? next : "editorial";
 		try {
@@ -4069,6 +4102,8 @@
 			if (f === "sans" || f === "mono" || f === "systemmono")
 				editorFontPref = f;
 			mdHighlightOn = localStorage.getItem(MD_HIGHLIGHT_KEY) === "1";
+			// Default an: nur ein explizites "0" schaltet die Chips ab.
+			colorChipsOn = localStorage.getItem(COLOR_CHIPS_KEY) !== "0";
 			const p = localStorage.getItem(MD_PRESET_KEY);
 			if (p === "editorial" || p === "accent" || p === "muted")
 				mdPreset = p;
@@ -4089,6 +4124,9 @@
 		const tog = document.getElementById("editorMdToggle");
 		if (tog)
 			tog.addEventListener("click", () => setMdHighlight(!mdHighlightOn));
+		const chipTog = document.getElementById("previewColorChipsToggle");
+		if (chipTog)
+			chipTog.addEventListener("click", () => setColorChips(!colorChipsOn));
 		const group = document.getElementById("editorPresetGroup");
 		if (group)
 			group.addEventListener("click", (e) => {
@@ -7292,6 +7330,9 @@
 				"settings.themes.glow.desc": "Theme-Glow aktivieren oder deaktivieren.",
 				"settings.themes.glow_on": "Glow an",
 				"settings.themes.glow_off": "Glow aus",
+				"settings.editor.chips.title": "Farb-Chips in der Vorschau",
+				"settings.editor.chips.desc":
+					"Zeigt /FF6115/ und #FF6115 als Farbkreis mit Hex-Code.",
 				"settings.ai.title": "KI",
 				"settings.ai.desc":
 					"API-Key wird lokal gespeichert und pro Anfrage verwendet.",
@@ -8050,6 +8091,9 @@
 				"settings.themes.glow.desc": "Enable or disable the theme glow.",
 				"settings.themes.glow_on": "Glow on",
 				"settings.themes.glow_off": "Glow off",
+				"settings.editor.chips.title": "Color chips in preview",
+				"settings.editor.chips.desc":
+					"Renders /FF6115/ and #FF6115 as a color dot with its hex code.",
 				"settings.ai.title": "AI",
 				"settings.ai.desc": "API key is stored locally and used per request.",
 				"settings.ai.key_label": "Anthropic API key",
@@ -13890,6 +13934,99 @@
 			} catch {
 				// ignore
 			}
+			// Farb-Chips: /FF6115/ und #FF6115 -> Farbkreis + Label.
+			// Bewusst eine CORE-Rule (kein Inline-Tokenizer): die oben gepatchte
+			// text-Rule terminiert nicht auf "/", der Text-Scanner verschluckt
+			// "/FF6115/" also als Plain-Text, bevor ein Inline-Tokenizer an der
+			// Position überhaupt aufgerufen wird.  Die Core-Rule läuft nach dem
+			// Parsen über die fertigen inline-Token und schützt damit zugleich
+			// Code-Spans und Fences automatisch (das sind keine text-Token).
+			try {
+				// Nur bestimmte Längen und nur an Wortgrenzen — das hält Wörter wie
+				// "beef"/"cafe" und Pfade wie "https://ex.de/beef/" bzw. "/usr/bin/"
+				// draußen. Die #-Form erlaubt bewusst KEINE 3 Stellen, sonst würden
+				// Hashtags wie #dad, #bad, #ace zu Farbchips. Längste zuerst.
+				const CHIP_HEX_LONG = "[0-9a-fA-F]{8}|[0-9a-fA-F]{6}";
+				const CHIP_HEX_SLASH = `${CHIP_HEX_LONG}|[0-9a-fA-F]{3}`;
+				const CHIP_RE = new RegExp(
+					`(^|[\\s(\\[])(?:\\/(${CHIP_HEX_SLASH})\\/|#(${CHIP_HEX_LONG}))(?=$|[\\s.,;:!?)\\]])`,
+					"g"
+				);
+				const splitTextIntoChips = (state, text) => {
+					if (!text || (text.indexOf("/") < 0 && text.indexOf("#") < 0)) {
+						return null;
+					}
+					const nodes = [];
+					let last = 0;
+					let m;
+					CHIP_RE.lastIndex = 0;
+					while ((m = CHIP_RE.exec(text)) !== null) {
+						const before = text.slice(last, m.index) + (m[1] || "");
+						if (before) {
+							const t = new state.Token("text", "", 0);
+							t.content = before;
+							nodes.push(t);
+						}
+						const chip = new state.Token("color_chip", "", 0);
+						chip.content = String(m[2] || m[3] || "").toUpperCase();
+						nodes.push(chip);
+						last = m.index + m[0].length;
+					}
+					if (!nodes.length) return null;
+					const rest = text.slice(last);
+					if (rest) {
+						const t = new state.Token("text", "", 0);
+						t.content = rest;
+						nodes.push(t);
+					}
+					return nodes;
+				};
+				md.core.ruler.push("color_chip", (state) => {
+					if (!colorChipsOn) return;
+					const tokens = state.tokens || [];
+					for (let i = 0; i < tokens.length; i++) {
+						if (tokens[i].type !== "inline") continue;
+						const children = tokens[i].children || [];
+						let linkDepth = 0;
+						let out = null;
+						for (let j = 0; j < children.length; j++) {
+							const tok = children[j];
+							// Linktext niemals anfassen — sonst zerschneidet die Regex
+							// den Text von [Label](url) bzw. von linkify-URLs.
+							if (tok.type === "link_open") linkDepth += 1;
+							else if (tok.type === "link_close")
+								linkDepth = Math.max(0, linkDepth - 1);
+							const replaced =
+								tok.type === "text" && linkDepth === 0
+									? splitTextIntoChips(state, tok.content)
+									: null;
+							if (replaced) {
+								if (!out) out = children.slice(0, j);
+								for (let k = 0; k < replaced.length; k++) out.push(replaced[k]);
+							} else if (out) {
+								out.push(tok);
+							}
+						}
+						if (out) tokens[i].children = out;
+					}
+				});
+				md.renderer.rules.color_chip = (tokens, idx) => {
+					const raw = String(tokens[idx].content || "");
+					// Whitelist: nur Hexziffern erreichen das style-Attribut.
+					if (!/^(?:[0-9A-F]{8}|[0-9A-F]{6}|[0-9A-F]{3})$/.test(raw)) {
+						return md.utils.escapeHtml(raw);
+					}
+					const css = `#${raw}`;
+					return (
+						`<span class="color-chip" title="${css}">` +
+						`<span class="color-chip-dot" style="background-color:${css}"></span>` +
+						`<span class="color-chip-label">${css}</span>` +
+						`</span>`
+					);
+				};
+			} catch {
+				// ignore
+			}
 			// Links in neuer Tab + sicher
 			const defaultRender =
 				md.renderer.rules.link_open ||
@@ -14669,6 +14806,9 @@
 		mark.mark-purple{background:${isLightSyntax ? "rgba(168,85,247,.18)" : "rgba(168,85,247,.25)"};color:${isLightSyntax ? "rgba(126,34,206,1)" : "rgba(216,180,254,1)"};}
 		mark.mark-pink{background:${isLightSyntax ? "rgba(236,72,153,.18)" : "rgba(236,72,153,.25)"};color:${isLightSyntax ? "rgba(190,24,93,1)" : "rgba(249,168,212,1)"};}
 		mark.mark-cyan{background:${isLightSyntax ? "rgba(6,182,212,.18)" : "rgba(6,182,212,.25)"};color:${isLightSyntax ? "rgba(14,116,144,1)" : "rgba(103,232,249,1)"};}
+		.color-chip{display:inline-flex;align-items:center;gap:.35em;vertical-align:-.15em;padding:.1em .5em .1em .3em;border-radius:999px;background:${isLightSyntax ? "rgba(15,23,42,.05)" : "rgba(255,255,255,.06)"};border:1px solid ${isLightSyntax ? "rgba(15,23,42,.12)" : "rgba(255,255,255,.12)"};line-height:1.3;white-space:nowrap;}
+		.color-chip-dot{width:.85em;height:.85em;border-radius:999px;flex:0 0 auto;box-shadow:inset 0 0 0 1px rgba(128,128,128,.45);}
+		.color-chip-label{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;font-size:.85em;letter-spacing:.02em;color:inherit;}
 		.meta-yaml{margin:0 0 12px 0;font-size:11px;line-height:1.4;color:${previewMetaText};background:${previewMetaBg};border:1px solid ${previewMetaBorder};border-radius:10px;padding:8px 10px;white-space:pre-wrap;}
 		*{scrollbar-width:thin;scrollbar-color:transparent transparent;}
 		*::-webkit-scrollbar{width:10px;height:10px;}
