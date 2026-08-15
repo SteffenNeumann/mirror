@@ -40,7 +40,11 @@
 
 ## Documentation (repo)
 
-Projekt-Doku in **`.github/Documentation/`**: `Project-overview.md` (Architektur + Funktions-Tabellen), `DOCUMENTATION.md` (datierter Changelog), `FEATURES.md` (Backlog), `todo.md`. **Neue Features hier dokumentieren**, nicht nur im Memory.
+Projekt-Doku in **`.github/Documentation/`** — jede Datei mit eigener Lebensdauer:
+`ARCHITECTURE.md` (**Ist-Zustand, wird überschrieben** — hier nachsehen, wie etwas gebaut ist),
+`FUNCTIONS.md` (Funktionskatalog, nach `#tag` greppen), `DOCUMENTATION.md` (datierter Changelog),
+`CHANGELOG-ARCHIVE.md` (Altbestand 2026-02…08), `FEATURES.md` + `todo.md` (Backlog).
+`Project-overview.md` ist nur noch ein Wegweiser-Stub. **Neue Features dort dokumentieren**, nicht nur im Memory.
 
 ## Stack Summary
 
