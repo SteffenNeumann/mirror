@@ -1,3 +1,27 @@
+# Dokumentation – Änderungen (2026-08-15)
+
+## Ziel
+- Hex-Farbcodes in der Markdown-Vorschau als Farbkreis + Hex-Label rendern (Anwendungsfall: Notiz „Colormatches" mit Paletten der Form `Neon Orange /FF6115/ + Porcelain /FFFCF4/`).
+
+## Änderungen
+- **Farb-Chips** in `ensureMarkdown()`: `/FF6115/` (Slash-Form, 3/6/8 Hexstellen) und `#FF6115` (Hash-Form, nur 6/8 Stellen) werden zu `<span class="color-chip">` mit farbigem Punkt und Hex-Label.
+- **Bewusst als markdown-it CORE-Rule**, nicht als Inline-Tokenizer: die für `||passwort||` gepatchte `text`-Rule (`textWithPipe`) terminiert nicht auf `/`, der Text-Scanner verschluckt `/FF6115/` also als Plain-Text — ein Inline-Tokenizer wird an der Position nie aufgerufen (empirisch verifiziert: 0 Treffer). Die Core-Rule läuft über die fertigen inline-Token und schützt dadurch Code-Spans und Fences automatisch.
+- **Link-Tiefen-Tracking** über `link_open`/`link_close`: ohne das zerschneidet die Regex Linktexte und linkify-erkannte URLs (`https://ex.de/facade/`).
+- **False-Positive-Härtung:** nur Längen 3/6/8, nur an Wortgrenzen (`(^|[\s(\[])` + Lookahead). Das schließt `beef`, `cafe`, `/usr/bin/`, `24/7`, `1/2/3` aus. Die Hash-Form erlaubt **keine** 3 Stellen, sonst würden Hashtags wie `#dad`, `#bad`, `#ace` zu Farbchips.
+- **Sicherheit:** Nur `[0-9a-fA-F]` erreicht das `style`-Attribut (Whitelist-Regex im Renderer, zusätzlich zur Regex beim Tokenisieren) — CSS-Injection strukturell ausgeschlossen, passend zu `html:false`.
+- **Styling an zwei Stellen**, weil die Haupt-Vorschau ein iframe mit inline generiertem CSS ist: theme-abhängig (`isLightSyntax`) im iframe-`<style>`, plus globale `.color-chip`-Regeln in `styles/app.css` für PS-Notizkarten und Kommentare. Innerer Ring (`box-shadow: inset 0 0 0 1px rgba(128,128,128,.45)`) hält sehr helle (`#FFFCF4`) wie sehr dunkle (`#18251D`) Farben auf jedem Theme sichtbar.
+- **Settings → „Editor":** Schalter „Farb-Chips in der Vorschau", **Default an**, Persistenz `mirror_color_chips` (nur explizites `"0"` schaltet ab). Die Core-Rule liest das Flag bei jedem Render → Umschalten wirkt sofort ohne Neuaufbau der `md`-Instanz. i18n-Keys DE + EN ergänzt.
+
+## Auswirkungen
+- **UI/UX:** Default an; abschaltbar. Bestehende Notizen bleiben unverändert — die Syntax des Users muss nicht angepasst werden.
+- **Datenebene:** Keine. Reines Render-Feature, kein Eingriff in gespeicherten Text.
+- **Performance:** Regex läuft nur über `text`-Token und steigt früh aus, wenn weder `/` noch `#` vorkommt.
+- **Cache:** SW `v43`→`v44`, `app.js?v`→`2026-08-15-01`.
+
+## Tests
+- 40 automatisierte Assertions gegen den **aus `app.js` extrahierten** Code (nicht gegen eine Kopie) mit der vendored markdown-it: Notiz 12/12 Farben, Heading/Wiki-Link/Liste intakt, 9 Kontext-Schutz-Fälle, 15 False-Positive-Fälle, Toggle an/aus, Injection-Abwehr. Alle bestanden.
+- Browser verifiziert (statisch serviertes Frontend): 13 Chips gerendert, Negativfälle (`` `/FF6115/` ``, linkify-URL, `#dad`, `/beef/`) bleiben Text, Toggle 13→0→13, Kontrast auf monoDark **und** monoLight geprüft, keine JS-Konsolenfehler.
+
 # Dokumentation – Änderungen (2026-07-02b)
 
 ## Ziel

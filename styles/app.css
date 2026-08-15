@@ -1321,6 +1321,36 @@ body.code-lang-active #clearMirror {
 	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
 		"Liberation Mono", "Courier New", monospace;
 }
+/* Farb-Chips (/FF6115/ bzw. #FF6115) in PS-Notizkarten und Kommentaren.
+   Bewusst nicht auf .md-content beschränkt: Kommentare rendern ohne diesen
+   Wrapper. Neutrale Graustufen halten den Chip auf hellen wie dunklen Themes
+   lesbar, der innere Ring hält auch #FFFCF4 bzw. #18251D sichtbar. */
+.color-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35em;
+	vertical-align: -0.15em;
+	padding: 0.1em 0.5em 0.1em 0.3em;
+	border-radius: 999px;
+	background: rgba(128, 128, 128, 0.12);
+	border: 1px solid rgba(128, 128, 128, 0.28);
+	line-height: 1.3;
+	white-space: nowrap;
+}
+.color-chip-dot {
+	width: 0.85em;
+	height: 0.85em;
+	flex: 0 0 auto;
+	border-radius: 999px;
+	box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.45);
+}
+.color-chip-label {
+	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+		"Liberation Mono", "Courier New", monospace;
+	font-size: 0.85em;
+	letter-spacing: 0.02em;
+	color: inherit;
+}
 #attributionOverlay {
 	z-index: 5;
 }
