@@ -713,6 +713,20 @@
 | `setPreviewDocument` | Preview-Dokument setzen | `#handler` `#render` | `attachPreviewCheckboxWriteback`, `t` |
 | `applyTaskClosedTimestampsToHtml` | Task-Closed-Timestamps anwenden | `#render` `#date` | — |
 
+##### 19.9 Vergleichs-Panel `#compare` — `app.js`
+
+| Funktion | Zweck | Tags | Abhängigkeiten |
+|----------|-------|------|----------------|
+| `syncEditorPreviewGridColumns` | Spaltenzahl des Editor-Grids setzen (per `classList`, nie `className`) | `#ui` `#layout` | — |
+| `loadCompareNoteId` / `saveCompareNoteId` | Auswahl aus/nach `mirror_compare_note_v1` | `#state` `#storage` | — |
+| `getCompareCandidates` | Auswählbare Notizen (ohne die bearbeitete) | `#read` `#state` | `filterRealNotes` |
+| `populateCompareSelect` | Auswahl-Select füllen | `#render` `#ui` | `escapeAttr`, `escapeHtml`, `findNoteById`, `getCompareCandidates`, `getNoteTitle`, `t` |
+| `renderComparePanel` | Vergleichsnotiz read-only rendern | `#render` `#markdown` | `buildPreviewContentHtml`, `ensureMarkdown`, `ensureMarkdownLibs`, `findNoteById`, `t`, `toast` |
+| `syncComparePanelFromState` | Panel am Listen-Rerender aktuell halten | `#sync` `#state` | `getCompareCandidates`, `populateCompareSelect`, `renderComparePanel`, `saveCompareNoteId` |
+| `setCompareNoteId` | Vergleichsnotiz wählen | `#handler` `#state` | `findNoteById`, `populateCompareSelect`, `renderComparePanel`, `saveCompareNoteId`, `setComparePanelVisible` |
+| `setCompareMetaVisible` | Meta-Block im Panel ein-/ausblenden | `#handler` `#ui` | `renderComparePanel` |
+| `setComparePanelVisible` | Panel öffnen/schließen | `#handler` `#ui` | `findNoteById`, `loadCompareNoteId`, `populateCompareSelect`, `renderComparePanel`, `setPreviewVisible`, `syncEditorPreviewGridColumns`, `syncMobileFocusState` |
+
 #### 20 · Code-Runner `#runner` — `app.js`
 
 | Funktion | Zweck | Tags | Abhängigkeiten |
