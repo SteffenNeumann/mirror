@@ -285,6 +285,10 @@
 	const psContextSelectAll = document.getElementById("psContextSelectAll");
 	const psContextClear = document.getElementById("psContextClear");
 	const psContextTags = document.getElementById("psContextTags");
+	const psContextCompare = document.getElementById("psContextCompare");
+	const psContextCompareLabel = document.querySelector(
+		"[data-role=\"psContextCompareLabel\"]"
+	);
 	const psContextShare = document.getElementById("psContextShare");
 	const psContextDelete = document.getElementById("psContextDelete");
 	const psTagContextMenu = document.getElementById("psTagContextMenu");
@@ -7022,7 +7026,7 @@
 				"compare.select": "Notiz zum Vergleichen",
 				"compare.pick": "Notiz wählen …",
 				"compare.empty":
-					"Notiz oben auswählen oder in der Liste mit Alt-Klick anwählen.",
+					"Notiz oben auswählen — oder in der Liste auf das Vergleichen-Symbol klicken.",
 				"compare.close": "Vergleich schließen",
 				"compare.meta": "Meta",
 				"compare.meta.tooltip":
@@ -7030,6 +7034,8 @@
 				"compare.md_failed": "Markdown-Bibliothek nicht geladen.",
 				"compare.link_missing": "Notiz nicht gefunden.",
 				"compare.link_is_open": "Diese Notiz liegt schon im Editor.",
+				"compare.action.start": "Zum Vergleichen öffnen",
+				"compare.action.stop": "Vergleich schließen",
 				"editor.upload": "Datei hochladen",
 				"editor.save": "Speichern",
 				"editor.ready": "Bereit.",
@@ -7808,13 +7814,15 @@
 				"compare.select": "Note to compare",
 				"compare.pick": "Pick a note …",
 				"compare.empty":
-					"Pick a note above, or Alt-click one in the list.",
+					"Pick a note above — or click the compare icon in the list.",
 				"compare.close": "Close compare",
 				"compare.meta": "Meta",
 				"compare.meta.tooltip": "Show/hide metadata of the compared note",
 				"compare.md_failed": "Markdown library not loaded.",
 				"compare.link_missing": "Note not found.",
 				"compare.link_is_open": "That note is already open in the editor.",
+				"compare.action.start": "Open for comparison",
+				"compare.action.stop": "Close comparison",
 				"editor.upload": "Upload file",
 				"editor.save": "Save",
 				"editor.ready": "Ready.",
@@ -14527,6 +14535,8 @@
 	}
 
 	function setCompareNoteId(id, opts) {
+		const previous = compareNoteId;
+		const wasOpen = compareOpen;
 		const next = String(id || "").trim();
 		// Die gerade bearbeitete Notiz gar nicht erst annehmen — sonst räumt
 		// syncComparePanelFromState sie beim nächsten Rerender kommentarlos weg.
@@ -14538,6 +14548,17 @@
 		if (compareOpen) renderComparePanel();
 		if (!(opts && opts.skipOpen) && compareNoteId && !compareOpen) {
 			setComparePanelVisible(true);
+		}
+		// Der Vergleichen-Knopf in der Liste markiert die aktive Notiz — ohne
+		// Rerender bliebe die Markierung auf der alten stehen. Hat sich dabei
+		// das Panel geöffnet, hat setComparePanelVisible schon neu gerendert.
+		if (
+			previous !== compareNoteId &&
+			wasOpen === compareOpen &&
+			psState &&
+			psState.authed
+		) {
+			applyPersonalSpaceFiltersAndRender();
 		}
 	}
 
@@ -14554,6 +14575,7 @@
 	}
 
 	function setComparePanelVisible(next) {
+		const wasOpen = compareOpen;
 		compareOpen = Boolean(next);
 		if (!comparePanel || !editorPreviewGrid) return;
 		// Preview and compare share the second column.
@@ -14572,6 +14594,10 @@
 			}
 			populateCompareSelect();
 			renderComparePanel();
+		}
+		// Der Vergleichen-Knopf in der Liste markiert nur, was offen ist.
+		if (wasOpen !== compareOpen && psState && psState.authed) {
+			applyPersonalSpaceFiltersAndRender();
 		}
 		syncMobileFocusState();
 	}
@@ -18066,6 +18092,17 @@ ${highlightThemeCss}
 				? "Auswahl entfernen"
 				: "Auswählen";
 		}
+		if (psContextCompare) {
+			// Auf der Notiz im Editor wäre der Eintrag wirkungslos.
+			const isActiveNote = id === String(psEditingNoteId || "").trim();
+			psContextCompare.classList.toggle("hidden", isActiveNote);
+			if (psContextCompareLabel) {
+				psContextCompareLabel.textContent =
+					compareOpen && id === compareNoteId
+						? t("compare.action.stop", "Vergleich schließen")
+						: t("compare.action.start", "Zum Vergleichen öffnen");
+			}
+		}
 		if (psTagContextMenuOpen) closePsTagContextMenu();
 		positionPsContextMenu(x, y);
 		setPsContextMenuOpen(true);
@@ -18241,6 +18278,24 @@ ${highlightThemeCss}
 						</svg>
 					</span>`
 					: "";
+				// Vergleichen: auf der Notiz im Editor sinnlos, dort weglassen.
+				// Markiert wird nur, was gerade wirklich im Panel steht.
+				const isCompared = Boolean(id) && compareOpen && id === compareNoteId;
+				const compareLabel = isCompared
+					? t("compare.action.stop", "Vergleich beenden")
+					: t("compare.action.start", "Zum Vergleichen öffnen");
+				const compareBtnHtml =
+					id && !active
+						? `<button type="button" data-action="compare" class="ps-note-compare inline-flex rounded-md p-1 transition ${
+								isCompared
+									? "text-fuchsia-300"
+									: "text-slate-400 hover:text-slate-200"
+							}" title="${escapeAttr(compareLabel)}" aria-label="${escapeAttr(
+								compareLabel
+							)}" aria-pressed="${isCompared ? "true" : "false"}">
+								<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2" /><path d="M12 4v16" /></svg>
+							</button>`
+						: "";
 				return `
 					<div data-note-id="${id}" class="group ps-note-item relative cursor-pointer ${
 					active ? "ps-note-active" : ""
@@ -18248,6 +18303,7 @@ ${highlightThemeCss}
 						<div class="flex items-center justify-between gap-4 w-full">
 							<div class="truncate text-sm font-semibold text-slate-100 flex-1 min-w-0">${titleHtml}</div>
 							<div class="ps-note-actions flex items-center gap-2 flex-shrink-0">
+								${compareBtnHtml}
 								<button type="button" data-action="pin" class="ps-note-pin inline-flex rounded-md p-1 transition ${pinned ? "text-fuchsia-300" : "text-slate-400 hover:text-slate-200"}" title="Pin" aria-label="Pin">
 									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16" /><path d="M4 4h12l-2 5 2 5H4" /></svg>
 								</button>
@@ -18359,6 +18415,23 @@ ${highlightThemeCss}
 				}
 				openPsContextMenu(id, ev.clientX, ev.clientY);
 			});
+
+			const compareBtn = row.querySelector('[data-action="compare"]');
+			if (compareBtn) {
+				compareBtn.addEventListener("click", (ev) => {
+					ev.preventDefault();
+					ev.stopPropagation();
+					const id = row.getAttribute("data-note-id") || "";
+					if (!id) return;
+					// Zweiter Klick auf dieselbe Notiz schließt das Panel; die
+					// Auswahl bleibt, damit erneutes Öffnen sie wieder zeigt.
+					if (compareOpen && id === compareNoteId) {
+						setComparePanelVisible(false);
+						return;
+					}
+					setCompareNoteId(id);
+				});
+			}
 
 			const delBtn = row.querySelector('[data-action="delete"]');
 			if (delBtn) {
@@ -32211,6 +32284,25 @@ self.onmessage = async (e) => {
 			await applyBulkTagsToNotes(ids, tags);
 			await refreshPersonalSpace();
 			clearPsSelection();
+		});
+	}
+	if (psContextCompare) {
+		psContextCompare.addEventListener("click", () => {
+			const id = String(psContextMenuTargetId || "");
+			closePsContextMenu();
+			if (!id) return;
+			if (compareOpen && id === compareNoteId) {
+				setComparePanelVisible(false);
+				return;
+			}
+			if (id === String(psEditingNoteId || "").trim()) {
+				toast(
+					t("compare.link_is_open", "Diese Notiz liegt schon im Editor."),
+					"info"
+				);
+				return;
+			}
+			setCompareNoteId(id);
 		});
 	}
 	if (psContextShare) {

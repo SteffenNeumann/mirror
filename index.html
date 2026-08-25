@@ -27,7 +27,7 @@
 		<!-- Preload critical assets -->
 		<link rel="preload" href="/vendor/tailwind-built.css?v=2026-07-14-01" as="style" />
 		<link rel="preload" href="/styles/app.css" as="style" />
-		<link rel="preload" href="/app.js?v=2026-08-25-01" as="script" />
+		<link rel="preload" href="/app.js?v=2026-08-25-02" as="script" />
 		<link rel="prefetch" href="/vendor/yjs.bundle.js" as="script" />
 
 		<!-- Tailwind: precompiled static CSS (built from index.html + app.js by the
@@ -1613,7 +1613,7 @@
 										id="compareEmpty"
 										class="mt-4 text-xs text-slate-400"
 										data-i18n="compare.empty">
-										Notiz oben auswaehlen oder in der Liste mit Alt-Klick anwaehlen.
+										Notiz oben auswaehlen — oder in der Liste auf das Vergleichen-Symbol klicken.
 									</p>
 								</div>
 							</div>
@@ -3757,6 +3757,12 @@
 			</button>
 			<div class="my-1 h-px bg-white/10"></div>
 			<button
+				id="psContextCompare"
+				type="button"
+				class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-white/5">
+				<span data-role="psContextCompareLabel">Zum Vergleichen öffnen</span>
+			</button>
+			<button
 				id="psContextTags"
 				type="button"
 				class="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left hover:bg-white/5">
@@ -3858,7 +3864,7 @@
 		     by app.js (ensureMarkdownLibs) to speed up initial mobile load. They
 		     stay SW-precached so the lazy load is instant + offline-capable. -->
 		<script defer fetchpriority="low" src="/vendor/yjs.bundle.js"></script>
-		<script defer src="/app.js?v=2026-08-25-01"></script>
+		<script defer src="/app.js?v=2026-08-25-02"></script>
 		<script>
 			if ("serviceWorker" in navigator) {
 				// Auto-reload once when an UPDATED service worker takes control, so
