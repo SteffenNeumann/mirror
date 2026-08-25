@@ -154,8 +154,9 @@ markdown-it mit `html: false`, `linkify`, `breaks`, `typographer`, lazy geladen
 Vergleich teilen sich die zweite Spalte von `#editorPreviewGrid`; die Spaltenzahl setzt
 `syncEditorPreviewGridColumns()` per `classList` (nie `className` überschreiben — daran
 hängen auch `comment-panel-open` und das `hidden` des Kalenders). Öffnen: Button
-„Vergleichen" oder **Alt+Klick** in der Notizliste. Mobil: Vollbild über die Body-Klasse
-`mobile-compare-open`.
+„Vergleichen" in der Editor-Leiste, das Symbol in der Notizzeile, der Kontextmenü-Eintrag
+oder **Alt+Klick** in der Liste. Auf Touch führt nur das Kontextmenü hin — `.ps-note-actions`
+erscheint erst bei `:hover`. Mobil: Vollbild über die Body-Klasse `mobile-compare-open`.
 
 Datenquelle ist `psState.notes`, gerendert mit `buildPreviewContentHtml(text, {noteId,
 showMeta})` ins Haupt-DOM. Kein Backend, kein CRDT, kein Auto-Save.

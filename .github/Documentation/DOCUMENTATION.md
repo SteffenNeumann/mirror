@@ -1,3 +1,25 @@
+# Dokumentation – Änderungen (2026-08-25b)
+
+## Ziel
+- Das Vergleichs-Panel ohne Tastenkombination bedienbar machen.
+
+## Änderungen
+- **Neuer Knopf in jeder Notizzeile** (`data-action="compare"`), erstes Symbol in `.ps-note-actions` vor Pin/Teilen/Löschen. Ein geteiltes Rechteck als Symbol; die gerade verglichene Notiz wird fuchsia markiert (`aria-pressed`).
+- **Zweiter Klick schließt das Panel**, die Auswahl bleibt erhalten — erneutes Öffnen zeigt dieselbe Notiz wieder.
+- **Auf der Notiz im Editor wird der Knopf weggelassen**, statt einen wirkungslosen Knopf anzubieten (das Panel lehnt die bearbeitete Notiz ohnehin ab).
+- **Kontextmenü-Eintrag „Zum Vergleichen öffnen"** (Rechtsklick, auf Mobil langes Tippen). Das ist der Weg ohne Hover — `.ps-note-actions` wird nur bei `:hover` bzw. auf der aktiven Zeile eingeblendet, auf Touch-Geräten also nicht. Label wechselt zu „Vergleich schließen", wenn die Notiz gerade im Panel steht; auf der bearbeiteten Notiz ist der Eintrag ausgeblendet.
+- **Markierung folgt dem Panel:** `setCompareNoteId` und `setComparePanelVisible` stoßen einen Listen-Rerender an, wenn sich Auswahl oder Sichtbarkeit ändern — ohne das bliebe die Markierung auf der alten Zeile stehen. Doppeltes Rendern ist abgefangen.
+- **Hinweistext im leeren Panel** verweist jetzt auf das Symbol statt auf Alt+Klick. Alt+Klick funktioniert unverändert weiter.
+- **i18n:** 2 neue Keys in DE und EN.
+
+## Auswirkungen
+- **UI/UX:** Ein Symbol mehr pro Notizzeile. Drei Wege zur selben Funktion: Symbol, Kontextmenü, Alt+Klick — plus die Auswahl im Panel-Kopf.
+- **Datenebene:** Keine. Das Panel bleibt strikt read-only.
+- **Cache:** SW `v45`→`v46`, `app.js?v`→`2026-08-25-02`.
+
+## Tests
+- Lokal gegen den Fake-API-Server verifiziert: Knopf öffnet das Panel und markiert die Zeile, zweiter Klick schließt es und behält die Auswahl, auf der bearbeiteten Notiz fehlt der Knopf, Kontextmenü-Eintrag öffnet den Vergleich mit korrektem Label, Editor bleibt in allen Fällen unberührt. Keine Konsolenfehler.
+
 # Dokumentation – Änderungen (2026-08-25)
 
 ## Ziel

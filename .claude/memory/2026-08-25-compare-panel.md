@@ -76,6 +76,22 @@ Rendering inkl. Code-Highlighting, Farb-Chips, Passwortfeldern, Tabellen und
 Wiki-Links, Alt+Klick, Persistenz, Light-Theme, Mobil-Vollbild, und dass der
 Editor dabei unberührt bleibt.
 
+## Nachtrag: Bedienung ohne Tastenkombination (v46)
+
+Alt+Klick allein reichte nicht. Dazugekommen sind ein **Knopf in jeder
+Notizzeile** (erstes Symbol in `.ps-note-actions`) und ein
+**Kontextmenü-Eintrag**.
+
+- `.ps-note-actions` ist nur bei `:hover` bzw. auf der aktiven Zeile sichtbar —
+  auf Touch-Geräten führt dorthin kein Weg. Der **Kontextmenü-Eintrag** (langes
+  Tippen) ist deshalb der mobile Pfad, nicht der Knopf.
+- Auf der Notiz im Editor werden Knopf und Menüeintrag weggelassen, statt einen
+  wirkungslosen Knopf anzubieten.
+- Die Markierung zeigt, was *offen* ist (`compareOpen && id === compareNoteId`),
+  nicht bloß was ausgewählt ist. Dafür stoßen `setCompareNoteId` und
+  `setComparePanelVisible` einen Listen-Rerender an — mit Guard gegen doppeltes
+  Rendern, wenn beide nacheinander laufen.
+
 ## Offen
 
 - Zeilenweiser Diff (farbige Unterschiede) — bewusst nicht in v1. Es gibt keine
