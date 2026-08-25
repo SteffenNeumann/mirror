@@ -1,3 +1,44 @@
+# Dokumentation – Änderungen (2026-08-25)
+
+## Ziel
+- Zwei Notizen nebeneinander lesen und vergleichen können.
+
+## Ausgangsbefund
+- **Tabs existierten bereits — als Raum-Tabs.** Ein Tab = ein Raum (`room`+`key`), `MAX_ROOM_TABS = 5`, persistiert in `mirror_room_tabs_v1` + Server-Tabelle `room_tabs`. Umschalten läuft ausschließlich über `location.hash` → `hashchange` und baut WS + CRDT komplett neu auf; zwei Tabs gleichzeitig sichtbar waren damit ausgeschlossen. Gefehlt hat nicht das Öffnen, sondern das Nebeneinander.
+- **Ein zweiter *editierbarer* Editor wäre ein Neubau:** ein `<textarea id="mirror">`, ein Yjs-Doc, eine WS-Verbindung — und `psEditingNoteId`, Auto-Save-Kette, Undo/Redo, Vor/Zurück-Historie und Kommentare sind sämtlich Singletons. `psAutoSaveLastSavedNoteId` kennt genau **eine** Notiz; eine Verwechslung schriebe Text in die falsche Notiz. Umgesetzt wurde deshalb die read-only Variante.
+
+## Änderungen
+- **Neues Panel `#comparePanel`** als Geschwister von `#previewPanel` in `#editorPreviewGrid`. Vorschau und Vergleich teilen sich die zweite Spalte — drei Spalten sind zwischen 1024 und ~1280 px unbenutzbar.
+- **Öffnen:** Button „Vergleichen" neben „Vorschau", oder **Alt+Klick** auf eine Notiz in der Liste. Auswahl zusätzlich über ein Select im Panel-Kopf; die zuletzt gewählte Notiz merkt sich `mirror_compare_note_v1`.
+- **Rendering ohne iframe:** `buildPreviewContentHtml(text, {noteId, showMeta})` — die Funktion wurde um die beiden optionalen Parameter erweitert, ohne Parameter verhält sie sich unverändert. Ergebnis landet in `.md-content` im Haupt-DOM. Code-Highlighting, Farb-Chips, Passwortfelder, Tabellen, Task-Timestamps und PDF/Video-Embeds kommen damit unverändert mit.
+- **Bewusst kein zweites Vorschau-iframe:** `previewMsgToken` ist ein *einziger* globaler String, gegen den der zentrale `message`-Handler alle Nachrichten validiert. Ein zweiter Frame wäre entweder tot oder würde den des Hauptpanels kapern — ein Checkbox-Klick im Vergleich schriebe dann in die **bearbeitete** Notiz.
+- **`psEditingNoteId` bleibt unberührt.** Alt+Klick greift ganz vorn im Listen-Handler, vor `flushPendingPsAutoSave()`. Auf Mobil hängt der komplette Ansichtszustand allein an dieser Variable, und die Auto-Save-Kette leitet daraus die bearbeitete Notiz ab.
+- **Eigene Typografie unter `.compare-body`:** Tailwind-Preflight resettet Überschriften und Listen. Der Vorschau-iframe kennt kein Preflight und lebt von Browser-Defaults — im Haupt-DOM las sich die Notiz sonst als Fließtext ohne Struktur.
+- **Task-Checkboxen werden deaktiviert.** Die Task-Listen rendern mit `enabled: true`, sind also echte Checkboxen. Im iframe fängt `attachPreviewCheckboxWriteback()` die Klicks ab — im Panel gibt es keine Rückschreibe-Kette, ein Haken hätte sich sichtbar gesetzt und wäre nie gespeichert worden.
+- **PDF-Links bleiben Links** (`skipPdfEmbed`). Das `.pdf-embed`-Widget braucht pdf.js und CSS, die nur im Vorschau-iframe leben; im Haupt-DOM bliebe ein toter Kasten. Video-Embeds bleiben, die sind native `<video>`-Elemente.
+- **Links:** `note:`-Wiki-Links werden abgefangen und springen **im Panel** weiter, statt per `postMessage` in den Editor. Zeigt der Link auf die Notiz im Editor, kommt ein Hinweis-Toast statt einer stillen Nicht-Aktion. (`target="_blank"` setzt bereits die `link_open`-Rule für jeden Link.)
+- **Robustheit:** die Vergleichsnotiz kann nie die bearbeitete sein (sonst räumt der nächste Rerender sie kommentarlos weg); eine gelöschte Notiz wird aus Auswahl und `localStorage` entfernt, statt das Select auf einen Wert ohne Option zu setzen; das Nachladen der Markdown-Libs versucht genau **einen** erneuten Render (sonst Microtask-Endlosschleife, wenn die Libs da sind, aber die Initialisierung wirft).
+- **Aktualität:** `syncComparePanelFromState()` hängt am Listen-Rerender (u. a. 60-s-Poll, Tab-Fokus) und rendert Markdown nur bei tatsächlich geändertem Inhalt neu. Dieselbe Notiz links und rechts wird automatisch aufgelöst.
+- **Mobil:** eigener Vollbildmodus über die Body-Klasse `mobile-compare-open` (`100dvh`, `bottom: auto`), inklusive der `main`-Viewport-Regel, Priorität zwischen Vorschau und Notiz-Ansicht.
+- **Altbug mitgefixt:** `setPreviewVisible()` überschrieb `editorPreviewGrid.className` komplett und warf dabei `comment-panel-open` (Kommentarpanel) und `hidden` (Kalender) weg. Ersetzt durch `syncEditorPreviewGridColumns()` mit `classList.toggle`.
+- **i18n:** 13 neue Keys in DE **und** EN.
+
+## Auswirkungen
+- **UI/UX:** Zusätzlicher Button in der Editor-Leiste. Vorschau und Vergleich schließen sich gegenseitig aus. Bestehende Abläufe unverändert.
+- **Datenebene:** Keine. Das Panel ist strikt read-only — kein Schreibpfad, kein CRDT, kein Auto-Save.
+- **Backend:** Keine Änderung. Die Notizen liegen bereits vollständig clientseitig in `psState.notes`.
+- **Grenze:** `stmtNotesByUser` liefert `LIMIT 500` und es gibt keine Route für eine einzelne Notiz — ab 500 Notizen wäre eine ältere Notiz clientseitig nicht auffindbar.
+- **Cache:** SW `v44`→`v45`, `app.js?v`→`2026-08-25-01`.
+
+## Tests
+- Lokal gegen einen Fake-API-Server (der echte Serverstart scheitert weiter an der `better-sqlite3`-ABI; `npm rebuild` läuft unter Node 26 nicht durch).
+- Verifiziert: Spaltenwechsel 1↔2, gegenseitiger Ausschluss mit der Vorschau, Rendering inkl. Überschriften/Listen/Tabellen/Code-Highlighting/Farb-Chips/Passwortfeld (Aufdecken funktioniert über den bestehenden Handler auf `document`-Ebene), Wiki-Link-Sprung im Panel ohne URL-Wechsel, Alt+Klick ohne Editor-Änderung, Auto-Auflösung bei gleicher Notiz links/rechts, Persistenz der Auswahl, Light-Theme (coffeeLight), Mobil-Vollbild inkl. Rückkehr, Layout bei 1024 px. Der Altbug-Fix ist gegengeprüft: `comment-panel-open` überlebt den Preview-Umschalter.
+- Keine Konsolenfehler aus dem Feature (nur WS-/SW-Meldungen des Fake-Servers).
+
+## Offen
+- Zeilenweiser Diff (farbige Unterschiede) bewusst nicht in v1 — es gibt keine Diff-Bibliothek im Projekt, das wären ~80–120 Zeilen ohne neue Abhängigkeit.
+- Keine E2E-Tests; `tests/` enthält weiterhin nur den Playwright-Scaffold.
+
 # Dokumentation – Änderungen (2026-08-15)
 
 ## Ziel

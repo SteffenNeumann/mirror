@@ -145,8 +145,32 @@ markdown-it mit `html: false`, `linkify`, `breaks`, `typographer`, lazy geladen
    Core-Rules brauchen dann aber Link-Tiefen-Tracking über `link_open`/`link_close`.
 2. **Die Haupt-Vorschau ist ein iframe, dessen CSS `updatePreview()` als String
    erzeugt** — `styles/app.css` greift dort **nicht**. Vorschau-Styles müssen immer an
-   zwei Stellen: in den iframe-`<style>` **und** nach `styles/app.css` (für PS-Karten
-   via `renderNoteHtml` und für Kommentare, die ohne `.md-content`-Wrapper rendern).
+   zwei Stellen: in den iframe-`<style>` **und** nach `styles/app.css` (für das
+   Vergleichs-Panel und für Kommentare, die ohne `.md-content`-Wrapper rendern).
+
+## Vergleichs-Panel
+
+`#comparePanel` zeigt eine **zweite Notiz read-only** neben dem Editor. Vorschau und
+Vergleich teilen sich die zweite Spalte von `#editorPreviewGrid`; die Spaltenzahl setzt
+`syncEditorPreviewGridColumns()` per `classList` (nie `className` überschreiben — daran
+hängen auch `comment-panel-open` und das `hidden` des Kalenders). Öffnen: Button
+„Vergleichen" oder **Alt+Klick** in der Notizliste. Mobil: Vollbild über die Body-Klasse
+`mobile-compare-open`.
+
+Datenquelle ist `psState.notes`, gerendert mit `buildPreviewContentHtml(text, {noteId,
+showMeta})` ins Haupt-DOM. Kein Backend, kein CRDT, kein Auto-Save.
+
+⚠️ **Drei Regeln, die das Panel tragen:**
+
+1. **Kein zweites Vorschau-iframe.** `previewMsgToken` ist ein *einziger* globaler
+   String, gegen den der zentrale `message`-Handler alles validiert. Ein zweiter Frame
+   wäre tot oder würde den Haupt-Frame kapern — ein Checkbox-Klick im Vergleich schriebe
+   dann in die **bearbeitete** Notiz.
+2. **`psEditingNoteId` bleibt unberührt.** Auf Mobil hängt der Ansichtszustand allein
+   daran, und die Auto-Save-Kette leitet daraus die bearbeitete Notiz ab.
+3. **Eigene Typografie.** Tailwind-Preflight resettet Überschriften und Listen; der
+   iframe der Vorschau kennt kein Preflight und nutzt Browser-Defaults. Die Regeln für
+   das Panel stehen unter `.compare-body` in `styles/app.css`.
 
 ## Kalender: gemeinsame Terminfindung
 

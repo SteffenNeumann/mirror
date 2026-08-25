@@ -77,6 +77,13 @@
 	const togglePreview = document.getElementById("togglePreview");
 	const toggleFullPreview = document.getElementById("toggleFullPreview");
 	const previewCloseMobile = document.getElementById("previewCloseMobile");
+	const comparePanel = document.getElementById("comparePanel");
+	const compareNoteSelect = document.getElementById("compareNoteSelect");
+	const compareContent = document.getElementById("compareContent");
+	const compareEmpty = document.getElementById("compareEmpty");
+	const compareClose = document.getElementById("compareClose");
+	const compareMetaToggle = document.getElementById("compareMetaToggle");
+	const toggleCompare = document.getElementById("toggleCompare");
 	const aiModeSelect = document.getElementById("aiMode");
 	const aiAssistBtn = document.getElementById("aiAssist");
 	const clearRunOutputBtn = document.getElementById("clearRunOutput");
@@ -6387,6 +6394,14 @@
 		return { begin, end, isActive, isBlocked, requestRender, activeType };
 	})();
 	let previewOpen = false;
+	/* Compare panel: a strictly read-only second note next to the editor.
+	 * It never touches psEditingNoteId, the auto-save chain or the CRDT — see
+	 * the compare block near setComparePanelVisible() for why. */
+	let compareOpen = false;
+	let compareNoteId = "";
+	let compareMetaVisible = false;
+	let compareLastRenderKey = "";
+	let compareCandidateSig = "";
 	let fullPreview = false;
 	let mobilePsOpen = false;
 	let mobileNoteReturn = "editor";
@@ -6433,12 +6448,29 @@
 		const isMobile = isMobileViewport();
 		const calActive = isMobile && calendarPanelActive;
 		const previewActive = isMobile && !calActive && previewOpen;
+		const compareActive = isMobile && !calActive && !previewOpen && compareOpen;
 		const noteActive =
-			isMobile && !calActive && !previewOpen && Boolean(String(psEditingNoteId || ""));
-		const psActive = isMobile && !calActive && !previewOpen && !noteActive && mobilePsOpen;
+			isMobile &&
+			!calActive &&
+			!previewOpen &&
+			!compareActive &&
+			Boolean(String(psEditingNoteId || ""));
+		const psActive =
+			isMobile &&
+			!calActive &&
+			!previewOpen &&
+			!compareActive &&
+			!noteActive &&
+			mobilePsOpen;
 		const editorActive =
-			isMobile && !calActive && !previewOpen && !noteActive && !mobilePsOpen;
+			isMobile &&
+			!calActive &&
+			!previewOpen &&
+			!compareActive &&
+			!noteActive &&
+			!mobilePsOpen;
 		const wasNoteActive = document.body.classList.contains("mobile-note-open");
+		document.body.classList.toggle("mobile-compare-open", compareActive);
 		document.body.classList.toggle("mobile-preview-open", previewActive);
 		document.body.classList.toggle("mobile-note-open", noteActive);
 		document.body.classList.toggle("mobile-ps-open", psActive);
@@ -6984,6 +7016,20 @@
 				"editor.nav_back": "Zurück",
 				"editor.nav_forward": "Vorwärts",
 				"editor.preview": "Vorschau",
+				"editor.compare": "Vergleichen",
+				"tooltip.toggle_compare": "Zweite Notiz zum Vergleichen einblenden",
+				"compare.title": "Vergleichen",
+				"compare.select": "Notiz zum Vergleichen",
+				"compare.pick": "Notiz wählen …",
+				"compare.empty":
+					"Notiz oben auswählen oder in der Liste mit Alt-Klick anwählen.",
+				"compare.close": "Vergleich schließen",
+				"compare.meta": "Meta",
+				"compare.meta.tooltip":
+					"Metadaten der Vergleichsnotiz ein-/ausblenden",
+				"compare.md_failed": "Markdown-Bibliothek nicht geladen.",
+				"compare.link_missing": "Notiz nicht gefunden.",
+				"compare.link_is_open": "Diese Notiz liegt schon im Editor.",
 				"editor.upload": "Datei hochladen",
 				"editor.save": "Speichern",
 				"editor.ready": "Bereit.",
@@ -7756,6 +7802,19 @@
 				"editor.nav_back": "Back",
 				"editor.nav_forward": "Forward",
 				"editor.preview": "Preview",
+				"editor.compare": "Compare",
+				"tooltip.toggle_compare": "Show a second note for comparison",
+				"compare.title": "Compare",
+				"compare.select": "Note to compare",
+				"compare.pick": "Pick a note …",
+				"compare.empty":
+					"Pick a note above, or Alt-click one in the list.",
+				"compare.close": "Close compare",
+				"compare.meta": "Meta",
+				"compare.meta.tooltip": "Show/hide metadata of the compared note",
+				"compare.md_failed": "Markdown library not loaded.",
+				"compare.link_missing": "Note not found.",
+				"compare.link_is_open": "That note is already open in the editor.",
 				"editor.upload": "Upload file",
 				"editor.save": "Save",
 				"editor.ready": "Ready.",
@@ -8511,6 +8570,8 @@
 			updateLinearProjectSelectOptions(getLinearNoteId());
 			renderLinearTasks(getLinearNoteId());
 			updateLinearApiStatus();
+			// Die Auswahl im Vergleichs-Panel wird per innerHTML gebaut.
+			if (typeof populateCompareSelect === "function") populateCompareSelect();
 			if (aiDictationRecognizer) {
 				aiDictationRecognizer.lang = getUiSpeechLocale();
 			}
@@ -13151,6 +13212,7 @@
 			syncPsListHeight();
 		});
 		updateEditorMetaYaml();
+		syncComparePanelFromState();
 	}
 
 	function loadPsTagsCollapsed() {
@@ -14308,14 +14370,220 @@
 		updateRunOutputSizing();
 	}
 
+	/* Toggle only the column count. Never overwrite `className` here — the grid
+	 * also carries `comment-panel-open` (setCommentPanelOpen) and `hidden`
+	 * (calendar), and a full overwrite silently dropped both. */
+	function syncEditorPreviewGridColumns() {
+		if (!editorPreviewGrid || !editorPreviewGrid.classList) return;
+		const twoCols = previewOpen || compareOpen;
+		editorPreviewGrid.classList.toggle("lg:grid-cols-2", twoCols);
+		editorPreviewGrid.classList.toggle("lg:grid-cols-1", !twoCols);
+	}
+
+	/* ── Compare panel ────────────────────────────────────────────────────
+	 * Shows a second note read-only next to the editor, so two notes can be
+	 * read side by side. Deliberately NOT an iframe: the preview iframe is a
+	 * single-channel protocol (one global previewMsgToken), so a second frame
+	 * would either be dead or hijack the main preview — a checkbox click in
+	 * here would then write into the edited note. Plain DOM + .md-content
+	 * avoids that entirely.
+	 * ───────────────────────────────────────────────────────────────────── */
+	const COMPARE_NOTE_KEY = "mirror_compare_note_v1";
+
+	function loadCompareNoteId() {
+		try {
+			return String(localStorage.getItem(COMPARE_NOTE_KEY) || "").trim();
+		} catch {
+			return "";
+		}
+	}
+
+	function saveCompareNoteId(id) {
+		try {
+			const next = String(id || "").trim();
+			if (next) localStorage.setItem(COMPARE_NOTE_KEY, next);
+			else localStorage.removeItem(COMPARE_NOTE_KEY);
+		} catch {
+			// ignore
+		}
+	}
+
+	// Candidates for the picker: every real note except the one being edited.
+	function getCompareCandidates() {
+		const all = filterRealNotes(
+			psState && Array.isArray(psState.notes) ? psState.notes : []
+		);
+		const activeId = String(psEditingNoteId || "").trim();
+		return all
+			.filter((n) => n && String(n.id || "").trim() !== activeId)
+			.sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
+	}
+
+	function populateCompareSelect() {
+		if (!compareNoteSelect) return;
+		const candidates = getCompareCandidates();
+		const selected = String(compareNoteId || "").trim();
+		const placeholder = t("compare.pick", "Notiz wählen …");
+		const options = [
+			`<option value="">${escapeHtml(placeholder)}</option>`,
+			...candidates.map((n) => {
+				const id = String(n.id || "");
+				const title = getNoteTitle(String(n.text || ""));
+				return `<option value="${escapeAttr(id)}"${
+					id === selected ? " selected" : ""
+				}>${escapeHtml(title)}</option>`;
+			}),
+		].join("");
+		compareNoteSelect.innerHTML = options;
+		compareNoteSelect.value = selected;
+		// Bei schmalem Panel schneidet das Select den Titel ab.
+		const active = selected ? findNoteById(selected) : null;
+		compareNoteSelect.setAttribute(
+			"title",
+			active ? getNoteTitle(String(active.text || "")) : placeholder
+		);
+	}
+
+	function renderComparePanel(opts) {
+		if (!compareContent) return;
+		const note = compareNoteId ? findNoteById(compareNoteId) : null;
+		if (!note) {
+			// Gelöschte Notiz: die tote ID darf nicht liegen bleiben, sonst
+			// steht das Select auf einem Wert ohne Option und ist leer statt
+			// auf dem Platzhalter.
+			if (compareNoteId) {
+				compareNoteId = "";
+				saveCompareNoteId("");
+				populateCompareSelect();
+			}
+			compareLastRenderKey = "";
+			compareContent.innerHTML = "";
+			if (compareEmpty) compareEmpty.classList.remove("hidden");
+			return;
+		}
+		// Der 60-s-Poll rendert die Liste neu; Markdown nur dann erneut rendern,
+		// wenn sich am Inhalt wirklich etwas geändert hat.
+		const renderKey = `${note.id}|${compareMetaVisible ? 1 : 0}|${String(
+			note.text || ""
+		)}`;
+		if (opts && opts.ifChanged && renderKey === compareLastRenderKey) return;
+		compareLastRenderKey = renderKey;
+		if (compareEmpty) compareEmpty.classList.add("hidden");
+		if (!ensureMarkdown()) {
+			// Nachladen und einmal erneut versuchen. Genau EIN Versuch:
+			// ensureMarkdownLibs() löst sofort auf, wenn die Libs da sind, und
+			// ensureMarkdown() liefert auch bei einem Init-Fehler null — ohne
+			// die Bremse wäre das eine Microtask-Endlosschleife.
+			compareLastRenderKey = "";
+			const mayRetry = !(opts && opts.mdRetry);
+			ensureMarkdownLibs()
+				.then(() => {
+					if (compareOpen && mayRetry) renderComparePanel({ mdRetry: true });
+				})
+				.catch(() => {
+					toast(t("compare.md_failed", "Markdown-Bibliothek nicht geladen."), "error");
+				});
+			compareContent.innerHTML = "";
+			return;
+		}
+		const html = buildPreviewContentHtml(String(note.text || ""), {
+			noteId: String(note.id || ""),
+			showMeta: compareMetaVisible,
+			skipPdfEmbed: true,
+		});
+		compareContent.innerHTML = `<div class="md-content">${html}</div>`;
+		// Das Panel ist read-only. Die Task-Listen werden mit `enabled: true`
+		// gerendert, sind also echte Checkboxen — im iframe fängt
+		// attachPreviewCheckboxWriteback() die Klicks ab, hier gibt es keine
+		// Rückschreibe-Kette. Ohne das setzt ein Haken sich sichtbar und wird
+		// nie gespeichert.
+		compareContent
+			.querySelectorAll("input.task-list-item-checkbox, input[type=checkbox]")
+			.forEach((cb) => {
+				cb.disabled = true;
+			});
+	}
+
+	/* Hängt am Listen-Rerender (u. a. 60-s-Poll und Tab-Fokus): hält Auswahl
+	 * und Inhalt aktuell, ohne bei jedem Rerender Markdown neu zu rendern. */
+	function syncComparePanelFromState() {
+		if (!compareOpen) return;
+		// Dieselbe Notiz links und rechts ergibt keinen Vergleich.
+		if (
+			compareNoteId &&
+			compareNoteId === String(psEditingNoteId || "").trim()
+		) {
+			compareNoteId = "";
+			saveCompareNoteId("");
+		}
+		const sig = getCompareCandidates()
+			.map((n) => `${n.id}:${n.updatedAt || 0}`)
+			.join("|");
+		if (sig !== compareCandidateSig) {
+			compareCandidateSig = sig;
+			populateCompareSelect();
+		}
+		renderComparePanel({ ifChanged: true });
+	}
+
+	function setCompareNoteId(id, opts) {
+		const next = String(id || "").trim();
+		// Die gerade bearbeitete Notiz gar nicht erst annehmen — sonst räumt
+		// syncComparePanelFromState sie beim nächsten Rerender kommentarlos weg.
+		const activeId = String(psEditingNoteId || "").trim();
+		compareNoteId =
+			next && next !== activeId && findNoteById(next) ? next : "";
+		saveCompareNoteId(compareNoteId);
+		populateCompareSelect();
+		if (compareOpen) renderComparePanel();
+		if (!(opts && opts.skipOpen) && compareNoteId && !compareOpen) {
+			setComparePanelVisible(true);
+		}
+	}
+
+	function setCompareMetaVisible(next) {
+		compareMetaVisible = Boolean(next);
+		if (compareMetaToggle) {
+			compareMetaToggle.setAttribute(
+				"aria-pressed",
+				compareMetaVisible ? "true" : "false"
+			);
+			compareMetaToggle.classList.toggle("bg-fuchsia-500/20", compareMetaVisible);
+		}
+		if (compareOpen) renderComparePanel();
+	}
+
+	function setComparePanelVisible(next) {
+		compareOpen = Boolean(next);
+		if (!comparePanel || !editorPreviewGrid) return;
+		// Preview and compare share the second column.
+		if (compareOpen && previewOpen) setPreviewVisible(false);
+		comparePanel.classList.toggle("hidden", !compareOpen);
+		syncEditorPreviewGridColumns();
+		if (toggleCompare) {
+			toggleCompare.setAttribute("aria-pressed", compareOpen ? "true" : "false");
+			toggleCompare.classList.toggle("bg-white/10", compareOpen);
+		}
+		if (compareOpen) {
+			if (!compareNoteId) {
+				const stored = loadCompareNoteId();
+				if (stored && findNoteById(stored)) compareNoteId = stored;
+				else if (stored) saveCompareNoteId(""); // Notiz existiert nicht mehr
+			}
+			populateCompareSelect();
+			renderComparePanel();
+		}
+		syncMobileFocusState();
+	}
+
 	function setPreviewVisible(next) {
 		const wasPreviewOpen = previewOpen;
 		previewOpen = Boolean(next);
 		if (!previewPanel || !editorPreviewGrid) return;
+		// Preview and compare share the second column.
+		if (previewOpen && compareOpen) setComparePanelVisible(false);
 		previewPanel.classList.toggle("hidden", !previewOpen);
-		editorPreviewGrid.className = previewOpen
-			? "grid h-full min-h-0 grid-cols-1 gap-3 lg:grid-cols-2"
-			: "grid h-full min-h-0 grid-cols-1 gap-3 lg:grid-cols-1";
+		syncEditorPreviewGridColumns();
 		if (togglePreview) {
 			togglePreview.textContent = previewOpen ? "Hide preview" : "Preview";
 		}
@@ -14349,14 +14617,25 @@
 		syncMobileFocusState();
 	}
 
-	function buildPreviewContentHtml(srcRaw) {
+	/* opts (optional): { noteId, showMeta } — render for a note other than the
+	 * one in the editor. Without opts the behaviour is unchanged. */
+	function buildPreviewContentHtml(srcRaw, opts) {
+		const options = opts && typeof opts === "object" ? opts : null;
+		const scopeNoteId = options
+			? String(options.noteId || "").trim()
+			: getActiveRoomTabNoteId();
 		const renderer = ensureMarkdown();
 		if (!renderer) return "";
 		const src = applyWikiLinksToMarkdown(String(srcRaw || ""));
 		let bodyHtml = "";
-		const taskScopeKey = buildTaskScopeKey(getActiveRoomTabNoteId());
+		const taskScopeKey = buildTaskScopeKey(scopeNoteId);
 		try {
-			bodyHtml = embedVideoLinks(embedPdfLinks(applyHljsToHtml(renderer.render(src))));
+			// Das PDF-Widget braucht pdf.js und CSS, die nur im Vorschau-iframe
+			// leben — außerhalb bliebe ein toter Kasten. Dort lieber der Link.
+			const rendered = applyHljsToHtml(renderer.render(src));
+			bodyHtml = embedVideoLinks(
+				options && options.skipPdfEmbed ? rendered : embedPdfLinks(rendered)
+			);
 			bodyHtml = applyTaskClosedTimestampsToHtml(
 				bodyHtml,
 				String(srcRaw || ""),
@@ -14365,9 +14644,9 @@
 		} catch {
 			bodyHtml = "";
 		}
-		const metaNote = psEditingNoteId ? findNoteById(psEditingNoteId) : null;
-		const metaYaml =
-			psMetaVisible && metaNote ? buildNoteMetaYaml(metaNote) : "";
+		const metaNote = scopeNoteId ? findNoteById(scopeNoteId) : null;
+		const metaWanted = options ? Boolean(options.showMeta) : psMetaVisible;
+		const metaYaml = metaWanted && metaNote ? buildNoteMetaYaml(metaNote) : "";
 		const metaHtml = metaYaml
 			? `<pre class="meta-yaml">${escapeHtml(metaYaml)}</pre>`
 			: "";
@@ -17997,9 +18276,20 @@ ${highlightThemeCss}
 				});
 			});
 			row.addEventListener("click", async (ev) => {
+				const rowNoteId = row.getAttribute("data-note-id") || "";
+				// Alt+Klick öffnet die Notiz read-only im Vergleichs-Panel.
+				// Bewusst ganz vorn und ohne await: psEditingNoteId bleibt
+				// unberührt, sonst kippt auf Mobil die Ansicht und die
+				// Auto-Save-Kette hält die falsche Notiz für die bearbeitete.
+				if (rowNoteId && ev && ev.altKey && !ev.metaKey && !ev.ctrlKey) {
+					ev.preventDefault();
+					ev.stopPropagation();
+					setCompareNoteId(rowNoteId);
+					return;
+				}
 				forcePreviewTaskAutoSortNow();
 				await flushPendingPsAutoSave();
-				const id = row.getAttribute("data-note-id") || "";
+				const id = rowNoteId;
 				if (!id) return;
 				const toggle = Boolean(ev && (ev.metaKey || ev.ctrlKey));
 				if (toggle) {
@@ -30938,6 +31228,59 @@ self.onmessage = async (e) => {
 	if (togglePreview) {
 		togglePreview.addEventListener("click", () => {
 			setPreviewVisible(!previewOpen);
+		});
+	}
+	if (toggleCompare) {
+		toggleCompare.addEventListener("click", () => {
+			setComparePanelVisible(!compareOpen);
+		});
+	}
+	if (compareClose) {
+		compareClose.addEventListener("click", () => {
+			setComparePanelVisible(false);
+		});
+	}
+	if (compareMetaToggle) {
+		compareMetaToggle.addEventListener("click", () => {
+			setCompareMetaVisible(!compareMetaVisible);
+		});
+	}
+	if (compareNoteSelect) {
+		compareNoteSelect.addEventListener("change", () => {
+			setCompareNoteId(compareNoteSelect.value, { skipOpen: true });
+		});
+	}
+	if (compareContent) {
+		// [[Wiki-Links]] werden zu note:<id>. Im iframe löst das ein
+		// postMessage; hier bleiben wir im Panel und springen zur Zielnotiz —
+		// der Editor wird bewusst nicht angefasst.
+		compareContent.addEventListener("click", (ev) => {
+			const link =
+				ev && ev.target && ev.target.closest
+					? ev.target.closest('a[href^="note:"]')
+					: null;
+			if (!link) return;
+			ev.preventDefault();
+			const raw = String(link.getAttribute("href") || "").slice(5);
+			let target = raw;
+			try {
+				target = decodeURIComponent(raw);
+			} catch {
+				target = raw;
+			}
+			const note = findNoteById(target) || findNoteByTitle(target);
+			if (!note) {
+				toast(t("compare.link_missing", "Notiz nicht gefunden."), "info");
+				return;
+			}
+			if (String(note.id || "") === String(psEditingNoteId || "").trim()) {
+				toast(
+					t("compare.link_is_open", "Diese Notiz liegt schon im Editor."),
+					"info"
+				);
+				return;
+			}
+			setCompareNoteId(String(note.id || ""), { skipOpen: true });
 		});
 	}
 	if (toggleFullPreview) {

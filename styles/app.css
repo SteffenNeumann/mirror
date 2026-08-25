@@ -1316,6 +1316,102 @@ body.code-lang-active #clearMirror {
 	text-decoration: underline;
 	text-underline-offset: 3px;
 }
+/* Vergleichs-Panel: rendert eine zweite Notiz read-only im Haupt-DOM.
+   Die Vorschau ist ein iframe mit eigenem CSS-String — hier greift dafür
+   styles/app.css. Änderungen an Vorschau-Styles also weiterhin an beiden
+   Stellen pflegen. */
+/* Keine feste Textfarbe: #compareBody trägt `text-slate-200`, das die
+   Light-Themes bereits global überschreiben. */
+.compare-body {
+	font-size: 0.875rem;
+	line-height: 1.55;
+	overscroll-behavior: contain;
+}
+.compare-body .md-content {
+	word-break: break-word;
+}
+/* Die Vorschau lebt im iframe ohne Tailwind-Preflight und behält dort die
+   Browser-Defaults für Überschriften und Listen. Im Haupt-DOM sind die
+   wegresettet — hier also bewusst wiederherstellen, sonst liest sich die
+   Vergleichsnotiz als Fließtext ohne Struktur. */
+.compare-body h1,
+.compare-body h2,
+.compare-body h3,
+.compare-body h4 {
+	line-height: 1.25;
+	font-weight: 600;
+	margin: 1em 0 0.5em;
+}
+.compare-body h1:first-child,
+.compare-body h2:first-child,
+.compare-body h3:first-child {
+	margin-top: 0;
+}
+.compare-body h1 {
+	font-size: 1.5em;
+}
+.compare-body h2 {
+	font-size: 1.25em;
+}
+.compare-body h3 {
+	font-size: 1.1em;
+}
+.compare-body h4 {
+	font-size: 1em;
+}
+.compare-body p {
+	margin: 0.6em 0;
+}
+.compare-body ul:not(.task-list):not(.toc-list),
+.compare-body ol:not(.task-list) {
+	margin: 0.5em 0;
+	padding-left: 1.5em;
+	list-style: revert;
+}
+.compare-body ul:not(.task-list):not(.toc-list) li,
+.compare-body ol:not(.task-list) li {
+	margin: 0.35em 0;
+}
+.compare-body blockquote {
+	margin: 0.6em 0;
+	padding: 0 0.75em;
+	border-left: 3px solid rgba(148, 163, 184, 0.4);
+	color: rgba(148, 163, 184, 0.95);
+}
+.compare-body hr {
+	margin: 1em 0;
+	border: 0;
+	border-top: 1px solid rgba(148, 163, 184, 0.25);
+}
+.compare-body table {
+	margin: 0.6em 0;
+}
+.compare-body img {
+	max-width: 100%;
+	height: auto;
+}
+.compare-body pre {
+	overflow-x: auto;
+}
+.compare-body .meta-yaml {
+	margin-bottom: 0.75rem;
+	padding: 0.5rem 0.65rem;
+	border-radius: 0.5rem;
+	background: rgba(148, 163, 184, 0.1);
+	font-size: 0.75rem;
+	white-space: pre-wrap;
+	color: rgb(148 163 184);
+}
+#compareNoteSelect {
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+}
+#toggleCompare,
+#compareClose,
+#compareMetaToggle {
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+}
 .md-content code,
 .md-content pre {
 	font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
@@ -2589,7 +2685,8 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	body.mobile-editor-open main,
 	body.mobile-ps-open main,
 	body.mobile-note-open main,
-	body.mobile-calendar-open main {
+	body.mobile-calendar-open main,
+	body.mobile-compare-open main {
 		width: 100vw;
 		width: 100dvw;
 		height: 100vh;
@@ -2602,7 +2699,29 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	body.mobile-ps-open #previewPanel,
 	body.mobile-note-open #previewPanel,
 	body.mobile-editor-open #psPanel,
-	body.mobile-calendar-open #psPanel {
+	body.mobile-calendar-open #psPanel,
+	body.mobile-compare-open #psPanel,
+	body.mobile-ps-open #comparePanel,
+	body.mobile-note-open #comparePanel,
+	body.mobile-preview-open #comparePanel {
+		display: none;
+	}
+	body.mobile-compare-open #comparePanel {
+		position: fixed;
+		inset: 0;
+		bottom: auto;
+		width: 100vw;
+		height: 100vh;
+		height: 100dvh;
+		z-index: 70;
+		display: flex;
+		flex-direction: column;
+		pointer-events: auto;
+		border-radius: 0;
+		border: none;
+	}
+	body.mobile-compare-open #editorPanel > header,
+	body.mobile-compare-open #editorPreviewGrid > div:first-child {
 		display: none;
 	}
 	body.mobile-preview-open #previewPanel {

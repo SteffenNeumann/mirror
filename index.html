@@ -27,7 +27,7 @@
 		<!-- Preload critical assets -->
 		<link rel="preload" href="/vendor/tailwind-built.css?v=2026-07-14-01" as="style" />
 		<link rel="preload" href="/styles/app.css" as="style" />
-		<link rel="preload" href="/app.js?v=2026-08-15-01" as="script" />
+		<link rel="preload" href="/app.js?v=2026-08-25-01" as="script" />
 		<link rel="prefetch" href="/vendor/yjs.bundle.js" as="script" />
 
 		<!-- Tailwind: precompiled static CSS (built from index.html + app.js by the
@@ -1265,6 +1265,15 @@
 											<span data-i18n="editor.preview">Preview</span>
 										</button>
 										<button
+											id="toggleCompare"
+											type="button"
+											data-tooltip="Zweite Notiz zum Vergleichen einblenden"
+											data-i18n-tooltip="tooltip.toggle_compare"
+											aria-pressed="false"
+											class="rounded-lg bg-transparent px-3 py-1.5 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10">
+											<span data-i18n="editor.compare">Vergleichen</span>
+										</button>
+										<button
 											id="openUploadModal"
 											type="button"
 											class="rounded-lg bg-transparent px-3 py-1.5 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10"
@@ -1548,6 +1557,67 @@
 									</div>
 								</div>
 							</div>
+						<div
+							id="comparePanel"
+							class="hidden h-full min-h-56 sm:min-h-72 overflow-hidden rounded-xl border border-white/10 bg-slate-950/25">
+							<div class="flex h-full min-h-0 flex-col">
+								<div
+									class="flex items-center justify-between gap-2 border-b border-white/10 bg-slate-950/30 px-3 py-2">
+									<div class="flex min-w-0 items-center gap-2">
+										<span class="shrink-0 text-xs font-medium text-slate-200" data-i18n="compare.title">
+											Vergleichen
+										</span>
+										<select
+											id="compareNoteSelect"
+											class="min-w-0 max-w-xs truncate rounded-lg border border-white/10 bg-slate-950/40 px-2 py-1 text-xs text-slate-200"
+											aria-label="Notiz zum Vergleichen"
+											data-i18n-aria="compare.select"></select>
+									</div>
+									<div class="flex items-center gap-2">
+										<button
+											id="compareMetaToggle"
+											type="button"
+											class="hidden lg:inline-flex items-center justify-center rounded-lg bg-transparent px-3 py-1.5 text-xs text-slate-200 transition hover:bg-white/5 active:bg-white/10"
+											data-tooltip="Metadaten der Vergleichsnotiz ein-/ausblenden"
+											data-i18n-tooltip="compare.meta.tooltip"
+											aria-label="Metadaten anzeigen"
+											data-i18n-aria="compare.meta"
+											aria-pressed="false">
+											<span data-i18n="compare.meta">Meta</span>
+										</button>
+										<button
+											id="compareClose"
+											type="button"
+											class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-xs text-slate-200 transition hover:bg-white/10 active:bg-white/15"
+											title="Vergleich schliessen"
+											aria-label="Vergleich schliessen"
+											data-i18n-title="compare.close"
+											data-i18n-aria="compare.close">
+											<svg
+												viewBox="0 0 24 24"
+												fill="none"
+												stroke="currentColor"
+												stroke-width="2"
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												class="h-4 w-4">
+												<path d="M18 6L6 18" />
+												<path d="M6 6l12 12" />
+											</svg>
+										</button>
+									</div>
+								</div>
+								<div id="compareBody" class="compare-body min-h-0 flex-1 overflow-auto px-3 py-2 text-slate-200">
+									<div id="compareContent"></div>
+									<p
+										id="compareEmpty"
+										class="mt-4 text-xs text-slate-400"
+										data-i18n="compare.empty">
+										Notiz oben auswaehlen oder in der Liste mit Alt-Klick anwaehlen.
+									</p>
+								</div>
+							</div>
+						</div>
 						</div>
 						<div
 							id="calendarPanel"
@@ -3788,7 +3858,7 @@
 		     by app.js (ensureMarkdownLibs) to speed up initial mobile load. They
 		     stay SW-precached so the lazy load is instant + offline-capable. -->
 		<script defer fetchpriority="low" src="/vendor/yjs.bundle.js"></script>
-		<script defer src="/app.js?v=2026-08-15-01"></script>
+		<script defer src="/app.js?v=2026-08-25-01"></script>
 		<script>
 			if ("serviceWorker" in navigator) {
 				// Auto-reload once when an UPDATED service worker takes control, so
