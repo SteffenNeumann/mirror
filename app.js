@@ -6886,6 +6886,36 @@
 			scrollbarThumbHover: "rgba(87, 96, 106, 0.5)",
 			scrollbarBorder: "rgba(240, 246, 252, 0.9)",
 		},
+		ash: {
+			label: "Ash",
+			top: "#2f3437",
+			bottom: "rgba(108, 150, 180, 0.5)",
+			previewBg: "#262a2c",
+			previewText: "#d0d9e0",
+			tocText: "#d0d9e0",
+			previewMetaBg: "rgba(47, 52, 55, 0.75)",
+			previewMetaBorder: "rgba(108, 150, 180, 0.38)",
+			previewMetaText: "rgba(208, 217, 224, 0.92)",
+			previewLink: "rgba(128, 170, 200, 0.95)",
+			accentBgSoft: "rgba(108, 150, 180, 0.1)",
+			accentBg: "rgba(108, 150, 180, 0.15)",
+			accentBgHover: "rgba(108, 150, 180, 0.2)",
+			accentBadgeBg: "rgba(108, 150, 180, 0.2)",
+			accentStrong: "rgba(108, 150, 180, 0.75)",
+			accentStrongHover: "rgba(108, 150, 180, 0.85)",
+			accentStrongActive: "rgba(108, 150, 180, 0.95)",
+			accentBorder: "rgba(108, 150, 180, 0.3)",
+			accentBorderStrong: "rgba(108, 150, 180, 0.45)",
+			accentText: "#d0d9e0",
+			accentTextSoft: "#80aac8",
+			accentRing: "rgba(108, 150, 180, 0.25)",
+			accentRingStrong: "rgba(108, 150, 180, 0.4)",
+			blockquoteBorder: "rgba(108, 150, 180, 0.45)",
+			blockquoteText: "rgba(208, 217, 224, 0.9)",
+			scrollbarThumb: "rgba(108, 150, 180, 0.2)",
+			scrollbarThumbHover: "rgba(108, 150, 180, 0.3)",
+			scrollbarBorder: "rgba(23, 26, 27, 0.6)",
+		},
 	};
 
 	const THEME_ORDER = [
@@ -6900,6 +6930,7 @@
 		"bitterLight",
 		"monoDark",
 		"monoLight",
+		"ash",
 	];
 
 	const GLOW_BLOCKED_THEMES = new Set([
@@ -6910,6 +6941,7 @@
 		"bronzeDark",
 		"bitterLight",
 		"bitterDark",
+		"ash",
 	]);
 
 		const UI_STRINGS = {
@@ -10760,7 +10792,8 @@
 				fuchsia: "#0f0a1a", cyan: "#0a1018", emerald: "#0a1510", violet: "#0d0a18",
 				coffeeDark: "#1c1614", bronzeDark: "#2c2924", coffeeLight: "#f3ebe2",
 				bitterDark: "#131216", bitterLight: "#efecea",
-				monoDark: "#161b22", monoLight: "#eef1f5"
+				monoDark: "#161b22", monoLight: "#eef1f5",
+				ash: "#262a2c"
 			};
 			root.style.setProperty("--panel-solid-bg", solidBgs[next] || "#0f0a1a");
 			/* modal theming – backdrop & border per theme */
@@ -10769,14 +10802,16 @@
 				emerald: "rgba(10,21,16,0.6)", violet: "rgba(13,10,24,0.6)",
 				coffeeDark: "rgba(16,12,10,0.6)", bronzeDark: "rgba(20,18,15,0.6)", coffeeLight: "rgba(68,45,30,0.2)",
 				bitterDark: "rgba(13,12,16,0.6)", bitterLight: "rgba(21,21,24,0.2)",
-				monoDark: "rgba(22,27,34,0.6)", monoLight: "rgba(27,31,36,0.22)"
+				monoDark: "rgba(22,27,34,0.6)", monoLight: "rgba(27,31,36,0.22)",
+				ash: "rgba(18,20,21,0.6)"
 			};
 			const modalBorders = {
 				fuchsia: "rgba(255,255,255,0.1)", cyan: "rgba(255,255,255,0.1)",
 				emerald: "rgba(255,255,255,0.1)", violet: "rgba(255,255,255,0.1)",
 				coffeeDark: "#35261e", bronzeDark: "#4a4038", coffeeLight: "#d9c7bc",
 				bitterDark: "#2a2a30", bitterLight: "#d8d2cb",
-				monoDark: "rgba(48,54,61,0.9)", monoLight: "#d0d7de"
+				monoDark: "rgba(48,54,61,0.9)", monoLight: "#d0d7de",
+				ash: "#3d4447"
 			};
 			root.style.setProperty("--modal-backdrop", modalBackdrops[next] || "rgba(2,6,23,0.7)");
 			root.style.setProperty("--modal-border", modalBorders[next] || "rgba(255,255,255,0.1)");
@@ -14877,6 +14912,8 @@
 					return { ...base, fieldBg: "#f6f8fa", fieldBorder: "#d0d7de", fieldText: "#57606a", valueText: "#24292f" };
 				case "monoDark":
 					return { ...base, fieldBg: "#0d1117", fieldBorder: "#30363d", fieldText: "#8b949e", valueText: "#c9d1d9" };
+				case "ash":
+					return { ...base, fieldBg: "#2f3437", fieldBorder: "#3d4447", fieldText: "#a3aeb6", valueText: "#d0d9e0" };
 				default:
 					return base;
 			}
@@ -14948,6 +14985,14 @@
 						preBorder: "#2a2a30",
 						preText: "#f0e8df",
 						codeBg: "rgba(255,210,194,.1)",
+					};
+				case "ash":
+					return {
+						...base,
+						preBg: "#2f3437",
+						preBorder: "#3d4447",
+						preText: "#d0d9e0",
+						codeBg: "rgba(128,170,200,.12)",
 					};
 				default:
 					return base;
@@ -15027,6 +15072,14 @@
 					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#d4a96a;}
 					.hljs-string,.hljs-attr,.hljs-number{color:#bfa888;}
 					.hljs-comment,.hljs-quote{color:rgba(232,223,211,.5);}
+					`;
+				case "ash":
+					return `
+					pre.hljs, pre.hljs code.hljs{background:#2f3437!important;border-color:#3d4447;color:#d0d9e0;}
+					pre code.hljs{background:transparent!important;}
+					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#8fb8d6;}
+					.hljs-string,.hljs-attr,.hljs-number{color:#a8b8c2;}
+					.hljs-comment,.hljs-quote{color:rgba(208,217,224,.65);}
 					`;
 				default:
 					return "";
