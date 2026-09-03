@@ -20,12 +20,18 @@ mehr liest — genau deshalb wurde die 221 KB große `Project-overview.md` aufge
 | Datei | Verhalten | Budget |
 |---|---|---|
 | `CLAUDE.md` (diese) | Regeln, **wird ersetzt** | 5 KB |
-| `.github/Documentation/ARCHITECTURE.md` | Ist-Zustand, **wird ersetzt** | 15 KB |
+| `.github/Documentation/ARCHITECTURE.md` | Ist-Zustand **querliegend**, ganz gelesen, **wird ersetzt** | 15 KB |
+| `.github/Documentation/ARCHITECTURE-FEATURES.md` | Ist-Zustand **je Feature**, abschnittsweise gelesen, wächst | – |
 | `.claude/memory/MEMORY.md` | Index, eine Zeile pro Aufgabe | 17 KB |
 | `.claude/memory/<datum>-<thema>.md` | Details je Aufgabe | 6 KB |
 | `.github/Documentation/DOCUMENTATION.md` | Changelog, wächst | – |
 | `.github/Documentation/FUNCTIONS.md` | Nachschlagewerk (`#tags`), wächst | – |
 | `.github/Documentation/FEATURES.md`, `todo.md` | Backlog | – |
+
+Die beiden Architektur-Dateien trennen nach **Lesehäufigkeit**: querliegendes Wissen
+budgetiert in `ARCHITECTURE.md`, Feature-Interna wachsend daneben. Neues Feature =
+Abschnitt dort + Dreizeiler mit Verweis hier. **Nie** auf eine datierte Datei in
+`.claude/memory/` verweisen — die sind Protokolle und werden nicht nachgeführt.
 
 `scripts/check-doc-budgets.sh` prüft die Budgets, die CI führt es bei jedem Push aus.
 Reißt ein Budget: **auslagern statt kürzen** — Details in eine Topic-Datei. Erreicht

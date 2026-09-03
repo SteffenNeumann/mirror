@@ -45,7 +45,8 @@
 ## Documentation (repo)
 
 Projekt-Doku in **`.github/Documentation/`** — jede Datei mit eigener Lebensdauer:
-`ARCHITECTURE.md` (**Ist-Zustand, wird überschrieben** — hier nachsehen, wie etwas gebaut ist),
+`ARCHITECTURE.md` (**Ist-Zustand querliegend, wird überschrieben** — hier nachsehen, wie etwas gebaut ist),
+`ARCHITECTURE-FEATURES.md` (Ist-Zustand **je Feature**, nur den passenden Abschnitt lesen),
 `FUNCTIONS.md` (Funktionskatalog, nach `#tag` greppen), `DOCUMENTATION.md` (datierter Changelog),
 `CHANGELOG-ARCHIVE.md` (Altbestand 2026-02…08), `FEATURES.md` + `todo.md` (Backlog).
 `Project-overview.md` ist nur noch ein Wegweiser-Stub. **Neue Features dort dokumentieren**, nicht nur im Memory.
@@ -92,6 +93,7 @@ und das Aufgaben-Log.
      ARCHIVE-<jahr>.md im selben Ordner — verschieben, nicht löschen.
      Zuletzt rotiert: 2026-09-03 (alles vor 2026-08-01 → ARCHIVE-2026.md). -->
 
+- **2026-09-03** Doku-Struktur: `ARCHITECTURE.md` nach **Lesehäufigkeit** geteilt. Querliegendes bleibt dort (budgetiert, ganz gelesen), Feature-Interna nach `ARCHITECTURE-FEATURES.md` (wächst, abschnittsweise gelesen). **Warum:** die Datei startete am 2026-08-15 schon bei 79 % und wächst ~3,4 KB/Monat — Budget anheben hätte nur ~2 Monate gekauft. 92 % → 81 %. **MERKE:** aus einem Ist-Zustand **nie** auf eine datierte Datei in `.claude/memory/` verweisen — die sind Protokolle und werden nicht nachgeführt; genau den Fehler hatte ich am selben Tag gemacht.
 - **2026-09-03** Theme **„Ash"** aus `sku-menubar` nach Mirror portiert (flach: Grund, Sidebar und Panels alle `#262a2c`, Steel-Blue `#6c96b4`, kein Glow). **MERKE:** zwei Theming-Systeme — JS schreibt Variablen auf `<html>`, CSS auf `<body>`, die UI nimmt **immer den CSS-Wert**; nur `--modal-backdrop`/`--modal-border` kommen aus JS. Das Vorschau-iframe liest direkt aus `THEMES` → beide Seiten deckungsgleich halten (bronzeDark divergiert real). 4 leicht übersehene CSS-Gruppen: `.ps-tags-bar-inner`, `.excel-iframe`-Invert, `.ps-note-pin svg path`, `.calendar-day-today`. Nachtrag: MD-Hervorhebung war nicht kaputt, nur unlesbar — `--accent-strong` ist eine **Füll-, keine Textfarbe** (Akzent-Schema: violet 1,9:1, ash 3,2:1); Ash-Marker + Akzent-Überschrift angehoben, Tags-Leisten-Schatten entfernt. **Test-Falle:** eingefrorene CSS-Transitions lassen `getComputedStyle` alte Farben liefern — erst Reflow erzwingen. Details: `2026-09-03-ash-theme.md`, `2026-09-03-md-highlight-contrast.md`.
 - **2026-08-25** Vergleichs-Panel: zweite Notiz **read-only** neben dem Editor (`#comparePanel`, Button „Vergleichen" + **Alt+Klick** in der Liste, v45). **MERKE:** Tabs gibt es längst — als *Raum*-Tabs (`hashchange` → WS/CRDT-Neuaufbau, nie zwei gleichzeitig sichtbar). Ein zweiter *editierbarer* Editor wäre ein Neubau (alles Singleton). **Nie ein zweites Vorschau-iframe** — `previewMsgToken` ist global, ein Checkbox-Klick schriebe in die falsche Notiz. `psEditingNoteId` bleibt unberührt. Tailwind-Preflight resettet Überschriften/Listen — die Vorschau merkt das nicht (iframe ohne Preflight). Nebenbei Altbug gefixt: `setPreviewVisible` überschrieb `className` und verlor `comment-panel-open`/`hidden`. Detail: `2026-08-25-compare-panel.md`.
 - **2026-08-25** Vergleichs-Panel ohne Tastenkombi bedienbar (v46): Knopf in jeder Notizzeile + Kontextmenü-Eintrag. **MERKE:** `.ps-note-actions` ist nur bei `:hover` sichtbar — auf Touch führt kein Weg dorthin, deshalb ist der **Kontextmenü-Eintrag** (langes Tippen) der mobile Pfad. Markierung folgt dem Panel, also Listen-Rerender bei Auswahl-/Sichtbarkeitswechsel. Detail: `2026-08-25-compare-panel.md`.
@@ -111,7 +113,6 @@ und das Aufgaben-Log.
 - Fix B des Raum-Restores (echtes Login am Handy) ist vom User noch nicht real gegengetestet.
 - **Farbschema „Theme-Akzent" ist bei 10 von 12 Themes unter AA** — `--md-heading: var(--accent-strong)`, und `--accent-strong` ist eine halbtransparente **Füllfarbe**. Gedeckt über der Editor-Fläche: violet 1,9:1, fuchsia/coffeeLight 2,7:1; nur bitterDark schafft AA. Für Ash am 2026-09-03 gefixt, der Rest bewusst offen (User: passt so). Fix wäre eine Zeile: `--md-heading` auf eine deckende Akzentfarbe legen.
 - **`styles/app.css` hat als einziges Haupt-Stylesheet keinen `?v=`-Cache-Buster** (`index.html:42`) → Server liefert `max-age=300` statt `immutable`, SW stale-while-revalidate. Ein `CACHE_NAME`-Bump repariert es pro Deploy; strukturell offen. Folge: nach einem CSS-Deploy kann ein Ladevorgang neues `data-theme` mit altem Theme-CSS zeigen.
-- **`ARCHITECTURE.md` steht bei 92 % seines Budgets.** Nach der Bereinigung vom 2026-09-03 ist nichts Offensichtliches mehr auslagerbar — der nächste größere Abschnitt braucht entweder ein höheres Budget oder eine eigene Datei. Entscheidung steht beim User.
 
 ## Design Decisions
 

@@ -86,8 +86,9 @@ Der Fix ist AUSLAGERN, nicht kürzen:
 
   MEMORY.md      → Details in .claude/memory/<datum>-<thema>.md,
                    älteste Log-Einträge nach ARCHIVE-<jahr>.md rotieren
-  ARCHITECTURE.md→ Detailtabellen nach .github/Documentation/FUNCTIONS.md,
-                   Historisches nach DOCUMENTATION.md
+  ARCHITECTURE.md→ Feature-Interna nach ARCHITECTURE-FEATURES.md (dort bleibt
+                   nur ein Dreizeiler mit Verweis), Detailtabellen nach
+                   FUNCTIONS.md, Historisches nach DOCUMENTATION.md
   CLAUDE.md      → alles außer Regeln gehört woanders hin
 EOF
 	exit 1

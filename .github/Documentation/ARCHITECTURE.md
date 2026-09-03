@@ -148,68 +148,27 @@ markdown-it mit `html: false`, `linkify`, `breaks`, `typographer`, lazy geladen
    zwei Stellen: in den iframe-`<style>` **und** nach `styles/app.css` (für das
    Vergleichs-Panel und für Kommentare, die ohne `.md-content`-Wrapper rendern).
 
-## Vergleichs-Panel
+## Features im Überblick
 
-`#comparePanel` zeigt eine **zweite Notiz read-only** neben dem Editor. Vorschau und
-Vergleich teilen sich die zweite Spalte von `#editorPreviewGrid`; die Spaltenzahl setzt
-`syncEditorPreviewGridColumns()` per `classList` — **nie `className` überschreiben**,
-daran hängen auch `comment-panel-open` und das `hidden` des Kalenders. Datenquelle ist
-`psState.notes`, gerendert mit `buildPreviewContentHtml()` ins Haupt-DOM: kein Backend,
-kein CRDT, kein Auto-Save. Mobil Vollbild über `mobile-compare-open`.
+Die Interna der einzelnen Features stehen in
+[`ARCHITECTURE-FEATURES.md`](ARCHITECTURE-FEATURES.md) — dort wird abschnittsweise
+gelesen, was man gerade anfasst. Hier nur, was es gibt und die eine Regel, die man
+kennen muss, bevor man in die Nähe kommt:
 
-⚠️ **Kein zweites Vorschau-iframe.** `previewMsgToken` ist ein einziger globaler String,
-gegen den der zentrale `message`-Handler alles validiert — ein zweiter Frame wäre tot
-oder würde den Haupt-Frame kapern, und ein Checkbox-Klick im Vergleich schriebe dann in
-die *bearbeitete* Notiz.
-
-Die weiteren Regeln (unberührtes `psEditingNoteId`, eigene Typografie wegen
-Tailwind-Preflight, die Bedien-Wege inklusive Touch) stehen in
-`.claude/memory/2026-08-25-compare-panel.md`.
-
-## Kalender: gemeinsame Terminfindung
-
-Zwei Modi (`calendarMode`): `personal` und `planning`. Im Planning-Modus wird das Teilen
-automatisch aktiviert.
-
-```
-Tage wählen → toggleDayAvailability() → manualFreeSlots: Map<"YYYY-MM-DD", Set>
-            → broadcastAvailability()  ──WS "availability_state"──▶ Server
-Server validiert (busy ≤ 200 Intervalle, selectedDays ≤ 60) und broadcastet an alle
-            ◀── handleAvailabilityState() → renderCommonFreeSlots() + renderCalendarPanel()
-```
-
-`computeCommonSelectedDays()` bildet die Schnittmenge aller Teilnehmer;
-`renderParticipantIndicators(day)` zeichnet farbige Punkte plus „2/3"-Badge ins Grid.
-Empfangene Daten liegen in `availabilityByClient: Map<clientId, AvailabilityData>`
-mit `{ name, color, busy[], selectedDays[], rangeStart, rangeEnd }`.
-
-## Notiz-Graph
-
-Vollbild-Overlay `#noteGraphOverlay`, reine Client-Ansicht über vorhandene Daten —
-**kein Backend- oder Schema-Change**. Alle Funktionen sind `ng`-präfixiert.
-
-```
-psState.notes → filterRealNotes → ngBuildData {nodes, links} → ngViewData (Global|Lokal)
-              → ForceGraph().graphData()  (Canvas)
-```
-
-Kanten aus `[[Wiki-Links]]`, optional aus geteilten Tags (default aus). Liste
-(`#ngSidebar`) und Canvas sind zwei Ansichten **einer** Auswahl — beide laufen durch
-`ngSetSelection(id, {source})`.
-
-⚠️ Canvas erbt kein CSS: Farben kommen per `getComputedStyle` aus den `--accent-*`, die
-Textfarbe wird aus der **Hintergrund-Luminanz** abgeleitet (`body color` ist auf mehreren
-Dark-Themes schwarz). In `ngInit` ist `.autoPauseRedraw(false)` zwingend, sonst friert
-`cooldownTicks` das Rendering ein.
-
-Details in `.claude/memory/2026-07-01-note-graph-view.md`.
-
-## Query-Engine (PS-Suchfeld)
-
-Operatoren: `tag:` · `task:open` · `task:done` · `has:task` · `has:link` · `kind:` ·
-`created:>` · `updated:<` · `pinned:`. Bei Task-Queries erscheint ein aggregiertes
-Ergebnis-Panel über der Notizliste. Zuständig: `parseQueryTokens`,
-`noteMatchesStructuredQuery`, `renderQueryResults`.
+- **Vergleichs-Panel** (`#comparePanel`) — zweite Notiz read-only neben dem Editor,
+  reines Client-Rendering aus `psState.notes`.
+  ⚠️ **Nie ein zweites Vorschau-iframe:** `previewMsgToken` ist ein einziger globaler
+  String, gegen den der zentrale `message`-Handler alles validiert — ein zweiter Frame
+  kapert den ersten, und ein Checkbox-Klick im Vergleich schriebe in die *bearbeitete*
+  Notiz.
+- **Kalender** (`calendarMode` `personal`/`planning`) — gemeinsame Terminfindung über
+  WS-Nachricht `availability_state`, Schnittmenge via `computeCommonSelectedDays()`.
+- **Notiz-Graph** (`#noteGraphOverlay`, alles `ng`-präfixiert) — Client-Ansicht über
+  vorhandene Daten, kein Backend- oder Schema-Change.
+  ⚠️ In `ngInit` ist `.autoPauseRedraw(false)` zwingend, sonst friert `cooldownTicks`
+  das Rendering ein.
+- **Query-Engine** (PS-Suchfeld) — `parseQueryTokens`, `noteMatchesStructuredQuery`,
+  `renderQueryResults`.
 
 ## Themes und Layout
 
@@ -223,9 +182,8 @@ Ergebnis-Panel über der Notizliste. Zuständig: `parseQueryTokens`,
   Variablen gewinnt in der UI **immer der CSS-Wert** (JS schreibt auf `<html>`, CSS auf
   `<body>`) — Ausnahme `--modal-backdrop`/`--modal-border`, die es nur in JS gibt.
   Beide Seiten identisch halten, sonst weichen Editor und Vorschau sichtbar voneinander
-  ab. Begründung und die Checkliste, wo ein neues Theme überall eingetragen werden muss
-  (9 Stellen in `app.js`, 5 in `app.css`, keine in `index.html`):
-  `.claude/memory/2026-09-03-ash-theme.md`.
+  ab. Die Checkliste, wo ein **neues** Theme überall eingetragen werden muss, steht in
+  [ARCHITECTURE-FEATURES.md](ARCHITECTURE-FEATURES.md#ein-neues-theme-hinzufügen).
 - ⚠️ `--accent-text` ist auf Light-Themes `#fff` — gedacht als Text *auf* Akzentfüllung,
   nicht auf hellem Panel. Wer es als Textfarbe nutzt, braucht ein Override.
 - **Mobile** über JS-getoggelte Body-Klassen: `mobile-editor-open`, `mobile-note-open`,
@@ -273,7 +231,8 @@ brauchen ggf. einen manuellen Reload.
 | Frage | Datei |
 |---|---|
 | Wie arbeite ich in diesem Repo? | `CLAUDE.md` (Root) |
-| Wie ist es gebaut? | **diese Datei** |
+| Wie ist es gebaut? | **diese Datei** (querliegend, ganz lesen) |
+| Wie funktioniert *ein bestimmtes Feature*? | [ARCHITECTURE-FEATURES.md](ARCHITECTURE-FEATURES.md) (nur den Abschnitt) |
 | Welche Funktion macht was? | [FUNCTIONS.md](FUNCTIONS.md) (nach `#tag` greppen) |
 | Was wurde wann geändert? | [DOCUMENTATION.md](DOCUMENTATION.md), älter: [CHANGELOG-ARCHIVE.md](CHANGELOG-ARCHIVE.md) |
 | Was ist geplant? | [FEATURES.md](FEATURES.md), [todo.md](todo.md) |
