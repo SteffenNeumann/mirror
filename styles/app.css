@@ -388,6 +388,12 @@ body[data-theme="emerald"] .bg-blob {
 	border-radius: 12px;
 	backdrop-filter: blur(18px) saturate(160%);
 	-webkit-backdrop-filter: blur(18px) saturate(160%);
+}
+
+/* Schatten nur an den Buttons — die Tags-Leiste selbst liegt flach auf dem
+   Editor. Das Vorschlags-Dropdown (#psEditorTagsSuggest) behält seinen
+   eigenen Schatten über die Klasse .shadow-soft. */
+#toggleComments {
 	box-shadow: 0 5px 14px rgba(2, 6, 23, 0.22);
 }
 
@@ -12475,6 +12481,17 @@ body.md-preset-muted {
 	--md-heading: var(--md-muted);
 	--md-link: var(--md-muted);
 	--md-code: var(--md-muted);
+}
+/* Ash: die Grundfläche ist heller als bei den anderen Dark-Themes, deshalb
+   waren die Default-Token dort zu schwach. Marker 3,0:1 → 4,7:1. */
+body[data-theme="ash"] {
+	--md-marker: #8b949e;
+}
+/* Ash + Theme-Akzent: --accent-strong ist eine halbtransparente Füllfarbe und
+   kam als Überschrift nur auf 3,2:1 — dunkler als der Klartext. Deckende
+   Variante mit 5,7:1, analog zum Editorial-Blau (5,3:1). */
+body.md-preset-accent[data-theme="ash"] {
+	--md-heading: #6fa8d6;
 }
 /* Token spans. NOTE: never change font-size (would break textarea alignment);
    monospace keeps a fixed advance width across weight/italic, so those are safe. */
