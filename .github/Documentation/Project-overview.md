@@ -7,7 +7,8 @@ aufgeteilt worden.
 
 | Du suchst | Datei |
 |---|---|
-| **Wie ist Mirror gebaut?** (Ist-Zustand) | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| **Wie ist Mirror gebaut?** (Ist-Zustand, querliegend) | [ARCHITECTURE.md](ARCHITECTURE.md) |
+| Wie funktioniert *ein bestimmtes Feature*? | [ARCHITECTURE-FEATURES.md](ARCHITECTURE-FEATURES.md) |
 | Welche Funktion macht was? | [FUNCTIONS.md](FUNCTIONS.md) — nach `#tag` greppen |
 | Was wurde wann geändert? | [DOCUMENTATION.md](DOCUMENTATION.md) |
 | Ältere Änderungsnotizen (2026-02 … 2026-08) | [CHANGELOG-ARCHIVE.md](CHANGELOG-ARCHIVE.md) |

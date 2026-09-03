@@ -1,3 +1,57 @@
+# Dokumentation – Änderungen (2026-09-03d)
+
+## Ziel
+- `ARCHITECTURE.md` dauerhaft unter sein Budget bringen, statt es weiter zu verschieben.
+
+## Ausgangsbefund
+Gemessen an der Git-Historie der Datei:
+
+```
+2026-08-15   12,1 KB   angelegt (bei 15 KB Budget = 79 %)
+2026-08-25   13,5 KB   Vergleichs-Panel
+2026-09-03   15,0 KB   Ash-Theme
+```
+
+- Die Datei startete bereits bei **79 %**. Jedes Feature kostet ~0,7 KB, macht rund
+  **3,4 KB pro Monat** — sie wäre spätestens im Oktober gerissen, auch ohne Ash.
+- **Budget anheben wäre keine Lösung:** 20 KB hätten bei diesem Tempo etwa zwei Monate
+  gekauft, und der Druck zum Kuratieren wäre weg.
+- Die Ursache ist strukturell: Feature-Abschnitte wachsen mit der Zahl der Features,
+  querliegendes Wissen wächst mit der App. Zwei Wachstumsraten in einer budgetierten
+  Datei gehen nicht auf.
+
+## Änderungen
+- **Neue Datei `ARCHITECTURE-FEATURES.md`** — Ist-Zustand **je Feature**, wird je
+  Abschnitt ersetzt, wächst, **kein Budget**. Getrennt wird nach **Lesehäufigkeit**,
+  nicht nach Thema: `ARCHITECTURE.md` = was man vor *jeder* Aufgabe braucht (ganz
+  gelesen, budgetiert), die neue Datei = was man nur beim Anfassen des Features liest.
+  Dasselbe Muster, das bei `FUNCTIONS.md` schon trägt.
+- **Umgezogen:** Vergleichs-Panel, Kalender, Notiz-Graph, Query-Engine — jeweils in
+  **voller** Fassung (die zuvor am selben Tag verdichteten Abschnitte sind aus der
+  Historie wiederhergestellt, nichts blieb gekürzt). In `ARCHITECTURE.md` steht dafür
+  ein Abschnitt „Features im Überblick": vier Zeilen plus die je eine Regel, die man
+  kennen muss, *bevor* man in die Nähe kommt (kein zweites Vorschau-iframe,
+  `autoPauseRedraw`).
+- **Lebensdauer-Fehler vom selben Tag korrigiert:** die verdichteten Abschnitte zeigten
+  auf `.claude/memory/2026-08-25-compare-panel.md` und `…-note-graph-view.md`. Das sind
+  **datierte Aufgaben-Protokolle** — sie werden nicht nachgeführt, wenn sich das Feature
+  ändert, der Verweis wäre nach der nächsten Änderung falsch. Ebenso die
+  Theme-Checkliste, die jetzt als Ist-Zustand in `ARCHITECTURE-FEATURES.md` steht.
+- **Regel ergänzt** in `CLAUDE.md` und im Kopf der neuen Datei: neues Feature = Abschnitt
+  dort + Dreizeiler mit Verweis, **nie** ein Verweis auf eine datierte Memory-Datei.
+- Wegweiser nachgezogen: `CLAUDE.md`-Tabelle, `MEMORY.md`, `Project-overview.md`,
+  „Wo was nachschlagen" in `ARCHITECTURE.md`, Hinweistext in `check-doc-budgets.sh`.
+
+## Auswirkungen
+- **UI/UX:** Keine. Kein Produktionscode geändert, kein Cache-Bump.
+- **Budgets:** `ARCHITECTURE.md` 92 % → **81 %**, alle anderen grün. Platz für rund
+  vier weitere Features, danach wächst nur noch die unbudgetierte Datei.
+
+## Tests
+- `scripts/check-doc-budgets.sh` grün.
+- Geprüft, dass kein Verweis aus `ARCHITECTURE.md` mehr in eine datierte Memory-Datei
+  zeigt (nur noch der legitime auf `MEMORY.md` als Erfahrungs-Index).
+
 # Dokumentation – Änderungen (2026-09-03c)
 
 ## Ziel
