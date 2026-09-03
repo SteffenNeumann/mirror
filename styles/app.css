@@ -1225,6 +1225,17 @@ body[data-theme="bronzeDark"] .ps-tags-input::placeholder {
 	color: rgba(176, 152, 136, 0.5);
 }
 
+body[data-theme="ash"] .ps-tags-bar-inner {
+	background: rgba(47, 52, 55, 0.85);
+	border-color: rgba(61, 68, 71, 0.5);
+}
+body[data-theme="ash"] .ps-tags-input {
+	color: #d0d9e0;
+}
+body[data-theme="ash"] .ps-tags-input::placeholder {
+	color: rgba(148, 159, 167, 0.6);
+}
+
 body[data-theme="bitterDark"] .ps-tags-bar-inner {
 	background: rgba(13, 12, 16, 0.9);
 	border-color: rgba(42, 42, 48, 0.5);
@@ -1715,7 +1726,8 @@ body[data-theme="violet"] .excel-iframe,
 body[data-theme="coffeeDark"] .excel-iframe,
 body[data-theme="bronzeDark"] .excel-iframe,
 body[data-theme="bitterDark"] .excel-iframe,
-body[data-theme="monoDark"] .excel-iframe {
+body[data-theme="monoDark"] .excel-iframe,
+body[data-theme="ash"] .excel-iframe {
 	filter: invert(1) hue-rotate(180deg);
 }
 
@@ -4437,7 +4449,8 @@ body[data-theme="coffeeLight"] .ps-note-pin.bg-fuchsia-500\/20 svg path,
 body[data-theme="bitterDark"] .ps-note-pin.bg-fuchsia-500\/20 svg path,
 body[data-theme="bitterLight"] .ps-note-pin.bg-fuchsia-500\/20 svg path,
 body[data-theme="monoDark"] .ps-note-pin.bg-fuchsia-500\/20 svg path,
-body[data-theme="monoLight"] .ps-note-pin.bg-fuchsia-500\/20 svg path {
+body[data-theme="monoLight"] .ps-note-pin.bg-fuchsia-500\/20 svg path,
+body[data-theme="ash"] .ps-note-pin.bg-fuchsia-500\/20 svg path {
 	fill: currentColor !important;
 	stroke: currentColor !important;
 }
@@ -4912,6 +4925,395 @@ body[data-theme="bronzeDark"] .md-content .pw-field {
 
 body[data-theme="bronzeDark"] .md-content .pw-mask {
 	color: #c5b8aa;
+}
+
+/* ═══════════════════════════════════════════
+   Ash Theme (#262A2C flach / #6C96B4 Steel-Blue)
+   Portiert aus sku-menubar (ThemeManager.swift "ash").
+   Variante A: Grundfläche und Panels sind identisch — die Struktur
+   entsteht über weiße Auflagen (4–12 %) und feine Rahmen, nicht über
+   Flächenkontrast. Kein Glow, kein Verlauf.
+   ═══════════════════════════════════════════ */
+
+body[data-theme="ash"] {
+	color-scheme: dark;
+	background-color: #262a2c;
+	color: #d0d9e0;
+	--ash-accent: #6c96b4;
+	--panel-bg: #262a2c;
+	--panel-solid-bg: #262a2c;
+	--selection-menu-bg: #2f3437;
+	--selection-menu-border: #3d4447;
+	--sel-text: #d0d9e0;
+	--sel-text-muted: rgba(208, 217, 224, 0.65);
+	--sel-text-hover: #e8eef2;
+	--sel-hover-bg: rgba(108, 150, 180, 0.1);
+	--sel-sep: rgba(108, 150, 180, 0.15);
+	--sel-divider: rgba(108, 150, 180, 0.1);
+	--sel-dot-ring: rgba(108, 150, 180, 0.45);
+	--comment-item-bg: #2f3437;
+	--calendar-event-bg: rgba(47, 52, 55, 0.82);
+	--calendar-tooltip-bg: #2f3437;
+	--calendar-tooltip-border: rgba(108, 150, 180, 0.35);
+	--calendar-tooltip-text: #d0d9e0;
+	--calendar-tooltip-shadow: 0 12px 28px rgba(0, 0, 0, 0.36),
+		inset 0 0 0 1px rgba(108, 150, 180, 0.14);
+	--scrollbar-thumb: rgba(108, 150, 180, 0.2);
+	--scrollbar-thumb-hover: rgba(108, 150, 180, 0.3);
+	--scrollbar-border: rgba(23, 26, 27, 0.6);
+	--dropdown-accent: var(--ash-accent);
+	--dropdown-accent-bg: rgba(108, 150, 180, 0.1);
+	--dropdown-text: #d0d9e0;
+	--dropdown-text-hover: #e8eef2;
+	--dropdown-hover-bg: rgba(108, 150, 180, 0.1);
+	--dropdown-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+	/* Standard accent-* bridge → Steel-Blue (overrides fuchsia :root defaults).
+	   Werte identisch zum THEMES.ash-Eintrag in app.js, damit UI und
+	   Vorschau-iframe nicht auseinanderlaufen. */
+	--accent-bg-soft:       rgba(108, 150, 180, 0.10);
+	--accent-bg:            rgba(108, 150, 180, 0.15);
+	--accent-bg-hover:      rgba(108, 150, 180, 0.20);
+	--accent-badge-bg:      rgba(108, 150, 180, 0.20);
+	--accent-strong:        rgba(108, 150, 180, 0.75);
+	--accent-strong-hover:  rgba(108, 150, 180, 0.85);
+	--accent-strong-active: rgba(108, 150, 180, 0.95);
+	--accent-border:        rgba(108, 150, 180, 0.30);
+	--accent-border-strong: rgba(108, 150, 180, 0.45);
+	--accent-text:          #d0d9e0;   /* 10.1:1 auf #262a2c */
+	--accent-text-soft:     #80aac8;   /* 5.9:1 auf #262a2c, 5.1:1 auf #2f3437 */
+	--accent-ring:          rgba(108, 150, 180, 0.25);
+	--accent-ring-strong:   rgba(108, 150, 180, 0.40);
+	--blockquote-border:    rgba(108, 150, 180, 0.45);
+	--blockquote-text:      rgba(208, 217, 224, 0.90);
+}
+
+body[data-theme="ash"] .bg-glow {
+	display: none;
+}
+
+body[data-theme="ash"] #togglePermanentLink[aria-pressed="true"] {
+	color: var(--ash-accent) !important;
+}
+
+body[data-theme="ash"] .border-white\/10 {
+	border-color: #3d4447 !important;
+}
+
+/* Textstufen — jede Stufe erreicht WCAG AA (4.5:1) sowohl auf der
+   Grundfläche #262a2c als auch auf der Auflage #2f3437. Auf den
+   akzentgetönten Ersatzflächen (.bg-slate-950/70 und /80) liegen die
+   unteren Stufen darunter — das ist von bronzeDark geerbte Konvention,
+   dort stehen nur kurze Labels. */
+body[data-theme="ash"] .text-slate-100 {
+	color: #d0d9e0 !important; /* 10.1:1 / 8.8:1 */
+}
+body[data-theme="ash"] .text-slate-200 {
+	color: #bcc6ce !important; /* 8.4:1 / 7.3:1 */
+}
+body[data-theme="ash"] .text-slate-300 {
+	color: #a3aeb6 !important; /* 6.4:1 / 5.6:1 */
+}
+body[data-theme="ash"] .text-slate-400 {
+	color: #9aa5ad !important; /* 5.8:1 / 5.0:1 */
+}
+body[data-theme="ash"] .text-slate-500 {
+	color: #939ea6 !important; /* 5.3:1 / 4.6:1 */
+}
+
+body[data-theme="ash"] .bg-white\/5,
+body[data-theme="ash"] .bg-white\/10,
+body[data-theme="ash"] .bg-white\/15,
+body[data-theme="ash"] .bg-white\/20 {
+	background-color: #2f3437 !important;
+}
+
+body[data-theme="ash"] #psPanel,
+body[data-theme="ash"] #editorPanel {
+	background-color: var(--panel-bg) !important;
+}
+
+body[data-theme="ash"] .bg-slate-950\/10,
+body[data-theme="ash"] .bg-slate-950\/20,
+body[data-theme="ash"] .bg-slate-950\/25,
+body[data-theme="ash"] .bg-slate-950\/30,
+body[data-theme="ash"] .bg-slate-950\/40,
+body[data-theme="ash"] .bg-slate-950\/60,
+body[data-theme="ash"] .bg-slate-950\/90 {
+	background-color: #262a2c !important;
+}
+
+body[data-theme="ash"] .bg-slate-950\/70 {
+	background-color: rgba(108, 150, 180, 0.18) !important;
+}
+
+body[data-theme="ash"] .bg-slate-950\/80 {
+	background-color: rgba(108, 150, 180, 0.24) !important;
+}
+
+body[data-theme="ash"] .border-fuchsia-400\/30 {
+	border-color: rgba(108, 150, 180, 0.55) !important;
+}
+
+body[data-theme="ash"] .bg-fuchsia-500\/15,
+body[data-theme="ash"] .bg-fuchsia-500\/20,
+body[data-theme="ash"] .bg-fuchsia-500\/25,
+body[data-theme="ash"] .bg-fuchsia-600\/20 {
+	background-color: rgba(108, 150, 180, 0.15) !important;
+	color: #80aac8 !important;
+}
+
+body[data-theme="ash"] .hover\:bg-fuchsia-500\/20:hover,
+body[data-theme="ash"] .hover\:bg-fuchsia-500\/25:hover {
+	background-color: rgba(108, 150, 180, 0.2) !important;
+}
+
+body[data-theme="ash"] .text-fuchsia-100,
+body[data-theme="ash"] .text-fuchsia-200,
+body[data-theme="ash"] .text-fuchsia-300 {
+	color: #80aac8 !important;
+}
+
+body[data-theme="ash"] .ps-note-item.ps-note-active {
+	background-color: #2f3437 !important;
+	border-left-color: transparent !important;
+	border-right: none !important;
+	box-shadow: none;
+	color: #80aac8 !important;
+}
+body[data-theme="ash"] #psList .ps-note-item {
+	border-bottom-color: rgba(108, 150, 180, 0.08);
+}
+
+@media (max-width: 1023px) {
+	body[data-theme="ash"] #psList .ps-note-item {
+		border-bottom-color: rgba(108, 150, 180, 0.02);
+	}
+}
+
+body[data-theme="ash"] .ps-note-item.ps-note-active .ps-note-excerpt,
+body[data-theme="ash"] .ps-note-item.ps-note-active .ps-note-title {
+	color: #80aac8 !important;
+}
+
+body[data-theme="ash"] .ps-note-item .ps-note-actions button {
+	box-shadow: none !important;
+}
+
+body[data-theme="ash"] .ps-note-pin.bg-fuchsia-500\/20 {
+	background: var(--ash-accent) !important;
+	background-image: none !important;
+	border-color: rgba(108, 150, 180, 0.6) !important;
+	color: #1a1d1f !important;
+}
+
+body[data-theme="ash"] .ps-note-item .ps-note-actions button:hover {
+	background-color: transparent !important;
+}
+
+body[data-theme="ash"] .ps-note-item.ps-note-active span.rounded-full.border {
+	background-color: transparent !important;
+	border-color: rgba(61, 68, 71, 0.65) !important;
+	color: inherit !important;
+}
+
+body[data-theme="ash"] [aria-pressed="true"],
+body[data-theme="ash"] .ps-tag-button.ps-tag-active,
+body[data-theme="ash"] .ps-note-item.ps-note-active,
+body[data-theme="ash"] .ps-tag-section .ps-tag-active {
+	color: #80aac8 !important;
+}
+
+body[data-theme="ash"] #psEditorTagsBar > div {
+	background-color: #2f3437 !important;
+	border-color: #3d4447 !important;
+}
+
+body[data-theme="ash"] #aiUsePreviewBtn {
+	border-color: rgba(108, 150, 180, 0.45) !important;
+	background-color: transparent !important;
+	color: inherit !important;
+	--ai-preview-dot-on: var(--ash-accent, #6c96b4);
+}
+
+body[data-theme="ash"] #aiUsePreviewBtn[aria-pressed="true"] {
+	background-color: transparent !important;
+	border-color: rgba(108, 150, 180, 0.65) !important;
+	color: inherit !important;
+}
+
+body[data-theme="ash"] #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
+	background-color: var(--ai-preview-dot-on) !important;
+}
+
+body[data-theme="ash"] #aiUsePreviewBtn[aria-pressed="true"] span:last-child {
+	color: inherit !important;
+}
+
+body[data-theme="ash"] #psEditorTagsBar input,
+body[data-theme="ash"] #psEditorTagsBar select {
+	background: rgba(47, 52, 55, 0.78) !important;
+	border-color: rgba(61, 68, 71, 0.78) !important;
+	color: #d0d9e0 !important;
+}
+
+body[data-theme="ash"] #psEditorTagsInput {
+	background-color: #2f3437 !important;
+}
+
+body[data-theme="ash"] #psEditorTagsSuggest {
+	background-color: #2f3437 !important;
+	border-color: #3d4447 !important;
+}
+
+body[data-theme="ash"] #settingsBackdrop {
+	background-color: rgba(18, 20, 21, 0.6) !important;
+}
+
+body[data-theme="ash"] #settingsPanel {
+	background-color: #262a2c !important;
+	border-color: #3d4447 !important;
+}
+
+body[data-theme="ash"] #settingsNav {
+	background-color: #262a2c !important;
+}
+
+body[data-theme="ash"] .shadow-soft {
+	box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+}
+
+body[data-theme="ash"] #previewPanel,
+body[data-theme="ash"] #commentPanel {
+	background: #262a2c !important;
+	border-color: rgba(61, 68, 71, 0.78) !important;
+}
+
+body[data-theme="ash"] #toggleComments,
+body[data-theme="ash"] #psMetaToggle,
+body[data-theme="ash"] #clearMirror,
+body[data-theme="ash"] #copyMirror,
+body[data-theme="ash"] #psEditorTagsBar,
+body[data-theme="ash"] #psEditorTagsBar > div {
+	background: rgba(47, 52, 55, 0.78) !important;
+	border-color: rgba(61, 68, 71, 0.78) !important;
+}
+
+body[data-theme="ash"] .hover\:bg-white\/5:hover {
+	background-color: #32373a !important;
+}
+body[data-theme="ash"] .hover\:bg-white\/10:hover {
+	background-color: #383d40 !important;
+}
+body[data-theme="ash"] .hover\:bg-white\/15:hover {
+	background-color: #3e4346 !important;
+}
+body[data-theme="ash"] .active\:bg-white\/10:active {
+	background-color: #383d40 !important;
+}
+body[data-theme="ash"] .active\:bg-white\/15:active {
+	background-color: #3e4346 !important;
+}
+body[data-theme="ash"] .active\:bg-white\/20:active {
+	background-color: #444a4d !important;
+}
+
+body[data-theme="ash"] input,
+body[data-theme="ash"] select,
+body[data-theme="ash"] textarea {
+	background-color: #2f3437;
+	color: #d0d9e0;
+	border-color: #3d4447;
+}
+
+body[data-theme="ash"] ::placeholder {
+	color: #939ea6;
+}
+
+body[data-theme="ash"] #mirror.attribution-active {
+	color: transparent !important;
+	caret-color: #d0d9e0;
+}
+
+body[data-theme="ash"] .md-content pre {
+	background: #2f3437;
+	border-color: #3d4447;
+}
+
+body[data-theme="ash"] .md-content pre.hljs {
+	background: #2f3437 !important;
+	border-color: #3d4447;
+	color: #d0d9e0;
+}
+
+body[data-theme="ash"] .md-content pre.hljs code.hljs {
+	color: #d0d9e0;
+}
+
+body[data-theme="ash"] .md-content code.hljs,
+body[data-theme="ash"] .md-content pre code.hljs {
+	color: #d0d9e0;
+	background: transparent !important;
+}
+
+/* Ash syntax highlights */
+body[data-theme="ash"] .md-content .hljs-keyword,
+body[data-theme="ash"] .md-content .hljs-selector-tag,
+body[data-theme="ash"] .md-content .hljs-title {
+	color: #8fb8d6;
+}
+body[data-theme="ash"] .md-content .hljs-string,
+body[data-theme="ash"] .md-content .hljs-attr,
+body[data-theme="ash"] .md-content .hljs-number {
+	color: #a8b8c2;
+}
+body[data-theme="ash"] .md-content .hljs-comment,
+body[data-theme="ash"] .md-content .hljs-quote {
+	color: rgba(208, 217, 224, 0.65);
+}
+
+body[data-theme="ash"] .md-content code {
+	background: rgba(128, 170, 200, 0.12);
+}
+
+body[data-theme="ash"] .md-content th,
+body[data-theme="ash"] .md-content td {
+	border-color: #3d4447;
+}
+
+body[data-theme="ash"] .md-content .pw-field {
+	background: #2f3437;
+	border-color: #3d4447;
+	color: #d0d9e0;
+}
+
+body[data-theme="ash"] .md-content .pw-mask {
+	color: #a3aeb6;
+}
+
+/* Glow-Toggle optisch deaktivieren (Glow ist für Ash gesperrt) */
+body[data-theme="ash"] #settingsGlowToggle {
+	opacity: 0.35 !important;
+	filter: grayscale(1);
+	pointer-events: none !important;
+	background-color: transparent !important;
+	border-color: #3d4447 !important;
+	color: #939ea6 !important;
+}
+
+body[data-theme="ash"] .block-arrange-overlay {
+	background: rgba(38, 42, 44, 0.92);
+}
+
+body[data-theme="ash"] .cal-mode-tab {
+	background: rgba(38, 42, 44, 0.4) !important;
+	border-color: rgba(108, 150, 180, 0.3) !important;
+	color: #bcc6ce !important;
+}
+
+body[data-theme="ash"] .cal-mode-tab--active {
+	border-color: var(--ash-accent) !important;
+	background: rgba(108, 150, 180, 0.15) !important;
+	color: #d0d9e0 !important;
 }
 
 body[data-theme="bitterLight"] {
@@ -9721,6 +10123,13 @@ body[data-theme="bitterDark"] .calendar-day-today .calendar-day-number,
 body[data-theme="monoLight"] .calendar-day-today .calendar-day-number,
 body[data-theme="monoDark"] .calendar-day-today .calendar-day-number {
 	color: #fff !important;
+}
+
+/* Ash: Weiß auf --accent-strong (0.75) käme nur auf 4.48:1 — solider
+   Akzent mit dunklem Text liefert 5.6:1. */
+body[data-theme="ash"] .calendar-day-today .calendar-day-number {
+	background: #6c96b4 !important;
+	color: #16191a !important;
 }
 
 .calendar-day-available {

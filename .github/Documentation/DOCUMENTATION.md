@@ -1,3 +1,55 @@
+# Dokumentation – Änderungen (2026-09-03)
+
+## Ziel
+- Das Theme **„Ash"** aus der macOS-App `sku-menubar` nach Mirror übernehmen.
+
+## Ausgangsbefund
+- `sku-menubar` hatte sein Theme-System ursprünglich **aus Mirror portiert**
+  (`ThemeManager.swift:4`). „Ash" ist dort neu entstanden und existierte in Mirror nicht —
+  die Aufgabe war also ein Rück-Port von SwiftUI nach CSS.
+- Der Quell-Kommentar dort nennt `#202325`; der reale Wert ist seit Commit `880aa41`
+  **`#262A2C`**. Auch die dort notierten „11.1:1" stimmen nicht mehr (real 10,13:1).
+- Zwei Kontrastlücken im Original: Tertiärtext (`#808080`, 3,64:1) verfehlt AA überall,
+  Sekundärtext (`#999999`) verfehlt AA auf Karten (4,10:1).
+
+## Änderungen
+- **Neues Dark-Theme `ash`** — flach, ohne Glow, ohne Verlauf: Grundfläche, Sidebar und
+  Panels tragen dieselbe Farbe `#262A2C`. Struktur entsteht über weiße Auflagen
+  (`#2F3437` Fläche, `#3D4447` Rahmen) statt über Flächenkontrast. Akzent:
+  Steel-Blue `#6C96B4`, Akzent-Text `#80AAC8`, Haupttext `#D0D9E0`.
+- **Textstufen gegenüber dem Original angehoben**, damit jede Stufe AA (4,5:1) auf
+  *beiden* Flächen erreicht: `.text-slate-100` `#d0d9e0` (10,1/8,8) · `200` `#bcc6ce`
+  (8,4/7,3) · `300` `#a3aeb6` (6,4/5,6) · `400` `#9aa5ad` (5,8/5,0) · `500` `#939ea6`
+  (5,3/4,6). Code-Kommentare in der Vorschau von `0.5` auf `0.65` Alpha (3,4 → 4,7:1).
+  Das „Heute"-Badge im Kalender bekommt für Ash den soliden Akzent mit dunklem Text
+  (5,6:1) — Weiß auf `--accent-strong` käme nur auf 4,48:1.
+- **`app.js` (9 Stellen):** `THEMES.ash`, `THEME_ORDER`, `GLOW_BLOCKED_THEMES`,
+  `solidBgs`, `modalBackdrops`, `modalBorders`, `getPreviewFieldColors`,
+  `getPreviewPreColors`, `buildPreviewHighlightCss`.
+- **`styles/app.css` (5 Stellen):** Haupt-Block (~360 Zeilen), `.ps-tags-bar-inner`-Block,
+  `.excel-iframe`-Invert-Liste, `.ps-note-pin svg path`-Gruppe, `.calendar-day-today`-Gruppe.
+- **Lücken mitgenommen, die `bronzeDark` selbst noch hat:** `#settingsGlowToggle` wird
+  optisch deaktiviert, `.block-arrange-overlay`, `.cal-mode-tab(-active)`,
+  `#mirror.attribution-active` (caret-color) und `getPreviewPreColors` sind für Ash
+  von Anfang an gesetzt.
+- **JS- und CSS-Werte sind deckungsgleich.** Bei `bronzeDark` divergieren sie real
+  (`--accent-text` `#fff` in der Vorschau vs. `#e8dfd3` im Editor), weil JS auf `<html>`
+  schreibt und CSS auf `<body>` — die UI nimmt immer den CSS-Wert.
+
+## Auswirkungen
+- **UI/UX:** Ein Theme mehr, an letzter Position der Liste. Kein bestehendes Theme berührt.
+- **Datenebene:** Keine.
+- **Cache:** SW `v46`→`v47`, `app.js?v`→`2026-09-03-01`.
+
+## Tests
+- Lokal statisch verifiziert (Browser): Theme erscheint in der Liste und lässt sich wählen;
+  `body`, `#psPanel`, `#editorPanel` und `#mirror` sind alle exakt `rgb(38,42,44)` (flach);
+  Glow ist gesperrt (`glow-disabled`, Blobs `display:none`, Toggle `opacity 0.35`);
+  `--modal-backdrop`/`--modal-border` kommen korrekt aus JS an; das Vorschau-iframe rendert
+  Hintergrund, Text, Links, Blockquote, Inline-Code, Tabellen und hljs-Syntaxfarben in
+  Ash-Farben; Kalender inkl. „Heute"-Badge und Mode-Tabs korrekt; Mobile-Viewport korrekt.
+  Keine Konsolenfehler.
+
 # Dokumentation – Änderungen (2026-08-25b)
 
 ## Ziel

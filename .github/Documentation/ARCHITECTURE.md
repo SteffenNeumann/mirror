@@ -219,10 +219,27 @@ Ergebnis-Panel über der Notizliste. Zuständig: `parseQueryTokens`,
 
 ## Themes und Layout
 
-- **7 Themes** über `body[data-theme]`, gesteuert durch die CSS-Variablen `--accent-bg`,
+- **12 Themes** über `body[data-theme]`, gesteuert durch die CSS-Variablen `--accent-bg`,
   `--accent-border`, `--accent-text`, `--accent-text-soft` u. a. `applyTheme` setzt sie
   zur Laufzeit auf `documentElement`. Ein neues Dark-Theme **muss alle** `--accent-*`
   in seinem Block überschreiben.
+- ⚠️ **Zwei getrennte Theming-Systeme, beide sind Pflicht:** das `THEMES`-Objekt in
+  `app.js` versorgt bg-Blobs, den Settings-Swatch, `--modal-backdrop`/`--modal-border`
+  und **das komplette Vorschau-iframe** (dessen CSS `updatePreview()` als String baut —
+  `styles/app.css` greift dort nicht). Der `body[data-theme="…"]`-Block in `app.css`
+  versorgt die Haupt-UI.
+- ⚠️ **Wer gewinnt bei doppelten Variablen:** JS schreibt auf `<html>`, CSS auf `<body>`.
+  Custom Properties werden vererbt, die eigene Deklaration am Element schlägt den
+  ererbten Wert — für die gesamte UI gewinnt also **immer der CSS-Wert**. Ausnahme:
+  `--modal-backdrop`/`--modal-border` sind in CSS nirgends deklariert, dort gewinnt JS.
+  Divergierende Werte führen zu sichtbaren Unterschieden zwischen Editor und Vorschau —
+  beide Seiten deshalb identisch halten.
+- Ein neues Theme braucht neben dem `THEMES`-Eintrag und dem CSS-Block auch Einträge in
+  `THEME_ORDER`, `GLOW_BLOCKED_THEMES` (falls ohne Glow), `solidBgs`, `modalBackdrops`,
+  `modalBorders`, `getPreviewFieldColors`, `getPreviewPreColors`,
+  `buildPreviewHighlightCss` sowie in den verstreuten Gruppen-Selektoren in `app.css`
+  (`.ps-tags-bar-inner`, `.excel-iframe`-Invert-Liste, `.ps-note-pin svg path`,
+  `.calendar-day-today`). `index.html` braucht **nichts** — die Liste wird gerendert.
 - ⚠️ `--accent-text` ist auf Light-Themes `#fff` — gedacht als Text *auf* Akzentfüllung,
   nicht auf hellem Panel. Wer es als Textfarbe nutzt, braucht ein Override.
 - **Mobile** über JS-getoggelte Body-Klassen: `mobile-editor-open`, `mobile-note-open`,
