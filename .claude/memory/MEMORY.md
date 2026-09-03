@@ -10,9 +10,13 @@
 >    Topic-Datei daneben (`YYYY-MM-DD-thema.md`), verlinkt aus der Zeile.
 > 2. **Budgets** (CI prüft sie, siehe `scripts/check-doc-budgets.sh`):
 >    diese Datei ≤ 17 KB, jede Topic-Datei ≤ 6 KB.
-> 3. **Rotation:** Log-Einträge älter als ~6 Monate wandern gesammelt nach
->    `ARCHIVE-<jahr>.md` in diesem Ordner. Nichts löschen, nur verschieben.
-> 4. **Nichts Privates hier** — das Repo ist öffentlich. Konkrete Adressen, Konten und
+> 3. **Rotation:** Sobald diese Datei **85 %** ihres Budgets erreicht, wandern die
+>    ältesten Log-Einträge nach `ARCHIVE-<jahr>.md` in diesem Ordner — verschieben,
+>    nicht löschen. (Die frühere Regel „älter als ~6 Monate" hielt mit dem Wachstum
+>    nicht Schritt; die Datei lief voll, bevor die Frist erreicht war.)
+> 4. **Nicht wiederholen, was in `ARCHITECTURE.md` steht.** Doppelte Fakten veralten
+>    hier zuerst und werden dann geglaubt.
+> 5. **Nichts Privates hier** — das Repo ist öffentlich. Konkrete Adressen, Konten und
 >    Zugangsdaten gehören in `local.md` (gitignoriert).
 >
 > Ist-Zustand der Architektur: `.github/Documentation/ARCHITECTURE.md`.
@@ -46,36 +50,16 @@ Projekt-Doku in **`.github/Documentation/`** — jede Datei mit eigener Lebensda
 `CHANGELOG-ARCHIVE.md` (Altbestand 2026-02…08), `FEATURES.md` + `todo.md` (Backlog).
 `Project-overview.md` ist nur noch ein Wegweiser-Stub. **Neue Features dort dokumentieren**, nicht nur im Memory.
 
-## Stack Summary
+## Architektur — steht woanders
 
-| Layer | Details |
-|---|---|
-| Frontend | Vanilla JS (`app.js` ~34k lines), `index.html`, `styles/app.css` |
-| Backend | Node.js ES modules (`server.js`), WebSocket (`ws`), Yjs CRDT, SQLite (`better-sqlite3`) |
-| Styling | Tailwind (vorkompiliert, `vendor/tailwind-built.css`) + custom CSS in `app.css` |
-| Deploy | Fly.io + Docker, persistent volume `/data`, suspend mode |
+Stack, Startsequenz, Raum-/Scope-Modell, PS-Persistenz, Themes, Z-Index-Skala,
+Mobile-Regeln, Markdown-Vorschau, Offline und Cache-Busting stehen **vollständig und
+aktuell** in [`.github/Documentation/ARCHITECTURE.md`](../../.github/Documentation/ARCHITECTURE.md).
+Hier bewusst **nicht** wiederholt — die Kopie war zuletzt veraltet (sie sprach noch von
+7 Themes, als es 12 waren). Fakten stehen genau einmal.
 
-## Key Architectural Patterns
-
-- **No build step im Dev** — Quelldateien direkt editieren. CSS/JS-Build (Tailwind + esbuild-Minify) läuft nur im Docker-Build.
-- **Single JS file** — all frontend logic in `app.js`
-- **Mobile layout** via JS body-class toggle: `mobile-editor-open`, `mobile-note-open`, `mobile-ps-open`, `mobile-preview-open`, `mobile-calendar-open` (breakpoint `max-width: 1023px`; helper `isMobileViewport()`)
-- **Themes**: 7 themes via `body[data-theme]` (incl. bronzeDark), CSS vars `--accent-*`. Neues Dark-Theme MUSS alle `--accent-*` in seinem Block überschreiben.
-- **Z-index scale**: overlays 30 → panels 40 → mobile fullscreen 70 → modals 9998–9999
-- **PS persistence**: server SQLite + IndexedDB offline queue (`mirror_offline_v1`) + localStorage "black box" ring buffer (`mirror_ps_local_backup_v1`). Trash mit `/restore`, retention 365 Tage.
-- **Markdown-Vorschau**: markdown-it mit Custom-Rules in `ensureMarkdown()` (`||passwort||`, `==highlight==`, Farb-Chips). **Die Haupt-Vorschau ist ein iframe, dessen CSS `updatePreview()` als String erzeugt** — `styles/app.css` greift dort NICHT.
-
-## Mobile CSS Rules (Critical)
-
-- Always `touch-action: manipulation` + `-webkit-tap-highlight-color: transparent` on mobile buttons
-- Fullscreen mobile panels: `height: 100vh; height: 100dvh; bottom: auto;` (NICHT `inset: 0` allein — keyboard issue). `100dvh` = iOS keyboard.
-
-## Design System
-
-- **Aesthetic**: glass morphism, dark UI, fuchsia/purple accent (`#d946ef` family)
-- **Backdrop**: `backdrop-filter: blur(24px) saturate(1.5)`; radius 8/10/12/16–20px; transitions 0.15–0.25s (`transform`+`opacity`)
-- **Show/hide**: `visibility`+`opacity`+`pointer-events` (nicht `display`)
-- **CSS specificity trap**: light themes nutzen `body[data-theme="X"] .bg-slate-950/80 {!important}` (0,0,2,1) — modal overrides müssen `#modalId .class` nutzen.
+Was hier steht, steht *nicht* dort: Zugänge, Login-Fallstricke, die stehenden Fallen
+und das Aufgaben-Log.
 
 ## AI Roles / Skills
 
@@ -103,39 +87,18 @@ Projekt-Doku in **`.github/Documentation/`** — jede Datei mit eigener Lebensda
 
 ## Completed Tasks Log (eine Zeile je Aufgabe; Details in den Topic-Dateien)
 
-<!-- ROTATION: Einträge älter als ~6 Monate gesammelt nach ARCHIVE-<jahr>.md verschieben
-     (nicht löschen). Ältester Eintrag aktuell 2026-03-07 → nächste Rotation ab ca. 2026-09. -->
+<!-- ROTATION: Sobald diese Datei 85 % ihres Budgets erreicht (siehe
+     scripts/check-doc-budgets.sh), wandern die ältesten Einträge nach
+     ARCHIVE-<jahr>.md im selben Ordner — verschieben, nicht löschen.
+     Zuletzt rotiert: 2026-09-03 (alles vor 2026-08-01 → ARCHIVE-2026.md). -->
 
-
+- **2026-09-03** Theme **„Ash"** aus `sku-menubar` nach Mirror portiert (flach: Grund, Sidebar und Panels alle `#262a2c`, Steel-Blue `#6c96b4`, kein Glow). **MERKE:** zwei Theming-Systeme — JS schreibt Variablen auf `<html>`, CSS auf `<body>`, die UI nimmt **immer den CSS-Wert**; nur `--modal-backdrop`/`--modal-border` kommen aus JS. Das Vorschau-iframe liest direkt aus `THEMES` → beide Seiten deckungsgleich halten (bronzeDark divergiert real). 4 leicht übersehene CSS-Gruppen: `.ps-tags-bar-inner`, `.excel-iframe`-Invert, `.ps-note-pin svg path`, `.calendar-day-today`. Nachtrag: MD-Hervorhebung war nicht kaputt, nur unlesbar — `--accent-strong` ist eine **Füll-, keine Textfarbe** (Akzent-Schema: violet 1,9:1, ash 3,2:1); Ash-Marker + Akzent-Überschrift angehoben, Tags-Leisten-Schatten entfernt. **Test-Falle:** eingefrorene CSS-Transitions lassen `getComputedStyle` alte Farben liefern — erst Reflow erzwingen. Details: `2026-09-03-ash-theme.md`, `2026-09-03-md-highlight-contrast.md`.
 - **2026-08-25** Vergleichs-Panel: zweite Notiz **read-only** neben dem Editor (`#comparePanel`, Button „Vergleichen" + **Alt+Klick** in der Liste, v45). **MERKE:** Tabs gibt es längst — als *Raum*-Tabs (`hashchange` → WS/CRDT-Neuaufbau, nie zwei gleichzeitig sichtbar). Ein zweiter *editierbarer* Editor wäre ein Neubau (alles Singleton). **Nie ein zweites Vorschau-iframe** — `previewMsgToken` ist global, ein Checkbox-Klick schriebe in die falsche Notiz. `psEditingNoteId` bleibt unberührt. Tailwind-Preflight resettet Überschriften/Listen — die Vorschau merkt das nicht (iframe ohne Preflight). Nebenbei Altbug gefixt: `setPreviewVisible` überschrieb `className` und verlor `comment-panel-open`/`hidden`. Detail: `2026-08-25-compare-panel.md`.
 - **2026-08-25** Vergleichs-Panel ohne Tastenkombi bedienbar (v46): Knopf in jeder Notizzeile + Kontextmenü-Eintrag. **MERKE:** `.ps-note-actions` ist nur bei `:hover` sichtbar — auf Touch führt kein Weg dorthin, deshalb ist der **Kontextmenü-Eintrag** (langes Tippen) der mobile Pfad. Markierung folgt dem Panel, also Listen-Rerender bei Auswahl-/Sichtbarkeitswechsel. Detail: `2026-08-25-compare-panel.md`.
-- **2026-09-03** Theme **„Ash"** aus `sku-menubar` nach Mirror portiert (flach: Grund, Sidebar und Panels alle `#262a2c`, Steel-Blue `#6c96b4`, kein Glow). **MERKE:** zwei Theming-Systeme — JS schreibt Variablen auf `<html>`, CSS auf `<body>`, die UI nimmt **immer den CSS-Wert**; nur `--modal-backdrop`/`--modal-border` kommen aus JS. Das Vorschau-iframe liest direkt aus `THEMES` → beide Seiten deckungsgleich halten (bronzeDark divergiert real). 4 leicht übersehene CSS-Gruppen: `.ps-tags-bar-inner`, `.excel-iframe`-Invert, `.ps-note-pin svg path`, `.calendar-day-today`. Nachtrag: MD-Hervorhebung war nicht kaputt, nur unlesbar — `--accent-strong` ist eine **Füll-, keine Textfarbe** (Akzent-Schema: violet 1,9:1, ash 3,2:1); Ash-Marker + Akzent-Überschrift angehoben, Tags-Leisten-Schatten entfernt. **Test-Falle:** eingefrorene CSS-Transitions lassen `getComputedStyle` alte Farben liefern — erst Reflow erzwingen. Detail: `2026-09-03-ash-theme.md`.
 - **2026-08-16** Analyse „Bild wird in der Vorschau nicht angezeigt" (kein Code-Fix): im Notiztext stand `[name](…)` statt `![name](…)` — das `!` war beim Einfügen verrutscht. **MERKE:** Upload-URLs haben immer ein Zufalls-Präfix (`/uploads/<originalname>` = 404); `Content-Type: image/png` beweist nichts (endungsabgeleitet); die blob:-Vorschau ist durch `<base href>` entlastet. Offene Härtung: Upload-Auth/Typprüfung (Details in `local.md`). Detail: `2026-08-16-upload-preview-image-bug.md`.
 - **2026-08-15** Doku + Memory nach **Lebensdauer** getrennt (PRs #27/#28, `e5c90e5`). `Project-overview.md` (221 KB, von keiner KI mehr gelesen) → `ARCHITECTURE.md` (Ist-Zustand, wird überschrieben) + `FUNCTIONS.md` + `CHANGELOG-ARCHIVE.md` + Stub. Memory ins Repo (`.claude/memory/`, Claude-Ordner ist Symlink), private Konten nach `local.md` (gitignoriert, Repo ist öffentlich). `CLAUDE.md` nur noch Regeln. **Grundsatz: eine Datei darf wachsen ODER gelesen werden, nie beides** — `scripts/check-doc-budgets.sh` + CI erzwingen das. Detail: `2026-08-15-doc-memory-restructure.md`.
 - **2026-08-15** Farb-Chips in der Vorschau (PR #26, `85da9ba`, v44) — `/FF6115/` + `#FF6115` → Farbkreis, Settings→„Editor", Default an. **MERKE:** Inline-Tokenizer auf `/` feuert nie → `md.core.ruler.push`; Preview-Styles immer an zwei Stellen (iframe + app.css). Detail: `2026-08-15-preview-color-chips.md`.
 - **2026-08-11** Geräte-Anzeige in Presence + Präsenz auf Mobil wieder sichtbar (PR #25, `c2a6f2f`, v43). **MERKE:** Presence-Felder müssen durch 4 Whitelists, sonst still verschluckt. Detail: `2026-08-11-presence-device-display.md`.
-- **2026-07-15** Raum-Restore (Fix A lokal wirksam, Fix B account-basiert) + app.js-Minifizierung (PRs #21 `1a2da08`, #22 `feb3f90`, v41/v42) + SW-Auto-Reload. Detail: `2026-07-15-room-restore-and-minify.md`.
-- **2026-07-14** Mobile-Ladegewicht: Tailwind-CDN-Runtime → vorkompiliertes CSS (PRs #19+#20, v40). **FALLE:** `NODE_ENV=production` überspringt devDeps im Docker-Build. Detail: `2026-07-14-mobile-load-weight.md`.
-- **2026-07-13** Full Offline Mode — CDN-Assets nach `/vendor/` vendored + precached (PR #14, v35). **MERKE:** opaque cross-origin Responses (`ok===false`) werden von `.ok`-gegateten `cache.put` nie gespeichert. Detail: `2026-07-13-full-offline-mode.md`.
-- **2026-07-13** Follow-up PR #15 (`c8b78bd`, v36): markdown-Libs lazy via `ensureMarkdownLibs()` + Idle-Prefetch, Offline-Badge dezenter.
-- **2026-07-13** Fix PS-Sort „Geändert" — bloßes Anwählen bumpte `updatedAt` (PRs #16–#18, `e380fca`, v39). **MERKE:** jeder PUT stempelt `updatedAt` → No-Op-Saves VOR dem PUT abfangen. Detail: `2026-07-13-ps-sort-modified-fix.md`.
-- **2026-07-02** Editor: JetBrains Mono + einstellbares MD-Quell-Highlighting (PRs #10 `5815730`, #11 `b575d17`). **MERKE:** programmatische `textarea.value=`-Edits triggern kein `input`-Event. Detail: `2026-07-02-editor-font-md-highlighting.md`.
-- **2026-07-01→02** Obsidian-Style Note Graph v1–v5, vendored force-graph (PRs #3–#9). **MERKE:** `.autoPauseRedraw(false)` zwingend. Detail: `2026-07-01-note-graph-view.md`.
-- **2026-06-29** Editor Undo/Redo — Snapshot-History (200 Schritte, Caret-Restore, Cmd+Z/Shift+Z/Y), Undo via synthetischem `input`-Event. `fe128ac`.
-- **2026-06-28** Auto-backup zu fixer Tageszeit (`psAutoBackupTime`, default 03:00) + backup-on-leave (`attachBackupOnLeave`). FS-Folder-Backup bei Hard-Close nicht garantiert — die black box ist das verlässliche Netz. `716ad01`.
-- **2026-06-27** PS data-loss hardening (offline 404 recreate, dirty-note preserve, save-fail toasts, black box, conflict warning, trash→365d). `18dc7df`. Detail: `2026-06-27-ps-dataloss-hardening.md`.
-- **2026-06-27** Action-Panel Share „An Drafts" (`drafts://x-callback-url/create?text=`) statt Telegram; Fix `getEditorContent()` las nicht-existentes `#editor` → `#mirror`. `cc0e5a6`.
-- **2026-06-03** Content Actions & Workflow system — ⚡ panel, SMTP mail, save/share/copy, SSRF-geschützte Webhook-Workflows (`workflows`-Tabelle, 7 API-Routen). `fdbf48a`+.
-- **2026-06-03** bronzeDark theme + `--accent-*` bridge fix (tokens on bg `#262626`). `b636483`.
-- **2026-03-30** Fix PS data loss on remote delete — snapshot-404-Handler legt via `savePersonalSpaceNote(rawText,{auto:false})` neu an. `4fc1e4f`.
-- **2026-03-23** Query Builder filter button + dead-button cleanup. `e88a887`, `c7f2bf0`, `94cd497`.
-- **2026-03-20** Query Builder tag browser — accordion groups + search filter (`qbTagBrowserState`, `qbTagFilter`).
-- **2026-03-19** AI Transform mode („Bearbeiten & Anwenden") — `mode==="transform"`, ersetzt `#mirror`. `4e181a8`.
-- **2026-03-17** Paste cleanup — `formatPastedText()` on textarea paste. `399cfb7`.
-- **2026-03-09** Upload delete cleans PS note links — `removeUploadLinksFromNotes()` in `deleteUpload()`.
-- **2026-03-09** WCAG AA contrast fix light themes (coffee/bitter/monoLight). `d3e30ce`.
-- **2026-03-07** Mobile Toolbox Fix — `100dvh` + `bottom:auto` on editorPanel; touch-action. `dd37f6d`.
-- **2026-03-07** AI Skill Setup — `CLAUDE.md`, skills, MEMORY.md angelegt.
 
 ---
 
@@ -146,6 +109,9 @@ Projekt-Doku in **`.github/Documentation/`** — jede Datei mit eigener Lebensda
 - Prod DB access via Keychain token (`mirror_fly_token`) — siehe Access.
 - Local server boot fails on `better-sqlite3` ABI mismatch — nur lokal; Docker prod fine.
 - Fix B des Raum-Restores (echtes Login am Handy) ist vom User noch nicht real gegengetestet.
+- **Farbschema „Theme-Akzent" ist bei 10 von 12 Themes unter AA** — `--md-heading: var(--accent-strong)`, und `--accent-strong` ist eine halbtransparente **Füllfarbe**. Gedeckt über der Editor-Fläche: violet 1,9:1, fuchsia/coffeeLight 2,7:1; nur bitterDark schafft AA. Für Ash am 2026-09-03 gefixt, der Rest bewusst offen (User: passt so). Fix wäre eine Zeile: `--md-heading` auf eine deckende Akzentfarbe legen.
+- **`styles/app.css` hat als einziges Haupt-Stylesheet keinen `?v=`-Cache-Buster** (`index.html:42`) → Server liefert `max-age=300` statt `immutable`, SW stale-while-revalidate. Ein `CACHE_NAME`-Bump repariert es pro Deploy; strukturell offen. Folge: nach einem CSS-Deploy kann ein Ladevorgang neues `data-theme` mit altem Theme-CSS zeigen.
+- **`ARCHITECTURE.md` steht bei 92 % seines Budgets.** Nach der Bereinigung vom 2026-09-03 ist nichts Offensichtliches mehr auslagerbar — der nächste größere Abschnitt braucht entweder ein höheres Budget oder eine eigene Datei. Entscheidung steht beim User.
 
 ## Design Decisions
 

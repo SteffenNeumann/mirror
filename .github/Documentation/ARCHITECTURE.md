@@ -152,26 +152,19 @@ markdown-it mit `html: false`, `linkify`, `breaks`, `typographer`, lazy geladen
 
 `#comparePanel` zeigt eine **zweite Notiz read-only** neben dem Editor. Vorschau und
 Vergleich teilen sich die zweite Spalte von `#editorPreviewGrid`; die Spaltenzahl setzt
-`syncEditorPreviewGridColumns()` per `classList` (nie `className` überschreiben — daran
-hängen auch `comment-panel-open` und das `hidden` des Kalenders). Öffnen: Button
-„Vergleichen" in der Editor-Leiste, das Symbol in der Notizzeile, der Kontextmenü-Eintrag
-oder **Alt+Klick** in der Liste. Auf Touch führt nur das Kontextmenü hin — `.ps-note-actions`
-erscheint erst bei `:hover`. Mobil: Vollbild über die Body-Klasse `mobile-compare-open`.
+`syncEditorPreviewGridColumns()` per `classList` — **nie `className` überschreiben**,
+daran hängen auch `comment-panel-open` und das `hidden` des Kalenders. Datenquelle ist
+`psState.notes`, gerendert mit `buildPreviewContentHtml()` ins Haupt-DOM: kein Backend,
+kein CRDT, kein Auto-Save. Mobil Vollbild über `mobile-compare-open`.
 
-Datenquelle ist `psState.notes`, gerendert mit `buildPreviewContentHtml(text, {noteId,
-showMeta})` ins Haupt-DOM. Kein Backend, kein CRDT, kein Auto-Save.
+⚠️ **Kein zweites Vorschau-iframe.** `previewMsgToken` ist ein einziger globaler String,
+gegen den der zentrale `message`-Handler alles validiert — ein zweiter Frame wäre tot
+oder würde den Haupt-Frame kapern, und ein Checkbox-Klick im Vergleich schriebe dann in
+die *bearbeitete* Notiz.
 
-⚠️ **Drei Regeln, die das Panel tragen:**
-
-1. **Kein zweites Vorschau-iframe.** `previewMsgToken` ist ein *einziger* globaler
-   String, gegen den der zentrale `message`-Handler alles validiert. Ein zweiter Frame
-   wäre tot oder würde den Haupt-Frame kapern — ein Checkbox-Klick im Vergleich schriebe
-   dann in die **bearbeitete** Notiz.
-2. **`psEditingNoteId` bleibt unberührt.** Auf Mobil hängt der Ansichtszustand allein
-   daran, und die Auto-Save-Kette leitet daraus die bearbeitete Notiz ab.
-3. **Eigene Typografie.** Tailwind-Preflight resettet Überschriften und Listen; der
-   iframe der Vorschau kennt kein Preflight und nutzt Browser-Defaults. Die Regeln für
-   das Panel stehen unter `.compare-body` in `styles/app.css`.
+Die weiteren Regeln (unberührtes `psEditingNoteId`, eigene Typografie wegen
+Tailwind-Preflight, die Bedien-Wege inklusive Touch) stehen in
+`.claude/memory/2026-08-25-compare-panel.md`.
 
 ## Kalender: gemeinsame Terminfindung
 
@@ -200,15 +193,16 @@ psState.notes → filterRealNotes → ngBuildData {nodes, links} → ngViewData 
               → ForceGraph().graphData()  (Canvas)
 ```
 
-Kanten aus `[[Wiki-Links]]`, optional aus geteilten Tags (default **aus**, gekappt bei
-8 Notizen pro Tag). Knotengröße skaliert mit dem Verlinkungsgrad. Split-View: Liste
+Kanten aus `[[Wiki-Links]]`, optional aus geteilten Tags (default aus). Liste
 (`#ngSidebar`) und Canvas sind zwei Ansichten **einer** Auswahl — beide laufen durch
-`ngSetSelection(id, {source})`, damit nichts auseinanderdriftet.
+`ngSetSelection(id, {source})`.
 
-⚠️ Canvas erbt kein CSS. Farben kommen per `getComputedStyle` aus den `--accent-*`.
-Die Textfarbe wird aus der **Hintergrund-Luminanz** abgeleitet, weil `body color` auf
-mehreren Dark-Themes schwarz ist. In `ngInit` ist `.autoPauseRedraw(false)` zwingend,
-sonst friert `cooldownTicks` das Rendering ein.
+⚠️ Canvas erbt kein CSS: Farben kommen per `getComputedStyle` aus den `--accent-*`, die
+Textfarbe wird aus der **Hintergrund-Luminanz** abgeleitet (`body color` ist auf mehreren
+Dark-Themes schwarz). In `ngInit` ist `.autoPauseRedraw(false)` zwingend, sonst friert
+`cooldownTicks` das Rendering ein.
+
+Details in `.claude/memory/2026-07-01-note-graph-view.md`.
 
 ## Query-Engine (PS-Suchfeld)
 
@@ -223,23 +217,15 @@ Ergebnis-Panel über der Notizliste. Zuständig: `parseQueryTokens`,
   `--accent-border`, `--accent-text`, `--accent-text-soft` u. a. `applyTheme` setzt sie
   zur Laufzeit auf `documentElement`. Ein neues Dark-Theme **muss alle** `--accent-*`
   in seinem Block überschreiben.
-- ⚠️ **Zwei getrennte Theming-Systeme, beide sind Pflicht:** das `THEMES`-Objekt in
-  `app.js` versorgt bg-Blobs, den Settings-Swatch, `--modal-backdrop`/`--modal-border`
-  und **das komplette Vorschau-iframe** (dessen CSS `updatePreview()` als String baut —
-  `styles/app.css` greift dort nicht). Der `body[data-theme="…"]`-Block in `app.css`
-  versorgt die Haupt-UI.
-- ⚠️ **Wer gewinnt bei doppelten Variablen:** JS schreibt auf `<html>`, CSS auf `<body>`.
-  Custom Properties werden vererbt, die eigene Deklaration am Element schlägt den
-  ererbten Wert — für die gesamte UI gewinnt also **immer der CSS-Wert**. Ausnahme:
-  `--modal-backdrop`/`--modal-border` sind in CSS nirgends deklariert, dort gewinnt JS.
-  Divergierende Werte führen zu sichtbaren Unterschieden zwischen Editor und Vorschau —
-  beide Seiten deshalb identisch halten.
-- Ein neues Theme braucht neben dem `THEMES`-Eintrag und dem CSS-Block auch Einträge in
-  `THEME_ORDER`, `GLOW_BLOCKED_THEMES` (falls ohne Glow), `solidBgs`, `modalBackdrops`,
-  `modalBorders`, `getPreviewFieldColors`, `getPreviewPreColors`,
-  `buildPreviewHighlightCss` sowie in den verstreuten Gruppen-Selektoren in `app.css`
-  (`.ps-tags-bar-inner`, `.excel-iframe`-Invert-Liste, `.ps-note-pin svg path`,
-  `.calendar-day-today`). `index.html` braucht **nichts** — die Liste wird gerendert.
+- ⚠️ **Zwei Theming-Systeme, beide sind Pflicht.** `THEMES` in `app.js` versorgt
+  bg-Blobs, Settings-Swatch, `--modal-*` und **das Vorschau-iframe**; der
+  `body[data-theme="…"]`-Block in `app.css` die Haupt-UI. Bei doppelt gesetzten
+  Variablen gewinnt in der UI **immer der CSS-Wert** (JS schreibt auf `<html>`, CSS auf
+  `<body>`) — Ausnahme `--modal-backdrop`/`--modal-border`, die es nur in JS gibt.
+  Beide Seiten identisch halten, sonst weichen Editor und Vorschau sichtbar voneinander
+  ab. Begründung und die Checkliste, wo ein neues Theme überall eingetragen werden muss
+  (9 Stellen in `app.js`, 5 in `app.css`, keine in `index.html`):
+  `.claude/memory/2026-09-03-ash-theme.md`.
 - ⚠️ `--accent-text` ist auf Light-Themes `#fff` — gedacht als Text *auf* Akzentfüllung,
   nicht auf hellem Panel. Wer es als Textfarbe nutzt, braucht ein Override.
 - **Mobile** über JS-getoggelte Body-Klassen: `mobile-editor-open`, `mobile-note-open`,
@@ -251,6 +237,13 @@ Ergebnis-Panel über der Notizliste. Zuständig: `parseQueryTokens`,
   (nicht `inset: 0` allein — sonst Tastatur-Problem auf iOS).
 - ⚠️ **Spezifitätsfalle:** Light-Themes nutzen `body[data-theme="X"] .bg-slate-950/80
   { … !important }` (0,0,2,1) — Modal-Overrides müssen daher `#modalId .class` nutzen.
+
+**Gestaltungssprache:** Glas-Optik auf dunklem Grund, Akzent standardmäßig Fuchsia
+(`#d946ef`-Familie). `backdrop-filter: blur(24px) saturate(1.5)`, Radien 8/10/12/16–20 px,
+Übergänge 0,15–0,25 s auf `transform` und `opacity`. Ein- und Ausblenden über
+`visibility` + `opacity` + `pointer-events`, **nicht** über `display` — sonst gehen die
+Übergänge verloren. Ausnahmen sind die flachen Themes (mono, coffee, bitter, bronze, ash),
+die Glas und Glow bewusst weglassen.
 
 ## Offline-Fähigkeit
 
