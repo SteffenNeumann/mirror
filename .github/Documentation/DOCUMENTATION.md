@@ -1,3 +1,57 @@
+# Dokumentation – Änderungen (2026-09-03b)
+
+## Ziel
+- Markdown-Hervorhebung im Editor für **Ash** lesbar machen.
+- Schatten von der Tags-Leiste `#psEditorTagsBar` entfernen, Buttons behalten ihren.
+
+## Ausgangsbefund
+- Die Markdown-Hervorhebung war **nicht kaputt** — Feature-Code seit Einführung
+  (`cd06ac6` + Fix `36e2d67`) nie wieder angefasst, in Produktion verifiziert.
+  Das Problem war reine Lesbarkeit auf der Ash-Fläche.
+- **Farbschema „Theme-Akzent":** `--md-heading: var(--accent-strong)`. `--accent-strong`
+  ist bei 8 von 12 Themes eine **halbtransparente Füllfarbe**, keine Textfarbe. Über der
+  Editor-Fläche gedeckt bleibt kaum Kontrast: violet **1,92:1**, fuchsia und coffeeLight
+  je 2,66:1, ash 3,23:1 — nur bitterDark (5,10:1) schafft AA. Bei Ash war die Überschrift
+  damit **dunkler als der Klartext** (3,14:1 gegeneinander), sah also aus wie „keine
+  Formatierung".
+- **`--md-marker`** (`#`, `**`, `>`, `-`) liegt in **jedem** Theme unter AA (3,00–4,03:1).
+  Ash war mit exakt 3,00:1 das schwächste — die Grundfläche `#262a2c` ist heller als bei
+  den anderen Dark-Themes, der Default-Marker `#6b7280` deshalb dort am schwächsten.
+
+## Änderungen
+- **Nur Ash** angehoben (die anderen Themes passen laut User):
+  `--md-marker` `#6b7280` → **`#8b949e`** (3,0:1 → 4,7:1) und, im Akzent-Schema,
+  `--md-heading` → deckendes **`#6fa8d6`** (3,2:1 → 5,7:1; das Editorial-Blau liegt
+  bei 5,3:1). Selektor `body.md-preset-accent[data-theme="ash"]` (0,2,1) schlägt
+  `body.md-preset-accent` (0,1,1) unabhängig von der Reihenfolge.
+- **Schatten der Tags-Leiste entfernt.** Die Gruppe
+  `#toggleComments, #psEditorTagsBar, #psEditorTagsBar > div` trug einen gemeinsamen
+  `box-shadow`. Der liegt jetzt nur noch auf `#toggleComments` (Button). Die Leiste und
+  ihre innere Leiste liegen flach auf dem Editor. Das Vorschlags-Dropdown
+  `#psEditorTagsSuggest` ist ebenfalls ein `> div`, behält aber über die Klasse
+  `.shadow-soft` seinen eigenen Schatten — es soll weiter schweben.
+  Die drei Light-Themes hatten dort ohnehin `box-shadow: none !important`, für sie
+  ändert sich nichts.
+
+## Auswirkungen
+- **UI/UX:** Tags-Leiste flach in allen Themes. Ash-Hervorhebung lesbar.
+- **Datenebene:** Keine.
+- **Cache:** SW `v47`→`v48`, `app.js?v`→`2026-09-03-02`.
+
+## Offen
+- Das Akzent-Schema ist bei den übrigen 10 Themes weiter unter AA (violet 1,92:1 am
+  schlechtesten). Bewusst nicht angefasst — der User hat sie als passend bewertet.
+- `styles/app.css` ist das einzige Haupt-Stylesheet **ohne** `?v=`-Cache-Buster
+  (`index.html:42`). Server liefert `max-age=300` statt `immutable`, der SW
+  stale-while-revalidate. Ein `CACHE_NAME`-Bump repariert es pro Deploy, strukturell
+  bleibt die Lücke. Als eigener Schritt vorgemerkt.
+
+## Tests
+- Lokal verifiziert: `#psEditorTagsBar` und `.ps-tags-bar-inner` `box-shadow: none`,
+  `#psEditorTagsSuggest` behält `rgba(0,0,0,.2) 0 6px 14px`, `#toggleComments` behält
+  seinen Schatten — geprüft in Ash **und** fuchsia. Ash-Tokens: `--md-marker` `#8b949e`,
+  `--md-heading` `#6fa8d6` kommen im Overlay an. Kontraste nachgerechnet, nicht geschätzt.
+
 # Dokumentation – Änderungen (2026-09-03)
 
 ## Ziel
