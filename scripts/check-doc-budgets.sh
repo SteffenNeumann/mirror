@@ -19,8 +19,14 @@ BUDGETS=(
 	".claude/memory/*.md:6"
 )
 
-# MEMORY.md hat sein eigenes, größeres Budget und ist vom Topic-Muster ausgenommen.
-TOPIC_EXCLUDE=".claude/memory/MEMORY.md"
+# Vom Topic-Budget ausgenommen: MEMORY.md hat sein eigenes, größeres Budget, und die
+# ARCHIVE-Dateien sind append-only — sie werden gegrept, nicht am Stück gelesen.
+is_excluded() {
+	case "$1" in
+	".claude/memory/MEMORY.md" | ".claude/memory/ARCHIVE-"*) return 0 ;;
+	*) return 1 ;;
+	esac
+}
 
 LIST_ONLY=0
 [ "${1:-}" = "--list" ] && LIST_ONLY=1
@@ -57,7 +63,7 @@ for entry in "${BUDGETS[@]}"; do
 	case "$path" in
 	*'*'*)
 		for f in $path; do
-			[ "$f" = "$TOPIC_EXCLUDE" ] && continue
+			is_excluded "$f" && continue
 			check_one "$f" "$limit"
 		done
 		;;
@@ -79,7 +85,7 @@ Diese Dateien werden bei jeder Session gelesen — sie müssen klein bleiben.
 Der Fix ist AUSLAGERN, nicht kürzen:
 
   MEMORY.md      → Details in .claude/memory/<datum>-<thema>.md,
-                   Einträge älter als ~6 Monate nach ARCHIVE-<jahr>.md
+                   älteste Log-Einträge nach ARCHIVE-<jahr>.md rotieren
   ARCHITECTURE.md→ Detailtabellen nach .github/Documentation/FUNCTIONS.md,
                    Historisches nach DOCUMENTATION.md
   CLAUDE.md      → alles außer Regeln gehört woanders hin

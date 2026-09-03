@@ -28,8 +28,9 @@ mehr liest — genau deshalb wurde die 221 KB große `Project-overview.md` aufge
 | `.github/Documentation/FEATURES.md`, `todo.md` | Backlog | – |
 
 `scripts/check-doc-budgets.sh` prüft die Budgets, die CI führt es bei jedem Push aus.
-Reißt ein Budget: **auslagern statt kürzen** — Details in eine Topic-Datei, alte
-Log-Einträge nach `.claude/memory/ARCHIVE-<jahr>.md`.
+Reißt ein Budget: **auslagern statt kürzen** — Details in eine Topic-Datei. Erreicht
+`MEMORY.md` 85 %, wandern die ältesten Log-Einträge nach
+`.claude/memory/ARCHIVE-<jahr>.md` (verschieben, nicht löschen).
 
 **Nichts Privates in versionierte Dateien** — das Repo ist öffentlich. Konten,
 Adressen, Zugangsdaten gehören in `.claude/memory/local.md` (gitignoriert).

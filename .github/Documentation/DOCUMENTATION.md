@@ -1,3 +1,52 @@
+# Dokumentation – Änderungen (2026-09-03c)
+
+## Ziel
+- Doku und Memory nachziehen und aufräumen. Kein Produktionscode berührt.
+
+## Ausgangsbefund
+- `MEMORY.md` stand bei **99 %** seines Budgets — der nächste Eintrag hätte die CI gerissen.
+- Vier Abschnitte in `MEMORY.md` (Stack Summary, Key Architectural Patterns, Mobile CSS
+  Rules, Design System) **duplizierten `ARCHITECTURE.md`** — und die Kopie war bereits
+  **veraltet**: sie sprach von „7 Themes (incl. bronzeDark)", während es 12 sind. Genau
+  der Fehler, den die Doku-Trennung vom 2026-08-15 verhindern sollte.
+- Der Log war nicht chronologisch (der 2026-09-03-Eintrag stand zwischen zwei August-Einträgen).
+- Die Rotationsregel („älter als ~6 Monate") hielt mit dem Wachstum nicht Schritt.
+
+## Änderungen
+- **Rotation ausgeführt:** 22 Log-Einträge vor 2026-08-01 nach
+  `.claude/memory/ARCHIVE-2026.md` verschoben (nichts gelöscht). Log neu sortiert —
+  er war nicht mehr chronologisch. Im Index bleiben die 7 Einträge ab August.
+- **Rotationsregel mechanisch gemacht:** ab 85 % Budget rotieren, statt nach Alter.
+  Die alte Frist ist als gescheitert vermerkt, damit sie niemand zurücksetzt.
+- **Duplikate entfernt:** die vier Abschnitte sind durch **einen Verweis** auf
+  `ARCHITECTURE.md` ersetzt, plus eine neue Regel „Nicht wiederholen, was dort steht".
+  99 % → **79 %**.
+- **Gestaltungssprache umgezogen:** Glas-Optik, `backdrop-filter`, Radien, Übergangs-
+  zeiten und die Show/Hide-Konvention standen **nur** in `MEMORY.md` und fehlten in
+  `ARCHITECTURE.md`. Jetzt dort, wo sie hingehören.
+- **`ARCHITECTURE.md` entlastet** (97 % → 92 %): die How-to-Checkliste für neue Themes
+  raus (gehört nicht in einen Ist-Zustand), Vergleichs-Panel und Notiz-Graph auf das
+  Wesentliche verdichtet mit Verweis auf ihre Topic-Dateien. Vorher geprüft, dass jede
+  entfernte Falle dort wirklich steht.
+- **Topic-Datei geteilt:** `2026-09-03-ash-theme.md` (96 %) → Theme-Port bleibt dort,
+  Kontrast- und Schatten-Nachtrag nach `2026-09-03-md-highlight-contrast.md`.
+- **`scripts/check-doc-budgets.sh`:** `ARCHIVE-*.md` vom Topic-Budget ausgenommen —
+  Archive sind append-only und werden gegrept, nicht am Stück gelesen.
+- **Offene Punkte im Memory festgehalten:** das schwache Akzent-Farbschema in 10 Themes,
+  der fehlende `?v=`-Cache-Buster für `styles/app.css`, und dass `ARCHITECTURE.md` bei
+  92 % strukturell an seiner Grenze ist.
+
+## Auswirkungen
+- **UI/UX:** Keine. Kein Produktionscode geändert.
+- **Cache:** Kein Bump nötig — weder `app.js` noch `index.html` noch `styles/app.css`
+  wurden verändert.
+
+## Tests
+- `scripts/check-doc-budgets.sh` grün; alle Budgets eingehalten, `MEMORY.md` bei 79 %.
+- Vor dem Entfernen geprüft, dass jede verschobene Falle in der Zieldatei steht
+  (`previewMsgToken`, `psEditingNoteId`, Tailwind-Preflight, `autoPauseRedraw`,
+  Luminanz-Ableitung) — per grep, nicht per Augenmaß.
+
 # Dokumentation – Änderungen (2026-09-03b)
 
 ## Ziel
