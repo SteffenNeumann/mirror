@@ -5,9 +5,13 @@
 > damit der Index lesbar bleibt.
 >
 > Rotiert am 2026-09-03: alle Einträge vor 2026-08-01.
+> Rotiert am 2026-09-13: alle Einträge vor 2026-08-16.
 
 ## Completed Tasks Log (älteste zuerst rotiert, neueste oben)
 
+- **2026-08-15** Doku + Memory nach **Lebensdauer** getrennt (PRs #27/#28, `e5c90e5`). `Project-overview.md` (221 KB, von keiner KI mehr gelesen) → `ARCHITECTURE.md` (Ist-Zustand, wird überschrieben) + `FUNCTIONS.md` + `CHANGELOG-ARCHIVE.md` + Stub. Memory ins Repo (`.claude/memory/`, Claude-Ordner ist Symlink), private Konten nach `local.md` (gitignoriert, Repo ist öffentlich). `CLAUDE.md` nur noch Regeln. **Grundsatz: eine Datei darf wachsen ODER gelesen werden, nie beides** — `scripts/check-doc-budgets.sh` + CI erzwingen das. Detail: `2026-08-15-doc-memory-restructure.md`.
+- **2026-08-15** Farb-Chips in der Vorschau (PR #26, `85da9ba`, v44) — `/FF6115/` + `#FF6115` → Farbkreis, Settings→„Editor", Default an. **MERKE:** Inline-Tokenizer auf `/` feuert nie → `md.core.ruler.push`; Preview-Styles immer an zwei Stellen (iframe + app.css). Detail: `2026-08-15-preview-color-chips.md`.
+- **2026-08-11** Geräte-Anzeige in Presence + Präsenz auf Mobil wieder sichtbar (PR #25, `c2a6f2f`, v43). **MERKE:** Presence-Felder müssen durch 4 Whitelists, sonst still verschluckt. Detail: `2026-08-11-presence-device-display.md`.
 - **2026-07-15** Raum-Restore (Fix A lokal wirksam, Fix B account-basiert) + app.js-Minifizierung (PRs #21 `1a2da08`, #22 `feb3f90`, v41/v42) + SW-Auto-Reload. Detail: `2026-07-15-room-restore-and-minify.md`.
 - **2026-07-14** Mobile-Ladegewicht: Tailwind-CDN-Runtime → vorkompiliertes CSS (PRs #19+#20, v40). **FALLE:** `NODE_ENV=production` überspringt devDeps im Docker-Build. Detail: `2026-07-14-mobile-load-weight.md`.
 - **2026-07-13** Full Offline Mode — CDN-Assets nach `/vendor/` vendored + precached (PR #14, v35). **MERKE:** opaque cross-origin Responses (`ok===false`) werden von `.ok`-gegateten `cache.put` nie gespeichert. Detail: `2026-07-13-full-offline-mode.md`.
