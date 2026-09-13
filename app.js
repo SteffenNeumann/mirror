@@ -12385,6 +12385,10 @@
 			attributionOverlay.style.setProperty('padding-top', val, 'important');
 		if (commentOverlay)
 			commentOverlay.style.setProperty('padding-top', val, 'important');
+		if (searchHighlightOverlay)
+			searchHighlightOverlay.style.setProperty('padding-top', val, 'important');
+		if (mdHighlightOverlay)
+			mdHighlightOverlay.style.setProperty('padding-top', val, 'important');
 	}
 
 	function resetEditorMetaPadding() {
@@ -12405,6 +12409,10 @@
 			attributionOverlay.style.removeProperty('padding-top');
 		if (commentOverlay)
 			commentOverlay.style.removeProperty('padding-top');
+		if (searchHighlightOverlay)
+			searchHighlightOverlay.style.removeProperty('padding-top');
+		if (mdHighlightOverlay)
+			mdHighlightOverlay.style.removeProperty('padding-top');
 	}
 
 	function cleanNoteTitleLine(line) {
