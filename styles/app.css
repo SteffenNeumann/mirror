@@ -245,7 +245,8 @@ body {
 	background-color: var(--selection-menu-bg) !important;
 	border-color: var(--selection-menu-border) !important;
 	color: var(--calendar-tooltip-text);
-	box-shadow: var(--calendar-tooltip-shadow);
+	/* Kein Schatten: das Kästchen liegt flach über dem Editortext (User-Wunsch). */
+	box-shadow: none !important;
 }
 
 .run-output-icon {
