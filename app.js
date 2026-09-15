@@ -7095,6 +7095,8 @@
 				"preview.chat_you": "Du",
 				"preview.chat_ai": "KI",
 				"preview.chat_clear": "Chat leeren",
+				"preview.chat_max": "Chat maximieren",
+				"preview.chat_restore": "Vorschau wieder anzeigen",
 				"preview.chat_delete": "Chat löschen",
 				"preview.chat_output": "Chat",
 				"toast.dictation_started": "Diktat gestartet.",
@@ -7882,6 +7884,8 @@
 				"preview.chat_you": "You",
 				"preview.chat_ai": "AI",
 				"preview.chat_clear": "Clear chat",
+				"preview.chat_max": "Maximize chat",
+				"preview.chat_restore": "Show preview again",
 				"preview.chat_delete": "Delete chat",
 				"preview.chat_output": "Chat",
 				"toast.dictation_started": "Dictation started.",
@@ -13542,10 +13546,12 @@
 	function updateRunOutputSizing() {
 		if (!runOutputEl) return;
 		// When the preview panel is closed/hidden, keep default sizing.
+		// Maximised chat: the output scrolls inside the flex column (CSS), no cap.
 		if (
 			!previewOpen ||
 			!previewPanel ||
-			(previewPanel.classList && previewPanel.classList.contains("hidden"))
+			(previewPanel.classList && previewPanel.classList.contains("hidden")) ||
+			(previewPanel.classList && previewPanel.classList.contains("ai-chat-max"))
 		) {
 			try {
 				runOutputEl.style.maxHeight = "";
@@ -31618,11 +31624,43 @@ self.onmessage = async (e) => {
 	const aiConversationHeader = document.getElementById("aiConversationHeader");
 	const aiConversationBody = document.getElementById("aiConversationBody");
 	const aiConversationChevron = document.getElementById("aiConversationChevron");
+	const aiChatMaxBtn = document.getElementById("aiChatMaxBtn");
+
+	function setAiConversationCollapsed(collapsed) {
+		if (!aiConversationHeader || !aiConversationBody) return;
+		aiConversationBody.classList.toggle("ai-collapsed", collapsed);
+		if (aiConversationChevron) aiConversationChevron.classList.toggle("ai-collapsed", collapsed);
+		aiConversationHeader.setAttribute("aria-expanded", collapsed ? "false" : "true");
+	}
+
+	/* Maximised chat hides the preview iframe so history + answers get the full
+	 * panel height. Deliberately not persisted: a reload always shows the preview. */
+	function setAiChatMax(next) {
+		if (!previewPanel || !aiChatMaxBtn) return;
+		const on = Boolean(next);
+		previewPanel.classList.toggle("ai-chat-max", on);
+		if (on) setAiConversationCollapsed(false);
+		const key = on ? "preview.chat_restore" : "preview.chat_max";
+		aiChatMaxBtn.setAttribute("data-i18n-title", key);
+		aiChatMaxBtn.setAttribute("data-i18n-aria", key);
+		aiChatMaxBtn.setAttribute("title", t(key));
+		aiChatMaxBtn.setAttribute("aria-label", t(key));
+		aiChatMaxBtn.setAttribute("aria-pressed", on ? "true" : "false");
+		updateRunOutputSizing();
+	}
+
 	if (aiConversationHeader && aiConversationBody) {
 		aiConversationHeader.addEventListener("click", () => {
-			const isCollapsed = aiConversationBody.classList.toggle("ai-collapsed");
-			if (aiConversationChevron) aiConversationChevron.classList.toggle("ai-collapsed", isCollapsed);
-			aiConversationHeader.setAttribute("aria-expanded", isCollapsed ? "false" : "true");
+			const isCollapsed = !aiConversationBody.classList.contains("ai-collapsed");
+			setAiConversationCollapsed(isCollapsed);
+			// A collapsed chat has nothing to fill the panel with — bring the preview back.
+			if (isCollapsed) setAiChatMax(false);
+		});
+	}
+	if (aiChatMaxBtn) {
+		aiChatMaxBtn.addEventListener("click", (e) => {
+			e.stopPropagation();
+			setAiChatMax(!previewPanel.classList.contains("ai-chat-max"));
 		});
 	}
 

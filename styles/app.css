@@ -2474,6 +2474,54 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	transform: rotate(-90deg);
 }
 
+/* Section never grows past the panel: capped + own scroll, so the prompt
+ * can't be pushed below the panel's overflow-hidden edge. */
+#aiConversationSection {
+	min-height: 0;
+	max-height: 60%;
+	overflow-y: auto;
+}
+
+/* Maximised chat: iframe hidden, section takes the full panel height.
+ * History and AI output scroll inside; prompt row stays visible. */
+.ai-chat-restore-icon,
+#previewPanel.ai-chat-max .ai-chat-max-icon {
+	display: none;
+}
+#previewPanel.ai-chat-max .ai-chat-restore-icon {
+	display: block;
+}
+#previewPanel.ai-chat-max #mdPreview {
+	display: none;
+}
+#previewPanel.ai-chat-max #aiConversationSection {
+	display: flex;
+	flex: 1 1 0;
+	flex-direction: column;
+	max-height: none;
+	overflow: hidden;
+}
+#previewPanel.ai-chat-max #aiConversationBody {
+	flex: 1 1 0;
+	min-height: 0;
+}
+#previewPanel.ai-chat-max #aiConversationBody > * {
+	flex-shrink: 0;
+}
+#previewPanel.ai-chat-max #aiChatHistory {
+	flex: 0 1 auto;
+	min-height: 0;
+	overflow-y: auto;
+}
+#previewPanel.ai-chat-max #aiPromptRow {
+	margin-top: auto;
+}
+#previewPanel.ai-chat-max #runOutput {
+	flex: 0 1 auto;
+	min-height: 0;
+	max-height: none;
+}
+
 /* Calendar Clear Availability Dropdown */
 .cal-clear-select {
 	position: relative;
