@@ -47,6 +47,23 @@ showMeta})` ins Haupt-DOM. Kein Backend, kein CRDT, kein Auto-Save.
    iframe der Vorschau kennt kein Preflight und nutzt Browser-Defaults. Die Regeln für
    das Panel stehen unter `.compare-body` in `styles/app.css`.
 
+## Claude-Chat im Vorschau-Panel
+
+`#previewPanel` ist eine Flex-Spalte: Kopfzeile, `iframe#mdPreview` (`flex-1 min-h-0`),
+`#aiConversationSection`. Im Abschnitt stehen Steuerzeile, `#aiChatHistory`,
+`#aiPromptRow`, `#runOutputBar` und `#runOutput`.
+
+- **Normalmodus:** `#aiConversationSection` hat `max-height: 60%` und scrollt selbst.
+  Ohne diese Grenze wuchs er mit dem Verlauf, drückte das iframe auf 0 px, und das
+  `overflow-hidden` des Panels schnitt Prompt und Antwort ab.
+- **Maximiert** (`#aiChatMaxBtn` → `setAiChatMax()`, Klasse `ai-chat-max` am Panel):
+  iframe `display:none` (unbedenklich — nichts misst das iframe, Rendering läuft über
+  `src`/`srcdoc`). Der Abschnitt nimmt die volle Höhe; Verlauf und `#runOutput`
+  schrumpfen und scrollen, `#aiPromptRow` hat `margin-top:auto` und bleibt sichtbar.
+  `updateRunOutputSizing()` setzt in diesem Modus kein Inline-`max-height`.
+- Einklappen beendet den Max-Modus, Maximieren klappt auf. Der Zustand wird **nicht**
+  gespeichert — nach dem Neuladen ist die Vorschau immer da.
+
 ## Kalender: gemeinsame Terminfindung
 
 Zwei Modi (`calendarMode`): `personal` und `planning`. Im Planning-Modus wird das Teilen

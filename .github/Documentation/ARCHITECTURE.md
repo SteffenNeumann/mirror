@@ -161,6 +161,10 @@ kennen muss, bevor man in die Nähe kommt:
   String, gegen den der zentrale `message`-Handler alles validiert — ein zweiter Frame
   kapert den ersten, und ein Checkbox-Klick im Vergleich schriebe in die *bearbeitete*
   Notiz.
+- **Claude-Chat im Vorschau-Panel** (`#aiConversationSection`) — Knopf „Chat maximieren"
+  blendet das iframe aus (`#previewPanel.ai-chat-max`, nicht gespeichert).
+  ⚠️ Der Abschnitt ist auf 60 % gedeckelt und scrollt selbst — nie ohne Höhengrenze
+  wachsen lassen, sonst schneidet das `overflow-hidden` des Panels den Prompt ab.
 - **Kalender** (`calendarMode` `personal`/`planning`) — gemeinsame Terminfindung über
   WS-Nachricht `availability_state`, Schnittmenge via `computeCommonSelectedDays()`.
 - **Notiz-Graph** (`#noteGraphOverlay`, alles `ng`-präfixiert) — Client-Ansicht über

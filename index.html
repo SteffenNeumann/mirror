@@ -27,7 +27,7 @@
 		<!-- Preload critical assets -->
 		<link rel="preload" href="/vendor/tailwind-built.css?v=2026-07-14-01" as="style" />
 		<link rel="preload" href="/styles/app.css" as="style" />
-		<link rel="preload" href="/app.js?v=2026-09-13-01" as="script" />
+		<link rel="preload" href="/app.js?v=2026-09-15-01" as="script" />
 		<link rel="prefetch" href="/vendor/yjs.bundle.js" as="script" />
 
 		<!-- Tailwind: precompiled static CSS (built from index.html + app.js by the
@@ -1379,9 +1379,33 @@
 													>Ask Claude</span
 												>
 											</div>
-											<svg id="aiConversationChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 transition-transform duration-200">
-												<path d="M6 9l6 6 6-6" />
-											</svg>
+											<div class="flex items-center gap-1">
+												<button
+													id="aiChatMaxBtn"
+													type="button"
+													class="inline-flex h-6 w-6 items-center justify-center rounded-md bg-transparent text-slate-300 transition hover:bg-white/5 hover:text-slate-100 active:bg-white/10 focus:outline-none focus:ring-2 focus:ring-fuchsia-400/30"
+													title="Chat maximieren"
+													aria-label="Chat maximieren"
+													data-i18n-title="preview.chat_max"
+													data-i18n-aria="preview.chat_max"
+													aria-pressed="false">
+													<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ai-chat-max-icon h-3.5 w-3.5">
+														<path d="M8 3H5a2 2 0 0 0-2 2v3" />
+														<path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+														<path d="M3 16v3a2 2 0 0 0 2 2h3" />
+														<path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+													</svg>
+													<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="ai-chat-restore-icon h-3.5 w-3.5">
+														<path d="M8 3v3a2 2 0 0 1-2 2H3" />
+														<path d="M21 8h-3a2 2 0 0 1-2-2V3" />
+														<path d="M3 16h3a2 2 0 0 1 2 2v3" />
+														<path d="M16 21v-3a2 2 0 0 1 2-2h3" />
+													</svg>
+												</button>
+												<svg id="aiConversationChevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-4 w-4 transition-transform duration-200">
+													<path d="M6 9l6 6 6-6" />
+												</svg>
+											</div>
 										</div>
 										<div id="aiConversationBody" class="mt-2 flex flex-col gap-2">
 											<div class="flex flex-wrap items-center gap-2 pr-12">
@@ -1443,7 +1467,7 @@
 												</div>
 												<div id="aiChatList" class="space-y-2"></div>
 											</div>
-											<div class="flex flex-wrap items-start gap-2">
+											<div id="aiPromptRow" class="flex flex-wrap items-start gap-2">
 													<div
 														id="aiPromptWrap"
 														class="relative min-w-0 flex-1 group">
@@ -3864,7 +3888,7 @@
 		     by app.js (ensureMarkdownLibs) to speed up initial mobile load. They
 		     stay SW-precached so the lazy load is instant + offline-capable. -->
 		<script defer fetchpriority="low" src="/vendor/yjs.bundle.js"></script>
-		<script defer src="/app.js?v=2026-09-13-01"></script>
+		<script defer src="/app.js?v=2026-09-15-01"></script>
 		<script>
 			if ("serviceWorker" in navigator) {
 				// Auto-reload once when an UPDATED service worker takes control, so

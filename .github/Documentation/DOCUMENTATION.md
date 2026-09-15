@@ -1,3 +1,28 @@
+# Dokumentation – Änderungen (2026-09-15)
+
+## Ziel
+- Der Bereich „Claude fragen" im Vorschau-Panel soll die volle Höhe nutzen können —
+  Chatverlauf und Antworten passten nicht hinein.
+
+## Befund
+- `#aiConversationSection` hatte keine Höhengrenze. Mit 15 Nachrichten wurde er
+  2042 px hoch bei 736 px sichtbarer Panelhöhe; das iframe schrumpfte auf 0 px, das
+  Eingabefeld lag über 1000 px unter dem sichtbaren Rand.
+- `#runOutput` durfte zusätzlich bis 85 % der Panelhöhe einnehmen.
+- „Vollansicht" half nicht: sie blendet nur den Editor aus, nicht die Vorschau.
+
+## Änderungen
+- **Neuer Knopf „Chat maximieren"** in der Kopfzeile „Claude fragen": blendet die
+  Vorschau aus, Chat nimmt die ganze Panelhöhe. Verlauf und Antwort scrollen, das
+  Eingabefeld bleibt unten sichtbar. Nochmal klicken zeigt die Vorschau wieder.
+  Zustand wird bewusst nicht gespeichert.
+- **Grundfix:** Der Chatbereich ist im Normalmodus auf 60 % der Panelhöhe gedeckelt und
+  scrollt selbst — es wird nichts mehr abgeschnitten.
+- Einklappen beendet den Max-Modus; Maximieren klappt einen eingeklappten Chat auf.
+- Getestet: Desktop (1440×900) und Mobil (375×812), jeweils Verlauf + lange Antwort.
+- Dateien: `index.html`, `styles/app.css`, `app.js`; Cache-Busting `v=2026-09-15-01`,
+  `CACHE_NAME` `mirror-v53`.
+
 # Dokumentation – Änderungen (2026-09-03d)
 
 ## Ziel
