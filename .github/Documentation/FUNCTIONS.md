@@ -355,6 +355,8 @@
 | `loadAiStatus` | AI-Status laden | `#api` `#load` | `api` |
 | `getAiMode` | AI-Modus ermitteln (explain/fix/improve/run/summarize/image) | `#read` | — |
 | `aiAssistFromPreview` | AI-Assist aus Preview (Text via Anthropic, Bild via FLUX.2) | `#api` `#handler` | `api`, `addAiChatEntry`, `clearAiPromptAfterResponse`, `escapeHtml`, `getAiApiConfig`, `getAiChatContextKey`, `getAiMode`, `getAiPrompt`, `getAiUseAnswer`, `getAiUsePreview`, `parseRunnableFromEditor`, `saveAiPrompt`, `setPreviewRunOutput`, `setRunOutputProcessing`, `t`, `toast`, `updateRunOutputSizing`, `updateRunOutputUi` |
+| `setAiConversationCollapsed` | Chatbereich „Claude fragen" ein-/ausklappen (Body, Chevron, `aria-expanded`) | `#ui` `#state` | — |
+| `setAiChatMax` | Chat maximieren: iframe aus, Chat in voller Panelhöhe (`#previewPanel.ai-chat-max`, nicht gespeichert) | `#ui` `#state` `#preview` | `setAiConversationCollapsed`, `t`, `updateRunOutputSizing` |
 
 ##### 15.2 AI-Diktat — `app.js`
 
