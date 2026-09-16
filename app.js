@@ -2253,6 +2253,68 @@
 		dezember: "dec",
 	};
 
+	/* Touch fallback for right-click menus. iOS Safari does not reliably fire
+	   `contextmenu` on plain buttons, so features that only had a contextmenu handler
+	   were unreachable on a phone. Call this next to the contextmenu listener. */
+	function addLongPress(el, handler, holdMs = 500) {
+		if (!el || typeof handler !== "function") return;
+		let timer = 0;
+		let startX = 0;
+		let startY = 0;
+		const cancel = () => {
+			if (timer) {
+				window.clearTimeout(timer);
+				timer = 0;
+			}
+		};
+		el.addEventListener(
+			"touchstart",
+			(ev) => {
+				const touch = ev.touches && ev.touches[0];
+				if (!touch || ev.touches.length > 1) return cancel();
+				startX = touch.clientX;
+				startY = touch.clientY;
+				cancel();
+				timer = window.setTimeout(() => {
+					timer = 0;
+					// Swallow the click that follows the release, so the long press does
+					// not also trigger the element's normal tap action.
+					const suppress = (clickEv) => {
+						clickEv.preventDefault();
+						clickEv.stopPropagation();
+					};
+					el.addEventListener("click", suppress, {
+						capture: true,
+						once: true,
+					});
+					window.setTimeout(
+						() => el.removeEventListener("click", suppress, true),
+						700
+					);
+					handler(startX, startY);
+				}, holdMs);
+			},
+			{ passive: true }
+		);
+		el.addEventListener(
+			"touchmove",
+			(ev) => {
+				const touch = ev.touches && ev.touches[0];
+				if (!touch) return cancel();
+				// A scroll gesture must not open the menu.
+				if (
+					Math.abs(touch.clientX - startX) > 10 ||
+					Math.abs(touch.clientY - startY) > 10
+				) {
+					cancel();
+				}
+			},
+			{ passive: true }
+		);
+		el.addEventListener("touchend", cancel, { passive: true });
+		el.addEventListener("touchcancel", cancel, { passive: true });
+	}
+
 	function uniqTags(list) {
 		const out = [];
 		const seen = new Set();
@@ -4891,7 +4953,7 @@
 			// ignore
 		}
 		if (changed) {
-			metaLeft.textContent = "Formatting";
+			metaLeft.textContent = t("editor.formatting", "Formatiere…");
 			metaRight.textContent = nowIso();
 			const canSyncRoom = shouldSyncRoomContentNow();
 			if (canSyncRoom) {
@@ -4986,7 +5048,7 @@
 		const changed = before !== after;
 		try { textarea.focus(); } catch { /* ignore */ }
 		if (changed) {
-			metaLeft.textContent = "Formatting";
+			metaLeft.textContent = t("editor.formatting", "Formatiere…");
 			metaRight.textContent = nowIso();
 			const canSyncRoom = shouldSyncRoomContentNow();
 			if (canSyncRoom) {
@@ -5064,7 +5126,7 @@
 		const after = String(el.value || "");
 		if (before === after) return;
 		try { el.focus(); } catch { /* ignore */ }
-		metaLeft.textContent = "Formatting";
+		metaLeft.textContent = t("editor.formatting", "Formatiere…");
 		metaRight.textContent = nowIso();
 		const canSyncRoom = shouldSyncRoomContentNow();
 		if (canSyncRoom) {
@@ -7024,7 +7086,19 @@
 				"tabs.tooltip.private": "Privater Raum · Zugriff nur mit Schlüssel",
 				"tabs.tooltip.public": "Öffentlicher Raum · Kein Schlüssel erforderlich",
 				"tabs.tooltip.shared": "Geteilter Raum · Link wurde geteilt",
-				"editor.note_close": "Notiz schließen",
+				"editor.note_close": "Notizliste",
+				"editor.cmd_palette": "Befehlspalette",
+				"ps.login_prompt": "E-Mail-Adresse für deinen Personal Space:",
+				"ps.login_send": "Link senden",
+				"ps.note.pin": "Anheften",
+				"ps.note.delete": "Löschen",
+				"editor.preview_hide": "Vorschau ausblenden",
+				"editor.formatting": "Formatiere…",
+				"editor.code_inserted": "Codeblock eingefügt.",
+				"editor.preview_ready": "Vorschau bereit.",
+				"editor.online_waiting": "Online. Warte auf Änderungen…",
+				"editor.connection_lost": "Verbindung verloren. Server/Netzwerk prüfen.",
+				"editor.placeholder": "Schreib etwas — alle mit diesem Link sehen es sofort…",
 				"editor.copy": "In Zwischenablage kopieren",
 				"editor.clear_input": "Eingabe leeren",
 				"comments.toggle": "Kommentare ein-/ausblenden",
@@ -7192,7 +7266,7 @@
 				"settings.close": "Einstellungen schließen",
 				"settings.nav.user": "Benutzer-Einstellungen",
 				"settings.nav.export": "Export/Import",
-				"settings.nav.shared": "Geteilte Raeume",
+				"settings.nav.shared": "Geteilte Räume",
 				"settings.nav.themes": "Themes",
 				"settings.nav.calendar": "Kalender",
 				"settings.nav.integrations": "Integrationen",
@@ -7253,16 +7327,16 @@
 				"settings.user.favorites.desc":
 					"Favoriten bearbeiten, Notizen hinzufügen oder entfernen.",
 				"settings.user.favorites.empty": "Keine Favoriten vorhanden.",
-				"settings.shared.title": "Geteilte Raeume",
-				"settings.shared.desc": "Geteilte Raeume verwalten und entfernen.",
+				"settings.shared.title": "Geteilte Räume",
+				"settings.shared.desc": "Geteilte Räume verwalten und entfernen.",
 				"settings.shared.empty": "Keine geteilten Raeume gespeichert.",
 				"settings.shared.empty_filtered": "Keine Treffer fuer den Filter.",
 				"settings.shared.open": "Oeffnen",
 				"settings.shared.remove": "Entfernen",
 				"settings.shared.updated": "Zuletzt geteilt:",
-				"settings.shared.search_placeholder": "Geteilte Raeume suchen",
+				"settings.shared.search_placeholder": "Geteilte Räume suchen",
 				"settings.shared.clear": "Alle entfernen",
-				"settings.shared.clear_title": "Geteilte Raeume loeschen",
+				"settings.shared.clear_title": "Geteilte Räume löschen",
 				"settings.shared.clear_confirm": "Moechtest du alle geteilten Raeume entfernen?",
 				"settings.shared.clear_ok": "Alles entfernen",
 				"settings.shared.clear_cancel": "Abbrechen",
@@ -7814,7 +7888,19 @@
 				"tabs.tooltip.private": "Private room · Access requires key",
 				"tabs.tooltip.public": "Public room · No key required",
 				"tabs.tooltip.shared": "Shared room · Link was shared",
-				"editor.note_close": "Close note",
+				"editor.note_close": "Note list",
+				"editor.cmd_palette": "Command palette",
+				"ps.login_prompt": "Email address for your Personal Space:",
+				"ps.login_send": "Send link",
+				"ps.note.pin": "Pin",
+				"ps.note.delete": "Delete",
+				"editor.preview_hide": "Hide preview",
+				"editor.formatting": "Formatting",
+				"editor.code_inserted": "Inserted code block.",
+				"editor.preview_ready": "Preview ready.",
+				"editor.online_waiting": "Online. Waiting for updates…",
+				"editor.connection_lost": "Connection lost. Check server/network.",
+				"editor.placeholder": "Type something — everyone with this link sees it instantly…",
 				"editor.copy": "Copy to clipboard",
 				"editor.clear_input": "Clear input",
 				"comments.toggle": "Toggle comments",
@@ -10962,7 +11048,7 @@
 			},
 			{
 				q: "Wie aktiviere ich Personal Space?",
-				a: "Klicke links auf „Personal Space hinzufügen“. Du erhältst einen Bestätigungslink per E‑Mail. Nach der Anmeldung werden Notizen, Tags und Favoriten mit deinem Account synchronisiert.",
+				a: "Tippe auf „Personal Space hinzufügen“ (am Desktop links in der Seitenleiste). Du erhältst einen Bestätigungslink per E‑Mail. Nach der Anmeldung werden Notizen, Tags und Favoriten mit deinem Account synchronisiert.",
 			},
 			{
 				q: "An- und Abmelden",
@@ -13786,7 +13872,7 @@
 		} catch {
 			// ignore
 		}
-		metaLeft.textContent = "Inserted code block.";
+		metaLeft.textContent = t("editor.code_inserted", "Codeblock eingefügt.");
 		metaRight.textContent = nowIso();
 		updatePreview();
 		updateCodeLangOverlay();
@@ -14660,7 +14746,9 @@
 		previewPanel.classList.toggle("hidden", !previewOpen);
 		syncEditorPreviewGridColumns();
 		if (togglePreview) {
-			togglePreview.textContent = previewOpen ? "Hide preview" : "Preview";
+			togglePreview.textContent = previewOpen
+				? t("editor.preview_hide", "Vorschau ausblenden")
+				: t("editor.preview", "Vorschau");
 		}
 		if (previewOpen) {
 			if (!ensureMarkdown()) {
@@ -14682,7 +14770,7 @@
 		} else {
 			// Reset status when preview is hidden.
 			previewMsgToken = "";
-			if (metaLeft) metaLeft.textContent = "Ready.";
+			if (metaLeft) metaLeft.textContent = t("editor.ready", "Bereit.");
 			if (metaRight) metaRight.textContent = "";
 		}
 		if (!previewOpen && wasPreviewOpen) {
@@ -16575,6 +16663,11 @@ ${highlightThemeCss}
 				ev.stopPropagation();
 				openPsTagContextMenu(t, ev.clientX, ev.clientY);
 			});
+			addLongPress(btn, (x, y) => {
+				const t = btn.getAttribute("data-tag") || "";
+				if (!t) return;
+				openPsTagContextMenu(t, x, y);
+			});
 		});
 	}
 
@@ -18371,13 +18464,13 @@ ${highlightThemeCss}
 							<div class="truncate text-sm font-semibold text-slate-100 flex-1 min-w-0">${titleHtml}</div>
 							<div class="ps-note-actions flex items-center gap-2 flex-shrink-0">
 								${compareBtnHtml}
-								<button type="button" data-action="pin" class="ps-note-pin inline-flex rounded-md p-1 transition ${pinned ? "text-fuchsia-300" : "text-slate-400 hover:text-slate-200"}" title="Pin" aria-label="Pin">
+								<button type="button" data-action="pin" class="ps-note-pin inline-flex rounded-md p-1 transition ${pinned ? "text-fuchsia-300" : "text-slate-400 hover:text-slate-200"}" title="${escapeAttr(t("ps.note.pin", "Anheften"))}" aria-label="${escapeAttr(t("ps.note.pin", "Anheften"))}">
 									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16" /><path d="M4 4h12l-2 5 2 5H4" /></svg>
 								</button>
 								<button type="button" data-action="share" class="ps-note-share inline-flex rounded-md p-1 text-slate-400 hover:text-slate-200 transition" title="Teilen" aria-label="Teilen">
 									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.5 10.5L15.5 6.5" /><path d="M8.5 13.5L15.5 17.5" /></svg>
 								</button>
-								<button type="button" data-action="delete" class="ps-note-delete inline-flex rounded-md p-1 text-slate-400 hover:text-red-400 transition" title="Delete" aria-label="Delete">
+								<button type="button" data-action="delete" class="ps-note-delete inline-flex rounded-md p-1 text-slate-400 hover:text-red-400 transition" title="${escapeAttr(t("ps.note.delete", "Löschen"))}" aria-label="${escapeAttr(t("ps.note.delete", "Löschen"))}">
 									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18" /><path d="M8 6V4h8v2" /><path d="M19 6l-1 14H6L5 6" /><path d="M10 11v6" /><path d="M14 11v6" /></svg>
 								</button>
 							</div>
@@ -18481,6 +18574,14 @@ ${highlightThemeCss}
 					setPsNoteSelected(id, true);
 				}
 				openPsContextMenu(id, ev.clientX, ev.clientY);
+			});
+			addLongPress(row, (x, y) => {
+				const id = row.getAttribute("data-note-id") || "";
+				if (!id) return;
+				if (!psSelectedNoteIds.has(id)) {
+					setPsNoteSelected(id, true);
+				}
+				openPsContextMenu(id, x, y);
 			});
 
 			const compareBtn = row.querySelector('[data-action="compare"]');
@@ -18597,7 +18698,7 @@ ${highlightThemeCss}
 		if (data.type === "mirror_preview_ready") {
 			if (!previewMsgToken) return;
 			if (String(data.token || "") !== String(previewMsgToken)) return;
-			if (metaLeft) metaLeft.textContent = "Preview ready.";
+			if (metaLeft) metaLeft.textContent = t("editor.preview_ready", "Vorschau bereit.");
 			if (metaRight) metaRight.textContent = nowIso();
 			return;
 		}
@@ -19645,10 +19746,10 @@ self.onmessage = async (e) => {
 	}
 
 	async function requestPersonalSpaceLink() {
-		const raw = await modalPrompt("Email address for your Personal Space:", {
+		const raw = await modalPrompt(t("ps.login_prompt", "E-Mail-Adresse für deinen Personal Space:"), {
 			title: "Personal Space",
-			okText: "Send link",
-			cancelText: "Cancel",
+			okText: t("ps.login_send", "Link senden"),
+			cancelText: t("modal.cancel", "Abbrechen"),
 			type: "email",
 			autocomplete: "email",
 			placeholder: "name@example.com",
@@ -26669,7 +26770,7 @@ self.onmessage = async (e) => {
 		ws.addEventListener("open", () => {
 			if (mySeq !== connectionSeq) return;
 			setStatus("online", "Online");
-			metaLeft.textContent = "Online. Waiting for updates…";
+			metaLeft.textContent = t("editor.online_waiting", "Online. Warte auf Änderungen…");
 			// Replay any offline-queued operations
 			void replayOfflineOps();
 			const mode = isCrdtAvailable() ? "crdt" : "lww";
@@ -27177,7 +27278,7 @@ self.onmessage = async (e) => {
 		ws.addEventListener("close", () => {
 			if (mySeq !== connectionSeq) return;
 			setStatus("offline", "Offline — reconnecting…");
-			metaLeft.textContent = "Connection lost. Check server/network.";
+			metaLeft.textContent = t("editor.connection_lost", "Verbindung verloren. Server/Netzwerk prüfen.");
 			presenceState.clear();
 			updatePresenceUI();
 			reconnectTimer = window.setTimeout(connect, 900);
@@ -29195,7 +29296,7 @@ self.onmessage = async (e) => {
 		const slashApplied = applySlashCommand(textarea);
 		if (slashApplied) {
 			ev.preventDefault();
-			metaLeft.textContent = "Formatting";
+			metaLeft.textContent = t("editor.formatting", "Formatiere…");
 			metaRight.textContent = nowIso();
 			updatePreview();
 			scheduleSend();
@@ -32516,8 +32617,12 @@ self.onmessage = async (e) => {
 	}
 	if (noteCloseMobile) {
 		noteCloseMobile.addEventListener("click", async () => {
+			// This button doubles as the only mobile entry into the PS list, so it also
+			// fires while the shared room editor is open. Clearing the textarea then would
+			// wipe the room text for everyone on the next keystroke — only clear a PS note.
+			const hadPsNote = Boolean(psEditingNoteId);
 			// Save current note if it has content before closing
-			if (textarea && textarea.value && textarea.value.trim()) {
+			if (hadPsNote && textarea && textarea.value && textarea.value.trim()) {
 				try {
 					await flushPendingPsAutoSave();
 				} catch {
@@ -32531,7 +32636,7 @@ self.onmessage = async (e) => {
 			psEditingNoteId = "";
 			psEditingNoteKind = "";
 			if (psMainHint) psMainHint.classList.add("hidden");
-			if (textarea) textarea.value = "";
+			if (hadPsNote && textarea) textarea.value = "";
 			updatePreview();
 
 			// Mobile: direkt PS-Panel einblenden, Editor ausblenden
@@ -33946,6 +34051,14 @@ self.onmessage = async (e) => {
 					</span>
 					<span class="block-arrange-badge" data-type="${block.type}">${badge}</span>
 					<span class="block-arrange-preview">${preview}</span>
+					<span class="block-arrange-move">
+						<button type="button" class="block-arrange-move-btn" data-move="up" title="Nach oben" aria-label="Nach oben">
+							<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6" /></svg>
+						</button>
+						<button type="button" class="block-arrange-move-btn" data-move="down" title="Nach unten" aria-label="Nach unten">
+							<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6" /></svg>
+						</button>
+					</span>
 				</div>
 			`;
 		}).join("");
@@ -33960,6 +34073,23 @@ self.onmessage = async (e) => {
 			item.addEventListener("click", handleBlockClick);
 			item.addEventListener("keydown", handleBlockKeydown);
 		});
+		// HTML5 drag and drop does not work by touch on iOS, and Alt+Arrow needs a
+		// keyboard — without these buttons blocks cannot be reordered on a phone at all.
+		blockArrangeList.querySelectorAll(".block-arrange-move-btn").forEach(btn => {
+			btn.addEventListener("click", handleBlockMoveClick);
+		});
+	}
+
+	function handleBlockMoveClick(e) {
+		e.preventDefault();
+		e.stopPropagation();
+		const item = e.currentTarget.closest(".block-arrange-item");
+		if (!item) return;
+		const idx = parseInt(item.dataset.idx, 10);
+		if (!Number.isFinite(idx)) return;
+		const target = e.currentTarget.dataset.move === "up" ? idx - 1 : idx + 1;
+		if (target < 0 || target >= blockArrangeBlocks.length) return;
+		moveBlock(idx, target);
 	}
 
 	let draggedBlockIdx = -1;
@@ -34623,6 +34753,15 @@ self.onmessage = async (e) => {
 
 	function openCmdPalette() { setCmdPaletteOpen(true); }
 	function closeCmdPalette() { setCmdPaletteOpen(false); }
+
+	/* The palette used to be reachable only via Cmd/Alt+Shift+P — impossible on a phone. */
+	const cmdPaletteToggle = document.getElementById("cmdPaletteToggle");
+	if (cmdPaletteToggle) {
+		cmdPaletteToggle.addEventListener("click", () => {
+			if (cmdPaletteOpen) closeCmdPalette();
+			else openCmdPalette();
+		});
+	}
 
 	/* ── Execute selected item ── */
 	function executeCmdItem(idx) {
