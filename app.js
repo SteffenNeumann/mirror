@@ -2277,21 +2277,25 @@
 				cancel();
 				timer = window.setTimeout(() => {
 					timer = 0;
-					// Swallow the click that follows the release, so the long press does
-					// not also trigger the element's normal tap action.
+					// The menu opens while the finger is still down, and the release then
+					// fires a click. Swallow the first click anywhere — listening on `el`
+					// alone would miss it, because the menu is position:fixed and not a
+					// descendant of the row.
 					const suppress = (clickEv) => {
 						clickEv.preventDefault();
 						clickEv.stopPropagation();
 					};
-					el.addEventListener("click", suppress, {
+					document.addEventListener("click", suppress, {
 						capture: true,
 						once: true,
 					});
 					window.setTimeout(
-						() => el.removeEventListener("click", suppress, true),
-						700
+						() => document.removeEventListener("click", suppress, true),
+						400
 					);
-					handler(startX, startY);
+					// Offset so the menu does not open directly under the fingertip —
+					// its first entry would otherwise sit right where the finger is.
+					handler(startX, startY + 24);
 				}, holdMs);
 			},
 			{ passive: true }
@@ -2313,6 +2317,9 @@
 		);
 		el.addEventListener("touchend", cancel, { passive: true });
 		el.addEventListener("touchcancel", cancel, { passive: true });
+		// Android Chrome fires `contextmenu` on long press too. Let the native event win
+		// there, otherwise both paths open the menu.
+		el.addEventListener("contextmenu", cancel);
 	}
 
 	function uniqTags(list) {
@@ -7092,6 +7099,9 @@
 				"ps.login_send": "Link senden",
 				"ps.note.pin": "Anheften",
 				"ps.note.delete": "Löschen",
+				"ps.note.share": "Teilen",
+				"arrange.move_up": "Nach oben",
+				"arrange.move_down": "Nach unten",
 				"editor.preview_hide": "Vorschau ausblenden",
 				"editor.formatting": "Formatiere…",
 				"editor.code_inserted": "Codeblock eingefügt.",
@@ -7894,6 +7904,9 @@
 				"ps.login_send": "Send link",
 				"ps.note.pin": "Pin",
 				"ps.note.delete": "Delete",
+				"ps.note.share": "Share",
+				"arrange.move_up": "Move up",
+				"arrange.move_down": "Move down",
 				"editor.preview_hide": "Hide preview",
 				"editor.formatting": "Formatting",
 				"editor.code_inserted": "Inserted code block.",
@@ -18467,7 +18480,7 @@ ${highlightThemeCss}
 								<button type="button" data-action="pin" class="ps-note-pin inline-flex rounded-md p-1 transition ${pinned ? "text-fuchsia-300" : "text-slate-400 hover:text-slate-200"}" title="${escapeAttr(t("ps.note.pin", "Anheften"))}" aria-label="${escapeAttr(t("ps.note.pin", "Anheften"))}">
 									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4v16" /><path d="M4 4h12l-2 5 2 5H4" /></svg>
 								</button>
-								<button type="button" data-action="share" class="ps-note-share inline-flex rounded-md p-1 text-slate-400 hover:text-slate-200 transition" title="Teilen" aria-label="Teilen">
+								<button type="button" data-action="share" class="ps-note-share inline-flex rounded-md p-1 text-slate-400 hover:text-slate-200 transition" title="${escapeAttr(t("ps.note.share", "Teilen"))}" aria-label="${escapeAttr(t("ps.note.share", "Teilen"))}">
 									<svg viewBox="0 0 24 24" class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.5 10.5L15.5 6.5" /><path d="M8.5 13.5L15.5 17.5" /></svg>
 								</button>
 								<button type="button" data-action="delete" class="ps-note-delete inline-flex rounded-md p-1 text-slate-400 hover:text-red-400 transition" title="${escapeAttr(t("ps.note.delete", "Löschen"))}" aria-label="${escapeAttr(t("ps.note.delete", "Löschen"))}">
@@ -34052,10 +34065,10 @@ self.onmessage = async (e) => {
 					<span class="block-arrange-badge" data-type="${block.type}">${badge}</span>
 					<span class="block-arrange-preview">${preview}</span>
 					<span class="block-arrange-move">
-						<button type="button" class="block-arrange-move-btn" data-move="up" title="Nach oben" aria-label="Nach oben">
+						<button type="button" class="block-arrange-move-btn" data-move="up" title="${escapeAttr(t("arrange.move_up", "Nach oben"))}" aria-label="${escapeAttr(t("arrange.move_up", "Nach oben"))}">
 							<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6" /></svg>
 						</button>
-						<button type="button" class="block-arrange-move-btn" data-move="down" title="Nach unten" aria-label="Nach unten">
+						<button type="button" class="block-arrange-move-btn" data-move="down" title="${escapeAttr(t("arrange.move_down", "Nach unten"))}" aria-label="${escapeAttr(t("arrange.move_down", "Nach unten"))}">
 							<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6" /></svg>
 						</button>
 					</span>

@@ -2598,7 +2598,7 @@ body.preview-only #editorPreviewGrid > div:first-child {
 /* Phones show the month in 2 columns, so 42 cells at the desktop height of 150px make
    one month ~6.6 screens tall. Keep the cells tall enough for two events instead.
    Needs the #calendarGrid prefix: the 150px base rule sits further down in this file. */
-@media (max-width: 639px) {
+@media (max-width: 640px) {
 	#calendarGrid .calendar-day-cell-month {
 		height: 64px;
 	}
@@ -7802,8 +7802,10 @@ body[data-theme="monoLight"] .editor-search-icon {
 	flex-shrink: 0;
 }
 
-/* ── Mobile: smaller items ── */
-@media (max-width: 639px) {
+/* ── Touch: compact items, bounded strip ── */
+/* Bis 1023px, nicht nur bis 639px: ein iPhone im Querformat ist 812px breit und
+   haette den Ueberlauf sonst behalten. */
+@media (max-width: 1023px) {
 	.toolbox-panel {
 		gap: 2px;
 		padding: 3px 4px;
@@ -12832,9 +12834,19 @@ body[data-theme="monoLight"] #codeLang option {
 	/* iOS Safari zooms the page whenever a focused field is under 16px. Almost every
 	   field in the app was 10–14px, so tapping into one threw the layout off. */
 	input,
-	textarea,
+	textarea:not(#mirror),
 	select {
 		font-size: 16px !important;
+	}
+
+	/* #mirror teilt seine Metriken mit vier Overlay-Divs (siehe „IDENTICAL metrics"
+	   weiter unten). Die Textarea einzeln auf 16px zu zwingen reisst sie auseinander,
+	   weil die Overlays keine Formularelemente sind. Stattdessen die gemeinsame
+	   Variable anheben — die Mono-Schriften stehen auf 15px, und das Einschalten der
+	   Markdown-Hervorhebung erzwingt Mono (app.js), also traefe es fast jeden. */
+	body.editor-font-mono,
+	body.editor-font-systemmono {
+		--editor-size: 1rem;
 	}
 
 	/* The project rule asks for these on every button; only ~19 selectors had them,
@@ -12868,12 +12880,6 @@ body[data-theme="monoLight"] #codeLang option {
 	.mobile-only {
 		min-width: 44px;
 		min-height: 44px;
-	}
-
-	/* 9–10px is below what is comfortably readable on a phone. */
-	.ps-tag-pill,
-	.block-arrange-badge {
-		font-size: 11px;
 	}
 
 	/* Dialog buttons were 38px and the CRDT toggle 20px — both under the 44px target. */
