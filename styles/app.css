@@ -377,6 +377,7 @@ body[data-theme="emerald"] .bg-blob {
 
 #psTagsPanel {
 	max-height: 62.5vh;
+	max-height: 62.5dvh;
 	overflow-y: auto;
 	padding-right: 0.25rem;
 }
@@ -2582,7 +2583,9 @@ body.preview-only #editorPreviewGrid > div:first-child {
 .calendar-cell-weekday {
 	display: none;
 }
-@media (min-width: 640px) and (max-width: 1023px) {
+/* The month grid is 2 cols on phones and 4 on tablets — a 7-col weekday header would
+   sit above the wrong days. Applies to every width below lg, phones included. */
+@media (max-width: 1023px) {
 	/* Hide weekday header row when grid is not 7 cols */
 	.calendar-month-weekdays {
 		display: none !important;
@@ -2591,6 +2594,16 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	.calendar-cell-weekday {
 		display: inline;
 	}
+}
+/* Phones show the month in 2 columns, so 42 cells at the desktop height of 150px make
+   one month ~6.6 screens tall. Keep the cells tall enough for two events instead.
+   Needs the #calendarGrid prefix: the 150px base rule sits further down in this file. */
+@media (max-width: 640px) {
+	#calendarGrid .calendar-day-cell-month {
+		height: 64px;
+	}
+}
+@media (min-width: 640px) and (max-width: 1023px) {
 	/* Tablet portrait: 50/50 vertical split for calendar grid and sidebar */
 	#calendarLayout {
 		display: flex;
@@ -2794,8 +2807,10 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	body.mobile-preview-open #previewPanel {
 		position: fixed;
 		inset: 0;
+		bottom: auto;
 		width: 100vw;
 		height: 100vh;
+		height: 100dvh;
 		z-index: 70;
 		display: flex;
 		flex-direction: column;
@@ -2812,8 +2827,10 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	body.mobile-ps-open #psPanel {
 		position: fixed;
 		inset: 0;
+		bottom: auto;
 		width: 100vw;
 		height: 100vh;
+		height: 100dvh;
 		z-index: 70;
 		display: flex;
 		flex-direction: column;
@@ -2845,8 +2862,10 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	body.mobile-calendar-open #editorPanel {
 		position: fixed;
 		inset: 0;
+		bottom: auto;
 		width: 100vw;
 		height: 100vh;
+		height: 100dvh;
 		z-index: 70;
 		pointer-events: auto;
 		border-radius: 0;
@@ -2910,6 +2929,7 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	#settingsPanel {
 		width: 100vw;
 		height: 100vh;
+		height: 100dvh;
 		max-height: none;
 		border-radius: 0;
 		border: none;
@@ -3004,6 +3024,7 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	#runOutput.is-ai-output,
 	#runOutput:has(img) {
 		max-height: 70vh;
+		max-height: 70dvh;
 		overflow: auto;
 	}
 
@@ -3023,7 +3044,9 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		padding-top: 48px !important;
 	}
 	#attributionOverlay,
-	#commentOverlay {
+	#commentOverlay,
+	#searchHighlightOverlay,
+	#mdHighlightOverlay {
 		padding-top: 48px !important;
 	}
 
@@ -3070,6 +3093,7 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	#psMetaYaml {
 		top: 40px !important;
 		max-height: 30vh;
+		max-height: 30dvh;
 		overflow-y: auto;
 	}
 	#psMetaYamlInline {
@@ -3114,7 +3138,9 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		padding-top: 80px !important;
 	}
 	#attributionOverlay,
-	#commentOverlay {
+	#commentOverlay,
+	#searchHighlightOverlay,
+	#mdHighlightOverlay {
 		padding-top: 80px !important;
 	}
 
@@ -3153,6 +3179,7 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	}
 	#psPanel {
 		max-height: 35vh;
+		max-height: 35dvh;
 		overflow-y: auto;
 	}
 	#editorPreviewGrid {
@@ -3288,15 +3315,15 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	#calendarSidebar {
 		order: 2;
 		max-height: 34vh;
+		max-height: 34dvh;
 		padding: 0.5rem;
 		padding-top: 0.75rem;
 		gap: 0.625rem;
 	}
-	#calendarSidebarCalendarsSection,
-	#calendarBundeslandWrap,
-	#calendarLegend,
-	#calendarStatus,
-	#calendarRefresh {
+	/* Only the legend is decorative — hiding calendar sources, the Bundesland picker,
+	   the sync status and the refresh button left no way to manage calendars on a
+	   phone at all. The sidebar scrolls, so they fit. */
+	#calendarLegend {
 		display: none !important;
 	}
 
@@ -3347,9 +3374,10 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	/* Calendar search: compact on small phones */
 	#calendarSearchInput {
 		min-width: 60px;
-		font-size: 14px; /* prevent iOS zoom */
+		/* 16px, not 14px: iOS Safari zooms the page for anything smaller. The old
+		   14px carried a "prevent iOS zoom" comment and was overridden below anyway. */
+		font-size: 16px;
 	}
-	#calendarSearchInput,
 	#calendarViewDropdownLabel,
 	#calendarWeekLabel,
 	#calendarTitle {
@@ -3358,6 +3386,7 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	/* Calendar sidebar: stack below grid */
 	.calendar-sidebar {
 		max-height: 34vh;
+		max-height: 34dvh;
 	}
 	#calendarMySelections,
 	#calendarCommonFreeSlots {
@@ -3392,17 +3421,19 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		padding-left: 0.32rem !important;
 		padding-right: 0.32rem !important;
 	}
-	#calendarSearchInput,
+	/* #calendarSearchInput deliberately left out: anything under 16px makes iOS
+	   Safari zoom the page on focus. */
 	#calendarViewDropdownLabel,
 	#calendarWeekLabel,
 	#calendarTitle {
-		font-size: 10px !important;
+		font-size: 11px !important;
 	}
 	#calendarGrid {
 		padding: 0.25rem;
 	}
 	#calendarSidebar {
 		max-height: 30vh;
+		max-height: 30dvh;
 		padding: 0.4rem;
 		gap: 0.45rem;
 	}
@@ -3476,7 +3507,9 @@ body.preview-only #editorPreviewGrid > div:first-child {
 		padding-top: 42px !important;
 	}
 	#attributionOverlay,
-	#commentOverlay {
+	#commentOverlay,
+	#searchHighlightOverlay,
+	#mdHighlightOverlay {
 		padding-top: 42px !important;
 	}
 	#psEditorTagsBar {
@@ -3489,8 +3522,10 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	}
 	#psMetaToggle,
 	#clearMirror {
-		height: 32px !important;
-		width: 32px !important;
+		/* 40px like every other toolbox button — these two carried !important and
+		   stayed at 32px, below the touch target, while the rest grew. */
+		height: 40px !important;
+		width: 40px !important;
 	}
 	#psMetaToggle svg,
 	#clearMirror svg {
@@ -7767,22 +7802,47 @@ body[data-theme="monoLight"] .editor-search-icon {
 	flex-shrink: 0;
 }
 
-/* ── Mobile: smaller items ── */
-@media (max-width: 639px) {
+/* ── Touch: compact items, bounded strip ── */
+/* Bis 1023px, nicht nur bis 639px: ein iPhone im Querformat ist 812px breit und
+   haette den Ueberlauf sonst behalten. */
+@media (max-width: 1023px) {
 	.toolbox-panel {
 		gap: 2px;
 		padding: 3px 4px;
+		/* The expanded strip is ~412px wide and anchored right, so on a 375px phone its
+		   left end (Linear, Excalidraw) used to sit off-screen with no way to reach it.
+		   The toolbox below is now bounded on both sides; this lets the strip shrink
+		   into whatever is left and scroll sideways instead of overflowing. */
+		min-width: 0;
+		flex: 0 1 auto;
+		overflow-x: auto;
+		overflow-y: hidden;
+		-webkit-overflow-scrolling: touch;
+		scrollbar-width: none;
 	}
-	.toolbox-btn {
-		width: 28px;
-		height: 28px;
+	.toolbox-panel::-webkit-scrollbar {
+		display: none;
 	}
-	.toolbox-btn svg {
-		width: 14px;
-		height: 14px;
+	/* Needs the #toolboxPanel prefix — the 32px base rule is an ID selector and would
+	   otherwise win regardless of this media query. */
+	#toolboxPanel .toolbox-btn {
+		flex-shrink: 0;
+		width: 40px;
+		height: 40px;
 	}
 	.toolbox-sep {
 		height: 16px;
+		flex-shrink: 0;
+	}
+	.toolbox-trigger {
+		width: 44px;
+		height: 44px;
+		flex-shrink: 0;
+	}
+	/* Bound the whole toolbox on the left too, so it can never start off-screen. */
+	.editor-toolbox {
+		left: 8px;
+		justify-content: flex-end;
 	}
 }
 
@@ -8039,6 +8099,44 @@ body[data-theme="monoLight"] .toolbox-sep {
 	justify-content: center;
 	color: rgba(255, 255, 255, 0.35);
 	cursor: grab;
+}
+
+/* Touch fallback for reordering: iOS Safari has no HTML5 drag and drop by finger,
+   and the Alt+Arrow shortcut needs a hardware keyboard. */
+.block-arrange-move {
+	flex-shrink: 0;
+	display: flex;
+	align-items: center;
+	gap: 0.125rem;
+	margin-left: auto;
+}
+.block-arrange-move-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 0.375rem;
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	background: rgba(255, 255, 255, 0.04);
+	color: rgba(226, 232, 240, 0.7);
+	cursor: pointer;
+	touch-action: manipulation;
+	-webkit-tap-highlight-color: transparent;
+	transition: background 0.15s ease, color 0.15s ease;
+}
+.block-arrange-move-btn:hover {
+	background: rgba(255, 255, 255, 0.1);
+	color: rgba(226, 232, 240, 1);
+}
+.block-arrange-move-btn:active {
+	background: rgba(255, 255, 255, 0.16);
+}
+@media (max-width: 1023px) {
+	.block-arrange-move-btn {
+		width: 44px;
+		height: 44px;
+	}
 }
 
 .block-arrange-item:hover .block-arrange-handle {
@@ -10446,6 +10544,7 @@ body[data-theme="ash"] .calendar-day-today .calendar-day-number {
 	width: 90%;
 	max-width: 480px;
 	max-height: 85vh;
+	max-height: 85dvh;
 	overflow: hidden;
 	border-radius: 16px;
 	border: 1px solid var(--modal-border, rgba(255, 255, 255, 0.1));
@@ -10499,6 +10598,7 @@ body[data-theme="ash"] .calendar-day-today .calendar-day-number {
 .qb-body {
 	padding: 16px 20px;
 	max-height: calc(85vh - 140px);
+	max-height: calc(85dvh - 140px);
 	overflow-y: auto;
 	scrollbar-width: thin;
 	scrollbar-color: var(--scrollbar-thumb, rgba(148, 163, 184, 0.15)) transparent;
@@ -11305,6 +11405,7 @@ body[data-theme="bitterDark"] .ps-search-help-arrow {
 	border-color: var(--modal-border, rgba(255,255,255,0.1));
 	box-shadow: 0 24px 80px rgba(0,0,0,0.55), 0 0 0 1px var(--modal-border, rgba(255,255,255,0.1));
 	max-height: min(520px, 70vh);
+	max-height: min(520px, 70dvh);
 	animation: cmdPaletteIn 0.18s ease-out;
 }
 
@@ -11658,6 +11759,7 @@ body[data-theme="monoLight"] .cmd-palette-results:empty::after {
 		margin-left: 8px;
 		margin-right: 8px;
 		max-height: calc(100vh - 16px);
+		max-height: calc(100dvh - 16px);
 		max-width: calc(100vw - 16px);
 		border-radius: 16px;
 	}
@@ -12624,7 +12726,9 @@ body[data-theme="monoLight"] #codeLang option {
 	top: 10px;
 	left: 50%;
 	transform: translate(-50%, -12px);
-	z-index: 9997; /* above panels, below modals (9998–9999) */
+	/* Most modals are z-[200], not 9998 — at 9997 this floated over their headers,
+	   which on a phone is exactly where the close button sits. */
+	z-index: 150; /* above mobile fullscreen panels (70), below every modal */
 	display: flex;
 	align-items: center;
 	gap: 6px;
@@ -12695,6 +12799,19 @@ body[data-theme="monoLight"] #codeLang option {
 		min-height: 40px;
 		min-width: 40px;
 	}
+	/* Pin/share/delete/compare only appear on :hover or on the active row, and the
+	   active row is never visible on mobile (note view and list view are exclusive).
+	   Without this they cannot be reached by touch at all. */
+	#psList .ps-note-actions {
+		opacity: 1;
+		pointer-events: auto;
+		transform: none;
+	}
+	/* 24px icon buttons are well under the 44px touch target. */
+	#psList .ps-note-actions button {
+		min-width: 40px;
+		min-height: 40px;
+	}
 }
 #toggleHeader,
 #presenceCompact {
@@ -12705,4 +12822,92 @@ body[data-theme="monoLight"] #codeLang option {
 	min-height: 36px;
 	padding: 0.25rem 0;
 	cursor: pointer;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   MOBILE FIXES — see .claude/memory for the audit these came from.
+   Kept at the end of the file on purpose: several of the rules below have to beat
+   earlier ID selectors, and a media query alone does not raise specificity.
+   ══════════════════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 1023px) {
+	/* iOS Safari zooms the page whenever a focused field is under 16px. Almost every
+	   field in the app was 10–14px, so tapping into one threw the layout off. */
+	input,
+	textarea:not(#mirror),
+	select {
+		font-size: 16px !important;
+	}
+
+	/* #mirror teilt seine Metriken mit vier Overlay-Divs (siehe „IDENTICAL metrics"
+	   weiter unten). Die Textarea einzeln auf 16px zu zwingen reisst sie auseinander,
+	   weil die Overlays keine Formularelemente sind. Stattdessen die gemeinsame
+	   Variable anheben — die Mono-Schriften stehen auf 15px, und das Einschalten der
+	   Markdown-Hervorhebung erzwingt Mono (app.js), also traefe es fast jeden. */
+	body.editor-font-mono,
+	body.editor-font-systemmono {
+		--editor-size: 1rem;
+	}
+
+	/* The project rule asks for these on every button; only ~19 selectors had them,
+	   so the rest kept the 300ms tap delay and the grey iOS tap flash. */
+	button,
+	[role="button"],
+	summary,
+	a[href] {
+		touch-action: manipulation;
+		-webkit-tap-highlight-color: transparent;
+	}
+
+	/* The editor does not wrap lines by design (white-space: pre). On a 375px screen
+	   that means scrolling sideways to read your own sentence — a 107 character line
+	   needs 800px. Wrap on small screens; the overlays must match or highlighting
+	   drifts out of alignment with the text underneath. */
+	#mirror {
+		white-space: pre-wrap !important;
+		overflow-wrap: break-word !important;
+		word-break: normal !important;
+		overflow-x: hidden;
+	}
+	#searchHighlightContent,
+	#mdHighlightContent {
+		white-space: pre-wrap !important;
+		overflow-wrap: break-word !important;
+		word-break: normal !important;
+	}
+
+	/* The four mobile close buttons are the only way out of a fullscreen panel. */
+	.mobile-only {
+		min-width: 44px;
+		min-height: 44px;
+	}
+
+	/* Dialog buttons were 38px and the CRDT toggle 20px — both under the 44px target. */
+	#modalRoot button,
+	#uploadModal button,
+	#shareModal button,
+	#noteShareModal button,
+	#identityModal button,
+	#calendarEventModal button {
+		min-height: 44px;
+	}
+	#toggleCrdtMarks {
+		min-width: 32px;
+		min-height: 32px;
+	}
+}
+
+@media (max-width: 639px) {
+	/* 13 settings tabs in a 375px strip meant 3.5 visible and no hint that it scrolls —
+	   Papierkorb, Tastenkürzel, FAQ and six more were effectively hidden. Wrap instead. */
+	#settingsNav {
+		flex-wrap: wrap;
+		overflow-x: visible;
+		gap: 0.375rem;
+		padding-top: 0.5rem;
+		padding-bottom: 0.5rem;
+	}
+	#settingsNav > button {
+		flex: 0 0 auto;
+	}
 }
