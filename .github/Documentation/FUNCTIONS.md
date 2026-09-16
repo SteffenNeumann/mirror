@@ -240,6 +240,10 @@
 | `sortSelectionLines` | Selektions-Zeilen sortieren | `#edit` `#sort` | `getSelectionLineRange`, `t` |
 | `applySelectionAction` | Selektions-Aktion ausführen | `#handler` | `openCommentFromSelection`, `schedulePsAutoSave`, `scheduleSend`, diverse |
 | `updateSelectionMenu` | Selektions-Menü aktualisieren | `#render` `#menu` | `getSelectionRange`, `positionFloatingMenu`, `setSelectionMenuOpen` |
+| `renderBlockArrangeItems` | Rendert die Blockliste im Panel „Blöcke anordnen" | `#render` `#dom` | `handleBlockMoveClick`, diverse Drag-Handler |
+| `moveBlock` | Verschiebt einen Block, schreibt die Undo-Historie und rendert neu | `#edit` `#sort` | `renderBlockArrangeItems` |
+| `handleBlockKeydown` | Tastatursteuerung im Panel (`Alt`+Pfeil verschiebt) | `#handler` `#a11y` | `moveBlock` |
+| `handleBlockMoveClick` | Hoch/Runter-Knöpfe je Zeile — der einzige Weg zum Sortieren auf Touch, da HTML5-Drag&Drop auf iOS nicht per Finger geht | `#handler` `#mobile` | `moveBlock` |
 
 #### 9 · Wiki-Menü `#wiki` — `app.js`
 
@@ -298,6 +302,7 @@
 | `recordMobileLastActive` | Merkt letzte Aktivität | `#state` | — |
 | `shouldStartMobileAutoNote` | Prüft ob Auto-Note starten | `#check` | `isMobileViewport`, `t` |
 | `maybeStartMobileAutoNoteSession` | Startet ggf. Auto-Note-Session | `#handler` `#auto` | `setPreviewVisible`, `shouldStartMobileAutoNote`, `syncMobileFocusState` |
+| `addLongPress` | Long-Press-Ersatz für `contextmenu` auf Touch (iOS feuert es auf Buttons nicht zuverlässig). Bricht bei Scroll ab, schluckt den Klick beim Loslassen dokumentweit und weicht dem nativen `contextmenu` auf Android. | `#handler` `#touch` `#menu` | — |
 
 #### 13 · Internationalisierung (i18n) `#i18n` — `app.js`
 

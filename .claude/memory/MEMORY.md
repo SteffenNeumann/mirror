@@ -105,11 +105,11 @@ und das Aufgaben-Log.
 - **Cold-Start (~5s weißer Bildschirm) — ADRESSIERT 2026-07-15 via Keep-Alive** (`.github/workflows/keep-alive.yml`, GH Actions cron `*/5`, intern 5× Ping/60s → durchgehend warm; public repo = gratis; pingt `/gitstamp.txt`). **Kosten-Realität:** warme Fly-Maschine ≈ gleiche Compute-Kosten wie `min_machines_running=1` (~5$/Mon) — nur das GH-Pingen ist gratis, die Suspend-Ersparnis entfällt. User kann den Workflow deaktivieren. Fly warm ~250ms, gzip aktiv.
 - PS Black-Box recovery ist console-only (`window.mirrorLocalBackups` / `mirrorRestoreBackup`) — keine Settings-UI.
 - Prod DB access via Keychain token (`mirror_fly_token`) — siehe Access.
-- Local server boot fails on `better-sqlite3` ABI mismatch — nur lokal; Docker prod fine.
+- Local server boot fails on `better-sqlite3` ABI mismatch — nur lokal; Docker prod fine. **Workaround für Frontend-Tests (2026-09-16):** statisch servieren reicht NICHT, ohne API-Antworten kollabiert das Layout. Kleiner Python-Server mit Stubs für `/api/identity`, `/api/personal-space/me`, `/api/saved-queries`, `/api/rooms/*/comments` → App rendert normal. Rezept in `2026-09-16-mobil-audit.md`.
 - Fix B des Raum-Restores (echtes Login am Handy) ist vom User noch nicht real gegengetestet.
 - **Farbschema „Theme-Akzent" ist bei 10 von 12 Themes unter AA** — `--md-heading: var(--accent-strong)`, und `--accent-strong` ist eine halbtransparente **Füllfarbe**. Gedeckt über der Editor-Fläche: violet 1,9:1, fuchsia/coffeeLight 2,7:1; nur bitterDark schafft AA. Für Ash am 2026-09-03 gefixt, der Rest bewusst offen (User: passt so). Fix wäre eine Zeile: `--md-heading` auf eine deckende Akzentfarbe legen.
 
 ## Design Decisions
 
-- Toolbox panel slides from right (`translateX(40px)`→`0`), left of trigger; `#commentPanel` z-40 hides toolbox (z-30) when open.
+- Toolbox panel slides from right (`translateX(40px)`→`0`), left of trigger; `#commentPanel` z-40 hides toolbox (z-30) when open. **Mobil (≤1023px) ist `.editor-toolbox` beidseitig begrenzt (`left: 8px`, `justify-content: flex-end`) und `.toolbox-panel` schrumpft per `min-width: 0` + `overflow-x: auto`** — ohne das ragte der 408-px-Streifen links aus dem Bild.
 - Search bar `#editorSearchBar` = sibling of `#editorToolbox`.

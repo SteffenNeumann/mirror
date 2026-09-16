@@ -11,7 +11,7 @@ This list is intentionally broad. It’s an idea backlog for future iterations.
 - “Join on Enter” + validation feedback (invalid characters, length)
 - More precise load/sync status: `Connecting…`, `Online`, `Offline`, `Last update: …`
 - Toasts for important actions/errors
-- Mobile UX: better height/keyboard handling, larger touch targets
+- ~~Mobile UX: better height/keyboard handling, larger touch targets~~ — erledigt 2026-09-16 (PR #47): `100dvh` statt `100vh`, Knopfzeile umbricht bei offener Tastatur, Touch-Ziele auf 44 px.
 - Accessibility: focus styles, ARIA labels, contrast, screen reader text
 - i18n (DE/EN) as an option
 - Vor/Zurück Navigation

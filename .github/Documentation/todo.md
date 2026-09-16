@@ -2,6 +2,8 @@
 
 - [x] Cold-Start (~5s weißer Bildschirm 1. Zugriff): Keep-Alive-Ping via GitHub Actions (`.github/workflows/keep-alive.yml`, alle 5 Min, intern 60s-Takt) hält Fly-Maschine warm. Public Repo → Actions kostenlos. HINWEIS: Fly-Compute für eine warme Maschine kostet ~gleich viel wie `min_machines_running=1` (~5$/Mon) — nur das Pingen ist gratis. (2026-07-15)
 - [x] Client-Ladegewicht mobil gesenkt: markdown-it/highlight.js lazy (~248KB), Tailwind-Runtime → vorkompiliertes statisches CSS (398KB→30KB, kein Runtime-JIT). (2026-07-14, PR #19/#20)
+- [x] Mobil-Audit iPhone (375×812) + Fix-Paket: stiller CRDT-Datenverlust im Raum-Editor behoben, Monatskalender brauchbar (6,6 → 2,7 Bildschirme), Werkzeugleiste vollständig erreichbar, Notiz-Aktionen/Blocksortierung/Befehlspalette/Kontextmenüs auf Touch bedienbar, Zeilenumbruch im Editor, Eingabefelder 16 px gegen den iOS-Zoom. Nebenbei: `styles/app.css` hat jetzt einen `?v=`-Cache-Buster. (2026-09-16, PR #47/#48)
+- [ ] Monatskalender auf dem Handy: bleibt es bei 2 Spalten (Listen-Charakter) oder soll es ein echtes 7-Spalten-Raster mit sehr schmalen Zellen werden? Der Anzeigefehler ist behoben, die Darstellungsfrage ist eine offene Design-Entscheidung.
 - [ ] Google Kalender integration vervollstandigen( [https://console.cloud.google.com/auth/branding?
 - [ ] Themes anpassen(light Themes)
 - [ ] Tasks in Akzentfarbe
