@@ -1,3 +1,71 @@
+# Dokumentation – Änderungen (2026-09-16)
+
+## Ziel
+- Detaillierte Prüfung der Mobilansicht (iPhone 375×812): Was ist sichtbar, was ist
+  bedienbar, was funktioniert nicht. Anschließend alle bestätigten Funde beheben.
+
+## Befund
+- **Stiller Datenverlust im Raum-Editor.** `#noteCloseMobile` erscheint dort, obwohl
+  keine Notiz offen ist — `.mobile-only { display: inline-flex !important }` schlägt die
+  Regel, die es ausblenden soll (die hat kein `!important`). Sein Handler leerte
+  `textarea.value` bedingungslos; der nächste Tastendruck verteilte die Löschung über
+  CRDT an alle. Mit zwei Browser-Tabs gegen Produktion reproduziert: 76 Zeichen Raumtext
+  waren nach einem einzigen Tastendruck für alle weg.
+- **Monatskalender unbrauchbar.** Die `grid-cols-7`-Wochentagszeile stand über einem
+  `grid-cols-2`-Tagegitter; 42 Zellen à 150 px ergaben 3150 px, also 6,6 Bildschirme für
+  einen Monat. Der Fix dafür existierte bereits, lag aber in
+  `@media (min-width: 640px) and (max-width: 1023px)` und griff damit auf keinem Telefon.
+- **Vier Funktionen nur mit Maus oder Tastatur erreichbar:** Notiz-Aktionen (nur
+  `:hover` bzw. `.ps-note-active`, beides mobil ausgeschlossen), Blöcke sortieren (nur
+  HTML5-Drag&Drop oder Alt+Pfeil), Befehlspalette (nur Tastenkombination), Tag- und
+  Notiz-Kontextmenü (nur Rechtsklick). `app.js` hatte null `touchstart`-Handler.
+- **Werkzeugleiste** 408 px breit und rechts verankert: zwei Werkzeuge lagen außerhalb
+  des Bildschirms. Die dafür gedachte Verkleinerung war wirkungslos, weil `.toolbox-btn`
+  gegen `#toolboxPanel .toolbox-btn` verliert.
+- **Editor brach keine Zeilen um** (`white-space: pre !important`): ein Satz mit 107
+  Zeichen brauchte 800 px in einem 341 px breiten Feld.
+- **62 Eingabefelder unter 16 px** → iOS Safari zoomt beim Fokus hinein.
+- Weiteres: „Speichern" außerhalb des Bildschirms, Vollbild-Panels auf `100vh` statt
+  `dvh`, Such- und MD-Overlay 38 px zu tief, 13 Einstellungs-Reiter mit 3½ sichtbaren,
+  Offline-Banner über allen Dialogen, Kalenderverwaltung mobil ganz ausgeblendet,
+  Touch-Ziele bis hinunter zu 20 px, englische Texte im deutschen Interface.
+
+## Änderungen
+- **Datenverlust:** Das Leeren der Textarea hängt jetzt an `psEditingNoteId`. Das X
+  bleibt sichtbar — es ist der einzige mobile Einstieg in die Notizliste — und heißt
+  jetzt „Notizliste".
+- **Kalender:** Wochentagszeile wird unter 1024 px ausgeblendet, der Wochentag steht in
+  der Zelle; Zellenhöhe auf Telefonen 64 px statt 150 px → 2,7 statt 6,6 Bildschirme.
+- **Werkzeugleiste** beidseitig begrenzt und seitlich scrollbar, Knöpfe 40 px.
+- **Neu bedienbar:** Notiz-Aktionen auf Touch sichtbar, Hoch/Runter-Knöpfe zum
+  Sortieren von Blöcken, Knopf für die Befehlspalette, Long-Press für die beiden
+  Kontextmenüs (`addLongPress` in `app.js`).
+- **Layout:** Editor bricht mobil um (Overlays ziehen mit), Knopfzeile umbricht,
+  Vollbild-Panels auf `100dvh` + `bottom: auto`, Einstellungs-Reiter umbrechen,
+  Offline-Banner auf `z-index: 150`, Touch-Ziele auf 44 px.
+- **Eingabefelder** mobil auf 16 px — außer `#mirror`, das seine Metriken mit vier
+  Overlays teilt und stattdessen über `--editor-size` mitwächst.
+- **Deutsch:** Login-Dialog, Vorschau-Knopf, Statuszeile, Editor-Platzhalter,
+  Notiz-Aktionen; „Geteilte Raeume" → „Geteilte Räume".
+- **Nebenbei:** `styles/app.css` hat endlich einen `?v=`-Cache-Buster. Vorher wurde es
+  mit `max-age=300` statt `immutable` ausgeliefert, und beim Testen kam reproduzierbar
+  altes CSS zurück.
+
+## Verifikation
+- Funde live gegen Produktion gemessen, von einem separaten Agenten gegengeprüft
+  (vier Fehlalarme verworfen), Fix-Paket unabhängig code-reviewt und im Browser gegen
+  den unveränderten Stand getestet.
+- Das Review fand eine Regression im Fix selbst: die 16-px-Regel riss `#mirror` und
+  seine Overlays auseinander (16 px/25,6 px gegen 15 px/24 px). Behoben und gemessen.
+- Datenverlust-Kette nach dem Deploy erneut gegen Produktion gefahren: Raumtext bleibt
+  vollständig erhalten.
+- Desktop 1440×900, Tablet 768×1024 und Querformat 812×375 ohne Verschlechterung.
+
+PR #47. `app.js` und `app.css` `?v=2026-09-16-01`, `CACHE_NAME` `mirror-v54`.
+Details: `.claude/memory/2026-09-16-mobil-audit.md`.
+
+---
+
 # Dokumentation – Änderungen (2026-09-15)
 
 ## Ziel

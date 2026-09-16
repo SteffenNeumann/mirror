@@ -197,8 +197,19 @@ kennen muss, bevor man in die Nähe kommt:
 - **Mobile-Pflicht:** `touch-action: manipulation` + `-webkit-tap-highlight-color:
   transparent` auf Buttons; Vollbild-Panels `height: 100dvh` mit `bottom: auto`
   (nicht `inset: 0` allein — sonst Tastatur-Problem auf iOS).
+- **Eingabefelder mobil ≥ 16 px** — iOS Safari zoomt die Seite sonst beim Fokus hinein.
+  Gilt **nicht** für `#mirror`: die Textarea teilt ihre Metriken mit vier Overlay-Divs
+  (`attribution`, `comment`, `searchHighlight`, `mdHighlight`). Dort nie die Schriftgröße
+  einzeln setzen, sondern `--editor-size` / `--editor-lh` anheben, sonst laufen sie
+  auseinander. Die Mono-Schrift liegt tiefer, und die MD-Hervorhebung erzwingt Mono.
 - ⚠️ **Spezifitätsfalle:** Light-Themes nutzen `body[data-theme="X"] .bg-slate-950/80
   { … !important }` (0,0,2,1) — Modal-Overrides müssen daher `#modalId .class` nutzen.
+- ⚠️ **Media Queries erhöhen die Spezifität nicht.** Eine Mobil-Regel `.foo` verliert
+  gegen eine Basisregel `#bar .foo`, egal in welcher Query sie steht. Vor jedem
+  „Mobil-Override" die **ganze** `app.css` nach dem Selektor greppen. Diese Falle hat
+  am 2026-09-16 drei Fixes gleichzeitig wirkungslos gemacht.
+- **`#noteCloseMobile` ist der einzige mobile Einstieg in die Notizliste** —
+  `mobilePsOpen = true` steht in `app.js` nur in diesem Handler. Nicht ausblenden.
 
 **Gestaltungssprache:** Glas-Optik auf dunklem Grund, Akzent standardmäßig Fuchsia
 (`#d946ef`-Familie). `backdrop-filter: blur(24px) saturate(1.5)`, Radien 8/10/12/16–20 px,
