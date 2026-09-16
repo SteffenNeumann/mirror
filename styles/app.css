@@ -3522,8 +3522,10 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	}
 	#psMetaToggle,
 	#clearMirror {
-		height: 32px !important;
-		width: 32px !important;
+		/* 40px like every other toolbox button — these two carried !important and
+		   stayed at 32px, below the touch target, while the rest grew. */
+		height: 40px !important;
+		width: 40px !important;
 	}
 	#psMetaToggle svg,
 	#clearMirror svg {
