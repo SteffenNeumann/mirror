@@ -1,5 +1,20 @@
 # Dokumentation – Änderungen (2026-09-21)
 
+## Tags im Editor: gruppiert statt sechs Farbkästchen
+- `renderPsEditorTagsPills()` baut die Leiste neu: **Datum** (Jahr + Monat als ein
+  Element mit Kalender-Icon, z. B. „Sep 2026“), **Pfad** (Kategorie › Unterkategorie),
+  Trennstrich, dann die **freien Tags** als neutrale Punkt-Chips ohne `#`.
+- Das X an Datum oder Pfad entfernt die ganze Gruppe. Gemeinsamer Helfer
+  `createPillRemoveButton()` statt fünfmal derselbe Klick-Code.
+- Farbe überall `--accent-text-soft`, Fläche 9 % davon per `color-mix` → kein Theme
+  braucht eigene Regeln. „+ Tag“ ist ein gestrichelter Chip. Auf Touch (`hover: none`)
+  ist das Entfernen-X immer sichtbar.
+- Ausnahme bronzeDark: dort kam `--accent-text-soft` nur auf ~4,1:1 → eigenes Bronze
+  `#dcb77f`. (Die freien Tags lagen dort schon vorher knapp unter AA.)
+- Die alten Klassen `.ps-tag-pill-year/-month/-category/-subcategory` nutzt der Editor
+  nicht mehr; die Theme-Regeln dafür sind jetzt ungenutzt.
+- Cache-Busting: `?v=2026-09-21-06`, `CACHE_NAME` `mirror-v60`.
+
 ## Tags-Leiste im Editor flach
 - `#psEditorTagsBar` und `.ps-tags-bar-inner` haben in **allen 13 Themes** keinen
   Hintergrund, keinen Rahmen, keinen Schatten und keinen Blur mehr — die Tag-Pills

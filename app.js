@@ -2613,120 +2613,94 @@
 		return svg;
 	}
 
+	function createPillRemoveButton(label, onRemove) {
+		const rm = document.createElement("span");
+		rm.className = "ps-tag-pill-remove";
+		rm.setAttribute("role", "button");
+		rm.setAttribute("aria-label", label);
+		rm.appendChild(createPillRemoveIcon());
+		rm.addEventListener("click", (e) => {
+			e.stopPropagation();
+			onRemove();
+			psEditingNoteTagsOverridden = true;
+			renderPsEditorTagsPills();
+			updatePsEditingTagsHint();
+			schedulePsTagsAutoSave();
+			updateEditorMetaYaml();
+		});
+		return rm;
+	}
+
+	/* Tags-Leiste, Variante „gruppiert“: Jahr + Monat als ein Datum, Kategorie ›
+	   Unterkategorie als Pfad, danach die freien Tags als neutrale Punkt-Chips.
+	   Das X einer Gruppe entfernt die ganze Gruppe. */
 	function renderPsEditorTagsPills() {
 		if (!psEditorTagsPills) return;
 		psEditorTagsPills.innerHTML = "";
+		let hasMeta = false;
 
-		// Year pill
-		if (psEditingNoteYearTag) {
-			const pill = document.createElement("span");
-			pill.className = "ps-tag-pill ps-tag-pill-year";
-			pill.innerHTML = `<span class="ps-tag-pill-hash">#</span><span>${escapeHtml(psEditingNoteYearTag)}</span>`;
-			const rm = document.createElement("span");
-			rm.className = "ps-tag-pill-remove";
-			rm.appendChild(createPillRemoveIcon());
-			rm.addEventListener("click", (e) => {
-				e.stopPropagation();
-				psEditingNoteYearTag = "";
-				psEditingNoteTagsOverridden = true;
-				syncPsEditorTagMetaInputs();
-				renderPsEditorTagsPills();
-				updatePsEditingTagsHint();
-				schedulePsTagsAutoSave();
-				updateEditorMetaYaml();
-			});
-			pill.appendChild(rm);
-			psEditorTagsPills.appendChild(pill);
+		if (psEditingNoteYearTag || psEditingNoteMonthTag) {
+			const month = psEditingNoteMonthTag
+				? psEditingNoteMonthTag.charAt(0).toUpperCase() + psEditingNoteMonthTag.slice(1)
+				: "";
+			const label = [month, psEditingNoteYearTag].filter(Boolean).join(" ");
+			const group = document.createElement("span");
+			group.className = "ps-tag-pill ps-tag-group ps-tag-group-date";
+			group.title = "Datum";
+			group.innerHTML = `<svg class="ps-tag-group-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M2 6.5h12M5.5 1.5v3M10.5 1.5v3"/></svg><span>${escapeHtml(label)}</span>`;
+			group.appendChild(
+				createPillRemoveButton("Datum entfernen", () => {
+					psEditingNoteYearTag = "";
+					psEditingNoteMonthTag = "";
+					syncPsEditorTagMetaInputs();
+				})
+			);
+			psEditorTagsPills.appendChild(group);
+			hasMeta = true;
 		}
 
-		// Month pill
-		if (psEditingNoteMonthTag) {
-			const pill = document.createElement("span");
-			pill.className = "ps-tag-pill ps-tag-pill-month";
-			pill.innerHTML = `<span class="ps-tag-pill-hash">#</span><span>${escapeHtml(psEditingNoteMonthTag.charAt(0).toUpperCase() + psEditingNoteMonthTag.slice(1))}</span>`;
-			const rm = document.createElement("span");
-			rm.className = "ps-tag-pill-remove";
-			rm.appendChild(createPillRemoveIcon());
-			rm.addEventListener("click", (e) => {
-				e.stopPropagation();
-				psEditingNoteMonthTag = "";
-				psEditingNoteTagsOverridden = true;
-				syncPsEditorTagMetaInputs();
-				renderPsEditorTagsPills();
-				updatePsEditingTagsHint();
-				schedulePsTagsAutoSave();
-				updateEditorMetaYaml();
-			});
-			pill.appendChild(rm);
-			psEditorTagsPills.appendChild(pill);
+		if (psEditingNoteCategory || psEditingNoteSubcategory) {
+			const group = document.createElement("span");
+			group.className = "ps-tag-pill ps-tag-group ps-tag-group-path";
+			group.title = "Kategorie";
+			const parts = [];
+			if (psEditingNoteCategory) {
+				parts.push(`<span class="ps-tag-path-category">${escapeHtml(psEditingNoteCategory)}</span>`);
+			}
+			if (psEditingNoteSubcategory) {
+				parts.push(`<span class="ps-tag-path-subcategory">${escapeHtml(psEditingNoteSubcategory)}</span>`);
+			}
+			group.innerHTML = parts.join(`<span class="ps-tag-path-sep" aria-hidden="true">›</span>`);
+			group.appendChild(
+				createPillRemoveButton("Kategorie entfernen", () => {
+					psEditingNoteCategory = "";
+					psEditingNoteSubcategory = "";
+					syncPsEditorTagMetaInputs();
+				})
+			);
+			psEditorTagsPills.appendChild(group);
+			hasMeta = true;
 		}
 
-		// Category pill
-		if (psEditingNoteCategory) {
-			const pill = document.createElement("span");
-			pill.className = "ps-tag-pill ps-tag-pill-category";
-			pill.innerHTML = `<span class="ps-tag-pill-hash">#</span><span>${escapeHtml(psEditingNoteCategory)}</span>`;
-			const rm = document.createElement("span");
-			rm.className = "ps-tag-pill-remove";
-			rm.appendChild(createPillRemoveIcon());
-			rm.addEventListener("click", (e) => {
-				e.stopPropagation();
-				psEditingNoteCategory = "";
-				psEditingNoteTagsOverridden = true;
-				syncPsEditorTagMetaInputs();
-				renderPsEditorTagsPills();
-				updatePsEditingTagsHint();
-				schedulePsTagsAutoSave();
-				updateEditorMetaYaml();
-			});
-			pill.appendChild(rm);
-			psEditorTagsPills.appendChild(pill);
+		const manualTags = (Array.isArray(psEditingNoteTags) ? psEditingNoteTags : [])
+			.map((t) => String(t || "").trim())
+			.filter(Boolean);
+		if (hasMeta && manualTags.length) {
+			const sep = document.createElement("span");
+			sep.className = "ps-tag-sep";
+			sep.setAttribute("aria-hidden", "true");
+			psEditorTagsPills.appendChild(sep);
 		}
-
-		// Subcategory pill
-		if (psEditingNoteSubcategory) {
+		for (const s of manualTags) {
 			const pill = document.createElement("span");
-			pill.className = "ps-tag-pill ps-tag-pill-subcategory";
-			pill.innerHTML = `<span class="ps-tag-pill-hash">#</span><span>${escapeHtml(psEditingNoteSubcategory)}</span>`;
-			const rm = document.createElement("span");
-			rm.className = "ps-tag-pill-remove";
-			rm.appendChild(createPillRemoveIcon());
-			rm.addEventListener("click", (e) => {
-				e.stopPropagation();
-				psEditingNoteSubcategory = "";
-				psEditingNoteTagsOverridden = true;
-				syncPsEditorTagMetaInputs();
-				renderPsEditorTagsPills();
-				updatePsEditingTagsHint();
-				schedulePsTagsAutoSave();
-				updateEditorMetaYaml();
-			});
-			pill.appendChild(rm);
-			psEditorTagsPills.appendChild(pill);
-		}
-
-		// Manual tags as pills
-		const manualTags = Array.isArray(psEditingNoteTags) ? psEditingNoteTags : [];
-		for (const tag of manualTags) {
-			const s = String(tag || "").trim();
-			if (!s) continue;
-			const pill = document.createElement("span");
-			pill.className = "ps-tag-pill ps-tag-pill-tag";
-			pill.innerHTML = `<span class="ps-tag-pill-hash">#</span><span>${escapeHtml(s)}</span>`;
-			const rm = document.createElement("span");
-			rm.className = "ps-tag-pill-remove";
-			rm.appendChild(createPillRemoveIcon());
-			rm.addEventListener("click", (e) => {
-				e.stopPropagation();
-				psEditingNoteTags = psEditingNoteTags.filter(t => t.toLowerCase() !== s.toLowerCase());
-				psEditingNoteTagsOverridden = true;
-				renderPsEditorTagsPills();
-				updatePsEditingTagsHint();
-				updateEditingNoteTagsLocal(psEditingNoteTags);
-				schedulePsTagsAutoSave();
-				updateEditorMetaYaml();
-			});
-			pill.appendChild(rm);
+			pill.className = "ps-tag-pill ps-tag-pill-tag ps-tag-chip";
+			pill.innerHTML = `<span>${escapeHtml(s)}</span>`;
+			pill.appendChild(
+				createPillRemoveButton(`Tag ${s} entfernen`, () => {
+					psEditingNoteTags = psEditingNoteTags.filter((t) => t.toLowerCase() !== s.toLowerCase());
+					updateEditingNoteTagsLocal(psEditingNoteTags);
+				})
+			);
 			psEditorTagsPills.appendChild(pill);
 		}
 	}
