@@ -1,5 +1,17 @@
 # Dokumentation – Änderungen (2026-09-21)
 
+## Tags-Leiste: Verlauf gegen durchscheinenden Text
+- Seit die Leiste flach ist, lief gescrollter Text sichtbar unter den Tags durch.
+  Jetzt liegt über die volle Editor-Breite ein Verlauf in der Editor-Farbe: deckend
+  bis zur Unterkante der Leiste, dann 12 px weich ausblendend. Die Leiste selbst bleibt
+  ohne Kasten, Rahmen und Schatten.
+- Sitzt als `::before` am Eltern-Container von `#mirror`, nur solange die Leiste
+  sichtbar ist (`:has(> #psEditorTagsBar:not(.hidden))`), `z-index: 7` zwischen den
+  Text-Overlays (2–6) und der Leiste (10). Farbe `--tags-fade` je Theme auf `body`.
+- Bekannt, nicht behoben: eine Textzeile blitzt manchmal knapp **über** der oberen
+  Editor-Kante — alter Zeichenfehler der Markdown-Ebene (verschwindet beim Neuzeichnen).
+- Cache-Busting: `?v=2026-09-21-08`, `CACHE_NAME` `mirror-v62`.
+
 ## Tags im Editor: gruppiert statt sechs Farbkästchen
 - `renderPsEditorTagsPills()` baut die Leiste neu: **Datum** (Jahr + Monat als ein
   Element mit Kalender-Icon, z. B. „Sep 2026“), **Pfad** (Kategorie › Unterkategorie),
