@@ -90,6 +90,7 @@ und das Aufgaben-Log.
 
 ## Completed Tasks Log (eine Zeile je Aufgabe; Details in den Topic-Dateien)
 
+- **2026-09-21** Tags-Leiste: Verlauf in Editor-Farbe gegen durchscheinenden Text (Folge meiner flachen Leiste). **MERKE:** Eine Deko hinter einer schmaleren Leiste deckt auf Mobil nicht — Leiste ist dort `left/right: 44px`; Verlauf deshalb am Container. Offen: Textzeile blitzt teils über der Editor-Kante (Stale-Paint der MD-Ebene, schon vorher da, auch im User-Screenshot).
 - **2026-09-21** Editor-Tags gruppiert (Variante C aus Artefakt „Mirror Tags“): Datum-Chip, Kategorie-Pfad, Punkt-Chips; X entfernt ganze Gruppe. **MERKE:** Meta-YAML-Kopf zeigt entfernte Datum/Kategorie-Tags erst nach dem Speichern — war schon vorher so (gegen main verglichen), kein Fehler der Umstellung.
 - **2026-09-21** Tags-Leiste `#psEditorTagsBar` in allen Themes flach (kein BG/Rahmen/Schatten). **MERKE:** gegen ~25 Theme-Regeln mit `!important` hilft eine Regel mit doppelter ID am Dateiende statt 25 Einzelfixes; `#psEditorTagsBar > div` trifft auch das Suggest-Dropdown.
 - **2026-09-21** Theme **Ash Light** (`ashLight`) — CSS per Skript aus `bitterLight` abgeleitet (243 Blöcke, rein additiv), eigene MD-Token, `isLightSyntax` ergänzt. **MERKE:** helles Theme = ~240 Blöcke statt ~75; nie von Hand, immer ableiten. Details: `2026-09-21-ash-light-theme.md`.
