@@ -13689,3 +13689,95 @@ body[data-theme="ashLight"] #codeLang option {
 	backdrop-filter: none !important;
 	-webkit-backdrop-filter: none !important;
 }
+
+/* Tags-Leiste, Variante „gruppiert“ (renderPsEditorTagsPills): Datum und
+   Kategorie-Pfad als Gruppen, freie Tags als neutrale Punkt-Chips. Alles in
+   --accent-text-soft (in allen 13 Themes lesbar), Fläche = 9 % der Textfarbe —
+   damit braucht kein Theme einen eigenen Block. Doppelte ID schlägt die
+   Theme-Regeln für Pills und das Eingabefeld. */
+#psEditorTagsBar#psEditorTagsBar .ps-tags-pills {
+	gap: 6px;
+}
+#psEditorTagsBar#psEditorTagsBar .ps-tag-group,
+#psEditorTagsBar#psEditorTagsBar .ps-tag-chip {
+	height: 24px;
+	gap: 6px;
+	padding: 0 9px 0 8px;
+	border: 0;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 500;
+	color: var(--accent-text-soft, rgba(226, 232, 240, 0.85));
+	background: color-mix(in srgb, currentColor 9%, transparent);
+}
+#psEditorTagsBar#psEditorTagsBar .ps-tag-group:hover,
+#psEditorTagsBar#psEditorTagsBar .ps-tag-chip:hover {
+	background: color-mix(in srgb, currentColor 15%, transparent);
+}
+#psEditorTagsBar#psEditorTagsBar .ps-tag-chip::before {
+	content: "";
+	flex: none;
+	width: 7px;
+	height: 7px;
+	border-radius: 50%;
+	background: currentColor;
+	opacity: 0.8;
+}
+.ps-tag-group-icon {
+	flex: none;
+	width: 13px;
+	height: 13px;
+	opacity: 0.8;
+}
+.ps-tag-path-category {
+	font-weight: 600;
+}
+.ps-tag-path-sep {
+	opacity: 0.55;
+	margin: 0 -1px;
+}
+.ps-tag-sep {
+	flex: none;
+	width: 1px;
+	height: 16px;
+	margin: 0 2px;
+	background: currentColor;
+	color: var(--accent-text-soft, rgba(226, 232, 240, 0.85));
+	opacity: 0.3;
+}
+#psEditorTagsBar#psEditorTagsBar input.ps-tags-input {
+	height: 24px;
+	padding: 0 10px;
+	border: 1px dashed color-mix(in srgb, currentColor 35%, transparent) !important;
+	border-radius: 999px;
+	background: transparent !important;
+}
+#psEditorTagsBar#psEditorTagsBar input.ps-tags-input:focus {
+	border-style: solid !important;
+	border-color: var(--accent-border-strong, color-mix(in srgb, currentColor 55%, transparent)) !important;
+}
+/* bronzeDark: --accent-text-soft kommt dort über der Editor-Fläche nur auf ~4,1:1.
+   Eigenes Bronze mit ≥ 5,3:1. */
+body[data-theme="bronzeDark"] #psEditorTagsBar#psEditorTagsBar .ps-tag-group,
+body[data-theme="bronzeDark"] #psEditorTagsBar#psEditorTagsBar .ps-tag-chip,
+body[data-theme="bronzeDark"] #psEditorTagsBar#psEditorTagsBar .ps-tag-sep {
+	color: #dcb77f;
+}
+/* Touch hat kein Hover — dort ist das Entfernen-X immer sichtbar. */
+@media (hover: none) {
+	.ps-tag-pill .ps-tag-pill-remove {
+		opacity: 0.6;
+	}
+}
+@media (max-width: 1023px) {
+	#psEditorTagsBar#psEditorTagsBar .ps-tag-group,
+	#psEditorTagsBar#psEditorTagsBar .ps-tag-chip {
+		height: 22px;
+		padding: 0 7px 0 6px;
+		font-size: 11px;
+		gap: 4px;
+	}
+	#psEditorTagsBar#psEditorTagsBar input.ps-tags-input {
+		height: 22px;
+	}
+}
