@@ -12728,6 +12728,30 @@ body[data-theme="monoLight"] #codeLang option {
 	background-color: #fbfaf8 !important;
 	color: #1e293b !important;
 }
+/* Dark themes with their own ground colour: same opaque values as solidBgs in
+   app.js (the body-level --panel-solid-bg has alpha in some of them). */
+body[data-theme="coffeeDark"] #codeLang,
+body[data-theme="coffeeDark"] #codeLang option {
+	background-color: #1c1614 !important;
+}
+body[data-theme="bronzeDark"] #codeLang,
+body[data-theme="bronzeDark"] #codeLang option {
+	background-color: #2c2924 !important;
+}
+body[data-theme="bitterDark"] #codeLang,
+body[data-theme="bitterDark"] #codeLang option {
+	background-color: #131216 !important;
+}
+body[data-theme="monoDark"] #codeLang,
+body[data-theme="monoDark"] #codeLang option {
+	background-color: #161b22 !important;
+}
+body[data-theme="ash"] #codeLang,
+body[data-theme="ash"] #codeLang option {
+	background-color: #2f3437 !important;
+	color: #d0d9e0 !important;
+	border-color: #3d4447 !important;
+}
 
 /* ── Offline badge: subtle, persistent indicator while the network is down ── */
 #offlineBanner {

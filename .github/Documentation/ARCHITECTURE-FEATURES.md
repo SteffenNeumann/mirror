@@ -119,10 +119,11 @@ rendert `renderThemeList()` aus `THEME_ORDER`.
 Glow) · `solidBgs` · `modalBackdrops` · `modalBorders` · `getPreviewFieldColors` ·
 `getPreviewPreColors` · `buildPreviewHighlightCss`
 
-**`styles/app.css` (5):** der `body[data-theme="…"]`-Hauptblock — plus vier **leicht
+**`styles/app.css` (6):** der `body[data-theme="…"]`-Hauptblock — plus fünf **leicht
 übersehene** Gruppen-Selektoren, die weit verstreut liegen: `.ps-tags-bar-inner`
 (steht rund 3300 Zeilen vor dem Hauptblock), die `.excel-iframe`-Invert-Liste,
-`.ps-note-pin … svg path` und `.calendar-day-today`.
+`.ps-note-pin … svg path`, `.calendar-day-today` und `#codeLang` (Basisregel mit
+`!important` und festem Dunkelblau — ohne eigenen Eintrag bleibt das Dropdown blau).
 
 ⚠️ `--modal-backdrop` und `--modal-border` sind in CSS **nirgends** deklariert — die
 JS-Maps sind dort die einzige Quelle. Wer sie vergisst, bekommt einen generisch blauen

@@ -1,5 +1,14 @@
 # Dokumentation – Änderungen (2026-09-21)
 
+## Code-Sprachauswahl (`#codeLang`) im Theme-Grund
+- **Befund:** Das Dropdown hatte in allen dunklen Themes fest Dunkelblau `#0f172a`
+  (nur die hellen Themes waren überschrieben) — in Ash, coffeeDark, bronzeDark,
+  bitterDark und monoDark wirkte es wie ein Fremdkörper.
+- **Fix:** `styles/app.css` setzt je Theme dieselben deckenden Werte wie `solidBgs` in
+  `app.js`; Ash nimmt seine Eingabefläche `#2f3437` mit Text `#d0d9e0` und Rand `#3d4447`.
+  Deckend bleibt Pflicht: `--panel-solid-bg` hat in manchen Themes Alpha.
+- Cache-Busting: `?v=2026-09-21-03`, `CACHE_NAME` `mirror-v57`.
+
 ## „Claude fragen" maximiert: Antwort ganz lesbar
 - **Befund:** Im maximierten Chat blieb der Verlauf klein (Nachrichten auf 3 Zeilen
   gekürzt), darüber viel leerer Platz. Die volle Antwort hing unten in `#runOutput`
