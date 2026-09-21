@@ -11975,6 +11975,13 @@
 			aiChatList.appendChild(createAiChatEntryEl(entry));
 		}
 		syncAiChatHistoryVisibility();
+		scrollAiChatHistoryToEnd();
+	}
+
+	// Newest answer first in view — matters once the history scrolls (maximised chat).
+	function scrollAiChatHistoryToEnd() {
+		if (!aiChatHistory) return;
+		aiChatHistory.scrollTop = aiChatHistory.scrollHeight;
 	}
 
 	function syncAiChatContext() {
@@ -31761,6 +31768,7 @@ self.onmessage = async (e) => {
 		aiChatMaxBtn.setAttribute("aria-label", t(key));
 		aiChatMaxBtn.setAttribute("aria-pressed", on ? "true" : "false");
 		updateRunOutputSizing();
+		if (on) scrollAiChatHistoryToEnd();
 	}
 
 	if (aiConversationHeader && aiConversationBody) {

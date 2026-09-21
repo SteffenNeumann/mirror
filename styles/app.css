@@ -2484,7 +2484,8 @@ body.preview-only #editorPreviewGrid > div:first-child {
 }
 
 /* Maximised chat: iframe hidden, section takes the full panel height.
- * History and AI output scroll inside; prompt row stays visible. */
+ * The history fills the free space and shows messages in full (no clamp);
+ * the AI output below is capped and scrolls, so it never runs off the panel. */
 .ai-chat-restore-icon,
 #previewPanel.ai-chat-max .ai-chat-max-icon {
 	display: none;
@@ -2510,9 +2511,14 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	flex-shrink: 0;
 }
 #previewPanel.ai-chat-max #aiChatHistory {
-	flex: 0 1 auto;
-	min-height: 0;
+	flex: 1 1 0;
+	min-height: 120px;
 	overflow-y: auto;
+}
+#previewPanel.ai-chat-max .ai-chat-message {
+	display: block;
+	-webkit-line-clamp: unset;
+	overflow: visible;
 }
 #previewPanel.ai-chat-max #aiPromptRow {
 	margin-top: auto;
@@ -2520,7 +2526,8 @@ body.preview-only #editorPreviewGrid > div:first-child {
 #previewPanel.ai-chat-max #runOutput {
 	flex: 0 1 auto;
 	min-height: 0;
-	max-height: none;
+	max-height: 30vh;
+	max-height: 30dvh;
 }
 
 /* Calendar Clear Availability Dropdown */
