@@ -13792,7 +13792,7 @@ body {
 	--tags-fade: #0a0e1d;
 	--tags-fade-solid: 44px;
 }
-body[data-theme="emerald"] { --tags-fade: #02100a; }
+body[data-theme="emerald"] { --tags-fade: #08150d; }
 body[data-theme="coffeeDark"] { --tags-fade: #18120e; }
 body[data-theme="bronzeDark"] { --tags-fade: #262626; }
 body[data-theme="coffeeLight"] { --tags-fade: #f2e6dc; }
