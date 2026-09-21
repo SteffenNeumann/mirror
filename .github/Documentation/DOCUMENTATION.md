@@ -7,7 +7,9 @@
 - **Fix:** Im Max-Modus füllt `#aiChatHistory` den freien Platz, zeigt Nachrichten
   ungekürzt und scrollt ans Ende. `#runOutput` ist auf `30dvh` begrenzt und scrollt.
   `renderAiChatHistory()` und `setAiChatMax()` rufen `scrollAiChatHistoryToEnd()`.
-- Cache-Busting: `?v=2026-09-21-01`, `CACHE_NAME` `mirror-v55`.
+- Nachtrag: Eingabe steht im Max-Modus jetzt ganz unten (`#aiPromptRow { order: 1 }`),
+  die Antwort darüber — vorher kam die Antwort unter der Eingabe.
+- Cache-Busting: `?v=2026-09-21-02`, `CACHE_NAME` `mirror-v56`.
 
 # Dokumentation – Änderungen (2026-09-16)
 

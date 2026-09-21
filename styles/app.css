@@ -2520,7 +2520,9 @@ body.preview-only #editorPreviewGrid > div:first-child {
 	-webkit-line-clamp: unset;
 	overflow: visible;
 }
+/* Chat order: history → answer → input. The prompt row moves last. */
 #previewPanel.ai-chat-max #aiPromptRow {
+	order: 1;
 	margin-top: auto;
 }
 #previewPanel.ai-chat-max #runOutput {

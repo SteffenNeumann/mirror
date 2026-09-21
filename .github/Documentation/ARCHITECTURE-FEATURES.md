@@ -61,8 +61,8 @@ showMeta})` ins Haupt-DOM. Kein Backend, kein CRDT, kein Auto-Save.
   `src`/`srcdoc`). Der Abschnitt nimmt die volle Höhe. `#aiChatHistory` füllt den
   freien Platz (`flex: 1 1 0`, mind. 120 px, scrollt, springt ans Ende) und zeigt die
   Nachrichten **ungekürzt** (das 3-Zeilen-`line-clamp` von `.ai-chat-message` ist hier
-  aus). `#runOutput` ist auf `30dvh` begrenzt und scrollt selbst. `#aiPromptRow` bleibt
-  sichtbar. `updateRunOutputSizing()` setzt in diesem Modus kein Inline-`max-height`.
+  aus). `#runOutput` ist auf `30dvh` begrenzt und scrollt selbst. `#aiPromptRow` steht
+  per `order: 1` ganz unten (Reihenfolge wie im Chat: Verlauf → Antwort → Eingabe). `updateRunOutputSizing()` setzt in diesem Modus kein Inline-`max-height`.
 - Einklappen beendet den Max-Modus, Maximieren klappt auf. Der Zustand wird **nicht**
   gespeichert — nach dem Neuladen ist die Vorschau immer da.
 
