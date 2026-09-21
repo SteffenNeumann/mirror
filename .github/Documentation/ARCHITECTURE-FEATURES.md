@@ -58,9 +58,11 @@ showMeta})` ins Haupt-DOM. Kein Backend, kein CRDT, kein Auto-Save.
   `overflow-hidden` des Panels schnitt Prompt und Antwort ab.
 - **Maximiert** (`#aiChatMaxBtn` → `setAiChatMax()`, Klasse `ai-chat-max` am Panel):
   iframe `display:none` (unbedenklich — nichts misst das iframe, Rendering läuft über
-  `src`/`srcdoc`). Der Abschnitt nimmt die volle Höhe; Verlauf und `#runOutput`
-  schrumpfen und scrollen, `#aiPromptRow` hat `margin-top:auto` und bleibt sichtbar.
-  `updateRunOutputSizing()` setzt in diesem Modus kein Inline-`max-height`.
+  `src`/`srcdoc`). Der Abschnitt nimmt die volle Höhe. `#aiChatHistory` füllt den
+  freien Platz (`flex: 1 1 0`, mind. 120 px, scrollt, springt ans Ende) und zeigt die
+  Nachrichten **ungekürzt** (das 3-Zeilen-`line-clamp` von `.ai-chat-message` ist hier
+  aus). `#runOutput` ist auf `30dvh` begrenzt und scrollt selbst. `#aiPromptRow` bleibt
+  sichtbar. `updateRunOutputSizing()` setzt in diesem Modus kein Inline-`max-height`.
 - Einklappen beendet den Max-Modus, Maximieren klappt auf. Der Zustand wird **nicht**
   gespeichert — nach dem Neuladen ist die Vorschau immer da.
 
