@@ -176,7 +176,7 @@ kennen muss, bevor man in die Nähe kommt:
 
 ## Themes und Layout
 
-- **12 Themes** über `body[data-theme]`, gesteuert durch die CSS-Variablen `--accent-bg`,
+- **13 Themes** über `body[data-theme]`, gesteuert durch die CSS-Variablen `--accent-bg`,
   `--accent-border`, `--accent-text`, `--accent-text-soft` u. a. `applyTheme` setzt sie
   zur Laufzeit auf `documentElement`. Ein neues Dark-Theme **muss alle** `--accent-*`
   in seinem Block überschreiben.

@@ -6985,6 +6985,39 @@
 			scrollbarThumbHover: "rgba(108, 150, 180, 0.3)",
 			scrollbarBorder: "rgba(23, 26, 27, 0.6)",
 		},
+		ashLight: {
+			label: "Ash Light",
+			top: "#f3f5f6",
+			bottom: "#e9edef",
+			previewBg: "#f3f5f6",
+			previewText: "#1d2427",
+			previewLink: "#2c5f86",
+			previewMetaBg: "rgba(233, 237, 239, 0.95)",
+			previewMetaBorder: "rgba(62, 106, 138, 0.22)",
+			previewMetaText: "rgba(29, 36, 39, 0.9)",
+			tocBorder: "rgba(29, 36, 39, 0.12)",
+			tocText: "#1d2427",
+			tocMuted: "rgba(67, 80, 89, 0.9)",
+			tocHover: "rgba(29, 36, 39, 0.06)",
+			accentBgSoft: "rgba(62, 106, 138, 0.08)",
+			accentBg: "rgba(62, 106, 138, 0.12)",
+			accentBgHover: "rgba(62, 106, 138, 0.16)",
+			accentBadgeBg: "rgba(62, 106, 138, 0.14)",
+			accentStrong: "#3e6a8a",
+			accentStrongHover: "#355d7a",
+			accentStrongActive: "#2b4f69",
+			accentBorder: "rgba(62, 106, 138, 0.25)",
+			accentBorderStrong: "rgba(62, 106, 138, 0.36)",
+			accentText: "#fff",
+			accentTextSoft: "#2e5a7a",
+			accentRing: "rgba(79, 125, 160, 0.35)",
+			accentRingStrong: "rgba(79, 125, 160, 0.55)",
+			blockquoteBorder: "rgba(62, 106, 138, 0.3)",
+			blockquoteText: "rgba(67, 80, 89, 0.95)",
+			scrollbarThumb: "rgba(29, 36, 39, 0.22)",
+			scrollbarThumbHover: "rgba(29, 36, 39, 0.32)",
+			scrollbarBorder: "rgba(233, 237, 239, 0.9)",
+		},
 	};
 
 	const THEME_ORDER = [
@@ -7000,6 +7033,7 @@
 		"monoDark",
 		"monoLight",
 		"ash",
+		"ashLight",
 	];
 
 	const GLOW_BLOCKED_THEMES = new Set([
@@ -7011,6 +7045,7 @@
 		"bitterLight",
 		"bitterDark",
 		"ash",
+		"ashLight",
 	]);
 
 		const UI_STRINGS = {
@@ -10896,7 +10931,7 @@
 				coffeeDark: "#1c1614", bronzeDark: "#2c2924", coffeeLight: "#f3ebe2",
 				bitterDark: "#131216", bitterLight: "#efecea",
 				monoDark: "#161b22", monoLight: "#eef1f5",
-				ash: "#262a2c"
+				ash: "#262a2c", ashLight: "#f3f5f6"
 			};
 			root.style.setProperty("--panel-solid-bg", solidBgs[next] || "#0f0a1a");
 			/* modal theming – backdrop & border per theme */
@@ -10906,7 +10941,7 @@
 				coffeeDark: "rgba(16,12,10,0.6)", bronzeDark: "rgba(20,18,15,0.6)", coffeeLight: "rgba(68,45,30,0.2)",
 				bitterDark: "rgba(13,12,16,0.6)", bitterLight: "rgba(21,21,24,0.2)",
 				monoDark: "rgba(22,27,34,0.6)", monoLight: "rgba(27,31,36,0.22)",
-				ash: "rgba(18,20,21,0.6)"
+				ash: "rgba(18,20,21,0.6)", ashLight: "rgba(29,36,39,0.3)"
 			};
 			const modalBorders = {
 				fuchsia: "rgba(255,255,255,0.1)", cyan: "rgba(255,255,255,0.1)",
@@ -10914,7 +10949,7 @@
 				coffeeDark: "#35261e", bronzeDark: "#4a4038", coffeeLight: "#d9c7bc",
 				bitterDark: "#2a2a30", bitterLight: "#d8d2cb",
 				monoDark: "rgba(48,54,61,0.9)", monoLight: "#d0d7de",
-				ash: "#3d4447"
+				ash: "#3d4447", ashLight: "#d3dadf"
 			};
 			root.style.setProperty("--modal-backdrop", modalBackdrops[next] || "rgba(2,6,23,0.7)");
 			root.style.setProperty("--modal-border", modalBorders[next] || "rgba(255,255,255,0.1)");
@@ -14935,7 +14970,8 @@
 		const isLightSyntax =
 			activeTheme === "monoLight" ||
 			activeTheme === "coffeeLight" ||
-			activeTheme === "bitterLight";
+			activeTheme === "bitterLight" ||
+			activeTheme === "ashLight";
 		const previewColorScheme = isLightSyntax ? "light" : "dark";
 		const previewBg =
 			themeColors.previewBg ||
@@ -15036,6 +15072,8 @@
 					return { ...base, fieldBg: "#0d1117", fieldBorder: "#30363d", fieldText: "#8b949e", valueText: "#c9d1d9" };
 				case "ash":
 					return { ...base, fieldBg: "#2f3437", fieldBorder: "#3d4447", fieldText: "#a3aeb6", valueText: "#d0d9e0" };
+				case "ashLight":
+					return { ...base, fieldBg: "#e9edef", fieldBorder: "#d3dadf", fieldText: "#435059", valueText: "#1d2427" };
 				default:
 					return base;
 			}
@@ -15115,6 +15153,14 @@
 						preBorder: "#3d4447",
 						preText: "#d0d9e0",
 						codeBg: "rgba(128,170,200,.12)",
+					};
+				case "ashLight":
+					return {
+						...base,
+						preBg: "#e6ebee",
+						preBorder: "#d3dadf",
+						preText: "#1d2427",
+						codeBg: "#e6ebee",
 					};
 				default:
 					return base;
@@ -15202,6 +15248,14 @@
 					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#8fb8d6;}
 					.hljs-string,.hljs-attr,.hljs-number{color:#a8b8c2;}
 					.hljs-comment,.hljs-quote{color:rgba(208,217,224,.65);}
+					`;
+				case "ashLight":
+					return `
+					pre.hljs, pre.hljs code.hljs{background:#e6ebee!important;border-color:#d3dadf;color:#1d2427;}
+					pre code.hljs{background:transparent!important;}
+					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#2b5676;}
+					.hljs-string,.hljs-attr,.hljs-number{color:#4a5f2a;}
+					.hljs-comment,.hljs-quote{color:#5f6b75;}
 					`;
 				default:
 					return "";

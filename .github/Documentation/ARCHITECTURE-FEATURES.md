@@ -115,15 +115,24 @@ Ergebnis-Panel über der Notizliste. Zuständig: `parseQueryTokens`,
 Vollständige Liste der Stellen — `index.html` braucht **nichts**, die Theme-Liste
 rendert `renderThemeList()` aus `THEME_ORDER`.
 
-**`app.js` (9):** `THEMES.<id>` · `THEME_ORDER` · `GLOW_BLOCKED_THEMES` (falls ohne
-Glow) · `solidBgs` · `modalBackdrops` · `modalBorders` · `getPreviewFieldColors` ·
-`getPreviewPreColors` · `buildPreviewHighlightCss`
+**`app.js` (9, hell: 10):** `THEMES.<id>` · `THEME_ORDER` · `GLOW_BLOCKED_THEMES` (falls
+ohne Glow) · `solidBgs` · `modalBackdrops` · `modalBorders` · `getPreviewFieldColors` ·
+`getPreviewPreColors` · `buildPreviewHighlightCss` — und bei hellen Themes
+`isLightSyntax` in `updatePreview()`, sonst rendert die Vorschau dunkle Code-Farben.
 
 **`styles/app.css` (6):** der `body[data-theme="…"]`-Hauptblock — plus fünf **leicht
 übersehene** Gruppen-Selektoren, die weit verstreut liegen: `.ps-tags-bar-inner`
 (steht rund 3300 Zeilen vor dem Hauptblock), die `.excel-iframe`-Invert-Liste,
 `.ps-note-pin … svg path`, `.calendar-day-today` und `#codeLang` (Basisregel mit
 `!important` und festem Dunkelblau — ohne eigenen Eintrag bleibt das Dropdown blau).
+
+**Helle Themes sind ein anderer Maßstab:** Sie müssen jede dunkle Tailwind-Grundfarbe
+einzeln überschreiben — `bitterLight` hat rund 240 Regelblöcke (107 davon Gruppen-
+Selektoren), ein dunkles Theme wie `ash` rund 75. `ashLight` ist deshalb aus
+`bitterLight` **abgeleitet**: jeder Gruppen-Selektor bekam eine `ashLight`-Zeile, jeder
+Einzelblock eine Kopie mit gemappten Farben direkt dahinter (gleiche Kaskaden-Position).
+Die gemeinsame Light-Token-Gruppe (`--md-marker`, `--md-muted`, `--md-code`) fällt auf
+kühlem Grund unter AA — ein neues helles Theme braucht dort eigene Werte.
 
 ⚠️ `--modal-backdrop` und `--modal-border` sind in CSS **nirgends** deklariert — die
 JS-Maps sind dort die einzige Quelle. Wer sie vergisst, bekommt einen generisch blauen
@@ -133,6 +142,3 @@ Modal-Hintergrund.
 Themes haben (`.calendar-day-today`, `#settingsGlowToggle`-Optik,
 `.block-arrange-overlay`, `.cal-mode-tab`, `caret-color`, `getPreviewPreColors`). Wer
 es kopiert, kopiert die Lücken mit. `ash` hat alle sechs.
-
-Warum es zwei Theming-Systeme gibt und wie der Ash-Port lief:
-`.claude/memory/2026-09-03-ash-theme.md`.

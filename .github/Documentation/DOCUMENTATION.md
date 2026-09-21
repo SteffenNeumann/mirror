@@ -1,5 +1,17 @@
 # Dokumentation – Änderungen (2026-09-21)
 
+## Neues Theme „Ash Light“
+- Helles Gegenstück zu Ash: kühler Schiefergrund `#f3f5f6`, Panel `#e9edef`, Text
+  `#1d2427`, Akzent Stahlblau `#3e6a8a` (dunkler als im dunklen Ash, sonst 2,9:1).
+- ID `ashLight`, letzte Stelle in `THEME_ORDER`, ohne Glow. `app.js`: 10 Stellen inkl.
+  `isLightSyntax` (helle Code-Farben in der Vorschau).
+- `styles/app.css`: aus `bitterLight` abgeleitet — 107 Gruppen-Selektoren um eine Zeile
+  ergänzt, 136 Einzelblöcke mit gemappten Farben dahinter kopiert. Rein additiv, kein
+  anderes Theme verändert (Alt/Neu per `getComputedStyle` verglichen).
+- Eigene Markdown-Token (`--md-marker #616d77`, `--md-muted`, `--md-code`), weil die
+  gemeinsamen Light-Werte auf dem kühlen Panel unter AA lagen. Alle Textpaare ≥ 4,5:1.
+- Cache-Busting: `?v=2026-09-21-04`, `CACHE_NAME` `mirror-v58`.
+
 ## Code-Sprachauswahl (`#codeLang`) im Theme-Grund
 - **Befund:** Das Dropdown hatte in allen dunklen Themes fest Dunkelblau `#0f172a`
   (nur die hellen Themes waren überschrieben) — in Ash, coffeeDark, bronzeDark,
