@@ -1,5 +1,14 @@
 # Dokumentation – Änderungen (2026-09-21)
 
+## Tags-Leiste im Editor flach
+- `#psEditorTagsBar` und `.ps-tags-bar-inner` haben in **allen 13 Themes** keinen
+  Hintergrund, keinen Rahmen, keinen Schatten und keinen Blur mehr — die Tag-Pills
+  stehen direkt auf dem Editor.
+- Umsetzung: eine Regel am Ende von `styles/app.css` mit doppelter ID
+  (`#psEditorTagsBar#psEditorTagsBar`), die alle Theme-Blöcke schlägt. Die Basisregel
+  gilt jetzt gezielt für `#psEditorTagsSuggest`, das Vorschlags-Dropdown behält seine Fläche.
+- Cache-Busting: `?v=2026-09-21-05`, `CACHE_NAME` `mirror-v59`.
+
 ## Neues Theme „Ash Light“
 - Helles Gegenstück zu Ash: kühler Schiefergrund `#f3f5f6`, Panel `#e9edef`, Text
   `#1d2427`, Akzent Stahlblau `#3e6a8a` (dunkler als im dunklen Ash, sonst 2,9:1).
