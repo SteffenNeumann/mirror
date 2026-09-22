@@ -1,5 +1,18 @@
 # Dokumentation – Änderungen (2026-09-21)
 
+## Editor-Kante: kein Text mehr auf dem Rand, Tags-Verlauf bis rechts
+- **Befund (nachgestellt mit echtem Mausrad):** Die Text-Overlays (`#mdHighlightOverlay`
+  u. a.) und der mitscrollende Meta-Kasten (`#psMetaOverlay`) liegen mit `inset:0` über
+  dem ganzen `#mirror` — auch über dessen halbtransparentem 1px-Rahmen. Beim Scrollen
+  blitzte Text genau auf der oberen Editor-Kante auf. Zusätzlich ließ der Tags-Verlauf
+  rechts 12 px frei; lange Zeilen (`white-space: pre`) schienen dort durch.
+- **Fix:** `clip-path: inset(1.5px round 11px)` auf die vier Text-Overlays und
+  `#psMetaOverlay` (ändert nur das Sichtbare, nicht Layout/Metriken); Verlauf `right: 1px`.
+  Gemessen über 25 Mausrad-Schritte: helle Pixel auf der Kante 1880 → 0, rechts 1212 → 0.
+- Glasmorph für die Leiste geprüft und verworfen: hinter hellen Textstellen fiel die
+  Chip-Schrift unter 4,5:1, „Frosted Pills“ ließen Text zwischen den Chips durch.
+- Cache-Busting: `?v=2026-09-22-02`, `CACHE_NAME` `mirror-v64`.
+
 ## Tags-Leiste: Verlauf gegen durchscheinenden Text
 - Seit die Leiste flach ist, lief gescrollter Text sichtbar unter den Tags durch.
   Jetzt liegt über die volle Editor-Breite ein Verlauf in der Editor-Farbe: deckend
@@ -8,8 +21,8 @@
 - Sitzt als `::before` am Eltern-Container von `#mirror`, nur solange die Leiste
   sichtbar ist (`:has(> #psEditorTagsBar:not(.hidden))`), `z-index: 7` zwischen den
   Text-Overlays (2–6) und der Leiste (10). Farbe `--tags-fade` je Theme auf `body`.
-- Bekannt, nicht behoben: eine Textzeile blitzt manchmal knapp **über** der oberen
-  Editor-Kante — alter Zeichenfehler der Markdown-Ebene (verschwindet beim Neuzeichnen).
+- (Die „über der Kante aufblitzende Zeile“ war kein Zeichenfehler, sondern Text im
+  Rahmen — behoben im Eintrag darüber.)
 - Cache-Busting: `?v=2026-09-21-08`, `CACHE_NAME` `mirror-v62`.
 
 ## Tags im Editor: gruppiert statt sechs Farbkästchen
