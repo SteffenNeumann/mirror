@@ -90,6 +90,8 @@ und das Aufgaben-Log.
 
 ## Completed Tasks Log (eine Zeile je Aufgabe; Details in den Topic-Dateien)
 
+- **2026-09-22** Category/Subcategory-Tags aufgeräumt (Prod-DB, 154 Notizen, Backup `/data/backup-tags-1790054485803.json`) + `sortTagList()` dedupliziert. Regel: `cat:` = Art, `sub:` = Thema. **MERKE:** Doppelte Chips kamen von nackten Alt-Tags (`note`), die die Leiste zu `cat:note` normalisiert. Prod-Skripte per stdin in `/app` laufen lassen — aus `/tmp` findet `require` `better-sqlite3` nicht. Details: `DOCUMENTATION.md`.
+
 - **2026-09-21/22** Tags-Leiste im Editor, PRs #54–#57: flach, gruppiert (Datum · Kategorie-Pfad · Punkt-Chips), Verlauf gegen durchscheinenden Text, Overlays per `clip-path` aus dem `#mirror`-Rahmen. Glasmorph gemessen und verworfen. **MERKE:** Ich habe ein Symptom des Users zweimal als „alten Zeichenfehler“ abgetan, statt es nachzustellen — mit Playwright-Mausrad + Pixel-Scan war es in Minuten belegt. Nie wegerklären, was der User sieht und ich nicht nachgestellt habe. Details: `2026-09-21-tags-leiste.md`.
 - **2026-09-21** Theme **Ash Light** (`ashLight`) — CSS per Skript aus `bitterLight` abgeleitet (243 Blöcke, rein additiv), eigene MD-Token, `isLightSyntax` ergänzt. **MERKE:** helles Theme = ~240 Blöcke statt ~75; nie von Hand, immer ableiten. Details: `2026-09-21-ash-light-theme.md`.
 - **2026-09-21** `#codeLang`-Dropdown hatte in allen dunklen Themes fest `#0f172a` → jetzt je Theme deckend (Werte wie `solidBgs`). **MERKE:** Neues Theme = auch `#codeLang` in `styles/app.css` eintragen (steht nicht in der Theme-Checkliste, die per `body[data-theme]`-Block allein nicht greift, weil die Basisregel `!important` trägt).
