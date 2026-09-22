@@ -16326,7 +16326,8 @@ ${highlightThemeCss}
 	}
 
 	function sortTagList(list) {
-		return list.slice().sort((a, b) => a.localeCompare(b));
+		// Dedupe: legacy "note" and "cat:note" both land here as "cat:note".
+		return [...new Set(list)].sort((a, b) => a.localeCompare(b));
 	}
 
 	function buildTagSections(tags) {

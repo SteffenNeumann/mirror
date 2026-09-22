@@ -1,5 +1,18 @@
 # Dokumentation – Änderungen (2026-09-21)
 
+## Tags-Filter: Category/Subcategory aufgeräumt, keine doppelten Chips mehr (2026-09-22)
+- **Befund:** `#cat:note` stand zweimal in der Tag-Leiste. 90 Altnotizen trugen den
+  nackten Kind-Tag `note`; `buildTagSections()` macht daraus `cat:note` und legte ihn
+  neben den echten `cat:note`. Gleiches für `todo`.
+- **Code-Fix:** `sortTagList()` entfernt Duplikate (`new Set`), damit Alt-Tags und
+  `cat:`-Tags nie mehr doppelt erscheinen.
+- **Daten (Prod, User 1, 154 Notizen, Backup `/data/backup-tags-1790054485803.json`):**
+  Regel `cat:` = Art der Notiz, `sub:` = Thema. `note`/`todo` → `cat:`,
+  `cat:development` → `cat:wiki` (+ `sub:development`, wenn kein Thema), `cat:business`/
+  `cat:work` → `cat:note` + `sub:<thema>`, Tippfehler `sub:databse`/`sub:develoment`
+  korrigiert, `sub:note` und `sub:text` entfernt bzw. → `sub:development`.
+- Cache-Busting: `?v=2026-09-22-03`, `CACHE_NAME` `mirror-v65`.
+
 ## Editor-Kante: kein Text mehr auf dem Rand, Tags-Verlauf bis rechts
 - **Befund (nachgestellt mit echtem Mausrad):** Die Text-Overlays (`#mdHighlightOverlay`
   u. a.) und der mitscrollende Meta-Kasten (`#psMetaOverlay`) liegen mit `inset:0` über
