@@ -90,6 +90,7 @@ und das Aufgaben-Log.
 
 ## Completed Tasks Log (eine Zeile je Aufgabe; Details in den Topic-Dateien)
 
+- **2026-09-22** Tote CSS `.ps-tag-pill-year/-month/-category/-subcategory` (20 Blöcke, alle Themes) aus `styles/app.css` entfernt — seit PR #55 ungenutzt, vorher per grep in `app.js`/`index.html` belegt.
 - **2026-09-22** Category/Subcategory-Tags aufgeräumt (Prod-DB, 154 Notizen, Backup `/data/backup-tags-1790054485803.json`) + `sortTagList()` dedupliziert. Regel: `cat:` = Art, `sub:` = Thema. **MERKE:** Doppelte Chips kamen von nackten Alt-Tags (`note`), die die Leiste zu `cat:note` normalisiert. Prod-Skripte per stdin in `/app` laufen lassen — aus `/tmp` findet `require` `better-sqlite3` nicht. Details: `DOCUMENTATION.md`.
 
 - **2026-09-21/22** Tags-Leiste im Editor, PRs #54–#57: flach, gruppiert (Datum · Kategorie-Pfad · Punkt-Chips), Verlauf gegen durchscheinenden Text, Overlays per `clip-path` aus dem `#mirror`-Rahmen. Glasmorph gemessen und verworfen. **MERKE:** Ich habe ein Symptom des Users zweimal als „alten Zeichenfehler“ abgetan, statt es nachzustellen — mit Playwright-Mausrad + Pixel-Scan war es in Minuten belegt. Nie wegerklären, was der User sieht und ich nicht nachgestellt habe. Details: `2026-09-21-tags-leiste.md`.
@@ -113,7 +114,6 @@ und das Aufgaben-Log.
 - **Farbschema „Theme-Akzent" ist bei 10 von 12 Themes unter AA** — `--md-heading: var(--accent-strong)`, und `--accent-strong` ist eine halbtransparente **Füllfarbe**. Gedeckt über der Editor-Fläche: violet 1,9:1, fuchsia/coffeeLight 2,7:1; nur bitterDark schafft AA. Für Ash am 2026-09-03 gefixt, der Rest bewusst offen (User: passt so). Fix wäre eine Zeile: `--md-heading` auf eine deckende Akzentfarbe legen.
 - **Tags-Verlauf in Glow-Themes** (fuchsia/cyan/violet/emerald): `#mirror` ist dort halbtransparent über wanderndem Glow, die feste `--tags-fade`-Farbe zeigt ein leichtes Band. User nutzt Ash; nicht angegangen.
 - **Helle Themes, vorbestehend:** `.hljs-title.function_` bleibt lila (github.min.css schlägt die 1-Klassen-Override); einige `text-slate-*` direkt in `index.html` (Header-Buttons, Footer) < 4,5:1.
-- **Tote CSS-Regeln:** `.ps-tag-pill-year/-month/-category/-subcategory` je Theme — der Editor nutzt sie seit PR #55 nicht mehr. Aufräumen, wenn man in der Nähe ist.
 - Suchtreffer- und Kommentar-Markierungen direkt am Editor-Rand nach dem `clip-path` (PR #57) nicht mit echtem Inhalt getestet — höchstens 1,5 px Verlust.
 
 ## Design Decisions
