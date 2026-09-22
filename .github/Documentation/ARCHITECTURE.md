@@ -202,6 +202,8 @@ kennen muss, bevor man in die Nähe kommt:
   (`attribution`, `comment`, `searchHighlight`, `mdHighlight`). Dort nie die Schriftgröße
   einzeln setzen, sondern `--editor-size` / `--editor-lh` anheben, sonst laufen sie
   auseinander. Die Mono-Schrift liegt tiefer, und die MD-Hervorhebung erzwingt Mono.
+  Die Overlays (und `#psMetaOverlay`) liegen mit `inset:0` auch über dem 1px-Rahmen und
+  tragen deshalb `clip-path: inset(1.5px round 11px)` — sonst blitzt Text auf der Kante.
 - ⚠️ **Spezifitätsfalle:** Light-Themes nutzen `body[data-theme="X"] .bg-slate-950/80
   { … !important }` (0,0,2,1) — Modal-Overrides müssen daher `#modalId .class` nutzen.
 - ⚠️ **Media Queries erhöhen die Spezifität nicht.** Eine Mobil-Regel `.foo` verliert
