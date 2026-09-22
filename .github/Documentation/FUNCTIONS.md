@@ -161,6 +161,8 @@
 | `updatePsEditingTagsHint` | Aktualisiert Tags-Hint | `#render` `#ui` | `formatTagsForHint`, `t` |
 | `formatTagsForEditor` | Tags für Editor formatieren | `#format` `#editor` | — |
 | `setPsEditorTagsVisible` | Tags sichtbar/unsichtbar | `#ui` `#state` | — |
+| `renderPsEditorTagsPills` | Tags-Leiste rendern: Datum-Gruppe, Kategorie-Pfad, Punkt-Chips | `#render` `#ui` | `createPillRemoveButton`, `escapeHtml`, `syncPsEditorTagMetaInputs`, `updateEditingNoteTagsLocal` |
+| `createPillRemoveButton` | X-Knopf einer Gruppe/eines Chips; entfernt, speichert, rendert neu | `#ui` `#handler` | `createPillRemoveIcon`, `renderPsEditorTagsPills`, `schedulePsTagsAutoSave`, `updateEditorMetaYaml`, `updatePsEditingTagsHint` |
 | `syncPsEditorTagsInput` | Synchronisiert Tags-Input | `#sync` `#ui` | `formatTagsForEditor`, `syncPsEditorTagMetaInputs` |
 | `getPsEditorTagTokenBounds` | Tag-Token-Grenzen ermitteln | `#parse` `#cursor` | `t` |
 | `buildPsEditorTagsSuggestItems` | Suggest-Items erzeugen | `#build` `#suggest` | `getPsEditorTagTokenBounds`, `isMonthTag`, `isYearTag`, `normalizeManualTags`, `t` |

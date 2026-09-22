@@ -110,6 +110,32 @@ Operatoren: `tag:` · `task:open` · `task:done` · `has:task` · `has:link` · 
 Ergebnis-Panel über der Notizliste. Zuständig: `parseQueryTokens`,
 `noteMatchesStructuredQuery`, `renderQueryResults`.
 
+## Tags-Leiste im Editor
+
+`#psEditorTagsBar` liegt absolut über dem Editor einer Notiz (Desktop `left/right/top:
+8px`, mobil `left/right: 44px`). Sichtbar nur mit Personal-Space-Login
+(`setPsEditorTagsVisible`).
+
+- **Aufbau** (`renderPsEditorTagsPills`): Datum-Gruppe (Jahr + Monat, Kalender-Icon,
+  „Sep 2026“) · Pfad-Gruppe (Kategorie › Unterkategorie) · Trennstrich · freie Tags als
+  Punkt-Chips ohne `#` · „+ Tag“ als gestrichelter Chip. Das X einer Gruppe entfernt die
+  ganze Gruppe (`createPillRemoveButton`). Die alten Klassen `.ps-tag-pill-year/-month/
+  -category/-subcategory` nutzt der Editor nicht mehr.
+- **Farbe:** alles `--accent-text-soft`, Chip-Fläche per `color-mix` 9 % — kein Theme
+  braucht eigene Regeln. Ausnahme bronzeDark (`#dcb77f`), dort lag der Wert unter AA.
+- **Flach:** kein Hintergrund, Rahmen, Schatten, Blur — per `#psEditorTagsBar#psEditorTagsBar`
+  (doppelte ID schlägt die ~25 Theme-Regeln mit `!important`).
+- **Verlauf gegen durchscheinenden Text:** `div:has(> #mirror):has(> #psEditorTagsBar:not(.hidden))::before`,
+  volle Editor-Breite, deckend bis zur Leisten-Unterkante (`--tags-fade-solid`), dann 12 px
+  Ausblendung. `z-index: 7` — über den Text-Overlays (2–6), unter Leiste (10) und Embeds
+  (20+). Farbe `--tags-fade` je Theme auf `body` = Hintergrund von `#mirror`.
+- ⚠️ Die Deko muss am **Container** hängen, nicht an der Leiste: mobil ist die Leiste
+  schmaler, Text lief links/rechts vorbei.
+- ⚠️ Glow-Themes (fuchsia, cyan, violet, emerald): `#mirror` ist dort halbtransparent über
+  wanderndem Glow — eine feste Verlaufsfarbe passt nie ganz, es bleibt ein leichtes Band.
+- **Glasmorph wurde gemessen und verworfen** (2026-09-22): hinter hellen Textstellen fiel
+  die Chip-Schrift unter 4,5:1; Glas nur hinter den Chips ließ Text dazwischen durch.
+
 ## Ein neues Theme hinzufügen
 
 Vollständige Liste der Stellen — `index.html` braucht **nichts**, die Theme-Liste
@@ -125,6 +151,7 @@ ohne Glow) · `solidBgs` · `modalBackdrops` · `modalBorders` · `getPreviewFie
 (steht rund 3300 Zeilen vor dem Hauptblock), die `.excel-iframe`-Invert-Liste,
 `.ps-note-pin … svg path`, `.calendar-day-today` und `#codeLang` (Basisregel mit
 `!important` und festem Dunkelblau — ohne eigenen Eintrag bleibt das Dropdown blau).
+Dazu `--tags-fade` (Hintergrund von `#mirror`, sonst Band hinter der Tags-Leiste).
 
 **Helle Themes sind ein anderer Maßstab:** Sie müssen jede dunkle Tailwind-Grundfarbe
 einzeln überschreiben — `bitterLight` hat rund 240 Regelblöcke (107 davon Gruppen-
