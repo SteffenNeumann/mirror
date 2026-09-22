@@ -1,5 +1,10 @@
 # Dokumentation – Änderungen (2026-09-21)
 
+## Aufgeräumt: tote Tag-Pill-Farben (2026-09-22)
+- `.ps-tag-pill-year/-month/-category/-subcategory` samt Theme-Varianten (20 Blöcke)
+  aus `styles/app.css` entfernt. Die Editor-Tags nutzen seit PR #55 Gruppen/Chips.
+- Cache-Busting: `app.css?v=2026-09-22-03`, `CACHE_NAME` `mirror-v66`.
+
 ## Tags-Filter: Category/Subcategory aufgeräumt, keine doppelten Chips mehr (2026-09-22)
 - **Befund:** `#cat:note` stand zweimal in der Tag-Leiste. 90 Altnotizen trugen den
   nackten Kind-Tag `note`; `buildTagSections()` macht daraus `cat:note` und legte ihn
