@@ -27,16 +27,17 @@
 - **App**: Mirror – collaborative editor, Personal Space (notes), Calendar, Planning
 - **URL**: https://mymirror.myinterdesk.net
 - **Repo**: `/Users/steffen/Documents/GitHub/mirror`
-- **Deploy**: Fly.io (`mirror-snowy-sound-8093`, region `fra`), auto-deploy on `git push main`. `FLY_API_TOKEN` lives ONLY as a GitHub Actions secret — no local fly login.
+- **Deploy**: Fly.io (`mirror-snowy-sound-8093`, region `fra`), auto-deploy on `git push main`. Fly-Token: GitHub-Actions-Secret **und** lokal im Keychain (siehe Access).
 
 ## Access (Prod DB / Fly)
 
 - Fly-Token im **macOS-Keychain**, Service `mirror_fly_token` (NICHT im Klartext speichern). Abruf: `FLY_API_TOKEN="$(security find-generic-password -s mirror_fly_token -w)"`
 - Prod-DB durchsuchen (Container hat nur `better-sqlite3` via node, kein `sqlite3`): base64-Node-Skript in `/app`, z.B. `fly ssh console -a mirror-snowy-sound-8093 -C "sh -c 'cd /app && echo <B64> | base64 -d | node'"`. DB: `/data/mirror.sqlite`, Tabellen u.a. `notes`, `notes_trash` (`id,user_id,text,tags_json,updated_at`/`deleted_at`).
+- **Skript immer per stdin in `/app`** — aus `/tmp` findet `require` `better-sqlite3` nicht (leere Ausgabe, kein Fehler). **Schreiben:** erst Probelauf (readonly), dann alte Werte nach `/data/backup-<thema>-<ts>.json`, Update in einer Transaktion, danach nachzählen. Offene Mirror-Tabs vorher schließen (offene Notiz schreibt sonst alte Tags zurück).
 
 ## Login / Auth (Magic-Link)
 
-- **⚠️ Zwei Konten, leicht zu verwechseln:** das **echte Notizkonto** des Users (user_id 1, ~117 Notizen) und die **Claude-Konto-Adresse** (user_id 4, in Mirror LEER). Login-Tests IMMER gegen das echte Notizkonto. Notizen sind pro **exakter** E-Mail getrennt — eine falsche Adresse sieht aus wie „alle Notizen weg". **Die konkreten Adressen stehen in `local.md`** (gitignoriert, öffentliches Repo).
+- **⚠️ Zwei Konten, leicht zu verwechseln:** das **echte Notizkonto** des Users (user_id 1, alle echten Notizen) und die **Claude-Konto-Adresse** (user_id 4, in Mirror LEER). Login-Tests IMMER gegen das echte Notizkonto. Notizen sind pro **exakter** E-Mail getrennt — eine falsche Adresse sieht aus wie „alle Notizen weg". **Die konkreten Adressen stehen in `local.md`** (gitignoriert, öffentliches Repo).
 - App speichert KEINE Standard-Login-Mail — `modalPrompt` fragt jedes Mal neu. `#psEmail` = nur Anzeige des eingeloggten Kontos.
 - **Login = Magic-Link**, kein Passwort. `requestPersonalSpaceLink()` → POST `/api/personal-space/request-link` → `sendMagicLinkEmail()` (server.js ~2540) → GET `/verify?token=` setzt Cookie. Tabelle `login_tokens`, TTL 30 Min.
 - **SMTP = Gmail** via Fly-Secrets (`SMTP_*`, `MAIL_FROM`). `SMTP_PASS` = Gmail-App-Passwort (braucht 2FA).
@@ -66,12 +67,11 @@ und das Aufgaben-Log.
 
 `/app-dev` (full-stack), `/ui-designer` (visual/CSS), `/mirror-dev` (both).
 
-## Commit Workflow (MANDATORY)
+## Commit Workflow
 
-**Stehende Freigabe (User, 2026-07-01):** commit, push, PR erstellen UND PR nach `main` mergen (→ Fly-Prod-Deploy) dauerhaft freigegeben — nicht nachfragen, durchführen, danach Deploy + Prod verifizieren.
-- Seit 2026-07-13 sind `Bash(git push:*)`, `Bash(gh pr create:*)`, `Bash(gh pr merge:*)`, `Bash(gh pr edit:*)` in `~/.claude/settings.json` freigegeben → Selbst-Merge läuft ohne Classifier-Block. **ABER** `git reset --hard`/`--force` bleiben blockiert → Cleanup nicht-destruktiv (`git stash push <file>` + `git merge --ff-only origin/main` + `git stash drop`). settings.json darf ich NICHT selbst ändern (Self-Modification).
-- Before every `git commit + push`: `gitstamp.txt` (`YYYY-MM-DD HH:MM:SS <short-hash>`) aktualisieren, in gleichem/Follow-up-chore-Commit.
-- **Cache-Busting (bei sichtbaren app.js/index.html-Änderungen):** SW nutzt stale-while-revalidate + precached `index.html`. gitstamp allein reicht NICHT. IMMER: (1) `?v=DATUM` an `/app.js` in `index.html` (preload + script) hochzählen, (2) gleiche Version in `sw.js` PRECACHE_URLS, (3) `CACHE_NAME` in `sw.js` bumpen. Danach 1–2× neu laden.
+Regeln (Freigabe, gitstamp, Cache-Busting, Worktree) stehen in `CLAUDE.md` — hier nur, was dort fehlt:
+- `git push`, `gh pr create/merge/edit` sind in `~/.claude/settings.json` freigegeben (seit 2026-07-13). settings.json darf ich NICHT selbst ändern.
+- Cache-Busting gilt auch für `styles/app.css` (eigenes `?v=` in `index.html` + `sw.js`).
 
 ---
 
@@ -83,7 +83,7 @@ und das Aufgaben-Log.
 - **PROD-BUNDLE IST MINIFIED:** Funktionsnamen sind gemangelt → in Prod-`app.js` nur nach **String-Literalen** grepen (Keys, CSS-Klassen), nie nach fn-Namen. Detail: `2026-07-15-room-restore-and-minify.md`.
 - **SW CACHT AGGRESSIV:** Beim lokalen Testen zuerst SW unregistern + `caches.delete`.
 - **TDZ bei Raum-Init:** läuft top-level VOR den `*_KEY`-consts → dort keine localStorage-Logik; Keys als Literal lesen. Sicherer Ort: `maybeApplyStartupFavoriteFromPs`.
-- **Lokaler Serverstart scheitert** (`better-sqlite3` ABI) → für Browser-Tests Frontend statisch servieren; Vorschau/Editor sind reines Client-Rendering.
+- **Lokaler Serverstart scheitert** (`better-sqlite3` ABI, Docker-Prod ok). Rein statisch servieren reicht NICHT — ohne API-Antworten kollabiert das Layout. Kleiner Python-Server mit Stubs für `/api/identity`, `/api/personal-space/me`, `/api/saved-queries`, `/api/rooms/*/comments`. Rezept: `2026-09-16-mobil-audit.md`.
 - **AUTO-DEPLOY KANN NACH MERGE AUSBLEIBEN:** Bei PR #39 (2026-09-13) blieb der `Fly Deploy`-Workflow nach `gh pr merge` aus (kein Push-Event-Run für den Merge-Commit, andere Workflows liefen normal) — Ursache nicht geklärt, ggf. GitHub-Webhook-Aussetzer. Nach jedem Merge **prüfen, nicht annehmen:** `gh run list --workflow="Fly Deploy" --limit 1` bzw. `fly releases -a mirror-snowy-sound-8093` gegen die Merge-Zeit abgleichen. Fehlt der Run: `FLY_API_TOKEN="$(security find-generic-password -s mirror_fly_token -w)" fly deploy --remote-only -a mirror-snowy-sound-8093` manuell nachholen.
 
 ---
@@ -91,8 +91,7 @@ und das Aufgaben-Log.
 ## Completed Tasks Log (eine Zeile je Aufgabe; Details in den Topic-Dateien)
 
 - **2026-09-22** Tote CSS `.ps-tag-pill-year/-month/-category/-subcategory` (20 Blöcke, alle Themes) aus `styles/app.css` entfernt — seit PR #55 ungenutzt, vorher per grep in `app.js`/`index.html` belegt.
-- **2026-09-22** Category/Subcategory-Tags aufgeräumt (Prod-DB, 154 Notizen, Backup `/data/backup-tags-1790054485803.json`) + `sortTagList()` dedupliziert. Regel: `cat:` = Art, `sub:` = Thema. **MERKE:** Doppelte Chips kamen von nackten Alt-Tags (`note`), die die Leiste zu `cat:note` normalisiert. Prod-Skripte per stdin in `/app` laufen lassen — aus `/tmp` findet `require` `better-sqlite3` nicht. Details: `DOCUMENTATION.md`.
-
+- **2026-09-22** Category/Subcategory-Tags aufgeräumt (Prod-DB, 154 Notizen, Backup `/data/backup-tags-1790054485803.json`) + `sortTagList()` dedupliziert. Regel: `cat:` = Art, `sub:` = Thema. **MERKE:** Doppelte Chips kamen von nackten Alt-Tags (`note`), die die Leiste zu `cat:note` normalisiert. Details: `DOCUMENTATION.md`.
 - **2026-09-21/22** Tags-Leiste im Editor, PRs #54–#57: flach, gruppiert (Datum · Kategorie-Pfad · Punkt-Chips), Verlauf gegen durchscheinenden Text, Overlays per `clip-path` aus dem `#mirror`-Rahmen. Glasmorph gemessen und verworfen. **MERKE:** Ich habe ein Symptom des Users zweimal als „alten Zeichenfehler“ abgetan, statt es nachzustellen — mit Playwright-Mausrad + Pixel-Scan war es in Minuten belegt. Nie wegerklären, was der User sieht und ich nicht nachgestellt habe. Details: `2026-09-21-tags-leiste.md`.
 - **2026-09-21** Theme **Ash Light** (`ashLight`) — CSS per Skript aus `bitterLight` abgeleitet (243 Blöcke, rein additiv), eigene MD-Token, `isLightSyntax` ergänzt. **MERKE:** helles Theme = ~240 Blöcke statt ~75; nie von Hand, immer ableiten. Details: `2026-09-21-ash-light-theme.md`.
 - **2026-09-21** `#codeLang`-Dropdown hatte in allen dunklen Themes fest `#0f172a` → jetzt je Theme deckend (Werte wie `solidBgs`). **MERKE:** Neues Theme = auch `#codeLang` in `styles/app.css` eintragen (steht nicht in der Theme-Checkliste, die per `body[data-theme]`-Block allein nicht greift, weil die Basisregel `!important` trägt).
@@ -108,8 +107,6 @@ und das Aufgaben-Log.
 
 - **Cold-Start (~5s weißer Bildschirm) — ADRESSIERT 2026-07-15 via Keep-Alive** (`.github/workflows/keep-alive.yml`, GH Actions cron `*/5`, intern 5× Ping/60s → durchgehend warm; public repo = gratis; pingt `/gitstamp.txt`). **Kosten-Realität:** warme Fly-Maschine ≈ gleiche Compute-Kosten wie `min_machines_running=1` (~5$/Mon) — nur das GH-Pingen ist gratis, die Suspend-Ersparnis entfällt. User kann den Workflow deaktivieren. Fly warm ~250ms, gzip aktiv.
 - PS Black-Box recovery ist console-only (`window.mirrorLocalBackups` / `mirrorRestoreBackup`) — keine Settings-UI.
-- Prod DB access via Keychain token (`mirror_fly_token`) — siehe Access.
-- Local server boot fails on `better-sqlite3` ABI mismatch — nur lokal; Docker prod fine. **Workaround für Frontend-Tests (2026-09-16):** statisch servieren reicht NICHT, ohne API-Antworten kollabiert das Layout. Kleiner Python-Server mit Stubs für `/api/identity`, `/api/personal-space/me`, `/api/saved-queries`, `/api/rooms/*/comments` → App rendert normal. Rezept in `2026-09-16-mobil-audit.md`.
 - Fix B des Raum-Restores (echtes Login am Handy) ist vom User noch nicht real gegengetestet.
 - **Farbschema „Theme-Akzent" ist bei 10 von 12 Themes unter AA** — `--md-heading: var(--accent-strong)`, und `--accent-strong` ist eine halbtransparente **Füllfarbe**. Gedeckt über der Editor-Fläche: violet 1,9:1, fuchsia/coffeeLight 2,7:1; nur bitterDark schafft AA. Für Ash am 2026-09-03 gefixt, der Rest bewusst offen (User: passt so). Fix wäre eine Zeile: `--md-heading` auf eine deckende Akzentfarbe legen.
 - **Tags-Verlauf in Glow-Themes** (fuchsia/cyan/violet/emerald): `#mirror` ist dort halbtransparent über wanderndem Glow, die feste `--tags-fade`-Farbe zeigt ein leichtes Band. User nutzt Ash; nicht angegangen.
