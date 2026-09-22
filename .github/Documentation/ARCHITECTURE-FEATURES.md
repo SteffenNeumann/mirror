@@ -161,6 +161,15 @@ Einzelblock eine Kopie mit gemappten Farben direkt dahinter (gleiche Kaskaden-Po
 Die gemeinsame Light-Token-Gruppe (`--md-marker`, `--md-muted`, `--md-code`) fällt auf
 kühlem Grund unter AA — ein neues helles Theme braucht dort eigene Werte.
 
+**Helle (Pastell-)Akzentfüllung** — wie `ashLight` seit 2026-09-22: `accentStrong` ist
+dort `#c5d9e8`, `accentText` dunkel `#1d2d39`. Folgen: (1) Alles, was `var(--accent-strong)`
+als **Linie, Rand, Icon oder Text** nutzt, fällt unter 3:1 — dafür gibt es in `ashLight`
+einen eigenen Grafik-Ton `#5a798f` (Override-Block am Ende von `styles/app.css`).
+(2) Feste `color: #fff` auf Akzentgrund (Kalender-Heute, `.qb-btn-primary`, `.ng-*`,
+Checkbox-Haken) brauchen eigene Overrides. (3) Die Vorschau-Checkboxen sitzen im iframe —
+ihr Rand steht in `buildPreviewHighlightCss`, nicht in `app.css`. (4) Der Fokus-Ring
+(`accentRing`) ist deckend `#5a798f`, sonst < 3:1.
+
 ⚠️ `--modal-backdrop` und `--modal-border` sind in CSS **nirgends** deklariert — die
 JS-Maps sind dort die einzige Quelle. Wer sie vergisst, bekommt einen generisch blauen
 Modal-Hintergrund.

@@ -1,5 +1,18 @@
 # Dokumentation – Änderungen (2026-09-21)
 
+## Ash Light ruhiger: Pastell-Akzent, dunklere Flächen (2026-09-22, PR #62)
+- **Wunsch:** Akzent-Blau zu präsent, Flächen zu hell; danach „Akzent zu dunkel“ und
+  „Eingabe und Vorschau unterschiedlich getönt, wirkt unruhig“.
+- **Umgesetzt (Variante P + Fokus-Ring):** Seite `#e6ecef`, Editor **und** Vorschau
+  `#dde3e7`; Akzent-Füllung pastell `#c5d9e8`/`#b8d0e2`/`#abc7db` mit dunkler Schrift
+  `#1d2d39`; Links/Überschriften `#426682`; Linien, Kästchen, „an“-Zustände und
+  Fokus-Ring `#5a798f` (≥ 3:1, Ring vorher 1,5:1). `#codeLang` nicht mehr weiß.
+- Farben per Skript aus einer Alt→Neu-Tabelle, nur `ashLight`-Regeln; geteilte
+  Light-Regeln per eigener `ashLight`-Zeile. Andere Themes unverändert.
+- Bewusst offen: Rand der Aktions-Knöpfe (`#psNewNote` u. a.) bleibt zart (1,96:1),
+  die Knöpfe sind über die Beschriftung erkennbar.
+- Cache-Busting: `?v=2026-09-22-04`, `CACHE_NAME` `mirror-v67`.
+
 ## Aufgeräumt: tote Tag-Pill-Farben (2026-09-22)
 - `.ps-tag-pill-year/-month/-category/-subcategory` samt Theme-Varianten (20 Blöcke)
   aus `styles/app.css` entfernt. Die Editor-Tags nutzen seit PR #55 Gruppen/Chips.
