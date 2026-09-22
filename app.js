@@ -6961,36 +6961,36 @@
 		},
 		ashLight: {
 			label: "Ash Light",
-			top: "#f3f5f6",
-			bottom: "#e9edef",
-			previewBg: "#f3f5f6",
+			top: "#e6ecef",
+			bottom: "#dde3e7",
+			previewBg: "#dde3e7",
 			previewText: "#1d2427",
-			previewLink: "#2c5f86",
-			previewMetaBg: "rgba(233, 237, 239, 0.95)",
-			previewMetaBorder: "rgba(62, 106, 138, 0.22)",
+			previewLink: "#426682",
+			previewMetaBg: "rgba(221, 227, 231, 0.95)",
+			previewMetaBorder: "rgba(75, 98, 115, 0.22)",
 			previewMetaText: "rgba(29, 36, 39, 0.9)",
 			tocBorder: "rgba(29, 36, 39, 0.12)",
 			tocText: "#1d2427",
-			tocMuted: "rgba(67, 80, 89, 0.9)",
+			tocMuted: "rgba(61, 74, 83, 0.9)",
 			tocHover: "rgba(29, 36, 39, 0.06)",
-			accentBgSoft: "rgba(62, 106, 138, 0.08)",
-			accentBg: "rgba(62, 106, 138, 0.12)",
-			accentBgHover: "rgba(62, 106, 138, 0.16)",
-			accentBadgeBg: "rgba(62, 106, 138, 0.14)",
-			accentStrong: "#3e6a8a",
-			accentStrongHover: "#355d7a",
-			accentStrongActive: "#2b4f69",
-			accentBorder: "rgba(62, 106, 138, 0.25)",
-			accentBorderStrong: "rgba(62, 106, 138, 0.36)",
-			accentText: "#fff",
-			accentTextSoft: "#2e5a7a",
-			accentRing: "rgba(79, 125, 160, 0.35)",
-			accentRingStrong: "rgba(79, 125, 160, 0.55)",
-			blockquoteBorder: "rgba(62, 106, 138, 0.3)",
-			blockquoteText: "rgba(67, 80, 89, 0.95)",
+			accentBgSoft: "rgba(75, 98, 115, 0.08)",
+			accentBg: "rgba(75, 98, 115, 0.12)",
+			accentBgHover: "rgba(75, 98, 115, 0.16)",
+			accentBadgeBg: "rgba(75, 98, 115, 0.14)",
+			accentStrong: "#c5d9e8",
+			accentStrongHover: "#b8d0e2",
+			accentStrongActive: "#abc7db",
+			accentBorder: "rgba(75, 98, 115, 0.25)",
+			accentBorderStrong: "rgba(75, 98, 115, 0.36)",
+			accentText: "#1d2d39",
+			accentTextSoft: "#395a72",
+			accentRing: "#5a798f", // Fokus-Ring deckend: >= 3:1 auf den Flächen
+			accentRingStrong: "#5a798f",
+			blockquoteBorder: "rgba(75, 98, 115, 0.3)",
+			blockquoteText: "rgba(61, 74, 83, 0.95)",
 			scrollbarThumb: "rgba(29, 36, 39, 0.22)",
 			scrollbarThumbHover: "rgba(29, 36, 39, 0.32)",
-			scrollbarBorder: "rgba(233, 237, 239, 0.9)",
+			scrollbarBorder: "rgba(221, 227, 231, 0.9)",
 		},
 	};
 
@@ -10905,7 +10905,7 @@
 				coffeeDark: "#1c1614", bronzeDark: "#2c2924", coffeeLight: "#f3ebe2",
 				bitterDark: "#131216", bitterLight: "#efecea",
 				monoDark: "#161b22", monoLight: "#eef1f5",
-				ash: "#262a2c", ashLight: "#f3f5f6"
+				ash: "#262a2c", ashLight: "#e6ecef"
 			};
 			root.style.setProperty("--panel-solid-bg", solidBgs[next] || "#0f0a1a");
 			/* modal theming – backdrop & border per theme */
@@ -10923,7 +10923,7 @@
 				coffeeDark: "#35261e", bronzeDark: "#4a4038", coffeeLight: "#d9c7bc",
 				bitterDark: "#2a2a30", bitterLight: "#d8d2cb",
 				monoDark: "rgba(48,54,61,0.9)", monoLight: "#d0d7de",
-				ash: "#3d4447", ashLight: "#d3dadf"
+				ash: "#3d4447", ashLight: "#c9d0d5"
 			};
 			root.style.setProperty("--modal-backdrop", modalBackdrops[next] || "rgba(2,6,23,0.7)");
 			root.style.setProperty("--modal-border", modalBorders[next] || "rgba(255,255,255,0.1)");
@@ -15047,7 +15047,7 @@
 				case "ash":
 					return { ...base, fieldBg: "#2f3437", fieldBorder: "#3d4447", fieldText: "#a3aeb6", valueText: "#d0d9e0" };
 				case "ashLight":
-					return { ...base, fieldBg: "#e9edef", fieldBorder: "#d3dadf", fieldText: "#435059", valueText: "#1d2427" };
+					return { ...base, fieldBg: "#d3d9dd", fieldBorder: "#c9d0d5", fieldText: "#3d4a53", valueText: "#1d2427" };
 				default:
 					return base;
 			}
@@ -15131,10 +15131,10 @@
 				case "ashLight":
 					return {
 						...base,
-						preBg: "#e6ebee",
-						preBorder: "#d3dadf",
+						preBg: "#d3d9dd",
+						preBorder: "#c9d0d5",
 						preText: "#1d2427",
-						codeBg: "#e6ebee",
+						codeBg: "#d3d9dd",
 					};
 				default:
 					return base;
@@ -15225,11 +15225,14 @@
 					`;
 				case "ashLight":
 					return `
-					pre.hljs, pre.hljs code.hljs{background:#e6ebee!important;border-color:#d3dadf;color:#1d2427;}
+					pre.hljs, pre.hljs code.hljs{background:#d3d9dd!important;border-color:#c9d0d5;color:#1d2427;}
 					pre code.hljs{background:transparent!important;}
-					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#2b5676;}
+					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#394f60;}
 					.hljs-string,.hljs-attr,.hljs-number{color:#4a5f2a;}
-					.hljs-comment,.hljs-quote{color:#5f6b75;}
+					.hljs-comment,.hljs-quote{color:#58646e;}
+					/* Pastell ist für Linien zu blass: Kästchen + Durchstreichung >= 3:1 */
+					ul.task-list input[type=checkbox],ol.task-list input[type=checkbox],input.task-list-item-checkbox{border-color:#5a798f;}
+					li.task-list-item.checked label,li.task-list-item.checked label *,ul.task-list li.task-list-item.checked label,ol.task-list li.task-list-item.checked label{text-decoration-color:#5a798f;}
 					`;
 				default:
 					return "";
