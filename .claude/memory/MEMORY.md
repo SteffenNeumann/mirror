@@ -90,6 +90,7 @@ Regeln (Freigabe, gitstamp, Cache-Busting, Worktree) stehen in `CLAUDE.md` — h
 
 ## Completed Tasks Log (eine Zeile je Aufgabe; Details in den Topic-Dateien)
 
+- **2026-09-23** Erledigte Aufgaben nicht mehr durchgestrichen (Editor + Vorschau, Farbe bleibt blass), PR #64. **MERKE:** Vorschau-Stil steht doppelt — iframe-CSS in `app.js` UND `.md-content` in `styles/app.css`; beide anfassen.
 - **2026-09-22** Ash Light ruhiger, PR #62: Flächen dunkler (Editor = Vorschau `#dde3e7`), Akzent pastell `#c5d9e8` mit dunkler Schrift, Linien/Fokus-Ring `#5a798f`. **MERKE:** Die Vorschau ist ein iframe ohne `app.css` — Overrides dort nur über `buildPreviewHighlightCss`. Und: Wünsche wie „blasser“ können in zwei Richtungen gehen (entsättigt-dunkel vs. hell-pastell) — früh ein Bild zeigen. Details: `2026-09-22-ash-light-pastell.md`.
 - **2026-09-22** Tote CSS `.ps-tag-pill-year/-month/-category/-subcategory` (20 Blöcke, alle Themes) aus `styles/app.css` entfernt — seit PR #55 ungenutzt, vorher per grep in `app.js`/`index.html` belegt.
 - **2026-09-22** Category/Subcategory-Tags aufgeräumt (Prod-DB, 154 Notizen, Backup `/data/backup-tags-1790054485803.json`) + `sortTagList()` dedupliziert. Regel: `cat:` = Art, `sub:` = Thema. **MERKE:** Doppelte Chips kamen von nackten Alt-Tags (`note`), die die Leiste zu `cat:note` normalisiert. Details: `DOCUMENTATION.md`.

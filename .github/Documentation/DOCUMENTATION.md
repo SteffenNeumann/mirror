@@ -1,5 +1,9 @@
 # Dokumentation – Änderungen (2026-09-21)
 
+## Erledigte Aufgaben ohne Durchstreichen (2026-09-23, PR #64)
+
+Erledigte Aufgaben (`- [x]`) sind nicht mehr durchgestrichen – im Editor (`#mdHighlightContent .md-task-done`) und in der Vorschau (iframe-CSS in `app.js` sowie `.md-content` in `styles/app.css`). Die blassere Farbe bleibt, damit „erledigt“ erkennbar ist. Grund: durchgestrichener Text war schwer lesbar.
+
 ## Ash Light ruhiger: Pastell-Akzent, dunklere Flächen (2026-09-22, PR #62)
 - **Wunsch:** Akzent-Blau zu präsent, Flächen zu hell; danach „Akzent zu dunkel“ und
   „Eingabe und Vorschau unterschiedlich getönt, wirkt unruhig“.
