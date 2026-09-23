@@ -2336,16 +2336,12 @@ body[data-theme="ash"] .excel-iframe {
 .md-content ul.task-list li.task-list-item.checked label,
 .md-content ol.task-list li.task-list-item.checked label,
 .md-content li.task-list-item.checked label {
-	text-decoration: line-through;
-	text-decoration-thickness: 1.5px;
-	text-decoration-color: var(--accent-strong);
+	text-decoration: none;
 }
 .md-content ul.task-list li.task-list-item.checked label *,
 .md-content ol.task-list li.task-list-item.checked label *,
 .md-content li.task-list-item.checked label * {
-	text-decoration: line-through;
-	text-decoration-thickness: 1.5px;
-	text-decoration-color: var(--accent-strong);
+	text-decoration: none;
 }
 .md-content ul.task-list li > .task-closed-at,
 .md-content ol.task-list li > .task-closed-at,
@@ -13365,7 +13361,6 @@ body.md-preset-accent[data-theme="ashLight"] {
 }
 #mdHighlightContent .md-task-done {
 	color: var(--md-muted);
-	text-decoration: line-through;
 }
 /* Preset selector buttons. */
 .md-preset-btn {
