@@ -13103,23 +13103,56 @@
 		return psCommentIndexPromise;
 	}
 
+	/* Such-Index je Notiz: Kleinschreibung, Wörter und Klang-Codes werden
+	   einmal berechnet und erst neu gebaut, wenn sich Text oder Tags ändern.
+	   Vorher lief colognePhonetic bei jedem Tastendruck über jedes Wort
+	   jeder Notiz (~200 ms bei 400 Notizen). Schlüssel ist die Notiz-ID,
+	   weil der Server-Refresh neue Objekte für unveränderte Notizen liefert. */
+	const psSearchIndexCache = new Map();
+
+	function getNoteSearchIndex(note) {
+		const rawText = String(note && note.text ? note.text : "");
+		const tags = Array.isArray(note && note.tags) ? note.tags : [];
+		const tagsKey = tags.join("\u0000");
+		const cacheKey = String(note && note.id ? note.id : "");
+		const cached = cacheKey ? psSearchIndexCache.get(cacheKey) : null;
+		if (cached && cached.rawText === rawText && cached.tagsKey === tagsKey) return cached;
+		const text = rawText.toLowerCase();
+		const tagsLower = tags.map((t) => String(t || "").toLowerCase());
+		const words = text.split(/[^a-z0-9äöüß]+/i).filter(Boolean);
+		const firstLine = (text.split("\n", 1)[0] || "").trim();
+		/* Klang-Code → Anzahl Vorkommen (Wörter + Tags), wie im alten Zähler */
+		const phonCounts = new Map();
+		const codeByWord = new Map();
+		const countPhonetic = (word) => {
+			let code = codeByWord.get(word);
+			if (code === undefined) {
+				code = colognePhonetic(word);
+				codeByWord.set(word, code);
+			}
+			if (code) phonCounts.set(code, (phonCounts.get(code) || 0) + 1);
+		};
+		words.forEach(countPhonetic);
+		tagsLower.forEach(countPhonetic);
+		const entry = {
+			rawText,
+			tagsKey,
+			text,
+			tagsLower,
+			hay: `${text}\n${tagsLower.join(" ")}`,
+			firstLine,
+			wordSet: new Set(words),
+			titleWordSet: new Set(firstLine.split(/[^a-z0-9äöüß]+/i).filter(Boolean)),
+			phonCounts,
+		};
+		if (cacheKey) psSearchIndexCache.set(cacheKey, entry);
+		return entry;
+	}
+
 	function noteMatchesSearch(note, tokens) {
 		if (!tokens || tokens.length === 0) return true;
 		const noteId = String(note && note.id ? note.id : "").trim();
-		const text = String(note && note.text ? note.text : "").toLowerCase();
-		const tags = Array.isArray(note && note.tags) ? note.tags : [];
-		const tagsLower = tags.map((t) => String(t || "").toLowerCase());
-		const hay = `${text}\n${tagsLower.join(" ")}`;
-		const phoneticTokens = new Set();
-		const addPhonetic = (word) => {
-			const code = colognePhonetic(word);
-			if (code) phoneticTokens.add(code);
-		};
-		text
-			.split(/[^a-z0-9äöüß]+/i)
-			.filter(Boolean)
-			.forEach((w) => addPhonetic(w));
-		tagsLower.forEach((t) => addPhonetic(t));
+		const idx = getNoteSearchIndex(note);
 		return tokens.every((tokRaw) => {
 			let tok = String(tokRaw || "")
 				.trim()
@@ -13137,25 +13170,20 @@
 			if (tok.startsWith("tag:")) {
 				const want = tok.slice(4).trim();
 				if (!want) return true;
-				return tagsLower.includes(want);
+				return idx.tagsLower.includes(want);
 			}
 			if (!tok) return true;
+			if (idx.hay.includes(tok)) return true;
 			const phon = colognePhonetic(tok);
-			if (hay.includes(tok)) return true;
-			if (phon && phoneticTokens.has(phon)) return true;
+			if (phon && idx.phonCounts.has(phon)) return true;
 			return false;
 		});
 	}
 
 	function noteSearchRelevance(note, tokens) {
 		if (!tokens || tokens.length === 0) return 0;
-		const text = String(note && note.text ? note.text : "").toLowerCase();
-		const tags = Array.isArray(note && note.tags) ? note.tags : [];
-		const tagsLower = tags.map((t) => String(t || "").toLowerCase());
-		const hay = `${text}\n${tagsLower.join(" ")}`;
-		const firstLine = (text.split("\n")[0] || "").trim();
-		const words = text.split(/[^a-z0-9äöüß]+/i).filter(Boolean);
-		const titleWords = firstLine.split(/[^a-z0-9äöüß]+/i).filter(Boolean);
+		const idx = getNoteSearchIndex(note);
+		const { text, tagsLower, hay, firstLine } = idx;
 		let score = 0;
 		for (const tokRaw of tokens) {
 			let tok = String(tokRaw || "").trim().toLowerCase();
@@ -13165,8 +13193,8 @@
 			if (tok.startsWith("tag:")) { if (tagsLower.includes(tok.slice(4).trim())) score += 10; continue; }
 
 			/* ── exact whole-word match (highest value) ── */
-			const hasExactWord = words.some((w) => w === tok);
-			const hasExactTitleWord = titleWords.some((w) => w === tok);
+			const hasExactWord = idx.wordSet.has(tok);
+			const hasExactTitleWord = idx.titleWordSet.has(tok);
 			const hasExactTag = tagsLower.some((t) => t === tok);
 
 			/* ── title is exactly the search term ── */
@@ -13185,8 +13213,8 @@
 			if (hasExactWord && !hasExactTitleWord) score += 20;
 
 			/* ── substring match – count occurrences ── */
-			let idx = 0; let exactHits = 0;
-			while ((idx = hay.indexOf(tok, idx)) !== -1) { exactHits++; idx += tok.length; }
+			let pos = 0; let exactHits = 0;
+			while ((pos = hay.indexOf(tok, pos)) !== -1) { exactHits++; pos += tok.length; }
 			if (exactHits > 0) {
 				score += 10 + Math.min(exactHits, 20);
 			}
@@ -13201,9 +13229,7 @@
 			if (exactHits === 0) {
 				const phon = colognePhonetic(tok);
 				if (phon) {
-					let phonHits = 0;
-					for (const w of words) { if (colognePhonetic(w) === phon) phonHits++; }
-					for (const tl of tagsLower) { if (colognePhonetic(tl) === phon) phonHits++; }
+					const phonHits = idx.phonCounts.get(phon) || 0;
 					if (phonHits > 0) score += 2 + phonHits;
 				}
 			}
@@ -13366,7 +13392,9 @@
 			notes = notes.filter((n) => noteMatchesSearch(n, parsed.plain));
 			/* sort by relevance: exact matches first, phonetic-only lower */
 			const plain = parsed.plain;
-			notes.sort((a, b) => noteSearchRelevance(b, plain) - noteSearchRelevance(a, plain));
+			/* Score einmal je Notiz, nicht im Comparator (dort lief er ~5000×) */
+			const scoreByNote = new Map(notes.map((n) => [n, noteSearchRelevance(n, plain)]));
+			notes.sort((a, b) => scoreByNote.get(b) - scoreByNote.get(a));
 		}
 		if (psCount) {
 			const total = allNotes.length;
@@ -31950,11 +31978,14 @@ self.onmessage = async (e) => {
 	if (psSearchInput) {
 		psSearchInput.addEventListener("input", () => {
 			psSearchQuery = String(psSearchInput.value || "");
-			applyPersonalSpaceFiltersAndRender();
+			// Erst filtern, wenn kurz nicht getippt wird — sonst baut jeder
+			// Buchstabe Liste und Tags komplett neu.
 			if (psSearchDebounceTimer) window.clearTimeout(psSearchDebounceTimer);
 			psSearchDebounceTimer = window.setTimeout(() => {
+				psSearchDebounceTimer = 0;
+				applyPersonalSpaceFiltersAndRender();
 				savePsSearchQuery();
-			}, 150);
+			}, 120);
 		});
 	}
 

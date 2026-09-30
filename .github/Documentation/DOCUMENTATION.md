@@ -1,5 +1,16 @@
 # Dokumentation – Änderungen (2026-09-21)
 
+## Notizen-Suche schneller (2026-09-30)
+- **Befund** (410 echte Notizen, 1,9 MB): pro Tastendruck 0,2–2 s. Ursachen: keine
+  Tipp-Pause, Klang-Codes (`colognePhonetic`) für jedes Wort jeder Notiz neu berechnet,
+  `noteSearchRelevance` lief im Sort-Comparator (~5000× statt 410×).
+- **Fix:** `getNoteSearchIndex()` merkt je Notiz-ID Kleinschreibung, Wörter und
+  Klang-Codes; neu gebaut nur, wenn Text oder Tags sich ändern. Score einmal je Notiz,
+  dann sortieren. `#psSearch` filtert erst nach 120 ms Tipp-Pause.
+- **Ergebnis:** Suche+Sortierung ~3 ms statt bis 1,7 s; Treffer und Reihenfolge
+  identisch (386 Suchen gegen alten Code verglichen). Erster Index-Aufbau ~115 ms einmalig.
+- Cache-Busting: `app.js?v=2026-09-30-01`, `CACHE_NAME` `mirror-v69`.
+
 ## Erledigte Aufgaben ohne Durchstreichen (2026-09-23, PR #64)
 
 Erledigte Aufgaben (`- [x]`) sind nicht mehr durchgestrichen – im Editor (`#mdHighlightContent .md-task-done`) und in der Vorschau (iframe-CSS in `app.js` sowie `.md-content` in `styles/app.css`). Die blassere Farbe bleibt, damit „erledigt“ erkennbar ist. Grund: durchgestrichener Text war schwer lesbar.
