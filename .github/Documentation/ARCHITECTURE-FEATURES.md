@@ -105,10 +105,23 @@ sonst friert `cooldownTicks` das Rendering ein.
 
 ## Query-Engine (PS-Suchfeld)
 
-Operatoren: `tag:` · `task:open` · `task:done` · `has:task` · `has:link` · `kind:` ·
-`created:>` · `updated:<` · `pinned:`. Bei Task-Queries erscheint ein aggregiertes
-Ergebnis-Panel über der Notizliste. Zuständig: `parseQueryTokens`,
-`noteMatchesStructuredQuery`, `renderQueryResults`.
+Operatoren: `tag:` · `task:open` · `task:done` · `has:task` · `has:link` ·
+`has:comment` · `has:permalink` · `kind:` · `created:>`/`<` · `updated:>`/`<` · `pinned:`.
+Ergebnisse erscheinen nur als gefilterte Notizliste; `renderQueryResults` blendet das
+alte Panel `#psQueryResults` nur noch aus. Zuständig: `parseQueryTokens`,
+`noteMatchesStructuredQuery`.
+
+**Freitext** (`noteMatchesSearch`): Teilstring in Text + Tags **oder** gleicher Klang
+(`colognePhonetic`, Kölner Phonetik). Reihenfolge nach `noteSearchRelevance`
+(Titel exakt > Wort im Titel > Tag > Teilstring; Klang-Treffer zuletzt).
+
+**Tempo** (seit 2026-09-30): `getNoteSearchIndex()` hält je **Notiz-ID** Kleinschreibung,
+Wort-Sets und Klang-Code-Zähler; neu gebaut nur, wenn `text` oder `tags` sich ändern
+(Server-Refresh liefert neue Objekte, darum ID statt Objekt als Schlüssel). Relevanz
+wird einmal je Notiz berechnet, **nie im Sort-Comparator**. `#psSearch` filtert erst
+nach 120 ms Tipp-Pause. Ergebnis bei 410 Notizen: ~3 ms statt bis 1,7 s.
+⚠️ Wer die Suche erweitert: nichts pro Tastendruck über alle Wörter rechnen — in den
+Index legen.
 
 ## Tags-Leiste im Editor
 

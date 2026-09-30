@@ -171,8 +171,8 @@ kennen muss, bevor man in die Nähe kommt:
   vorhandene Daten, kein Backend- oder Schema-Change.
   ⚠️ In `ngInit` ist `.autoPauseRedraw(false)` zwingend, sonst friert `cooldownTicks`
   das Rendering ein.
-- **Query-Engine** (PS-Suchfeld) — `parseQueryTokens`, `noteMatchesStructuredQuery`,
-  `renderQueryResults`.
+- **Query-Engine** (PS-Suchfeld) — `parseQueryTokens`, `noteMatchesStructuredQuery`;
+  Freitext über den Such-Index `getNoteSearchIndex` (je Notiz-ID gecacht).
 
 ## Themes und Layout
 
