@@ -467,13 +467,16 @@
 | `loadPsPinnedOnly` | Nur-Pinned laden | `#storage` `#load` | `updatePsPinnedToggle` |
 | `savePsPinnedOnly` | Nur-Pinned speichern | `#storage` `#save` | — |
 | `updatePsPinnedToggle` | Pinned-Toggle aktualisieren | `#ui` `#render` | — |
-| `noteMatchesSearch` | Notiz-Suchfilter prüfen (Freitext + Phonetik) | `#filter` `#search` | `colognePhonetic` |
+| `colognePhonetic` | Wort → Kölner-Phonetik-Code (Klang-Suche) | `#search` `#phonetic` | — |
+| `getNoteSearchIndex` | Such-Index je Notiz-ID (lowercase, Wörter, Klang-Codes), gecacht bis Text/Tags sich ändern | `#search` `#cache` `#perf` | `colognePhonetic` |
+| `noteMatchesSearch` | Notiz-Suchfilter prüfen (Freitext + Phonetik) | `#filter` `#search` | `getNoteSearchIndex`, `colognePhonetic` |
+| `noteSearchRelevance` | Relevanz-Score je Notiz (einmal berechnen, nicht im Comparator) | `#search` `#sort` | `getNoteSearchIndex`, `colognePhonetic` |
 | `parseQueryTokens` | Query-String in strukturierte Operatoren + Freitext zerlegen | `#parse` `#query` `#search` | — |
 | `extractNoteTasks` | Markdown-Tasks (`- [ ]`/`- [x]`) aus Text extrahieren | `#parse` `#query` `#task` | — |
 | `parseDatePrefix` | Datumswert für Query-Datumsfilter parsen | `#parse` `#date` `#query` | — |
 | `isQueryMode` | Prüft ob Sucheingabe Query-Operatoren enthält | `#parse` `#query` | — |
 | `noteMatchesStructuredQuery` | Notiz gegen strukturierte Query-Token filtern | `#filter` `#query` | `extractNoteTasks`, `noteIsPinned`, `parseDatePrefix` |
-| `renderQueryResults` | Aggregiertes Task-Ergebnis-Panel rendern | `#render` `#query` `#ui` | `applyNoteToEditor`, `escapeHtml`, `extractNoteTasks`, `filterRealNotes`, `findNoteById`, `getNoteTitle`, `t` |
+| `renderQueryResults` | Blendet das alte Ergebnis-Panel `#psQueryResults` aus (Ergebnisse nur noch in der Liste) | `#render` `#query` `#ui` | — |
 | `applyPersonalSpaceFiltersAndRender` | Filter anwenden & rendern | `#render` `#filter` | `ensureNoteUpdatedAt`, `getNoteTitle`, `normalizeSearchQuery`, `noteIsPinned`, `noteMatchesSearch`, `noteMatchesStructuredQuery`, `parseQueryTokens`, `renderPsList`, `renderPsTags`, `renderQueryResults`, `t`, `updateEditorMetaYaml` |
 
 ##### 18.3 PS Tags-Prefs — `app.js`
