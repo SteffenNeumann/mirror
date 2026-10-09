@@ -30724,10 +30724,47 @@ self.onmessage = async (e) => {
 		});
 		if (savePdfBtn) savePdfBtn.addEventListener("click", () => {
 			saveFileModal.classList.add("hidden"); saveFileModal.classList.remove("flex"); saveFileModal.setAttribute("aria-hidden","true");
-			const iframe = document.getElementById("mdPreview");
-			if (iframe && iframe.contentWindow) { iframe.contentWindow.print(); }
-			else { window.print(); }
+			printNoteAsPdf();
 		});
+		// Eigenes Druck-Dokument statt #mdPreview: die Vorschau ist leer, solange sie
+		// zu ist, und druckt im dunklen Theme helle Schrift auf weißes Papier.
+		async function printNoteAsPdf() {
+			const title = getEditorTitle();
+			// Markdown-Libs laden erst mit der Vorschau — bei geschlossener Vorschau hier nachladen.
+			try { await ensureMarkdownLibs(); } catch { /* Fallback: <pre> */ }
+			const renderer = ensureMarkdown();
+			let bodyHtml = "";
+			try {
+				bodyHtml = renderer
+					? applyHljsToHtml(renderer.render(applyWikiLinksToMarkdown(getEditorContent())))
+					: `<pre>${escapeHtml(getEditorContent())}</pre>`;
+			} catch {
+				bodyHtml = `<pre>${escapeHtml(getEditorContent())}</pre>`;
+			}
+			const doc = `<!doctype html><html><head><meta charset="utf-8" /><title>${escapeHtml(title)}</title>
+				<link rel="stylesheet" href="/vendor/github.min.css?v=2026-07-13-01" />
+				<style>body{margin:0;padding:0;font:12pt/1.5 ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#111;background:#fff;}
+				h1,h2,h3,h4{line-height:1.25;break-after:avoid;}a{color:#1d4ed8;}img{max-width:100%;}
+				pre{white-space:pre-wrap;word-break:break-word;background:#f6f8fa;padding:10px;border-radius:6px;}
+				code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10pt;}
+				table{border-collapse:collapse;}th,td{border:1px solid #ccc;padding:4px 8px;}
+				blockquote{margin:0;padding-left:12px;border-left:3px solid #ccc;color:#444;}
+				ul.contains-task-list{list-style:none;padding-left:4px;}pre,table,img,blockquote{break-inside:avoid;}</style>
+				</head><body>${bodyHtml}</body></html>`;
+			const frame = document.createElement("iframe");
+			frame.setAttribute("aria-hidden", "true");
+			frame.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;";
+			document.body.appendChild(frame);
+			const cleanup = () => setTimeout(() => frame.remove(), 1000);
+			frame.addEventListener("load", () => {
+				const win = frame.contentWindow;
+				if (!win) { cleanup(); return; }
+				win.addEventListener("afterprint", cleanup, { once: true });
+				// Kurz warten, bis Stylesheet und Bilder geladen sind.
+				setTimeout(() => { win.focus(); win.print(); }, 300);
+			}, { once: true });
+			frame.srcdoc = doc;
+		}
 
 		// ── Share To ──
 		const shareToBtn = document.getElementById("actionShareTo");
