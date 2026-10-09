@@ -1,5 +1,10 @@
 # Dokumentation – Änderungen (2026-09-21)
 
+## „Drucken / Als PDF“ geht wieder (2026-10-09)
+- **Fehler:** Klick auf „Drucken / Als PDF“ tat nichts. Chrome-Konsole: `Ignored call to 'print()'. The document is sandboxed, and the 'allow-modals' keyword is not set.`
+- **Ursache:** Der Knopf ruft `print()` im Vorschau-iframe `#mdPreview` auf. Dessen `sandbox` hatte kein `allow-modals`.
+- **Fix:** `allow-modals` in `index.html` am `#mdPreview`-`sandbox` ergänzt. Cache-Busting: `CACHE_NAME` `mirror-v70`.
+
 ## Notizen-Suche schneller (2026-09-30)
 - **Befund** (410 echte Notizen, 1,9 MB): pro Tastendruck 0,2–2 s. Ursachen: keine
   Tipp-Pause, Klang-Codes (`colognePhonetic`) für jedes Wort jeder Notiz neu berechnet,
