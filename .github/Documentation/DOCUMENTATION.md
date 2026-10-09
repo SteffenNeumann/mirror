@@ -4,6 +4,7 @@
 - **Fehler:** Klick auf „Drucken / Als PDF“ tat nichts. Chrome-Konsole: `Ignored call to 'print()'. The document is sandboxed, and the 'allow-modals' keyword is not set.`
 - **Ursache:** Der Knopf ruft `print()` im Vorschau-iframe `#mdPreview` auf. Dessen `sandbox` hatte kein `allow-modals`.
 - **Fix:** `allow-modals` in `index.html` am `#mdPreview`-`sandbox` ergänzt. Cache-Busting: `CACHE_NAME` `mirror-v70`.
+- **Nachtrag – PDF war leer:** `#mdPreview` ist bei geschlossener Vorschau leer, und im dunklen Theme druckt sie helle Schrift auf weißes Papier. Jetzt baut `printNoteAsPdf()` ein eigenes Druck-Dokument (Markdown → HTML, schwarz auf weiß, `github.min.css`) in einem unsichtbaren iframe und druckt das. Lädt die Markdown-Libs bei Bedarf nach. Cache-Busting: `app.js?v=2026-10-09-01`, `CACHE_NAME` `mirror-v71`.
 
 ## Notizen-Suche schneller (2026-09-30)
 - **Befund** (410 echte Notizen, 1,9 MB): pro Tastendruck 0,2–2 s. Ursachen: keine
