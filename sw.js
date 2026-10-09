@@ -1,10 +1,10 @@
 // Mirror Service Worker — Offline-First Cache + Offline Notes Sync Queue
-const CACHE_NAME = "mirror-v71";
+const CACHE_NAME = "mirror-v73";
 const PRECACHE_URLS = [
 	"/",
 	"/index.html",
-	"/app.js?v=2026-10-09-01",
-	"/styles/app.css?v=2026-09-23-01",
+	"/app.js?v=2026-10-09-02",
+	"/styles/app.css?v=2026-10-09-02",
 	"/vendor/tailwind-built.css?v=2026-07-14-01",
 	"/vendor/markdown-it.min.js?v=2026-07-13-01",
 	"/vendor/markdown-it-task-lists.min.js?v=2026-07-13-01",
@@ -17,6 +17,9 @@ const PRECACHE_URLS = [
 	"/vendor/jetbrains-mono-var.woff2?v=2026-07-02-04",
 	"/excalidraw-embed.html",
 	"/manifest.json",
+	"/icon-192.png",
+	"/icon-512.png",
+	"/apple-touch-icon.png",
 ];
 
 // --- Install: pre-cache critical assets ---
