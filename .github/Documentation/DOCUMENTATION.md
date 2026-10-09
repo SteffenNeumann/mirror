@@ -1,5 +1,12 @@
 # Dokumentation – Änderungen (2026-09-21)
 
+## Installierte App wirkt nativer (2026-10-09)
+- **Wunsch:** Mirror vom Home-Bildschirm (iPhone/iPad) bzw. Dock (Mac) „professioneller“.
+- **Befund (iOS-Simulator):** Kein `apple-touch-icon` → Teilen-Menü zeigte einen Kompass; Icon mit eingebautem Rahmen → iOS rundete doppelt; feiner Strich mitten im „M“; beim Start weißer Bildschirm; keine `theme-color`.
+- **Umgesetzt:** randlose Icons ohne Strich (`icon-192/512.png`, `apple-touch-icon.png`), 38 iOS-Startbilder in `splash/`, `viewport-fit=cover` + Safe-Area-Abstände (Block am Ende von `styles/app.css`), `theme-color` folgt dem Theme, `manifest.json` mit `id`/`scope` und getrennten `any`/`maskable`-Icons, `overscroll-behavior: none`. Erzeuger: `scripts/gen-pwa-assets.py`.
+- **Geprüft:** iPhone 17 Pro (iOS 26, Simulator) als Home-Bildschirm-App: Startbild, Editor, Notizliste, Einstellungen frei von Uhr und Home-Indikator. iPad quer und Mac-Dock nicht geprüft.
+- Cache-Busting: `app.js?v=2026-10-09-02`, `app.css?v=2026-10-09-02`, `CACHE_NAME` `mirror-v73`.
+
 ## „Drucken / Als PDF“ geht wieder (2026-10-09)
 - **Fehler:** Klick auf „Drucken / Als PDF“ tat nichts. Chrome-Konsole: `Ignored call to 'print()'. The document is sandboxed, and the 'allow-modals' keyword is not set.`
 - **Ursache:** Der Knopf ruft `print()` im Vorschau-iframe `#mdPreview` auf. Dessen `sandbox` hatte kein `allow-modals`.

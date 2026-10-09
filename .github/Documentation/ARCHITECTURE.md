@@ -232,6 +232,18 @@ ersetzt.
 (`ok === false`) und werden von einem `.ok`-gegateten `cache.put` **nie** gespeichert.
 CDN-Abhängigkeiten sind offline tot.
 
+## Installierte App (Home-Bildschirm / Dock)
+
+Mirror ist eine PWA: `manifest.json` (`display: standalone`), Icons `icon-192/512.png`
+(randlos, `any` + `maskable`) und `apple-touch-icon.png`. iOS-Startbilder liegen in
+`splash/` (erzeugt je Gerätegröße, hoch + quer), verlinkt per
+`apple-touch-startup-image` in `index.html`. `viewport-fit=cover` legt die Seite unter
+Statusleiste und Home-Indikator — darum polstern `body` und die mobilen
+Vollbild-Panels mit `env(safe-area-inset-*)` (Block „Safe Area" am Ende von
+`styles/app.css`). **Neues Vollbild-Panel = dort eintragen**, sonst liegt es unter der
+Uhr. `meta[name=theme-color]` folgt beim Theme-Wechsel dem Body-Hintergrund.
+Neue Startbild-Größe: Gerät in `scripts/gen-pwa-assets.py` ergänzen und neu rendern.
+
 ## Cache-Busting (bei jeder sichtbaren Frontend-Änderung Pflicht)
 
 Der SW cached aggressiv, `gitstamp` allein reicht **nicht**. Immer alle drei:

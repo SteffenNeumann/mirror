@@ -10933,6 +10933,14 @@
 		} catch {
 			// ignore
 		}
+		// Statusleiste / Fenstertitel der installierten App an den Theme-Hintergrund angleichen
+		try {
+			const themeColorMeta = document.querySelector('meta[name="theme-color"]');
+			const bodyBg = getComputedStyle(document.body).backgroundColor;
+			if (themeColorMeta && bodyBg && bodyBg !== "rgba(0, 0, 0, 0)") themeColorMeta.setAttribute("content", bodyBg);
+		} catch {
+			// ignore
+		}
 		applyGlowEnabled();
 		if (previewOpen) updatePreview();
 	}
