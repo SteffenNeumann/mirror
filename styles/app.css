@@ -5596,9 +5596,9 @@ body[data-theme="ash"] .md-content .hljs-selector-tag,
 body[data-theme="ash"] .md-content .hljs-title {
 	color: #8fb8d6;
 }
-body[data-theme="graphite"] .md-content .hljs-keyword,
-body[data-theme="graphite"] .md-content .hljs-selector-tag,
-body[data-theme="graphite"] .md-content .hljs-title {
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-keyword,
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-selector-tag,
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-title {
 	color: #ffffff;
 }
 body[data-theme="ash"] .md-content .hljs-string,
@@ -5606,17 +5606,17 @@ body[data-theme="ash"] .md-content .hljs-attr,
 body[data-theme="ash"] .md-content .hljs-number {
 	color: #a8b8c2;
 }
-body[data-theme="graphite"] .md-content .hljs-string,
-body[data-theme="graphite"] .md-content .hljs-attr,
-body[data-theme="graphite"] .md-content .hljs-number {
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-string,
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-attr,
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-number {
 	color: #c4c4c4;
 }
 body[data-theme="ash"] .md-content .hljs-comment,
 body[data-theme="ash"] .md-content .hljs-quote {
 	color: rgba(208, 217, 224, 0.65);
 }
-body[data-theme="graphite"] .md-content .hljs-comment,
-body[data-theme="graphite"] .md-content .hljs-quote {
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-comment,
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-quote {
 	color: rgba(237, 237, 237, 0.65);
 }
 
@@ -14268,14 +14268,12 @@ body[data-theme="graphite"] {
 	--dropdown-hover-bg: #2a2a2a;
 	--tags-fade: #181818;
 
-	/* Markdown-Token im Editor — Hierarchie über Helligkeit + Gewicht, nicht über Farbe */
-	--md-heading: #ffffff;
+	/* Markdown-Token im Editor: Marker/Muted immer grau; Überschrift, Link und Code
+	   kommen bei „Editorial-Blau“ bunt aus :root, sonst grau (Block darunter). */
 	--md-marker: #a3a3a3;   /* 7.0:1 */
-	--md-link: #e0e0e0;
-	--md-code: #c4c4c4;
 	--md-muted: #adadad;
 }
-/* Presets „Theme-Akzent“/„Gedämpft“ würden sonst Blau/Grün zurückholen */
+/* „Theme-Akzent“/„Gedämpft“ = Graphit pur: Hierarchie über Helligkeit + Gewicht */
 body.md-preset-accent[data-theme="graphite"],
 body.md-preset-muted[data-theme="graphite"] {
 	--md-heading: #ffffff;
@@ -14490,21 +14488,23 @@ body[data-theme="graphite"] .md-content a {
 	text-decoration: underline;
 	text-underline-offset: 2px;
 }
-body[data-theme="graphite"] .md-content .hljs-keyword,
-body[data-theme="graphite"] .md-content .hljs-selector-tag,
-body[data-theme="graphite"] .md-content .hljs-title,
-body[data-theme="graphite"] .md-content .hljs-built_in {
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-keyword,
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-selector-tag,
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-title,
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-title.function_,
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-title.class_,
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-built_in {
 	color: #ffffff;
 	font-weight: 700;
 }
-body[data-theme="graphite"] .md-content .hljs-string,
-body[data-theme="graphite"] .md-content .hljs-attr,
-body[data-theme="graphite"] .md-content .hljs-number,
-body[data-theme="graphite"] .md-content .hljs-literal {
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-string,
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-attr,
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-number,
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-literal {
 	color: #c4c4c4;
 }
-body[data-theme="graphite"] .md-content .hljs-comment,
-body[data-theme="graphite"] .md-content .hljs-quote {
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-comment,
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-quote {
 	color: #a3a3a3;
 	font-style: italic;
 }
@@ -14536,12 +14536,12 @@ body[data-theme="graphite"] .cal-wizard-waiting {
 body[data-theme="graphite"] #roomTabs span {
 	color: inherit;
 }
-body[data-theme="graphite"] .md-content .hljs-subst,
-body[data-theme="graphite"] .md-content .hljs-params {
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-subst,
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-params {
 	color: #e0e0e0;
 }
-body[data-theme="graphite"] .md-content .hljs-comment,
-body[data-theme="graphite"] .md-content .hljs-quote {
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-comment,
+body[data-theme="graphite"]:not(.md-preset-editorial) .md-content .hljs-quote {
 	color: #adadad;
 }
 
@@ -14766,4 +14766,29 @@ body[data-theme="graphite"] #psSortMenuBtn:not(:hover) {
 }
 body[data-theme="graphite"] #psSortMenuBtn:hover {
 	border-color: var(--g-line-hover) !important;
+}
+
+/* Graphit — helle Akzent-Füllung braucht dunkle Schrift (vorher #fff auf #d6d6d6 = 1,4:1) */
+body[data-theme="graphite"] .qb-chip.is-active,
+body[data-theme="graphite"] .md-preset-btn.active,
+body[data-theme="graphite"] .bg-fuchsia-600\/60,
+body[data-theme="graphite"] .block-arrange-btn-primary,
+body[data-theme="graphite"] #sendMailModal .action-modal-box #sendMailSubmit,
+body[data-theme="graphite"] .identity-modal-btn-primary:active {
+	color: var(--g-on-accent) !important;
+}
+body[data-theme="graphite"] :is(.qb-chip.is-active, .md-preset-btn.active, .bg-fuchsia-600\/60) * {
+	color: var(--g-on-accent) !important;
+}
+body[data-theme="graphite"] .qb-chip.is-active {
+	border-color: var(--g-accent);
+}
+body[data-theme="graphite"] .qb-chip.is-active:hover,
+body[data-theme="graphite"] .bg-fuchsia-600\/60:hover {
+	background: #f0f0f0 !important;
+}
+/* Zähler „aktiv“ im Filter-Akkordeon war Fuchsia */
+body[data-theme="graphite"] .qb-accordion-active-badge {
+	background: var(--g-accent);
+	color: var(--g-on-accent);
 }

@@ -4148,6 +4148,8 @@
 			// ignore
 		}
 		applyMdHighlight();
+		// Graphit koppelt die Vorschau-Syntaxfarben an das Preset
+		if (activeTheme === "graphite" && previewOpen) updatePreview();
 	}
 
 	function loadEditorPrefs() {
@@ -15297,21 +15299,27 @@
 					.hljs-string,.hljs-attr,.hljs-number{color:#bfa888;}
 					.hljs-comment,.hljs-quote{color:rgba(232,223,211,.5);}
 					`;
-				case "graphite":
-					return `
+				case "graphite": {
+					// Ohne Syntax-Farben: Editorial-Blau zeigt die bunten hljs-Standardfarben,
+					// Theme-Akzent/Gedämpft bleiben grau (User 2026-10-10).
+					const graphiteBase = `
 					pre.hljs, pre.hljs code.hljs{background:#222222!important;border-color:#383838;color:#e0e0e0;}
 					pre code.hljs{background:transparent!important;}
-					.hljs-keyword,.hljs-selector-tag,.hljs-title,.hljs-built_in{color:#ffffff;font-weight:700;}
-					.hljs-string,.hljs-attr,.hljs-number,.hljs-literal{color:#c4c4c4;}
-					.hljs-comment,.hljs-quote{color:#adadad;font-style:italic;}
-					.hljs-subst,.hljs-params{color:#e0e0e0;}
 					h1,h2,h3,h4,h5,h6,strong,b{color:#ededed;}
-					a{color:#ffffff;text-decoration:underline;text-underline-offset:2px;}
 					blockquote{border-left-color:#7a7a7a;color:#c8c8c8;}
 					ul.task-list input[type=checkbox],ol.task-list input[type=checkbox],input.task-list-item-checkbox{border-color:#b8b8b8;}
 					ul.task-list input[type=checkbox]:checked,ol.task-list input[type=checkbox]:checked,input.task-list-item-checkbox:checked{background:#d6d6d6;border-color:#d6d6d6;}
 					ul.task-list input[type=checkbox]:checked::before,ol.task-list input[type=checkbox]:checked::before,input.task-list-item-checkbox:checked::before{border-color:#141414;}
 					`;
+					if (mdPreset === "editorial") return graphiteBase;
+					return graphiteBase + `
+					.hljs-keyword,.hljs-selector-tag,.hljs-title,.hljs-title.function_,.hljs-title.class_,.hljs-built_in{color:#ffffff;font-weight:700;}
+					.hljs-string,.hljs-attr,.hljs-number,.hljs-literal{color:#c4c4c4;}
+					.hljs-comment,.hljs-quote{color:#adadad;font-style:italic;}
+					.hljs-subst,.hljs-params{color:#e0e0e0;}
+					a{color:#ffffff;text-decoration:underline;text-underline-offset:2px;}
+					`;
+				}
 				case "ash":
 					return `
 					pre.hljs, pre.hljs code.hljs{background:#2f3437!important;border-color:#3d4447;color:#d0d9e0;}
