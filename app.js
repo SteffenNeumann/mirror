@@ -26258,7 +26258,6 @@ self.onmessage = async (e) => {
 			}
 			const avatar = document.createElement("span");
 			avatar.textContent = user.avatar || "🙂";
-			avatar.style.filter = "drop-shadow(0 0 6px rgba(0,0,0,0.25))";
 			const dot = document.createElement("span");
 			dot.className = "inline-block h-2 w-2 rounded-full";
 			dot.style.background = user.color || "#94a3b8";

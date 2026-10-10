@@ -14875,3 +14875,58 @@ body[data-theme="coffeeLight"] { --fl-page: #ece1d4; --fl-preview: #f2e6dc; --fl
 body[data-theme="bitterLight"] { --fl-page: #e9e7e3; --fl-preview: #f0eeeb; --fl-focus: #888480; }
 body[data-theme="monoLight"] { --fl-page: #eaeef2; --fl-preview: #f6f8fa; --fl-focus: #858a8e; }
 body[data-theme="ashLight"] { --fl-page: #d4dbe0; --fl-preview: #dde3e7; --fl-focus: #797d80; }
+
+/* ── Kompakte Knöpfe, kein Glow — alle Themes ──
+   Am Computer (≥1024px) drei Höhen: 24 Chips/Tabs, 28 normale Knöpfe, 32 Haupt-Aktionen.
+   Das Handy behält seine Tippflächen. Glow (weicher Leucht-Schatten) an Objekten ist
+   überall weg, auch Schatten unter Knöpfen; wo Glow einen Zustand zeigte, steht jetzt ein
+   scharfer Ring. Schatten unter Menüs und Dialogen bleiben (Abhebung, kein Leuchten). */
+@media (min-width: 1024px) {
+	:is(#psNewNote, #psQueryBuilderBtn, #psGraphBtn) {
+		height: 32px;
+		padding-top: 0 !important;
+		padding-bottom: 0 !important;
+		font-size: 13px;
+	}
+	#aiAssist { width: 32px; height: 32px; }
+	:is(#aiUsePreviewBtn, #aiMode, #favoritesSelect, #psTagFilterMode) {
+		height: 28px;
+		padding-top: 0;
+		padding-bottom: 0;
+	}
+	:is(#tableMenuBtn, #toggleComments, #psSettingsBtn),
+	.toolbox-trigger { width: 28px; height: 28px; }
+	#roomTabs [data-tab-select],
+	#roomTabs [data-calendar-tab] { padding-top: 3px; padding-bottom: 3px; }
+	#roomTabs [data-tab-close] { width: 20px; height: 20px; }
+	.action-item { padding-top: 5px; padding-bottom: 5px; }
+	button.theme-option { padding-top: 5px; padding-bottom: 5px; }
+	:is(#settingsPanel select, #psImportMode) { height: 32px; padding-top: 0; padding-bottom: 0; }
+	.help-icon { inline-size: 28px; block-size: 28px; }
+}
+#statusDot,
+.linear-project-header,
+.sel-dot:hover,
+.participant-dot:hover,
+.calendar-day-today .calendar-day-number,
+.identity-preview-dot,
+.identity-color-item:not(.selected),
+.identity-preview-chip,
+.help-icon,
+.help-icon:active,
+.remote-caret-label,
+#psNewNote:is(:hover, :active),
+:is(button, select).shadow-soft:not(:focus),
+.toolbox-trigger { box-shadow: none !important; }
+/* Fokus-Ring (Tailwind focus:ring) bleibt, nur der Schatten darunter fällt weg. */
+:is(button, select).shadow-soft:focus {
+	box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000) !important;
+}
+.theme-swatch { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18); }
+.room-tab-link-badge.is-live { box-shadow: 0 0 0 1px currentColor !important; }
+.calendar-day-common { box-shadow: inset 0 0 0 1px rgba(74, 222, 128, 0.3); }
+.calendar-day-common:hover { box-shadow: inset 0 0 0 1px rgba(74, 222, 128, 0.45); }
+.identity-avatar-item.selected { box-shadow: 0 0 0 2px var(--accent-ring); }
+.identity-color-item.selected { box-shadow: 0 0 0 2px currentColor, inset 0 0 0 2px rgba(0, 0, 0, 0.3); }
+.block-arrange-drop-zone { box-shadow: 0 0 0 2px var(--accent-strong, #d946ef); }
+body:is([data-theme="monoDark"], [data-theme="monoLight"]) .block-arrange-drop-zone { box-shadow: 0 0 0 2px #6e7681; }
