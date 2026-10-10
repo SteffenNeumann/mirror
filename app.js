@@ -6959,6 +6959,40 @@
 			scrollbarThumbHover: "rgba(108, 150, 180, 0.3)",
 			scrollbarBorder: "rgba(23, 26, 27, 0.6)",
 		},
+		graphite: {
+			label: "Graphit",
+			top: "#181818",
+			bottom: "#181818",
+			previewBg: "#181818",
+			previewText: "#ededed",
+			tocText: "#ededed",
+			tocBg: "#222222",
+			tocBorder: "#383838",
+			tocMuted: "#b8b8b8",
+			tocHover: "#2a2a2a",
+			previewMetaBg: "#222222",
+			previewMetaBorder: "#383838",
+			previewMetaText: "#c8c8c8",
+			previewLink: "#ffffff",
+			accentBgSoft: "rgba(255, 255, 255, 0.05)",
+			accentBg: "rgba(255, 255, 255, 0.08)",
+			accentBgHover: "rgba(255, 255, 255, 0.12)",
+			accentBadgeBg: "rgba(255, 255, 255, 0.12)",
+			accentStrong: "#d6d6d6",
+			accentStrongHover: "#e6e6e6",
+			accentStrongActive: "#f2f2f2",
+			accentBorder: "#4a4a4a",
+			accentBorderStrong: "#7a7a7a",
+			accentText: "#141414",
+			accentTextSoft: "#ffffff",
+			accentRing: "#f0f0f0",
+			accentRingStrong: "#f0f0f0",
+			blockquoteBorder: "#7a7a7a",
+			blockquoteText: "#c8c8c8",
+			scrollbarThumb: "rgba(255, 255, 255, 0.18)",
+			scrollbarThumbHover: "rgba(255, 255, 255, 0.3)",
+			scrollbarBorder: "rgba(12, 12, 12, 0.6)",
+		},
 		ashLight: {
 			label: "Ash Light",
 			top: "#e6ecef",
@@ -7008,6 +7042,7 @@
 		"monoLight",
 		"ash",
 		"ashLight",
+		"graphite",
 	];
 
 	const GLOW_BLOCKED_THEMES = new Set([
@@ -7020,6 +7055,7 @@
 		"bitterDark",
 		"ash",
 		"ashLight",
+		"graphite",
 	]);
 
 		const UI_STRINGS = {
@@ -10905,7 +10941,7 @@
 				coffeeDark: "#1c1614", bronzeDark: "#2c2924", coffeeLight: "#f3ebe2",
 				bitterDark: "#131216", bitterLight: "#efecea",
 				monoDark: "#161b22", monoLight: "#eef1f5",
-				ash: "#262a2c", ashLight: "#e6ecef"
+				ash: "#262a2c", ashLight: "#e6ecef", graphite: "#181818"
 			};
 			root.style.setProperty("--panel-solid-bg", solidBgs[next] || "#0f0a1a");
 			/* modal theming – backdrop & border per theme */
@@ -10915,7 +10951,7 @@
 				coffeeDark: "rgba(16,12,10,0.6)", bronzeDark: "rgba(20,18,15,0.6)", coffeeLight: "rgba(68,45,30,0.2)",
 				bitterDark: "rgba(13,12,16,0.6)", bitterLight: "rgba(21,21,24,0.2)",
 				monoDark: "rgba(22,27,34,0.6)", monoLight: "rgba(27,31,36,0.22)",
-				ash: "rgba(18,20,21,0.6)", ashLight: "rgba(29,36,39,0.3)"
+				ash: "rgba(18,20,21,0.6)", ashLight: "rgba(29,36,39,0.3)", graphite: "rgba(0,0,0,0.7)"
 			};
 			const modalBorders = {
 				fuchsia: "rgba(255,255,255,0.1)", cyan: "rgba(255,255,255,0.1)",
@@ -10923,7 +10959,7 @@
 				coffeeDark: "#35261e", bronzeDark: "#4a4038", coffeeLight: "#d9c7bc",
 				bitterDark: "#2a2a30", bitterLight: "#d8d2cb",
 				monoDark: "rgba(48,54,61,0.9)", monoLight: "#d0d7de",
-				ash: "#3d4447", ashLight: "#c9d0d5"
+				ash: "#3d4447", ashLight: "#c9d0d5", graphite: "#6e6e6e"
 			};
 			root.style.setProperty("--modal-backdrop", modalBackdrops[next] || "rgba(2,6,23,0.7)");
 			root.style.setProperty("--modal-border", modalBorders[next] || "rgba(255,255,255,0.1)");
@@ -15080,6 +15116,8 @@
 					return { ...base, fieldBg: "#f6f8fa", fieldBorder: "#d0d7de", fieldText: "#57606a", valueText: "#24292f" };
 				case "monoDark":
 					return { ...base, fieldBg: "#0d1117", fieldBorder: "#30363d", fieldText: "#8b949e", valueText: "#c9d1d9" };
+				case "graphite":
+					return { ...base, fieldBg: "#222222", fieldBorder: "#6e6e6e", fieldText: "#c8c8c8", valueText: "#ededed" };
 				case "ash":
 					return { ...base, fieldBg: "#2f3437", fieldBorder: "#3d4447", fieldText: "#a3aeb6", valueText: "#d0d9e0" };
 				case "ashLight":
@@ -15155,6 +15193,14 @@
 						preBorder: "#2a2a30",
 						preText: "#f0e8df",
 						codeBg: "rgba(255,210,194,.1)",
+					};
+				case "graphite":
+					return {
+						...base,
+						preBg: "#222222",
+						preBorder: "#383838",
+						preText: "#e0e0e0",
+						codeBg: "#2c2c2c",
 					};
 				case "ash":
 					return {
@@ -15250,6 +15296,19 @@
 					.hljs-keyword,.hljs-selector-tag,.hljs-title{color:#d4a96a;}
 					.hljs-string,.hljs-attr,.hljs-number{color:#bfa888;}
 					.hljs-comment,.hljs-quote{color:rgba(232,223,211,.5);}
+					`;
+				case "graphite":
+					return `
+					pre.hljs, pre.hljs code.hljs{background:#222222!important;border-color:#383838;color:#e0e0e0;}
+					pre code.hljs{background:transparent!important;}
+					.hljs-keyword,.hljs-selector-tag,.hljs-title,.hljs-built_in{color:#ffffff;font-weight:700;}
+					.hljs-string,.hljs-attr,.hljs-number,.hljs-literal{color:#c4c4c4;}
+					.hljs-comment,.hljs-quote{color:#adadad;font-style:italic;}
+					.hljs-subst,.hljs-params{color:#e0e0e0;}
+					a{color:#ffffff;text-decoration:underline;text-underline-offset:2px;}
+					blockquote{border-left-color:#7a7a7a;color:#c8c8c8;}
+					ul.task-list input[type=checkbox],ol.task-list input[type=checkbox],input.task-list-item-checkbox{border-color:#b8b8b8;}
+					ul.task-list input[type=checkbox]:checked,ol.task-list input[type=checkbox]:checked,input.task-list-item-checkbox:checked{background:#d6d6d6;border-color:#d6d6d6;}
 					`;
 				case "ash":
 					return `

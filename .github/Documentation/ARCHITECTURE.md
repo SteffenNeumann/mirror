@@ -176,7 +176,7 @@ kennen muss, bevor man in die Nähe kommt:
 
 ## Themes und Layout
 
-- **13 Themes** über `body[data-theme]`, gesteuert durch die CSS-Variablen `--accent-bg`,
+- **14 Themes** über `body[data-theme]`, gesteuert durch die CSS-Variablen `--accent-bg`,
   `--accent-border`, `--accent-text`, `--accent-text-soft` u. a. `applyTheme` setzt sie
   zur Laufzeit auf `documentElement`. Ein neues Dark-Theme **muss alle** `--accent-*`
   in seinem Block überschreiben.
@@ -217,7 +217,7 @@ kennen muss, bevor man in die Nähe kommt:
 (`#d946ef`-Familie). `backdrop-filter: blur(24px) saturate(1.5)`, Radien 8/10/12/16–20 px,
 Übergänge 0,15–0,25 s auf `transform` und `opacity`. Ein- und Ausblenden über
 `visibility` + `opacity` + `pointer-events`, **nicht** über `display` — sonst gehen die
-Übergänge verloren. Ausnahmen sind die flachen Themes (mono, coffee, bitter, bronze, ash),
+Übergänge verloren. Ausnahmen sind die flachen Themes (mono, coffee, bitter, bronze, ash, graphite),
 die Glas und Glow bewusst weglassen.
 
 ## Offline-Fähigkeit

@@ -183,6 +183,15 @@ Checkbox-Haken) brauchen eigene Overrides. (3) Die Vorschau-Checkboxen sitzen im
 ihr Rand steht in `buildPreviewHighlightCss`, nicht in `app.css`. (4) Der Fokus-Ring
 (`accentRing`) ist deckend `#5a798f`, sonst < 3:1.
 
+**Dunkle Ableitung — `graphite` (Graphit, seit 2026-10-10):** wie `ashLight`, nur aus
+`ash` (75 Blöcke, je direkt hinter dem Ash-Block, Farben gemappt). Alles Weitere steht
+in **einem** Graphit-Block am Ende von `styles/app.css` (Grau-Token `--g-*`): Primär-
+Knöpfe hell gefüllt (`--accent-strong` hell, `--accent-text` dunkel — daher eigene
+Overrides für `.text-fuchsia-*`, `#roomTabs .text-fuchsia-100`, Kalender-Heute),
+Bedien-Ränder `#6e6e6e`, Fokus-Ring nur auf Knöpfen/Links. ⚠️ `THEMES.<id>` braucht die
+`toc*`-Keys (`tocBg`, `tocBorder`, `tocMuted`, `tocHover`), sonst fällt das
+Inhaltsverzeichnis der Vorschau auf Schiefer-Blau zurück.
+
 ⚠️ `--modal-backdrop` und `--modal-border` sind in CSS **nirgends** deklariert — die
 JS-Maps sind dort die einzige Quelle. Wer sie vergisst, bekommt einen generisch blauen
 Modal-Hintergrund.

@@ -1,5 +1,13 @@
 # Dokumentation – Änderungen (2026-09-21)
 
+## Theme „Graphit“ (2026-10-10)
+- **Wunsch:** ein Theme nur aus sauber abgestuften Grautönen, mit bestmöglichem Kontrast; jedes Element bewertet.
+- **Umgesetzt:** dunkles Theme `graphite` („Graphit“), neutral (R = G = B). Flächen `#181818` → `#222222` → `#2a2a2a` → `#323232`, Text in fünf Stufen `#ededed` … `#adadad` (alle ≥ 7:1 auf Grund und Auflage), Bedien-Rand `#6e6e6e` (≥ 3:1), Platzhalter `#8c8c8c`. Primär-Knöpfe hell gefüllt mit dunkler Schrift; „aktiv“ = hellere Fläche + 3-px-Balken + fett; Syntax und Markdown über Helligkeit und Schnitt statt Farbe; Links unterstrichen; Fokus-Ring `#f0f0f0`.
+- **Bunt bleiben bewusst:** die 7 Markier-Farbpunkte im Auswahlmenü und der Verbindungs-Punkt.
+- **Gemessen** (Playwright, 10 Ansichten, gegen Ash): Texte unter 7:1 63 → 0, Bedien-Ränder unter 3:1 28 → 2 (Text-Chips). Unabhängig per Pixelmessung gegengeprüft; andere Themes pixelgleich.
+- **Bau:** CSS-Blöcke aus `ash` abgeleitet (direkt hinter jedem Ash-Block) + Graphit-Block am Ende von `styles/app.css`; `app.js` an den 9 Stellen der Theme-Checkliste.
+- Cache-Busting: `app.js?v=2026-10-10-01`, `app.css?v=2026-10-10-01`, `CACHE_NAME` `mirror-v74`.
+
 ## Installierte App wirkt nativer (2026-10-09)
 - **Wunsch:** Mirror vom Home-Bildschirm (iPhone/iPad) bzw. Dock (Mac) „professioneller“.
 - **Befund (iOS-Simulator):** Kein `apple-touch-icon` → Teilen-Menü zeigte einen Kompass; Icon mit eingebautem Rahmen → iOS rundete doppelt; feiner Strich mitten im „M“; beim Start weißer Bildschirm; keine `theme-color`.
