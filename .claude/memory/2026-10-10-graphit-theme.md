@@ -39,7 +39,18 @@ aktiver Raum-Tab (`#roomTabs .text-fuchsia-100 { #e2e8f0 !important }`).
   Knöpfe/Links, Textfelder zeigen Fokus über den Rand.
 - Fehlende `toc*`-Keys in `THEMES` fallen auf Schiefer-Blau zurück.
 
+- `--accent-text` nicht als „Schrift auf Akzent-Füllung“ umdeuten — fast alle Regeln
+  nutzen es als helle Schrift auf dunkler Fläche (Hover von Chips, ✕, Tooltip).
+
+## Nachtrag Rahmen + Hover
+
+User: „Rahmen massiv reduzieren, Hover reparieren“. Ränder `#6e6e6e` → `#383838`
+(aktiv/Hover `#4a4a4a`). Hover-Probe (Maus auf jedes Element, Stil vorher/nachher)
+fand: Filter-Chips, ✕, „Zurücksetzen“, Sortier-Knopf → Schrift `#141414`; dazu
+`!important`-Overrides, die Hover von „Anwenden“, Datumsfeldern und Backup-Knöpfen
+schluckten. Notizliste hat jetzt Hover (andere Themes: bewusst keiner).
+
 ## Offen
 
-Hover-/Fokus-/Disabled-Zustände nicht gemessen. Status-Punkt und die 7 Markier-Punkte
+Fokus-/Disabled-Zustände nicht gemessen. Status-Punkt und die 7 Markier-Punkte
 bleiben bunt (User-Entscheid: sind Inhalt bzw. Status).

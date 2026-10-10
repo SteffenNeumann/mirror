@@ -6981,9 +6981,9 @@
 			accentStrong: "#d6d6d6",
 			accentStrongHover: "#e6e6e6",
 			accentStrongActive: "#f2f2f2",
-			accentBorder: "#4a4a4a",
-			accentBorderStrong: "#7a7a7a",
-			accentText: "#141414",
+			accentBorder: "#383838",
+			accentBorderStrong: "#4a4a4a",
+			accentText: "#ffffff",
 			accentTextSoft: "#ffffff",
 			accentRing: "#f0f0f0",
 			accentRingStrong: "#f0f0f0",
@@ -10959,7 +10959,7 @@
 				coffeeDark: "#35261e", bronzeDark: "#4a4038", coffeeLight: "#d9c7bc",
 				bitterDark: "#2a2a30", bitterLight: "#d8d2cb",
 				monoDark: "rgba(48,54,61,0.9)", monoLight: "#d0d7de",
-				ash: "#3d4447", ashLight: "#c9d0d5", graphite: "#6e6e6e"
+				ash: "#3d4447", ashLight: "#c9d0d5", graphite: "#383838"
 			};
 			root.style.setProperty("--modal-backdrop", modalBackdrops[next] || "rgba(2,6,23,0.7)");
 			root.style.setProperty("--modal-border", modalBorders[next] || "rgba(255,255,255,0.1)");
@@ -15310,6 +15310,7 @@
 					blockquote{border-left-color:#7a7a7a;color:#c8c8c8;}
 					ul.task-list input[type=checkbox],ol.task-list input[type=checkbox],input.task-list-item-checkbox{border-color:#b8b8b8;}
 					ul.task-list input[type=checkbox]:checked,ol.task-list input[type=checkbox]:checked,input.task-list-item-checkbox:checked{background:#d6d6d6;border-color:#d6d6d6;}
+					ul.task-list input[type=checkbox]:checked::before,ol.task-list input[type=checkbox]:checked::before,input.task-list-item-checkbox:checked::before{border-color:#141414;}
 					`;
 				case "ash":
 					return `

@@ -191,9 +191,12 @@ ihr Rand steht in `buildPreviewHighlightCss`, nicht in `app.css`. (4) Der Fokus-
 **Dunkle Ableitung — `graphite` (Graphit, seit 2026-10-10):** wie `ashLight`, nur aus
 `ash` (75 Blöcke, je direkt hinter dem Ash-Block, Farben gemappt). Alles Weitere steht
 in **einem** Graphit-Block am Ende von `styles/app.css` (Grau-Token `--g-*`): Primär-
-Knöpfe hell gefüllt (`--accent-strong` hell, `--accent-text` dunkel — daher eigene
-Overrides für `.text-fuchsia-*`, `#roomTabs .text-fuchsia-100`, Kalender-Heute),
-Bedien-Ränder `#6e6e6e`, Fokus-Ring nur auf Knöpfen/Links. ⚠️ `THEMES.<id>` braucht die
+Knöpfe hell gefüllt (`--accent-strong` hell; die wenigen Stellen auf dieser Füllung
+bekommen eigens dunkle Schrift), Bedien-Ränder leise `#383838` (aktiv/Hover `#4a4a4a`,
+User-Wunsch — bewusst unter 3:1, Felder erkennt man an der Fläche), Fokus-Ring nur auf
+Knöpfen/Links. ⚠️ `--accent-text` muss in dunklen Themes **hell** bleiben: die meisten
+Regeln (`.qb-chip:hover`, `.qb-close:hover`, Kalender-Tooltip, `.text-fuchsia-100`)
+setzen damit helle Schrift auf dunkle Fläche — `#141414` machte sie unsichtbar. ⚠️ `THEMES.<id>` braucht die
 `toc*`-Keys (`tocBg`, `tocBorder`, `tocMuted`, `tocHover`), sonst fällt das
 Inhaltsverzeichnis der Vorschau auf Schiefer-Blau zurück.
 
