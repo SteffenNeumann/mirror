@@ -6728,7 +6728,7 @@
 			label: "Coffee Dark",
 			top: "rgba(38, 29, 26, 0.9)",
 			bottom: "rgba(28, 22, 20, 0.92)",
-			previewBg: "#18120e",
+			previewBg: "#211912", // = --fl-preview (styles/app.css)
 			previewText: "#e8d9cc",
 			tocText: "#e8d9cc",
 			previewMetaBg: "rgba(53, 38, 32, 0.75)",
@@ -6758,7 +6758,7 @@
 			label: "Bronze Dark",
 			top: "rgba(50, 48, 44, 0.9)",
 			bottom: "rgba(38, 38, 38, 0.92)",
-			previewBg: "#262626",
+			previewBg: "#37342f", // = --fl-preview (styles/app.css)
 			previewText: "#e8dfd3",
 			tocText: "#e8dfd3",
 			previewMetaBg: "rgba(74, 64, 56, 0.75)",
@@ -6788,7 +6788,7 @@
 			label: "Bitter Dark",
 			top: "#0d0c10",
 			bottom: "#151518",
-			previewBg: "#0d0c10",
+			previewBg: "#151518", // = --fl-preview (styles/app.css)
 			previewText: "#f0e8df",
 			previewLink: "#ff2301",
 			previewMetaBg: "rgba(21, 21, 24, 0.85)",
@@ -6885,7 +6885,7 @@
 			label: "Mono Dark",
 			top: "#0d1117",
 			bottom: "#0d1117",
-			previewBg: "#0d1117",
+			previewBg: "#151a21", // = --fl-preview (styles/app.css)
 			previewText: "#c9d1d9",
 			tocText: "#c9d1d9",
 			accentBgSoft: "rgba(88, 166, 255, 0.12)",
@@ -6935,7 +6935,7 @@
 			label: "Ash",
 			top: "#2f3437",
 			bottom: "rgba(108, 150, 180, 0.5)",
-			previewBg: "#262a2c",
+			previewBg: "#2a2e31", // = --fl-preview (styles/app.css)
 			previewText: "#d0d9e0",
 			tocText: "#d0d9e0",
 			previewMetaBg: "rgba(47, 52, 55, 0.75)",

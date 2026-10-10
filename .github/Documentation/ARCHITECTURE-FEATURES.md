@@ -171,6 +171,14 @@ ohne Glow) · `solidBgs` · `modalBackdrops` · `modalBorders` · `getPreviewFie
 `!important` und festem Dunkelblau — ohne eigenen Eintrag bleibt das Dropdown blau).
 Dazu `--tags-fade` (Hintergrund von `#mirror`, sonst Band hinter der Tags-Leiste).
 
+**Flächen statt Rahmen (seit 2026-10-10, alle Themes):** Große Flächen haben keine
+Rahmen; Seite, Panel und Vorschau unterscheiden sich nur im Ton. Ein neues Theme
+braucht im Block „Flächen statt Rahmen — alle Themes“ am Ende von `app.css` seine
+Token `--fl-page`, `--fl-preview`, `--fl-focus` (Editor-Fokus ≥ 3:1), dunkel auch
+`--fl-panel` (= Editor-Grund) und `--tags-fade` — und `THEMES.<id>.previewBg` =
+`--fl-preview`, sonst sitzt im iframe ein Kasten. Leucht-Themes nutzen die Basis-
+regeln ohne Token. Graphit hat einen eigenen Block.
+
 **Helle Themes sind ein anderer Maßstab:** Sie müssen jede dunkle Tailwind-Grundfarbe
 einzeln überschreiben — `bitterLight` hat rund 240 Regelblöcke (107 davon Gruppen-
 Selektoren), ein dunkles Theme wie `ash` rund 75. `ashLight` ist deshalb aus
