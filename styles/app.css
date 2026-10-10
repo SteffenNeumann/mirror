@@ -14826,3 +14826,52 @@ body[data-theme="graphite"] #aiConversationSection {
 body[data-theme="graphite"] #mirror:focus {
 	border-color: #6e6e6e !important;
 }
+
+/* Flächen statt Rahmen — alle Themes (Prinzip aus Graphit, User 2026-10-10).
+   Große Flächen ohne Rahmen/Schatten, Vorschau samt Chat als abgesetzte Fläche
+   ohne Linien. Je Theme: Seite (--fl-page), Vorschau (--fl-preview, = previewBg
+   in THEMES), Editor-Fokus-Rand (--fl-focus, ≥ 3:1). Dunkle Themes: Seite dunkler,
+   Editor = Panel, Vorschau etwas heller. Helle Themes: Seite dunkler, Editor und
+   Vorschau behalten ihren eigenen Ton. Leucht-Themes: Töne bleiben, nur Linien weg. */
+body:not([data-theme="graphite"]) :is(#psPanel, #editorPanel) {
+	border-color: transparent !important;
+	box-shadow: none !important;
+}
+body:not([data-theme="graphite"]) #mirror:not(:focus),
+body:not([data-theme="graphite"]) :is(#previewPanel, #psMetaYaml) {
+	border-color: transparent !important;
+}
+body:not([data-theme="graphite"]) #mirror:focus {
+	border-color: var(--fl-focus, rgba(255, 255, 255, 0.4)) !important;
+}
+body:not([data-theme="graphite"]) #previewPanel {
+	border-radius: 12px;
+}
+body:not([data-theme="graphite"]) #previewPanel > div > div.border-b {
+	border-bottom-color: transparent !important;
+	background: transparent !important;
+}
+body:not([data-theme="graphite"]) #aiConversationSection {
+	border-top-color: transparent !important;
+	background: transparent !important;
+}
+body:is([data-theme="coffeeDark"], [data-theme="bronzeDark"], [data-theme="bitterDark"], [data-theme="monoDark"], [data-theme="ash"],
+	[data-theme="coffeeLight"], [data-theme="bitterLight"], [data-theme="monoLight"], [data-theme="ashLight"]) {
+	background-color: var(--fl-page);
+}
+body:is([data-theme="coffeeDark"], [data-theme="bronzeDark"], [data-theme="bitterDark"], [data-theme="monoDark"], [data-theme="ash"],
+	[data-theme="coffeeLight"], [data-theme="bitterLight"], [data-theme="monoLight"], [data-theme="ashLight"]) #previewPanel {
+	background: var(--fl-preview) !important;
+}
+body:is([data-theme="coffeeDark"], [data-theme="bronzeDark"], [data-theme="bitterDark"], [data-theme="monoDark"], [data-theme="ash"]) #mirror {
+	background-color: var(--fl-panel) !important;
+}
+body[data-theme="coffeeDark"] { --fl-page: #100c09; --fl-panel: #1d160f; --fl-preview: #211912; --fl-focus: #746661; --tags-fade: #1d160f; }
+body[data-theme="bronzeDark"] { --fl-page: #262626; --fl-panel: #32302c; --fl-preview: #37342f; --fl-focus: #847d78; --tags-fade: #32302c; }
+body[data-theme="bitterDark"] { --fl-page: #060608; --fl-panel: #101014; --fl-preview: #151518; --fl-focus: #646468; --tags-fade: #101014; }
+body[data-theme="monoDark"] { --fl-page: #090c10; --fl-panel: #10141a; --fl-preview: #151a21; --fl-focus: #64686e; --tags-fade: #10141a; }
+body[data-theme="ash"] { --fl-page: #1e2123; --fl-panel: #262a2c; --fl-preview: #2a2e31; --fl-focus: #73787b; --tags-fade: #262a2c; }
+body[data-theme="coffeeLight"] { --fl-page: #ece1d4; --fl-preview: #f2e6dc; --fl-focus: #897d76; }
+body[data-theme="bitterLight"] { --fl-page: #e9e7e3; --fl-preview: #f0eeeb; --fl-focus: #888480; }
+body[data-theme="monoLight"] { --fl-page: #eaeef2; --fl-preview: #f6f8fa; --fl-focus: #858a8e; }
+body[data-theme="ashLight"] { --fl-page: #d4dbe0; --fl-preview: #dde3e7; --fl-focus: #797d80; }
