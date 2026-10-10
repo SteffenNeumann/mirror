@@ -14792,3 +14792,29 @@ body[data-theme="graphite"] .qb-accordion-active-badge {
 	background: var(--g-accent);
 	color: var(--g-on-accent);
 }
+
+/* Graphit — Flächen statt Rahmen: die Seite liegt dunkler, die Panels heben
+   sich als Fläche ab. Innen keine Kästen mehr, nur zwei feine Trennlinien.
+   Der Editor zeigt beim Tippen weiter seinen hellen Fokus-Rand. */
+body[data-theme="graphite"] {
+	background-color: #0e0e0e;
+}
+body[data-theme="graphite"] :is(#psPanel, #editorPanel) {
+	border-color: transparent !important;
+	box-shadow: none !important;
+}
+body[data-theme="graphite"] #mirror:not(:focus),
+body[data-theme="graphite"] :is(#previewPanel, #psMetaYaml) {
+	border-color: transparent !important;
+}
+body[data-theme="graphite"] #previewPanel {
+	border-left-color: #262626 !important;
+	border-radius: 0;
+}
+body[data-theme="graphite"] #aiConversationSection {
+	border-top-color: #262626 !important;
+}
+/* Ohne Rahmen ist der Fokus-Rand die einzige Kante des Editors (#6e6e6e, 3,5:1 auf #181818). --g-line-strong ist hier #383838. */
+body[data-theme="graphite"] #mirror:focus {
+	border-color: #6e6e6e !important;
+}
