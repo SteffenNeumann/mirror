@@ -11,6 +11,7 @@
 - **Rahmen + Hover:** Rahmen aller Bedien-Elemente leise (`#6e6e6e` → `#383838`, aktiv `#4a4a4a`). Hover-Schrift wurde im Filter-Dialog und am Sortier-Knopf fast schwarz auf Dunkel (`--accent-text` = `#141414`) → jetzt hell. Hover für „Anwenden“, Datumsfelder, Backup-Hinweis und Notizliste ergänzt. `?v=2026-10-10-04`, `mirror-v77`.
 - **Aktive Elemente + Markdown:** Gewählte Tag-Chips im Filter, aktiver Farbschema-Schalter u. a. hatten weiße Schrift auf `#d6d6d6` (1,4:1) → dunkel; Akkordeon-Zähler grau statt Fuchsia. Farbschema „Editorial-Blau“ ist in Graphit jetzt bunt (Editor + Vorschau), „Theme-Akzent“/„Gedämpft“ grau. `?v=2026-10-10-05`, `mirror-v78`.
 - **Flächen statt Rahmen (User wählte Variante A):** Sidebar, Hauptfläche, Editor, Vorschau und Kopfdaten ohne Rahmen/Schatten; Seite `#0e0e0e`, Panels `#181818`; feine `#262626`-Linien zwischen Editor/Vorschau und über dem Chat; Editor-Fokus-Rand `#6e6e6e`. `?v=2026-10-10-06`, `mirror-v79`.
+- **Vorschau als Fläche (User wählte Variante 1):** Die Linien endeten im Leeren → Vorschau samt Chat jetzt eine hellere Fläche `#1c1c1c` mit runden Ecken, keine Linien; iframe-Grund zieht über `THEMES.graphite.previewBg` mit. `?v=2026-10-10-07`, `mirror-v80`.
 - **Feinschliff (User):** gewählte Notiz ohne Seitenbalken (nur hellere Fläche + fett); Vorschau-Fließtext `#d6d6d6` (12:1) statt `#ededed`, Überschriften/Fett bleiben `#ededed`. Cache-Busting `?v=2026-10-10-02`, `mirror-v75`.
 
 ## Installierte App wirkt nativer (2026-10-09)

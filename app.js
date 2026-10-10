@@ -6965,7 +6965,7 @@
 			label: "Graphit",
 			top: "#181818",
 			bottom: "#181818",
-			previewBg: "#181818",
+			previewBg: "#1c1c1c", // Vorschau-Fläche hebt sich leicht ab (styles/app.css)
 			previewText: "#d6d6d6", // Fließtext 12:1; Überschriften/Fett #ededed (buildPreviewHighlightCss)
 			tocText: "#ededed",
 			tocBg: "#222222",

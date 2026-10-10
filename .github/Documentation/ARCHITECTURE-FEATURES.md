@@ -194,8 +194,8 @@ in **einem** Graphit-Block am Ende von `styles/app.css` (Grau-Token `--g-*`): Pr
 Knöpfe hell gefüllt (`--accent-strong` hell; die wenigen Stellen auf dieser Füllung
 bekommen eigens dunkle Schrift), Bedien-Ränder leise `#383838` (aktiv/Hover `#4a4a4a`,
 User-Wunsch — bewusst unter 3:1, Felder erkennt man an der Fläche), Fokus-Ring nur auf
-Knöpfen/Links. Große Flächen ohne Rahmen: Seite `#0e0e0e`, Panels `#181818`; Editor/Vorschau
-nur durch eine `#262626`-Linie getrennt, Editor-Fokus-Rand `#6e6e6e` (⚠️ `--g-line-strong`
+Knöpfen/Links. Große Flächen ohne Rahmen: Seite `#0e0e0e`, Panels `#181818`; die Vorschau
+samt Chat ist eine leicht hellere Fläche `#1c1c1c` ohne Linien (auch `previewBg`), Editor-Fokus-Rand `#6e6e6e` (⚠️ `--g-line-strong`
 ist inzwischen `#383838`, also nicht für „sichtbar“ nehmen). ⚠️ `--accent-text` muss in dunklen Themes **hell** bleiben: die meisten
 Regeln (`.qb-chip:hover`, `.qb-close:hover`, Kalender-Tooltip, `.text-fuchsia-100`)
 setzen damit helle Schrift auf dunkle Fläche — `#141414` machte sie unsichtbar.
