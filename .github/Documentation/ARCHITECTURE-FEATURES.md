@@ -100,7 +100,12 @@ Kanten aus `[[Wiki-Links]]`, optional aus geteilten Tags (default **aus**, gekap
 
 ⚠️ Canvas erbt kein CSS. Farben kommen per `getComputedStyle` aus den `--accent-*`.
 Die Textfarbe wird aus der **Hintergrund-Luminanz** abgeleitet, weil `body color` auf
-mehreren Dark-Themes schwarz ist. In `ngInit` ist `.autoPauseRedraw(false)` zwingend,
+mehreren Dark-Themes schwarz ist. Optional je Theme (seit 2026-10-10): `--ng-node`
+(Knoten-Grundton), `--ng-select` (gewählter Knoten), `--ng-label` — ohne sie gilt der
+Akzent bzw. die Luminanz-Regel. Beschriftungen, die eine im selben Frame schon
+gezeichnete überdecken würden, entfallen (`ngState.labelBoxes`, geleert in
+`onRenderFramePre`); gewählt/gehovert/Suchtreffer immer. ⚠️ `.ng-empty` braucht
+`[hidden] { display: none }` — sein `display: flex` schlug sonst das Attribut. In `ngInit` ist `.autoPauseRedraw(false)` zwingend,
 sonst friert `cooldownTicks` das Rendering ein.
 
 ## Query-Engine (PS-Suchfeld)
