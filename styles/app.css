@@ -14794,7 +14794,7 @@ body[data-theme="graphite"] .qb-accordion-active-badge {
 }
 
 /* Graphit — Flächen statt Rahmen: die Seite liegt dunkler, die Panels heben
-   sich als Fläche ab. Innen keine Kästen mehr, nur zwei feine Trennlinien.
+   sich als Fläche ab. Innen keine Kästen und keine Linien mehr.
    Der Editor zeigt beim Tippen weiter seinen hellen Fokus-Rand. */
 body[data-theme="graphite"] {
 	background-color: #0e0e0e;
@@ -14807,12 +14807,20 @@ body[data-theme="graphite"] #mirror:not(:focus),
 body[data-theme="graphite"] :is(#previewPanel, #psMetaYaml) {
 	border-color: transparent !important;
 }
+/* Vorschau samt Chat = eine leicht hellere Fläche (#1c1c1c) mit runden Ecken,
+   ohne Linien — Linien endeten vorher oben bzw. vor dem rechten Rand im Leeren.
+   Der iframe-Inhalt zieht über THEMES.graphite.previewBg mit. */
 body[data-theme="graphite"] #previewPanel {
-	border-left-color: #262626 !important;
-	border-radius: 0;
+	background: #1c1c1c !important;
+	border-radius: 12px;
+}
+body[data-theme="graphite"] #previewPanel > div > div.border-b {
+	border-bottom-color: transparent !important;
+	background: transparent !important;
 }
 body[data-theme="graphite"] #aiConversationSection {
-	border-top-color: #262626 !important;
+	border-top-color: transparent !important;
+	background: transparent !important;
 }
 /* Ohne Rahmen ist der Fokus-Rand die einzige Kante des Editors (#6e6e6e, 3,5:1 auf #181818). --g-line-strong ist hier #383838. */
 body[data-theme="graphite"] #mirror:focus {
