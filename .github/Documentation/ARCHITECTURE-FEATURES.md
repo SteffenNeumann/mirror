@@ -179,6 +179,13 @@ Token `--fl-page`, `--fl-preview`, `--fl-focus` (Editor-Fokus ≥ 3:1), dunkel a
 `--fl-preview`, sonst sitzt im iframe ein Kasten. Leucht-Themes nutzen die Basis-
 regeln ohne Token. Graphit hat einen eigenen Block.
 
+**Knopf-Maß und kein Glow (seit 2026-10-10, alle Themes):** Block „Kompakte Knöpfe,
+kein Glow“ am Ende von `app.css`. Am Computer (≥ 1024 px) drei Höhen: 24 Chips/Tabs,
+28 normale Knöpfe, 32 Haupt-Aktionen; das Handy behält seine Tippflächen. Kein
+weicher Leucht-Schatten an Objekten und keine Schatten unter Knöpfen; Zustände (Live-
+Link, gewählte Farbe, Ablage-Zone) zeigen einen scharfen Ring. Neue Knöpfe: kein
+`shadow-soft`, keine Höhe über 32 px am Computer.
+
 **Helle Themes sind ein anderer Maßstab:** Sie müssen jede dunkle Tailwind-Grundfarbe
 einzeln überschreiben — `bitterLight` hat rund 240 Regelblöcke (107 davon Gruppen-
 Selektoren), ein dunkles Theme wie `ash` rund 75. `ashLight` ist deshalb aus
