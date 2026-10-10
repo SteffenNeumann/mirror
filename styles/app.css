@@ -1189,11 +1189,21 @@ body[data-theme="ash"] .ps-tags-bar-inner {
 	background: rgba(47, 52, 55, 0.85);
 	border-color: rgba(61, 68, 71, 0.5);
 }
+body[data-theme="graphite"] .ps-tags-bar-inner {
+	background: rgba(34, 34, 34, 0.85);
+	border-color: rgba(56, 56, 56, 0.5);
+}
 body[data-theme="ash"] .ps-tags-input {
 	color: #d0d9e0;
 }
+body[data-theme="graphite"] .ps-tags-input {
+	color: #ededed;
+}
 body[data-theme="ash"] .ps-tags-input::placeholder {
 	color: rgba(148, 159, 167, 0.6);
+}
+body[data-theme="graphite"] .ps-tags-input::placeholder {
+	color: #8c8c8c;
 }
 
 body[data-theme="bitterDark"] .ps-tags-bar-inner {
@@ -1688,6 +1698,9 @@ body[data-theme="bronzeDark"] .excel-iframe,
 body[data-theme="bitterDark"] .excel-iframe,
 body[data-theme="monoDark"] .excel-iframe,
 body[data-theme="ash"] .excel-iframe {
+	filter: invert(1) hue-rotate(180deg);
+}
+body[data-theme="graphite"] .excel-iframe {
 	filter: invert(1) hue-rotate(180deg);
 }
 
@@ -4503,6 +4516,10 @@ body[data-theme="ash"] .ps-note-pin.bg-fuchsia-500\/20 svg path {
 	fill: currentColor !important;
 	stroke: currentColor !important;
 }
+body[data-theme="graphite"] .ps-note-pin.bg-fuchsia-500\/20 svg path {
+	fill: currentColor !important;
+	stroke: currentColor !important;
+}
 
 body[data-theme="coffeeDark"] #settingsBackdrop {
 	background-color: rgba(16, 12, 10, 0.6) !important;
@@ -5035,17 +5052,77 @@ body[data-theme="ash"] {
 	--blockquote-border:    rgba(108, 150, 180, 0.45);
 	--blockquote-text:      rgba(208, 217, 224, 0.90);
 }
+body[data-theme="graphite"] {
+	color-scheme: dark;
+	background-color: #181818;
+	color: #ededed;
+	--graphite-accent: #d6d6d6;
+	--panel-bg: #181818;
+	--panel-solid-bg: #181818;
+	--selection-menu-bg: #222222;
+	--selection-menu-border: #383838;
+	--sel-text: #ededed;
+	--sel-text-muted: rgba(237, 237, 237, 0.65);
+	--sel-text-hover: #ffffff;
+	--sel-hover-bg: rgba(255, 255, 255, 0.055);
+	--sel-sep: rgba(255, 255, 255, 0.083);
+	--sel-divider: rgba(255, 255, 255, 0.055);
+	--sel-dot-ring: rgba(255, 255, 255, 0.248);
+	--comment-item-bg: #222222;
+	--calendar-event-bg: rgba(34, 34, 34, 0.82);
+	--calendar-tooltip-bg: #222222;
+	--calendar-tooltip-border: rgba(255, 255, 255, 0.193);
+	--calendar-tooltip-text: #ededed;
+	--calendar-tooltip-shadow: 0 12px 28px rgba(0, 0, 0, 0.36),
+		inset 0 0 0 1px rgba(255, 255, 255, 0.077);
+	--scrollbar-thumb: rgba(255, 255, 255, 0.11);
+	--scrollbar-thumb-hover: rgba(255, 255, 255, 0.165);
+	--scrollbar-border: rgba(12, 12, 12, 0.6);
+	--dropdown-accent: var(--graphite-accent);
+	--dropdown-accent-bg: rgba(255, 255, 255, 0.055);
+	--dropdown-text: #ededed;
+	--dropdown-text-hover: #ffffff;
+	--dropdown-hover-bg: rgba(255, 255, 255, 0.055);
+	--dropdown-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+	/* Standard accent-* bridge → Steel-Blue (overrides fuchsia :root defaults).
+	   Werte identisch zum THEMES.ash-Eintrag in app.js, damit UI und
+	   Vorschau-iframe nicht auseinanderlaufen. */
+	--accent-bg-soft:       rgba(255, 255, 255, 0.055);
+	--accent-bg:            rgba(255, 255, 255, 0.083);
+	--accent-bg-hover:      rgba(255, 255, 255, 0.11);
+	--accent-badge-bg:      rgba(255, 255, 255, 0.11);
+	--accent-strong:        rgba(255, 255, 255, 0.413);
+	--accent-strong-hover:  rgba(255, 255, 255, 0.468);
+	--accent-strong-active: rgba(255, 255, 255, 0.522);
+	--accent-border:        rgba(255, 255, 255, 0.165);
+	--accent-border-strong: rgba(255, 255, 255, 0.248);
+	--accent-text:          #ededed;   /* 10.1:1 auf #181818 */
+	--accent-text-soft:     #ffffff;   /* 5.9:1 auf #181818, 5.1:1 auf #222222 */
+	--accent-ring:          rgba(255, 255, 255, 0.138);
+	--accent-ring-strong:   rgba(255, 255, 255, 0.22);
+	--blockquote-border:    rgba(255, 255, 255, 0.248);
+	--blockquote-text:      rgba(237, 237, 237, 0.9);
+}
 
 body[data-theme="ash"] .bg-glow {
+	display: none;
+}
+body[data-theme="graphite"] .bg-glow {
 	display: none;
 }
 
 body[data-theme="ash"] #togglePermanentLink[aria-pressed="true"] {
 	color: var(--ash-accent) !important;
 }
+body[data-theme="graphite"] #togglePermanentLink[aria-pressed="true"] {
+	color: var(--graphite-accent) !important;
+}
 
 body[data-theme="ash"] .border-white\/10 {
 	border-color: #3d4447 !important;
+}
+body[data-theme="graphite"] .border-white\/10 {
+	border-color: #383838 !important;
 }
 
 /* Textstufen — jede Stufe erreicht WCAG AA (4.5:1) sowohl auf der
@@ -5056,17 +5133,32 @@ body[data-theme="ash"] .border-white\/10 {
 body[data-theme="ash"] .text-slate-100 {
 	color: #d0d9e0 !important; /* 10.1:1 / 8.8:1 */
 }
+body[data-theme="graphite"] .text-slate-100 {
+	color: #ededed !important; /* 10.1:1 / 8.8:1 */
+}
 body[data-theme="ash"] .text-slate-200 {
 	color: #bcc6ce !important; /* 8.4:1 / 7.3:1 */
+}
+body[data-theme="graphite"] .text-slate-200 {
+	color: #dadada !important; /* 8.4:1 / 7.3:1 */
 }
 body[data-theme="ash"] .text-slate-300 {
 	color: #a3aeb6 !important; /* 6.4:1 / 5.6:1 */
 }
+body[data-theme="graphite"] .text-slate-300 {
+	color: #c8c8c8 !important; /* 6.4:1 / 5.6:1 */
+}
 body[data-theme="ash"] .text-slate-400 {
 	color: #9aa5ad !important; /* 5.8:1 / 5.0:1 */
 }
+body[data-theme="graphite"] .text-slate-400 {
+	color: #b8b8b8 !important; /* 5.8:1 / 5.0:1 */
+}
 body[data-theme="ash"] .text-slate-500 {
 	color: #939ea6 !important; /* 5.3:1 / 4.6:1 */
+}
+body[data-theme="graphite"] .text-slate-500 {
+	color: #adadad !important; /* 5.3:1 / 4.6:1 */
 }
 
 body[data-theme="ash"] .bg-white\/5,
@@ -5075,9 +5167,19 @@ body[data-theme="ash"] .bg-white\/15,
 body[data-theme="ash"] .bg-white\/20 {
 	background-color: #2f3437 !important;
 }
+body[data-theme="graphite"] .bg-white\/5,
+body[data-theme="graphite"] .bg-white\/10,
+body[data-theme="graphite"] .bg-white\/15,
+body[data-theme="graphite"] .bg-white\/20 {
+	background-color: #222222 !important;
+}
 
 body[data-theme="ash"] #psPanel,
 body[data-theme="ash"] #editorPanel {
+	background-color: var(--panel-bg) !important;
+}
+body[data-theme="graphite"] #psPanel,
+body[data-theme="graphite"] #editorPanel {
 	background-color: var(--panel-bg) !important;
 }
 
@@ -5090,17 +5192,35 @@ body[data-theme="ash"] .bg-slate-950\/60,
 body[data-theme="ash"] .bg-slate-950\/90 {
 	background-color: #262a2c !important;
 }
+body[data-theme="graphite"] .bg-slate-950\/10,
+body[data-theme="graphite"] .bg-slate-950\/20,
+body[data-theme="graphite"] .bg-slate-950\/25,
+body[data-theme="graphite"] .bg-slate-950\/30,
+body[data-theme="graphite"] .bg-slate-950\/40,
+body[data-theme="graphite"] .bg-slate-950\/60,
+body[data-theme="graphite"] .bg-slate-950\/90 {
+	background-color: #181818 !important;
+}
 
 body[data-theme="ash"] .bg-slate-950\/70 {
 	background-color: rgba(108, 150, 180, 0.18) !important;
+}
+body[data-theme="graphite"] .bg-slate-950\/70 {
+	background-color: rgba(255, 255, 255, 0.099) !important;
 }
 
 body[data-theme="ash"] .bg-slate-950\/80 {
 	background-color: rgba(108, 150, 180, 0.24) !important;
 }
+body[data-theme="graphite"] .bg-slate-950\/80 {
+	background-color: rgba(255, 255, 255, 0.132) !important;
+}
 
 body[data-theme="ash"] .border-fuchsia-400\/30 {
 	border-color: rgba(108, 150, 180, 0.55) !important;
+}
+body[data-theme="graphite"] .border-fuchsia-400\/30 {
+	border-color: rgba(255, 255, 255, 0.303) !important;
 }
 
 body[data-theme="ash"] .bg-fuchsia-500\/15,
@@ -5110,16 +5230,32 @@ body[data-theme="ash"] .bg-fuchsia-600\/20 {
 	background-color: rgba(108, 150, 180, 0.15) !important;
 	color: #80aac8 !important;
 }
+body[data-theme="graphite"] .bg-fuchsia-500\/15,
+body[data-theme="graphite"] .bg-fuchsia-500\/20,
+body[data-theme="graphite"] .bg-fuchsia-500\/25,
+body[data-theme="graphite"] .bg-fuchsia-600\/20 {
+	background-color: rgba(255, 255, 255, 0.083) !important;
+	color: #ffffff !important;
+}
 
 body[data-theme="ash"] .hover\:bg-fuchsia-500\/20:hover,
 body[data-theme="ash"] .hover\:bg-fuchsia-500\/25:hover {
 	background-color: rgba(108, 150, 180, 0.2) !important;
+}
+body[data-theme="graphite"] .hover\:bg-fuchsia-500\/20:hover,
+body[data-theme="graphite"] .hover\:bg-fuchsia-500\/25:hover {
+	background-color: rgba(255, 255, 255, 0.11) !important;
 }
 
 body[data-theme="ash"] .text-fuchsia-100,
 body[data-theme="ash"] .text-fuchsia-200,
 body[data-theme="ash"] .text-fuchsia-300 {
 	color: #80aac8 !important;
+}
+body[data-theme="graphite"] .text-fuchsia-100,
+body[data-theme="graphite"] .text-fuchsia-200,
+body[data-theme="graphite"] .text-fuchsia-300 {
+	color: #ffffff !important;
 }
 
 body[data-theme="ash"] .ps-note-item.ps-note-active {
@@ -5129,13 +5265,26 @@ body[data-theme="ash"] .ps-note-item.ps-note-active {
 	box-shadow: none;
 	color: #80aac8 !important;
 }
+body[data-theme="graphite"] .ps-note-item.ps-note-active {
+	background-color: #222222 !important;
+	border-left-color: transparent !important;
+	border-right: none !important;
+	box-shadow: none;
+	color: #ffffff !important;
+}
 body[data-theme="ash"] #psList .ps-note-item {
 	border-bottom-color: rgba(108, 150, 180, 0.08);
+}
+body[data-theme="graphite"] #psList .ps-note-item {
+	border-bottom-color: rgba(255, 255, 255, 0.044);
 }
 
 @media (max-width: 1023px) {
 	body[data-theme="ash"] #psList .ps-note-item {
 		border-bottom-color: rgba(108, 150, 180, 0.02);
+	}
+body[data-theme="graphite"] #psList .ps-note-item {
+		border-bottom-color: rgba(255, 255, 255, 0.011);
 	}
 }
 
@@ -5143,8 +5292,15 @@ body[data-theme="ash"] .ps-note-item.ps-note-active .ps-note-excerpt,
 body[data-theme="ash"] .ps-note-item.ps-note-active .ps-note-title {
 	color: #80aac8 !important;
 }
+body[data-theme="graphite"] .ps-note-item.ps-note-active .ps-note-excerpt,
+body[data-theme="graphite"] .ps-note-item.ps-note-active .ps-note-title {
+	color: #ffffff !important;
+}
 
 body[data-theme="ash"] .ps-note-item .ps-note-actions button {
+	box-shadow: none !important;
+}
+body[data-theme="graphite"] .ps-note-item .ps-note-actions button {
 	box-shadow: none !important;
 }
 
@@ -5154,14 +5310,28 @@ body[data-theme="ash"] .ps-note-pin.bg-fuchsia-500\/20 {
 	border-color: rgba(108, 150, 180, 0.6) !important;
 	color: #1a1d1f !important;
 }
+body[data-theme="graphite"] .ps-note-pin.bg-fuchsia-500\/20 {
+	background: var(--graphite-accent) !important;
+	background-image: none !important;
+	border-color: rgba(255, 255, 255, 0.33) !important;
+	color: #141414 !important;
+}
 
 body[data-theme="ash"] .ps-note-item .ps-note-actions button:hover {
+	background-color: transparent !important;
+}
+body[data-theme="graphite"] .ps-note-item .ps-note-actions button:hover {
 	background-color: transparent !important;
 }
 
 body[data-theme="ash"] .ps-note-item.ps-note-active span.rounded-full.border {
 	background-color: transparent !important;
 	border-color: rgba(61, 68, 71, 0.65) !important;
+	color: inherit !important;
+}
+body[data-theme="graphite"] .ps-note-item.ps-note-active span.rounded-full.border {
+	background-color: transparent !important;
+	border-color: rgba(56, 56, 56, 0.65) !important;
 	color: inherit !important;
 }
 
@@ -5171,10 +5341,20 @@ body[data-theme="ash"] .ps-note-item.ps-note-active,
 body[data-theme="ash"] .ps-tag-section .ps-tag-active {
 	color: #80aac8 !important;
 }
+body[data-theme="graphite"] [aria-pressed="true"],
+body[data-theme="graphite"] .ps-tag-button.ps-tag-active,
+body[data-theme="graphite"] .ps-note-item.ps-note-active,
+body[data-theme="graphite"] .ps-tag-section .ps-tag-active {
+	color: #ffffff !important;
+}
 
 body[data-theme="ash"] #psEditorTagsBar > div {
 	background-color: #2f3437 !important;
 	border-color: #3d4447 !important;
+}
+body[data-theme="graphite"] #psEditorTagsBar > div {
+	background-color: #222222 !important;
+	border-color: #383838 !important;
 }
 
 body[data-theme="ash"] #aiUsePreviewBtn {
@@ -5183,18 +5363,35 @@ body[data-theme="ash"] #aiUsePreviewBtn {
 	color: inherit !important;
 	--ai-preview-dot-on: var(--ash-accent, #6c96b4);
 }
+body[data-theme="graphite"] #aiUsePreviewBtn {
+	border-color: rgba(255, 255, 255, 0.248) !important;
+	background-color: transparent !important;
+	color: inherit !important;
+	--ai-preview-dot-on: var(--graphite-accent, #d6d6d6);
+}
 
 body[data-theme="ash"] #aiUsePreviewBtn[aria-pressed="true"] {
 	background-color: transparent !important;
 	border-color: rgba(108, 150, 180, 0.65) !important;
 	color: inherit !important;
 }
+body[data-theme="graphite"] #aiUsePreviewBtn[aria-pressed="true"] {
+	background-color: transparent !important;
+	border-color: rgba(255, 255, 255, 0.358) !important;
+	color: inherit !important;
+}
 
 body[data-theme="ash"] #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
 	background-color: var(--ai-preview-dot-on) !important;
 }
+body[data-theme="graphite"] #aiUsePreviewBtn[aria-pressed="true"] span:first-child {
+	background-color: var(--ai-preview-dot-on) !important;
+}
 
 body[data-theme="ash"] #aiUsePreviewBtn[aria-pressed="true"] span:last-child {
+	color: inherit !important;
+}
+body[data-theme="graphite"] #aiUsePreviewBtn[aria-pressed="true"] span:last-child {
 	color: inherit !important;
 }
 
@@ -5204,30 +5401,56 @@ body[data-theme="ash"] #psEditorTagsBar select {
 	border-color: rgba(61, 68, 71, 0.78) !important;
 	color: #d0d9e0 !important;
 }
+body[data-theme="graphite"] #psEditorTagsBar input,
+body[data-theme="graphite"] #psEditorTagsBar select {
+	background: rgba(34, 34, 34, 0.78) !important;
+	border-color: rgba(56, 56, 56, 0.78) !important;
+	color: #ededed !important;
+}
 
 body[data-theme="ash"] #psEditorTagsInput {
 	background-color: #2f3437 !important;
+}
+body[data-theme="graphite"] #psEditorTagsInput {
+	background-color: #222222 !important;
 }
 
 body[data-theme="ash"] #psEditorTagsSuggest {
 	background-color: #2f3437 !important;
 	border-color: #3d4447 !important;
 }
+body[data-theme="graphite"] #psEditorTagsSuggest {
+	background-color: #222222 !important;
+	border-color: #383838 !important;
+}
 
 body[data-theme="ash"] #settingsBackdrop {
 	background-color: rgba(18, 20, 21, 0.6) !important;
+}
+body[data-theme="graphite"] #settingsBackdrop {
+	background-color: rgba(0, 0, 0, 0.7) !important;
 }
 
 body[data-theme="ash"] #settingsPanel {
 	background-color: #262a2c !important;
 	border-color: #3d4447 !important;
 }
+body[data-theme="graphite"] #settingsPanel {
+	background-color: #181818 !important;
+	border-color: #383838 !important;
+}
 
 body[data-theme="ash"] #settingsNav {
 	background-color: #262a2c !important;
 }
+body[data-theme="graphite"] #settingsNav {
+	background-color: #181818 !important;
+}
 
 body[data-theme="ash"] .shadow-soft {
+	box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
+}
+body[data-theme="graphite"] .shadow-soft {
 	box-shadow: 0 6px 14px rgba(0, 0, 0, 0.2);
 }
 
@@ -5235,6 +5458,11 @@ body[data-theme="ash"] #previewPanel,
 body[data-theme="ash"] #commentPanel {
 	background: #262a2c !important;
 	border-color: rgba(61, 68, 71, 0.78) !important;
+}
+body[data-theme="graphite"] #previewPanel,
+body[data-theme="graphite"] #commentPanel {
+	background: #181818 !important;
+	border-color: rgba(56, 56, 56, 0.78) !important;
 }
 
 body[data-theme="ash"] #toggleComments,
@@ -5246,24 +5474,51 @@ body[data-theme="ash"] #psEditorTagsBar > div {
 	background: rgba(47, 52, 55, 0.78) !important;
 	border-color: rgba(61, 68, 71, 0.78) !important;
 }
+body[data-theme="graphite"] #toggleComments,
+body[data-theme="graphite"] #psMetaToggle,
+body[data-theme="graphite"] #clearMirror,
+body[data-theme="graphite"] #copyMirror,
+body[data-theme="graphite"] #psEditorTagsBar,
+body[data-theme="graphite"] #psEditorTagsBar > div {
+	background: rgba(34, 34, 34, 0.78) !important;
+	border-color: rgba(56, 56, 56, 0.78) !important;
+}
 
 body[data-theme="ash"] .hover\:bg-white\/5:hover {
 	background-color: #32373a !important;
 }
+body[data-theme="graphite"] .hover\:bg-white\/5:hover {
+	background-color: #262626 !important;
+}
 body[data-theme="ash"] .hover\:bg-white\/10:hover {
 	background-color: #383d40 !important;
+}
+body[data-theme="graphite"] .hover\:bg-white\/10:hover {
+	background-color: #2c2c2c !important;
 }
 body[data-theme="ash"] .hover\:bg-white\/15:hover {
 	background-color: #3e4346 !important;
 }
+body[data-theme="graphite"] .hover\:bg-white\/15:hover {
+	background-color: #323232 !important;
+}
 body[data-theme="ash"] .active\:bg-white\/10:active {
 	background-color: #383d40 !important;
+}
+body[data-theme="graphite"] .active\:bg-white\/10:active {
+	background-color: #2c2c2c !important;
 }
 body[data-theme="ash"] .active\:bg-white\/15:active {
 	background-color: #3e4346 !important;
 }
+body[data-theme="graphite"] .active\:bg-white\/15:active {
+	background-color: #323232 !important;
+}
 body[data-theme="ash"] .active\:bg-white\/20:active {
 	background-color: #444a4d !important;
+}
+body[data-theme="graphite"] .active\:bg-white\/20:active {
+	background-color: #383838 !important;
 }
 
 body[data-theme="ash"] input,
@@ -5273,19 +5528,37 @@ body[data-theme="ash"] textarea {
 	color: #d0d9e0;
 	border-color: #3d4447;
 }
+body[data-theme="graphite"] input,
+body[data-theme="graphite"] select,
+body[data-theme="graphite"] textarea {
+	background-color: #222222;
+	color: #ededed;
+	border-color: #383838;
+}
 
 body[data-theme="ash"] ::placeholder {
 	color: #939ea6;
+}
+body[data-theme="graphite"] ::placeholder {
+	color: #adadad;
 }
 
 body[data-theme="ash"] #mirror.attribution-active {
 	color: transparent !important;
 	caret-color: #d0d9e0;
 }
+body[data-theme="graphite"] #mirror.attribution-active {
+	color: transparent !important;
+	caret-color: #ededed;
+}
 
 body[data-theme="ash"] .md-content pre {
 	background: #2f3437;
 	border-color: #3d4447;
+}
+body[data-theme="graphite"] .md-content pre {
+	background: #222222;
+	border-color: #383838;
 }
 
 body[data-theme="ash"] .md-content pre.hljs {
@@ -5293,14 +5566,27 @@ body[data-theme="ash"] .md-content pre.hljs {
 	border-color: #3d4447;
 	color: #d0d9e0;
 }
+body[data-theme="graphite"] .md-content pre.hljs {
+	background: #222222 !important;
+	border-color: #383838;
+	color: #ededed;
+}
 
 body[data-theme="ash"] .md-content pre.hljs code.hljs {
 	color: #d0d9e0;
+}
+body[data-theme="graphite"] .md-content pre.hljs code.hljs {
+	color: #ededed;
 }
 
 body[data-theme="ash"] .md-content code.hljs,
 body[data-theme="ash"] .md-content pre code.hljs {
 	color: #d0d9e0;
+	background: transparent !important;
+}
+body[data-theme="graphite"] .md-content code.hljs,
+body[data-theme="graphite"] .md-content pre code.hljs {
+	color: #ededed;
 	background: transparent !important;
 }
 
@@ -5310,23 +5596,44 @@ body[data-theme="ash"] .md-content .hljs-selector-tag,
 body[data-theme="ash"] .md-content .hljs-title {
 	color: #8fb8d6;
 }
+body[data-theme="graphite"] .md-content .hljs-keyword,
+body[data-theme="graphite"] .md-content .hljs-selector-tag,
+body[data-theme="graphite"] .md-content .hljs-title {
+	color: #ffffff;
+}
 body[data-theme="ash"] .md-content .hljs-string,
 body[data-theme="ash"] .md-content .hljs-attr,
 body[data-theme="ash"] .md-content .hljs-number {
 	color: #a8b8c2;
 }
+body[data-theme="graphite"] .md-content .hljs-string,
+body[data-theme="graphite"] .md-content .hljs-attr,
+body[data-theme="graphite"] .md-content .hljs-number {
+	color: #c4c4c4;
+}
 body[data-theme="ash"] .md-content .hljs-comment,
 body[data-theme="ash"] .md-content .hljs-quote {
 	color: rgba(208, 217, 224, 0.65);
+}
+body[data-theme="graphite"] .md-content .hljs-comment,
+body[data-theme="graphite"] .md-content .hljs-quote {
+	color: rgba(237, 237, 237, 0.65);
 }
 
 body[data-theme="ash"] .md-content code {
 	background: rgba(128, 170, 200, 0.12);
 }
+body[data-theme="graphite"] .md-content code {
+	background: rgba(255, 255, 255, 0.072);
+}
 
 body[data-theme="ash"] .md-content th,
 body[data-theme="ash"] .md-content td {
 	border-color: #3d4447;
+}
+body[data-theme="graphite"] .md-content th,
+body[data-theme="graphite"] .md-content td {
+	border-color: #383838;
 }
 
 body[data-theme="ash"] .md-content .pw-field {
@@ -5334,9 +5641,17 @@ body[data-theme="ash"] .md-content .pw-field {
 	border-color: #3d4447;
 	color: #d0d9e0;
 }
+body[data-theme="graphite"] .md-content .pw-field {
+	background: #222222;
+	border-color: #383838;
+	color: #ededed;
+}
 
 body[data-theme="ash"] .md-content .pw-mask {
 	color: #a3aeb6;
+}
+body[data-theme="graphite"] .md-content .pw-mask {
+	color: #c8c8c8;
 }
 
 /* Glow-Toggle optisch deaktivieren (Glow ist für Ash gesperrt) */
@@ -5348,9 +5663,20 @@ body[data-theme="ash"] #settingsGlowToggle {
 	border-color: #3d4447 !important;
 	color: #939ea6 !important;
 }
+body[data-theme="graphite"] #settingsGlowToggle {
+	opacity: 0.35 !important;
+	filter: grayscale(1);
+	pointer-events: none !important;
+	background-color: transparent !important;
+	border-color: #383838 !important;
+	color: #adadad !important;
+}
 
 body[data-theme="ash"] .block-arrange-overlay {
 	background: rgba(38, 42, 44, 0.92);
+}
+body[data-theme="graphite"] .block-arrange-overlay {
+	background: rgba(24, 24, 24, 0.92);
 }
 
 body[data-theme="ash"] .cal-mode-tab {
@@ -5358,11 +5684,21 @@ body[data-theme="ash"] .cal-mode-tab {
 	border-color: rgba(108, 150, 180, 0.3) !important;
 	color: #bcc6ce !important;
 }
+body[data-theme="graphite"] .cal-mode-tab {
+	background: rgba(24, 24, 24, 0.4) !important;
+	border-color: rgba(255, 255, 255, 0.165) !important;
+	color: #dadada !important;
+}
 
 body[data-theme="ash"] .cal-mode-tab--active {
 	border-color: var(--ash-accent) !important;
 	background: rgba(108, 150, 180, 0.15) !important;
 	color: #d0d9e0 !important;
+}
+body[data-theme="graphite"] .cal-mode-tab--active {
+	border-color: var(--graphite-accent) !important;
+	background: rgba(255, 255, 255, 0.083) !important;
+	color: #ededed !important;
 }
 
 body[data-theme="bitterLight"] {
@@ -10816,6 +11152,10 @@ body[data-theme="ash"] .calendar-day-today .calendar-day-number {
 	background: #6c96b4 !important;
 	color: #16191a !important;
 }
+body[data-theme="graphite"] .calendar-day-today .calendar-day-number {
+	background: #d6d6d6 !important;
+	color: #141414 !important;
+}
 
 .calendar-day-available {
 	background: rgba(74, 222, 128, 0.015) !important;
@@ -13303,11 +13643,17 @@ body.md-preset-muted {
 body[data-theme="ash"] {
 	--md-marker: #8b949e;
 }
+body[data-theme="graphite"] {
+	--md-marker: #a3a3a3;
+}
 /* Ash + Theme-Akzent: --accent-strong ist eine halbtransparente Füllfarbe und
    kam als Überschrift nur auf 3,2:1 — dunkler als der Klartext. Deckende
    Variante mit 5,7:1, analog zum Editorial-Blau (5,3:1). */
 body.md-preset-accent[data-theme="ash"] {
 	--md-heading: #6fa8d6;
+}
+body.md-preset-accent[data-theme="graphite"] {
+	--md-heading: #ffffff;
 }
 /* Ash Light: die gemeinsamen Light-Token fallen auf dem kühlen Panel #e9edef
    unter AA (Marker 3,4 · Muted 4,1 · Code 4,2). Eigene Werte, alle ≥ 4,5:1. */
@@ -13420,6 +13766,12 @@ body[data-theme="ash"] #codeLang option {
 	background-color: #2f3437 !important;
 	color: #d0d9e0 !important;
 	border-color: #3d4447 !important;
+}
+body[data-theme="graphite"] #codeLang,
+body[data-theme="graphite"] #codeLang option {
+	background-color: #222222 !important;
+	color: #ededed !important;
+	border-color: #383838 !important;
 }
 body[data-theme="ashLight"] #codeLang,
 body[data-theme="ashLight"] #codeLang option {
@@ -13744,6 +14096,7 @@ body[data-theme="bitterLight"] { --tags-fade: #f0eeeb; }
 body[data-theme="monoDark"] { --tags-fade: #0d1117; }
 body[data-theme="monoLight"] { --tags-fade: #f6f8fa; }
 body[data-theme="ash"] { --tags-fade: #262a2c; }
+body[data-theme="graphite"] { --tags-fade: #181818; }
 body[data-theme="ashLight"] { --tags-fade: #dde3e7; }
 @media (max-width: 1023px) {
 	body { --tags-fade-solid: 38px; }
@@ -13848,4 +14201,398 @@ main.relative {
 	body {
 		padding: max(8px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
 	}
+}
+
+
+/* ═══════════════════════════════════════════
+   GRAPHIT — reine Grautöne, Kontrast-optimiert.
+   Skala (alle neutral, R = G = B):
+     Flächen   #181818 Grund · #222222 Auflage · #2a2a2a Hover · #323232 Aktiv
+     Linien    #383838 Trenner (dekorativ) · #6e6e6e Bedien-Rand (≥ 3:1)
+     Text      #ededed · #dadada · #c8c8c8 · #b8b8b8 · #adadad (alle ≥ 7:1 auf Grund + Auflage)
+     Platzhalter #8c8c8c (bewusst nur AA, damit er sich vom Inhalt abhebt)
+     Akzent    #d6d6d6 Füllung mit #141414 Schrift · Fokus-Ring #f0f0f0
+   Steht am Ende, damit es die abgeleiteten Ash-Kopien bei gleicher Spezifität schlägt.
+   ═══════════════════════════════════════════ */
+body[data-theme="graphite"] {
+	--g-base: #181818;
+	--g-raised: #222222;
+	--g-hover: #2a2a2a;
+	--g-active: #323232;
+	--g-line: #383838;
+	--g-line-strong: #6e6e6e;
+	--g-t1: #ededed;
+	--g-t2: #dadada;
+	--g-t3: #c8c8c8;
+	--g-t4: #b8b8b8;
+	--g-t5: #adadad;
+	--g-ph: #8c8c8c;
+	--g-accent: #d6d6d6;
+	--g-on-accent: #141414;
+	--g-ring: #f0f0f0;
+	--graphite-accent: var(--g-accent);
+
+	--accent-bg-soft:       rgba(255, 255, 255, 0.05);
+	--accent-bg:            rgba(255, 255, 255, 0.08);
+	--accent-bg-hover:      rgba(255, 255, 255, 0.12);
+	--accent-badge-bg:      rgba(255, 255, 255, 0.12);
+	--accent-strong:        #d6d6d6;
+	--accent-strong-hover:  #e6e6e6;
+	--accent-strong-active: #f2f2f2;
+	--accent-border:        #4a4a4a;
+	--accent-border-strong: #7a7a7a;
+	--accent-text:          #141414;   /* Text AUF der hellen Akzentfüllung */
+	--accent-text-soft:     #ffffff;   /* „aktiv“-Text auf Grund/Auflage */
+	--accent-ring:          #f0f0f0;
+	--accent-ring-strong:   #f0f0f0;
+	--blockquote-border:    #7a7a7a;
+	--blockquote-text:      #c8c8c8;
+
+	--selection-menu-bg: #222222;
+	--selection-menu-border: #6e6e6e;
+	--sel-text: #ededed;
+	--sel-text-muted: #b8b8b8;
+	--sel-text-hover: #ffffff;
+	--sel-hover-bg: #323232;
+	--sel-sep: #383838;
+	--sel-divider: #383838;
+	--sel-dot-ring: #7a7a7a;
+	--calendar-tooltip-border: #6e6e6e;
+	--dropdown-accent: #ffffff;
+	--dropdown-accent-bg: #323232;
+	--dropdown-hover-bg: #2a2a2a;
+	--tags-fade: #181818;
+
+	/* Markdown-Token im Editor — Hierarchie über Helligkeit + Gewicht, nicht über Farbe */
+	--md-heading: #ffffff;
+	--md-marker: #a3a3a3;   /* 7.0:1 */
+	--md-link: #e0e0e0;
+	--md-code: #c4c4c4;
+	--md-muted: #adadad;
+}
+/* Presets „Theme-Akzent“/„Gedämpft“ würden sonst Blau/Grün zurückholen */
+body.md-preset-accent[data-theme="graphite"],
+body.md-preset-muted[data-theme="graphite"] {
+	--md-heading: #ffffff;
+	--md-link: #e0e0e0;
+	--md-code: #c4c4c4;
+}
+body[data-theme="graphite"] #mdHighlightContent .md-link,
+body[data-theme="graphite"] #mdHighlightContent .md-url {
+	text-decoration: underline;
+	text-decoration-color: #7a7a7a;
+}
+
+/* Bedien-Ränder: Felder und reine Symbol-Knöpfe brauchen 3:1 (WCAG 1.4.11) */
+body[data-theme="graphite"] input,
+body[data-theme="graphite"] select,
+body[data-theme="graphite"] textarea,
+body[data-theme="graphite"] #psSearch,
+body[data-theme="graphite"] #psTagFilterMode,
+body[data-theme="graphite"] #toggleComments,
+body[data-theme="graphite"] #actionTrigger,
+body[data-theme="graphite"] #toolboxTrigger,
+body[data-theme="graphite"] #psSettingsBtn,
+body[data-theme="graphite"] #tableMenuBtn,
+body[data-theme="graphite"] #commentClose,
+body[data-theme="graphite"] #settingsClose,
+body[data-theme="graphite"] #calendarSidebarToggle,
+body[data-theme="graphite"] #noteCloseMobile,
+body[data-theme="graphite"] #psCloseMobile,
+body[data-theme="graphite"] #compareClose,
+body[data-theme="graphite"] #psQueryBuilderBtn,
+body[data-theme="graphite"] #psGraphBtn {
+	border-color: var(--g-line-strong) !important;
+}
+body[data-theme="graphite"] #mirror,
+body[data-theme="graphite"] #psEditorTagsInput {
+	border-color: var(--g-line) !important;
+}
+body[data-theme="graphite"] ::placeholder {
+	color: var(--g-ph) !important;
+}
+
+/* Fokus: ein klarer heller Ring statt getönter Halo */
+/* Ring nur für Knöpfe, Links, Auswahl, Häkchen — Textfelder zeigen Fokus über
+   einen hellen Rand, sonst rahmt der Ring beim Tippen den ganzen Editor ein. */
+body[data-theme="graphite"] :is(button, a, select, summary, [role="button"], [tabindex], input[type="checkbox"], input[type="radio"]):focus-visible {
+	outline: 2px solid var(--g-ring) !important;
+	outline-offset: 2px;
+}
+body[data-theme="graphite"] :is(input:not([type="checkbox"]):not([type="radio"]), textarea):focus {
+	outline: none !important;
+	border-color: var(--g-t4) !important;
+}
+body[data-theme="graphite"] #mirror:focus {
+	border-color: var(--g-line-strong) !important;
+}
+body[data-theme="graphite"] [class*="focus:ring"]:focus {
+	--tw-ring-color: var(--g-ring) !important;
+}
+
+/* Primär-Knöpfe: helle Füllung, dunkle Schrift (≈ 13:1) */
+body[data-theme="graphite"] #psNewNote,
+body[data-theme="graphite"] #psSaveMain,
+body[data-theme="graphite"] #aiAssist,
+body[data-theme="graphite"] .cal-header-add-btn,
+body[data-theme="graphite"] .qb-btn-primary {
+	background: var(--g-accent) !important;
+	border-color: var(--g-accent) !important;
+	color: var(--g-on-accent) !important;
+}
+body[data-theme="graphite"] #psNewNote *,
+body[data-theme="graphite"] #psSaveMain *,
+body[data-theme="graphite"] #aiAssist *,
+body[data-theme="graphite"] .cal-header-add-btn * {
+	color: var(--g-on-accent) !important;
+}
+body[data-theme="graphite"] #psNewNote:hover,
+body[data-theme="graphite"] #psSaveMain:hover,
+body[data-theme="graphite"] #aiAssist:hover,
+body[data-theme="graphite"] .cal-header-add-btn:hover {
+	background: #f0f0f0 !important;
+}
+
+/* Aktiv/Gewählt: hellerer Grund + Balken + weiße Schrift — nie nur Farbe */
+body[data-theme="graphite"] .ps-note-item.ps-note-active {
+	background-color: var(--g-active) !important;
+	box-shadow: inset 3px 0 0 var(--g-accent) !important;
+	color: #ffffff !important;
+}
+body[data-theme="graphite"] .ps-note-item.ps-note-active .ps-note-title {
+	color: #ffffff !important;
+	font-weight: 700;
+}
+body[data-theme="graphite"] .ps-note-item.ps-note-active .ps-note-excerpt,
+body[data-theme="graphite"] .ps-note-item.ps-note-active .text-slate-400 {
+	color: var(--g-t3) !important;
+}
+body[data-theme="graphite"] [aria-pressed="true"],
+body[data-theme="graphite"] .ps-tag-button.ps-tag-active,
+body[data-theme="graphite"] .ps-tag-section .ps-tag-active {
+	color: #ffffff !important;
+}
+body[data-theme="graphite"] .ps-tag-button.ps-tag-active,
+body[data-theme="graphite"] .ps-tag-section .ps-tag-active,
+body[data-theme="graphite"] .bg-fuchsia-500\/15,
+body[data-theme="graphite"] .bg-fuchsia-500\/20,
+body[data-theme="graphite"] .bg-fuchsia-500\/25,
+body[data-theme="graphite"] .bg-fuchsia-600\/20 {
+	background-color: var(--g-active) !important;
+	border-color: #7a7a7a !important;
+	color: #ffffff !important;
+}
+body[data-theme="graphite"] .bg-slate-950\/70,
+body[data-theme="graphite"] .bg-slate-950\/80 {
+	background-color: var(--g-active) !important;
+}
+body[data-theme="graphite"] .ps-note-pin.bg-fuchsia-500\/20 {
+	background: var(--g-accent) !important;
+	color: var(--g-on-accent) !important;
+}
+body[data-theme="graphite"] .cal-mode-tab--active {
+	background: var(--g-active) !important;
+	border-color: var(--g-accent) !important;
+	color: #ffffff !important;
+}
+body[data-theme="graphite"] .cal-mode-tab {
+	border-color: var(--g-line-strong) !important;
+	color: var(--g-t2) !important;
+}
+
+/* Gedimmte Stellen, die per opacity unter 4.5:1 rutschten */
+body[data-theme="graphite"] #syncStamp,
+body[data-theme="graphite"] #presenceCompact .opacity-40,
+body[data-theme="graphite"] .ps-tag-path-sep {
+	opacity: 1 !important;
+	color: var(--g-t5) !important;
+}
+body[data-theme="graphite"] .comment-md-btn,
+body[data-theme="graphite"] .comment-md-btn span {
+	color: var(--g-t3) !important;
+}
+body[data-theme="graphite"] .cal-wizard-hint,
+body[data-theme="graphite"] .cal-wizard-waiting,
+body[data-theme="graphite"] #calendarWaitingHint span {
+	color: var(--g-t5) !important;
+}
+body[data-theme="graphite"] .cal-wizard-step-title {
+	color: var(--g-t1) !important;
+}
+body[data-theme="graphite"] .cal-wizard-step-num {
+	background: var(--g-active) !important;
+	color: #ffffff !important;
+}
+body[data-theme="graphite"] .cal-room-select__label {
+	color: var(--g-t2) !important;
+}
+
+/* Kalender */
+body[data-theme="graphite"] .calendar-day-number {
+	color: var(--g-t3) !important;
+}
+body[data-theme="graphite"] .calendar-day-outside .calendar-day-number,
+body[data-theme="graphite"] .calendar-day-muted .calendar-day-number {
+	color: var(--g-ph) !important;
+}
+body[data-theme="graphite"] .calendar-day-today .calendar-day-number {
+	background: var(--g-accent) !important;
+	color: var(--g-on-accent) !important;
+	font-weight: 700;
+}
+body[data-theme="graphite"] .calendar-day-indicator {
+	opacity: 1;
+}
+body[data-theme="graphite"] .calendar-day-available .calendar-day-indicator {
+	color: #ffffff;
+}
+body[data-theme="graphite"] .calendar-day-unavailable .calendar-day-indicator {
+	color: var(--g-ph);
+}
+body[data-theme="graphite"] .calendar-day-common {
+	border-color: #ffffff !important;
+}
+
+/* Hinweis-Banner (Backup): neutral statt Bernstein, Wichtigkeit über Rand + Gewicht */
+body[data-theme="graphite"] #backupFolderHint {
+	background: var(--g-raised) !important;
+	border-color: var(--g-line-strong) !important;
+	color: var(--g-t1) !important;
+	backdrop-filter: none;
+}
+body[data-theme="graphite"] #backupFolderHint button:first-of-type {
+	background: var(--g-accent) !important;
+	border-color: var(--g-accent) !important;
+	color: var(--g-on-accent) !important;
+}
+body[data-theme="graphite"] #backupFolderHint button:last-of-type {
+	color: var(--g-t3) !important;
+}
+
+/* Auswahlmenü: „Markierung entfernen“ blieb rot-transparent (1.9:1) */
+body[data-theme="graphite"] .sel-btn-remove {
+	color: var(--g-t3);
+}
+body[data-theme="graphite"] .sel-btn-remove:hover {
+	color: #ffffff;
+	background: var(--g-active);
+}
+
+/* Vorschau im Haupt-DOM (.md-content) */
+body[data-theme="graphite"] .md-content a {
+	color: #ffffff;
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+body[data-theme="graphite"] .md-content .hljs-keyword,
+body[data-theme="graphite"] .md-content .hljs-selector-tag,
+body[data-theme="graphite"] .md-content .hljs-title,
+body[data-theme="graphite"] .md-content .hljs-built_in {
+	color: #ffffff;
+	font-weight: 700;
+}
+body[data-theme="graphite"] .md-content .hljs-string,
+body[data-theme="graphite"] .md-content .hljs-attr,
+body[data-theme="graphite"] .md-content .hljs-number,
+body[data-theme="graphite"] .md-content .hljs-literal {
+	color: #c4c4c4;
+}
+body[data-theme="graphite"] .md-content .hljs-comment,
+body[data-theme="graphite"] .md-content .hljs-quote {
+	color: #a3a3a3;
+	font-style: italic;
+}
+body[data-theme="graphite"] .md-content code {
+	background: #2c2c2c;
+}
+
+/* Felder mit eigener .border-white/10-Klasse: Spezifität über :not(#id) anheben */
+body[data-theme="graphite"] :is(input, select, textarea):not(#mirror):not(#psEditorTagsInput):not([type="checkbox"]) {
+	border-color: var(--g-line-strong) !important;
+}
+/* Kalender: Tage außerhalb des Monats — statt opacity-40 (2.7:1) eigene Stufe */
+body[data-theme="graphite"] .calendar-day-cell-month.opacity-40 {
+	opacity: 1;
+}
+body[data-theme="graphite"] .calendar-day-cell-month.opacity-40 .calendar-day-number,
+body[data-theme="graphite"] .calendar-day-cell-month.opacity-40 .calendar-cell-weekday {
+	color: var(--g-ph) !important;
+}
+body[data-theme="graphite"] .calendar-day-cell-month.opacity-40 .calendar-day-indicator {
+	color: #6e6e6e;
+}
+body[data-theme="graphite"] .calendar-day-unavailable .calendar-day-indicator {
+	color: var(--g-t5);
+}
+body[data-theme="graphite"] .cal-wizard-waiting {
+	background: var(--g-raised);
+}
+body[data-theme="graphite"] #roomTabs span {
+	color: inherit;
+}
+body[data-theme="graphite"] .md-content .hljs-subst,
+body[data-theme="graphite"] .md-content .hljs-params {
+	color: #e0e0e0;
+}
+body[data-theme="graphite"] .md-content .hljs-comment,
+body[data-theme="graphite"] .md-content .hljs-quote {
+	color: #adadad;
+}
+
+/* Tag-Gruppen (Jahr/Monat/Kategorie/…) trugen je eine eigene Farbe — hier eine Graustufe für alle */
+body[data-theme="graphite"] .ps-tag-section {
+	--ps-tag-bg: #222222;
+	--ps-tag-bg-strong: #323232;
+	--ps-tag-border: #4a4a4a;
+	--ps-tag-border-strong: #7a7a7a;
+	--ps-tag-text: #dadada;
+	--ps-tag-text-strong: #ffffff;
+	--ps-tag-icon: #b8b8b8;
+}
+
+/* Symbole, die mit festem Schiefer-Blau (#94a3b8, 40–50 %) unter 3:1 blieben */
+body[data-theme="graphite"] .ps-search-icon,
+body[data-theme="graphite"] .ps-search-icon *,
+body[data-theme="graphite"] #psSortMenuBtn svg,
+body[data-theme="graphite"] #psSortMenuBtn svg *,
+body[data-theme="graphite"] .cal-room-select__chevron,
+body[data-theme="graphite"] .cal-room-select__chevron * {
+	stroke: var(--g-t4) !important;
+}
+
+/* Nachbesserung nach der Gegenprüfung */
+body[data-theme="graphite"] .calendar-day-cell-month.opacity-40 .calendar-day-number,
+body[data-theme="graphite"] .calendar-day-cell-month.opacity-40 .calendar-cell-weekday,
+body[data-theme="graphite"] .calendar-day-cell-month.opacity-40 .calendar-day-indicator,
+body[data-theme="graphite"] .calendar-day-unavailable .calendar-day-indicator {
+	color: var(--g-t5) !important;   /* ≥ 7:1 auch auf der Zellfläche */
+}
+body[data-theme="graphite"] .ps-tag-path-sep {
+	color: var(--g-t3) !important;   /* sitzt auf dem Chip #2d2d2d → 8:1 */
+}
+body[data-theme="graphite"] #psEditorTagsBar#psEditorTagsBar input.ps-tags-input {
+	border-color: var(--g-line-strong) !important;
+}
+body[data-theme="graphite"] #actionTrigger,
+body[data-theme="graphite"] #toolboxTrigger {
+	color: var(--g-t3) !important;
+}
+body[data-theme="graphite"] #roomTabs button,
+body[data-theme="graphite"] #roomTabs button span {
+	color: inherit;
+}
+body[data-theme="graphite"] #roomTabs button.text-fuchsia-100,
+body[data-theme="graphite"] #roomTabs button.text-fuchsia-100 span {
+	color: #ffffff !important;
+}
+body[data-theme="graphite"] #roomTabs button[class*="bg-fuchsia"],
+body[data-theme="graphite"] #roomTabs button[class*="bg-fuchsia"] span {
+	color: #ffffff !important;
+}
+body[data-theme="graphite"] #roomTabs {
+	color: var(--g-t1);
+}
+/* aktiver Raum-Tab: Basisregel #roomTabs .text-fuchsia-100 setzt festes Schiefer #e2e8f0 */
+body[data-theme="graphite"] #roomTabs .text-fuchsia-100 {
+	color: #ffffff !important;
 }
