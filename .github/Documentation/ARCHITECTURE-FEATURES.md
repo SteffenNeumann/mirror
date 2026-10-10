@@ -196,7 +196,11 @@ bekommen eigens dunkle Schrift), Bedien-Ränder leise `#383838` (aktiv/Hover `#4
 User-Wunsch — bewusst unter 3:1, Felder erkennt man an der Fläche), Fokus-Ring nur auf
 Knöpfen/Links. ⚠️ `--accent-text` muss in dunklen Themes **hell** bleiben: die meisten
 Regeln (`.qb-chip:hover`, `.qb-close:hover`, Kalender-Tooltip, `.text-fuchsia-100`)
-setzen damit helle Schrift auf dunkle Fläche — `#141414` machte sie unsichtbar. ⚠️ `THEMES.<id>` braucht die
+setzen damit helle Schrift auf dunkle Fläche — `#141414` machte sie unsichtbar.
+Umgekehrt haben Regeln mit `background: var(--accent-strong)` oft festes `color: #fff`
+(`.qb-chip.is-active`, `.md-preset-btn.active`) → in Graphit eigens dunkel. Markdown:
+Preset „Editorial-Blau“ bleibt bunt (Editor aus `:root`, Vorschau ohne hljs-Override),
+„Theme-Akzent“/„Gedämpft“ grau; `setMdPreset` rendert die Vorschau in Graphit neu. ⚠️ `THEMES.<id>` braucht die
 `toc*`-Keys (`tocBg`, `tocBorder`, `tocMuted`, `tocHover`), sonst fällt das
 Inhaltsverzeichnis der Vorschau auf Schiefer-Blau zurück.
 

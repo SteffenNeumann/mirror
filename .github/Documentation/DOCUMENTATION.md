@@ -9,6 +9,7 @@
 - Cache-Busting: `app.js?v=2026-10-10-01`, `app.css?v=2026-10-10-01`, `CACHE_NAME` `mirror-v74`.
 - **Graph-Ansicht (User: „passt noch nicht“):** Leer-Hinweis „Noch keine Verbindungen“ lag in **allen** Themes dauerhaft über dem Graphen (`display: flex` schlug `hidden`) → behoben. Überlappende Knoten-Beschriftungen werden ausgelassen (alle Themes; vorher bis 46 Überlappungen beim Zoomen). Graphit: Titel (1,2:1) und aktive Knöpfe (1,45:1) lesbar, Knoten grau (`--ng-node`), gewählter Knoten weiß (`--ng-select`), Legende passend, Detailkarte ≥ 7:1. Cache-Busting `?v=2026-10-10-03`, `mirror-v76`.
 - **Rahmen + Hover:** Rahmen aller Bedien-Elemente leise (`#6e6e6e` → `#383838`, aktiv `#4a4a4a`). Hover-Schrift wurde im Filter-Dialog und am Sortier-Knopf fast schwarz auf Dunkel (`--accent-text` = `#141414`) → jetzt hell. Hover für „Anwenden“, Datumsfelder, Backup-Hinweis und Notizliste ergänzt. `?v=2026-10-10-04`, `mirror-v77`.
+- **Aktive Elemente + Markdown:** Gewählte Tag-Chips im Filter, aktiver Farbschema-Schalter u. a. hatten weiße Schrift auf `#d6d6d6` (1,4:1) → dunkel; Akkordeon-Zähler grau statt Fuchsia. Farbschema „Editorial-Blau“ ist in Graphit jetzt bunt (Editor + Vorschau), „Theme-Akzent“/„Gedämpft“ grau. `?v=2026-10-10-05`, `mirror-v78`.
 - **Feinschliff (User):** gewählte Notiz ohne Seitenbalken (nur hellere Fläche + fett); Vorschau-Fließtext `#d6d6d6` (12:1) statt `#ededed`, Überschriften/Fett bleiben `#ededed`. Cache-Busting `?v=2026-10-10-02`, `mirror-v75`.
 
 ## Installierte App wirkt nativer (2026-10-09)
