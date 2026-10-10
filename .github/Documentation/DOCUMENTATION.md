@@ -7,6 +7,7 @@
 - **Gemessen** (Playwright, 10 Ansichten, gegen Ash): Texte unter 7:1 63 → 0, Bedien-Ränder unter 3:1 28 → 2 (Text-Chips). Unabhängig per Pixelmessung gegengeprüft; andere Themes pixelgleich.
 - **Bau:** CSS-Blöcke aus `ash` abgeleitet (direkt hinter jedem Ash-Block) + Graphit-Block am Ende von `styles/app.css`; `app.js` an den 9 Stellen der Theme-Checkliste.
 - Cache-Busting: `app.js?v=2026-10-10-01`, `app.css?v=2026-10-10-01`, `CACHE_NAME` `mirror-v74`.
+- **Feinschliff (User):** gewählte Notiz ohne Seitenbalken (nur hellere Fläche + fett); Vorschau-Fließtext `#d6d6d6` (12:1) statt `#ededed`, Überschriften/Fett bleiben `#ededed`. Cache-Busting `?v=2026-10-10-02`, `mirror-v75`.
 
 ## Installierte App wirkt nativer (2026-10-09)
 - **Wunsch:** Mirror vom Home-Bildschirm (iPhone/iPad) bzw. Dock (Mac) „professioneller“.
