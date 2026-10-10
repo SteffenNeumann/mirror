@@ -14694,3 +14694,76 @@ body[data-theme="graphite"] .ng-item.ng-item-sel .ng-note-meta {
 body[data-theme="graphite"] .ng-item.ng-item-sel .ng-note-tag {
 	color: var(--g-t1);
 }
+
+/* Graphit — Rahmen leiser, Hover repariert (User 2026-10-10: „Rahmen massiv reduzieren“).
+   Bedien-Ränder gehen von #6e6e6e auf die Trenner-Stufe #383838; Felder erkennt man an
+   der Fläche, Fokus zeigt weiter ein heller Rand. Aktive Zustände: #4a4a4a. */
+body[data-theme="graphite"] {
+	--g-line-strong: #383838;
+	--g-line-hover: #4a4a4a;
+	--accent-border: #383838;
+	--accent-border-strong: #4a4a4a;
+	--selection-menu-border: #383838;
+	--calendar-tooltip-border: #383838;
+	/* --accent-text ist in fast allen Regeln helle Schrift auf dunkler Fläche
+	   (Chip-Hover, ✕, Tooltip). #141414 machte sie dort unsichtbar. */
+	--accent-text: #ffffff;
+}
+body[data-theme="graphite"] .ps-tag-section {
+	--ps-tag-border: #383838;
+	--ps-tag-border-strong: #4a4a4a;
+}
+body[data-theme="graphite"] .ps-tag-button.ps-tag-active,
+body[data-theme="graphite"] .ps-tag-section .ps-tag-active,
+body[data-theme="graphite"] .bg-fuchsia-500\/15,
+body[data-theme="graphite"] .bg-fuchsia-500\/20,
+body[data-theme="graphite"] .bg-fuchsia-500\/25,
+body[data-theme="graphite"] .bg-fuchsia-600\/20,
+body[data-theme="graphite"] .cal-mode-tab--active {
+	border-color: var(--g-line-hover) !important;
+}
+body[data-theme="graphite"] #mirror:focus {
+	border-color: var(--g-line-hover) !important;
+}
+/* Die wenigen Stellen mit heller Akzent-Füllung brauchen dunkle Schrift */
+body[data-theme="graphite"] .comment-badge {
+	color: var(--g-on-accent);
+}
+body[data-theme="graphite"] .md-content :is(ul.task-list input[type="checkbox"], ol.task-list input[type="checkbox"], input.task-list-item-checkbox):checked::before {
+	border-color: var(--g-on-accent);
+}
+
+/* Hover: jedes Bedien-Element zeigt einen grauen Wechsel */
+body[data-theme="graphite"] :is(input, select, textarea):not(#mirror):not(#psEditorTagsInput):not([type="checkbox"]):not(:focus):hover,
+body[data-theme="graphite"] #psEditorTagsBar#psEditorTagsBar input.ps-tags-input:not(:focus):hover {
+	border-color: var(--g-line-hover) !important;
+}
+body[data-theme="graphite"] [class*="hover:text-"]:hover,
+body[data-theme="graphite"] [class*="hover:text-"]:hover > span {
+	color: #ffffff !important;
+}
+body[data-theme="graphite"] #psList .ps-note-item:not(.ps-note-active):hover {
+	background-color: var(--g-hover) !important;
+}
+body[data-theme="graphite"] :is(.ps-note-pin, .ps-note-share, .ps-note-delete, #psToggleTags, #toggleComments, #togglePersonalSpace, #psTagFilterMode button, #roomTabs button):hover {
+	background-color: var(--g-hover) !important;
+	color: #ffffff !important;
+}
+body[data-theme="graphite"] .qb-btn-primary:hover {
+	background: #f0f0f0 !important;
+}
+body[data-theme="graphite"] #backupFolderHint button:first-of-type:hover {
+	background: #f0f0f0 !important;
+}
+body[data-theme="graphite"] #backupFolderHint button:last-of-type:hover {
+	background: var(--g-hover) !important;
+	color: #ffffff !important;
+}
+/* Sortier-Knopf: blieb im Ruhezustand Schiefer-Blau 50 % (2,7:1) */
+body[data-theme="graphite"] #psSortMenuBtn:not(:hover) {
+	color: var(--g-t4) !important;
+	border-color: var(--g-line) !important;
+}
+body[data-theme="graphite"] #psSortMenuBtn:hover {
+	border-color: var(--g-line-hover) !important;
+}
