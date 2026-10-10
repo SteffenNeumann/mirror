@@ -17249,6 +17249,7 @@ ${highlightThemeCss}
 		mobileView: "list",
 		hubThreshold: 4,
 		topHubId: null,
+		labelBoxes: [],
 	};
 	const NG_SIDEBAR_KEY = "mirror_ng_sidebar_collapsed";
 	const NG_SORT_KEY = "mirror_ng_sort";
@@ -17326,9 +17327,14 @@ ${highlightThemeCss}
 		const light = lum > 0.55;
 		// Body text color is unreliable across themes (black on several dark
 		// themes), so derive a guaranteed-readable label color from bg luminance.
-		const text = light
-			? { r: 38, g: 32, b: 45, a: 1 }
-			: { r: 232, g: 228, b: 240, a: 1 };
+		const text = ngParseColor(
+			cs.getPropertyValue("--ng-label"),
+			light ? { r: 38, g: 32, b: 45, a: 1 } : { r: 232, g: 228, b: 240, a: 1 }
+		);
+		// Optional per theme: node base shade and selection colour. Default to
+		// the accent, so themes without these vars render as before.
+		const node = ngParseColor(cs.getPropertyValue("--ng-node"), accent);
+		const select = ngParseColor(cs.getPropertyValue("--ng-select"), accent);
 		const rgba = (c, a) =>
 			"rgba(" +
 			Math.round(c.r) +
@@ -17341,6 +17347,8 @@ ${highlightThemeCss}
 			")";
 		return {
 			accent,
+			node,
+			select,
 			soft,
 			text,
 			bg,
@@ -17445,7 +17453,7 @@ ${highlightThemeCss}
 			step = Math.round(step * 4) / 4;
 			n.__step = step;
 			if (p) {
-				n.__shade = ngShade(isTag ? p.soft : p.accent, p.bg, step);
+				n.__shade = ngShade(isTag ? p.soft : p.node, p.bg, step);
 			}
 		}
 	}
@@ -17651,20 +17659,20 @@ ${highlightThemeCss}
 			if (isSel) {
 				ctx.beginPath();
 				ctx.arc(node.x, node.y, r + 4, 0, 2 * Math.PI);
-				ctx.fillStyle = p.rgba(p.accent, 0.22);
+				ctx.fillStyle = p.rgba(p.select, 0.22);
 				ctx.fill();
 				ctx.beginPath();
 				ctx.arc(node.x, node.y, r + 3, 0, 2 * Math.PI);
 				ctx.lineWidth = 1.5 / scale;
-				ctx.strokeStyle = p.rgba(p.accent, 0.8);
+				ctx.strokeStyle = p.rgba(p.select, 0.8);
 				ctx.stroke();
 			}
 			// base disc — graded theme shade by connection count
 			ctx.beginPath();
 			ctx.arc(node.x, node.y, r, 0, 2 * Math.PI);
 			ctx.fillStyle = isSel
-				? p.rgba(p.accent, 1)
-				: p.rgba(node.__shade || p.accent, isTop ? 1 : 0.95);
+				? p.rgba(p.select, 1)
+				: p.rgba(node.__shade || p.node, isTop ? 1 : 0.95);
 			ctx.fill();
 			// inner top-lit sheen (depth without gradients), skip when tiny
 			if (r * scale > 10 && !isTop) {
@@ -17689,7 +17697,9 @@ ${highlightThemeCss}
 			ctx.lineWidth = (matchQ ? 2 : isTop ? 2.5 : isHub ? 2 : 1) / scale;
 			ctx.strokeStyle = matchQ
 				? p.rgba(p.text, 0.95)
-				: isHub || isSel
+				: isSel
+				? p.rgba(p.select, 1)
+				: isHub
 				? p.rgba(p.accent, 1)
 				: p.light
 				? p.rgba(p.accent, 0.55)
@@ -17724,11 +17734,29 @@ ${highlightThemeCss}
 			const label = (isTag ? "#" : "") + (node.__label || node.title || "");
 			const halfH = isTag ? (node.__side || r * 2) / 2 : r;
 			const ly = node.y + halfH + fs * 0.9 + fs * 0.5;
+			const tw = ctx.measureText(label).width;
+			const padX = 4 / scale;
+			const boxH = fs * 1.5;
+			const boxW = tw + padX * 2;
+			// Skip a secondary label (hub/zoom) that would overlap one already drawn
+			// this frame; selection, hover and search hits always get their label.
+			const box = { x: node.x - boxW / 2, y: ly - boxH / 2, w: boxW, h: boxH };
+			const mustShow = emph || matchQ;
+			if (
+				!mustShow &&
+				ngState.labelBoxes.some(
+					(b) =>
+						box.x < b.x + b.w &&
+						b.x < box.x + box.w &&
+						box.y < b.y + b.h &&
+						b.y < box.y + box.h
+				)
+			) {
+				ctx.globalAlpha = 1;
+				return;
+			}
+			ngState.labelBoxes.push(box);
 			if (active) {
-				const tw = ctx.measureText(label).width;
-				const padX = 4 / scale;
-				const boxH = fs * 1.5;
-				const boxW = tw + padX * 2;
 				ngRoundRect(
 					ctx,
 					node.x - boxW / 2,
@@ -18077,6 +18105,9 @@ ${highlightThemeCss}
 			.maxZoom(8)
 			.nodeRelSize(1)
 			.nodeCanvasObjectMode(() => "replace")
+			.onRenderFramePre(() => {
+				ngState.labelBoxes = [];
+			})
 			.nodeCanvasObject(ngDrawNode)
 			.nodePointerAreaPaint(ngPaintArea)
 			.linkColor(ngLinkColor)

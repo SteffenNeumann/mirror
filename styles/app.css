@@ -13457,6 +13457,11 @@ body.ng-sidebar-collapsed .ng-sidebar {
 	text-align: center;
 	pointer-events: none;
 }
+/* .ng-empty setzt display:flex und schlug damit das hidden-Attribut — der
+   Leer-Hinweis stand dauerhaft über dem Graphen, auch mit Verbindungen. */
+.ng-empty[hidden] {
+	display: none;
+}
 .ng-empty-glyph svg {
 	width: 56px;
 	height: 56px;
@@ -14605,4 +14610,87 @@ body[data-theme="graphite"] .md-content {
 }
 body[data-theme="graphite"] .md-content :is(h1, h2, h3, h4, h5, h6, strong, b) {
 	color: #ededed;
+}
+
+/* Graphit — Graph-Ansicht. Der Graph liest --ng-node/--ng-select/--ng-label
+   (ngReadPalette); ohne sie nimmt er den Akzent wie in allen anderen Themes. */
+body[data-theme="graphite"] {
+	--ng-node: #b4b4b4;    /* Knoten: Hubs #b4b4b4, Blätter ≈ #666 (3:1 auf #181818) */
+	--ng-select: #ffffff;  /* gewählter Knoten hebt sich klar von Hubs ab */
+	--ng-label: #ededed;
+}
+body[data-theme="graphite"] .ng-title,
+body[data-theme="graphite"] .ng-note-title,
+body[data-theme="graphite"] .ng-empty-title {
+	color: var(--g-t1);
+}
+body[data-theme="graphite"] .ng-segbtn.ng-on,
+body[data-theme="graphite"] .ng-sortbtn.ng-on {
+	background: var(--g-accent);
+	color: var(--g-on-accent);
+}
+body[data-theme="graphite"] .ng-segbtn,
+body[data-theme="graphite"] .ng-sortbtn,
+body[data-theme="graphite"] .ng-leg,
+body[data-theme="graphite"] .ng-note-tag {
+	color: var(--g-t3);
+}
+body[data-theme="graphite"] .ng-item-meta,
+body[data-theme="graphite"] .ng-item-deg,
+body[data-theme="graphite"] .ng-list-count,
+body[data-theme="graphite"] .ng-hint,
+body[data-theme="graphite"] .ng-note-meta,
+body[data-theme="graphite"] .ng-empty-text {
+	color: var(--g-t4);
+}
+/* Gewählter Listeneintrag wie die Notizliste: Fläche + fett, kein Seitenbalken */
+body[data-theme="graphite"] .ng-item.ng-item-sel {
+	background: var(--g-active);
+	border-left-color: transparent;
+}
+body[data-theme="graphite"] .ng-item.ng-item-sel .ng-item-title {
+	color: #ffffff;
+	font-weight: 700;
+}
+/* Legende = dieselben Graustufen wie im Graphen */
+body[data-theme="graphite"] .ng-legend {
+	background: var(--g-raised);
+	border-color: var(--g-line);
+	backdrop-filter: none;
+	-webkit-backdrop-filter: none;
+}
+body[data-theme="graphite"] .ng-leg-dot {
+	background: #8c8c8c;
+}
+body[data-theme="graphite"] .ng-leg-dot-sel {
+	background: #ffffff;
+	box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25);
+}
+body[data-theme="graphite"] .ng-leg-dot-tag {
+	background: transparent;
+	border-color: var(--g-t4);
+}
+body[data-theme="graphite"] .ng-leg-line {
+	border-top-color: var(--g-t4);
+}
+body[data-theme="graphite"] .ng-empty-glyph svg {
+	color: var(--g-t4);
+	opacity: 1;
+}
+body[data-theme="graphite"] .ng-note-open {
+	background: var(--g-accent);
+	color: var(--g-on-accent);
+}
+body[data-theme="graphite"] .ng-note-open:hover {
+	background: #f0f0f0;
+}
+/* Detailkarte des gewählten Eintrags liegt auf #323232 — dort eine Stufe heller,
+   sonst fallen Meta, Grad und Links/Backlinks unter 7:1 (gemessen 5,6–6,5). */
+body[data-theme="graphite"] .ng-item.ng-item-sel .ng-item-meta,
+body[data-theme="graphite"] .ng-item.ng-item-sel .ng-item-deg,
+body[data-theme="graphite"] .ng-item.ng-item-sel .ng-note-meta {
+	color: var(--g-t3);
+}
+body[data-theme="graphite"] .ng-item.ng-item-sel .ng-note-tag {
+	color: var(--g-t1);
 }
