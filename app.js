@@ -6964,7 +6964,7 @@
 			top: "#181818",
 			bottom: "#181818",
 			previewBg: "#181818",
-			previewText: "#ededed",
+			previewText: "#d6d6d6", // Fließtext 12:1; Überschriften/Fett #ededed (buildPreviewHighlightCss)
 			tocText: "#ededed",
 			tocBg: "#222222",
 			tocBorder: "#383838",
@@ -15305,6 +15305,7 @@
 					.hljs-string,.hljs-attr,.hljs-number,.hljs-literal{color:#c4c4c4;}
 					.hljs-comment,.hljs-quote{color:#adadad;font-style:italic;}
 					.hljs-subst,.hljs-params{color:#e0e0e0;}
+					h1,h2,h3,h4,h5,h6,strong,b{color:#ededed;}
 					a{color:#ffffff;text-decoration:underline;text-underline-offset:2px;}
 					blockquote{border-left-color:#7a7a7a;color:#c8c8c8;}
 					ul.task-list input[type=checkbox],ol.task-list input[type=checkbox],input.task-list-item-checkbox{border-color:#b8b8b8;}

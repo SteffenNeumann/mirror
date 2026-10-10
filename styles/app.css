@@ -14353,10 +14353,11 @@ body[data-theme="graphite"] .cal-header-add-btn:hover {
 	background: #f0f0f0 !important;
 }
 
-/* Aktiv/Gewählt: hellerer Grund + Balken + weiße Schrift — nie nur Farbe */
+/* Aktiv/Gewählt: hellerer Grund + fette weiße Schrift — nie nur Farbe.
+   Kein Seitenbalken (User 2026-10-10: zu viel Rahmen). */
 body[data-theme="graphite"] .ps-note-item.ps-note-active {
 	background-color: var(--g-active) !important;
-	box-shadow: inset 3px 0 0 var(--g-accent) !important;
+	box-shadow: none !important;
 	color: #ffffff !important;
 }
 body[data-theme="graphite"] .ps-note-item.ps-note-active .ps-note-title {
@@ -14595,4 +14596,13 @@ body[data-theme="graphite"] #roomTabs {
 /* aktiver Raum-Tab: Basisregel #roomTabs .text-fuchsia-100 setzt festes Schiefer #e2e8f0 */
 body[data-theme="graphite"] #roomTabs .text-fuchsia-100 {
 	color: #ffffff !important;
+}
+
+/* Vorschau-Fließtext eine Stufe weicher (#d6d6d6, 12:1) — #ededed wirkte auf
+   großen Textflächen grell. Überschriften und Fett bleiben #ededed. */
+body[data-theme="graphite"] .md-content {
+	color: #d6d6d6;
+}
+body[data-theme="graphite"] .md-content :is(h1, h2, h3, h4, h5, h6, strong, b) {
+	color: #ededed;
 }
