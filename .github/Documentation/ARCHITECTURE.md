@@ -218,7 +218,9 @@ kennen muss, bevor man in die Nähe kommt:
 Übergänge 0,15–0,25 s auf `transform` und `opacity`. Ein- und Ausblenden über
 `visibility` + `opacity` + `pointer-events`, **nicht** über `display` — sonst gehen die
 Übergänge verloren. Ausnahmen sind die flachen Themes (mono, coffee, bitter, bronze, ash, graphite),
-die Glas und Glow bewusst weglassen.
+die Glas bewusst weglassen. **Seit 2026-10-10 in allen Themes:** große Flächen ohne Rahmen
+(nur Tonabstufung), Knöpfe am Computer 24/28/32 px, kein Glow an Objekten, keine Schatten
+unter Knöpfen — Details und Checkliste in ARCHITECTURE-FEATURES.md (Themes).
 
 ## Offline-Fähigkeit
 

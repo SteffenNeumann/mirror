@@ -54,3 +54,11 @@ schluckten. Notizliste hat jetzt Hover (andere Themes: bewusst keiner).
 
 Fokus-/Disabled-Zustände nicht gemessen. Status-Punkt und die 7 Markier-Punkte
 bleiben bunt (User-Entscheid: sind Inhalt bzw. Status).
+
+## Nachträge am selben Tag (PRs #76–#79)
+
+- Flächen statt Rahmen (Graphit, dann alle Themes), Vorschau als hellere Fläche.
+- Kompakte Knöpfe + kein Glow (INT-715): Glow-Regeln per CSSOM-Dump im Browser gefunden
+  (alle Regeln mit `box-shadow`/`filter` + Blur), nicht per grep. Ein Prüfer allein
+  schaffte 14 Themes × Einstellungen × Handy × Fokus nicht in einer Runde — solche
+  Prüfungen gleich in zwei schmale Aufträge teilen, Läufe nie parallel (Timeouts).
